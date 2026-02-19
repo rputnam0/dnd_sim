@@ -1,0 +1,1255 @@
+{
+  "ability_scores": {
+    "cha": 11,
+    "con": 16,
+    "dex": 19,
+    "int": 11,
+    "str": 16,
+    "wis": 14
+  },
+  "ac": 16,
+  "attacks": [
+    {
+      "damage": "1d6+5",
+      "damage_type": "bludgeoning",
+      "name": "Quarterstaff, +1",
+      "to_hit": 8
+    },
+    {
+      "damage": "2d10",
+      "damage_type": "necrotic",
+      "name": "Chill Touch",
+      "to_hit": 5
+    },
+    {
+      "damage": "1d6+4",
+      "damage_type": "bludgeoning",
+      "name": "Unarmed Strike",
+      "to_hit": 7
+    },
+    {
+      "damage": "1d6+4",
+      "damage_type": "bludgeoning",
+      "name": "Unarmed Strike",
+      "to_hit": 7
+    },
+    {
+      "damage": "1d6+4",
+      "damage_type": "bludgeoning",
+      "name": "Flurry of Blows",
+      "to_hit": 7
+    },
+    {
+      "damage": "1d6+4",
+      "damage_type": "bludgeoning",
+      "name": "Deflect Missiles Attack",
+      "to_hit": 7
+    }
+  ],
+  "character_id": "isak_wissa",
+  "class_level": "Monk 8",
+  "max_hp": 77,
+  "name": "Isak Wissa",
+  "raw_fields": [
+    {
+      "field": "AC",
+      "page": 1,
+      "value": "16"
+    },
+    {
+      "field": "Acrobatics",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "AcrobaticsMod",
+      "page": 1,
+      "value": "DEX"
+    },
+    {
+      "field": "AcrobaticsProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "Actions1",
+      "page": 1,
+      "value": "=== ACTIONS === \nStandard Actions \n     Attack, Magic, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Utilize, Opportunity Attack, Grapple, Shove, Improvise, Two-Weapon Fighting, Interact with an Object, Study, Influence \n\nWholeness of Body \u2022 1 / Long Rest \n     Once per long rest as an action, you can regain 24 HP. \n\n=== BONUS ACTIONS === \nFlurry of Blows \n     After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action."
+    },
+    {
+      "field": "Actions2",
+      "page": 1,
+      "value": "Patient Defense \n     You can spend 1 ki point to take the Dodge action as a bonus action on your turn. \n\nStep of the Wind \n     You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn. \n\nUnarmed Strike \n     When you use the Attack action with an unarmed strike or a monk weapon on your turn, you can make one unarmed strike as a bonus action. \n\n=== REACTIONS ==="
+    },
+    {
+      "field": "AdditionalSenses",
+      "page": 1,
+      "value": "Darkvision 60 ft."
+    },
+    {
+      "field": "Animal",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "AnimalMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "Arcana",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "ArcanaMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "Athletics",
+      "page": 1,
+      "value": "+6"
+    },
+    {
+      "field": "AthleticsMod",
+      "page": 1,
+      "value": "STR"
+    },
+    {
+      "field": "AthleticsProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "BACKGROUND",
+      "page": 1,
+      "value": "Soldier"
+    },
+    {
+      "field": "CHA",
+      "page": 1,
+      "value": "11"
+    },
+    {
+      "field": "CHamod",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "CharacterName",
+      "page": 1,
+      "value": "Isak Wissa"
+    },
+    {
+      "field": "CLASS  LEVEL",
+      "page": 1,
+      "value": "Monk 8"
+    },
+    {
+      "field": "CON",
+      "page": 1,
+      "value": "16"
+    },
+    {
+      "field": "CONmod",
+      "page": 1,
+      "value": "+3"
+    },
+    {
+      "field": "Deception",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "DeceptionMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "DEX",
+      "page": 1,
+      "value": "19"
+    },
+    {
+      "field": "DEXmod",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "DexProf",
+      "page": 1,
+      "value": "\u2022"
+    },
+    {
+      "field": "EXPERIENCE POINTS",
+      "page": 1,
+      "value": "(Milestone)"
+    },
+    {
+      "field": "History",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "HistoryMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "Init",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "Insight",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "InsightMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "INT",
+      "page": 1,
+      "value": "11"
+    },
+    {
+      "field": "Intimidation",
+      "page": 1,
+      "value": "+3"
+    },
+    {
+      "field": "IntimidationMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "IntimidationProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "INTmod",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "Investigation",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "InvestigationMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "MaxHP",
+      "page": 1,
+      "value": "77"
+    },
+    {
+      "field": "Medicine",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "MedicineMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "Nature",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "NatureMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "Passive1",
+      "page": 1,
+      "value": "12"
+    },
+    {
+      "field": "Passive2",
+      "page": 1,
+      "value": "12"
+    },
+    {
+      "field": "Passive3",
+      "page": 1,
+      "value": "10"
+    },
+    {
+      "field": "Perception",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "PerceptionMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "Performance",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "PerformanceMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "Persuasion",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "PersuasionMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "PLAYER NAME",
+      "page": 1,
+      "value": "The_Lizardscale_King"
+    },
+    {
+      "field": "ProfBonus",
+      "page": 1,
+      "value": "+3"
+    },
+    {
+      "field": "ProficienciesLang",
+      "page": 1,
+      "value": "=== WEAPONS === \nShortsword, Simple Weapons \n\n=== TOOLS === \nDice Set, Flute \n\n=== LANGUAGES === \nChondathan, Common, Goblin"
+    },
+    {
+      "field": "RACE",
+      "page": 1,
+      "value": "Gnome"
+    },
+    {
+      "field": "Religion",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "ReligionMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "SaveModifiers",
+      "page": 1,
+      "value": "Advantage on INT \nAdvantage on WIS \nAdvantage on CHA"
+    },
+    {
+      "field": "SleightofHand",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "SleightofHandMod",
+      "page": 1,
+      "value": "DEX"
+    },
+    {
+      "field": "Speed",
+      "page": 1,
+      "value": "45 ft. (Walking)"
+    },
+    {
+      "field": "ST Charisma",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "ST Constitution",
+      "page": 1,
+      "value": "+3"
+    },
+    {
+      "field": "ST Dexterity",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "ST Intelligence",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "ST Strength",
+      "page": 1,
+      "value": "+6"
+    },
+    {
+      "field": "ST Wisdom",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "Stealth",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "StealthMod",
+      "page": 1,
+      "value": "DEX"
+    },
+    {
+      "field": "StealthProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "STR",
+      "page": 1,
+      "value": "16"
+    },
+    {
+      "field": "STRmod",
+      "page": 1,
+      "value": "+3"
+    },
+    {
+      "field": "StrProf",
+      "page": 1,
+      "value": "\u2022"
+    },
+    {
+      "field": "Survival",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "SurvivalMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "TempHP",
+      "page": 1,
+      "value": "--"
+    },
+    {
+      "field": "Total",
+      "page": 1,
+      "value": "8d8"
+    },
+    {
+      "field": "WIS",
+      "page": 1,
+      "value": "14"
+    },
+    {
+      "field": "WISmod",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "Wpn Name",
+      "page": 1,
+      "value": "Quarterstaff, +1"
+    },
+    {
+      "field": "Wpn Name 2",
+      "page": 1,
+      "value": "Chill Touch"
+    },
+    {
+      "field": "Wpn Name 3",
+      "page": 1,
+      "value": "Unarmed Strike"
+    },
+    {
+      "field": "Wpn Name 4",
+      "page": 1,
+      "value": "Unarmed Strike"
+    },
+    {
+      "field": "Wpn Name 5",
+      "page": 1,
+      "value": "Flurry of Blows"
+    },
+    {
+      "field": "Wpn Name 6",
+      "page": 1,
+      "value": "Deflect Missiles Attack"
+    },
+    {
+      "field": "Wpn Notes 1",
+      "page": 1,
+      "value": "Simple, Versatile, Topple"
+    },
+    {
+      "field": "Wpn Notes 2",
+      "page": 1,
+      "value": "V/S"
+    },
+    {
+      "field": "Wpn1 AtkBonus",
+      "page": 1,
+      "value": "+8"
+    },
+    {
+      "field": "Wpn1 Damage",
+      "page": 1,
+      "value": "1d6+5 Bludgeoning"
+    },
+    {
+      "field": "Wpn2 AtkBonus",
+      "page": 1,
+      "value": "+5"
+    },
+    {
+      "field": "Wpn2 Damage",
+      "page": 1,
+      "value": "2d10 Necrotic"
+    },
+    {
+      "field": "Wpn3 AtkBonus",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "Wpn3 Damage",
+      "page": 1,
+      "value": "1d6+4 Bludgeoning"
+    },
+    {
+      "field": "Wpn4 AtkBonus",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "Wpn4 Damage",
+      "page": 1,
+      "value": "1d6+4 Bludgeoning"
+    },
+    {
+      "field": "Wpn5 AtkBonus",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "Wpn5 Damage",
+      "page": 1,
+      "value": "1d6+4 Bludgeoning"
+    },
+    {
+      "field": "Wpn6 AtkBonus",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "Wpn6 Damage",
+      "page": 1,
+      "value": "1d6+4"
+    },
+    {
+      "field": "BACKGROUND2",
+      "page": 2,
+      "value": "Soldier"
+    },
+    {
+      "field": "CharacterName2",
+      "page": 2,
+      "value": "Isak Wissa"
+    },
+    {
+      "field": "CLASS  LEVEL2",
+      "page": 2,
+      "value": "Monk 8"
+    },
+    {
+      "field": "CP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "Encumbered",
+      "page": 2,
+      "value": "240 lb."
+    },
+    {
+      "field": "EP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "Eq Name0",
+      "page": 2,
+      "value": "Quarterstaff, +1"
+    },
+    {
+      "field": "Eq Name1",
+      "page": 2,
+      "value": "Dart"
+    },
+    {
+      "field": "Eq Name10",
+      "page": 2,
+      "value": "Waterskin"
+    },
+    {
+      "field": "Eq Name2",
+      "page": 2,
+      "value": "Shortsword"
+    },
+    {
+      "field": "Eq Name3",
+      "page": 2,
+      "value": "Backpack"
+    },
+    {
+      "field": "Eq Name4",
+      "page": 2,
+      "value": "Bedroll"
+    },
+    {
+      "field": "Eq Name5",
+      "page": 2,
+      "value": "Mess Kit"
+    },
+    {
+      "field": "Eq Name6",
+      "page": 2,
+      "value": "Rations (1 day)"
+    },
+    {
+      "field": "Eq Name7",
+      "page": 2,
+      "value": "Rope, Hempen (50 feet)"
+    },
+    {
+      "field": "Eq Name8",
+      "page": 2,
+      "value": "Tinderbox"
+    },
+    {
+      "field": "Eq Name9",
+      "page": 2,
+      "value": "Torch"
+    },
+    {
+      "field": "Eq Qty0",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty1",
+      "page": 2,
+      "value": "10"
+    },
+    {
+      "field": "Eq Qty10",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty2",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty3",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty4",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty5",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty6",
+      "page": 2,
+      "value": "10"
+    },
+    {
+      "field": "Eq Qty7",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty8",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty9",
+      "page": 2,
+      "value": "10"
+    },
+    {
+      "field": "Eq Weight0",
+      "page": 2,
+      "value": "4 lb."
+    },
+    {
+      "field": "Eq Weight1",
+      "page": 2,
+      "value": "2.5 lb."
+    },
+    {
+      "field": "Eq Weight10",
+      "page": 2,
+      "value": "5 lb."
+    },
+    {
+      "field": "Eq Weight2",
+      "page": 2,
+      "value": "2 lb."
+    },
+    {
+      "field": "Eq Weight3",
+      "page": 2,
+      "value": "5 lb."
+    },
+    {
+      "field": "Eq Weight4",
+      "page": 2,
+      "value": "7 lb."
+    },
+    {
+      "field": "Eq Weight5",
+      "page": 2,
+      "value": "1 lb."
+    },
+    {
+      "field": "Eq Weight6",
+      "page": 2,
+      "value": "20 lb."
+    },
+    {
+      "field": "Eq Weight7",
+      "page": 2,
+      "value": "10 lb."
+    },
+    {
+      "field": "Eq Weight8",
+      "page": 2,
+      "value": "1 lb."
+    },
+    {
+      "field": "Eq Weight9",
+      "page": 2,
+      "value": "10 lb."
+    },
+    {
+      "field": "EXPERIENCE POINTS2",
+      "page": 2,
+      "value": "(Milestone)"
+    },
+    {
+      "field": "FeaturesTraits1",
+      "page": 2,
+      "value": "=== MONK FEATURES === \n\n* Hit Points \u2022 PHB 77 \n\n* Proficiencies \u2022 PHB 77 \n\n* Unarmored Defense \u2022 PHB 78 \nWhile not wearing armor and not using a shield, your AC equals 10 + DEX modifier + WIS modifier. \n\n* Martial Arts \u2022 PHB 78 \nWhile you are unarmed or wielding only monk weapons and you aren\u2019t wearing armor or wielding a shield, you can use DEX instead of STR for the attack and damage rolls, you can roll your Martial Arts damage die in place of the normal damage, and when you use the Attack action on your turn, you can make one unarmed strike as a bonus action. \n\n   \\| Unarmed Strike: 1 Bonus Action \n\n* Ki \u2022 PHB 78 \nYou can spend Ki Points to fuel ki features. You have 8 points per short rest and your Ki save DC is 13. \n\nFlurry of Blows - After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action. \n\nPatient Defense - You can spend 1 ki point to take the Dodge action as a bonus action on your turn. \n\nStep of the Wind - You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn. \n\n   \\| Ki Points: 8 / Short Rest \u2022 Special \n\n   \\| Flurry of Blows: 1 Bonus Action \n\n   \\| Patient Defense: 1 Bonus Action"
+    },
+    {
+      "field": "FeaturesTraits2",
+      "page": 2,
+      "value": "\\| Step of the Wind: 1 Bonus Action \n\n* Unarmored Movement \u2022 PHB 78 \nYour speed increases by 15 feet while you are not wearing armor or wielding a shield. \n\n* Monastic Tradition \u2022 PHB 78 \n\n   \\| Way of the Open Hand \n\n* Deflect Missiles \u2022 PHB 78 \nYou can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. When you do so, the damage you take from the attack is reduced by 1d10 +12. If you reduce damage to 0 and have a free hand, you can spend 1 ki point to make a ranged attack (as with a monk weapon) with range 20/60. \n\n   \\| 1 Reaction \n\n   \\| Deflect Missiles Attack: 1 Reaction \n\n* Open Hand Technique \u2022 PHB 79 \nWhenever you hit with one of your Flurry of Blows attacks, you can impose one of the following effects on that target: fall prone if it fails a DEX saving throw (DC 13), get pushed up to 15 ft. if it fails a STR saving throw (DC 13), or it can't take reaction until the end of your next turn. \n\n   \\| Special \n\n* Ability Score Improvement \u2022 PHB 78 \n\n* Slow Fall \u2022 PHB 78 \nYou can use your reaction when you fall to reduce any falling damage you take by 40. \n\n   \\| 1 Reaction"
+    },
+    {
+      "field": "FeaturesTraits3",
+      "page": 2,
+      "value": "* Extra Attack \u2022 PHB 79 \nYou can attack twice, instead of once, whenever you take the Attack action on your turn. \n\n* Stunning Strike \u2022 PHB 79 \nWhen you hit with a melee weapon attack, you can spend 1 ki point to make the target stunned until the end of your next turn if it fails a CON saving throw (DC 13). \n\n   \\| Special \n\n* Ki-Empowered Strikes \u2022 PHB 79 \nYour unarmed strikes count as magical for the purpose of overcoming resistance and immunity. \n\n* Wholeness of Body \u2022 PHB 79 \nOnce per long rest as an action, you can regain 24 HP. \n\n   \\| 1 / Long Rest \u2022 1 Action \n\n* Evasion \u2022 PHB 79 \nWhen you are subjected to an effect that allows you to make a DEX saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail. \n\n* Stillness of Mind \u2022 PHB 79 \nYou can use an action to end one effect on yourself that is causing you to be charmed or frightened. \n\n   \\| 1 Action \n\n\n=== GNOME SPECIES TRAITS === \n\n* Creature Type \u2022 PHB-2024 191 \nYou are a Humanoid. \n\n* Size \u2022 PHB-2024 191"
+    },
+    {
+      "field": "GP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "PLAYER NAME2",
+      "page": 2,
+      "value": "The_Lizardscale_King"
+    },
+    {
+      "field": "PP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "PushDragLift",
+      "page": 2,
+      "value": "480 lb."
+    },
+    {
+      "field": "RACE2",
+      "page": 2,
+      "value": "Gnome"
+    },
+    {
+      "field": "SP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "Weight Carried",
+      "page": 2,
+      "value": "67.5 lb."
+    },
+    {
+      "field": "BACKGROUND3",
+      "page": 3,
+      "value": "Soldier"
+    },
+    {
+      "field": "CharacterName3",
+      "page": 3,
+      "value": "Isak Wissa"
+    },
+    {
+      "field": "CLASS  LEVEL3",
+      "page": 3,
+      "value": "Monk 8"
+    },
+    {
+      "field": "EXPERIENCE POINTS3",
+      "page": 3,
+      "value": "(Milestone)"
+    },
+    {
+      "field": "FeaturesTraits4",
+      "page": 3,
+      "value": "You are Small. \n\n* Speed \u2022 PHB-2024 191 \nYour Speed is 30 ft. \n\n* Darkvision \u2022 PHB-2024 191 \nYou have Darkvision with a range of 60 ft. \n\n* Gnomish Cunning \u2022 PHB-2024 191 \nYou have Advantage on Intelligence, Wisdom, and Charisma saving throws. \n\n* Gnomish Lineage \u2022 PHB-2024 191 \n\n* Gnomish Lineage Spells \u2022 PHB-2024 191 \n\n   \\| Forest Gnome - Intelligence \u2022  \n\n* Languages \u2022 PHB-2024 37 \nYour character knows at least three languages: Common plus two languages you roll or choose from the Standard Languages table. Knowledge of a language means your character can communicate in it, read it, and write it. \n\n\n=== FEATS === \n\n* Magic Initiate (Wizard) \u2022 PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice from the Wizard spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. \n\nSpell Change. Whenever you gain a new level, you"
+    },
+    {
+      "field": "FeaturesTraits5",
+      "page": 3,
+      "value": "can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   \\| Wisdom \u2022  \n\n* Savage Attacker \u2022 PHB-2024 201 \nOnce per turn when you hit a target with a weapon, you can roll the weapon\u2019s damage dice twice and use either roll against the target. \n\n* Soldier Ability Score Improvements \u2022 PHB-2024 185 \n\n   \\| Increase three scores (+1 / +1 / +1) \u2022"
+    },
+    {
+      "field": "PLAYER NAME3",
+      "page": 3,
+      "value": "The_Lizardscale_King"
+    },
+    {
+      "field": "RACE3",
+      "page": 3,
+      "value": "Gnome"
+    },
+    {
+      "field": "ALIGNMENT",
+      "page": 4,
+      "value": "Neutral Good"
+    },
+    {
+      "field": "Backstory",
+      "page": 4,
+      "value": "Isak Wissa is a gnome monk of the Way of the Open Hand, trained first by his grandmother in a small village tradition that taught Ley was not a weapon or a commodity, but the breath of the world\u2014something to be guided back into balance rather than dominated. After her death, he completed his training at a monastery loosely aligned with the Aureate Crown, though he never fully embraced the Crown\u2019s doctrine that magic must be licensed and controlled. Drafted and stationed at the River Line on the Jungle Front, Isak serves as a scout and close-quarters specialist, positioned between the Crown and the industrial ambitions of the Iron Concord. Quiet, introverted, and lethally precise, he fights not for ideology but for survival and for the deep loyalty he feels toward his unit. He believes the Ley in the jungle is strained\u2014not corrupted, but listening\u2014and he carries a private doubt: a missing week of memory after a patrol near the DMZ, from which he returned uninjured yet covered in river mud. Since then, when he meditates, his heartbeat seems to echo the rhythm of the jungle itself."
+    },
+    {
+      "field": "CharacterName4",
+      "page": 4,
+      "value": "Isak Wissa"
+    },
+    {
+      "field": "SIZE",
+      "page": 4,
+      "value": "Small"
+    },
+    {
+      "field": "spellCastingTime0",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellCastingTime1",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellCastingTime2",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellCastingTime3",
+      "page": 5,
+      "value": "1R"
+    },
+    {
+      "field": "spellCastingTime4",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellCastingTime5",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellComponents0",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellComponents1",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellComponents2",
+      "page": 5,
+      "value": "S,M"
+    },
+    {
+      "field": "spellComponents3",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellComponents4",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellComponents5",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration0",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellDuration1",
+      "page": 5,
+      "value": "1 minute"
+    },
+    {
+      "field": "spellDuration2",
+      "page": 5,
+      "value": "1 minute"
+    },
+    {
+      "field": "spellDuration3",
+      "page": 5,
+      "value": "1 round"
+    },
+    {
+      "field": "spellDuration4",
+      "page": 5,
+      "value": "10 minutes"
+    },
+    {
+      "field": "spellDuration5",
+      "page": 5,
+      "value": "10 minutes"
+    },
+    {
+      "field": "spellHeader0",
+      "page": 5,
+      "value": "=== CANTRIPS ==="
+    },
+    {
+      "field": "spellHeader1",
+      "page": 5,
+      "value": "=== 1st LEVEL ==="
+    },
+    {
+      "field": "spellName0",
+      "page": 5,
+      "value": "Chill Touch"
+    },
+    {
+      "field": "spellName1",
+      "page": 5,
+      "value": "Mage Hand"
+    },
+    {
+      "field": "spellName2",
+      "page": 5,
+      "value": "Minor Illusion"
+    },
+    {
+      "field": "spellName3",
+      "page": 5,
+      "value": "Shield"
+    },
+    {
+      "field": "spellName4",
+      "page": 5,
+      "value": "Speak with Animals"
+    },
+    {
+      "field": "spellName5",
+      "page": 5,
+      "value": "Speak with Animals"
+    },
+    {
+      "field": "spellNotes0",
+      "page": 5,
+      "value": "V/S"
+    },
+    {
+      "field": "spellNotes1",
+      "page": 5,
+      "value": "D: 1m, V/S"
+    },
+    {
+      "field": "spellNotes2",
+      "page": 5,
+      "value": "D: 1m, 5 ft. Cube, S/M"
+    },
+    {
+      "field": "spellNotes3",
+      "page": 5,
+      "value": "1/LR, D: 1Rnd, V/S"
+    },
+    {
+      "field": "spellNotes4",
+      "page": 5,
+      "value": "1 Use (3/3), D: 10m, V/S"
+    },
+    {
+      "field": "spellNotes5",
+      "page": 5,
+      "value": "D: 10m, V/S"
+    },
+    {
+      "field": "spellPage0",
+      "page": 5,
+      "value": "PHB-2024 249"
+    },
+    {
+      "field": "spellPage1",
+      "page": 5,
+      "value": "PHB-2024 293"
+    },
+    {
+      "field": "spellPage2",
+      "page": 5,
+      "value": "PHB-2024 298"
+    },
+    {
+      "field": "spellPage3",
+      "page": 5,
+      "value": "PHB-2024 316"
+    },
+    {
+      "field": "spellPage4",
+      "page": 5,
+      "value": "PHB-2024 318"
+    },
+    {
+      "field": "spellPage5",
+      "page": 5,
+      "value": "PHB-2024 318"
+    },
+    {
+      "field": "spellPrepared0",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellPrepared1",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellPrepared2",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellPrepared3",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellPrepared4",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellPrepared5",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellRange0",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellRange1",
+      "page": 5,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellRange2",
+      "page": 5,
+      "value": "30 ft./5 ft. Cube"
+    },
+    {
+      "field": "spellRange3",
+      "page": 5,
+      "value": "Self"
+    },
+    {
+      "field": "spellRange4",
+      "page": 5,
+      "value": "Self"
+    },
+    {
+      "field": "spellRange5",
+      "page": 5,
+      "value": "Self"
+    },
+    {
+      "field": "spellSaveHit0",
+      "page": 5,
+      "value": "+5"
+    },
+    {
+      "field": "spellSaveHit1",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellSaveHit2",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellSaveHit3",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellSaveHit4",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellSaveHit5",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellSlotHeader0",
+      "page": 5,
+      "value": "(At Will)"
+    },
+    {
+      "field": "spellSource0",
+      "page": 5,
+      "value": "Magic Initiate (Wizard)"
+    },
+    {
+      "field": "spellSource1",
+      "page": 5,
+      "value": "Magic Initiate (Wizard)"
+    },
+    {
+      "field": "spellSource2",
+      "page": 5,
+      "value": "Gnomish Lineage Spells"
+    },
+    {
+      "field": "spellSource3",
+      "page": 5,
+      "value": "Magic Initiate (Wizard)"
+    },
+    {
+      "field": "spellSource4",
+      "page": 5,
+      "value": "Gnomish Lineage Spells"
+    },
+    {
+      "field": "spellSource5",
+      "page": 5,
+      "value": "Gnomish Lineage Spells"
+    }
+  ],
+  "resources": {
+    "feature_uses": {
+      "ki_points": 8
+    },
+    "ki": {
+      "max": 8
+    }
+  },
+  "save_mods": {
+    "cha": 0,
+    "con": 3,
+    "dex": 7,
+    "int": 0,
+    "str": 6,
+    "wis": 2
+  },
+  "skill_mods": {
+    "acrobatics": 7,
+    "animal": 2,
+    "arcana": 0,
+    "athletics": 6,
+    "deception": 0,
+    "history": 0,
+    "insight": 2,
+    "intimidation": 3,
+    "investigation": 0,
+    "medicine": 2,
+    "nature": 0,
+    "perception": 2,
+    "performance": 0,
+    "persuasion": 0,
+    "religion": 0,
+    "sleightofhand": 4,
+    "stealth": 7,
+    "survival": 2
+  },
+  "source": {
+    "pdf_name": "The_Lizardscale_King_161559385.pdf"
+  },
+  "speed_ft": 45,
+  "traits": [
+    "Ability Score Improvement",
+    "Creature Type",
+    "Darkvision",
+    "Deflect Missiles",
+    "Evasion",
+    "Extra Attack",
+    "Gnomish Cunning",
+    "Gnomish Lineage",
+    "Gnomish Lineage Spells",
+    "Hit Points",
+    "Ki",
+    "Ki-Empowered Strikes",
+    "Languages",
+    "Magic Initiate (Wizard)",
+    "Martial Arts",
+    "Monastic Tradition",
+    "Open Hand Technique",
+    "Proficiencies",
+    "Savage Attacker",
+    "Size",
+    "Slow Fall",
+    "Soldier Ability Score Improvements",
+    "Speed",
+    "Stillness of Mind",
+    "Stunning Strike",
+    "Unarmored Defense",
+    "Unarmored Movement",
+    "Wholeness of Body"
+  ]
+}

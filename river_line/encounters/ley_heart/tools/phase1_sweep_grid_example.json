@@ -1,0 +1,6 @@
+{
+  "boss_phase_1.guilt_fog_dc": [14, 15],
+  "boss_phase_1.boiler_vent_dc": [14, 15],
+  "boss_phase_1.harpoon_to_hit": [7, 8],
+  "boss_phase_1.arc_flash_damage_expr": ["1d6+1", "2d6"]
+}

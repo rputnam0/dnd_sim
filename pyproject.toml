@@ -1,0 +1,32 @@
+[project]
+name = "dnd-sim"
+version = "0.1.0"
+description = "Generalized D&D encounter simulator"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "matplotlib>=3.9",
+  "pydantic>=2.9",
+  "seaborn>=0.13",
+]
+
+[project.optional-dependencies]
+dev = [
+  "black>=24.10",
+  "pytest>=8.3",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dnd_sim"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "-q"

@@ -1,0 +1,6358 @@
+{
+  "ability_scores": {
+    "cha": 10,
+    "con": 15,
+    "dex": 13,
+    "int": 12,
+    "str": 8,
+    "wis": 19
+  },
+  "ac": 11,
+  "attacks": [
+    {
+      "damage": "2d8+4",
+      "damage_type": "radiant",
+      "name": "Starry Wisp",
+      "to_hit": 7
+    },
+    {
+      "damage": "0",
+      "damage_type": "bludgeoning",
+      "name": "Unarmed Strike",
+      "to_hit": 2
+    }
+  ],
+  "character_id": "squanch_161607569",
+  "class_level": "Druid 8",
+  "max_hp": 59,
+  "name": "Squanch",
+  "raw_fields": [
+    {
+      "field": "CharacterName",
+      "page": 1,
+      "value": "Squanch"
+    },
+    {
+      "field": "CLASS  LEVEL",
+      "page": 1,
+      "value": "Druid 8"
+    },
+    {
+      "field": "PLAYER NAME",
+      "page": 1,
+      "value": "The_Lizardscale_King"
+    },
+    {
+      "field": "RACE",
+      "page": 1,
+      "value": "Elf"
+    },
+    {
+      "field": "BACKGROUND",
+      "page": 1,
+      "value": "Sage"
+    },
+    {
+      "field": "EXPERIENCE POINTS",
+      "page": 1,
+      "value": "(Milestone)"
+    },
+    {
+      "field": "STR",
+      "page": 1,
+      "value": "8"
+    },
+    {
+      "field": "STRmod",
+      "page": 1,
+      "value": "-1"
+    },
+    {
+      "field": "DEX",
+      "page": 1,
+      "value": "13"
+    },
+    {
+      "field": "DEXmod",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "CON",
+      "page": 1,
+      "value": "15"
+    },
+    {
+      "field": "CONmod",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "INT",
+      "page": 1,
+      "value": "12"
+    },
+    {
+      "field": "INTmod",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "WIS",
+      "page": 1,
+      "value": "19"
+    },
+    {
+      "field": "WISmod",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "CHA",
+      "page": 1,
+      "value": "10"
+    },
+    {
+      "field": "CHamod",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "ST Strength",
+      "page": 1,
+      "value": "-1"
+    },
+    {
+      "field": "ST Dexterity",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "ST Constitution",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "IntProf",
+      "page": 1,
+      "value": "\u2022"
+    },
+    {
+      "field": "ST Intelligence",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "WisProf",
+      "page": 1,
+      "value": "\u2022"
+    },
+    {
+      "field": "ST Wisdom",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "ST Charisma",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "Defenses",
+      "page": 1,
+      "value": "Immunities - Magical Sleep"
+    },
+    {
+      "field": "SaveModifiers",
+      "page": 1,
+      "value": "Advantage Made to avoid or end the Charmed condition"
+    },
+    {
+      "field": "Acrobatics",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "AcrobaticsMod",
+      "page": 1,
+      "value": "DEX"
+    },
+    {
+      "field": "AnimalHandlingProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "Animal",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "AnimalMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "ArcanaProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "Arcana",
+      "page": 1,
+      "value": "+8"
+    },
+    {
+      "field": "ArcanaMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "Athletics",
+      "page": 1,
+      "value": "-1"
+    },
+    {
+      "field": "AthleticsMod",
+      "page": 1,
+      "value": "STR"
+    },
+    {
+      "field": "Deception",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "DeceptionMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "HistoryProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "History",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "HistoryMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "InsightProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "Insight",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "InsightMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "Intimidation",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "IntimidationMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "Investigation",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "InvestigationMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "Medicine",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "MedicineMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "Nature",
+      "page": 1,
+      "value": "+5"
+    },
+    {
+      "field": "NatureMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "PerceptionProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "Perception",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "PerceptionMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "Performance",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "PerformanceMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "Persuasion",
+      "page": 1,
+      "value": "+0"
+    },
+    {
+      "field": "PersuasionMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "Religion",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "SleightofHand",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "Stealth",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "Survival",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "Passive1",
+      "page": 1,
+      "value": "17"
+    },
+    {
+      "field": "Passive2",
+      "page": 1,
+      "value": "17"
+    },
+    {
+      "field": "Passive3",
+      "page": 1,
+      "value": "11"
+    },
+    {
+      "field": "AdditionalSenses",
+      "page": 1,
+      "value": "Darkvision 60 ft."
+    },
+    {
+      "field": "Init",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "AC",
+      "page": 1,
+      "value": "11"
+    },
+    {
+      "field": "ProfBonus",
+      "page": 1,
+      "value": "+3"
+    },
+    {
+      "field": "Speed",
+      "page": 1,
+      "value": "35 ft. (Walking)"
+    },
+    {
+      "field": "MaxHP",
+      "page": 1,
+      "value": "59"
+    },
+    {
+      "field": "TempHP",
+      "page": 1,
+      "value": "--"
+    },
+    {
+      "field": "Total",
+      "page": 1,
+      "value": "8d8"
+    },
+    {
+      "field": "ProficienciesLang",
+      "page": 1,
+      "value": "=== ARMOR === \nLight Armor, Shields \n\n=== WEAPONS === \nSimple Weapons \n\n=== TOOLS === \nCalligrapher's Supplies, Herbalism Kit \n\n=== LANGUAGES === \nCommon, Common Sign Language, Druidic, Elvish"
+    },
+    {
+      "field": "ReligionMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "SleightofHandMod",
+      "page": 1,
+      "value": "DEX"
+    },
+    {
+      "field": "StealthMod",
+      "page": 1,
+      "value": "DEX"
+    },
+    {
+      "field": "SurvivalMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "Actions1",
+      "page": 1,
+      "value": "=== ACTIONS === \nStandard Actions \n     Attack, Magic, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Utilize, Opportunity Attack, Grapple, Shove, Improvise, Two-Weapon Fighting, Interact with an Object, Study, Influence \n\n=== BONUS ACTIONS === \nWild Shape \u2022 3 / Long Rest \n     You shape-shift into a Beast form that you have learned for this feature. You stay in that form for 4 hours or until you use Wild Shape again, have the Incapacitated condition, or die. You can also leave the form early as a Bonus Action. \n\nRules While Shape-Shifted. The following rules apply"
+    },
+    {
+      "field": "Actions2",
+      "page": 1,
+      "value": "while you\u2019re shape-shifted: \n    \u2022 You retain your personality, memories, and ability to speak. \n    \u2022 When you assume a Wild Shape form, you gain 8 Temporary HP. \n    \u2022 Your game statistics are replaced by the Beast\u2019s stat block, but you retain your creature type; HP; HP Dice; Int., Wis., and Cha. scores; class features; languages; and feats. \n    \u2022 You retain your skill and saving throws and use your Proficiency Bonus for them, and gain any proficiencies of the creature. If the Beast\u2019s stat block has a higher skill or saving throw modifier, use the one in the stat block. \n    \u2022 You can\u2019t cast spells, but shape-shifting doesn\u2019t break your Concentration."
+    },
+    {
+      "field": "Wpn Name",
+      "page": 1,
+      "value": "Starry Wisp"
+    },
+    {
+      "field": "Wpn1 AtkBonus",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "Wpn1 Damage",
+      "page": 1,
+      "value": "2d8+4 Radiant"
+    },
+    {
+      "field": "Wpn Notes 1",
+      "page": 1,
+      "value": "V/S"
+    },
+    {
+      "field": "Wpn Name 2",
+      "page": 1,
+      "value": "Unarmed Strike"
+    },
+    {
+      "field": "Wpn2 AtkBonus",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "Wpn2 Damage",
+      "page": 1,
+      "value": "0 Bludgeoning"
+    },
+    {
+      "field": "CharacterName2",
+      "page": 2,
+      "value": "Squanch"
+    },
+    {
+      "field": "CLASS  LEVEL2",
+      "page": 2,
+      "value": "Druid 8"
+    },
+    {
+      "field": "PLAYER NAME2",
+      "page": 2,
+      "value": "The_Lizardscale_King"
+    },
+    {
+      "field": "RACE2",
+      "page": 2,
+      "value": "Elf"
+    },
+    {
+      "field": "BACKGROUND2",
+      "page": 2,
+      "value": "Sage"
+    },
+    {
+      "field": "EXPERIENCE POINTS2",
+      "page": 2,
+      "value": "(Milestone)"
+    },
+    {
+      "field": "FeaturesTraits1",
+      "page": 2,
+      "value": "=== DRUID FEATURES === \n\n* Core Druid Traits \u2022 PHB-2024 79 \n\n* Spellcasting \u2022 PHB-2024 79 \n\n* Druidic \u2022 PHB-2024 80 \nYou know Druidic and always have Speak with Animals prepared. \n\nYou can use Druidic to leave hidden message. You and others who know Druidic automatically spot such a message. Others spot the message\u2019s presence with a successful DC 15 Intelligence (Investigation) check but can\u2019t decipher it without magic. \n\n   | Leave Druidic Message: Special \n\n* Primal Order \u2022 PHB-2024 80 \nYou have dedicated yourself to one of the sacred roles. \n\n   | Magician \u2022  \nYou know one extra cantrip from the Druid spell list. You also gain a +4 bonus to Intelligence (Arcana or Nature) checks. \n\n* Wild Shape \u2022 PHB-2024 80 \nAs a Bonus Action, you shape-shift into a Beast form that you have learned for this feature. You stay in that form for 4 hours or until you use Wild Shape again, have the Incapacitated condition, or die. You can also leave the form early as a Bonus Action. \n\nYou can use Wild Shape 3 times per Long Rest, and regain one expended use after finishing a Short Rest. \n\nYou are able to learn a number of Beast forms as outlined below, and whenever you finish a Long Rest, you can replace one of your known forms with another eligible form."
+    },
+    {
+      "field": "FeaturesTraits2",
+      "page": 2,
+      "value": "\u2022 Level 2: You know 4 four Beast Forms with a max CR of 1/4 that lack a Fly Speed. \n    \u2022 Level 4: You know 6 four Beast Forms with a max CR of 1/2 that lack a Fly Speed. \n    \u2022 Level 8  You know 8 four Beast Forms with a max CR of 1 and can adopt a form that has a Fly Speed. \n\n   | 3 / Long Rest \u2022 1 Bonus Action \n\n* Wild Companion \u2022 PHB-2024 81 \nAs a Magic action, you can expend a spell slot or a use of Wild Shape to cast Find Familiar without Material components. When you cast the spell in this way, the familiar is Fey and disappears when you finish a Long Rest. \n\n* Druid Subclass \u2022 PHB-2024 81 \n\n   | Circle of the Land \n\n* Circle of the Land Spells \u2022 PHB-2024 84 \n\n   | Tropical Land \u2022  \n\n* Land\u2019s Aid \u2022 PHB-2024 85 \nAs a Magic action, you can expend a use of Wild Shape and choose a point within 60 ft. of you. A 10-ft.-radius Sphere is centered on that point; each creature of your choice in the Sphere must make a DC 15 Con. saving throw, taking 2d6 Necrotic damage on a failed save or half as much on a successful one. One creature of your choice in that area regains 2d6 HP. \n\n   | Land\u2019s Aid: Damage: 1 Action \n\n   | Land\u2019s Aid: Heal: 1 Action \n\n* Ability Score Improvement \u2022 PHB-2024 81 \n\n* Wild Resurgence \u2022 PHB-2024 81 \nOnce on each of your turns, if you have no uses of"
+    },
+    {
+      "field": "FeaturesTraits3",
+      "page": 2,
+      "value": "Wild Shape left, you can give yourself one use by expending a spell slot (no action required). \n\nIn addition, you can expend one use of Wild Shape (no action required) to give yourself a level 1 spell slot, but you can\u2019t do so again until you finish a Long Rest. \n\n   | Wild Resurgence: Regain Wild Shape: No Action \n\n   | Wild Resurgence: Regain Spell Slot: 1 / Long Rest \u2022 No Action \n\n* Natural Recovery \u2022 PHB-2024 85 \nOnce per Long Rest, you can cast one of the level 1+ spells from your chosen land without expending a spell slot. \n\nIn addition, when you finish a Short Rest, you can recover expended spell slots. The spell slot(s) can have a combined level of up to 4. \n\n   | Natural Recovery: Recover Spell Slots: 1 / Long Rest \u2022 Special \n\n   | Natural Recovery: Cast Circle Spell: 1 / Long Rest \u2022 Special \n\n* Elemental Fury \u2022 PHB-2024 81 \nThe might of the elements flows through you. \n\n   | Potent Spellcasting \u2022  \nAdd your Wisdom modifier (+4) to the damage you deal with any Druid cantrip. \n\n* 8: Ability Score Improvement \u2022 PHB-2024 81 \n\n\n=== ELF SPECIES TRAITS === \n\n* Creature Type \u2022 PHB-2024 190 \nYou are a Humanoid."
+    },
+    {
+      "field": "CP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "SP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "EP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "GP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "PP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "Weight Carried",
+      "page": 2,
+      "value": "0 lb."
+    },
+    {
+      "field": "Encumbered",
+      "page": 2,
+      "value": "120 lb."
+    },
+    {
+      "field": "PushDragLift",
+      "page": 2,
+      "value": "240 lb."
+    },
+    {
+      "field": "CharacterName3",
+      "page": 3,
+      "value": "Squanch"
+    },
+    {
+      "field": "CLASS  LEVEL3",
+      "page": 3,
+      "value": "Druid 8"
+    },
+    {
+      "field": "PLAYER NAME3",
+      "page": 3,
+      "value": "The_Lizardscale_King"
+    },
+    {
+      "field": "RACE3",
+      "page": 3,
+      "value": "Elf"
+    },
+    {
+      "field": "BACKGROUND3",
+      "page": 3,
+      "value": "Sage"
+    },
+    {
+      "field": "EXPERIENCE POINTS3",
+      "page": 3,
+      "value": "(Milestone)"
+    },
+    {
+      "field": "FeaturesTraits4",
+      "page": 3,
+      "value": "* Size \u2022 PHB-2024 190 \nYou are Medium. \n\n* Speed \u2022 PHB-2024 190 \nYour speed is 30 ft. \n\n* Darkvision \u2022 PHB-2024 190 \nYou have Darkvision with a range of 60 ft. \n\n* Elven Lineage \u2022 PHB-2024 190 \nChoose a lineage from the Elven Lineages table. You gain the level 1 benefit of that lineage. \n\n   | Wood Elf Lineage \u2022  \nYour Speed increases to 35 ft. and you gain the spells outlined in the Elven Lineages table. \n\n* Elven Lineage Spells \u2022 PHB-2024 189 \n\n   | Wood Elf - Wisdom \u2022  \n\n* Fey Ancestry \u2022 PHB-2024 190 \nYou have Advantage on saving throws you make to avoid or end the Charmed condition. \n\n* Keen Senses \u2022 PHB-2024 190 \nYou have proficiency in the Insight, Perception, or Survival skill. \n\n* Trance \u2022 PHB-2024 190 \nYou don\u2019t need to sleep, and magic can\u2019t put you to sleep. You can finish a Long Rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness. \n\n* Languages \u2022 PHB-2024 37 \nYour character knows at least three languages: Common plus two languages you roll or choose from the Standard Languages table. Knowledge of a language means your character can communicate in it,"
+    },
+    {
+      "field": "FeaturesTraits5",
+      "page": 3,
+      "value": "read it, and write it. \n\n\n=== FEATS === \n\n* Magic Initiate (Druid) \u2022 PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice from the Druid spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Druid spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. \n\nSpell Change. Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   | Wisdom \u2022  \n\n* Ability Score Improvement \u2022 PHB-2024 202 \nIncrease one ability score by 2 or two ability scores by 1. \n\n* Magic Initiate (Wizard) \u2022 PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice from the Wizard spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots"
+    },
+    {
+      "field": "FeaturesTraits6",
+      "page": 3,
+      "value": "you have. \n\nSpell Change. Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   | Wisdom \u2022  \n\n* Sage Ability Score Improvements \u2022 PHB-2024 183 \n\n   | Increase two scores (+2 / +1) \u2022"
+    },
+    {
+      "field": "CharacterName4",
+      "page": 4,
+      "value": "Squanch"
+    },
+    {
+      "field": "SIZE",
+      "page": 4,
+      "value": "Medium"
+    },
+    {
+      "field": "ALIGNMENT",
+      "page": 4,
+      "value": "Neutral"
+    },
+    {
+      "field": "spellCastingAbility0",
+      "page": 5,
+      "value": "WIS"
+    },
+    {
+      "field": "spellSaveDC0",
+      "page": 5,
+      "value": "15"
+    },
+    {
+      "field": "spellAtkBonus0",
+      "page": 5,
+      "value": "+7"
+    },
+    {
+      "field": "spellCastingClass0",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellHeader0",
+      "page": 5,
+      "value": "=== CANTRIPS ==="
+    },
+    {
+      "field": "spellSlotHeader0",
+      "page": 5,
+      "value": "(At Will)"
+    },
+    {
+      "field": "spellPrepared0",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName0",
+      "page": 5,
+      "value": "Infestation"
+    },
+    {
+      "field": "spellSource0",
+      "page": 5,
+      "value": "Magic Initiate (Druid)"
+    },
+    {
+      "field": "spellSaveHit0",
+      "page": 5,
+      "value": "CON 15"
+    },
+    {
+      "field": "spellCastingTime0",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange0",
+      "page": 5,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents0",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration0",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage0",
+      "page": 5,
+      "value": "XGtE 158"
+    },
+    {
+      "field": "spellNotes0",
+      "page": 5,
+      "value": "V/S/M"
+    },
+    {
+      "field": "spellPrepared1",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName1",
+      "page": 5,
+      "value": "Gust"
+    },
+    {
+      "field": "spellSource1",
+      "page": 5,
+      "value": "Magic Initiate (Druid)"
+    },
+    {
+      "field": "spellSaveHit1",
+      "page": 5,
+      "value": "STR 15"
+    },
+    {
+      "field": "spellCastingTime1",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange1",
+      "page": 5,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents1",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration1",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage1",
+      "page": 5,
+      "value": "EE 157"
+    },
+    {
+      "field": "spellNotes1",
+      "page": 5,
+      "value": "V/S"
+    },
+    {
+      "field": "spellPrepared2",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName2",
+      "page": 5,
+      "value": "Mage Hand"
+    },
+    {
+      "field": "spellSource2",
+      "page": 5,
+      "value": "Magic Initiate (Wizard)"
+    },
+    {
+      "field": "spellSaveHit2",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime2",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange2",
+      "page": 5,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents2",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration2",
+      "page": 5,
+      "value": "1 minute"
+    },
+    {
+      "field": "spellPage2",
+      "page": 5,
+      "value": "PHB-2024 293"
+    },
+    {
+      "field": "spellNotes2",
+      "page": 5,
+      "value": "D: 1m, V/S"
+    },
+    {
+      "field": "spellPrepared3",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName3",
+      "page": 5,
+      "value": "Toll the Dead"
+    },
+    {
+      "field": "spellSource3",
+      "page": 5,
+      "value": "Magic Initiate (Wizard)"
+    },
+    {
+      "field": "spellSaveHit3",
+      "page": 5,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime3",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange3",
+      "page": 5,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents3",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration3",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage3",
+      "page": 5,
+      "value": "XGtE 169"
+    },
+    {
+      "field": "spellNotes3",
+      "page": 5,
+      "value": "V/S"
+    },
+    {
+      "field": "spellPrepared4",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName4",
+      "page": 5,
+      "value": "Druidcraft"
+    },
+    {
+      "field": "spellSource4",
+      "page": 5,
+      "value": "Elven Lineage Spells"
+    },
+    {
+      "field": "spellSaveHit4",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime4",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange4",
+      "page": 5,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents4",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration4",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage4",
+      "page": 5,
+      "value": "PHB-2024 266"
+    },
+    {
+      "field": "spellNotes4",
+      "page": 5,
+      "value": "V/S"
+    },
+    {
+      "field": "spellPrepared5",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName5",
+      "page": 5,
+      "value": "Acid Splash"
+    },
+    {
+      "field": "spellSource5",
+      "page": 5,
+      "value": "Circle of the Land Spells"
+    },
+    {
+      "field": "spellSaveHit5",
+      "page": 5,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime5",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange5",
+      "page": 5,
+      "value": "60 ft./5 ft. Sphere"
+    },
+    {
+      "field": "spellComponents5",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration5",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage5",
+      "page": 5,
+      "value": "PHB-2024 239"
+    },
+    {
+      "field": "spellNotes5",
+      "page": 5,
+      "value": "5 ft. Sphere, V/S"
+    },
+    {
+      "field": "spellPrepared6",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName6",
+      "page": 5,
+      "value": "Starry Wisp"
+    },
+    {
+      "field": "spellSource6",
+      "page": 5,
+      "value": "Primal Order"
+    },
+    {
+      "field": "spellSaveHit6",
+      "page": 5,
+      "value": "+7"
+    },
+    {
+      "field": "spellCastingTime6",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange6",
+      "page": 5,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents6",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration6",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage6",
+      "page": 5,
+      "value": "PHB-2024 320"
+    },
+    {
+      "field": "spellNotes6",
+      "page": 5,
+      "value": "V/S"
+    },
+    {
+      "field": "spellHeader1",
+      "page": 5,
+      "value": "=== 1st LEVEL ==="
+    },
+    {
+      "field": "spellSlotHeader1",
+      "page": 5,
+      "value": "4 Slots OOOO"
+    },
+    {
+      "field": "spellPrepared7",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName7",
+      "page": 5,
+      "value": "Absorb Elements"
+    },
+    {
+      "field": "spellSource7",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit7",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime7",
+      "page": 5,
+      "value": "1R"
+    },
+    {
+      "field": "spellRange7",
+      "page": 5,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents7",
+      "page": 5,
+      "value": "S"
+    },
+    {
+      "field": "spellDuration7",
+      "page": 5,
+      "value": "1 round"
+    },
+    {
+      "field": "spellPage7",
+      "page": 5,
+      "value": "EE 150"
+    },
+    {
+      "field": "spellNotes7",
+      "page": 5,
+      "value": "D: 1Rnd, S"
+    },
+    {
+      "field": "spellPrepared8",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName8",
+      "page": 5,
+      "value": "Beast Bond"
+    },
+    {
+      "field": "spellSource8",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit8",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime8",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange8",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents8",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration8",
+      "page": 5,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage8",
+      "page": 5,
+      "value": "EE 150"
+    },
+    {
+      "field": "spellNotes8",
+      "page": 5,
+      "value": "D: 10m, V/S/M"
+    },
+    {
+      "field": "spellPrepared9",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName9",
+      "page": 5,
+      "value": "Earth Tremor"
+    },
+    {
+      "field": "spellSource9",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit9",
+      "page": 5,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime9",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange9",
+      "page": 5,
+      "value": "10 ft."
+    },
+    {
+      "field": "spellComponents9",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration9",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage9",
+      "page": 5,
+      "value": "EE 155"
+    },
+    {
+      "field": "spellNotes9",
+      "page": 5,
+      "value": "V/S"
+    },
+    {
+      "field": "spellPrepared10",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName10",
+      "page": 5,
+      "value": "Ice Knife"
+    },
+    {
+      "field": "spellSource10",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit10",
+      "page": 5,
+      "value": "DEX 15 / +7"
+    },
+    {
+      "field": "spellCastingTime10",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange10",
+      "page": 5,
+      "value": "60 ft./5 ft. Sphere"
+    },
+    {
+      "field": "spellComponents10",
+      "page": 5,
+      "value": "S,M"
+    },
+    {
+      "field": "spellDuration10",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage10",
+      "page": 5,
+      "value": "EE 157"
+    },
+    {
+      "field": "spellNotes10",
+      "page": 5,
+      "value": "5 ft. Sphere, S/M"
+    },
+    {
+      "field": "spellPrepared11",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName11",
+      "page": 5,
+      "value": "Snare"
+    },
+    {
+      "field": "spellSource11",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit11",
+      "page": 5,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime11",
+      "page": 5,
+      "value": "1m"
+    },
+    {
+      "field": "spellRange11",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents11",
+      "page": 5,
+      "value": "S,M"
+    },
+    {
+      "field": "spellDuration11",
+      "page": 5,
+      "value": "8 hours"
+    },
+    {
+      "field": "spellPage11",
+      "page": 5,
+      "value": "XGtE 165"
+    },
+    {
+      "field": "spellNotes11",
+      "page": 5,
+      "value": "D: 8h, S/M"
+    },
+    {
+      "field": "spellPrepared12",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName12",
+      "page": 5,
+      "value": "Animal Friendship"
+    },
+    {
+      "field": "spellSource12",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit12",
+      "page": 5,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime12",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange12",
+      "page": 5,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents12",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration12",
+      "page": 5,
+      "value": "24 hours"
+    },
+    {
+      "field": "spellPage12",
+      "page": 5,
+      "value": "PHB-2024 239"
+    },
+    {
+      "field": "spellNotes12",
+      "page": 5,
+      "value": "D: 24h, V/S/M"
+    },
+    {
+      "field": "spellPrepared13",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName13",
+      "page": 5,
+      "value": "Faerie Fire"
+    },
+    {
+      "field": "spellSource13",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit13",
+      "page": 5,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime13",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange13",
+      "page": 5,
+      "value": "60 ft./20 ft. Cube"
+    },
+    {
+      "field": "spellComponents13",
+      "page": 5,
+      "value": "V"
+    },
+    {
+      "field": "spellDuration13",
+      "page": 5,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage13",
+      "page": 5,
+      "value": "PHB-2024 271"
+    },
+    {
+      "field": "spellNotes13",
+      "page": 5,
+      "value": "D: 1m, 20 ft. Cube, V"
+    },
+    {
+      "field": "spellPrepared14",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName14",
+      "page": 5,
+      "value": "Fog Cloud"
+    },
+    {
+      "field": "spellSource14",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit14",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime14",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange14",
+      "page": 5,
+      "value": "120 ft./20 ft. Sphere"
+    },
+    {
+      "field": "spellComponents14",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration14",
+      "page": 5,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage14",
+      "page": 5,
+      "value": "PHB-2024 276"
+    },
+    {
+      "field": "spellNotes14",
+      "page": 5,
+      "value": "D: 1h, 20 ft. Sphere, V/S"
+    },
+    {
+      "field": "spellPrepared15",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName15",
+      "page": 5,
+      "value": "Protection from Evil and Good"
+    },
+    {
+      "field": "spellSource15",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit15",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime15",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange15",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents15",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration15",
+      "page": 5,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage15",
+      "page": 5,
+      "value": "PHB-2024 309"
+    },
+    {
+      "field": "spellNotes15",
+      "page": 5,
+      "value": "D: 10m, V/S/M"
+    },
+    {
+      "field": "spellPrepared16",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName16",
+      "page": 5,
+      "value": "Purify Food and Drink [R]"
+    },
+    {
+      "field": "spellSource16",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit16",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime16",
+      "page": 5,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange16",
+      "page": 5,
+      "value": "10 ft./5 ft. Sphere"
+    },
+    {
+      "field": "spellComponents16",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration16",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage16",
+      "page": 5,
+      "value": "PHB-2024 310"
+    },
+    {
+      "field": "spellNotes16",
+      "page": 5,
+      "value": "5 ft. Sphere, V/S"
+    },
+    {
+      "field": "spellPrepared17",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName17",
+      "page": 5,
+      "value": "Goodberry"
+    },
+    {
+      "field": "spellSource17",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit17",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime17",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange17",
+      "page": 5,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents17",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration17",
+      "page": 5,
+      "value": "24 hours"
+    },
+    {
+      "field": "spellPage17",
+      "page": 5,
+      "value": "PHB-2024 280"
+    },
+    {
+      "field": "spellNotes17",
+      "page": 5,
+      "value": "D: 24h, V/S/M"
+    },
+    {
+      "field": "spellPrepared18",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName18",
+      "page": 5,
+      "value": "Charm Person"
+    },
+    {
+      "field": "spellSource18",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit18",
+      "page": 5,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime18",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange18",
+      "page": 5,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents18",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration18",
+      "page": 5,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage18",
+      "page": 5,
+      "value": "PHB-2024 249"
+    },
+    {
+      "field": "spellNotes18",
+      "page": 5,
+      "value": "D: 1h, V/S"
+    },
+    {
+      "field": "spellPrepared19",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName19",
+      "page": 5,
+      "value": "Jump"
+    },
+    {
+      "field": "spellSource19",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit19",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime19",
+      "page": 5,
+      "value": "1BA"
+    },
+    {
+      "field": "spellRange19",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents19",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration19",
+      "page": 5,
+      "value": "1 minute"
+    },
+    {
+      "field": "spellPage19",
+      "page": 5,
+      "value": "PHB-2024 290"
+    },
+    {
+      "field": "spellNotes19",
+      "page": 5,
+      "value": "D: 1m, V/S/M"
+    },
+    {
+      "field": "spellPrepared20",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName20",
+      "page": 5,
+      "value": "Longstrider"
+    },
+    {
+      "field": "spellSource20",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit20",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime20",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange20",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents20",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration20",
+      "page": 5,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage20",
+      "page": 5,
+      "value": "PHB-2024 293"
+    },
+    {
+      "field": "spellNotes20",
+      "page": 5,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared21",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName21",
+      "page": 5,
+      "value": "Speak with Animals [R]"
+    },
+    {
+      "field": "spellSource21",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit21",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime21",
+      "page": 5,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange21",
+      "page": 5,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents21",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration21",
+      "page": 5,
+      "value": "10 minutes"
+    },
+    {
+      "field": "spellPage21",
+      "page": 5,
+      "value": "PHB-2024 318"
+    },
+    {
+      "field": "spellNotes21",
+      "page": 5,
+      "value": "D: 10m, V/S"
+    },
+    {
+      "field": "spellPrepared22",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName22",
+      "page": 5,
+      "value": "Create or Destroy Water"
+    },
+    {
+      "field": "spellSource22",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit22",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime22",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange22",
+      "page": 5,
+      "value": "30 ft./30 ft. Cube"
+    },
+    {
+      "field": "spellComponents22",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration22",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage22",
+      "page": 5,
+      "value": "PHB-2024 258"
+    },
+    {
+      "field": "spellNotes22",
+      "page": 5,
+      "value": "30 ft. Cube, V/S/M"
+    },
+    {
+      "field": "spellPrepared23",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName23",
+      "page": 5,
+      "value": "Cure Wounds"
+    },
+    {
+      "field": "spellSource23",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit23",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime23",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange23",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents23",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration23",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage23",
+      "page": 5,
+      "value": "PHB-2024 259"
+    },
+    {
+      "field": "spellNotes23",
+      "page": 5,
+      "value": "V/S"
+    },
+    {
+      "field": "spellPrepared24",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName24",
+      "page": 5,
+      "value": "Detect Poison and Disease [R]"
+    },
+    {
+      "field": "spellSource24",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit24",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime24",
+      "page": 5,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange24",
+      "page": 5,
+      "value": "Self/30 ft. Sphere"
+    },
+    {
+      "field": "spellComponents24",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration24",
+      "page": 5,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage24",
+      "page": 5,
+      "value": "PHB-2024 262"
+    },
+    {
+      "field": "spellNotes24",
+      "page": 5,
+      "value": "D: 10m, 30 ft. Sphere, V/S/M"
+    },
+    {
+      "field": "spellPrepared25",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName25",
+      "page": 5,
+      "value": "Detect Magic [R]"
+    },
+    {
+      "field": "spellSource25",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit25",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime25",
+      "page": 5,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange25",
+      "page": 5,
+      "value": "Self/30 ft. Sphere"
+    },
+    {
+      "field": "spellComponents25",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration25",
+      "page": 5,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage25",
+      "page": 5,
+      "value": "PHB-2024 262"
+    },
+    {
+      "field": "spellNotes25",
+      "page": 5,
+      "value": "D: 10m, 30 ft. Sphere, V/S"
+    },
+    {
+      "field": "spellPrepared26",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName26",
+      "page": 5,
+      "value": "Healing Word"
+    },
+    {
+      "field": "spellSource26",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit26",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime26",
+      "page": 5,
+      "value": "1BA"
+    },
+    {
+      "field": "spellRange26",
+      "page": 5,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents26",
+      "page": 5,
+      "value": "V"
+    },
+    {
+      "field": "spellDuration26",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage26",
+      "page": 5,
+      "value": "PHB-2024 284"
+    },
+    {
+      "field": "spellNotes26",
+      "page": 5,
+      "value": "V"
+    },
+    {
+      "field": "spellPrepared27",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName27",
+      "page": 5,
+      "value": "Ice Knife"
+    },
+    {
+      "field": "spellSource27",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit27",
+      "page": 5,
+      "value": "DEX 15 / +7"
+    },
+    {
+      "field": "spellCastingTime27",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange27",
+      "page": 5,
+      "value": "60 ft./5 ft. Sphere"
+    },
+    {
+      "field": "spellComponents27",
+      "page": 5,
+      "value": "S,M"
+    },
+    {
+      "field": "spellDuration27",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage27",
+      "page": 5,
+      "value": "PHB-2024 287"
+    },
+    {
+      "field": "spellNotes27",
+      "page": 5,
+      "value": "5 ft. Sphere, S/M"
+    },
+    {
+      "field": "spellPrepared28",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName28",
+      "page": 5,
+      "value": "Thunderwave"
+    },
+    {
+      "field": "spellSource28",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit28",
+      "page": 5,
+      "value": "CON 15"
+    },
+    {
+      "field": "spellCastingTime28",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange28",
+      "page": 5,
+      "value": "Self/15 ft. Cube"
+    },
+    {
+      "field": "spellComponents28",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration28",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage28",
+      "page": 5,
+      "value": "PHB-2024 334"
+    },
+    {
+      "field": "spellNotes28",
+      "page": 5,
+      "value": "15 ft. Cube, V/S"
+    },
+    {
+      "field": "spellPrepared29",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName29",
+      "page": 5,
+      "value": "Entangle"
+    },
+    {
+      "field": "spellSource29",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit29",
+      "page": 5,
+      "value": "STR 15"
+    },
+    {
+      "field": "spellCastingTime29",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange29",
+      "page": 5,
+      "value": "90 ft./20 ft. Square"
+    },
+    {
+      "field": "spellComponents29",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration29",
+      "page": 5,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage29",
+      "page": 5,
+      "value": "PHB-2024 268"
+    },
+    {
+      "field": "spellNotes29",
+      "page": 5,
+      "value": "D: 1m, 20 ft. Square, V/S"
+    },
+    {
+      "field": "spellPrepared30",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName30",
+      "page": 5,
+      "value": "Cure Wounds"
+    },
+    {
+      "field": "spellSource30",
+      "page": 5,
+      "value": "Magic Initiate (Druid)"
+    },
+    {
+      "field": "spellSaveHit30",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime30",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange30",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents30",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration30",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage30",
+      "page": 5,
+      "value": "PHB-2024 259"
+    },
+    {
+      "field": "spellNotes30",
+      "page": 5,
+      "value": "1/LR, V/S"
+    },
+    {
+      "field": "spellPrepared31",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName31",
+      "page": 5,
+      "value": "Charm Person"
+    },
+    {
+      "field": "spellSource31",
+      "page": 5,
+      "value": "Magic Initiate (Wizard)"
+    },
+    {
+      "field": "spellSaveHit31",
+      "page": 5,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime31",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange31",
+      "page": 5,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents31",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration31",
+      "page": 5,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage31",
+      "page": 5,
+      "value": "PHB-2024 249"
+    },
+    {
+      "field": "spellNotes31",
+      "page": 5,
+      "value": "1/LR, D: 1h, V/S"
+    },
+    {
+      "field": "spellPrepared32",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName32",
+      "page": 5,
+      "value": "Longstrider"
+    },
+    {
+      "field": "spellSource32",
+      "page": 5,
+      "value": "Elven Lineage Spells"
+    },
+    {
+      "field": "spellSaveHit32",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime32",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange32",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents32",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration32",
+      "page": 5,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage32",
+      "page": 5,
+      "value": "PHB-2024 293"
+    },
+    {
+      "field": "spellNotes32",
+      "page": 5,
+      "value": "1/LR, D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared33",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName33",
+      "page": 5,
+      "value": "Longstrider"
+    },
+    {
+      "field": "spellSource33",
+      "page": 5,
+      "value": "Elven Lineage Spells"
+    },
+    {
+      "field": "spellSaveHit33",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime33",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange33",
+      "page": 5,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents33",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration33",
+      "page": 5,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage33",
+      "page": 5,
+      "value": "PHB-2024 293"
+    },
+    {
+      "field": "spellNotes33",
+      "page": 5,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared34",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName34",
+      "page": 5,
+      "value": "Ray of Sickness"
+    },
+    {
+      "field": "spellSource34",
+      "page": 5,
+      "value": "Circle of the Land Spells"
+    },
+    {
+      "field": "spellSaveHit34",
+      "page": 5,
+      "value": "+7"
+    },
+    {
+      "field": "spellCastingTime34",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange34",
+      "page": 5,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents34",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration34",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage34",
+      "page": 5,
+      "value": "PHB-2024 311"
+    },
+    {
+      "field": "spellNotes34",
+      "page": 5,
+      "value": "V/S"
+    },
+    {
+      "field": "spellPrepared35",
+      "page": 5,
+      "value": "P"
+    },
+    {
+      "field": "spellName35",
+      "page": 5,
+      "value": "Speak with Animals [R]"
+    },
+    {
+      "field": "spellSource35",
+      "page": 5,
+      "value": "Druidic (Always Prepared)"
+    },
+    {
+      "field": "spellSaveHit35",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime35",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange35",
+      "page": 5,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents35",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration35",
+      "page": 5,
+      "value": "10 minutes"
+    },
+    {
+      "field": "spellPage35",
+      "page": 5,
+      "value": "PHB-2024 318"
+    },
+    {
+      "field": "spellNotes35",
+      "page": 5,
+      "value": "D: 10m, V/S"
+    },
+    {
+      "field": "spellPrepared36",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName36",
+      "page": 5,
+      "value": "Find Familiar [R]"
+    },
+    {
+      "field": "spellSource36",
+      "page": 5,
+      "value": "Wild Companion"
+    },
+    {
+      "field": "spellSaveHit36",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime36",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange36",
+      "page": 5,
+      "value": "10 ft."
+    },
+    {
+      "field": "spellComponents36",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration36",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage36",
+      "page": 5,
+      "value": "PHB-2024 272"
+    },
+    {
+      "field": "spellNotes36",
+      "page": 5,
+      "value": "V/S/M"
+    },
+    {
+      "field": "spellHeader2",
+      "page": 5,
+      "value": "=== 2nd LEVEL ==="
+    },
+    {
+      "field": "spellSlotHeader2",
+      "page": 5,
+      "value": "3 Slots OOO"
+    },
+    {
+      "field": "spellPrepared37",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName37",
+      "page": 5,
+      "value": "Dust Devil"
+    },
+    {
+      "field": "spellSource37",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit37",
+      "page": 5,
+      "value": "STR 15"
+    },
+    {
+      "field": "spellCastingTime37",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange37",
+      "page": 5,
+      "value": "60 ft./5 ft. Cube"
+    },
+    {
+      "field": "spellComponents37",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration37",
+      "page": 5,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage37",
+      "page": 5,
+      "value": "EE 154"
+    },
+    {
+      "field": "spellNotes37",
+      "page": 5,
+      "value": "D: 1m, 5 ft. Cube, V/S/M"
+    },
+    {
+      "field": "spellPrepared38",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName38",
+      "page": 5,
+      "value": "Earthbind"
+    },
+    {
+      "field": "spellSource38",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit38",
+      "page": 5,
+      "value": "STR 15"
+    },
+    {
+      "field": "spellCastingTime38",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange38",
+      "page": 5,
+      "value": "300 ft."
+    },
+    {
+      "field": "spellComponents38",
+      "page": 5,
+      "value": "V"
+    },
+    {
+      "field": "spellDuration38",
+      "page": 5,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage38",
+      "page": 5,
+      "value": "EE 154"
+    },
+    {
+      "field": "spellNotes38",
+      "page": 5,
+      "value": "D: 1m, V"
+    },
+    {
+      "field": "spellPrepared39",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName39",
+      "page": 5,
+      "value": "Skywrite [R]"
+    },
+    {
+      "field": "spellSource39",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit39",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime39",
+      "page": 5,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange39",
+      "page": 5,
+      "value": "Sight"
+    },
+    {
+      "field": "spellComponents39",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration39",
+      "page": 5,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage39",
+      "page": 5,
+      "value": "EE 165"
+    },
+    {
+      "field": "spellNotes39",
+      "page": 5,
+      "value": "D: 1h, V/S"
+    },
+    {
+      "field": "spellPrepared40",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName40",
+      "page": 5,
+      "value": "Warding Wind"
+    },
+    {
+      "field": "spellSource40",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit40",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime40",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange40",
+      "page": 5,
+      "value": "Self/10 ft. Sphere"
+    },
+    {
+      "field": "spellComponents40",
+      "page": 5,
+      "value": "V"
+    },
+    {
+      "field": "spellDuration40",
+      "page": 5,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage40",
+      "page": 5,
+      "value": "EE 170"
+    },
+    {
+      "field": "spellNotes40",
+      "page": 5,
+      "value": "D: 10m, 10 ft. Sphere, V"
+    },
+    {
+      "field": "spellPrepared41",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName41",
+      "page": 5,
+      "value": "Healing Spirit"
+    },
+    {
+      "field": "spellSource41",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit41",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime41",
+      "page": 5,
+      "value": "1BA"
+    },
+    {
+      "field": "spellRange41",
+      "page": 5,
+      "value": "60 ft./5 ft. Cube"
+    },
+    {
+      "field": "spellComponents41",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration41",
+      "page": 5,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage41",
+      "page": 5,
+      "value": "XGtE 157"
+    },
+    {
+      "field": "spellNotes41",
+      "page": 5,
+      "value": "D: 1m, 5 ft. Cube, V/S"
+    },
+    {
+      "field": "spellPrepared42",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName42",
+      "page": 5,
+      "value": "Summon Beast"
+    },
+    {
+      "field": "spellSource42",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit42",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime42",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange42",
+      "page": 5,
+      "value": "90 ft."
+    },
+    {
+      "field": "spellComponents42",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration42",
+      "page": 5,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage42",
+      "page": 5,
+      "value": "TCoE 109"
+    },
+    {
+      "field": "spellNotes42",
+      "page": 5,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared43",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName43",
+      "page": 5,
+      "value": "Aid"
+    },
+    {
+      "field": "spellSource43",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit43",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime43",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange43",
+      "page": 5,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents43",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration43",
+      "page": 5,
+      "value": "8 hours"
+    },
+    {
+      "field": "spellPage43",
+      "page": 5,
+      "value": "PHB-2024 239"
+    },
+    {
+      "field": "spellNotes43",
+      "page": 5,
+      "value": "D: 8h, V/S/M"
+    },
+    {
+      "field": "spellPrepared44",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellName44",
+      "page": 5,
+      "value": "Pass without Trace"
+    },
+    {
+      "field": "spellSource44",
+      "page": 5,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit44",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime44",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange44",
+      "page": 5,
+      "value": "Self/30 ft. Emanation"
+    },
+    {
+      "field": "spellComponents44",
+      "page": 5,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration44",
+      "page": 5,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage44",
+      "page": 5,
+      "value": "PHB-2024 303"
+    },
+    {
+      "field": "spellNotes44",
+      "page": 5,
+      "value": "D: 1h, 30 ft. Emanation, V/S/M"
+    },
+    {
+      "field": "spellCastingAbility0",
+      "page": 6,
+      "value": "WIS"
+    },
+    {
+      "field": "spellSaveDC0",
+      "page": 6,
+      "value": "15"
+    },
+    {
+      "field": "spellAtkBonus0",
+      "page": 6,
+      "value": "+7"
+    },
+    {
+      "field": "spellCastingClass0",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellPrepared45",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName45",
+      "page": 6,
+      "value": "Animal Messenger [R]"
+    },
+    {
+      "field": "spellSource45",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit45",
+      "page": 6,
+      "value": "CHA 15"
+    },
+    {
+      "field": "spellCastingTime45",
+      "page": 6,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange45",
+      "page": 6,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents45",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration45",
+      "page": 6,
+      "value": "24 hours"
+    },
+    {
+      "field": "spellPage45",
+      "page": 6,
+      "value": "PHB-2024 240"
+    },
+    {
+      "field": "spellNotes45",
+      "page": 6,
+      "value": "D: 24h, V/S/M"
+    },
+    {
+      "field": "spellPrepared46",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName46",
+      "page": 6,
+      "value": "Augury [R]"
+    },
+    {
+      "field": "spellSource46",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit46",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime46",
+      "page": 6,
+      "value": "11m"
+    },
+    {
+      "field": "spellRange46",
+      "page": 6,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents46",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration46",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage46",
+      "page": 6,
+      "value": "PHB-2024 244"
+    },
+    {
+      "field": "spellNotes46",
+      "page": 6,
+      "value": "V/S/M"
+    },
+    {
+      "field": "spellPrepared47",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName47",
+      "page": 6,
+      "value": "Find Traps"
+    },
+    {
+      "field": "spellSource47",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit47",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime47",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange47",
+      "page": 6,
+      "value": "120 ft."
+    },
+    {
+      "field": "spellComponents47",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration47",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage47",
+      "page": 6,
+      "value": "PHB-2024 273"
+    },
+    {
+      "field": "spellNotes47",
+      "page": 6,
+      "value": "V/S"
+    },
+    {
+      "field": "spellPrepared48",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName48",
+      "page": 6,
+      "value": "Flame Blade"
+    },
+    {
+      "field": "spellSource48",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit48",
+      "page": 6,
+      "value": "+7"
+    },
+    {
+      "field": "spellCastingTime48",
+      "page": 6,
+      "value": "1BA"
+    },
+    {
+      "field": "spellRange48",
+      "page": 6,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents48",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration48",
+      "page": 6,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage48",
+      "page": 6,
+      "value": "PHB-2024 275"
+    },
+    {
+      "field": "spellNotes48",
+      "page": 6,
+      "value": "D: 10m, V/S/M"
+    },
+    {
+      "field": "spellPrepared49",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName49",
+      "page": 6,
+      "value": "Barkskin"
+    },
+    {
+      "field": "spellSource49",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit49",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime49",
+      "page": 6,
+      "value": "1BA"
+    },
+    {
+      "field": "spellRange49",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents49",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration49",
+      "page": 6,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage49",
+      "page": 6,
+      "value": "PHB-2024 245"
+    },
+    {
+      "field": "spellNotes49",
+      "page": 6,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared50",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName50",
+      "page": 6,
+      "value": "Protection from Poison"
+    },
+    {
+      "field": "spellSource50",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit50",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime50",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange50",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents50",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration50",
+      "page": 6,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage50",
+      "page": 6,
+      "value": "PHB-2024 310"
+    },
+    {
+      "field": "spellNotes50",
+      "page": 6,
+      "value": "D: 1h, V/S"
+    },
+    {
+      "field": "spellPrepared51",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName51",
+      "page": 6,
+      "value": "Flaming Sphere"
+    },
+    {
+      "field": "spellSource51",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit51",
+      "page": 6,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime51",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange51",
+      "page": 6,
+      "value": "60 ft./5 ft. Sphere"
+    },
+    {
+      "field": "spellComponents51",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration51",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage51",
+      "page": 6,
+      "value": "PHB-2024 275"
+    },
+    {
+      "field": "spellNotes51",
+      "page": 6,
+      "value": "D: 1m, 5 ft. Sphere, V/S/M"
+    },
+    {
+      "field": "spellPrepared52",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName52",
+      "page": 6,
+      "value": "Locate Animals or Plants [R]"
+    },
+    {
+      "field": "spellSource52",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit52",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime52",
+      "page": 6,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange52",
+      "page": 6,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents52",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration52",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage52",
+      "page": 6,
+      "value": "PHB-2024 292"
+    },
+    {
+      "field": "spellNotes52",
+      "page": 6,
+      "value": "V/S/M"
+    },
+    {
+      "field": "spellPrepared53",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName53",
+      "page": 6,
+      "value": "Locate Object"
+    },
+    {
+      "field": "spellSource53",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit53",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime53",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange53",
+      "page": 6,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents53",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration53",
+      "page": 6,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage53",
+      "page": 6,
+      "value": "PHB-2024 293"
+    },
+    {
+      "field": "spellNotes53",
+      "page": 6,
+      "value": "D: 10m, V/S/M"
+    },
+    {
+      "field": "spellPrepared54",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName54",
+      "page": 6,
+      "value": "Lesser Restoration"
+    },
+    {
+      "field": "spellSource54",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit54",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime54",
+      "page": 6,
+      "value": "1BA"
+    },
+    {
+      "field": "spellRange54",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents54",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration54",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage54",
+      "page": 6,
+      "value": "PHB-2024 291"
+    },
+    {
+      "field": "spellNotes54",
+      "page": 6,
+      "value": "V/S"
+    },
+    {
+      "field": "spellPrepared55",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName55",
+      "page": 6,
+      "value": "Continual Flame"
+    },
+    {
+      "field": "spellSource55",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit55",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime55",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange55",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents55",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration55",
+      "page": 6,
+      "value": "Until dispelled"
+    },
+    {
+      "field": "spellPage55",
+      "page": 6,
+      "value": "PHB-2024 256"
+    },
+    {
+      "field": "spellNotes55",
+      "page": 6,
+      "value": "D: Until Dispelled, V/S/M"
+    },
+    {
+      "field": "spellPrepared56",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName56",
+      "page": 6,
+      "value": "Spike Growth"
+    },
+    {
+      "field": "spellSource56",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit56",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime56",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange56",
+      "page": 6,
+      "value": "150 ft./20 ft. Sphere"
+    },
+    {
+      "field": "spellComponents56",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration56",
+      "page": 6,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage56",
+      "page": 6,
+      "value": "PHB-2024 318"
+    },
+    {
+      "field": "spellNotes56",
+      "page": 6,
+      "value": "D: 10m, 20 ft. Sphere, V/S/M"
+    },
+    {
+      "field": "spellPrepared57",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName57",
+      "page": 6,
+      "value": "Darkvision"
+    },
+    {
+      "field": "spellSource57",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit57",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime57",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange57",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents57",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration57",
+      "page": 6,
+      "value": "8 hours"
+    },
+    {
+      "field": "spellPage57",
+      "page": 6,
+      "value": "PHB-2024 260"
+    },
+    {
+      "field": "spellNotes57",
+      "page": 6,
+      "value": "D: 8h, V/S/M"
+    },
+    {
+      "field": "spellPrepared58",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName58",
+      "page": 6,
+      "value": "Moonbeam"
+    },
+    {
+      "field": "spellSource58",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit58",
+      "page": 6,
+      "value": "CON 15"
+    },
+    {
+      "field": "spellCastingTime58",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange58",
+      "page": 6,
+      "value": "120 ft./5 ft. Cylinder"
+    },
+    {
+      "field": "spellComponents58",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration58",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage58",
+      "page": 6,
+      "value": "PHB-2024 300"
+    },
+    {
+      "field": "spellNotes58",
+      "page": 6,
+      "value": "D: 1m, 5 ft. Cylinder, V/S/M"
+    },
+    {
+      "field": "spellPrepared59",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName59",
+      "page": 6,
+      "value": "Gust of Wind"
+    },
+    {
+      "field": "spellSource59",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit59",
+      "page": 6,
+      "value": "STR 15"
+    },
+    {
+      "field": "spellCastingTime59",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange59",
+      "page": 6,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents59",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration59",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage59",
+      "page": 6,
+      "value": "PHB-2024 282"
+    },
+    {
+      "field": "spellNotes59",
+      "page": 6,
+      "value": "D: 1m, V/S/M"
+    },
+    {
+      "field": "spellPrepared60",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName60",
+      "page": 6,
+      "value": "Heat Metal"
+    },
+    {
+      "field": "spellSource60",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit60",
+      "page": 6,
+      "value": "CON 15"
+    },
+    {
+      "field": "spellCastingTime60",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange60",
+      "page": 6,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents60",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration60",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage60",
+      "page": 6,
+      "value": "PHB-2024 284"
+    },
+    {
+      "field": "spellNotes60",
+      "page": 6,
+      "value": "D: 1m, V/S/M"
+    },
+    {
+      "field": "spellPrepared61",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName61",
+      "page": 6,
+      "value": "Hold Person"
+    },
+    {
+      "field": "spellSource61",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit61",
+      "page": 6,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime61",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange61",
+      "page": 6,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents61",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration61",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage61",
+      "page": 6,
+      "value": "PHB-2024 286"
+    },
+    {
+      "field": "spellNotes61",
+      "page": 6,
+      "value": "D: 1m, V/S/M"
+    },
+    {
+      "field": "spellPrepared62",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName62",
+      "page": 6,
+      "value": "Enhance Ability"
+    },
+    {
+      "field": "spellSource62",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit62",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime62",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange62",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents62",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration62",
+      "page": 6,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage62",
+      "page": 6,
+      "value": "PHB-2024 268"
+    },
+    {
+      "field": "spellNotes62",
+      "page": 6,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared63",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName63",
+      "page": 6,
+      "value": "Enlarge/Reduce"
+    },
+    {
+      "field": "spellSource63",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit63",
+      "page": 6,
+      "value": "CON 15"
+    },
+    {
+      "field": "spellCastingTime63",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange63",
+      "page": 6,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents63",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration63",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage63",
+      "page": 6,
+      "value": "PHB-2024 268"
+    },
+    {
+      "field": "spellNotes63",
+      "page": 6,
+      "value": "D: 1m, V/S/M"
+    },
+    {
+      "field": "spellPrepared64",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName64",
+      "page": 6,
+      "value": "Pass without Trace"
+    },
+    {
+      "field": "spellSource64",
+      "page": 6,
+      "value": "Elven Lineage Spells"
+    },
+    {
+      "field": "spellSaveHit64",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime64",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange64",
+      "page": 6,
+      "value": "Self/30 ft. Emanation"
+    },
+    {
+      "field": "spellComponents64",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration64",
+      "page": 6,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage64",
+      "page": 6,
+      "value": "PHB-2024 303"
+    },
+    {
+      "field": "spellNotes64",
+      "page": 6,
+      "value": "1/LR, D: 1h, 30 ft. Emanation, V/S/M"
+    },
+    {
+      "field": "spellPrepared65",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName65",
+      "page": 6,
+      "value": "Pass without Trace"
+    },
+    {
+      "field": "spellSource65",
+      "page": 6,
+      "value": "Elven Lineage Spells"
+    },
+    {
+      "field": "spellSaveHit65",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime65",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange65",
+      "page": 6,
+      "value": "Self/30 ft. Emanation"
+    },
+    {
+      "field": "spellComponents65",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration65",
+      "page": 6,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage65",
+      "page": 6,
+      "value": "PHB-2024 303"
+    },
+    {
+      "field": "spellNotes65",
+      "page": 6,
+      "value": "D: 1h, 30 ft. Emanation, V/S/M"
+    },
+    {
+      "field": "spellPrepared66",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName66",
+      "page": 6,
+      "value": "Web"
+    },
+    {
+      "field": "spellSource66",
+      "page": 6,
+      "value": "Circle of the Land Spells"
+    },
+    {
+      "field": "spellSaveHit66",
+      "page": 6,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime66",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange66",
+      "page": 6,
+      "value": "60 ft./20 ft. Cube"
+    },
+    {
+      "field": "spellComponents66",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration66",
+      "page": 6,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage66",
+      "page": 6,
+      "value": "PHB-2024 340"
+    },
+    {
+      "field": "spellNotes66",
+      "page": 6,
+      "value": "D: 1h, 20 ft. Cube, V/S/M"
+    },
+    {
+      "field": "spellHeader3",
+      "page": 6,
+      "value": "=== 3rd LEVEL ==="
+    },
+    {
+      "field": "spellSlotHeader3",
+      "page": 6,
+      "value": "3 Slots OOO"
+    },
+    {
+      "field": "spellPrepared67",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName67",
+      "page": 6,
+      "value": "Erupting Earth"
+    },
+    {
+      "field": "spellSource67",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit67",
+      "page": 6,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime67",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange67",
+      "page": 6,
+      "value": "120 ft./20 ft. Cube"
+    },
+    {
+      "field": "spellComponents67",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration67",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage67",
+      "page": 6,
+      "value": "EE 155"
+    },
+    {
+      "field": "spellNotes67",
+      "page": 6,
+      "value": "20 ft. Cube, V/S/M"
+    },
+    {
+      "field": "spellPrepared68",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName68",
+      "page": 6,
+      "value": "Flame Arrows"
+    },
+    {
+      "field": "spellSource68",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit68",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime68",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange68",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents68",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration68",
+      "page": 6,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage68",
+      "page": 6,
+      "value": "EE 156"
+    },
+    {
+      "field": "spellNotes68",
+      "page": 6,
+      "value": "D: 1h, V/S"
+    },
+    {
+      "field": "spellPrepared69",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName69",
+      "page": 6,
+      "value": "Tidal Wave"
+    },
+    {
+      "field": "spellSource69",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit69",
+      "page": 6,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime69",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange69",
+      "page": 6,
+      "value": "120 ft."
+    },
+    {
+      "field": "spellComponents69",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration69",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage69",
+      "page": 6,
+      "value": "EE 168"
+    },
+    {
+      "field": "spellNotes69",
+      "page": 6,
+      "value": "V/S/M"
+    },
+    {
+      "field": "spellPrepared70",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName70",
+      "page": 6,
+      "value": "Wall of Water"
+    },
+    {
+      "field": "spellSource70",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit70",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime70",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange70",
+      "page": 6,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents70",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration70",
+      "page": 6,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage70",
+      "page": 6,
+      "value": "EE 170"
+    },
+    {
+      "field": "spellNotes70",
+      "page": 6,
+      "value": "D: 10m, V/S/M"
+    },
+    {
+      "field": "spellPrepared71",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName71",
+      "page": 6,
+      "value": "Summon Fey"
+    },
+    {
+      "field": "spellSource71",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit71",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime71",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange71",
+      "page": 6,
+      "value": "90 ft."
+    },
+    {
+      "field": "spellComponents71",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration71",
+      "page": 6,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage71",
+      "page": 6,
+      "value": "TCoE 112"
+    },
+    {
+      "field": "spellNotes71",
+      "page": 6,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared72",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName72",
+      "page": 6,
+      "value": "Freedom of the Waves"
+    },
+    {
+      "field": "spellSource72",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit72",
+      "page": 6,
+      "value": "STR 15"
+    },
+    {
+      "field": "spellCastingTime72",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange72",
+      "page": 6,
+      "value": "120 ft./10 ft. Cylinder"
+    },
+    {
+      "field": "spellComponents72",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration72",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage72",
+      "page": 6,
+      "value": "TCSR 176"
+    },
+    {
+      "field": "spellNotes72",
+      "page": 6,
+      "value": "10 ft. Cylinder, V/S/M"
+    },
+    {
+      "field": "spellPrepared73",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName73",
+      "page": 6,
+      "value": "Plant Growth"
+    },
+    {
+      "field": "spellSource73",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit73",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime73",
+      "page": 6,
+      "value": "S"
+    },
+    {
+      "field": "spellRange73",
+      "page": 6,
+      "value": "150 ft./100 ft. Sphere"
+    },
+    {
+      "field": "spellComponents73",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration73",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage73",
+      "page": 6,
+      "value": "PHB-2024 305"
+    },
+    {
+      "field": "spellNotes73",
+      "page": 6,
+      "value": "100 ft. Sphere, V/S"
+    },
+    {
+      "field": "spellPrepared74",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName74",
+      "page": 6,
+      "value": "Protection from Energy"
+    },
+    {
+      "field": "spellSource74",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit74",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime74",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange74",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents74",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration74",
+      "page": 6,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage74",
+      "page": 6,
+      "value": "PHB-2024 309"
+    },
+    {
+      "field": "spellNotes74",
+      "page": 6,
+      "value": "D: 1h, V/S"
+    },
+    {
+      "field": "spellPrepared75",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName75",
+      "page": 6,
+      "value": "Call Lightning"
+    },
+    {
+      "field": "spellSource75",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit75",
+      "page": 6,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime75",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange75",
+      "page": 6,
+      "value": "120 ft./60 ft. Cylinder"
+    },
+    {
+      "field": "spellComponents75",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration75",
+      "page": 6,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage75",
+      "page": 6,
+      "value": "PHB-2024 248"
+    },
+    {
+      "field": "spellNotes75",
+      "page": 6,
+      "value": "D: 10m, 60 ft. Cylinder, V/S"
+    },
+    {
+      "field": "spellPrepared76",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName76",
+      "page": 6,
+      "value": "Revivify"
+    },
+    {
+      "field": "spellSource76",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit76",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime76",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange76",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents76",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration76",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage76",
+      "page": 6,
+      "value": "PHB-2024 312"
+    },
+    {
+      "field": "spellNotes76",
+      "page": 6,
+      "value": "V/S/M"
+    },
+    {
+      "field": "spellPrepared77",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName77",
+      "page": 6,
+      "value": "Sleet Storm"
+    },
+    {
+      "field": "spellSource77",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit77",
+      "page": 6,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime77",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange77",
+      "page": 6,
+      "value": "150 ft./40 ft. Cylinder"
+    },
+    {
+      "field": "spellComponents77",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration77",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage77",
+      "page": 6,
+      "value": "PHB-2024 317"
+    },
+    {
+      "field": "spellNotes77",
+      "page": 6,
+      "value": "D: 1m, 40 ft. Cylinder, V/S/M"
+    },
+    {
+      "field": "spellPrepared78",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName78",
+      "page": 6,
+      "value": "Meld into Stone [R]"
+    },
+    {
+      "field": "spellSource78",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit78",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime78",
+      "page": 6,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange78",
+      "page": 6,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents78",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration78",
+      "page": 6,
+      "value": "8 hours"
+    },
+    {
+      "field": "spellPage78",
+      "page": 6,
+      "value": "PHB-2024 296"
+    },
+    {
+      "field": "spellNotes78",
+      "page": 6,
+      "value": "D: 8h, V/S"
+    },
+    {
+      "field": "spellPrepared79",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName79",
+      "page": 6,
+      "value": "Conjure Animals"
+    },
+    {
+      "field": "spellSource79",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit79",
+      "page": 6,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime79",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange79",
+      "page": 6,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents79",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration79",
+      "page": 6,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage79",
+      "page": 6,
+      "value": "PHB-2024 254"
+    },
+    {
+      "field": "spellNotes79",
+      "page": 6,
+      "value": "D: 10m, V/S"
+    },
+    {
+      "field": "spellPrepared80",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName80",
+      "page": 6,
+      "value": "Speak with Plants"
+    },
+    {
+      "field": "spellSource80",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit80",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime80",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange80",
+      "page": 6,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents80",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration80",
+      "page": 6,
+      "value": "10 minutes"
+    },
+    {
+      "field": "spellPage80",
+      "page": 6,
+      "value": "PHB-2024 318"
+    },
+    {
+      "field": "spellNotes80",
+      "page": 6,
+      "value": "D: 10m, V/S"
+    },
+    {
+      "field": "spellPrepared81",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName81",
+      "page": 6,
+      "value": "Daylight"
+    },
+    {
+      "field": "spellSource81",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit81",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime81",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange81",
+      "page": 6,
+      "value": "60 ft./60 ft. Sphere"
+    },
+    {
+      "field": "spellComponents81",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration81",
+      "page": 6,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage81",
+      "page": 6,
+      "value": "PHB-2024 260"
+    },
+    {
+      "field": "spellNotes81",
+      "page": 6,
+      "value": "D: 1h, 60 ft. Sphere, V/S"
+    },
+    {
+      "field": "spellPrepared82",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName82",
+      "page": 6,
+      "value": "Dispel Magic"
+    },
+    {
+      "field": "spellSource82",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit82",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime82",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange82",
+      "page": 6,
+      "value": "120 ft."
+    },
+    {
+      "field": "spellComponents82",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration82",
+      "page": 6,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage82",
+      "page": 6,
+      "value": "PHB-2024 265"
+    },
+    {
+      "field": "spellNotes82",
+      "page": 6,
+      "value": "Special: (See Description)*, V/S"
+    },
+    {
+      "field": "spellPrepared83",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName83",
+      "page": 6,
+      "value": "Water Breathing [R]"
+    },
+    {
+      "field": "spellSource83",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit83",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime83",
+      "page": 6,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange83",
+      "page": 6,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents83",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration83",
+      "page": 6,
+      "value": "24 hours"
+    },
+    {
+      "field": "spellPage83",
+      "page": 6,
+      "value": "PHB-2024 340"
+    },
+    {
+      "field": "spellNotes83",
+      "page": 6,
+      "value": "D: 24h, V/S/M"
+    },
+    {
+      "field": "spellPrepared84",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName84",
+      "page": 6,
+      "value": "Water Walk [R]"
+    },
+    {
+      "field": "spellSource84",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit84",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime84",
+      "page": 6,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange84",
+      "page": 6,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents84",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration84",
+      "page": 6,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage84",
+      "page": 6,
+      "value": "PHB-2024 340"
+    },
+    {
+      "field": "spellNotes84",
+      "page": 6,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared85",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName85",
+      "page": 6,
+      "value": "Wind Wall"
+    },
+    {
+      "field": "spellSource85",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit85",
+      "page": 6,
+      "value": "STR 15"
+    },
+    {
+      "field": "spellCastingTime85",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange85",
+      "page": 6,
+      "value": "120 ft."
+    },
+    {
+      "field": "spellComponents85",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration85",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage85",
+      "page": 6,
+      "value": "PHB-2024 341"
+    },
+    {
+      "field": "spellNotes85",
+      "page": 6,
+      "value": "D: 1m, V/S/M"
+    },
+    {
+      "field": "spellPrepared86",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName86",
+      "page": 6,
+      "value": "Stinking Cloud"
+    },
+    {
+      "field": "spellSource86",
+      "page": 6,
+      "value": "Circle of the Land Spells"
+    },
+    {
+      "field": "spellSaveHit86",
+      "page": 6,
+      "value": "CON 15"
+    },
+    {
+      "field": "spellCastingTime86",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange86",
+      "page": 6,
+      "value": "90 ft./20 ft. Sphere"
+    },
+    {
+      "field": "spellComponents86",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration86",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage86",
+      "page": 6,
+      "value": "PHB-2024 320"
+    },
+    {
+      "field": "spellNotes86",
+      "page": 6,
+      "value": "D: 1m, 20 ft. Sphere, V/S/M"
+    },
+    {
+      "field": "spellHeader4",
+      "page": 6,
+      "value": "=== 4th LEVEL ==="
+    },
+    {
+      "field": "spellSlotHeader4",
+      "page": 6,
+      "value": "2 Slots OO"
+    },
+    {
+      "field": "spellPrepared87",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName87",
+      "page": 6,
+      "value": "Elemental Bane"
+    },
+    {
+      "field": "spellSource87",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit87",
+      "page": 6,
+      "value": "CON 15"
+    },
+    {
+      "field": "spellCastingTime87",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange87",
+      "page": 6,
+      "value": "90 ft."
+    },
+    {
+      "field": "spellComponents87",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration87",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage87",
+      "page": 6,
+      "value": "EE 155"
+    },
+    {
+      "field": "spellNotes87",
+      "page": 6,
+      "value": "D: 1m, V/S"
+    },
+    {
+      "field": "spellPrepared88",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName88",
+      "page": 6,
+      "value": "Watery Sphere"
+    },
+    {
+      "field": "spellSource88",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit88",
+      "page": 6,
+      "value": "STR 15"
+    },
+    {
+      "field": "spellCastingTime88",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange88",
+      "page": 6,
+      "value": "90 ft./5 ft. Sphere"
+    },
+    {
+      "field": "spellComponents88",
+      "page": 6,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration88",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage88",
+      "page": 6,
+      "value": "EE 170"
+    },
+    {
+      "field": "spellNotes88",
+      "page": 6,
+      "value": "D: 1m, 5 ft. Sphere, V/S/M"
+    },
+    {
+      "field": "spellPrepared89",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName89",
+      "page": 6,
+      "value": "Charm Monster"
+    },
+    {
+      "field": "spellSource89",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit89",
+      "page": 6,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime89",
+      "page": 6,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange89",
+      "page": 6,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents89",
+      "page": 6,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration89",
+      "page": 6,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage89",
+      "page": 6,
+      "value": "XGtE 151"
+    },
+    {
+      "field": "spellNotes89",
+      "page": 6,
+      "value": "D: 1h, V/S"
+    },
+    {
+      "field": "spellPrepared90",
+      "page": 6,
+      "value": "O"
+    },
+    {
+      "field": "spellName90",
+      "page": 6,
+      "value": "Guardian of Nature"
+    },
+    {
+      "field": "spellSource90",
+      "page": 6,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit90",
+      "page": 6,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime90",
+      "page": 6,
+      "value": "1BA"
+    },
+    {
+      "field": "spellRange90",
+      "page": 6,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents90",
+      "page": 6,
+      "value": "V"
+    },
+    {
+      "field": "spellDuration90",
+      "page": 6,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage90",
+      "page": 6,
+      "value": "XGtE 157"
+    },
+    {
+      "field": "spellNotes90",
+      "page": 6,
+      "value": "D: 1m, V"
+    },
+    {
+      "field": "spellCastingAbility0",
+      "page": 7,
+      "value": "WIS"
+    },
+    {
+      "field": "spellSaveDC0",
+      "page": 7,
+      "value": "15"
+    },
+    {
+      "field": "spellAtkBonus0",
+      "page": 7,
+      "value": "+7"
+    },
+    {
+      "field": "spellCastingClass0",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellPrepared91",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName91",
+      "page": 7,
+      "value": "Summon Elemental"
+    },
+    {
+      "field": "spellSource91",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit91",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime91",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange91",
+      "page": 7,
+      "value": "90 ft."
+    },
+    {
+      "field": "spellComponents91",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration91",
+      "page": 7,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage91",
+      "page": 7,
+      "value": "TCoE 111"
+    },
+    {
+      "field": "spellNotes91",
+      "page": 7,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared92",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName92",
+      "page": 7,
+      "value": "Polymorph"
+    },
+    {
+      "field": "spellSource92",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit92",
+      "page": 7,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime92",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange92",
+      "page": 7,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents92",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration92",
+      "page": 7,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage92",
+      "page": 7,
+      "value": "PHB-2024 306"
+    },
+    {
+      "field": "spellNotes92",
+      "page": 7,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared93",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName93",
+      "page": 7,
+      "value": "Fire Shield"
+    },
+    {
+      "field": "spellSource93",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit93",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime93",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange93",
+      "page": 7,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents93",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration93",
+      "page": 7,
+      "value": "10 minutes"
+    },
+    {
+      "field": "spellPage93",
+      "page": 7,
+      "value": "PHB-2024 274"
+    },
+    {
+      "field": "spellNotes93",
+      "page": 7,
+      "value": "D: 10m, V/S/M"
+    },
+    {
+      "field": "spellPrepared94",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName94",
+      "page": 7,
+      "value": "Freedom of Movement"
+    },
+    {
+      "field": "spellSource94",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit94",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime94",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange94",
+      "page": 7,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents94",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration94",
+      "page": 7,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage94",
+      "page": 7,
+      "value": "PHB-2024 277"
+    },
+    {
+      "field": "spellNotes94",
+      "page": 7,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared95",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName95",
+      "page": 7,
+      "value": "Blight"
+    },
+    {
+      "field": "spellSource95",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit95",
+      "page": 7,
+      "value": "CON 15"
+    },
+    {
+      "field": "spellCastingTime95",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange95",
+      "page": 7,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents95",
+      "page": 7,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration95",
+      "page": 7,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage95",
+      "page": 7,
+      "value": "PHB-2024 247"
+    },
+    {
+      "field": "spellNotes95",
+      "page": 7,
+      "value": "V/S"
+    },
+    {
+      "field": "spellPrepared96",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName96",
+      "page": 7,
+      "value": "Giant Insect"
+    },
+    {
+      "field": "spellSource96",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit96",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime96",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange96",
+      "page": 7,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents96",
+      "page": 7,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration96",
+      "page": 7,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage96",
+      "page": 7,
+      "value": "PHB-2024 279"
+    },
+    {
+      "field": "spellNotes96",
+      "page": 7,
+      "value": "D: 10m, V/S"
+    },
+    {
+      "field": "spellPrepared97",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName97",
+      "page": 7,
+      "value": "Charm Monster"
+    },
+    {
+      "field": "spellSource97",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit97",
+      "page": 7,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime97",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange97",
+      "page": 7,
+      "value": "30 ft."
+    },
+    {
+      "field": "spellComponents97",
+      "page": 7,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration97",
+      "page": 7,
+      "value": "1 hour"
+    },
+    {
+      "field": "spellPage97",
+      "page": 7,
+      "value": "PHB-2024 249"
+    },
+    {
+      "field": "spellNotes97",
+      "page": 7,
+      "value": "D: 1h, V/S"
+    },
+    {
+      "field": "spellPrepared98",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName98",
+      "page": 7,
+      "value": "Locate Creature"
+    },
+    {
+      "field": "spellSource98",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit98",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime98",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange98",
+      "page": 7,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents98",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration98",
+      "page": 7,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage98",
+      "page": 7,
+      "value": "PHB-2024 292"
+    },
+    {
+      "field": "spellNotes98",
+      "page": 7,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared99",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName99",
+      "page": 7,
+      "value": "Confusion"
+    },
+    {
+      "field": "spellSource99",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit99",
+      "page": 7,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime99",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange99",
+      "page": 7,
+      "value": "90 ft./10 ft. Sphere"
+    },
+    {
+      "field": "spellComponents99",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration99",
+      "page": 7,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage99",
+      "page": 7,
+      "value": "PHB-2024 253"
+    },
+    {
+      "field": "spellNotes99",
+      "page": 7,
+      "value": "D: 1m, 10 ft. Sphere, V/S/M"
+    },
+    {
+      "field": "spellPrepared100",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName100",
+      "page": 7,
+      "value": "Conjure Minor Elementals"
+    },
+    {
+      "field": "spellSource100",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit100",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime100",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange100",
+      "page": 7,
+      "value": "Self/15 ft. Emanation"
+    },
+    {
+      "field": "spellComponents100",
+      "page": 7,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration100",
+      "page": 7,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage100",
+      "page": 7,
+      "value": "PHB-2024 255"
+    },
+    {
+      "field": "spellNotes100",
+      "page": 7,
+      "value": "D: 10m, 15 ft. Emanation, V/S"
+    },
+    {
+      "field": "spellPrepared101",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName101",
+      "page": 7,
+      "value": "Conjure Woodland Beings"
+    },
+    {
+      "field": "spellSource101",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit101",
+      "page": 7,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime101",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange101",
+      "page": 7,
+      "value": "Self/10 ft. Emanation"
+    },
+    {
+      "field": "spellComponents101",
+      "page": 7,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration101",
+      "page": 7,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage101",
+      "page": 7,
+      "value": "PHB-2024 255"
+    },
+    {
+      "field": "spellNotes101",
+      "page": 7,
+      "value": "D: 10m, 10 ft. Emanation, V/S"
+    },
+    {
+      "field": "spellPrepared102",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName102",
+      "page": 7,
+      "value": "Control Water"
+    },
+    {
+      "field": "spellSource102",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit102",
+      "page": 7,
+      "value": "STR 15"
+    },
+    {
+      "field": "spellCastingTime102",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange102",
+      "page": 7,
+      "value": "300 ft."
+    },
+    {
+      "field": "spellComponents102",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration102",
+      "page": 7,
+      "value": "Concentration, up to 10 minutes"
+    },
+    {
+      "field": "spellPage102",
+      "page": 7,
+      "value": "PHB-2024 256"
+    },
+    {
+      "field": "spellNotes102",
+      "page": 7,
+      "value": "D: 10m, V/S/M"
+    },
+    {
+      "field": "spellPrepared103",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName103",
+      "page": 7,
+      "value": "Stone Shape"
+    },
+    {
+      "field": "spellSource103",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit103",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime103",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange103",
+      "page": 7,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents103",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration103",
+      "page": 7,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage103",
+      "page": 7,
+      "value": "PHB-2024 320"
+    },
+    {
+      "field": "spellNotes103",
+      "page": 7,
+      "value": "V/S/M"
+    },
+    {
+      "field": "spellPrepared104",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName104",
+      "page": 7,
+      "value": "Stoneskin"
+    },
+    {
+      "field": "spellSource104",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit104",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime104",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange104",
+      "page": 7,
+      "value": "Touch"
+    },
+    {
+      "field": "spellComponents104",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration104",
+      "page": 7,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage104",
+      "page": 7,
+      "value": "PHB-2024 320"
+    },
+    {
+      "field": "spellNotes104",
+      "page": 7,
+      "value": "D: 1h, V/S/M"
+    },
+    {
+      "field": "spellPrepared105",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName105",
+      "page": 7,
+      "value": "Wall of Fire"
+    },
+    {
+      "field": "spellSource105",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit105",
+      "page": 7,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime105",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange105",
+      "page": 7,
+      "value": "120 ft."
+    },
+    {
+      "field": "spellComponents105",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration105",
+      "page": 7,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage105",
+      "page": 7,
+      "value": "PHB-2024 338"
+    },
+    {
+      "field": "spellNotes105",
+      "page": 7,
+      "value": "D: 1m, V/S/M"
+    },
+    {
+      "field": "spellPrepared106",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName106",
+      "page": 7,
+      "value": "Hallucinatory Terrain"
+    },
+    {
+      "field": "spellSource106",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit106",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime106",
+      "page": 7,
+      "value": "10m"
+    },
+    {
+      "field": "spellRange106",
+      "page": 7,
+      "value": "300 ft./150 ft. Cube"
+    },
+    {
+      "field": "spellComponents106",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration106",
+      "page": 7,
+      "value": "24 hours"
+    },
+    {
+      "field": "spellPage106",
+      "page": 7,
+      "value": "PHB-2024 283"
+    },
+    {
+      "field": "spellNotes106",
+      "page": 7,
+      "value": "D: 24h, 150 ft. Cube, V/S/M"
+    },
+    {
+      "field": "spellPrepared107",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName107",
+      "page": 7,
+      "value": "Divination [R]"
+    },
+    {
+      "field": "spellSource107",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit107",
+      "page": 7,
+      "value": "--"
+    },
+    {
+      "field": "spellCastingTime107",
+      "page": 7,
+      "value": "1A + 10m"
+    },
+    {
+      "field": "spellRange107",
+      "page": 7,
+      "value": "Self"
+    },
+    {
+      "field": "spellComponents107",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration107",
+      "page": 7,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage107",
+      "page": 7,
+      "value": "PHB-2024 264"
+    },
+    {
+      "field": "spellNotes107",
+      "page": 7,
+      "value": "V/S/M"
+    },
+    {
+      "field": "spellPrepared108",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName108",
+      "page": 7,
+      "value": "Dominate Beast"
+    },
+    {
+      "field": "spellSource108",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit108",
+      "page": 7,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime108",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange108",
+      "page": 7,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents108",
+      "page": 7,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration108",
+      "page": 7,
+      "value": "Concentration, up to 1 minute"
+    },
+    {
+      "field": "spellPage108",
+      "page": 7,
+      "value": "PHB-2024 265"
+    },
+    {
+      "field": "spellNotes108",
+      "page": 7,
+      "value": "D: 1m, V/S"
+    },
+    {
+      "field": "spellPrepared109",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName109",
+      "page": 7,
+      "value": "Ice Storm"
+    },
+    {
+      "field": "spellSource109",
+      "page": 7,
+      "value": "Druid"
+    },
+    {
+      "field": "spellSaveHit109",
+      "page": 7,
+      "value": "DEX 15"
+    },
+    {
+      "field": "spellCastingTime109",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange109",
+      "page": 7,
+      "value": "300 ft./20 ft. Cylinder"
+    },
+    {
+      "field": "spellComponents109",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration109",
+      "page": 7,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellPage109",
+      "page": 7,
+      "value": "PHB-2024 287"
+    },
+    {
+      "field": "spellNotes109",
+      "page": 7,
+      "value": "20 ft. Cylinder, V/S/M"
+    },
+    {
+      "field": "spellPrepared110",
+      "page": 7,
+      "value": "O"
+    },
+    {
+      "field": "spellName110",
+      "page": 7,
+      "value": "Polymorph"
+    },
+    {
+      "field": "spellSource110",
+      "page": 7,
+      "value": "Circle of the Land Spells"
+    },
+    {
+      "field": "spellSaveHit110",
+      "page": 7,
+      "value": "WIS 15"
+    },
+    {
+      "field": "spellCastingTime110",
+      "page": 7,
+      "value": "1A"
+    },
+    {
+      "field": "spellRange110",
+      "page": 7,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellComponents110",
+      "page": 7,
+      "value": "V,S,M"
+    },
+    {
+      "field": "spellDuration110",
+      "page": 7,
+      "value": "Concentration, up to 1 hour"
+    },
+    {
+      "field": "spellPage110",
+      "page": 7,
+      "value": "PHB-2024 306"
+    },
+    {
+      "field": "spellNotes110",
+      "page": 7,
+      "value": "D: 1h, V/S/M"
+    }
+  ],
+  "resources": {
+    "spell_slots": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 2
+    },
+    "wild_shape": {
+      "max": 3
+    }
+  },
+  "save_mods": {
+    "cha": 0,
+    "con": 2,
+    "dex": 1,
+    "int": 4,
+    "str": -1,
+    "wis": 7
+  },
+  "skill_mods": {
+    "acrobatics": 1,
+    "animal": 7,
+    "arcana": 8,
+    "athletics": -1,
+    "deception": 0,
+    "history": 4,
+    "insight": 7,
+    "intimidation": 0,
+    "investigation": 1,
+    "medicine": 4,
+    "nature": 5,
+    "perception": 7,
+    "performance": 0,
+    "persuasion": 0,
+    "religion": 1,
+    "sleightofhand": 1,
+    "stealth": 1,
+    "survival": 4
+  },
+  "source": {
+    "pdf_name": "The_Lizardscale_King_161607569.pdf"
+  },
+  "speed_ft": 35,
+  "traits": [
+    "8: Ability Score Improvement",
+    "Ability Score Improvement",
+    "Circle of the Land Spells",
+    "Core Druid Traits",
+    "Creature Type",
+    "Darkvision",
+    "Druid Subclass",
+    "Druidic",
+    "Elemental Fury",
+    "Elven Lineage",
+    "Elven Lineage Spells",
+    "Fey Ancestry",
+    "Keen Senses",
+    "Land\u2019s Aid",
+    "Languages",
+    "Magic Initiate (Druid)",
+    "Magic Initiate (Wizard)",
+    "Natural Recovery",
+    "Primal Order",
+    "Sage Ability Score Improvements",
+    "Size",
+    "Speed",
+    "Spellcasting",
+    "Trance",
+    "Wild Companion",
+    "Wild Resurgence",
+    "Wild Shape"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "identity": {
+    "enemy_id": "present_pylon",
+    "name": "Present Pylon",
+    "team": "enemy"
+  },
+  "stat_block": {
+    "max_hp": 45,
+    "ac": 15,
+    "initiative_mod": 0,
+    "dex_mod": 0,
+    "con_mod": 2,
+    "save_mods": {
+      "con": 2,
+      "dex": 0,
+      "wis": 0
+    }
+  },
+  "actions": [
+    {
+      "name": "dynamo_pulse",
+      "action_type": "save",
+      "damage": "2d6",
+      "damage_type": "lightning",
+      "save_dc": 15,
+      "save_ability": "dex",
+      "half_on_save": true,
+      "attack_count": 1,
+      "resource_cost": {}
+    }
+  ],
+  "bonus_actions": [],
+  "reactions": [],
+  "legendary_actions": [],
+  "lair_actions": [],
+  "resources": {},
+  "damage_resistances": [
+    "all"
+  ],
+  "damage_immunities": [],
+  "damage_vulnerabilities": [],
+  "condition_immunities": [
+    "charmed",
+    "frightened",
+    "poisoned"
+  ],
+  "script_hooks": {
+    "phase": "ley_heart_phase_1",
+    "procedure_skill": [
+      "arcana",
+      "thieves_tools"
+    ],
+    "procedure_dc": 15,
+    "exposed_duration_rounds": 1
+  }
+}

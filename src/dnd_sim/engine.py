@@ -1,0 +1,1331 @@
+from __future__ import annotations
+
+import json
+import random
+import statistics
+from dataclasses import dataclass
+from typing import Any
+
+from dnd_sim.io import EnemyConfig, LoadedScenario
+from dnd_sim.models import (
+    ActionDefinition,
+    ActorRuntimeState,
+    SimulationSummary,
+    SummaryMetric,
+    TrialResult,
+)
+from dnd_sim.rules_2014 import (
+    apply_damage,
+    attack_roll,
+    parse_damage_expression,
+    resolve_death_save,
+    roll_damage,
+    run_concentration_check,
+)
+from dnd_sim.strategy_api import ActorView, BattleStateView, TargetRef
+
+_CONTROL_BLOCKING_CONDITIONS = {"incapacitated", "stunned", "unconscious"}
+_DISADVANTAGE_CONDITIONS = {"poisoned", "frightened", "restrained", "blinded"}
+_IMPLIED_CONDITION_MAP: dict[str, set[str]] = {
+    "stunned": {"incapacitated"},
+    "unconscious": {"incapacitated"},
+}
+
+
+@dataclass(slots=True)
+class SimulationArtifacts:
+    trial_results: list[TrialResult]
+    trial_rows: list[dict[str, Any]]
+    summary: SimulationSummary
+
+
+def _metric(values: list[float]) -> SummaryMetric:
+    ordered = sorted(values)
+    return SummaryMetric(
+        mean=float(statistics.mean(ordered)),
+        median=float(statistics.median(ordered)),
+        p10=float(ordered[int(0.10 * (len(ordered) - 1))]),
+        p90=float(ordered[int(0.90 * (len(ordered) - 1))]),
+        p95=float(ordered[int(0.95 * (len(ordered) - 1))]),
+    )
+
+
+def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition]:
+    attacks = character.get("attacks", [])
+    resources = character.get("resources", {})
+    traits = {trait.lower() for trait in character.get("traits", [])}
+
+    if attacks:
+
+        def avg_damage(expr: str) -> float:
+            n_dice, dice_size, flat = parse_damage_expression(expr)
+            if n_dice == 0:
+                return float(flat)
+            return n_dice * ((dice_size + 1) / 2.0) + flat
+
+        best_attack = max(
+            attacks,
+            key=lambda attack: (
+                avg_damage(str(attack.get("damage", "1"))),
+                int(attack.get("to_hit", 0)),
+            ),
+        )
+        attack_count = 2 if "extra attack" in traits else 1
+        actions = [
+            ActionDefinition(
+                name="basic",
+                action_type="attack",
+                to_hit=int(best_attack.get("to_hit", 0)),
+                damage=str(best_attack.get("damage", "1")),
+                damage_type=str(best_attack.get("damage_type", "bludgeoning")),
+                attack_count=attack_count,
+                tags=["basic"],
+            )
+        ]
+
+        for idx, attack in enumerate(attacks, start=1):
+            actions.append(
+                ActionDefinition(
+                    name=f"attack_{idx}",
+                    action_type="attack",
+                    to_hit=int(attack.get("to_hit", 0)),
+                    damage=str(attack.get("damage", "1")),
+                    damage_type=str(attack.get("damage_type", "bludgeoning")),
+                    attack_count=attack_count,
+                    tags=["attack_option"],
+                )
+            )
+
+        if "ki" in resources and resources["ki"].get("max", 0) > 0:
+            actions.append(
+                ActionDefinition(
+                    name="signature",
+                    action_type="attack",
+                    to_hit=int(best_attack.get("to_hit", 0)),
+                    damage=str(best_attack.get("damage", "1")),
+                    damage_type=str(best_attack.get("damage_type", "bludgeoning")),
+                    attack_count=attack_count + 1,
+                    resource_cost={"ki": 1},
+                    tags=["signature"],
+                )
+            )
+        elif len(attacks) > 1:
+            secondary = attacks[1]
+            actions.append(
+                ActionDefinition(
+                    name="signature",
+                    action_type="attack",
+                    to_hit=int(secondary.get("to_hit", best_attack.get("to_hit", 0))),
+                    damage=str(secondary.get("damage", best_attack.get("damage", "1"))),
+                    damage_type=str(
+                        secondary.get("damage_type", best_attack.get("damage_type", "bludgeoning"))
+                    ),
+                    attack_count=attack_count,
+                    tags=["signature"],
+                )
+            )
+
+        return actions
+
+    return [
+        ActionDefinition(
+            name="basic",
+            action_type="attack",
+            to_hit=0,
+            damage="1",
+            damage_type="bludgeoning",
+            tags=["basic"],
+        )
+    ]
+
+
+def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
+    result: dict[str, int] = {}
+    raw = character.get("resources", {})
+    for key, value in raw.items():
+        if isinstance(value, dict):
+            max_value = value.get("max")
+            if isinstance(max_value, int):
+                result[key] = max_value
+            elif key == "spell_slots":
+                for level, slots in value.items():
+                    result[f"spell_slot_{level}"] = int(slots)
+            else:
+                for name, amount in value.items():
+                    if isinstance(amount, int):
+                        result[f"{key}_{name}"] = amount
+        elif isinstance(value, int):
+            result[key] = value
+    return result
+
+
+def _build_actor_from_character(character: dict[str, Any]) -> ActorRuntimeState:
+    ability_scores = character.get("ability_scores", {})
+    dex_mod = int(ability_scores.get("dex", 10) - 10) // 2
+    con_mod = int(ability_scores.get("con", 10) - 10) // 2
+    return ActorRuntimeState(
+        actor_id=character["character_id"],
+        team="party",
+        name=character["name"],
+        max_hp=int(character.get("max_hp", 1)),
+        hp=int(character.get("max_hp", 1)),
+        temp_hp=0,
+        ac=int(character.get("ac", 10)),
+        initiative_mod=dex_mod,
+        dex_mod=dex_mod,
+        con_mod=con_mod,
+        save_mods={k: int(v) for k, v in character.get("save_mods", {}).items()},
+        actions=_build_character_actions(character),
+        resources=_extract_flat_resources(character),
+        traits={trait.lower() for trait in character.get("traits", [])},
+    )
+
+
+def _build_actor_from_enemy(enemy: EnemyConfig) -> ActorRuntimeState:
+    actions: list[ActionDefinition] = []
+
+    def append_actions(source_actions: list[Any], default_cost: str) -> None:
+        for action in source_actions:
+            resolved_cost = (
+                default_cost
+                if default_cost != "action" and action.action_cost == "action"
+                else action.action_cost
+            )
+            actions.append(
+                ActionDefinition(
+                    name=action.name,
+                    action_type=action.action_type,
+                    to_hit=action.to_hit,
+                    damage=action.damage,
+                    damage_type=action.damage_type,
+                    attack_count=action.attack_count,
+                    save_dc=action.save_dc,
+                    save_ability=action.save_ability,
+                    half_on_save=action.half_on_save,
+                    resource_cost=dict(action.resource_cost),
+                    recharge=action.recharge,
+                    max_uses=action.max_uses,
+                    action_cost=resolved_cost,
+                    target_mode=action.target_mode,
+                    max_targets=action.max_targets,
+                    include_self=action.include_self,
+                    save_each_target=action.save_each_target,
+                    effects=[effect.model_dump() for effect in action.effects],
+                    tags=list(action.tags),
+                )
+            )
+
+    append_actions(enemy.actions, "action")
+    append_actions(enemy.bonus_actions, "bonus")
+    append_actions(enemy.reactions, "reaction")
+    append_actions(enemy.legendary_actions, "legendary")
+    append_actions(enemy.lair_actions, "lair")
+    if not actions:
+        actions.append(ActionDefinition(name="basic", action_type="attack", to_hit=0, damage="1"))
+
+    legendary_pool = int(enemy.resources.get("legendary_actions", 0))
+    if legendary_pool == 0 and enemy.legendary_actions:
+        legendary_pool = 3
+
+    recharge_ready = {action.name: True for action in actions if action.recharge}
+
+    return ActorRuntimeState(
+        actor_id=enemy.identity.enemy_id,
+        team=enemy.identity.team,
+        name=enemy.identity.name,
+        max_hp=enemy.stat_block.max_hp,
+        hp=enemy.stat_block.max_hp,
+        temp_hp=0,
+        ac=enemy.stat_block.ac,
+        initiative_mod=enemy.stat_block.initiative_mod,
+        dex_mod=enemy.stat_block.dex_mod,
+        con_mod=enemy.stat_block.con_mod,
+        save_mods=dict(enemy.stat_block.save_mods),
+        actions=actions,
+        damage_resistances={v.lower() for v in enemy.damage_resistances},
+        damage_immunities={v.lower() for v in enemy.damage_immunities},
+        damage_vulnerabilities={v.lower() for v in enemy.damage_vulnerabilities},
+        condition_immunities={v.lower() for v in enemy.condition_immunities},
+        resources=dict(enemy.resources),
+        recharge_ready=recharge_ready,
+        legendary_actions_remaining=legendary_pool,
+    )
+
+
+def _build_actor_views(
+    actors: dict[str, ActorRuntimeState],
+    actor_order: list[str],
+    round_number: int,
+    metadata: dict[str, Any],
+) -> BattleStateView:
+    return BattleStateView(
+        round_number=round_number,
+        actors={
+            actor_id: ActorView(
+                actor_id=actor.actor_id,
+                team=actor.team,
+                hp=actor.hp,
+                max_hp=actor.max_hp,
+                ac=actor.ac,
+                save_mods=dict(actor.save_mods),
+                resources=dict(actor.resources),
+                conditions=set(actor.conditions),
+            )
+            for actor_id, actor in actors.items()
+        },
+        actor_order=actor_order,
+        metadata=metadata,
+    )
+
+
+def _actor_defeated(actor: ActorRuntimeState) -> bool:
+    return actor.dead or actor.hp <= 0
+
+
+def _party_defeated(actors: dict[str, ActorRuntimeState]) -> bool:
+    party = [actor for actor in actors.values() if actor.team == "party"]
+    return bool(party) and all(_actor_defeated(actor) for actor in party)
+
+
+def _enemies_defeated(actors: dict[str, ActorRuntimeState]) -> bool:
+    enemies = [actor for actor in actors.values() if actor.team != "party"]
+    return bool(enemies) and all(_actor_defeated(actor) for actor in enemies)
+
+
+def _build_initiative_order(
+    rng: random.Random, actors: dict[str, ActorRuntimeState], mode: str
+) -> list[str]:
+    if mode == "grouped":
+        party = [actor for actor in actors.values() if actor.team == "party"]
+        enemies = [actor for actor in actors.values() if actor.team != "party"]
+        party_score = statistics.mean(rng.randint(1, 20) + actor.initiative_mod for actor in party)
+        enemy_score = statistics.mean(
+            rng.randint(1, 20) + actor.initiative_mod for actor in enemies
+        )
+        party_order = [
+            actor.actor_id for actor in sorted(party, key=lambda item: item.dex_mod, reverse=True)
+        ]
+        enemy_order = [
+            actor.actor_id for actor in sorted(enemies, key=lambda item: item.dex_mod, reverse=True)
+        ]
+        return (
+            party_order + enemy_order if party_score >= enemy_score else enemy_order + party_order
+        )
+
+    rolls = []
+    for actor in actors.values():
+        roll = rng.randint(1, 20) + actor.initiative_mod
+        rolls.append((roll, actor.dex_mod, actor.actor_id))
+    rolls.sort(reverse=True)
+    return [actor_id for _, _, actor_id in rolls]
+
+
+def _has_resources(actor: ActorRuntimeState, cost: dict[str, int]) -> bool:
+    for key, amount in cost.items():
+        if actor.resources.get(key, 0) < amount:
+            return False
+    return True
+
+
+def _spend_resources(actor: ActorRuntimeState, cost: dict[str, int]) -> dict[str, int]:
+    spent: dict[str, int] = {}
+    for key, amount in cost.items():
+        if amount <= 0:
+            continue
+        current = actor.resources.get(key, 0)
+        actual = min(amount, max(current, 0))
+        actor.resources[key] = current - actual
+        spent[key] = actual
+    return spent
+
+
+def _default_target(
+    actor: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+) -> list[TargetRef]:
+    candidates = [
+        target
+        for target in actors.values()
+        if target.team != actor.team and target.hp > 0 and not target.dead
+    ]
+    if not candidates:
+        return []
+    target = min(candidates, key=lambda value: (value.hp, value.max_hp))
+    return [TargetRef(target.actor_id)]
+
+
+def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
+    if action.action_type == "utility":
+        return True
+    for effect in action.effects:
+        if effect.get("target") != "target":
+            continue
+        if effect.get("effect_type") in {"heal", "temp_hp", "remove_condition", "resource_change"}:
+            return True
+    return False
+
+
+def _target_pool(
+    actor: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+    *,
+    mode: str,
+    include_self: bool,
+    include_downed_allies: bool,
+) -> list[ActorRuntimeState]:
+    def enemy_candidates() -> list[ActorRuntimeState]:
+        return [
+            value
+            for value in actors.values()
+            if value.team != actor.team and value.hp > 0 and not value.dead
+        ]
+
+    def ally_candidates() -> list[ActorRuntimeState]:
+        return [
+            value
+            for value in actors.values()
+            if value.team == actor.team
+            and not value.dead
+            and (value.hp > 0 or include_downed_allies)
+        ]
+
+    if mode == "self":
+        return [actor] if not actor.dead else []
+    if mode in {"single_enemy", "all_enemies", "n_enemies", "random_enemy"}:
+        pool = enemy_candidates()
+    elif mode in {"single_ally", "all_allies", "n_allies", "random_ally"}:
+        pool = ally_candidates()
+    else:
+        pool = [
+            value
+            for value in actors.values()
+            if not value.dead and (value.hp > 0 or include_downed_allies)
+        ]
+    if not include_self and mode != "self":
+        pool = [value for value in pool if value.actor_id != actor.actor_id]
+    return pool
+
+
+def _target_sort_key(
+    source: ActorRuntimeState,
+    target: ActorRuntimeState,
+    *,
+    mode: str,
+) -> tuple[float, int, int, str]:
+    if target.team == source.team:
+        ratio = target.hp / target.max_hp if target.max_hp > 0 else 1.0
+        deficit = target.max_hp - target.hp
+        return (ratio, -deficit, target.hp, target.actor_id)
+    return (0.0, target.hp, target.max_hp, target.actor_id)
+
+
+def _resolve_targets_for_action(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    actors: dict[str, ActorRuntimeState],
+    requested: list[TargetRef],
+) -> list[ActorRuntimeState]:
+    mode = action.target_mode
+    include_self = action.include_self or mode == "self"
+    include_downed_allies = _action_can_target_downed_allies(action)
+    candidates = _target_pool(
+        actor,
+        actors,
+        mode=mode,
+        include_self=include_self,
+        include_downed_allies=include_downed_allies,
+    )
+    if not candidates:
+        return []
+    by_id = {target.actor_id: target for target in candidates}
+
+    if mode in {"all_enemies", "all_allies", "all_creatures"}:
+        return sorted(
+            candidates,
+            key=lambda value: _target_sort_key(actor, value, mode=mode),
+        )
+
+    if mode in {"random_enemy", "random_ally"}:
+        valid_requested = [ref.actor_id for ref in requested if ref.actor_id in by_id]
+        if valid_requested:
+            return [by_id[valid_requested[0]]]
+        return [rng.choice(candidates)]
+
+    if mode == "self":
+        return [actor]
+
+    max_targets = 1
+    if mode in {"n_enemies", "n_allies"}:
+        max_targets = action.max_targets or 1
+
+    selected: list[ActorRuntimeState] = []
+    seen: set[str] = set()
+    for ref in requested:
+        target = by_id.get(ref.actor_id)
+        if target is None or target.actor_id in seen:
+            continue
+        selected.append(target)
+        seen.add(target.actor_id)
+        if len(selected) >= max_targets:
+            return selected
+
+    for target in sorted(candidates, key=lambda value: _target_sort_key(actor, value, mode=mode)):
+        if target.actor_id in seen:
+            continue
+        selected.append(target)
+        seen.add(target.actor_id)
+        if len(selected) >= max_targets:
+            break
+    return selected
+
+
+def _resolve_action_selection(
+    actor: ActorRuntimeState,
+    intent_name: str | None,
+) -> ActionDefinition:
+    if intent_name:
+        for action in actor.actions:
+            if action.name == intent_name:
+                return action
+    for action in actor.actions:
+        if action.name == "basic":
+            return action
+    return actor.actions[0]
+
+
+def _disadvantaged(actor: ActorRuntimeState) -> bool:
+    return bool(actor.conditions.intersection(_DISADVANTAGE_CONDITIONS))
+
+
+def _can_act(actor: ActorRuntimeState) -> bool:
+    return (
+        actor.hp > 0
+        and not actor.dead
+        and not actor.conditions.intersection(_CONTROL_BLOCKING_CONDITIONS)
+    )
+
+
+def _remove_condition(actor: ActorRuntimeState, condition: str) -> None:
+    key = condition.lower()
+    actor.conditions.discard(key)
+    actor.condition_durations.pop(key, None)
+    for implied in _IMPLIED_CONDITION_MAP.get(key, set()):
+        actor.conditions.discard(implied)
+        actor.condition_durations.pop(implied, None)
+
+
+def _apply_condition(
+    actor: ActorRuntimeState,
+    condition: str,
+    *,
+    duration_rounds: int | None = None,
+) -> None:
+    key = condition.lower()
+    if key in actor.condition_immunities or "all" in actor.condition_immunities:
+        return
+    actor.conditions.add(key)
+    if duration_rounds is not None and duration_rounds > 0:
+        existing = actor.condition_durations.get(key, 0)
+        actor.condition_durations[key] = max(existing, duration_rounds)
+    for implied in _IMPLIED_CONDITION_MAP.get(key, set()):
+        actor.conditions.add(implied)
+        if duration_rounds is not None and duration_rounds > 0:
+            existing = actor.condition_durations.get(implied, 0)
+            actor.condition_durations[implied] = max(existing, duration_rounds)
+
+
+def _tick_condition_durations(actors: dict[str, ActorRuntimeState]) -> None:
+    for actor in actors.values():
+        for condition, turns in list(actor.condition_durations.items()):
+            remaining = turns - 1
+            if remaining <= 0:
+                _remove_condition(actor, condition)
+            else:
+                actor.condition_durations[condition] = remaining
+
+
+def _apply_healing(target: ActorRuntimeState, amount: int) -> None:
+    if amount <= 0 or target.dead:
+        return
+    before = target.hp
+    target.hp = min(target.max_hp, target.hp + amount)
+    if before <= 0 and target.hp > 0:
+        target.death_successes = 0
+        target.death_failures = 0
+        target.stable = False
+        target.was_downed = False
+        _remove_condition(target, "unconscious")
+        _remove_condition(target, "incapacitated")
+
+
+def _effect_matches_event(effect: dict[str, Any], event: str) -> bool:
+    apply_on = str(effect.get("apply_on", "always"))
+    return apply_on == "always" or apply_on == event
+
+
+def _consume_attack_flags(actor: ActorRuntimeState) -> tuple[bool, bool]:
+    advantage = actor.next_attack_advantage
+    disadvantage = _disadvantaged(actor) or actor.next_attack_disadvantage
+    if actor.next_attack_advantage or actor.next_attack_disadvantage:
+        actor.next_attack_advantage = False
+        actor.next_attack_disadvantage = False
+    return advantage, disadvantage
+
+
+def _resolve_effect_target(
+    effect: dict[str, Any],
+    *,
+    actor: ActorRuntimeState,
+    target: ActorRuntimeState,
+) -> ActorRuntimeState:
+    return actor if effect.get("target") == "source" else target
+
+
+def _apply_effect(
+    *,
+    effect: dict[str, Any],
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    target: ActorRuntimeState,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    recipient = _resolve_effect_target(effect, actor=actor, target=target)
+    effect_type = str(effect.get("effect_type"))
+
+    if effect_type == "damage":
+        raw_damage = roll_damage(rng, str(effect.get("damage", "0")), crit=False)
+        damage_type = str(effect.get("damage_type", "bludgeoning"))
+        applied = apply_damage(recipient, raw_damage, damage_type)
+        run_concentration_check(rng, recipient, applied)
+        damage_dealt[actor.actor_id] += applied
+        damage_taken[recipient.actor_id] += applied
+        threat_scores[actor.actor_id] += applied
+        return
+
+    if effect_type == "heal":
+        amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
+        _apply_healing(recipient, amount)
+        return
+
+    if effect_type == "temp_hp":
+        amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
+        if amount > 0:
+            recipient.temp_hp = max(recipient.temp_hp, amount)
+        return
+
+    if effect_type == "apply_condition":
+        save_dc = effect.get("save_dc")
+        save_ability = effect.get("save_ability")
+        if save_dc is not None and save_ability:
+            save_key = str(save_ability).lower()
+            save_total = rng.randint(1, 20) + int(recipient.save_mods.get(save_key, 0))
+            condition_saved = save_total >= int(save_dc)
+            if not condition_saved and recipient.resources.get("legendary_resistance", 0) > 0:
+                recipient.resources["legendary_resistance"] -= 1
+                resources_spent[recipient.actor_id]["legendary_resistance"] = (
+                    resources_spent[recipient.actor_id].get("legendary_resistance", 0) + 1
+                )
+                condition_saved = True
+            if condition_saved:
+                return
+        _apply_condition(
+            recipient,
+            str(effect.get("condition", "")),
+            duration_rounds=effect.get("duration_rounds"),
+        )
+        return
+
+    if effect_type == "remove_condition":
+        _remove_condition(recipient, str(effect.get("condition", "")))
+        return
+
+    if effect_type == "resource_change":
+        resource = str(effect.get("resource", ""))
+        delta = int(effect.get("amount", 0))
+        minimum = int(effect.get("min_value", 0))
+        before = int(recipient.resources.get(resource, 0))
+        after = max(minimum, before + delta)
+        recipient.resources[resource] = after
+        if delta < 0:
+            resources_spent[recipient.actor_id][resource] = resources_spent[recipient.actor_id].get(
+                resource, 0
+            ) + (before - after)
+        return
+
+    if effect_type == "next_attack_advantage":
+        recipient.next_attack_advantage = True
+        recipient.next_attack_disadvantage = False
+        return
+
+    if effect_type == "next_attack_disadvantage":
+        recipient.next_attack_disadvantage = True
+        recipient.next_attack_advantage = False
+        return
+
+    # forced_movement and note are schema-valid but non-positional in v1.
+    return
+
+
+def _apply_action_effects(
+    *,
+    action: ActionDefinition,
+    event: str,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    target: ActorRuntimeState,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    for effect in action.effects:
+        if _effect_matches_event(effect, event):
+            _apply_effect(
+                effect=effect,
+                rng=rng,
+                actor=actor,
+                target=target,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+            )
+
+
+def _parse_recharge_threshold(spec: str) -> int | None:
+    value = spec.strip()
+    if "-" in value:
+        _, high = value.split("-", 1)
+        return int(high)
+    if value.isdigit():
+        return int(value)
+    return None
+
+
+def _roll_recharge_for_actor(rng: random.Random, actor: ActorRuntimeState) -> None:
+    if not actor.recharge_ready:
+        return
+    by_name = {action.name: action for action in actor.actions}
+    for action_name, is_ready in list(actor.recharge_ready.items()):
+        if is_ready:
+            continue
+        action = by_name.get(action_name)
+        if not action or not action.recharge:
+            actor.recharge_ready[action_name] = True
+            continue
+        threshold = _parse_recharge_threshold(action.recharge)
+        if threshold is None:
+            actor.recharge_ready[action_name] = True
+            continue
+        if rng.randint(1, 6) >= threshold:
+            actor.recharge_ready[action_name] = True
+
+
+def _can_pay_resource_cost(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    return _has_resources(actor, action.resource_cost)
+
+
+def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if action.max_uses is not None and actor.per_action_uses.get(action.name, 0) >= action.max_uses:
+        return False
+    if action.recharge and not actor.recharge_ready.get(action.name, True):
+        return False
+    if not _can_pay_resource_cost(actor, action):
+        return False
+    if action.action_cost == "bonus" and not actor.bonus_available:
+        return False
+    if action.action_cost == "reaction" and not actor.reaction_available:
+        return False
+    if action.action_cost == "legendary" and actor.legendary_actions_remaining <= 0:
+        return False
+    if action.action_cost == "lair" and actor.lair_action_used_this_round:
+        return False
+    return True
+
+
+def _mark_action_cost_used(actor: ActorRuntimeState, action: ActionDefinition) -> None:
+    if action.action_cost == "bonus":
+        actor.bonus_available = False
+    elif action.action_cost == "reaction":
+        actor.reaction_available = False
+    elif action.action_cost == "legendary":
+        actor.legendary_actions_remaining = max(0, actor.legendary_actions_remaining - 1)
+    elif action.action_cost == "lair":
+        actor.lair_action_used_this_round = True
+
+
+def _fallback_action(
+    actor: ActorRuntimeState, *, allow_special: bool = False
+) -> ActionDefinition | None:
+    disallowed = set() if allow_special else {"legendary", "lair", "reaction"}
+    for action in actor.actions:
+        if action.action_cost in disallowed:
+            continue
+        if action.name == "basic" and _action_available(actor, action):
+            return action
+    for action in actor.actions:
+        if action.action_cost in disallowed:
+            continue
+        if _action_available(actor, action):
+            return action
+    return None
+
+
+def _execute_action(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    targets: list[ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    if not targets:
+        return
+
+    if action.action_type == "attack":
+        if action.to_hit is None:
+            return
+        for target in targets:
+            if target.dead or target.hp <= 0:
+                continue
+            for _ in range(max(1, action.attack_count)):
+                if target.dead or target.hp <= 0:
+                    break
+                advantage, disadvantage = _consume_attack_flags(actor)
+                roll = attack_roll(
+                    rng,
+                    action.to_hit,
+                    target.ac,
+                    advantage=advantage,
+                    disadvantage=disadvantage,
+                )
+                event = "hit" if roll.hit else "miss"
+                if roll.hit and action.damage:
+                    raw_damage = roll_damage(rng, action.damage, crit=roll.crit)
+                    applied = apply_damage(
+                        target,
+                        raw_damage,
+                        action.damage_type,
+                        is_critical=roll.crit,
+                    )
+                    run_concentration_check(rng, target, applied)
+                    damage_dealt[actor.actor_id] += applied
+                    damage_taken[target.actor_id] += applied
+                    threat_scores[actor.actor_id] += applied
+                _apply_action_effects(
+                    action=action,
+                    event=event,
+                    rng=rng,
+                    actor=actor,
+                    target=target,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                )
+        return
+
+    if action.action_type == "save":
+        if action.save_dc is None or not action.save_ability:
+            return
+        save_key = action.save_ability.lower()
+        shared_save_roll = rng.randint(1, 20) if not action.save_each_target else None
+
+        for target in targets:
+            if target.dead or target.hp <= 0:
+                continue
+            save_mod = int(target.save_mods.get(save_key, 0))
+            save_roll = shared_save_roll if shared_save_roll is not None else rng.randint(1, 20)
+            success = (save_roll + save_mod) >= action.save_dc
+            if not success and target.resources.get("legendary_resistance", 0) > 0:
+                target.resources["legendary_resistance"] -= 1
+                resources_spent[target.actor_id]["legendary_resistance"] = (
+                    resources_spent[target.actor_id].get("legendary_resistance", 0) + 1
+                )
+                success = True
+
+            if action.damage:
+                raw_damage = roll_damage(rng, action.damage, crit=False)
+                final_damage = raw_damage
+                if success:
+                    final_damage = raw_damage // 2 if action.half_on_save else 0
+                elif save_key == "dex" and "evasion" in target.traits and action.half_on_save:
+                    final_damage = raw_damage // 2
+                if success and save_key == "dex" and "evasion" in target.traits:
+                    final_damage = 0
+                applied = apply_damage(target, final_damage, action.damage_type)
+                run_concentration_check(rng, target, applied)
+                damage_dealt[actor.actor_id] += applied
+                damage_taken[target.actor_id] += applied
+                threat_scores[actor.actor_id] += applied
+
+            _apply_action_effects(
+                action=action,
+                event="save_success" if success else "save_fail",
+                rng=rng,
+                actor=actor,
+                target=target,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+            )
+        return
+
+    if action.action_type == "utility":
+        for target in targets:
+            _apply_action_effects(
+                action=action,
+                event="always",
+                rng=rng,
+                actor=actor,
+                target=target,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+            )
+
+
+def _build_round_metadata(
+    *,
+    actors: dict[str, ActorRuntimeState],
+    threat_scores: dict[str, int],
+    burst_round_threshold: int,
+) -> dict[str, Any]:
+    return {
+        "threat_scores": dict(threat_scores),
+        "burst_round_threshold": burst_round_threshold,
+        "available_actions": {
+            actor_id: [action.name for action in actor.actions if _action_available(actor, action)]
+            for actor_id, actor in actors.items()
+        },
+        "action_catalog": {
+            actor_id: [
+                {
+                    "name": action.name,
+                    "action_type": action.action_type,
+                    "to_hit": action.to_hit,
+                    "damage": action.damage,
+                    "damage_type": action.damage_type,
+                    "attack_count": action.attack_count,
+                    "save_dc": action.save_dc,
+                    "save_ability": action.save_ability,
+                    "half_on_save": action.half_on_save,
+                    "resource_cost": dict(action.resource_cost),
+                    "max_uses": action.max_uses,
+                    "used_count": actor.per_action_uses.get(action.name, 0),
+                    "action_cost": action.action_cost,
+                    "recharge_ready": actor.recharge_ready.get(action.name, True),
+                    "target_mode": action.target_mode,
+                    "max_targets": action.max_targets,
+                    "include_self": action.include_self,
+                    "save_each_target": action.save_each_target,
+                    "effects": list(action.effects),
+                }
+                for action in actor.actions
+            ]
+            for actor_id, actor in actors.items()
+        },
+    }
+
+
+def _run_lair_actions(
+    *,
+    rng: random.Random,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    for actor in actors.values():
+        if actor.dead or actor.hp <= 0:
+            continue
+        if actor.lair_action_used_this_round:
+            continue
+        lair_actions = [action for action in actor.actions if action.action_cost == "lair"]
+        if not lair_actions:
+            continue
+        action = next(
+            (candidate for candidate in lair_actions if _action_available(actor, candidate)), None
+        )
+        if action is None:
+            continue
+        targets = _resolve_targets_for_action(
+            rng=rng,
+            actor=actor,
+            action=action,
+            actors=actors,
+            requested=[],
+        )
+        if not targets:
+            continue
+        spent = _spend_resources(actor, action.resource_cost)
+        for key, amount in spent.items():
+            resources_spent[actor.actor_id][key] = (
+                resources_spent[actor.actor_id].get(key, 0) + amount
+            )
+        actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
+        if action.recharge:
+            actor.recharge_ready[action.name] = False
+        _mark_action_cost_used(actor, action)
+        _execute_action(
+            rng=rng,
+            actor=actor,
+            action=action,
+            targets=targets,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+        )
+
+
+def _run_legendary_actions(
+    *,
+    rng: random.Random,
+    trigger_actor: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    for actor in actors.values():
+        if actor.actor_id == trigger_actor.actor_id:
+            continue
+        if actor.dead or actor.hp <= 0:
+            continue
+        legendary = [action for action in actor.actions if action.action_cost == "legendary"]
+        if not legendary:
+            continue
+        action = next(
+            (candidate for candidate in legendary if _action_available(actor, candidate)), None
+        )
+        if action is None:
+            continue
+        targets = _resolve_targets_for_action(
+            rng=rng,
+            actor=actor,
+            action=action,
+            actors=actors,
+            requested=[],
+        )
+        if not targets:
+            continue
+        spent = _spend_resources(actor, action.resource_cost)
+        for key, amount in spent.items():
+            resources_spent[actor.actor_id][key] = (
+                resources_spent[actor.actor_id].get(key, 0) + amount
+            )
+        actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
+        if action.recharge:
+            actor.recharge_ready[action.name] = False
+        _mark_action_cost_used(actor, action)
+        _execute_action(
+            rng=rng,
+            actor=actor,
+            action=action,
+            targets=targets,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+        )
+
+
+def _flatten_trial(trial: TrialResult) -> dict[str, Any]:
+    return {
+        "trial_index": trial.trial_index,
+        "rounds": trial.rounds,
+        "winner": trial.winner,
+        "damage_taken": json.dumps(trial.damage_taken, sort_keys=True),
+        "damage_dealt": json.dumps(trial.damage_dealt, sort_keys=True),
+        "resources_spent": json.dumps(trial.resources_spent, sort_keys=True),
+        "downed_counts": json.dumps(trial.downed_counts, sort_keys=True),
+        "death_counts": json.dumps(trial.death_counts, sort_keys=True),
+        "remaining_hp": json.dumps(trial.remaining_hp, sort_keys=True),
+    }
+
+
+def run_simulation(
+    scenario: LoadedScenario,
+    character_db: dict[str, dict[str, Any]],
+    strategy_registry: dict[str, Any],
+    *,
+    trials: int,
+    seed: int,
+    run_id: str,
+) -> SimulationArtifacts:
+    if trials <= 0:
+        raise ValueError("trials must be >= 1")
+
+    rng = random.Random(seed)
+    trial_results: list[TrialResult] = []
+
+    assumption_overrides = scenario.config.assumption_overrides
+    party_default_strategy = assumption_overrides.get("party_strategy", "optimal_expected_damage")
+    enemy_default_strategy = assumption_overrides.get("enemy_strategy", "optimal_expected_damage")
+    actor_strategy_overrides = assumption_overrides.get("actor_strategy", {})
+    tracked_resource_names: dict[str, set[str]] = {}
+
+    for trial_idx in range(trials):
+        actors: dict[str, ActorRuntimeState] = {}
+        for character_id in scenario.config.party:
+            if character_id not in character_db:
+                raise ValueError(f"Character ID missing from DB: {character_id}")
+            actor = _build_actor_from_character(character_db[character_id])
+            actors[actor.actor_id] = actor
+
+        for enemy_id in scenario.config.enemies:
+            actor = _build_actor_from_enemy(scenario.enemies[enemy_id])
+            actors[actor.actor_id] = actor
+
+        if trial_idx == 0:
+            tracked_resource_names = {
+                actor_id: set(actor.resources.keys()) for actor_id, actor in actors.items()
+            }
+
+        damage_taken = {actor_id: 0 for actor_id in actors}
+        damage_dealt = {actor_id: 0 for actor_id in actors}
+        resources_spent = {actor_id: {} for actor_id in actors}
+        threat_scores = {actor_id: 0 for actor_id in actors}
+
+        initiative_order = _build_initiative_order(rng, actors, scenario.config.initiative_mode)
+        rounds = 0
+        max_rounds = int(scenario.config.termination_rules.get("max_rounds", 20))
+
+        while rounds < max_rounds:
+            rounds += 1
+            for actor in actors.values():
+                actor.lair_action_used_this_round = False
+                if any(action.action_cost == "legendary" for action in actor.actions):
+                    base_legendary = int(actor.resources.get("legendary_actions", 0))
+                    actor.legendary_actions_remaining = base_legendary if base_legendary > 0 else 3
+
+            _run_lair_actions(
+                rng=rng,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+            )
+
+            metadata = _build_round_metadata(
+                actors=actors,
+                threat_scores=threat_scores,
+                burst_round_threshold=int(
+                    scenario.config.resource_policy.get("burst_round_threshold", 3)
+                ),
+            )
+            state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
+            for strategy in strategy_registry.values():
+                strategy.on_round_start(state_view)
+
+            for actor_id in initiative_order:
+                actor = actors[actor_id]
+                _roll_recharge_for_actor(rng, actor)
+                actor.bonus_available = True
+                actor.reaction_available = True
+
+                if actor.dead:
+                    continue
+
+                if actor.hp <= 0:
+                    resolve_death_save(rng, actor)
+                    continue
+
+                if _party_defeated(actors) or _enemies_defeated(actors):
+                    break
+
+                if not _can_act(actor):
+                    continue
+
+                strategy_name = actor_strategy_overrides.get(actor.actor_id)
+                if strategy_name is None:
+                    strategy_name = (
+                        party_default_strategy if actor.team == "party" else enemy_default_strategy
+                    )
+                strategy = strategy_registry.get(strategy_name)
+                if strategy is None:
+                    raise ValueError(
+                        f"No strategy registered for actor {actor.actor_id}: {strategy_name}"
+                    )
+
+                metadata = _build_round_metadata(
+                    actors=actors,
+                    threat_scores=threat_scores,
+                    burst_round_threshold=int(
+                        scenario.config.resource_policy.get("burst_round_threshold", 3)
+                    ),
+                )
+                state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
+                actor_view = state_view.actors[actor.actor_id]
+                intent = strategy.choose_action(actor_view, state_view)
+                action = _resolve_action_selection(actor, intent.action_name)
+
+                if not _action_available(actor, action):
+                    fallback = _fallback_action(actor)
+                    if fallback is None:
+                        continue
+                    action = fallback
+
+                extra_spend = strategy.decide_resource_spend(actor_view, intent, state_view).amounts
+                cost = dict(action.resource_cost)
+                for key, amount in extra_spend.items():
+                    cost[key] = cost.get(key, 0) + amount
+
+                if cost and not _has_resources(actor, cost):
+                    action = _resolve_action_selection(actor, "basic")
+                    cost = dict(action.resource_cost)
+
+                targets = strategy.choose_targets(actor_view, intent, state_view)
+                resolved_targets = _resolve_targets_for_action(
+                    rng=rng,
+                    actor=actor,
+                    action=action,
+                    actors=actors,
+                    requested=targets,
+                )
+                if not resolved_targets:
+                    continue
+
+                spent = _spend_resources(actor, cost)
+                for key, amount in spent.items():
+                    resources_spent[actor.actor_id][key] = (
+                        resources_spent[actor.actor_id].get(key, 0) + amount
+                    )
+
+                actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
+                if action.recharge:
+                    actor.recharge_ready[action.name] = False
+                _mark_action_cost_used(actor, action)
+
+                _execute_action(
+                    rng=rng,
+                    actor=actor,
+                    action=action,
+                    targets=resolved_targets,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                )
+
+                _run_legendary_actions(
+                    rng=rng,
+                    trigger_actor=actor,
+                    actors=actors,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                )
+
+            _tick_condition_durations(actors)
+            if _party_defeated(actors) or _enemies_defeated(actors):
+                break
+
+        winner = "draw"
+        if _enemies_defeated(actors):
+            winner = "party"
+        elif _party_defeated(actors):
+            winner = "enemy"
+        else:
+            party_hp = sum(
+                actor.hp for actor in actors.values() if actor.team == "party" and not actor.dead
+            )
+            enemy_hp = sum(
+                actor.hp for actor in actors.values() if actor.team != "party" and not actor.dead
+            )
+            winner = "party" if party_hp >= enemy_hp else "enemy"
+
+        trial = TrialResult(
+            trial_index=trial_idx,
+            rounds=rounds,
+            winner=winner,
+            damage_taken=dict(damage_taken),
+            damage_dealt=dict(damage_dealt),
+            resources_spent=resources_spent,
+            downed_counts={actor_id: actor.downed_count for actor_id, actor in actors.items()},
+            death_counts={actor_id: int(actor.dead) for actor_id, actor in actors.items()},
+            remaining_hp={actor_id: actor.hp for actor_id, actor in actors.items()},
+        )
+        trial_results.append(trial)
+
+    trial_rows = [_flatten_trial(trial) for trial in trial_results]
+
+    party_wins = sum(1 for trial in trial_results if trial.winner == "party")
+    enemy_wins = sum(1 for trial in trial_results if trial.winner == "enemy")
+
+    actor_ids = sorted(trial_results[0].damage_taken.keys()) if trial_results else []
+
+    per_actor_damage_taken = {
+        actor_id: _metric([trial.damage_taken[actor_id] for trial in trial_results])
+        for actor_id in actor_ids
+    }
+    per_actor_damage_dealt = {
+        actor_id: _metric([trial.damage_dealt[actor_id] for trial in trial_results])
+        for actor_id in actor_ids
+    }
+
+    resources_all: dict[str, dict[str, list[float]]] = {actor_id: {} for actor_id in actor_ids}
+    for trial in trial_results:
+        for actor_id in actor_ids:
+            for resource_name in tracked_resource_names.get(actor_id, set()):
+                resources_all[actor_id].setdefault(resource_name, [])
+            for resource_name, amount in trial.resources_spent.get(actor_id, {}).items():
+                resources_all[actor_id].setdefault(resource_name, []).append(float(amount))
+            for resource_name in resources_all[actor_id]:
+                if resource_name not in trial.resources_spent.get(actor_id, {}):
+                    resources_all[actor_id][resource_name].append(0.0)
+
+    per_actor_resources_spent: dict[str, dict[str, SummaryMetric]] = {}
+    for actor_id, resource_map in resources_all.items():
+        per_actor_resources_spent[actor_id] = {
+            resource_name: _metric(values) for resource_name, values in resource_map.items()
+        }
+
+    per_actor_downed = {
+        actor_id: _metric([trial.downed_counts[actor_id] for trial in trial_results])
+        for actor_id in actor_ids
+    }
+    per_actor_deaths = {
+        actor_id: _metric([trial.death_counts[actor_id] for trial in trial_results])
+        for actor_id in actor_ids
+    }
+    per_actor_remaining_hp = {
+        actor_id: _metric([trial.remaining_hp[actor_id] for trial in trial_results])
+        for actor_id in actor_ids
+    }
+
+    summary = SimulationSummary(
+        run_id=run_id,
+        scenario_id=scenario.config.scenario_id,
+        trials=trials,
+        party_win_rate=party_wins / trials,
+        enemy_win_rate=enemy_wins / trials,
+        rounds=_metric([trial.rounds for trial in trial_results]),
+        per_actor_damage_taken=per_actor_damage_taken,
+        per_actor_damage_dealt=per_actor_damage_dealt,
+        per_actor_resources_spent=per_actor_resources_spent,
+        per_actor_downed=per_actor_downed,
+        per_actor_deaths=per_actor_deaths,
+        per_actor_remaining_hp=per_actor_remaining_hp,
+    )
+
+    return SimulationArtifacts(
+        trial_results=trial_results,
+        trial_rows=trial_rows,
+        summary=summary,
+    )

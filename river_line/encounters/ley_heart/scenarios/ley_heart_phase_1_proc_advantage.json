@@ -1,0 +1,142 @@
+{
+  "scenario_id": "ley_heart_phase_1_proc_advantage",
+  "encounter_id": "ley_heart",
+  "ruleset": "5e-2014",
+  "character_db_dir": "/Users/rexputnam/Documents/projects/dnd_sim/river_line/db/characters",
+  "party": [
+    "squanch_161607569",
+    "furyen_fury",
+    "isak_wissa"
+  ],
+  "enemies": [
+    "past_pylon",
+    "present_pylon",
+    "future_pylon"
+  ],
+  "initiative_mode": "individual",
+  "battlefield": {
+    "description": "Three pylons around ley heart",
+    "max_distance_ft": 30
+  },
+  "termination_rules": {
+    "party_defeat": "all_unconscious_or_dead",
+    "enemy_defeat": "all_dead",
+    "max_rounds": 20
+  },
+  "strategy_modules": [
+    {
+      "name": "focus_fire_lowest_hp",
+      "source": "builtin",
+      "class_name": "FocusFireLowestHPStrategy"
+    },
+    {
+      "name": "boss_highest_threat_target",
+      "source": "builtin",
+      "class_name": "BossHighestThreatTargetStrategy"
+    },
+    {
+      "name": "conserve_resources_then_burst",
+      "source": "builtin",
+      "class_name": "ConserveResourcesThenBurstStrategy"
+    },
+    {
+      "name": "always_use_signature_ability_if_ready",
+      "source": "builtin",
+      "class_name": "AlwaysUseSignatureAbilityStrategy"
+    },
+    {
+      "name": "ley_heart_phase_1",
+      "source": "encounter",
+      "module": "ley_heart_phase_1_strategy",
+      "class_name": "LeyHeartPhase1Strategy"
+    }
+  ],
+  "resource_policy": {
+    "mode": "combat_and_utility",
+    "burst_round_threshold": 2
+  },
+  "custom_simulation": {
+    "source": "encounter",
+    "module": "ley_heart_phase_1_custom_sim",
+    "callable": "run_custom_simulation"
+  },
+  "assumption_overrides": {
+    "party_strategy": "ley_heart_phase_1",
+    "enemy_strategy": "boss_highest_threat_target",
+    "actor_strategy": {
+      "squanch_161607569": "conserve_resources_then_burst"
+    },
+    "custom_sim": {
+      "pylon_hp": 39,
+      "pylon_ac": 12,
+      "procedure_dc": 13,
+      "pulse_save_dc": 15,
+      "unexposed_damage_multiplier": 0.5,
+      "procedure_cost_mode": "bonus_action",
+      "procedure_fail_forward": "next_attempt_advantage",
+      "positioning_mode": "equilateral_nodes",
+      "pylon_to_pylon_ft": 30,
+      "avoid_boss_center": true,
+      "spread_out_positions": true,
+      "pulse_targeting": "single_alternating_monk",
+      "breakpoints_per_attack": true,
+      "initiative_mode": "rolled_fixed",
+      "procedure_mode": "pass_on_fail",
+      "prism_pulse_magical": true,
+      "healing": {
+        "healing_word": false,
+        "threshold_fraction": 0.5,
+        "wholeness_of_body": false,
+        "wholeness_threshold_fraction": 0.5
+      },
+      "procedure_actors": {
+        "past": "druid",
+        "present": "fury",
+        "future": "druid"
+      },
+      "boss_phase_1": {
+        "enabled": true,
+        "action_priority": [
+          "guilt_fog",
+          "boiler_vent",
+          "time_shear",
+          "harpoon_winch",
+          "slam"
+        ],
+        "lair_priority": [
+          "arc_flash",
+          "undertow",
+          "phase_flicker"
+        ],
+        "lair_mode": "best_available",
+        "target_mode": "random",
+        "guilt_fog_targets": 2,
+        "boiler_vent_targets": 1,
+        "arc_flash_targets": 2,
+        "damage_scalar": 1.0,
+        "save_dc_offset": 0,
+        "attack_bonus_offset": 0,
+        "harpoon_to_hit": 7,
+        "harpoon_damage_expr": "1d10+4",
+        "harpoon_escape_dc": 16,
+        "guilt_fog_dc": 14,
+        "guilt_fog_damage_expr": "3d6",
+        "boiler_vent_dc": 14,
+        "boiler_vent_damage_expr": "3d6",
+        "time_shear_dc": 13,
+        "time_shear_damage_expr": "2d6+1",
+        "slam_to_hit": 8,
+        "slam_damage_expr": "2d6+2",
+        "tail_tap_dc": 13,
+        "undertow_dc": 13,
+        "arc_flash_dc": 13,
+        "arc_flash_damage_expr": "1d6+1",
+        "phase_flicker_ac_bonus": 2,
+        "phase_flicker_threshold_bonus": 5,
+        "phase_flicker_weak_threshold": 30,
+        "temporal_reversal_reduction": 10,
+        "temporal_reversal_recharge_min": 5
+      }
+    }
+  }
+}

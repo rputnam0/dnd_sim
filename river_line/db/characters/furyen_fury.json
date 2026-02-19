@@ -1,0 +1,1259 @@
+{
+  "ability_scores": {
+    "cha": 13,
+    "con": 16,
+    "dex": 20,
+    "int": 14,
+    "str": 12,
+    "wis": 18
+  },
+  "ac": 19,
+  "attacks": [
+    {
+      "damage": "1d6+5",
+      "damage_type": "bludgeoning",
+      "name": "Brass Knuckles",
+      "to_hit": 8
+    },
+    {
+      "damage": "1d8+5",
+      "damage_type": "slashing",
+      "name": "Katana",
+      "to_hit": 5
+    },
+    {
+      "damage": "1d6+5",
+      "damage_type": "bludgeoning",
+      "name": "Unarmed Strike",
+      "to_hit": 8
+    },
+    {
+      "damage": "1d6+5",
+      "damage_type": "bludgeoning",
+      "name": "Unarmed Strike",
+      "to_hit": 8
+    },
+    {
+      "damage": "1d6+5",
+      "damage_type": "bludgeoning",
+      "name": "Flurry of Blows",
+      "to_hit": 8
+    },
+    {
+      "damage": "1d6+5",
+      "damage_type": "bludgeoning",
+      "name": "Deflect Missiles Attack",
+      "to_hit": 8
+    }
+  ],
+  "character_id": "furyen_fury",
+  "class_level": "Monk 8",
+  "max_hp": 71,
+  "name": "Furyen (Fury)",
+  "raw_fields": [
+    {
+      "field": "AC",
+      "page": 1,
+      "value": "19"
+    },
+    {
+      "field": "Acrobatics",
+      "page": 1,
+      "value": "+5"
+    },
+    {
+      "field": "AcrobaticsMod",
+      "page": 1,
+      "value": "DEX"
+    },
+    {
+      "field": "Actions1",
+      "page": 1,
+      "value": "=== ACTIONS === \nStandard Actions \n     Attack, Magic, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Utilize, Opportunity Attack, Grapple, Shove, Improvise, Two-Weapon Fighting, Interact with an Object, Study, Influence \n\nWholeness of Body \u2022 1 / Long Rest \n     Once per long rest as an action, you can regain 24 HP. \n\n=== BONUS ACTIONS === \nFlurry of Blows \n     After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action."
+    },
+    {
+      "field": "Actions2",
+      "page": 1,
+      "value": "Patient Defense \n     You can spend 1 ki point to take the Dodge action as a bonus action on your turn. \n\nStep of the Wind \n     You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn. \n\nUnarmed Strike \n     When you use the Attack action with an unarmed strike or a monk weapon on your turn, you can make one unarmed strike as a bonus action. \n\n=== REACTIONS ==="
+    },
+    {
+      "field": "AdditionalSenses",
+      "page": 1,
+      "value": "Blindsight 10 ft."
+    },
+    {
+      "field": "Animal",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "AnimalMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "Arcana",
+      "page": 1,
+      "value": "+5"
+    },
+    {
+      "field": "ArcanaMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "ArcanaProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "Athletics",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "AthleticsMod",
+      "page": 1,
+      "value": "STR"
+    },
+    {
+      "field": "BACKGROUND",
+      "page": 1,
+      "value": "Sage"
+    },
+    {
+      "field": "CHA",
+      "page": 1,
+      "value": "13"
+    },
+    {
+      "field": "CHamod",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "CharacterName",
+      "page": 1,
+      "value": "Furyen (Fury)"
+    },
+    {
+      "field": "CLASS  LEVEL",
+      "page": 1,
+      "value": "Monk 8"
+    },
+    {
+      "field": "CON",
+      "page": 1,
+      "value": "16"
+    },
+    {
+      "field": "CONmod",
+      "page": 1,
+      "value": "+3"
+    },
+    {
+      "field": "Deception",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "DeceptionMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "DEX",
+      "page": 1,
+      "value": "20"
+    },
+    {
+      "field": "DEXmod",
+      "page": 1,
+      "value": "+5"
+    },
+    {
+      "field": "DexProf",
+      "page": 1,
+      "value": "\u2022"
+    },
+    {
+      "field": "EXPERIENCE POINTS",
+      "page": 1,
+      "value": "(Milestone)"
+    },
+    {
+      "field": "History",
+      "page": 1,
+      "value": "+5"
+    },
+    {
+      "field": "HistoryMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "HistoryProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "Init",
+      "page": 1,
+      "value": "+5"
+    },
+    {
+      "field": "Insight",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "InsightMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "InsightProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "INT",
+      "page": 1,
+      "value": "14"
+    },
+    {
+      "field": "Intimidation",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "IntimidationMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "INTmod",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "Investigation",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "InvestigationMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "MaxHP",
+      "page": 1,
+      "value": "71"
+    },
+    {
+      "field": "Medicine",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "MedicineMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "Nature",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "NatureMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "Passive1",
+      "page": 1,
+      "value": "17"
+    },
+    {
+      "field": "Passive2",
+      "page": 1,
+      "value": "17"
+    },
+    {
+      "field": "Passive3",
+      "page": 1,
+      "value": "12"
+    },
+    {
+      "field": "Perception",
+      "page": 1,
+      "value": "+7"
+    },
+    {
+      "field": "PerceptionMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "PerceptionProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "Performance",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "PerformanceMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "Persuasion",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "PersuasionMod",
+      "page": 1,
+      "value": "CHA"
+    },
+    {
+      "field": "PLAYER NAME",
+      "page": 1,
+      "value": "The_Lizardscale_King"
+    },
+    {
+      "field": "ProfBonus",
+      "page": 1,
+      "value": "+3"
+    },
+    {
+      "field": "ProficienciesLang",
+      "page": 1,
+      "value": "=== WEAPONS === \nShortsword, Simple Weapons \n\n=== TOOLS === \nCalligrapher's Supplies, Lute \n\n=== LANGUAGES === \nCommon, Primordial"
+    },
+    {
+      "field": "RACE",
+      "page": 1,
+      "value": "Variant Human"
+    },
+    {
+      "field": "Religion",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "ReligionMod",
+      "page": 1,
+      "value": "INT"
+    },
+    {
+      "field": "SleightofHand",
+      "page": 1,
+      "value": "+5"
+    },
+    {
+      "field": "SleightofHandMod",
+      "page": 1,
+      "value": "DEX"
+    },
+    {
+      "field": "Speed",
+      "page": 1,
+      "value": "45 ft. (Walking)"
+    },
+    {
+      "field": "ST Charisma",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "ST Constitution",
+      "page": 1,
+      "value": "+3"
+    },
+    {
+      "field": "ST Dexterity",
+      "page": 1,
+      "value": "+8"
+    },
+    {
+      "field": "ST Intelligence",
+      "page": 1,
+      "value": "+2"
+    },
+    {
+      "field": "ST Strength",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "ST Wisdom",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "Stealth",
+      "page": 1,
+      "value": "+8"
+    },
+    {
+      "field": "StealthMod",
+      "page": 1,
+      "value": "DEX"
+    },
+    {
+      "field": "StealthProf",
+      "page": 1,
+      "value": "P"
+    },
+    {
+      "field": "STR",
+      "page": 1,
+      "value": "12"
+    },
+    {
+      "field": "STRmod",
+      "page": 1,
+      "value": "+1"
+    },
+    {
+      "field": "StrProf",
+      "page": 1,
+      "value": "\u2022"
+    },
+    {
+      "field": "Survival",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "SurvivalMod",
+      "page": 1,
+      "value": "WIS"
+    },
+    {
+      "field": "TempHP",
+      "page": 1,
+      "value": "--"
+    },
+    {
+      "field": "Total",
+      "page": 1,
+      "value": "8d8"
+    },
+    {
+      "field": "WIS",
+      "page": 1,
+      "value": "18"
+    },
+    {
+      "field": "WISmod",
+      "page": 1,
+      "value": "+4"
+    },
+    {
+      "field": "Wpn Name",
+      "page": 1,
+      "value": "Brass Knuckles"
+    },
+    {
+      "field": "Wpn Name 2",
+      "page": 1,
+      "value": "Katana"
+    },
+    {
+      "field": "Wpn Name 3",
+      "page": 1,
+      "value": "Unarmed Strike"
+    },
+    {
+      "field": "Wpn Name 4",
+      "page": 1,
+      "value": "Unarmed Strike"
+    },
+    {
+      "field": "Wpn Name 5",
+      "page": 1,
+      "value": "Flurry of Blows"
+    },
+    {
+      "field": "Wpn Name 6",
+      "page": 1,
+      "value": "Deflect Missiles Attack"
+    },
+    {
+      "field": "Wpn Notes 1",
+      "page": 1,
+      "value": "Simple, Light, Push, Booming Blade: 1d8 Thunder, 2d8 Thunder"
+    },
+    {
+      "field": "Wpn Notes 2",
+      "page": 1,
+      "value": "Martial, Versatile, Sap, Booming Blade: 1d8 Thunder, 2d8 Thunder"
+    },
+    {
+      "field": "Wpn1 AtkBonus",
+      "page": 1,
+      "value": "+8"
+    },
+    {
+      "field": "Wpn1 Damage",
+      "page": 1,
+      "value": "1d6+5 Bludgeoning"
+    },
+    {
+      "field": "Wpn2 AtkBonus",
+      "page": 1,
+      "value": "+5"
+    },
+    {
+      "field": "Wpn2 Damage",
+      "page": 1,
+      "value": "1d8+5 Slashing"
+    },
+    {
+      "field": "Wpn3 AtkBonus",
+      "page": 1,
+      "value": "+8"
+    },
+    {
+      "field": "Wpn3 Damage",
+      "page": 1,
+      "value": "1d6+5 Bludgeoning"
+    },
+    {
+      "field": "Wpn4 AtkBonus",
+      "page": 1,
+      "value": "+8"
+    },
+    {
+      "field": "Wpn4 Damage",
+      "page": 1,
+      "value": "1d6+5 Bludgeoning"
+    },
+    {
+      "field": "Wpn5 AtkBonus",
+      "page": 1,
+      "value": "+8"
+    },
+    {
+      "field": "Wpn5 Damage",
+      "page": 1,
+      "value": "1d6+5 Bludgeoning"
+    },
+    {
+      "field": "Wpn6 AtkBonus",
+      "page": 1,
+      "value": "+8"
+    },
+    {
+      "field": "Wpn6 Damage",
+      "page": 1,
+      "value": "1d6+5"
+    },
+    {
+      "field": "BACKGROUND2",
+      "page": 2,
+      "value": "Sage"
+    },
+    {
+      "field": "CharacterName2",
+      "page": 2,
+      "value": "Furyen (Fury)"
+    },
+    {
+      "field": "CLASS  LEVEL2",
+      "page": 2,
+      "value": "Monk 8"
+    },
+    {
+      "field": "CP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "Encumbered",
+      "page": 2,
+      "value": "180 lb."
+    },
+    {
+      "field": "EP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "Eq Name0",
+      "page": 2,
+      "value": "Katana"
+    },
+    {
+      "field": "Eq Name1",
+      "page": 2,
+      "value": "Quarterstaff"
+    },
+    {
+      "field": "Eq Name10",
+      "page": 2,
+      "value": "Bedroll"
+    },
+    {
+      "field": "Eq Name11",
+      "page": 2,
+      "value": "Mess Kit"
+    },
+    {
+      "field": "Eq Name12",
+      "page": 2,
+      "value": "Rations (1 day)"
+    },
+    {
+      "field": "Eq Name13",
+      "page": 2,
+      "value": "Rope, Hempen (50 feet)"
+    },
+    {
+      "field": "Eq Name14",
+      "page": 2,
+      "value": "Tinderbox"
+    },
+    {
+      "field": "Eq Name15",
+      "page": 2,
+      "value": "Torch"
+    },
+    {
+      "field": "Eq Name16",
+      "page": 2,
+      "value": "Waterskin"
+    },
+    {
+      "field": "Eq Name2",
+      "page": 2,
+      "value": "Dart"
+    },
+    {
+      "field": "Eq Name3",
+      "page": 2,
+      "value": "Brass Knuckles"
+    },
+    {
+      "field": "Eq Name4",
+      "page": 2,
+      "value": "Backpack"
+    },
+    {
+      "field": "Eq Name5",
+      "page": 2,
+      "value": "Parchment"
+    },
+    {
+      "field": "Eq Name6",
+      "page": 2,
+      "value": "Calligrapher's Supplies"
+    },
+    {
+      "field": "Eq Name7",
+      "page": 2,
+      "value": "Robe"
+    },
+    {
+      "field": "Eq Name8",
+      "page": 2,
+      "value": "Book"
+    },
+    {
+      "field": "Eq Name9",
+      "page": 2,
+      "value": "Bracers of Defense"
+    },
+    {
+      "field": "Eq Qty0",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty1",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty10",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty11",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty12",
+      "page": 2,
+      "value": "10"
+    },
+    {
+      "field": "Eq Qty13",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty14",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty15",
+      "page": 2,
+      "value": "10"
+    },
+    {
+      "field": "Eq Qty16",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty2",
+      "page": 2,
+      "value": "10"
+    },
+    {
+      "field": "Eq Qty3",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty4",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty5",
+      "page": 2,
+      "value": "8"
+    },
+    {
+      "field": "Eq Qty6",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty7",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty8",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Qty9",
+      "page": 2,
+      "value": "1"
+    },
+    {
+      "field": "Eq Weight0",
+      "page": 2,
+      "value": "3 lb."
+    },
+    {
+      "field": "Eq Weight1",
+      "page": 2,
+      "value": "4 lb."
+    },
+    {
+      "field": "Eq Weight10",
+      "page": 2,
+      "value": "7 lb."
+    },
+    {
+      "field": "Eq Weight11",
+      "page": 2,
+      "value": "1 lb."
+    },
+    {
+      "field": "Eq Weight12",
+      "page": 2,
+      "value": "20 lb."
+    },
+    {
+      "field": "Eq Weight13",
+      "page": 2,
+      "value": "10 lb."
+    },
+    {
+      "field": "Eq Weight14",
+      "page": 2,
+      "value": "1 lb."
+    },
+    {
+      "field": "Eq Weight15",
+      "page": 2,
+      "value": "10 lb."
+    },
+    {
+      "field": "Eq Weight16",
+      "page": 2,
+      "value": "5 lb."
+    },
+    {
+      "field": "Eq Weight2",
+      "page": 2,
+      "value": "2.5 lb."
+    },
+    {
+      "field": "Eq Weight3",
+      "page": 2,
+      "value": "1 lb."
+    },
+    {
+      "field": "Eq Weight4",
+      "page": 2,
+      "value": "5 lb."
+    },
+    {
+      "field": "Eq Weight5",
+      "page": 2,
+      "value": "--"
+    },
+    {
+      "field": "Eq Weight6",
+      "page": 2,
+      "value": "5 lb."
+    },
+    {
+      "field": "Eq Weight7",
+      "page": 2,
+      "value": "4 lb."
+    },
+    {
+      "field": "Eq Weight8",
+      "page": 2,
+      "value": "5 lb."
+    },
+    {
+      "field": "Eq Weight9",
+      "page": 2,
+      "value": "--"
+    },
+    {
+      "field": "EXPERIENCE POINTS2",
+      "page": 2,
+      "value": "(Milestone)"
+    },
+    {
+      "field": "FeaturesTraits1",
+      "page": 2,
+      "value": "=== MONK FEATURES === \n\n* Hit Points \u2022 PHB 77 \n\n* Proficiencies \u2022 PHB 77 \n\n* Unarmored Defense \u2022 PHB 78 \nWhile not wearing armor and not using a shield, your AC equals 10 + DEX modifier + WIS modifier. \n\n* Martial Arts \u2022 PHB 78 \nWhile you are unarmed or wielding only monk weapons and you aren\u2019t wearing armor or wielding a shield, you can use DEX instead of STR for the attack and damage rolls, you can roll your Martial Arts damage die in place of the normal damage, and when you use the Attack action on your turn, you can make one unarmed strike as a bonus action. \n\n   \\| Unarmed Strike: 1 Bonus Action \n\n* Dedicated Weapon \u2022 TCoE 48 \n\n* Ki \u2022 PHB 78 \nYou can spend Ki Points to fuel ki features. You have 8 points per short rest and your Ki save DC is 15. \n\nFlurry of Blows - After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action. \n\nPatient Defense - You can spend 1 ki point to take the Dodge action as a bonus action on your turn. \n\nStep of the Wind - You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn. \n\n   \\| Ki Points: 8 / Short Rest \u2022 Special \n\n   \\| Flurry of Blows: 1 Bonus Action"
+    },
+    {
+      "field": "FeaturesTraits2",
+      "page": 2,
+      "value": "\\| Patient Defense: 1 Bonus Action \n\n   \\| Step of the Wind: 1 Bonus Action \n\n* Unarmored Movement \u2022 PHB 78 \nYour speed increases by 15 feet while you are not wearing armor or wielding a shield. \n\n* Ki-Fueled Attack \u2022 TCoE 48 \n\n   \\| Special \n\n* Monastic Tradition \u2022 PHB 78 \n\n   \\| Way of the Open Hand \n\n* Deflect Missiles \u2022 PHB 78 \nYou can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. When you do so, the damage you take from the attack is reduced by 1d10 +13. If you reduce damage to 0 and have a free hand, you can spend 1 ki point to make a ranged attack (as with a monk weapon) with range 20/60. \n\n   \\| 1 Reaction \n\n   \\| Deflect Missiles Attack: 1 Reaction \n\n* Open Hand Technique \u2022 PHB 79 \nWhenever you hit with one of your Flurry of Blows attacks, you can impose one of the following effects on that target: fall prone if it fails a DEX saving throw (DC 15), get pushed up to 15 ft. if it fails a STR saving throw (DC 15), or it can't take reaction until the end of your next turn. \n\n   \\| Special \n\n* Quickened Healing \u2022 TCoE 49"
+    },
+    {
+      "field": "FeaturesTraits3",
+      "page": 2,
+      "value": "\\| 1 Action \n\n* Ability Score Improvement \u2022 PHB 78 \n\n* Slow Fall \u2022 PHB 78 \nYou can use your reaction when you fall to reduce any falling damage you take by 40. \n\n   \\| 1 Reaction \n\n* Focused Aim \u2022 TCoE 49 \n\n   \\| Special \n\n* Extra Attack \u2022 PHB 79 \nYou can attack twice, instead of once, whenever you take the Attack action on your turn. \n\n* Stunning Strike \u2022 PHB 79 \nWhen you hit with a melee weapon attack, you can spend 1 ki point to make the target stunned until the end of your next turn if it fails a CON saving throw (DC 15). \n\n   \\| Special \n\n* Ki-Empowered Strikes \u2022 PHB 79 \nYour unarmed strikes count as magical for the purpose of overcoming resistance and immunity. \n\n* Wholeness of Body \u2022 PHB 79 \nOnce per long rest as an action, you can regain 24 HP. \n\n   \\| 1 / Long Rest \u2022 1 Action \n\n* Evasion \u2022 PHB 79 \nWhen you are subjected to an effect that allows you to make a DEX saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail."
+    },
+    {
+      "field": "GP",
+      "page": 2,
+      "value": "8"
+    },
+    {
+      "field": "PLAYER NAME2",
+      "page": 2,
+      "value": "The_Lizardscale_King"
+    },
+    {
+      "field": "PP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "PushDragLift",
+      "page": 2,
+      "value": "360 lb."
+    },
+    {
+      "field": "RACE2",
+      "page": 2,
+      "value": "Variant Human"
+    },
+    {
+      "field": "SP",
+      "page": 2,
+      "value": "0"
+    },
+    {
+      "field": "Weight Carried",
+      "page": 2,
+      "value": "83.5 lb."
+    },
+    {
+      "field": "BACKGROUND3",
+      "page": 3,
+      "value": "Sage"
+    },
+    {
+      "field": "CharacterName3",
+      "page": 3,
+      "value": "Furyen (Fury)"
+    },
+    {
+      "field": "CLASS  LEVEL3",
+      "page": 3,
+      "value": "Monk 8"
+    },
+    {
+      "field": "EXPERIENCE POINTS3",
+      "page": 3,
+      "value": "(Milestone)"
+    },
+    {
+      "field": "FeaturesTraits4",
+      "page": 3,
+      "value": "* Stillness of Mind \u2022 PHB 79 \nYou can use an action to end one effect on yourself that is causing you to be charmed or frightened. \n\n   \\| 1 Action \n\n\n=== VARIANT HUMAN SPECIES TRAITS === \n\n* Languages \u2022 BR 31 \nYou can speak, read, and write Common and one extra language. \n\n* Skills \u2022 BR 31 \nYou gain proficiency in one skill of your choice. \n\n* Feat \u2022 BR 31 \nYou gain one feat of your choice. \n\n\n=== FEATS === \n\n* Fighting Initiate \u2022 TCoE 80 \nYou learn one Fighting Style option of your choice from the fighter class. \n\n   \\| Blind Fighting \u2022 TCoE 41 \nYou have blindsight with a range of 10 ft. Within that range, you can effectively see anything that isn\u2019t behind total cover, even if you\u2019re blinded or in darkness. Moreover, you can see an invisible creature within that range, unless the creature successfully hides from you. \n\n* Ability Score Improvement \u2022 PHB-2024 202 \nIncrease one ability score by 2 or two ability scores by 1. \n\n* Magic Initiate (Wizard) \u2022 PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice"
+    },
+    {
+      "field": "FeaturesTraits5",
+      "page": 3,
+      "value": "from the Wizard spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. \n\nSpell Change. Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   \\| Wisdom \u2022  \n\n* Sage Ability Score Improvements \u2022 PHB-2024 183 \n\n   \\| Increase two scores (+2 / +1) \u2022"
+    },
+    {
+      "field": "PLAYER NAME3",
+      "page": 3,
+      "value": "The_Lizardscale_King"
+    },
+    {
+      "field": "RACE3",
+      "page": 3,
+      "value": "Variant Human"
+    },
+    {
+      "field": "AGE",
+      "page": 4,
+      "value": "25"
+    },
+    {
+      "field": "ALIGNMENT",
+      "page": 4,
+      "value": "Neutral Good"
+    },
+    {
+      "field": "AlliesOrganizations",
+      "page": 4,
+      "value": "=== Allies === \n\nRiver Line S11 \n\n=== Organizations === \n\nAureate Crown"
+    },
+    {
+      "field": "Backstory",
+      "page": 4,
+      "value": "Furyen (Fury) of the blind pass  \n\nFuryen was born into a small settlement far in the west, Tucked in a mountain pass. A small group that held too many suspicions and traditions. \n\nIt was no wonder that he was held in instant worship by the elders of Blind Pass. A child born during the lunar eclipse. A child born with shock white hair. A child born not in tears but in quiet awe with large unnaturally verdant eyes wide open, a color longer seen in their society. He was not deprived of his family, but he was given a role in society from the moment of his birth. He was raised under protection, spent his days listening to meetings of the elders, training his body, honing his skills in martial arts and swordplay. Learning the way of natural energy and how it influenced magics. He grew up distant from others with a singular purpose. He was fated and foretold, the child of the moon who would lead their people to its peak, to know a life only fit for emperors. \n\nHe did feel as though he was special. Not in the way he was being forced, but in his study he grew to understand the energy flow of the world around him. He nearly felt as though he could see it with his eyes closed. He sought only to better himself, and cared not for the politics he was submerged in. \n\nWith the hostility and tension of the coming Ley war, he secretly only cares about the preservation of Ley, and in this instance that means opposing the Iron Concord whose reach and industry strips the world of its resources. He left his home and traveled to the war front \n\nFuryen joined the Crowns forces and has spent the last few years training blindfolded and without use of blade, a decision met with heavy criticism, he seeks now to prove his power at any level, and to develop his 6th sense for the energy around him."
+    },
+    {
+      "field": "Bonds",
+      "page": 4,
+      "value": "Holds no close family, no loved ones, few close friends"
+    },
+    {
+      "field": "CharacterName4",
+      "page": 4,
+      "value": "Furyen (Fury)"
+    },
+    {
+      "field": "EYES",
+      "page": 4,
+      "value": "Vibrant unnaturally verdant eyes"
+    },
+    {
+      "field": "FAITH",
+      "page": 4,
+      "value": "Only in the Ley"
+    },
+    {
+      "field": "Flaws",
+      "page": 4,
+      "value": "In his life and training he has met few with as natural talent as him, can come off as cocky. Places too much"
+    },
+    {
+      "field": "GENDER",
+      "page": 4,
+      "value": "Male"
+    },
+    {
+      "field": "HAIR",
+      "page": 4,
+      "value": "Shock white, stained gray brown"
+    },
+    {
+      "field": "HEIGHT",
+      "page": 4,
+      "value": "6'0\""
+    },
+    {
+      "field": "Ideals",
+      "page": 4,
+      "value": "Preservation of the natural way. Disapproving of how both sides treat and extinguish Ley. Lesser of two"
+    },
+    {
+      "field": "PersonalityTraits",
+      "page": 4,
+      "value": "Sarcastic, light hearted, walks lightly in a dense world around him"
+    },
+    {
+      "field": "SIZE",
+      "page": 4,
+      "value": "Medium"
+    },
+    {
+      "field": "SKIN",
+      "page": 4,
+      "value": "Pale, flushed red from constant sun exposure"
+    },
+    {
+      "field": "WEIGHT",
+      "page": 4,
+      "value": "169"
+    },
+    {
+      "field": "spellCastingTime0",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellCastingTime1",
+      "page": 5,
+      "value": "1A"
+    },
+    {
+      "field": "spellCastingTime2",
+      "page": 5,
+      "value": "1R"
+    },
+    {
+      "field": "spellComponents0",
+      "page": 5,
+      "value": "V"
+    },
+    {
+      "field": "spellComponents1",
+      "page": 5,
+      "value": "S,M"
+    },
+    {
+      "field": "spellComponents2",
+      "page": 5,
+      "value": "V,S"
+    },
+    {
+      "field": "spellDuration0",
+      "page": 5,
+      "value": "Instantaneous"
+    },
+    {
+      "field": "spellDuration1",
+      "page": 5,
+      "value": "1 round"
+    },
+    {
+      "field": "spellDuration2",
+      "page": 5,
+      "value": "1 round"
+    },
+    {
+      "field": "spellHeader0",
+      "page": 5,
+      "value": "=== CANTRIPS ==="
+    },
+    {
+      "field": "spellHeader1",
+      "page": 5,
+      "value": "=== 1st LEVEL ==="
+    },
+    {
+      "field": "spellName0",
+      "page": 5,
+      "value": "Mind Sliver"
+    },
+    {
+      "field": "spellName1",
+      "page": 5,
+      "value": "Booming Blade"
+    },
+    {
+      "field": "spellName2",
+      "page": 5,
+      "value": "Shield"
+    },
+    {
+      "field": "spellNotes0",
+      "page": 5,
+      "value": "V"
+    },
+    {
+      "field": "spellNotes1",
+      "page": 5,
+      "value": "D: 1Rnd, 5 ft. Sphere, S/M"
+    },
+    {
+      "field": "spellNotes2",
+      "page": 5,
+      "value": "1/LR, D: 1Rnd, V/S"
+    },
+    {
+      "field": "spellPage0",
+      "page": 5,
+      "value": "TCoE 108"
+    },
+    {
+      "field": "spellPage1",
+      "page": 5,
+      "value": "SCAG 142"
+    },
+    {
+      "field": "spellPage2",
+      "page": 5,
+      "value": "PHB-2024 316"
+    },
+    {
+      "field": "spellPrepared0",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellPrepared1",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellPrepared2",
+      "page": 5,
+      "value": "O"
+    },
+    {
+      "field": "spellRange0",
+      "page": 5,
+      "value": "60 ft."
+    },
+    {
+      "field": "spellRange1",
+      "page": 5,
+      "value": "Self/5 ft. Sphere"
+    },
+    {
+      "field": "spellRange2",
+      "page": 5,
+      "value": "Self"
+    },
+    {
+      "field": "spellSaveHit0",
+      "page": 5,
+      "value": "INT 15"
+    },
+    {
+      "field": "spellSaveHit1",
+      "page": 5,
+      "value": "+7"
+    },
+    {
+      "field": "spellSaveHit2",
+      "page": 5,
+      "value": "--"
+    },
+    {
+      "field": "spellSlotHeader0",
+      "page": 5,
+      "value": "(At Will)"
+    },
+    {
+      "field": "spellSource0",
+      "page": 5,
+      "value": "Magic Initiate (Wizard)"
+    },
+    {
+      "field": "spellSource1",
+      "page": 5,
+      "value": "Magic Initiate (Wizard)"
+    },
+    {
+      "field": "spellSource2",
+      "page": 5,
+      "value": "Magic Initiate (Wizard)"
+    }
+  ],
+  "resources": {
+    "feature_uses": {
+      "ki_points": 8
+    },
+    "ki": {
+      "max": 8
+    }
+  },
+  "save_mods": {
+    "cha": 1,
+    "con": 3,
+    "dex": 8,
+    "int": 2,
+    "str": 4,
+    "wis": 4
+  },
+  "skill_mods": {
+    "acrobatics": 5,
+    "animal": 4,
+    "arcana": 5,
+    "athletics": 1,
+    "deception": 1,
+    "history": 5,
+    "insight": 7,
+    "intimidation": 1,
+    "investigation": 2,
+    "medicine": 4,
+    "nature": 2,
+    "perception": 7,
+    "performance": 1,
+    "persuasion": 1,
+    "religion": 2,
+    "sleightofhand": 5,
+    "stealth": 8,
+    "survival": 4
+  },
+  "source": {
+    "pdf_name": "The_Lizardscale_King_161305224.pdf"
+  },
+  "speed_ft": 45,
+  "traits": [
+    "Ability Score Improvement",
+    "Dedicated Weapon",
+    "Deflect Missiles",
+    "Evasion",
+    "Extra Attack",
+    "Feat",
+    "Fighting Initiate",
+    "Focused Aim",
+    "Hit Points",
+    "Ki",
+    "Ki-Empowered Strikes",
+    "Ki-Fueled Attack",
+    "Languages",
+    "Magic Initiate (Wizard)",
+    "Martial Arts",
+    "Monastic Tradition",
+    "Open Hand Technique",
+    "Proficiencies",
+    "Quickened Healing",
+    "Sage Ability Score Improvements",
+    "Skills",
+    "Slow Fall",
+    "Stillness of Mind",
+    "Stunning Strike",
+    "Unarmored Defense",
+    "Unarmored Movement",
+    "Wholeness of Body"
+  ]
+}
