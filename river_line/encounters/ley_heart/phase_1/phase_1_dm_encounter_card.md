@@ -226,14 +226,21 @@ Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/encounters/ley_h
 - Pulse save DC: 15
 - Breakpoints: 30 / 15
 - Procedure mode: pass-on-fail (first in initiative keeps trying until success; then passes on failure)
+- Procedure checks are rolled by **whoever is attempting the Procedure** (using that creature’s own skill modifiers); `procedure_actors` is present in JSON but **not used** unless you switch `procedure_mode` to `fixed_actor`
 - Initiative: rolled once and kept
+- Healing assumptions: **no Healing Word** and **no Wholeness of Body** (damage taken is “no-heal”)
 - Boss enabled; lair mode: best-available; target mode: random
+- Pulse targeting: `single_alternating_monk` (sim assumes only one PC is in 10 ft; it alternates between the two monks, starting randomly)
+- Boss action priority (sim tie-break): Guilt Fog → Boiler Vent → Time Shear → Harpoon → Slam
+- Boss lair selection: `best_available` (conditional order: Phase Flicker if a pylon is “weak”, else Arc Flash, else Undertow)
 - Boss canonical setpoints (used by the sim): `damage_scalar=1.0`, `save_dc_offset=0`, `attack_bonus_offset=0`, `temporal_reversal_recharge_min=5`
 
 ## Known simplifications (simulation vs table)
+- Boss cones/areas are approximated as hitting **N targets** in the sim (Baseline: Guilt Fog 2, Boiler Vent 1, Arc Flash 2), not true templates + placement.
 - **Present pylon “push 10 ft”** rider is not fully simulated as forced movement.
 - **Tail Tap** is modeled as an accuracy penalty in the sim (instead of fully simulating prone’s advantage/disadvantage ecosystem).
 - **Undertow** is modeled as a targeted restraint check rather than a true 10-ft-square placement puzzle.
+- Procedure range/LoS is not enforced in the sim (table rules on the card are the intended play experience).
 
 ---
 
