@@ -121,3 +121,31 @@ def test_phase1_custom_sim_allows_disabling_boss_phase1(tmp_path: Path) -> None:
     assert summary["boss_damage_dealt"]["isak"]["mean"] == 0
     assert summary["boss_damage_dealt"]["fury"]["mean"] == 0
     assert summary["boss_damage_dealt"]["druid"]["mean"] == 0
+
+
+def test_phase1_custom_sim_parallel_mode_runs(tmp_path: Path) -> None:
+    root = Path(__file__).resolve().parents[1]
+    scenario_path = (
+        root
+        / "river_line"
+        / "encounters"
+        / "ley_heart"
+        / "scenarios"
+        / "ley_heart_phase_1_split_two_pylons.json"
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    runner = load_custom_simulation_runner(loaded)
+    assert callable(runner)
+
+    out = runner(
+        scenario=loaded,
+        character_db=db,
+        trials=5,
+        seed=11,
+        run_dir=tmp_path / "run_parallel",
+    )
+
+    summary = out["summary"]
+    assert summary["combat_mode"] == "parallel"
+    assert set(summary["pylon_kill_rounds"].keys()) == {"past", "present", "future"}

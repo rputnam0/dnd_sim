@@ -2105,10 +2105,11 @@ def run_custom_simulation(
                     )
                     _boss_action(active_pylons=active_pylons, state=state)
 
-                for actor_id in initiative_order:
+                player_order = [pid for pid in initiative_order if pid != "boss"]
+                for actor_id in player_order:
                     if _party_defeated(state) or (not _active()):
                         break
-                    end_of_round = actor_id == initiative_order[-1]
+                    end_of_round = actor_id == player_order[-1]
                     active_pylons = _active()
 
                     def _end_turn() -> None:

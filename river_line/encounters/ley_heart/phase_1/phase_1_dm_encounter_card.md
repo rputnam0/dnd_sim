@@ -125,7 +125,7 @@ The prism jitters out of phase; an etched dial rotates like it’s searching for
 - **Action economy:** 1 Action on its turn, 1 Legendary Action per round, 1 Lair Action at initiative 20
 
 > **These boss numbers are already “baked” for play.**  
-> They incorporate the Phase 1 sim’s balancing sweep (lower DCs / to-hit and adjusted damage dice), so you never need to apply an offset at the table.
+> They incorporate the Phase 1 sim’s balancing sweep (lower DCs / to-hit), and use the boss’s full damage dice (no scalar), so you never need to apply an offset at the table.
 
 ### Action Options (choose one each round)
 
@@ -133,25 +133,25 @@ These options are available only while the linked pylon remains alive.
 
 **Harpoon Winch (Present alive)**
 - **Attack:** +7 to hit, range 60/180, 1 target
-- **Hit:** 1d10+4 piercing/force
+- **Hit:** 2d10+4 piercing/force
 - Target is **grappled** (escape DC 16)
 
 **Guilt Fog (Past alive; Recharge 5–6)**
 - **Area:** 30-ft cone
 - **Save:** DC 14 Con
-- **Fail:** 3d6 necrotic and the target **can’t regain HP until the start of the Engine’s next turn**
+- **Fail:** 4d8 necrotic and the target **can’t regain HP until the start of the Engine’s next turn**
 - **Success:** Half damage, no rider
 
 **Boiler Vent (Recharge 5–6)**
 - **Area:** 15-ft cone
 - **Save:** DC 14 Con
-- **Fail:** 3d6 fire and **pushed 10 ft**
+- **Fail:** 4d8 fire and **pushed 10 ft**
 - **Success:** Half damage, no push
 
 **Time Shear (Future alive; Recharge 4–6)**
 - **Target:** 1 creature within 90 ft
 - **Save:** DC 13 Wis
-- **Fail:** 2d6+1 psychic and **Slowed until end of its next turn**:
+- **Fail:** 3d8 psychic and **Slowed until end of its next turn**:
   - speed halved
   - no reactions
   - on its turn it can take **either** an action **or** a bonus action (not both)
@@ -159,7 +159,7 @@ These options are available only while the linked pylon remains alive.
 
 **Slam (Reach 10 ft; only if someone is in reach)**
 - **Attack:** +8 to hit, reach 10 ft, 1 target
-- **Hit:** 2d6+2 bludgeoning
+- **Hit:** 2d8+6 bludgeoning
 
 ### Legendary Actions (1 per round)
 
@@ -185,7 +185,7 @@ Choose one option tied to an active pylon.
 
 **Arc Flash (Present alive)**
 - Up to 2 creatures make **DC 13 Dex** save
-- **Fail:** 1d6+1 lightning and **no reactions** until the start of their next turn
+- **Fail:** 2d6 lightning and **no reactions** until the start of their next turn
 - **Success:** Half damage, keep reactions
 
 **Phase Flicker (Future alive; Pylon Defense)**
@@ -242,65 +242,65 @@ Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/encounters/ley_h
 All results below use seed `20260219` and are Monte Carlo estimates (mean/median).
 
 ## Scenario: Baseline (focus-fire order past → present → future)
-Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260219T231406Z_baseline_canonical_baked_50k/summary.json`
-- Mean rounds to destroy all pylons: 6.612 (median 6)
-- Mean pylon kill rounds: Past 2.145, Present 4.289, Future 6.611
-- Mean damage taken: Isak 21.935, Fury 22.575, Squanch 16.914
-- Mean damage dealt: Isak 45.583, Fury 49.255, Squanch 22.160
-- Down chance: Isak 0.070%, Fury 0.282%, Squanch 0.910%
-- Mean ki spent: Isak 1.265, Fury 1.274
+Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220T020151Z_baseline_boss_original_damage_50k/summary.json`
+- Mean rounds to destroy all pylons: 5.680 (median 6)
+- Mean pylon kill rounds: Past 2.004, Present 3.762, Future 5.679
+- Mean damage taken: Isak 21.886, Fury 22.968, Squanch 18.295
+- Mean damage dealt: Isak 44.198, Fury 46.794, Squanch 26.005
+- Down chance: Isak 0.144%, Fury 0.842%, Squanch 1.648%
+- Mean ki spent: Isak 1.295, Fury 1.250
 - Mean Procedure attempts / successes:
-  - Isak 1.912 / 0.825
-  - Fury 2.432 / 1.524
-  - Squanch 1.606 / 1.031
-- Mean boss action uses (per fight): Guilt Fog 1.377, Time Shear 3.035, Harpoon 0.812, Boiler Vent 0.328, Slam 0.050
-- Mean boss lair uses (per fight): Phase Flicker 4.529, Arc Flash 2.082, Undertow 0.000
-- Mean Temporal Reversal uses (per fight): 2.441
+  - Isak 1.844 / 0.787
+  - Fury 2.297 / 1.429
+  - Squanch 1.488 / 0.953
+- Mean boss action uses (per fight): Guilt Fog 1.057, Time Shear 1.737, Harpoon 0.228, Boiler Vent 0.064, Slam 0.006
+- Mean boss lair uses (per fight): Phase Flicker 3.649, Arc Flash 2.031, Undertow 0.000
+- Mean Temporal Reversal uses (per fight): 1.907
 
 ## Scenario: Baseline + fail-forward (next Procedure attempt has advantage after a failure)
-Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260219T231419Z_proc_adv_canonical_baked_50k/summary.json`
-- Mean rounds to destroy all pylons: 6.430 (median 6)
-- Mean pylon kill rounds: Past 2.062, Present 4.152, Future 6.430
-- Mean damage taken: Isak 21.780, Fury 22.176, Squanch 16.448
-- Mean damage dealt: Isak 45.888, Fury 49.165, Squanch 21.948
-- Down chance: Isak 0.048%, Fury 0.244%, Squanch 0.684%
-- Mean ki spent: Isak 1.311, Fury 1.285
+Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220T020458Z_proc_adv_boss_original_damage_50k/summary.json`
+- Mean rounds to destroy all pylons: 5.545 (median 6)
+- Mean pylon kill rounds: Past 1.927, Present 3.654, Future 5.545
+- Mean damage taken: Isak 21.506, Fury 22.534, Squanch 17.688
+- Mean damage dealt: Isak 44.483, Fury 47.040, Squanch 25.477
+- Down chance: Isak 0.116%, Fury 0.768%, Squanch 1.314%
+- Mean ki spent: Isak 1.329, Fury 1.277
 - Mean Procedure attempts / successes:
-  - Isak 1.720 / 0.865
-  - Fury 2.223 / 1.543
-  - Squanch 1.352 / 1.014
-- Mean boss action uses (per fight): Guilt Fog 1.352, Time Shear 2.968, Harpoon 0.776, Boiler Vent 0.293, Slam 0.044
-- Mean boss lair uses (per fight): Phase Flicker 4.366, Arc Flash 2.065, Undertow 0.000
-- Mean Temporal Reversal uses (per fight): 2.397
+  - Isak 1.658 / 0.833
+  - Fury 2.071 / 1.440
+  - Squanch 1.215 / 0.916
+- Mean boss action uses (per fight): Guilt Fog 1.024, Time Shear 1.679, Harpoon 0.192, Boiler Vent 0.051, Slam 0.006
+- Mean boss lair uses (per fight): Phase Flicker 3.526, Arc Flash 2.019, Undertow 0.000
+- Mean Temporal Reversal uses (per fight): 1.863
 
 ## Scenario: Aggressive play (both monks focus-fire and Flurry whenever ki is available)
-Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260219T231434Z_double_monk_flurry_canonical_baked_50k/summary.json`
-- Mean rounds to destroy all pylons: 5.478 (median 5)
-- Mean pylon kill rounds: Past 1.857, Present 3.565, Future 5.478
-- Mean damage taken: Isak 37.493, Fury 17.239, Squanch 11.127
-- Mean damage dealt: Isak 49.952, Fury 48.974, Squanch 18.074
-- Down chance: Isak 0.136%, Fury 0.012%, Squanch 0.130%
-- Mean ki spent: Isak 2.513, Fury 2.267
+Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220T020517Z_double_monk_flurry_boss_original_damage_50k/summary.json`
+- Mean rounds to destroy all pylons: 4.918 (median 5)
+- Mean pylon kill rounds: Past 1.780, Present 3.294, Future 4.918
+- Mean damage taken: Isak 39.751, Fury 18.412, Squanch 11.909
+- Mean damage dealt: Isak 48.376, Fury 46.616, Squanch 22.007
+- Down chance: Isak 0.684%, Fury 0.150%, Squanch 0.404%
+- Mean ki spent: Isak 2.254, Fury 1.942
 - Mean Procedure attempts / successes:
-  - Isak 1.791 / 0.766
-  - Fury 2.232 / 1.387
-  - Squanch 1.445 / 0.922
-- Mean boss action uses (per fight): Guilt Fog 1.284, Time Shear 2.558, Harpoon 0.588, Boiler Vent 0.164, Slam 0.027
-- Mean boss lair uses (per fight): Phase Flicker 3.418, Arc Flash 2.060, Undertow 0.000
-- Mean Temporal Reversal uses (per fight): 2.213
+  - Isak 1.778 / 0.755
+  - Fury 2.186 / 1.355
+  - Squanch 1.419 / 0.908
+- Mean boss action uses (per fight): Guilt Fog 0.946, Time Shear 1.414, Harpoon 0.132, Boiler Vent 0.031, Slam 0.004
+- Mean boss lair uses (per fight): Phase Flicker 2.895, Arc Flash 2.023, Undertow 0.000
+- Mean Temporal Reversal uses (per fight): 1.751
 
 ## Scenario: Split pressure (parallel mode; monks split onto two pylons)
-Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260219T231447Z_split_two_pylons_canonical_baked_50k/summary.json`
-- Mean rounds to destroy all pylons: 5.734 (median 6)
-- Mean pylon kill rounds: Past 4.799, Present 4.217, Future 4.511
-- Mean damage taken: Isak 22.109, Fury 13.173, Squanch 25.016
-- Mean damage dealt: Isak 44.360, Fury 46.616, Squanch 26.024
-- Down chance: Isak 0.006%, Fury 0.010%, Squanch 0.982%
-- Mean ki spent: Isak 0.413, Fury 0.473
+Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220T020625Z_split_two_pylons_boss_original_damage_50k/summary.json`
+- Mean rounds to destroy all pylons: 5.396 (median 5)
+- Mean pylon kill rounds: Past 4.496, Present 3.943, Future 4.200
+- Mean damage taken: Isak 27.016, Fury 20.042, Squanch 33.100
+- Mean damage dealt: Isak 42.267, Fury 43.798, Squanch 30.933
+- Down chance: Isak 0.270%, Fury 0.614%, Squanch 9.678%
+- Mean ki spent: Isak 0.380, Fury 0.426
 - Mean Procedure attempts / successes:
-  - Isak 3.561 / 1.422
-  - Fury 2.753 / 1.788
-  - Squanch 2.737 / 2.057
-- Mean boss action uses (per fight): Guilt Fog 2.271, Time Shear 1.792, Harpoon 0.788, Boiler Vent 0.224, Slam 0.015
-- Mean boss lair uses (per fight): Phase Flicker 3.314, Arc Flash 1.790, Undertow 0.630
-- Mean Temporal Reversal uses (per fight): 1.857
+  - Isak 3.372 / 1.351
+  - Fury 2.598 / 1.688
+  - Squanch 2.519 / 1.891
+- Mean boss action uses (per fight): Guilt Fog 2.165, Time Shear 1.667, Harpoon 0.760, Boiler Vent 0.155, Slam 0.007
+- Mean boss lair uses (per fight): Phase Flicker 3.043, Arc Flash 1.732, Undertow 0.620
+- Mean Temporal Reversal uses (per fight): 1.777
