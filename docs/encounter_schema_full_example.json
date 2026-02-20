@@ -152,7 +152,6 @@
         "action_cost": "action",
         "target_mode": "single_enemy",
         "include_self": false,
-        "save_each_target": true,
         "effects": [
           {
             "effect_type": "damage",
@@ -186,7 +185,6 @@
         "resource_cost": {},
         "target_mode": "n_enemies",
         "max_targets": 3,
-        "save_each_target": true,
         "effects": [
           {
             "effect_type": "forced_movement",
@@ -210,7 +208,6 @@
         "damage_type": "psychic",
         "resource_cost": {},
         "target_mode": "all_enemies",
-        "save_each_target": false,
         "effects": [
           {
             "effect_type": "next_attack_disadvantage",

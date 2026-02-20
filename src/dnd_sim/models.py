@@ -86,9 +86,15 @@ class ActionDefinition:
     target_mode: str = "single_enemy"
     max_targets: int | None = None
     include_self: bool = False
-    save_each_target: bool = True
     effects: list[dict[str, Any]] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class ConditionTracker:
+    remaining_rounds: int | None = None
+    save_dc: int | None = None
+    save_ability: str | None = None
 
 
 @dataclass(slots=True)
@@ -126,7 +132,7 @@ class ActorRuntimeState:
     legendary_actions_remaining: int = 0
     lair_action_used_this_round: bool = False
     traits: set[str] = field(default_factory=set)
-    condition_durations: dict[str, int] = field(default_factory=dict)
+    condition_durations: dict[str, ConditionTracker] = field(default_factory=dict)
     next_attack_advantage: bool = False
     next_attack_disadvantage: bool = False
 

@@ -36,6 +36,42 @@ def _roll_expr(rng: random.Random, expr: str, crit: bool = False) -> int:
     return sum(rng.randint(1, sides) for _ in range(n_dice)) + modifier
 
 
+def _roll_dice_only(rng: random.Random, expr: str, crit: bool = False) -> int:
+    """Roll only the dice portion of a damage expression (no flat modifier).
+
+    Used for Savage Attacker: re-roll dice only, keep higher, then add modifier once.
+    """
+    value = expr.replace(" ", "")
+    if "d" not in value:
+        return 0
+
+    if "+" in value:
+        dice, _flat = value.split("+", 1)
+    elif "-" in value[1:]:
+        dice, _flat = value.split("-", 1)
+    else:
+        dice = value
+
+    n_str, sides_str = dice.split("d", 1)
+    n_dice = int(n_str)
+    sides = int(sides_str)
+    if crit:
+        n_dice *= 2
+    return sum(rng.randint(1, sides) for _ in range(n_dice))
+
+
+def _expr_modifier(expr: str) -> int:
+    """Extract the flat modifier from a damage expression like '1d6+5'."""
+    value = expr.replace(" ", "")
+    if "d" not in value:
+        return int(value)
+    if "+" in value:
+        return int(value.split("+", 1)[1])
+    if "-" in value[1:]:
+        return -int(value.split("-", 1)[1])
+    return 0
+
+
 def _attack_roll(
     rng: random.Random,
     atk_bonus: int,
@@ -525,9 +561,17 @@ def run_custom_simulation(
         int(druid_attack_profile.get("to_hit", 8)) if druid_attack_profile else 8,
         str(druid_attack_profile.get("damage", "2d10+5")) if druid_attack_profile else "2d10+5",
     )
-    isak_staff = (8, "1d6+5")
-    isak_unarmed = (7, "1d6+4")
-    fury_main = (8, "1d6+5")
+    # Read monk attack stats from character JSON instead of hard-coding.
+    def _find_attack(actor: dict[str, Any], name_hint: str) -> tuple[int, str]:
+        for atk in actor.get("attacks", []):
+            if name_hint.lower() in str(atk.get("name", "")).lower():
+                return int(atk.get("to_hit", 0)), str(atk.get("damage", "1"))
+        return 0, "1"
+
+    isak_staff = _find_attack(isak, "quarterstaff")
+    isak_unarmed = _find_attack(isak, "unarmed strike")
+    fury_main = _find_attack(fury, "brass knuckles")
+    fury_unarmed = _find_attack(fury, "unarmed strike")
 
     rounds_all: list[float] = []
     isak_ki_all: list[float] = []
@@ -588,11 +632,11 @@ def run_custom_simulation(
             return min(rng.randint(1, 20), rng.randint(1, 20))
         return rng.randint(1, 20)
 
-    def _apply_unexposed_modifier(damage: int, exposed: bool) -> int:
+    def _apply_resistance(damage: int, exposed: bool) -> int:
+        """Apply standard 5e damage resistance when pylon is not exposed."""
         if exposed:
             return damage
-        adjusted = int(damage * unexposed_damage_multiplier)
-        return max(0, adjusted)
+        return damage // 2
 
     actor_ids = ("isak", "fury", "druid")
 
@@ -631,6 +675,8 @@ def run_custom_simulation(
         state[f"{pid}_death_successes"] = 0
         state[f"{pid}_death_fails"] = 0
         state[f"{pid}_stabilized"] = False
+        if pid == "druid":
+            state["druid_call_lightning_active"] = 0
         return applied
 
     def _apply_heal(
@@ -924,6 +970,31 @@ def run_custom_simulation(
     def druid_turn(exposed: bool, target_ac: int, state: dict[str, Any]) -> int:
         if state["druid_hp"] <= 0:
             return 0
+            
+        # C1: Call Lightning logic
+        cl_level = state.get("druid_call_lightning_active", 0)
+        if cl_level > 0:
+            # Maintain and call a bolt: 3d10 or 4d10, save vs DC 15
+            damage = _roll_expr(rng, f"{cl_level}d10", crit=False)
+            if _roll_d20() + 0 >= 15:  # Pylons have +0 DEX save vs DC 15
+                damage //= 2
+            return _apply_resistance(damage, exposed)
+            
+        slot_level = 0
+        for lvl in (3, 4):
+            if state.get(f"druid_spell_slots_{lvl}", 0) > 0:
+                slot_level = lvl
+                break
+                
+        if slot_level > 0:
+            state[f"druid_spell_slots_{slot_level}"] -= 1
+            state["druid_call_lightning_active"] = slot_level
+            damage = _roll_expr(rng, f"{slot_level}d10", crit=False)
+            if _roll_d20() + 0 >= 15:
+                damage //= 2
+            return _apply_resistance(damage, exposed)
+
+        # Fallback to Starry Wisp
         hit, crit = _attack_roll(
             rng,
             druid_attack[0],
@@ -934,7 +1005,7 @@ def run_custom_simulation(
         if not hit:
             return 0
         damage = _roll_expr(rng, druid_attack[1], crit=crit)
-        return _apply_unexposed_modifier(damage, exposed)
+        return _apply_resistance(damage, exposed)
 
     def _monk_ranged_profile(pid: str) -> tuple[int, str]:
         actor = {"isak": isak, "fury": fury}[pid]
@@ -966,7 +1037,7 @@ def run_custom_simulation(
             state[f"{pid}_next_disadvantage"] = False
             if hit:
                 damage = _roll_expr(rng, dmg_expr, crit=crit)
-                damages.append(_apply_unexposed_modifier(damage, exposed))
+                damages.append(_apply_resistance(damage, exposed))
         return damages
 
     def isak_turn(
@@ -992,11 +1063,13 @@ def run_custom_simulation(
             )
             state["isak_next_disadvantage"] = False
             if hit:
-                damage = _roll_expr(rng, isak_staff[1], crit=crit)
+                # A1: Savage Attacker — re-roll dice only, keep higher, add modifier once
+                dice_roll = _roll_dice_only(rng, isak_staff[1], crit=crit)
                 if has_savage_attacker.get("isak", False) and not savage_used:
-                    damage = max(damage, _roll_expr(rng, isak_staff[1], crit=crit))
+                    dice_roll = max(dice_roll, _roll_dice_only(rng, isak_staff[1], crit=crit))
                     savage_used = True
-                damages.append(_apply_unexposed_modifier(damage, exposed))
+                damage = dice_roll + _expr_modifier(isak_staff[1])
+                damages.append(_apply_resistance(damage, exposed))
 
         bonus_attacks = 0 if (slowed or (not bonus_action_available)) else 1
         if (not slowed) and bonus_action_available and state["isak_ki"] > 0:
@@ -1016,11 +1089,12 @@ def run_custom_simulation(
             )
             state["isak_next_disadvantage"] = False
             if hit:
-                damage = _roll_expr(rng, isak_unarmed[1], crit=crit)
+                dice_roll = _roll_dice_only(rng, isak_unarmed[1], crit=crit)
                 if has_savage_attacker.get("isak", False) and not savage_used:
-                    damage = max(damage, _roll_expr(rng, isak_unarmed[1], crit=crit))
+                    dice_roll = max(dice_roll, _roll_dice_only(rng, isak_unarmed[1], crit=crit))
                     savage_used = True
-                damages.append(_apply_unexposed_modifier(damage, exposed))
+                damage = dice_roll + _expr_modifier(isak_unarmed[1])
+                damages.append(_apply_resistance(damage, exposed))
 
         return damages
 
@@ -1047,7 +1121,7 @@ def run_custom_simulation(
             state["fury_next_disadvantage"] = False
             if hit:
                 damage = _roll_expr(rng, fury_main[1], crit=crit)
-                damages.append(_apply_unexposed_modifier(damage, exposed))
+                damages.append(_apply_resistance(damage, exposed))
 
         bonus_attacks = 0 if (slowed or (not bonus_action_available)) else 1
         if (not slowed) and bonus_action_available and state["fury_ki"] > 0:
@@ -1068,7 +1142,7 @@ def run_custom_simulation(
             state["fury_next_disadvantage"] = False
             if hit:
                 damage = _roll_expr(rng, fury_main[1], crit=crit)
-                damages.append(_apply_unexposed_modifier(damage, exposed))
+                damages.append(_apply_resistance(damage, exposed))
 
         return damages
 
@@ -1363,9 +1437,20 @@ def run_custom_simulation(
             if hit:
                 damage = _roll_expr(rng, harpoon_damage_expr, crit=crit)
                 damage = _scale_boss_damage(damage)
-                applied = _apply_damage(target, damage, state=state)
-                _record_boss_damage(target, applied, state)
-                state[f"{target}_grappled"] = True
+                # A4: Deflect Missiles — Isak can reduce ranged attack damage
+                if (
+                    target == "isak"
+                    and has_evasion.get("isak", False) is not None  # has trait check below
+                    and "Deflect Missiles" in isak.get("traits", [])
+                    and not state.get("isak_no_reactions", False)
+                ):
+                    deflect = rng.randint(1, 10) + dex_mod_by_id["isak"] + 8  # 1d10 + DEX + level
+                    damage = max(0, damage - deflect)
+                    state["isak_no_reactions"] = True  # uses reaction
+                if damage > 0:
+                    applied = _apply_damage(target, damage, state=state)
+                    _record_boss_damage(target, applied, state)
+                    state[f"{target}_grappled"] = True
             return
 
         if positioning_mode != "none" and state.get(f"{target}_pos") != "center":
@@ -1462,7 +1547,15 @@ def run_custom_simulation(
             return False
         if bool(state.get("druid_bonus_used", False)):
             return False
-        if state["druid_spell_slots_1"] <= 0:
+            
+        # C2: Healing Word upcasting
+        slot_level = 0
+        for lvl in (1, 2, 3, 4):
+            if state.get(f"druid_spell_slots_{lvl}", 0) > 0:
+                slot_level = lvl
+                break
+        
+        if slot_level == 0:
             return False
 
         downed = [pid for pid in actor_ids if _is_unconscious(pid, state)]
@@ -1482,10 +1575,10 @@ def run_custom_simulation(
                 key=lambda pid: state[f"{pid}_hp"] / max_hp_by_id[pid],
             )
 
-        state["druid_spell_slots_1"] -= 1
+        state[f"druid_spell_slots_{slot_level}"] -= 1
         state["druid_healing_word_casts"] += 1
         state["druid_bonus_used"] = True
-        heal_amount = _roll_expr(rng, "1d4") + druid_wis_mod
+        heal_amount = _roll_expr(rng, f"{slot_level}d4") + druid_wis_mod
         _apply_heal(target, heal_amount, state=state, max_hp_by_id=max_hp_by_id)
         return True
 
@@ -1517,13 +1610,25 @@ def run_custom_simulation(
         initiative_order = ["isak", "fury", "druid"]
         if initiative_mode == "random_fixed":
             rng.shuffle(initiative_order)
+            # D1: Insert boss at random position
+            if boss_enabled:
+                initiative_order.insert(rng.randint(0, len(initiative_order)), "boss")
         elif initiative_mode == "rolled_fixed":
-            init_scores: list[tuple[float, str]] = []
-            for pid in initiative_order:
-                score = _roll_d20() + dex_mod_by_id[pid]
-                init_scores.append((score + rng.random() * 1e-6, pid))
-            init_scores.sort(key=lambda t: t[0], reverse=True)
-            initiative_order = [pid for _score, pid in init_scores]
+            # A3 + D1: Roll initiative for all actors including boss, sort together
+            all_actors = list(initiative_order)
+            if boss_enabled:
+                all_actors.append("boss")
+            init_scores: list[tuple[int, int, str]] = []
+            for pid in all_actors:
+                mod = dex_mod_by_id.get(pid, 0)  # boss gets 0
+                score = _roll_d20() + mod
+                tiebreak = _roll_d20() + mod
+                init_scores.append((score, tiebreak, pid))
+            init_scores.sort(key=lambda t: (t[0], t[1]), reverse=True)
+            initiative_order = [pid for _score, _tie, pid in init_scores]
+        elif boss_enabled:
+            # Default mode: just append boss at end
+            initiative_order.append("boss")
 
         state: dict[str, Any] = {
             "isak_hp": max_hp_by_id["isak"],
@@ -1564,6 +1669,10 @@ def run_custom_simulation(
             "fury_dead": False,
             "druid_dead": False,
             "druid_spell_slots_1": int(druid["resources"]["spell_slots"]["1"]),
+            "druid_spell_slots_2": int(druid["resources"]["spell_slots"]["2"]),
+            "druid_spell_slots_3": int(druid["resources"]["spell_slots"]["3"]),
+            "druid_spell_slots_4": int(druid["resources"]["spell_slots"]["4"]),
+            "druid_call_lightning_active": 0,
             "druid_healing_word_casts": 0,
             "isak_wholeness_used": False,
             "isak_proc_attempts": 0,
@@ -1647,7 +1756,8 @@ def run_custom_simulation(
                 if procedure_mode == "fixed_actor":
                     procedure_candidate = str(procedure_actors[pylon])
                 else:
-                    procedure_candidate = initiative_order[0]
+                    player_order = [p for p in initiative_order if p != "boss"]
+                    procedure_candidate = player_order[0]
 
                 while hp > 0 and (not _party_defeated(state)) and rounds < max_rounds:
                     rounds += 1
@@ -1671,17 +1781,27 @@ def run_custom_simulation(
                     if boss_enabled:
                         for pid in actor_ids:
                             state[f"{pid}_no_heal_until_boss_turn"] = False
+                        # D1: Lair action fires at init 20 (top of round), boss action is interleaved
                         _boss_lair_action(
                             active_pylons=active_pylons,
                             pylon_hp_by_type={pylon: int(hp)},
                             state=state,
                         )
-                        _boss_action(active_pylons=active_pylons, state=state)
 
                     for actor_id in initiative_order:
                         if hp <= 0 or _party_defeated(state):
                             break
                         end_of_round = actor_id == initiative_order[-1]
+
+                        # D1: Boss takes its action at its initiative count
+                        if actor_id == "boss":
+                            _boss_action(active_pylons=active_pylons, state=state)
+                            _boss_legendary_after_turn(
+                                active_pylons=active_pylons,
+                                state=state,
+                                end_of_round=end_of_round,
+                            )
+                            continue
 
                         def _end_turn() -> None:
                             nonlocal exposed, exposed_by, exposed_fresh
@@ -1699,7 +1819,10 @@ def run_custom_simulation(
                             )
 
                         state[f"{actor_id}_no_reactions"] = False
-                        state[f"{actor_id}_restrained"] = False
+                        # A2: Restrained persists — attempt escape check at turn start
+                        if state.get(f"{actor_id}_restrained", False):
+                            if (_roll_d20() + _escape_grapple_bonus(actor_id)) >= undertow_dc:
+                                state[f"{actor_id}_restrained"] = False
                         state[f"{actor_id}_bonus_used"] = False
                         slowed_this_turn = bool(state[f"{actor_id}_slow_next_turn"])
                         state[f"{actor_id}_slow_next_turn"] = False
@@ -1753,11 +1876,12 @@ def run_custom_simulation(
                                 continue
 
                         if procedure_mode != "fixed_actor":
-                            for _ in range(len(initiative_order)):
+                            player_order = [p for p in initiative_order if p != "boss"]
+                            for _ in range(len(player_order)):
                                 if _is_conscious(procedure_candidate, state):
                                     break
                                 procedure_candidate = _next_in_order(
-                                    procedure_candidate, initiative_order
+                                    procedure_candidate, player_order
                                 )
 
                         should_attempt_procedure = (
@@ -1807,8 +1931,9 @@ def run_custom_simulation(
                                 if procedure_fail_forward == "next_attempt_advantage":
                                     proc_advantage_next = True
                                 if procedure_mode != "fixed_actor":
+                                    player_order = [p for p in initiative_order if p != "boss"]
                                     procedure_candidate = _next_in_order(
-                                        procedure_candidate, initiative_order
+                                        procedure_candidate, player_order
                                     )
                             if procedure_cost_mode == "one_attack" and actor_id in {"isak", "fury"}:
                                 action_attacks_lost = 1
@@ -2002,7 +2127,10 @@ def run_custom_simulation(
                         )
 
                     state[f"{actor_id}_no_reactions"] = False
-                    state[f"{actor_id}_restrained"] = False
+                    # A2: Restrained persists — attempt escape check at turn start
+                    if state.get(f"{actor_id}_restrained", False):
+                        if (_roll_d20() + _escape_grapple_bonus(actor_id)) >= undertow_dc:
+                            state[f"{actor_id}_restrained"] = False
                     state[f"{actor_id}_bonus_used"] = False
                     slowed_this_turn = bool(state[f"{actor_id}_slow_next_turn"])
                     state[f"{actor_id}_slow_next_turn"] = False

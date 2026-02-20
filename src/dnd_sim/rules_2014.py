@@ -103,9 +103,13 @@ def apply_damage_type_modifiers(
         return 0
 
     adjusted = damage
-    if dtype in resistances or "all" in resistances:
+    is_resistant = dtype in resistances or "all" in resistances
+    is_vulnerable = dtype in vulnerabilities or "all" in vulnerabilities
+    if is_resistant and is_vulnerable:
+        pass  # cancel each other per RAW
+    elif is_resistant:
         adjusted = half_damage(adjusted)
-    if dtype in vulnerabilities or "all" in vulnerabilities:
+    elif is_vulnerable:
         adjusted *= 2
     return max(adjusted, 0)
 

@@ -50,7 +50,7 @@
       "arcana",
       "thieves_tools"
     ],
-    "procedure_dc": 15,
+    "procedure_dc": 13,
     "exposed_duration_rounds": 1
   }
 }

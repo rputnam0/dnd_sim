@@ -42,7 +42,6 @@ class ActionConfig(BaseModel):
     ] = "single_enemy"
     max_targets: int | None = None
     include_self: bool = False
-    save_each_target: bool = True
     effects: list["EffectConfig"] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
 
