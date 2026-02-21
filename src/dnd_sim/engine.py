@@ -421,10 +421,19 @@ def _extract_spellcasting_profile_from_raw_fields(character: dict[str, Any]) -> 
             except ValueError:
                 pass
         elif field == "spellAtkBonus0":
-            hit = re.search(r"\\+?(\\d+)", value)
+            hit = re.search(r"\+?(\d+)", value)
             if hit:
                 out["to_hit"] = int(hit.group(1))
     return out
+
+
+def _classify_casting_time_action_cost(casting_time: str) -> str:
+    compact = re.sub(r"[^a-z0-9]+", "", casting_time.strip().lower())
+    if compact in {"ba", "1ba", "bonusaction", "1bonusaction"}:
+        return "bonus"
+    if compact in {"r", "1r", "reaction", "1reaction"}:
+        return "reaction"
+    return "action"
 
 
 def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str, Any]]:
@@ -523,8 +532,8 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             if "mechanics" in spell_def and isinstance(spell_def.get("mechanics"), list):
                 hydrated["mechanics"] = list(spell_def["mechanics"])
 
-            description = str(spell_def.get("description", "")) or str(
-                spell_def.get("description_raw", "")
+            description = str(
+                spell_def.get("description") or spell_def.get("description_raw") or ""
             )
             if not description and "meta" in spell_def and "description" in spell_def:
                 description = str(spell_def.get("description", ""))
@@ -570,10 +579,10 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
 
         # Determine action_cost from casting_time abbreviations used in raw fields.
         if casting_time:
-            ct = casting_time.lower()
-            if "ba" in ct:
+            action_cost = _classify_casting_time_action_cost(casting_time)
+            if action_cost == "bonus":
                 hydrated["action_cost"] = "bonus"
-            elif "r" in ct:
+            elif action_cost == "reaction":
                 hydrated["action_cost"] = "reaction"
             else:
                 hydrated["action_cost"] = "action"
@@ -613,12 +622,15 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "aoe_size_ft",
             "concentration",
         ):
-            if existing.get(field) in (None, "", 0, False) and spell.get(field) not in (
-                None,
-                "",
-                0,
-                False,
-            ):
+            existing_value = existing.get(field)
+            candidate_value = spell.get(field)
+            if field == "concentration":
+                existing_missing = existing_value is None
+                candidate_present = candidate_value is not None
+            else:
+                existing_missing = existing_value in (None, "", 0)
+                candidate_present = candidate_value not in (None, "", 0)
+            if existing_missing and candidate_present:
                 existing[field] = spell.get(field)
         existing_level = int(existing.get("level", 0))
         candidate_level = int(spell.get("level", 0))
