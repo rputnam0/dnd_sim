@@ -1,0 +1,17 @@
+{
+  "name": "Martial Arts Die",
+  "type": "class_feature",
+  "description": "You can roll 1d6 in place of the normal damage of your Unarmed Strike or Monk weapons. This die changes as you gain Monk levels, as shown in the Martial Arts column of the Monk Features table.",
+  "mechanics": [
+    {
+      "type": "damage_die_substitution",
+      "damage_die": "1d6",
+      "applies_to": [
+        "unarmed_strike",
+        "monk_weapons"
+      ],
+      "scales_with_level": true,
+      "note": "Die changes according to the Martial Arts column of the Monk Features table."
+    }
+  ]
+}

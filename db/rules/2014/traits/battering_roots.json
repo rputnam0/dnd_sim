@@ -1,0 +1,27 @@
+{
+  "name": "Battering Roots",
+  "type": "subclass_feature",
+  "description": "During your turn, your reach is 10 feet greater with any melee weapon that has the Heavy or Versatile property, as tendrils of the World Tree extend from you. When you hit with such a weapon on your turn, you can activate the Push or Topple mastery property in addition to a different mastery property you're using with that weapon.",
+  "mechanics": [
+    {
+      "type": "reach_increase",
+      "amount": 10,
+      "condition": {
+        "weapon_property": [
+          "heavy",
+          "versatile"
+        ]
+      },
+      "duration": "while your turn"
+    },
+    {
+      "type": "extra_mastery_property",
+      "trigger": "hit_with_qualifying_weapon_on_turn",
+      "options": [
+        "Push",
+        "Topple"
+      ],
+      "description": "You may apply the Push or Topple mastery property in addition to another mastery property you are using with the weapon."
+    }
+  ]
+}

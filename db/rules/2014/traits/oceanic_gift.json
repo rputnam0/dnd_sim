@@ -1,0 +1,21 @@
+{
+  "name": "Oceanic Gift",
+  "type": "subclass_feature",
+  "description": "Instead of manifesting the Emanation of Wrath of the Sea around yourself, you can manifest it around one willing creature within 60 feet of yourself. That creature gains all the benefits of the Emanation and uses your spell save DC and Wisdom modifier for it. In addition, you can manifest the Emanation around both the other creature and yourself if you expend two uses of your Wild Shape instead of one when manifesting it.",
+  "mechanics": [
+    {
+      "type": "target_change",
+      "ability": "Emanation of Wrath of the Sea",
+      "original_target": "self",
+      "new_target": "willing creature within 60 feet",
+      "notes": "The creature uses the druid's spell save DC and Wisdom modifier for the emanation."
+    },
+    {
+      "type": "optional_cost",
+      "cost": {
+        "wild_shape_uses": 2
+      },
+      "effect": "Emanation of Wrath of the Sea centered on both the willing creature and the druid."
+    }
+  ]
+}

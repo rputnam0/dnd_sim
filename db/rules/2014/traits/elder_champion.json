@@ -1,0 +1,45 @@
+{
+  "name": "Elder Champion",
+  "type": "subclass_feature",
+  "description": "At 20th level, you can assume the form of an ancient force of nature, taking on an appearance you choose. For example, your skin might turn green or take on a bark-like texture, your hair might become leafy or moss-like, or you might sprout antlers or a lion‑like mane. Using your action, you undergo a transformation. For 1 minute, you gain the following benefits: At the start of each of your turns, you regain 10 hit points. Whenever you cast a paladin spell that has a casting time of 1 action, you can cast it using your bonus action instead. Enemy creatures within 10 feet of you have disadvantage on saving throws against your paladin spells and Channel Divinity options. Once you use this feature, you can't use it again until you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "activation",
+      "action": "action",
+      "duration": "1 minute",
+      "description": "Transformation into Elder Champion form"
+    },
+    {
+      "type": "healing",
+      "amount": 10,
+      "trigger": "start_of_turn",
+      "duration": "1 minute",
+      "description": "Regain 10 hit points at the start of each of your turns"
+    },
+    {
+      "type": "spell_casting",
+      "original_cast_time": "1 action",
+      "new_cast_time": "bonus action",
+      "condition": "paladin spell",
+      "duration": "1 minute",
+      "description": "Paladin spells with a casting time of 1 action can be cast using your bonus action"
+    },
+    {
+      "type": "area_effect",
+      "radius": 10,
+      "effect": "disadvantage_on_saving_throws",
+      "target": "enemy_creatures",
+      "against": [
+        "paladin spells",
+        "Channel Divinity options"
+      ],
+      "duration": "1 minute",
+      "description": "Enemies within 10 feet have disadvantage on saves against your paladin spells and Channel Divinity options"
+    },
+    {
+      "type": "usage",
+      "frequency": "once per long rest",
+      "description": "Feature can be used once, then requires a long rest to recharge"
+    }
+  ]
+}

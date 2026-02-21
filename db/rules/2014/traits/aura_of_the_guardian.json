@@ -1,0 +1,22 @@
+{
+  "name": "Aura of the Guardian",
+  "type": "subclass_feature",
+  "description": "Starting at 7th level, you can shield others from harm at the cost of your own health. When a creature within 10 feet of you takes damage, you can use your reaction to magically take that damage, instead of that creature taking it. This feature doesn't transfer any other effects that might accompany the damage, and this damage can't be reduced in any way. At 18th level, the range of this aura increases to 30 feet.",
+  "mechanics": [
+    {
+      "type": "reaction",
+      "trigger": "a creature within X feet takes damage",
+      "range": {
+        "base": 10,
+        "scale": {
+          "level": 18,
+          "new_range": 30
+        }
+      },
+      "effect": "you take the damage instead of the creature",
+      "damage_transfer": true,
+      "damage_reduction_prohibited": true,
+      "notes": "Only the damage is transferred; any additional effects of the damage are not transferred."
+    }
+  ]
+}

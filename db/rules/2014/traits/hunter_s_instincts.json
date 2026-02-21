@@ -1,0 +1,19 @@
+{
+  "name": "Hunter's Instincts",
+  "type": "racial_trait",
+  "description": "You have proficiency in one of the following skills of your choice: Athletics, Intimidation, Perception, or Survival.",
+  "mechanics": [
+    {
+      "grantProficiency": {
+        "type": "skill",
+        "choices": [
+          "Athletics",
+          "Intimidation",
+          "Perception",
+          "Survival"
+        ],
+        "count": 1
+      }
+    }
+  ]
+}

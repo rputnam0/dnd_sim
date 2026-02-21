@@ -1,0 +1,12 @@
+{
+  "name": "Superior Critical",
+  "type": "subclass_feature",
+  "description": "Starting at 15th level, your weapon attacks score a critical hit on a roll of 18-20.",
+  "mechanics": [
+    {
+      "type": "critical_range",
+      "min": 18,
+      "max": 20
+    }
+  ]
+}

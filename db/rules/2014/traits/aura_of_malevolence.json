@@ -1,0 +1,17 @@
+{
+  "name": "Aura of Malevolence",
+  "type": "subclass_feature",
+  "description": "You radiate malignant power associated with one of the Dead Three. When you use Bloodthirst and teleport, each creature of your choice within 10 feet of either the space you left or your destination space (your choice) takes damage equal to your Intelligence modifier; the damage type is the same as the damage granted by your choice in the Dread Allegiance feature. Damage dealt by this feature ignores resistance.",
+  "mechanics": [
+    {
+      "trigger": "use Bloodthirst and teleport",
+      "target": "creatures of your choice within 10 feet of either the space you left or your destination space (your choice)",
+      "effect": "deal damage",
+      "damage": {
+        "amount": "Intelligence modifier",
+        "type": "choice from Dread Allegiance feature",
+        "ignore_resistance": true
+      }
+    }
+  ]
+}

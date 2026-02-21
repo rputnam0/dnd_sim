@@ -1,0 +1,12 @@
+{
+  "name": "Projected Ward",
+  "type": "subclass_feature",
+  "description": "Starting at 6th level, when a creature that you can see within 30 feet of you takes damage, you can use your reaction to cause your Arcane Ward to absorb that damage. If this damage reduces the ward to 0 hit points, the warded creature takes any remaining damage.",
+  "mechanics": [
+    {
+      "type": "reaction",
+      "trigger": "a creature you can see within 30 feet takes damage",
+      "effect": "Arcane Ward absorbs the damage; if the ward is reduced to 0 HP, any remaining damage is dealt to the creature"
+    }
+  ]
+}

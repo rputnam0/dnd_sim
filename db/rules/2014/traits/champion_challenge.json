@@ -1,0 +1,19 @@
+{
+  "name": "Champion Challenge",
+  "type": "subclass_feature",
+  "description": "As a bonus action, you issue a challenge that compels other creatures to do battle with you. Each creature of your choice that you can see within 30 feet of you must make a Wisdom saving throw. On a failed save, a creature can't willingly move more than 30 feet away from you. This effect ends on the creature if you are incapacitated or die or if the creature is more than 30 feet away from you.",
+  "mechanics": [
+    {
+      "action_type": "bonus_action",
+      "resource_consumed": "Channel Divinity",
+      "target": "creature",
+      "target_selection": "any creature you choose that you can see within 30 feet",
+      "save": {
+        "ability": "wisdom",
+        "type": "wisdom"
+      },
+      "effect": "creature cannot willingly move more than 30 feet away from you",
+      "duration": "until you become incapacitated, you die, or the creature is more than 30 feet away"
+    }
+  ]
+}

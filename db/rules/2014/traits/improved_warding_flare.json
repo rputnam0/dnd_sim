@@ -1,0 +1,19 @@
+{
+  "name": "Improved Warding Flare",
+  "type": "subclass_feature",
+  "description": "You regain all expended uses of your Warding Flare when you finish a Short Rest or Long Rest. In addition, whenever you use Warding Flare, you can give the target of the triggering attack a number of Temporary Hit Points equal to 2d6 plus your Wisdom modifier.",
+  "mechanics": [
+    {
+      "type": "resource_recovery",
+      "resource": "Warding Flare",
+      "trigger": "short_rest_or_long_rest",
+      "amount": "all"
+    },
+    {
+      "type": "temporary_hit_points",
+      "source": "Warding Flare",
+      "dice": "2d6",
+      "ability_modifier": "Wisdom"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Stride of the Elements",
+  "type": "subclass_feature",
+  "description": "While your Elemental Attunement is active, you also have a Fly Speed and a Swim Speed equal to your Speed.",
+  "mechanics": [
+    {
+      "type": "grant_speed",
+      "mode": "fly",
+      "value": "equal_to_speed",
+      "condition": "Elemental Attunement active"
+    },
+    {
+      "type": "grant_speed",
+      "mode": "swim",
+      "value": "equal_to_speed",
+      "condition": "Elemental Attunement active"
+    }
+  ]
+}

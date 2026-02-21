@@ -1,0 +1,35 @@
+{
+  "name": "Ferocious Charger",
+  "type": "subclass_feature",
+  "description": "Starting at 15th level, you can run down your foes, whether you're mounted or not. If you move at least 10 feet in a straight line right before attacking a creature and you hit it with the attack, that target must succeed on a Strength saving throw (DC 8 + your proficiency bonus + your Strength modifier) or be knocked prone. You can use this feature only once on each of your turns.",
+  "mechanics": [
+    {
+      "type": "usage_limit",
+      "limit": "once per turn",
+      "description": "Can be used only once on each of your turns."
+    },
+    {
+      "type": "attack_triggered_effect",
+      "trigger": {
+        "movement": {
+          "minimum_distance_feet": 10,
+          "path": "straight_line"
+        },
+        "attack_hit": true
+      },
+      "effect": {
+        "saving_throw": {
+          "ability": "Strength",
+          "dc": {
+            "base": 8,
+            "add_proficiency_bonus": true,
+            "add_ability_modifier": "Strength"
+          }
+        },
+        "on_failure": {
+          "condition": "prone"
+        }
+      }
+    }
+  ]
+}

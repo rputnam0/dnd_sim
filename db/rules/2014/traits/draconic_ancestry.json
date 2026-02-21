@@ -1,0 +1,17 @@
+{
+  "name": "Draconic Ancestry",
+  "type": "racial_trait",
+  "description": "You have draconic ancestry. Choose one type of dragon from the Draconic Ancestry table. Your breath weapon and damage resistance are determined by the dragon type, as shown in the table.",
+  "mechanics": [
+    {
+      "type": "damage_resistance",
+      "damage_type": "chosen dragon's damage type"
+    },
+    {
+      "type": "breath_weapon",
+      "damage_type": "chosen dragon's damage type",
+      "area": "as shown in the Draconic Ancestry table (line or cone)",
+      "save": "Dexterity or Constitution as indicated"
+    }
+  ]
+}

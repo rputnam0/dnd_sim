@@ -1,0 +1,36 @@
+{
+  "name": "Infiltrator",
+  "type": "subclass_feature",
+  "description": "You customize your armor for subtler undertakings. It has the following features: Lightning Launcher: A gemlike node appears on your armor, from which you can shoot bolts of lightning. The launcher counts as a Simple Ranged weapon with a normal range of 90 feet and a long range of 300 feet, and it deals 1d6 Lightning damage on a hit. Once on each of your turns when you hit a creature with the launcher, you can deal an extra 1d6 Lightning damage to that target. Powered Steps: Your Speed increases by 5 feet. Dampening Field: You have Advantage on Dexterity (Stealth) checks. If the armor imposes Disadvantage on such checks, the Advantage and Disadvantage cancel each other, as normal.",
+  "mechanics": [
+    {
+      "weapon": {
+        "name": "Lightning Launcher",
+        "category": "simple",
+        "type": "ranged",
+        "range": {
+          "normal": 90,
+          "long": 300
+        },
+        "damage": "1d6 lightning"
+      }
+    },
+    {
+      "extra_damage_on_hit": {
+        "source": "Lightning Launcher",
+        "damage": "1d6 lightning",
+        "once_per_turn": true,
+        "trigger": "hit"
+      }
+    },
+    {
+      "speed_increase": 5
+    },
+    {
+      "advantage_on_skill_check": {
+        "skill": "Stealth",
+        "ability": "Dexterity"
+      }
+    }
+  ]
+}

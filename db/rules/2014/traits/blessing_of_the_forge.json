@@ -1,0 +1,26 @@
+{
+  "name": "Blessing of the Forge",
+  "type": "subclass_feature",
+  "description": "At 1st level, you gain the ability to imbue magic into a weapon or armor. At the end of a long rest, you can touch one nonmagical object that is a suit of armor or a simple or martial weapon. Until the end of your next long rest or until you die, the object becomes a magic item, granting a +1 bonus to AC if it's armor or a +1 bonus to attack and damage rolls if it's a weapon. Once you use this feature, you can't use it again until you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "usage_limit",
+      "limit": "once",
+      "reset": "long_rest"
+    },
+    {
+      "type": "grant_bonus",
+      "target": "armor",
+      "bonus": "+1 AC",
+      "condition": "object is armor",
+      "duration": "until next long rest or death"
+    },
+    {
+      "type": "grant_bonus",
+      "target": "weapon",
+      "bonus": "+1 to attack and damage rolls",
+      "condition": "object is weapon",
+      "duration": "until next long rest or death"
+    }
+  ]
+}

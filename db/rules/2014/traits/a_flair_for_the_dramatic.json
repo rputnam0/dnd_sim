@@ -1,0 +1,12 @@
+{
+  "name": "A Flair for the Dramatic",
+  "type": "background_feature",
+  "description": "Rakdos performance styles typically fuse standard circus-style acrobatics with fire, wrought-iron spikes and hooks, and monsters. You can roll a d8 or choose from the options in the Performance Options table to determine your preferred style of performance. Performance Options: 1 – Spikewheel acrobat; 2 – Lampooning satirist; 3 – Fire juggler; 4 – Marionette puppeteer; 5 – Pain artist; 6 – Noise musician; 7 – Nightmare clown; 8 – Master of ceremonies.",
+  "mechanics": [
+    {
+      "type": "roll",
+      "dice": "d8",
+      "description": "Determine preferred style of performance"
+    }
+  ]
+}

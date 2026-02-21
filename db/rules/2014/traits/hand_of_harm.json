@@ -1,0 +1,21 @@
+{
+  "name": "Hand of Harm",
+  "type": "subclass_feature",
+  "description": "You use your ki to inflict wounds. When you hit a creature with an unarmed strike, you can spend 1 ki point to deal extra necrotic damage equal to one roll of your Martial Arts die + your Wisdom modifier. You can use this feature only once per turn.",
+  "mechanics": [
+    {
+      "trigger": "hit",
+      "weapon": "unarmed strike",
+      "cost": {
+        "resource": "ki",
+        "amount": 1
+      },
+      "damage": {
+        "type": "necrotic",
+        "dice": "1 Martial Arts die",
+        "modifier": "Wisdom"
+      },
+      "usage_limit": "once per turn"
+    }
+  ]
+}

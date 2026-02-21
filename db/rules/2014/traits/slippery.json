@@ -1,0 +1,15 @@
+{
+  "name": "Slippery",
+  "type": "racial_trait",
+  "description": "You have advantage on ability checks and saving throws made to escape a grapple.",
+  "mechanics": [
+    {
+      "type": "advantage",
+      "applies_to": [
+        "ability checks",
+        "saving throws"
+      ],
+      "condition": "to escape a grapple"
+    }
+  ]
+}

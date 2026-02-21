@@ -1,0 +1,13 @@
+{
+  "name": "Unpredictable Movement",
+  "type": "racial_trait",
+  "description": "When you roll initiative and don't have disadvantage on that roll, you can take the Dash action as a reaction.",
+  "mechanics": [
+    {
+      "type": "reaction",
+      "trigger": "initiative roll",
+      "condition": "no disadvantage on the roll",
+      "effect": "use your reaction to take the Dash action"
+    }
+  ]
+}

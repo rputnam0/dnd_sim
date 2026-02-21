@@ -1,0 +1,25 @@
+{
+  "name": "Benign Transposition",
+  "type": "subclass_feature",
+  "description": "Starting at 6th level, you can use your action to teleport up to 30 feet to an unoccupied space that you can see. Alternatively, you can choose a space within range that is occupied by a Small or Medium creature. If that creature is willing, you both teleport, swapping places. Once you use this feature, you can't use it again until you finish a long rest or you cast a conjuration spell of 1st level or higher.",
+  "mechanics": [
+    {
+      "effect": "teleport",
+      "actor": "self",
+      "range": 30,
+      "target": "unoccupied space you can see",
+      "activation": "action"
+    },
+    {
+      "effect": "swap",
+      "actor": "self",
+      "range": 30,
+      "target": "willing Small or Medium creature",
+      "activation": "action"
+    },
+    {
+      "effect": "recharge",
+      "trigger": "long rest or casting a conjuration spell of 1st level or higher"
+    }
+  ]
+}

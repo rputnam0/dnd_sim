@@ -1,0 +1,23 @@
+{
+  "name": "Eyes of the Grave",
+  "type": "subclass_feature",
+  "description": "At 1st level, you gain the ability to occasionally sense the presence of the undead, whose existence is an insult to the natural cycle of life. As an action, you can open your awareness to magically detect undead. Until the end of your next turn, you know the location of any undead within 60 feet of you that isn’t behind total cover and that isn’t protected from divination magic. This sense doesn’t tell you anything about a creature’s capabilities or identity. You can use this feature a number of times equal to your Wisdom modifier (minimum of once). You regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "action",
+      "name": "Eyes of the Grave detection",
+      "activation": "action",
+      "range": 60,
+      "target": "undead",
+      "condition": "not behind total cover and not protected from divination magic",
+      "duration": "until end of next turn",
+      "effect": "you know the location of the undead"
+    },
+    {
+      "type": "resource",
+      "name": "Eyes of the Grave uses",
+      "maxUses": "Wisdom modifier (minimum 1)",
+      "reset": "long rest"
+    }
+  ]
+}

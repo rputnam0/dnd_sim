@@ -1,0 +1,14 @@
+{
+  "name": "Illusion Savant",
+  "type": "subclass_feature",
+  "description": "Beginning when you select this school at 2nd level, the gold and time you must spend to copy an illusion spell into your spellbook is halved.",
+  "mechanics": [
+    {
+      "effect": "halve_copy_cost",
+      "target": "spellbook",
+      "spellSchool": "Illusion",
+      "appliesTo": "copying_spells",
+      "modifier": 0.5
+    }
+  ]
+}

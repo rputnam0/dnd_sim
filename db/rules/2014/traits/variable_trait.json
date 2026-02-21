@@ -1,0 +1,19 @@
+{
+  "name": "Variable Trait",
+  "type": "racial_trait",
+  "description": "You gain one of the following options of your choice: (a) darkvision with a range of 60 feet or (b) proficiency in one skill of your choice.",
+  "mechanics": [
+    {
+      "choice": [
+        {
+          "effect": "grant_darkvision",
+          "range_feet": 60
+        },
+        {
+          "effect": "grant_skill_proficiency",
+          "skill": "any"
+        }
+      ]
+    }
+  ]
+}

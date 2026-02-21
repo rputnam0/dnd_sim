@@ -1,0 +1,32 @@
+{
+  "name": "Bestial Soul",
+  "type": "subclass_feature",
+  "description": "The feral power within you increases, causing the natural weapons of your Form of the Beast to count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage. You can also alter your form to help you adapt to your surroundings. When you finish a short or long rest, choose one of the following benefits, which lasts until you finish your next short or long rest: You gain a swimming speed equal to your walking speed, and you can breathe underwater. You gain a climbing speed equal to your walking speed, and you can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check. When you jump, you can make a Strength (Athletics) check and extend your jump by a number of feet equal to the check's total. You can make this special check only once per turn.",
+  "mechanics": [
+    {
+      "effect": "natural_weapons_magical",
+      "description": "Natural weapons of the Form of the Beast count as magical for overcoming resistance and immunity to nonmagical attacks and damage."
+    },
+    {
+      "effect": "gain_swim_speed",
+      "value": "walking_speed",
+      "duration": "until next short rest",
+      "description": "Gain a swimming speed equal to your walking speed and can breathe underwater."
+    },
+    {
+      "effect": "gain_climb_speed",
+      "value": "walking_speed",
+      "special": "can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check",
+      "duration": "until next short rest",
+      "description": "Gain a climbing speed equal to your walking speed."
+    },
+    {
+      "effect": "extend_jump",
+      "method": "Strength Athletics check",
+      "extension": "feet equal to check total",
+      "limit": "once per turn",
+      "duration": "until next short rest",
+      "description": "When you jump, you can make a Strength (Athletics) check to extend your jump by a number of feet equal to the check's total."
+    }
+  ]
+}

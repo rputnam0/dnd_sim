@@ -1,0 +1,14 @@
+{
+  "name": "Astral Knowledge",
+  "type": "racial_trait",
+  "description": "You can mystically access a reservoir of experiences of entities connected to the Astral Plane. Whenever you finish a long rest, you gain proficiency in one skill of your choice and with one weapon or tool of your choice, selected from the Player's Handbook, as you momentarily project your consciousness into the Astral Plane. These proficiencies last until the end of your next long rest.",
+  "mechanics": [
+    {
+      "effect": "gain_proficiency",
+      "trigger": "after_long_rest",
+      "skill_choice": "one skill of your choice",
+      "weapon_or_tool_choice": "one weapon or tool of your choice",
+      "duration": "until the end of your next long rest"
+    }
+  ]
+}

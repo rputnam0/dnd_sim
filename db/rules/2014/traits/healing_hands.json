@@ -1,0 +1,17 @@
+{
+  "name": "Healing Hands",
+  "type": "racial_trait",
+  "description": "As an action, you can touch a creature and roll a number of d4s equal to your proficiency bonus. The creature regains a number of hit points equal to the total rolled. Once you use this trait, you can't use it again until you finish a long rest.",
+  "mechanics": [
+    {
+      "action_type": "action",
+      "target": "creature",
+      "range": "touch",
+      "heal": {
+        "dice": "d4",
+        "count": "proficiency_bonus"
+      },
+      "recharge": "long_rest"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Defensive Flourish",
+  "type": "subclass_feature",
+  "description": "You can expend one use of your Bardic Inspiration to cause the weapon to deal extra damage to the target you hit. The damage equals the number you roll on the Bardic Inspiration die. You also add the number rolled to your AC until the start of your next turn.",
+  "mechanics": [
+    {
+      "action": "expend_resource",
+      "resource": "Bardic Inspiration",
+      "amount": 1,
+      "effect": {
+        "damage": {
+          "type": "weapon",
+          "formula": "Bardic Inspiration die"
+        }
+      }
+    },
+    {
+      "action": "apply_temporary_ac",
+      "value": "Bardic Inspiration die",
+      "duration": "until start of next turn"
+    }
+  ]
+}

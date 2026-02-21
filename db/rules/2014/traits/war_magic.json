@@ -1,0 +1,12 @@
+{
+  "name": "War Magic",
+  "type": "subclass_feature",
+  "description": "Beginning at 7th level, when you use your action to cast a cantrip, you can make one weapon attack as a bonus action.",
+  "mechanics": [
+    {
+      "trigger": "action_cast_cantrip",
+      "effect": "bonus_action_weapon_attack",
+      "count": 1
+    }
+  ]
+}

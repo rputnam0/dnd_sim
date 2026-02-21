@@ -1,0 +1,56 @@
+{
+  "name": "Cold Fire Magic",
+  "type": "racial_trait",
+  "description": "You know the Ray of Frost cantrip. When you reach character levels 3 and 5, you learn the Ice Knife spell and the Flame Blade spell, respectively. You always have those spells prepared. You can cast each once without a spell slot, and you regain the ability to cast these spells in this way when you finish a Long Rest. You can also cast the spells using any spell slots you have of the appropriate level. When you cast Flame Blade using this trait, the spell deals Cold damage instead of Fire damage. Intelligence, Wisdom, or Charisma is your spellcasting ability for these spells (choose the ability when you select this species).",
+  "mechanics": [
+    {
+      "type": "grant_spell",
+      "spell": "Ray of Frost",
+      "level": 0,
+      "preparation": "always",
+      "source": "racial_trait"
+    },
+    {
+      "type": "grant_spell",
+      "spell": "Ice Knife",
+      "level": 1,
+      "level_requirement": 3,
+      "preparation": "always",
+      "source": "racial_trait"
+    },
+    {
+      "type": "grant_spell",
+      "spell": "Flame Blade",
+      "level": 2,
+      "level_requirement": 5,
+      "preparation": "always",
+      "source": "racial_trait"
+    },
+    {
+      "type": "free_cast",
+      "spell": "Ray of Frost",
+      "uses_per_long_rest": 1,
+      "source": "racial_trait"
+    },
+    {
+      "type": "free_cast",
+      "spell": "Ice Knife",
+      "uses_per_long_rest": 1,
+      "source": "racial_trait"
+    },
+    {
+      "type": "free_cast",
+      "spell": "Flame Blade",
+      "uses_per_long_rest": 1,
+      "source": "racial_trait"
+    },
+    {
+      "type": "damage_type_override",
+      "spell": "Flame Blade",
+      "original_damage_type": "Fire",
+      "new_damage_type": "Cold",
+      "condition": "cast_using_trait",
+      "source": "racial_trait"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Uthgardt Heritage",
+  "type": "background_feature",
+  "description": "You have an excellent knowledge of not only your tribe's territory, but also the terrain and natural resources of the rest of the North. You are familiar enough with any wilderness area that you can find twice as much food and water as you normally would when you forage there. Additionally, you can call upon the hospitality of your people, and those allied with your tribe, often including members of the druid circles, tribes of nomadic elves, the Harpers, and the priesthoods devoted to the gods of the First Circle.",
+  "mechanics": [
+    {
+      "type": "resource_multiplier",
+      "resource": "food_and_water",
+      "multiplier": 2,
+      "condition": "when foraging in wilderness"
+    }
+  ]
+}

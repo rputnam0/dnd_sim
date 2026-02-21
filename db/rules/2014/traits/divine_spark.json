@@ -1,0 +1,32 @@
+{
+  "name": "Divine Spark",
+  "type": "class_feature",
+  "description": "As a Magic action, you point your Holy Symbol at another creature you can see within 30 feet of yourself and focus divine energy at it. Roll 1d8 and add your Wisdom modifier. You either restore Hit Points to the creature equal to that total or force the creature to make a Constitution saving throw. On a failed save, the creature takes Necrotic or Radiant damage (your choice) equal to that total. On a successful save, the creature takes half as much damage (round down). You roll an additional d8 when you reach Cleric levels 7 (2d8), 13 (3d8), and 18 (4d8).",
+  "mechanics": [
+    {
+      "type": "channel_divinity",
+      "action": "Magic",
+      "range": "30 feet",
+      "target": "creature you can see",
+      "roll": "1d8 + Wisdom modifier",
+      "scaling": {
+        "7": "2d8",
+        "13": "3d8",
+        "18": "4d8"
+      },
+      "effect": {
+        "heal": "restores hit points equal to roll total",
+        "damage": {
+          "type": [
+            "necrotic",
+            "radiant"
+          ],
+          "choice": "caster's choice",
+          "save": "Constitution",
+          "failed": "damage equal to roll total",
+          "succeeded": "half damage (rounded down)"
+        }
+      }
+    }
+  ]
+}

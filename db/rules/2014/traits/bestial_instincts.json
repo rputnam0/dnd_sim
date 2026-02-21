@@ -1,0 +1,16 @@
+{
+  "name": "Bestial Instincts",
+  "type": "racial_trait",
+  "description": "Channeling the beast within, you gain proficiency in one of the following skills of your choice: Acrobatics, Athletics, Intimidation, or Survival.",
+  "mechanics": [
+    {
+      "effect": "gain_skill_proficiency",
+      "choices": [
+        "Acrobatics",
+        "Athletics",
+        "Intimidation",
+        "Survival"
+      ]
+    }
+  ]
+}

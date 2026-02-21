@@ -1,0 +1,16 @@
+{
+  "name": "Master of Runes",
+  "type": "subclass_feature",
+  "description": "You can invoke each rune you know from your Rune Carver feature twice, rather than once, and you regain all expended uses when you finish a short or long rest.",
+  "mechanics": [
+    {
+      "type": "resource",
+      "name": "Rune invocation",
+      "usesPerRune": 2,
+      "reset": [
+        "short rest",
+        "long rest"
+      ]
+    }
+  ]
+}

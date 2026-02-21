@@ -1,0 +1,33 @@
+{
+  "name": "Bolstering Magic",
+  "type": "subclass_feature",
+  "description": "6th-level Path of Wild Magic feature. You can harness your wild magic to bolster yourself or a companion. As an action, you can touch one creature (which can be yourself) and confer one of the following benefits of your choice to that creature: For 10 minutes, the creature can roll a d3 whenever making an attack roll or an ability check and add the number rolled to the d20 roll. Roll a d3. The creature regains one expended spell slot, the level of which equals the number rolled or lower (the creature's choice). Once a creature receives this benefit, that creature can't receive it again until after a long rest. You can take this action a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "action": "action",
+      "target": "creature",
+      "usage": {
+        "max_uses": "proficiency_bonus",
+        "reset": "long_rest"
+      },
+      "options": [
+        {
+          "name": "bonus_die",
+          "description": "For 10 minutes, the creature can roll a d3 and add the result to attack rolls and ability checks.",
+          "duration": "10 minutes",
+          "dice": "1d3",
+          "applies_to": [
+            "attack_roll",
+            "ability_check"
+          ]
+        },
+        {
+          "name": "spell_slot_recovery",
+          "description": "Roll a d3. The creature regains one expended spell slot of a level equal to or lower than the roll.",
+          "dice": "1d3",
+          "once_per_long_rest_per_target": true
+        }
+      ]
+    }
+  ]
+}

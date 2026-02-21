@@ -1,0 +1,41 @@
+{
+  "name": "Spreading Spores",
+  "type": "subclass_feature",
+  "description": "At 10th level, you gain the ability to seed an area with deadly spores. As a bonus action while your Symbiotic Entity feature is active, you can hurl spores up to 30 feet away, where they swirl in a 10‑foot cube for 1 minute. The spores disappear early if you use this feature again, if you dismiss them as a bonus action, or if your Symbiotic Entity feature is no longer active. Whenever a creature moves into the cube or starts its turn there, that creature takes your Halo of Spores damage, unless the creature succeeds on a Constitution saving throw against your spell save DC. A creature can take this damage no more than once per turn. While the cube of spores persists, you can't use your Halo of Spores reaction.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "effect": "create_spores_cube",
+      "range_feet": 30,
+      "cube_size_feet": 10,
+      "duration": "1 minute",
+      "conditions_end": [
+        "use_feature_again",
+        "dismiss_as_bonus_action",
+        "symbiotic_entity_inactive"
+      ]
+    },
+    {
+      "area_damage": {
+        "shape": "cube",
+        "size_feet": 10,
+        "trigger": [
+          "creature_enters",
+          "creature_starts_turn"
+        ],
+        "damage_source": "Halo of Spores",
+        "save": {
+          "ability": "Constitution",
+          "DC": "spell_save_dc"
+        },
+        "once_per_turn_per_creature": true
+      }
+    },
+    {
+      "restriction": {
+        "while_active": "spores_cube",
+        "cannot_use": "Halo of Spores reaction"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Extra Attack",
+  "type": "class_feature",
+  "description": "Beginning at 5th level, you can attack twice, instead of once, whenever you take the Attack action on your turn.",
+  "mechanics": [
+    {
+      "type": "extra_attack",
+      "count": 1
+    }
+  ]
+}

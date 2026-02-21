@@ -1,0 +1,19 @@
+{
+  "name": "Expert Divination",
+  "type": "subclass_feature",
+  "description": "Beginning at 6th level, casting divination spells comes so easily to you that it expends only a fraction of your spellcasting efforts. When you cast a divination spell of 2nd level or higher using a spell slot, you regain one expended spell slot. The slot you regain must be of a level lower than the spell you cast and can't be higher than 5th level.",
+  "mechanics": [
+    {
+      "trigger": "cast_spell",
+      "spell_filter": {
+        "school": "Divination",
+        "min_level": 2
+      },
+      "effect": "regain_spell_slot",
+      "slot_constraints": {
+        "must_be_lower_than_cast": true,
+        "max_level": 5
+      }
+    }
+  ]
+}

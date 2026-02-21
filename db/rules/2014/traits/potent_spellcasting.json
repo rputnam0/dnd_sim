@@ -1,0 +1,12 @@
+{
+  "name": "Potent Spellcasting",
+  "type": "class_feature",
+  "description": "Add your Wisdom modifier to the damage you deal with any Cleric cantrip.",
+  "mechanics": [
+    {
+      "effect": "damage_addition",
+      "target": "cleric_cantrip",
+      "value": "wisdom_modifier"
+    }
+  ]
+}

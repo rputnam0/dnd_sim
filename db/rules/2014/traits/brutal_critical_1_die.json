@@ -1,0 +1,24 @@
+{
+  "name": "Brutal Critical (1 die)",
+  "type": "class_feature",
+  "description": "Beginning at 9th level, you can roll one additional weapon damage die when determining the extra damage for a critical hit with a melee attack. This increases to two additional dice at 13th level and three additional dice at 17th level.",
+  "mechanics": [
+    {
+      "effect": "extra_critical_damage",
+      "dice_by_level": [
+        {
+          "level": 9,
+          "additional_dice": 1
+        },
+        {
+          "level": 13,
+          "additional_dice": 2
+        },
+        {
+          "level": 17,
+          "additional_dice": 3
+        }
+      ]
+    }
+  ]
+}

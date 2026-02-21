@@ -1,0 +1,17 @@
+{
+  "name": "Survivor",
+  "type": "racial_trait",
+  "description": "You have proficiency in one of the following skills of your choice: Animal Handling, Medicine, Nature, or Survival.",
+  "mechanics": [
+    {
+      "type": "skill_proficiency",
+      "options": [
+        "Animal Handling",
+        "Medicine",
+        "Nature",
+        "Survival"
+      ],
+      "choose": 1
+    }
+  ]
+}

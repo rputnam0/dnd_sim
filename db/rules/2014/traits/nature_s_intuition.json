@@ -1,0 +1,21 @@
+{
+  "name": "Nature's Intuition",
+  "type": "racial_trait",
+  "description": "Thanks to your mystical connection to nature, you gain proficiency with two of the following skills of your choice: Animal Handling, Medicine, Nature, Perception, Stealth, or Survival.",
+  "mechanics": [
+    {
+      "grantProficiency": {
+        "type": "skill",
+        "choices": [
+          "Animal Handling",
+          "Medicine",
+          "Nature",
+          "Perception",
+          "Stealth",
+          "Survival"
+        ],
+        "count": 2
+      }
+    }
+  ]
+}

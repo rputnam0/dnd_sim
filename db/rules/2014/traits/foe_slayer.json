@@ -1,0 +1,17 @@
+{
+  "name": "Foe Slayer",
+  "type": "class_feature",
+  "description": "At 20th level, you become an unparalleled hunter of your enemies. Once on each of your turns, you can add your Wisdom modifier to the attack roll or the damage roll of an attack you make against one of your favored enemies. You can choose to use this feature before or after the roll, but before any effects of the roll are applied.",
+  "mechanics": [
+    {
+      "type": "add_modifier",
+      "modifier": "Wisdom",
+      "applies_to": [
+        "attack_roll",
+        "damage_roll"
+      ],
+      "frequency": "once_per_turn",
+      "condition": "target_is_favored_enemy"
+    }
+  ]
+}

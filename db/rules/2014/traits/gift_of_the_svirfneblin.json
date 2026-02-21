@@ -1,0 +1,36 @@
+{
+  "name": "Gift of the Svirfneblin",
+  "type": "racial_trait",
+  "description": "Starting at 3rd level, you can cast the disguise self spell with this trait. Starting at 5th level, you can also cast the nondetection spell with it, without requiring a material component. Once you cast either of these spells with this trait, you can't cast that spell with it again until you finish a long rest. You can also cast these using spell slots you have of the appropriate level. Intelligence, Wisdom, or Charisma is your spellcasting ability for these spells when you cast them with this trait (choose when you select this race).",
+  "mechanics": [
+    {
+      "effect": "grant_spell",
+      "spell": "disguise self",
+      "available_at_level": 3,
+      "uses_per_long_rest": 1,
+      "requires_material_component": false
+    },
+    {
+      "effect": "grant_spell",
+      "spell": "nondetection",
+      "available_at_level": 5,
+      "uses_per_long_rest": 1,
+      "requires_material_component": false
+    },
+    {
+      "effect": "spellcasting_ability_choice",
+      "options": [
+        "Intelligence",
+        "Wisdom",
+        "Charisma"
+      ]
+    },
+    {
+      "effect": "allow_spell_slot_use",
+      "spells": [
+        "disguise self",
+        "nondetection"
+      ]
+    }
+  ]
+}

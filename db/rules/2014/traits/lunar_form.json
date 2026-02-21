@@ -1,0 +1,23 @@
+{
+  "name": "Lunar Form",
+  "type": "subclass_feature",
+  "description": "The power of the moon suffuses you, granting you the following benefits. Improved Lunar Radiance: Once per turn, you can deal an extra 2d10 Radiant damage to a target you hit with a Wild Shape form's attack. Shared Moonlight: Whenever you use Moonlight Step, you can also teleport one willing creature. That creature must be within 10 feet of you, and you teleport it to an unoccupied space you can see within 10 feet of your destination space.",
+  "mechanics": [
+    {
+      "type": "extra_damage",
+      "damage": "2d10",
+      "damage_type": "radiant",
+      "trigger": "hit",
+      "source": "Wild Shape form's attack",
+      "frequency": "once_per_turn"
+    },
+    {
+      "type": "teleport",
+      "condition": "when_using_Moonlight_Step",
+      "target": "willing creature",
+      "target_range": "10 ft",
+      "destination_range": "10 ft from your destination space",
+      "self_teleport": true
+    }
+  ]
+}

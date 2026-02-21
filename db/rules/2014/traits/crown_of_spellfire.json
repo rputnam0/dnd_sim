@@ -1,0 +1,50 @@
+{
+  "name": "Crown of Spellfire",
+  "type": "subclass_feature",
+  "description": "When you use Innate Sorcery, you can alter it and infuse yourself with the essence of spellfire, gaining the following benefits while this use of Innate Sorcery is active. Once you use this feature to alter Innate Sorcery, you can't use it again until you finish a Long Rest unless you spend 5 Sorcery Points (no action required) to restore your use of it. Burning Life Force: Once per turn when you are hit by an attack roll, you can expend a number of Hit Point Dice, up to a maximum equal to your Charisma modifier (minimum of one). Roll the expended dice, and reduce the amount of damage from that attack equal to the total rolled. Flight: You gain a Fly Speed of 60 feet and can hover. Spell Avoidance: When you're subjected to a spell or magical effect that allows you make a saving throw to take only half damage, you instead take no damage if you succeed on the saving throw and only half damage if you fail. You can't use this benefit if you have the Incapacitated condition.",
+  "mechanics": [
+    {
+      "type": "resource_consumption",
+      "resource": "Sorcery Point",
+      "amount": 7,
+      "description": "Cost to use Crown of Spellfire."
+    },
+    {
+      "type": "recharge",
+      "method": "long_rest",
+      "cost": {
+        "resource": "Sorcery Point",
+        "amount": 5
+      },
+      "description": "Spend 5 Sorcery Points (no action) to restore use after a long rest."
+    },
+    {
+      "type": "damage_reduction",
+      "trigger": "hit_by_attack",
+      "once_per": "turn",
+      "cost": {
+        "resource": "Hit Point Dice",
+        "max_per_use": "Charisma modifier",
+        "minimum": 1
+      },
+      "effect": "reduce_damage_by_roll",
+      "description": "Expend HP dice to reduce damage from the triggering attack by the total rolled."
+    },
+    {
+      "type": "speed",
+      "mode": "fly",
+      "speed": 60,
+      "hover": true,
+      "description": "Gain a fly speed of 60 feet and the ability to hover."
+    },
+    {
+      "type": "damage_resistance",
+      "condition": "spell_or_magical_effect",
+      "save": "half_damage",
+      "on_success": "no_damage",
+      "on_failure": "half_damage",
+      "restriction": "not incapacitated",
+      "description": "If you succeed on the saving throw, you take no damage; if you fail, you take half damage. Cannot be used while incapacitated."
+    }
+  ]
+}

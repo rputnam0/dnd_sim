@@ -1,0 +1,22 @@
+{
+  "name": "Combat Inspiration",
+  "type": "subclass_feature",
+  "description": "Also at 3rd level, you learn to inspire others in battle. A creature that has a Bardic Inspiration die from you can roll that die and add the number rolled to a weapon damage roll it just made. Alternatively, when an attack roll is made against the creature, it can use its reaction to roll the Bardic Inspiration die and add the number rolled to its AC against that attack, after seeing the roll but before knowing whether it hits or misses.",
+  "mechanics": [
+    {
+      "effect_type": "damage_bonus",
+      "trigger": "weapon_damage_roll",
+      "source": "bardic_inspiration_die",
+      "application": "add_die",
+      "description": "Add the rolled Bardic Inspiration die to the weapon damage roll."
+    },
+    {
+      "effect_type": "ac_bonus",
+      "trigger": "incoming_attack",
+      "source": "bardic_inspiration_die",
+      "reaction": true,
+      "application": "add_die",
+      "description": "Use a reaction to roll the Bardic Inspiration die and add the result to AC against the attack."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Telekinetic Thrust",
+  "type": "subclass_feature",
+  "description": "When you deal damage to a target with your Psionic Strike, you can force the target to make a Strength saving throw against a DC equal to 8 + your proficiency bonus + your Intelligence modifier. If the save fails, you can knock the target prone or move it up to 10 feet in any direction horizontally.",
+  "mechanics": [
+    {
+      "type": "saving_throw",
+      "ability": "Strength",
+      "dc": "8 + proficiency_bonus + intelligence_modifier",
+      "on_fail": [
+        {
+          "action": "knock_prone"
+        },
+        {
+          "action": "move",
+          "distance": 10,
+          "direction": "horizontal"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Primal Knowledge",
+  "type": "class_feature",
+  "description": "When you reach 3rd level and again at 10th level, you gain proficiency in one skill of your choice from the list of skills available to barbarians at 1st level.",
+  "mechanics": [
+    {
+      "type": "grant_skill_proficiency",
+      "choice": true,
+      "skill_list_source": "Barbarian",
+      "levels": [
+        3,
+        10
+      ],
+      "quantity": 1
+    }
+  ]
+}

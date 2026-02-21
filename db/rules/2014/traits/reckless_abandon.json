@@ -1,0 +1,19 @@
+{
+  "name": "Reckless Abandon",
+  "type": "subclass_feature",
+  "description": "Beginning at 6th level, when you use Reckless Attack while raging, you also gain temporary hit points equal to your Constitution modifier (minimum of 1). They vanish if any of them are left when your rage ends.",
+  "mechanics": [
+    {
+      "type": "gain_temporary_hit_points",
+      "trigger": "use_reckless_attack",
+      "condition": "raging",
+      "amount": "max(1, constitution_modifier)"
+    },
+    {
+      "type": "remove_temporary_hit_points",
+      "trigger": "rage_ends",
+      "condition": "any_remaining",
+      "effect": "temporary_hit_points_vanish"
+    }
+  ]
+}

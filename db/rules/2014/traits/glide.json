@@ -1,0 +1,22 @@
+{
+  "name": "Glide",
+  "type": "racial_trait",
+  "description": "When you fall at least 10 feet above the ground, you can use your reaction to extend your skin membranes to glide horizontally a number of feet equal to your walking speed, and you take 0 damage from the fall. You determine the direction of the glide.",
+  "mechanics": [
+    {
+      "trigger": "falling at least 10 feet",
+      "uses": "reaction",
+      "effect": [
+        {
+          "type": "glide",
+          "distance": "walking speed"
+        },
+        {
+          "type": "damage_prevention",
+          "damage_type": "fall",
+          "amount": 0
+        }
+      ]
+    }
+  ]
+}

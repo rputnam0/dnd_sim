@@ -1,0 +1,14 @@
+{
+  "name": "Specialized Design",
+  "type": "racial_trait",
+  "description": "You gain two tool proficiencies of your choice, selected from the Player's Handbook.",
+  "mechanics": [
+    {
+      "gainProficiencies": {
+        "category": "tool",
+        "count": 2,
+        "choice": true
+      }
+    }
+  ]
+}

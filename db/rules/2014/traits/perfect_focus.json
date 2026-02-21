@@ -1,0 +1,16 @@
+{
+  "name": "Perfect Focus",
+  "type": "class_feature",
+  "description": "When you roll Initiative and don't use Uncanny Metabolism, you regain expended Focus Points until you have 4 if you have 3 or fewer.",
+  "mechanics": [
+    {
+      "trigger": "initiative_roll",
+      "condition": "unusual_metabolism_not_used",
+      "restore_resource": {
+        "resource": "Focus Points",
+        "target_amount": 4,
+        "max_current": 3
+      }
+    }
+  ]
+}

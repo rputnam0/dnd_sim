@@ -1,0 +1,18 @@
+{
+  "name": "Battle Magic",
+  "type": "subclass_feature",
+  "description": "At 14th level, you have mastered the art of weaving spellcasting and weapon use into a single harmonious act. When you use your action to cast a bard spell, you can make one weapon attack as a bonus action.",
+  "mechanics": [
+    {
+      "trigger": "action_cast_spell",
+      "condition": {
+        "spell_class": "bard"
+      },
+      "effect": {
+        "type": "bonus_action_attack",
+        "weapon_attack": true,
+        "attack_count": 1
+      }
+    }
+  ]
+}

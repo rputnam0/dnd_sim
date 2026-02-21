@@ -1,0 +1,11 @@
+{
+  "name": "Bardic Inspiration (d12)",
+  "type": "class_feature",
+  "description": "At 15th level, your Bardic Inspiration die changes to a d12.",
+  "mechanics": [
+    {
+      "effect": "set_bardic_inspiration_die",
+      "value": "d12"
+    }
+  ]
+}

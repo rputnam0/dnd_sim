@@ -1,0 +1,31 @@
+{
+  "name": "Desert",
+  "type": "subclass_feature",
+  "description": "When this effect is activated, all other creatures in your aura take 2 fire damage each. The damage increases when you reach certain levels in this class, increasing to 3 at 5th level, 4 at 10th level, 5 at 15th level, and 6 at 20th level.",
+  "mechanics": [
+    {
+      "type": "damage",
+      "damage": "2 fire",
+      "target": "creatures in aura (excluding self)",
+      "activation": "effect activation",
+      "scaling": [
+        {
+          "level": 5,
+          "damage": "3 fire"
+        },
+        {
+          "level": 10,
+          "damage": "4 fire"
+        },
+        {
+          "level": 15,
+          "damage": "5 fire"
+        },
+        {
+          "level": 20,
+          "damage": "6 fire"
+        }
+      ]
+    }
+  ]
+}

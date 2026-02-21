@@ -1,0 +1,17 @@
+{
+  "name": "Advanced Artifice",
+  "type": "class_feature",
+  "description": "You gain the following benefits. Magic Item Savant: You can now attune to up to five magic items at once. Refreshed Genius: When you finish a Short Rest, you regain one expended use of your Flash of Genius feature.",
+  "mechanics": [
+    {
+      "type": "increase_attunement_limit",
+      "new_limit": 5
+    },
+    {
+      "type": "regain_feature_use",
+      "feature": "Flash of Genius",
+      "trigger": "short_rest",
+      "amount": 1
+    }
+  ]
+}

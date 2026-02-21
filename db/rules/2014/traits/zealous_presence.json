@@ -1,0 +1,29 @@
+{
+  "name": "Zealous Presence",
+  "type": "subclass_feature",
+  "description": "At 10th level, you learn to channel divine power to inspire zealotry in others. As a bonus action, you unleash a battle cry infused with divine energy. Up to ten other creatures of your choice within 60 feet of you that can hear you gain advantage on attack rolls and saving throws until the start of your next turn. Once you use this feature, you can't use it again until you finish a long rest.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "uses": {
+        "type": "long_rest",
+        "reset": "long_rest"
+      },
+      "target": {
+        "type": "creature",
+        "count": 10,
+        "range": 60,
+        "conditions": [
+          "can hear you"
+        ]
+      },
+      "effect": {
+        "advantage_on": [
+          "attack_rolls",
+          "saving_throws"
+        ],
+        "duration": "until start of your next turn"
+      }
+    }
+  ]
+}

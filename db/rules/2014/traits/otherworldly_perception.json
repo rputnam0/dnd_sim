@@ -1,0 +1,6 @@
+{
+  "name": "Otherworldly Perception",
+  "type": "racial_trait",
+  "description": "You can sense the presence of any creature within 30 feet of you that is invisible or on the Ethereal Plane. You can pinpoint such a creature that is moving.",
+  "mechanics": []
+}

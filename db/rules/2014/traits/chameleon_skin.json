@@ -1,0 +1,14 @@
+{
+  "name": "Chameleon Skin",
+  "type": "racial_trait",
+  "description": "You have advantage on Dexterity (Stealth) checks made to hide.",
+  "mechanics": [
+    {
+      "type": "advantage",
+      "target": "skill",
+      "skill": "Stealth",
+      "ability": "Dexterity",
+      "condition": "hide"
+    }
+  ]
+}

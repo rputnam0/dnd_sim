@@ -1,0 +1,28 @@
+{
+  "name": "Darkness",
+  "type": "subclass_feature",
+  "description": "You can expend 1 Focus Point to cast the Darkness spell without spell components. You can see within the spell's area when you cast it with this feature. While the spell persists, you can move its area of Darkness to a space within 60 feet of yourself at the start of each of your turns.",
+  "mechanics": [
+    {
+      "type": "resource_spend",
+      "resource": "Focus Point",
+      "amount": 1,
+      "effect": {
+        "action": "cast_spell",
+        "spell": "Darkness",
+        "components": "none"
+      }
+    },
+    {
+      "type": "vision",
+      "granted": true,
+      "condition": "within_darkness_area"
+    },
+    {
+      "type": "moveable_area",
+      "spell": "Darkness",
+      "range": 60,
+      "trigger": "start_of_turn"
+    }
+  ]
+}

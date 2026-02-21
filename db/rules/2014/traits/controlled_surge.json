@@ -1,0 +1,13 @@
+{
+  "name": "Controlled Surge",
+  "type": "subclass_feature",
+  "description": "14th-level Path of Wild Magic feature. Whenever you roll on the Wild Magic table, you can roll the die twice and choose which of the two effects to unleash. If you roll the same number on both dice, you can ignore the number and choose any effect on the table.",
+  "mechanics": [
+    {
+      "type": "wild_magic_table_choice",
+      "rolls": 2,
+      "choose_effect": true,
+      "duplicate_allows_any": true
+    }
+  ]
+}

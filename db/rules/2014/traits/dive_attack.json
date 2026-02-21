@@ -1,0 +1,16 @@
+{
+  "name": "Dive Attack",
+  "type": "racial_trait",
+  "description": "If you are flying and dive at least 30 ft. straight toward a target and then hit it with a melee weapon attack, the attack deals an extra 1d6 damage to the target.",
+  "mechanics": [
+    {
+      "trigger": "You are flying, dive at least 30 ft straight toward a target, and hit with a melee weapon attack",
+      "effect": {
+        "damage": {
+          "dice": "1d6",
+          "type": "extra"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Adjust Density",
+  "type": "subclass_feature",
+  "description": "2nd-level Graviturgy Magic feature. As an action, you can magically alter the weight of one object or creature you can see within 30 feet of you. The object or creature must be Large or smaller. The target's weight is halved or doubled for up to 1 minute or until your concentration ends (as if you were concentrating on a spell). While the weight of a creature is halved by this effect, the creature's speed increases by 10 feet, it can jump twice as far as normal, and it has disadvantage on Strength checks and Strength saving throws. While the weight of a creature is doubled by this effect, the creature's speed is reduced by 10 feet, and it has advantage on Strength checks and Strength saving throws. Upon reaching 10th level in this class, you can target an object or a creature that is Huge or smaller.",
+  "mechanics": [
+    {
+      "action": "action",
+      "effect": "alter_weight",
+      "target": "object_or_creature",
+      "range_feet": 30,
+      "size_limit_by_level": {
+        "2": "Large",
+        "10": "Huge"
+      },
+      "duration": "1 minute (concentration)",
+      "weight_change": "halved_or_doubled",
+      "outcomes": {
+        "halved": {
+          "speed_modifier_feet": 10,
+          "jump_multiplier": 2,
+          "strength_check": "disadvantage",
+          "strength_save": "disadvantage"
+        },
+        "doubled": {
+          "speed_modifier_feet": -10,
+          "strength_check": "advantage",
+          "strength_save": "advantage"
+        }
+      }
+    }
+  ]
+}

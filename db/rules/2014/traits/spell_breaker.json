@@ -1,0 +1,16 @@
+{
+  "name": "Spell Breaker",
+  "type": "subclass_feature",
+  "description": "Starting at 6th level, when you restore hit points to an ally with a spell of 1st level or higher, you can also end one spell of your choice on that creature. The level of the spell you end must be equal to or lower than the level of the spell slot you use to cast the healing spell.",
+  "mechanics": [
+    {
+      "trigger": "restore_hit_points",
+      "condition": {
+        "spell_level_min": 1
+      },
+      "action": "end_spell",
+      "target": "creature",
+      "spell_level_limit": "healing_spell_slot_level"
+    }
+  ]
+}

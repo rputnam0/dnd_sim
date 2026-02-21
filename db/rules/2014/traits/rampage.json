@@ -1,0 +1,23 @@
+{
+  "name": "Rampage",
+  "type": "racial_trait",
+  "description": "When you reduce a creature to 0 hit points with a melee attack on your turn, you can take a bonus action to move up to half your speed and make a bite attack.",
+  "mechanics": [
+    {
+      "trigger": "You reduce a creature to 0 hit points with a melee attack on your turn",
+      "action_type": "bonus_action",
+      "effects": [
+        {
+          "type": "move",
+          "distance": "half_speed"
+        },
+        {
+          "type": "attack",
+          "name": "bite",
+          "attack_type": "melee",
+          "damage": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Durable Summons",
+  "type": "subclass_feature",
+  "description": "Starting at 14th level, any creature that you summon or create with a conjuration spell has 30 temporary hit points.",
+  "mechanics": [
+    {
+      "grantTemporaryHP": 30,
+      "target": "creature summoned or created by a conjuration spell"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Fortune from the Many",
+  "type": "racial_trait",
+  "description": "If you miss with an attack roll or fail an ability check or a saving throw, you can draw on your bonds of reciprocity to gain a bonus to the roll equal to the number of allies you can see within 30 feet of you (maximum bonus of +3). You can use this trait a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "roll_bonus",
+      "trigger": "miss_attack_or_fail_ability_check_or_save",
+      "bonus": "min(number_of_allies_visible_within_30ft, 3)",
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    }
+  ]
+}

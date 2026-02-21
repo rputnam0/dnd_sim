@@ -1,0 +1,24 @@
+{
+  "name": "Infuse Item",
+  "type": "class_feature",
+  "description": "You've gained the ability to imbue mundane items with certain magical infusions, turning those objects into magic items. Whenever you finish a long rest, you can touch a nonmagical object and imbue it with one of your artificer infusions, turning it into a magic item. If the item requires attunement, you can attune yourself to it instantly; otherwise you may attune later using the normal process. The infusion remains in the item indefinitely, but when you die it vanishes after a number of days equal to your Intelligence modifier (minimum 1 day). The infusion also ends if you replace it with another. You can infuse multiple objects at the end of a long rest up to the number shown in the Infused Items column of the Artificer table. Each infusion can be in only one object, and an object can have only one of your infusions. If you exceed your maximum, the oldest infusion ends immediately. If an infused item that contains other things ends, its contents appear harmlessly around its space.",
+  "mechanics": [
+    {
+      "trigger": "long_rest",
+      "action": "infuse_item",
+      "target": "nonmagical object",
+      "description": "Touch a nonmagical object and apply one of your known artificer infusions, turning it into a magic item. If the item requires attunement, you may attune instantly."
+    },
+    {
+      "condition": "death",
+      "action": "remove_infusion",
+      "delay": "Intelligence modifier days (minimum 1)",
+      "description": "Infusions on items vanish after a number of days equal to your Intelligence modifier when you die."
+    },
+    {
+      "condition": "exceed_max_infused_items",
+      "action": "remove_oldest_infusion",
+      "description": "If you try to exceed your maximum number of infused items, the oldest infusion ends immediately before the new one is applied."
+    }
+  ]
+}

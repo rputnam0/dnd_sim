@@ -1,0 +1,11 @@
+{
+  "name": "Sneaky",
+  "type": "racial_trait",
+  "description": "You are proficient in the Stealth skill.",
+  "mechanics": [
+    {
+      "type": "skill_proficiency",
+      "skill": "Stealth"
+    }
+  ]
+}

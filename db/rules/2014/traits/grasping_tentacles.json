@@ -1,0 +1,32 @@
+{
+  "name": "Grasping Tentacles",
+  "type": "subclass_feature",
+  "description": "You learn the spell Evard's black tentacles. It counts as a warlock spell for you, but it doesn't count against the number of spells you know. You can also cast it once without a spell slot, and you regain the ability to do so when you finish a long rest. Whenever you cast this spell, your patron's magic bolsters you, granting you a number of temporary hit points equal to your warlock level. Moreover, damage can't break your concentration on this spell.",
+  "mechanics": [
+    {
+      "learn_spell": {
+        "name": "Evard's black tentacles",
+        "counts_as_warlock_spell": true,
+        "does_not_count_against_spells_known": true
+      }
+    },
+    {
+      "spell_cast": {
+        "spell": "Evard's black tentacles",
+        "free_casts_per_long_rest": 1
+      }
+    },
+    {
+      "temporary_hit_points_on_cast": {
+        "spell": "Evard's black tentacles",
+        "amount": "warlock_level"
+      }
+    },
+    {
+      "concentration_protection": {
+        "spell": "Evard's black tentacles",
+        "damage_cannot_break_concentration": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "Winter Walker Spells",
+  "type": "subclass_feature",
+  "description": "When you reach a Ranger level specified in the Winter Walker Spells table, you thereafter always have the listed spells prepared. Level 3: Ice Knife. Level 5: Hold Person. Level 9: Remove Curse. Level 13: Ice Storm. Level 17: Cone of Cold.",
+  "mechanics": [
+    {
+      "type": "always_prepared_spells",
+      "spells_by_level": {
+        "3": [
+          "Ice Knife"
+        ],
+        "5": [
+          "Hold Person"
+        ],
+        "9": [
+          "Remove Curse"
+        ],
+        "13": [
+          "Ice Storm"
+        ],
+        "17": [
+          "Cone of Cold"
+        ]
+      }
+    }
+  ]
+}

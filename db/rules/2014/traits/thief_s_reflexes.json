@@ -1,0 +1,20 @@
+{
+  "name": "Thief's Reflexes",
+  "type": "subclass_feature",
+  "description": "When you reach 17th level, you have become adept at laying ambushes and quickly escaping danger. You can take two turns during the first round of any combat. You take your first turn at your normal initiative and your second turn at your initiative minus 10. You can't use this feature when you are surprised.",
+  "mechanics": [
+    {
+      "type": "extra_turn",
+      "timing": "first_round",
+      "first_turn": {
+        "initiative": "normal"
+      },
+      "second_turn": {
+        "initiative_modifier": -10
+      },
+      "restriction": {
+        "cannot_use_when": "surprised"
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Nature's Ward",
+  "type": "subclass_feature",
+  "description": "When you reach 10th level, you can't be charmed or frightened by elementals or fey, and you are immune to poison and disease.",
+  "mechanics": [
+    {
+      "type": "immunity",
+      "condition": "charmed"
+    },
+    {
+      "type": "immunity",
+      "condition": "frightened"
+    },
+    {
+      "type": "immunity",
+      "damage_type": "poison"
+    },
+    {
+      "type": "immunity",
+      "condition": "disease"
+    }
+  ]
+}

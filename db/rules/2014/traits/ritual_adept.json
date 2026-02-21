@@ -1,0 +1,14 @@
+{
+  "name": "Ritual Adept",
+  "type": "class_feature",
+  "description": "You can cast any spell as a ritual if that spell has the ritual tag and the spell is in your spellbook. You needn't have the spell prepared, but you must read from the book to cast a spell in this way.",
+  "mechanics": [
+    {
+      "action": "cast",
+      "mode": "ritual",
+      "requires_prepared": false,
+      "requires_spellbook": true,
+      "source": "Wizard"
+    }
+  ]
+}

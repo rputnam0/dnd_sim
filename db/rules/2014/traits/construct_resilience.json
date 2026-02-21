@@ -1,0 +1,15 @@
+{
+  "name": "Construct Resilience",
+  "type": "racial_trait",
+  "description": "You have Resistance to Poison damage. You also have Advantage on saving throws to avoid or end the Poisoned condition.",
+  "mechanics": [
+    {
+      "type": "damage_resistance",
+      "damage_type": "poison"
+    },
+    {
+      "type": "saving_throw_advantage",
+      "condition": "poisoned"
+    }
+  ]
+}

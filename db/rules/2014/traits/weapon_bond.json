@@ -1,0 +1,36 @@
+{
+  "name": "Weapon Bond",
+  "type": "subclass_feature",
+  "description": "At 3rd level, you learn a ritual that creates a magical bond between yourself and one weapon. You perform the ritual over the course of 1 hour, which can be done during a short rest. The weapon must be within your reach throughout the ritual, at the conclusion of which you touch the weapon and forge the bond. Once you have bonded a weapon to yourself, you can't be disarmed of that weapon unless you are incapacitated. If it is on the same plane of existence, you can summon that weapon as a bonus action on your turn, causing it to teleport instantly to your hand. You can have up to two bonded weapons, but can summon only one at a time with your bonus action. If you attempt to bond with a third weapon, you must break the bond with one of the other two.",
+  "mechanics": [
+    {
+      "type": "ritual",
+      "duration": "1 hour",
+      "requires": "short rest",
+      "effect": "Create a magical bond with a weapon within reach"
+    },
+    {
+      "type": "restriction",
+      "target": "bonded weapon",
+      "cannot_be_disarmed_unless": "incapacitated"
+    },
+    {
+      "type": "action",
+      "name": "Summon Bonded Weapon",
+      "action_type": "bonus",
+      "effect": "Teleport a bonded weapon (on the same plane) to your hand"
+    },
+    {
+      "type": "limit",
+      "resource": "bonded weapons",
+      "max": 2,
+      "description": "You can have up to two bonded weapons"
+    },
+    {
+      "type": "limit",
+      "resource": "summon",
+      "max_per_turn": 1,
+      "description": "Only one bonded weapon can be summoned per bonus action"
+    }
+  ]
+}

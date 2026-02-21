@@ -1,0 +1,12 @@
+{
+  "name": "Leap to Your Feet",
+  "type": "subclass_feature",
+  "description": "When you're prone, you can stand up by spending 5 feet of movement, rather than half your speed.",
+  "mechanics": [
+    {
+      "type": "stand_up_cost",
+      "cost_feet": 5,
+      "condition": "prone"
+    }
+  ]
+}

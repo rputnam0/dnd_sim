@@ -1,0 +1,33 @@
+{
+  "name": "Searing Sunburst",
+  "type": "subclass_feature",
+  "description": "At 11th level, you gain the ability to create an orb of light that erupts into a devastating explosion. As an action, you magically create an orb and hurl it at a point you choose within 150 feet, where it erupts into a sphere of radiant light for a brief but deadly instant. Each creature in that 20-foot-radius sphere must succeed on a Constitution saving throw or take 2d6 radiant damage. A creature doesn't need to make the save if the creature is behind total cover that is opaque. You can increase the sphere's damage by spending ki points. Each point you spend, to a maximum of 3, increases the damage by 2d6.",
+  "mechanics": [
+    {
+      "action_type": "action",
+      "range_feet": 150,
+      "area": {
+        "shape": "sphere",
+        "radius_feet": 20
+      },
+      "damage": {
+        "dice": "2d6",
+        "damage_type": "radiant"
+      },
+      "saving_throw": {
+        "ability": "constitution",
+        "effect_on_success": "none",
+        "effect_on_failure": "full damage"
+      },
+      "cover_exemption": "total cover (opaque)"
+    },
+    {
+      "resource": "ki",
+      "max_spend": 3,
+      "damage_increase_per_point": {
+        "dice": "2d6",
+        "damage_type": "radiant"
+      }
+    }
+  ]
+}

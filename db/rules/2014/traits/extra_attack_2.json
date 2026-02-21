@@ -1,0 +1,12 @@
+{
+  "name": "Extra Attack (2)",
+  "type": "class_feature",
+  "description": "At 11th level, you can attack three times whenever you take the Attack action on your turn.",
+  "mechanics": [
+    {
+      "effect": "extra_attack",
+      "attacks": 3,
+      "trigger": "Attack action"
+    }
+  ]
+}

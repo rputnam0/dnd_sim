@@ -1,0 +1,30 @@
+{
+  "name": "Trance",
+  "type": "racial_trait",
+  "description": "You don't need to sleep, and magic can't put you to sleep. You can finish a long rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness. Whenever you finish this trance, you can change your season, and you can gain two proficiencies that you don't have, each one with a weapon or a tool of your choice selected from the Player's Handbook. You mystically acquire these proficiencies by drawing them from shared elven memory, and you retain them until you finish your next long rest.",
+  "mechanics": [
+    {
+      "type": "sleep_immunity",
+      "description": "The character does not need to sleep and cannot be put to sleep by magical effects."
+    },
+    {
+      "type": "shortened_long_rest",
+      "time": "4 hours",
+      "condition": "Spent in a trancelike meditation while retaining consciousness."
+    },
+    {
+      "type": "grant_proficiencies",
+      "count": 2,
+      "options": [
+        "weapon",
+        "tool"
+      ],
+      "duration": "until the next long rest",
+      "description": "After finishing the trance, the character gains two proficiencies (weapon or tool) of their choice that they do not already have."
+    },
+    {
+      "type": "season_change",
+      "description": "When the trance ends, the character can change their seasonal aspect."
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Dual Mind",
+  "type": "racial_trait",
+  "description": "You have Advantage on Wisdom and Charisma saving throws.",
+  "mechanics": [
+    {
+      "type": "advantage",
+      "saves": [
+        "wisdom",
+        "charisma"
+      ]
+    }
+  ]
+}

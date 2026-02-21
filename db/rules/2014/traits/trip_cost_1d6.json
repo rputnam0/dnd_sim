@@ -1,0 +1,15 @@
+{
+  "name": "Trip (Cost: 1d6)",
+  "type": "class_feature",
+  "description": "If the target is Large or smaller, it must succeed on a Dexterity saving throw or be Prone.",
+  "mechanics": [
+    {
+      "type": "saving_throw",
+      "ability": "Dexterity",
+      "target_filter": "Large or smaller",
+      "on_failure": {
+        "condition": "prone"
+      }
+    }
+  ]
+}

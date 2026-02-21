@@ -1,0 +1,15 @@
+{
+  "name": "Scornful Rebuke",
+  "type": "subclass_feature",
+  "description": "Starting at 15th level, those who dare to strike you are psychically punished for their audacity. Whenever a creature hits you with an attack, that creature takes psychic damage equal to your Charisma modifier (minimum of 1) if you're not incapacitated.",
+  "mechanics": [
+    {
+      "trigger": "when you are hit by an attack",
+      "condition": "you are not incapacitated",
+      "damage": {
+        "type": "psychic",
+        "amount": "max(1, charisma_mod)"
+      }
+    }
+  ]
+}

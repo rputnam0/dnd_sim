@@ -1,0 +1,15 @@
+{
+  "name": "Bolstering Flames",
+  "type": "subclass_feature",
+  "description": "You or one creature you can see within 30 feet of yourself gains temporary hit points equal to 1d4 plus your Charisma modifier.",
+  "mechanics": [
+    {
+      "type": "grant_temporary_hit_points",
+      "target": "creature you can see within 30 feet of you",
+      "amount": {
+        "dice": "1d4",
+        "ability_modifier": "Charisma"
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "Mortal Bulwark",
+  "type": "subclass_feature",
+  "description": "20th-level Oath of the Watchers feature. You manifest a spark of divine power in defense of the mortal realms. As a bonus action, you gain the following benefits for 1 minute: You gain truesight with a range of 120 feet. You have advantage on attack rolls against aberrations, celestials, elementals, fey, and fiends. When you hit a creature with an attack roll and deal damage to it, you can also force it to make a Charisma saving throw against your spell save DC. On a failed save, the creature is magically banished to its native plane of existence if it's currently not there. On a successful save, the creature can't be banished by this feature for 24 hours. Once you use this bonus action, you can't use it again until you finish a long rest, unless you expend a 5th-level spell slot to use it again.",
+  "mechanics": [
+    {
+      "type": "activation",
+      "action": "bonus_action",
+      "duration": "1 minute",
+      "uses_per_long_rest": 1,
+      "extra_use_slot_level": 5
+    },
+    {
+      "type": "grant_sense",
+      "sense": "truesight",
+      "range_feet": 120
+    },
+    {
+      "type": "advantage_on_attacks",
+      "targets": [
+        "aberrations",
+        "celestials",
+        "elementals",
+        "fey",
+        "fiends"
+      ]
+    },
+    {
+      "type": "conditional_banish",
+      "trigger": "hit_and_damage",
+      "save": {
+        "ability": "Charisma",
+        "dc_source": "spell_save_dc"
+      },
+      "effect": "banish_to_native_plane",
+      "condition": "creature_not_on_native_plane",
+      "failure": {
+        "action": "banish"
+      },
+      "success": {
+        "restriction": "cannot_be_banished_by_this_feature",
+        "duration": "24 hours"
+      }
+    }
+  ]
+}

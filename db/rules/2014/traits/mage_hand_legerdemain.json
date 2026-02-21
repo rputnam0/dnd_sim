@@ -1,0 +1,42 @@
+{
+  "name": "Mage Hand Legerdemain",
+  "type": "subclass_feature",
+  "description": "Starting at 3rd level, when you cast mage hand, you can make the spectral hand invisible, and you can perform the following additional tasks with it: you can stow one object the hand is holding in a container worn or carried by another creature; you can retrieve an object in a container worn or carried by another creature; you can use thieves' tools to pick locks and disarm traps at range. You can perform one of these tasks without being noticed by a creature if you succeed on a Dexterity (Sleight of Hand) check contested by the creature's Wisdom (Perception) check. In addition, you can use the bonus action granted by your Cunning Action to control the hand.",
+  "mechanics": [
+    {
+      "type": "spell_modification",
+      "spell": "mage hand",
+      "effect": "hand becomes invisible"
+    },
+    {
+      "type": "additional_task",
+      "task": "stow_object",
+      "description": "Stow one object the hand is holding in a container worn or carried by another creature"
+    },
+    {
+      "type": "additional_task",
+      "task": "retrieve_object",
+      "description": "Retrieve an object in a container worn or carried by another creature"
+    },
+    {
+      "type": "additional_task",
+      "task": "use_thieves_tools",
+      "description": "Use thieves' tools to pick locks and disarm traps at range"
+    },
+    {
+      "type": "stealth_check",
+      "condition": "perform task without being noticed",
+      "check": {
+        "ability": "Dexterity",
+        "skill": "Sleight of Hand",
+        "opposed_ability": "Wisdom",
+        "opposed_skill": "Perception"
+      }
+    },
+    {
+      "type": "bonus_action",
+      "source": "Cunning Action",
+      "effect": "control the mage hand"
+    }
+  ]
+}

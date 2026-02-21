@@ -1,0 +1,17 @@
+{
+  "name": "Chalice",
+  "type": "subclass_feature",
+  "description": "A constellation of a life-giving goblet appears on you. Whenever you cast a spell using a spell slot that restores hit points to a creature, you or another creature within 30 feet of you can regain hit points equal to 1d8 + your Wisdom modifier.",
+  "mechanics": [
+    {
+      "trigger": "spell_cast",
+      "condition": "spell restores hit points",
+      "target": "self_or_creature_within_30_feet",
+      "effect": {
+        "type": "heal",
+        "dice": "1d8",
+        "ability_modifier": "Wisdom"
+      }
+    }
+  ]
+}

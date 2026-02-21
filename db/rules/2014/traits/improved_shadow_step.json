@@ -1,0 +1,19 @@
+{
+  "name": "Improved Shadow Step",
+  "type": "subclass_feature",
+  "description": "You can draw on your Shadowfell connection to empower your teleportation. When you use your Shadow Step, you can expend 1 Focus Point to remove the requirement that you must start and end in dim light or darkness for that use of the feature. As part of this bonus action, you can make an unarmed strike immediately after you teleport.",
+  "mechanics": [
+    {
+      "type": "resource_spend",
+      "resource": "Focus Point",
+      "amount": 1,
+      "effect": "remove lighting requirement for Shadow Step"
+    },
+    {
+      "type": "extra_attack",
+      "attack_type": "unarmed strike",
+      "trigger": "after teleport",
+      "action_type": "bonus action"
+    }
+  ]
+}

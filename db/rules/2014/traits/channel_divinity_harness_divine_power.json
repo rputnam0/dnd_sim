@@ -1,0 +1,29 @@
+{
+  "name": "Channel Divinity: Harness Divine Power",
+  "type": "class_feature",
+  "description": "2nd-level cleric optional class features (optional feature). You can expend a use of your Channel Divinity to fuel your spells. As a bonus action, you touch your holy symbol, utter a prayer, and regain one expended spell slot, the level of which can be no higher than half your proficiency bonus (rounded up). The number of times you can use this feature is based on the level you've reached in this class: 2nd level, once; 6th level, twice; and 18th level, thrice. You regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "resource",
+      "resource": "Channel Divinity",
+      "cost": 1
+    },
+    {
+      "type": "action",
+      "action": "bonus"
+    },
+    {
+      "type": "spell_slot_recovery",
+      "max_slot_level_expression": "ceil(proficiency_bonus / 2)"
+    },
+    {
+      "type": "usage",
+      "reset": "long_rest",
+      "max_uses_by_level": {
+        "2": 1,
+        "6": 2,
+        "18": 3
+      }
+    }
+  ]
+}

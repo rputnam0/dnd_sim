@@ -1,0 +1,12 @@
+{
+  "name": "Draconic Resistance",
+  "type": "racial_trait",
+  "description": "You have resistance to the damage type associated with your Chromatic Ancestry.",
+  "mechanics": [
+    {
+      "type": "damage_resistance",
+      "damage_type": "ancestry_associated",
+      "condition": "Chromatic Ancestry"
+    }
+  ]
+}

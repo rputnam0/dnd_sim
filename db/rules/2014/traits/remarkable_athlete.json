@@ -1,0 +1,23 @@
+{
+  "name": "Remarkable Athlete",
+  "type": "subclass_feature",
+  "description": "Starting at 7th level, you can add half your proficiency bonus (round up) to any Strength, Dexterity, or Constitution check you make that doesn't already use your proficiency bonus. In addition, when you make a running long jump, the distance you can cover increases by a number of feet equal to your Strength modifier.",
+  "mechanics": [
+    {
+      "type": "ability_check_modifier",
+      "abilities": [
+        "strength",
+        "dexterity",
+        "constitution"
+      ],
+      "value": "half proficiency bonus (rounded up)",
+      "condition": "applies only if the check does not already use your proficiency bonus"
+    },
+    {
+      "type": "jump_distance_modifier",
+      "mode": "running_long_jump",
+      "value": "strength_modifier",
+      "unit": "feet"
+    }
+  ]
+}

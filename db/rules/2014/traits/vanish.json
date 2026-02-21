@@ -1,0 +1,18 @@
+{
+  "name": "Vanish",
+  "type": "class_feature",
+  "description": "Starting at 14th level, you can use the Hide action as a bonus action on your turn. Also, you can't be tracked by nonmagical means, unless you choose to leave a trail.",
+  "mechanics": [
+    {
+      "type": "action_cost",
+      "action": "Hide",
+      "cost": "bonus"
+    },
+    {
+      "type": "tracking_immunity",
+      "source": "nonmagical",
+      "optional": true,
+      "condition": "you choose to leave a trail"
+    }
+  ]
+}

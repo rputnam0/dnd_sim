@@ -1,0 +1,15 @@
+{
+  "name": "Wolf",
+  "type": "subclass_feature",
+  "description": "While you're raging, your friends have advantage on melee attack rolls against any creature within 5 feet of you that is hostile to you. The spirit of the wolf makes you a leader of hunters.",
+  "mechanics": [
+    {
+      "effect": "grant_advantage",
+      "target": "allies",
+      "action": "melee_attack",
+      "condition": "raging",
+      "range": "5 feet",
+      "filter": "hostile_creature"
+    }
+  ]
+}

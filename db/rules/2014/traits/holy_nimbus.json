@@ -1,0 +1,39 @@
+{
+  "name": "Holy Nimbus",
+  "type": "subclass_feature",
+  "description": "At 20th level, as an action, you can emanate an aura of sunlight. For 1 minute, bright light shines from you in a 30-foot radius, and dim light shines 30 feet beyond that. Whenever an enemy creature starts its turn in the bright light, the creature takes 10 radiant damage. In addition, for the duration, you have advantage on saving throws against spells cast by fiends or undead. Once you use this feature, you can't use it again until you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "action",
+      "name": "Emanate Holy Nimbus",
+      "activation": "action",
+      "duration": "1 minute",
+      "effects": [
+        {
+          "type": "light_aura",
+          "bright_radius": 30,
+          "dim_radius": 60,
+          "source": "sunlight"
+        },
+        {
+          "type": "damage_on_start_of_turn",
+          "trigger": "enemy_starts_turn_in_bright_light",
+          "damage": {
+            "amount": 10,
+            "damage_type": "radiant"
+          }
+        },
+        {
+          "type": "advantage_on_saving_throws",
+          "condition": "spells_cast_by_fiends_or_undead",
+          "advantage": true
+        }
+      ]
+    },
+    {
+      "type": "recharge",
+      "frequency": "long_rest",
+      "uses": 1
+    }
+  ]
+}

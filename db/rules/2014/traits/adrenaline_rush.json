@@ -1,0 +1,21 @@
+{
+  "name": "Adrenaline Rush",
+  "type": "racial_trait",
+  "description": "You can take the Dash action as a bonus action. You can use this trait a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest. Whenever you use this trait, you gain a number of temporary hit points equal to your proficiency bonus.",
+  "mechanics": [
+    {
+      "type": "action",
+      "action": "dash",
+      "cost": "bonus action",
+      "uses": {
+        "max": "proficiency bonus",
+        "reset": "long rest"
+      }
+    },
+    {
+      "type": "temporary_hit_points",
+      "amount": "proficiency bonus",
+      "trigger": "trait_used"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Enhanced Bond",
+  "type": "subclass_feature",
+  "description": "6th-level Circle of Wildfire feature. The bond with your wildfire spirit enhances your destructive and restorative spells. Whenever you cast a spell that deals fire damage or restores hit points while your wildfire spirit is summoned, roll a d8, and you gain a bonus equal to the number rolled to one damage or healing roll of the spell. In addition, when you cast a spell with a range other than self, the spell can originate from you or your wildfire spirit.",
+  "mechanics": [
+    {
+      "type": "spell_bonus",
+      "trigger": "cast_spell",
+      "condition": "spell_deals_fire_damage_or_restores_hit_points_and_wildfire_spirit_summoned",
+      "dice": "d8",
+      "apply_to": "one_damage_or_healing_roll"
+    },
+    {
+      "type": "spell_origin",
+      "trigger": "cast_spell",
+      "condition": "spell_range_not_self",
+      "options": [
+        "caster",
+        "wildfire_spirit"
+      ]
+    }
+  ]
+}

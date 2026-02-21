@@ -1,0 +1,12 @@
+{
+  "name": "Destroy Undead (CR 4)",
+  "type": "class_feature",
+  "description": "Starting at 17th level, when an undead of CR 4 or lower fails its saving throw against your Turn Undead feature, the creature is instantly destroyed.",
+  "mechanics": [
+    {
+      "effect": "destroy_undead",
+      "cr_max": 4,
+      "trigger": "failed_save_vs_turn_undead"
+    }
+  ]
+}

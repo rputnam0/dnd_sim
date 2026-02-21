@@ -1,0 +1,16 @@
+{
+  "name": "Wanderer",
+  "type": "background_feature",
+  "description": "You have an excellent memory for maps and geography, and you can always recall the general layout of terrain, settlements, and other features around you. In addition, you can find food and fresh water for yourself and up to five other people each day, provided that the land offers berries, small game, water, and so forth.",
+  "mechanics": [
+    {
+      "effect": "recall_terrain",
+      "detail": "Excellent memory for maps and geography; can recall the general layout of surrounding terrain, settlements, and features."
+    },
+    {
+      "effect": "provide_food_water",
+      "capacity": 5,
+      "condition": "land offers berries, small game, water, etc."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Daunting Roar",
+  "type": "racial_trait",
+  "description": "As a bonus action, you can let out an especially menacing roar. Creatures of your choice within 10 feet of you that can hear you must succeed on a Wisdom saving throw or become frightened of you until the end of your next turn. The DC of the save equals 8 + your proficiency bonus + your Constitution modifier. Once you use this trait, you can't use it again until you finish a short or long rest.",
+  "mechanics": [
+    {
+      "activation": "bonus_action"
+    },
+    {
+      "effect": "frightened",
+      "target": "creatures of your choice within 10 feet that can hear you",
+      "save": {
+        "type": "wisdom",
+        "dc": "8 + proficiency bonus + Constitution modifier"
+      }
+    },
+    {
+      "recharge": "short_or_long_rest"
+    }
+  ]
+}

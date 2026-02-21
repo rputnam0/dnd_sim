@@ -1,0 +1,15 @@
+{
+  "name": "Siren's Song",
+  "type": "racial_trait",
+  "description": "You know the friends cantrip and can cast it without material components.",
+  "mechanics": [
+    {
+      "type": "grant_cantrip",
+      "spell": "friends"
+    },
+    {
+      "type": "ignore_material_components",
+      "spell": "friends"
+    }
+  ]
+}

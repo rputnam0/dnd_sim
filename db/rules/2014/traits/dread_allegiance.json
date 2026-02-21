@@ -1,0 +1,44 @@
+{
+  "name": "Dread Allegiance",
+  "type": "subclass_feature",
+  "description": "Choose one of the Dead Three—Bane, Bhaal, or Myrkul. You gain resistance to a specific damage type and the ability to cast a cantrip, as detailed below; Intelligence is your spellcasting ability for this cantrip. When you finish a Long Rest, you can change your choice.\n\nBane: Psychic resistance; Minor Illusion cantrip.\nBhaal: Poison resistance; Blade Ward cantrip.\nMyrkul: Necrotic resistance; Chill Touch cantrip.",
+  "mechanics": [
+    {
+      "effect": "damage_resistance",
+      "choice": "Dead Three",
+      "options": [
+        {
+          "god": "Bane",
+          "damage_type": "psychic"
+        },
+        {
+          "god": "Bhaal",
+          "damage_type": "poison"
+        },
+        {
+          "god": "Myrkul",
+          "damage_type": "necrotic"
+        }
+      ]
+    },
+    {
+      "effect": "grant_cantrip",
+      "choice": "Dead Three",
+      "options": [
+        {
+          "god": "Bane",
+          "cantrip": "Minor Illusion"
+        },
+        {
+          "god": "Bhaal",
+          "cantrip": "Blade Ward"
+        },
+        {
+          "god": "Myrkul",
+          "cantrip": "Chill Touch"
+        }
+      ],
+      "spellcasting_ability": "Intelligence"
+    }
+  ]
+}

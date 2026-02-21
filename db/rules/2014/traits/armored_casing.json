@@ -1,0 +1,12 @@
+{
+  "name": "Armored Casing",
+  "type": "racial_trait",
+  "description": "You are encased in thin metal or some other durable material. While you aren't wearing armor, your base Armor Class is 13 + your Dexterity modifier.",
+  "mechanics": [
+    {
+      "type": "base_ac",
+      "value": "13 + Dex modifier",
+      "condition": "not wearing armor"
+    }
+  ]
+}

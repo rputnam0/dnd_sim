@@ -1,0 +1,11 @@
+{
+  "name": "Guardians of the Depths",
+  "type": "racial_trait",
+  "description": "Adapted to even the most extreme ocean depths, you have resistance to cold damage.",
+  "mechanics": [
+    {
+      "type": "damage_resistance",
+      "damage_type": "cold"
+    }
+  ]
+}

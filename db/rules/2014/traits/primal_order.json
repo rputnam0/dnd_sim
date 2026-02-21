@@ -1,0 +1,15 @@
+{
+  "name": "Primal Order",
+  "type": "class_feature",
+  "description": "You have dedicated yourself to one of the following sacred roles of your choice: Magician or Warden.",
+  "mechanics": [
+    {
+      "type": "choice",
+      "count": 1,
+      "options": [
+        "Magician",
+        "Warden"
+      ]
+    }
+  ]
+}

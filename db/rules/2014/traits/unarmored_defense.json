@@ -1,0 +1,16 @@
+{
+  "name": "Unarmored Defense",
+  "type": "class_feature",
+  "description": "While you are not wearing any armor, your Armor Class equals 10 + your Dexterity modifier + your Constitution modifier. You can use a shield and still gain this benefit.",
+  "mechanics": [
+    {
+      "type": "ac_override",
+      "formula": "10 + Dex + Con",
+      "condition": "not wearing armor"
+    },
+    {
+      "type": "shield_allowed",
+      "condition": "not wearing armor"
+    }
+  ]
+}

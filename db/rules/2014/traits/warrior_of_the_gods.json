@@ -1,0 +1,12 @@
+{
+  "name": "Warrior of the Gods",
+  "type": "subclass_feature",
+  "description": "At 3rd level, your soul is marked for endless battle. If a spell, such as raise dead, has the sole effect of restoring you to life (but not undeath), the caster doesn't need material components to cast the spell on you.",
+  "mechanics": [
+    {
+      "type": "spell_material_component_exemption",
+      "condition": "spell restores you to life and has no other effect (not undeath)",
+      "exempt_material_components": true
+    }
+  ]
+}

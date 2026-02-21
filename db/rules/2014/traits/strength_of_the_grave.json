@@ -1,0 +1,26 @@
+{
+  "name": "Strength of the Grave",
+  "type": "subclass_feature",
+  "description": "Starting at 1st level, your existence in a twilight state between life and death makes you difficult to defeat. When damage reduces you to 0 hit points, you can make a Charisma saving throw (DC 5 + the damage taken). On a success, you instead drop to 1 hit point. You can't use this feature if you are reduced to 0 hit points by radiant damage or by a critical hit. After the saving throw succeeds, you can't use this feature again until you finish a long rest.",
+  "mechanics": [
+    {
+      "trigger": "damage reduces you to 0 hit points",
+      "action": "make Charisma saving throw",
+      "dc": {
+        "base": 5,
+        "modifier": "damage taken"
+      },
+      "success": {
+        "setHitPoints": 1
+      },
+      "restrictions": [
+        "cannot be used if damage type is radiant",
+        "cannot be used if damage is a critical hit"
+      ],
+      "usage": {
+        "reset": "long rest",
+        "oncePerRest": true
+      }
+    }
+  ]
+}

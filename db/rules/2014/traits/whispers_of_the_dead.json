@@ -1,0 +1,18 @@
+{
+  "name": "Whispers of the Dead",
+  "type": "subclass_feature",
+  "description": "3rd-level Phantom feature\nEchoes of those who have died cling to you. Whenever you finish a short or long rest, you can choose one skill or tool proficiency that you lack and gain it, as a ghostly presence shares its knowledge with you. You lose this proficiency when you use this feature to choose a different proficiency that you lack.",
+  "mechanics": [
+    {
+      "type": "gain_proficiency",
+      "trigger": "rest",
+      "rest": [
+        "short",
+        "long"
+      ],
+      "choice": "skill_or_tool",
+      "condition": "you lack the proficiency",
+      "replace_on_new_choice": true
+    }
+  ]
+}

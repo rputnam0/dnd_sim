@@ -1,0 +1,15 @@
+{
+  "name": "Group Recovery",
+  "type": "subclass_feature",
+  "description": "When you use your Second Wind to regain Hit Points, you can choose a number of allies within a 30-foot emanation originating from yourself, up to a number of allies equal to your Charisma modifier (minimum of one). Each of those allies regains Hit Points equal to 1d4 plus your Fighter level. Once you use this ability, you can't use it again until you finish a Short Rest or Long Rest.",
+  "mechanics": [
+    {
+      "trigger": "use Second Wind",
+      "action": "heal allies",
+      "range": "30 ft emanation centered on you",
+      "targetLimit": "Charisma modifier (minimum 1) allies",
+      "healing": "1d4 + fighter level hit points per ally",
+      "recharge": "once per short or long rest"
+    }
+  ]
+}

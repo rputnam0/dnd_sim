@@ -1,0 +1,37 @@
+{
+  "name": "Circle of the Land Spells",
+  "type": "subclass_feature",
+  "description": "Whenever you finish a long rest, choose one type of land—arid, polar, temperate, or tropical. Consult the corresponding table; you have the spells listed for your druid level and lower prepared.",
+  "mechanics": [
+    {
+      "action": "choose_land_type",
+      "trigger": "after_long_rest",
+      "spells_by_level": {
+        "arid": {
+          "3": "Blur, Burning Hands, Fire Bolt",
+          "5": "Fireball",
+          "7": "Blight",
+          "9": "Wall of Stone"
+        },
+        "polar": {
+          "3": "Fog Cloud, Hold Person, Ray of Frost",
+          "5": "Sleet Storm",
+          "7": "Ice Storm",
+          "9": "Cone of Cold"
+        },
+        "temperate": {
+          "3": "Misty Step, Shocking Grasp, Sleep",
+          "5": "Lightning Bolt",
+          "7": "Freedom of Movement",
+          "9": "Tree Stride"
+        },
+        "tropical": {
+          "3": "Acid Splash, Ray of Sickness, Web",
+          "5": "Stinking Cloud",
+          "7": "Polymorph",
+          "9": "Insect Plague"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Fearless",
+  "type": "racial_trait",
+  "description": "You have advantage on saving throws you make to avoid or end the frightened condition on yourself. When you fail a saving throw to avoid or end the frightened condition on yourself, you can choose to succeed instead. Once you succeed on a saving throw in this way, you can't do so again until you finish a long rest.",
+  "mechanics": [
+    {
+      "effect_type": "advantage",
+      "applies_to": "saving throws",
+      "condition": "avoid or end frightened"
+    },
+    {
+      "effect_type": "replace_failure",
+      "applies_to": "saving throw",
+      "condition": "avoid or end frightened",
+      "once_per": "long rest"
+    }
+  ]
+}

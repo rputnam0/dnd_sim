@@ -1,0 +1,24 @@
+{
+  "name": "Acolyte of Strength",
+  "type": "subclass_feature",
+  "description": "At 1st level, you learn one druid cantrip of your choice. You also gain proficiency in one of the following skills of your choice: Animal Handling, Athletics, Nature, or Survival.",
+  "mechanics": [
+    {
+      "learn_cantrip": {
+        "source_class": "Druid",
+        "choice": true
+      }
+    },
+    {
+      "gain_skill_proficiency": {
+        "options": [
+          "Animal Handling",
+          "Athletics",
+          "Nature",
+          "Survival"
+        ],
+        "choice": true
+      }
+    }
+  ]
+}

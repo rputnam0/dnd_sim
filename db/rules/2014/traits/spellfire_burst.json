@@ -1,0 +1,22 @@
+{
+  "name": "Spellfire Burst",
+  "type": "subclass_feature",
+  "description": "When you spend at least 1 Sorcery Point as part of the Magic action or a Bonus Action on your turn, you can unleash one of the following magical effects of your choice. You can do so only once per turn. The available effects are Bolstering Flames and Radiant Fire.",
+  "mechanics": [
+    {
+      "trigger": "spend_resource",
+      "resource": "Sorcery Point",
+      "amount": 1,
+      "action_type": [
+        "Magic",
+        "Bonus Action"
+      ],
+      "effect_name": "Spellfire Burst",
+      "once_per": "turn",
+      "choices": [
+        "Bolstering Flames",
+        "Radiant Fire"
+      ]
+    }
+  ]
+}

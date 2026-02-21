@@ -1,0 +1,27 @@
+{
+  "name": "Training in War and Song (Bladesinging)",
+  "type": "subclass_feature",
+  "description": "When you adopt this tradition at 2nd level, you gain proficiency with light armor, and you gain proficiency with one type of one-handed melee weapon of your choice. You also gain proficiency in the Performance skill if you don't already have it.",
+  "mechanics": [
+    {
+      "gainProficiency": {
+        "armor": [
+          "light"
+        ]
+      }
+    },
+    {
+      "gainProficiency": {
+        "weapon": {
+          "type": "one-handed melee",
+          "choice": true
+        }
+      }
+    },
+    {
+      "gainProficiency": {
+        "skill": "Performance"
+      }
+    }
+  ]
+}
