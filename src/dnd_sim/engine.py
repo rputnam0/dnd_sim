@@ -1923,30 +1923,6 @@ def _execute_action(
                 )
                 success = True
 
-            # Roll damage once for all targets (AoE)
-            raw_damage = 0
-            if action.damage and not (
-                action.half_on_save and success and _has_trait(target, "evasion")
-            ):
-                empowered_rerolls = 0
-                if (
-                    "spell" in action.tags
-                    and _has_trait(actor, "empowered spell")
-                    and actor.resources.get("sorcery_points", 0) >= 1
-                ):
-                    actor.resources["sorcery_points"] -= 1
-                    resources_spent[actor.actor_id]["sorcery_points"] = (
-                        resources_spent[actor.actor_id].get("sorcery_points", 0) + 1
-                    )
-                    empowered_rerolls = max(1, actor.cha_mod)
-                raw_damage = roll_damage(
-                    rng,
-                    action.damage,
-                    crit=False,
-                    empowered_rerolls=empowered_rerolls,
-                    source=actor,
-                    damage_type=action.damage_type,
-                )
             final_damage = raw_damage
             if success:
                 final_damage = raw_damage // 2 if action.half_on_save else 0
