@@ -195,8 +195,8 @@ def apply_damage(
             for mechanic in trait_data.get("mechanics", []):
                 if mechanic.get("effect_type") == "ignore_resistance":
                     bypass_type = mechanic.get("damage_type", "").lower()
-                    if bypass_type in effective_resistances or bypass_type == damage_type:
-                        effective_resistances.discard(damage_type)
+                    if bypass_type in {damage_type.lower(), "any_elemental"}:
+                        effective_resistances.discard(damage_type.lower())
 
     adjusted = apply_damage_type_modifiers(
         adjusted,
@@ -243,18 +243,15 @@ def run_concentration_check(
         return True
 
     dc = concentration_check_dc(damage_taken)
-    roll_1 = rng.randint(1, 20)
-    roll_2 = rng.randint(1, 20)
-
     advantage = _has_trait(target, "war caster")
     disadvantage = bool(source and _has_trait(source, "mage slayer"))
 
     if advantage and not disadvantage:
-        roll = max(roll_1, roll_2)
+        roll = max(rng.randint(1, 20), rng.randint(1, 20))
     elif disadvantage and not advantage:
-        roll = min(roll_1, roll_2)
+        roll = min(rng.randint(1, 20), rng.randint(1, 20))
     else:
-        roll = roll_1
+        roll = rng.randint(1, 20)
 
     save_mod = target.save_mods.get("con", target.con_mod)
     success = (roll + save_mod) >= dc

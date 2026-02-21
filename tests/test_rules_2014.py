@@ -4,6 +4,7 @@ import random
 
 from dnd_sim.models import ActorRuntimeState
 from dnd_sim.rules_2014 import (
+    apply_damage,
     apply_damage_type_modifiers,
     attack_roll,
     concentration_check_dc,
@@ -19,6 +20,16 @@ class FixedRng:
 
     def randint(self, _a, _b):
         return self.values.pop(0)
+
+
+class CountingRng(FixedRng):
+    def __init__(self, values):
+        super().__init__(values)
+        self.calls = 0
+
+    def randint(self, _a, _b):
+        self.calls += 1
+        return super().randint(_a, _b)
 
 
 def _actor() -> ActorRuntimeState:
@@ -106,3 +117,30 @@ def test_concentration_check_honors_mage_slayer_with_underscore_trait_key() -> N
     rng = FixedRng([20, 1])
     assert run_concentration_check(rng, target, damage_taken=10, source=source) is False
     assert target.concentrating is False
+
+
+def test_concentration_check_uses_single_rng_draw_without_advantage_or_disadvantage() -> None:
+    target = _actor()
+    target.hp = 5
+    target.concentrating = True
+    rng = CountingRng([12])
+    assert run_concentration_check(rng, target, damage_taken=10) is True
+    assert rng.calls == 1
+
+
+def test_ignore_resistance_any_elemental_bypasses_case_insensitive_damage_type() -> None:
+    target = _actor()
+    target.hp = 20
+    target.max_hp = 20
+    target.damage_resistances = {"fire"}
+    source = _actor()
+    source.traits = {
+        "elemental adept": {
+            "mechanics": [{"effect_type": "ignore_resistance", "damage_type": "ANY_ELEMENTAL"}]
+        }
+    }
+
+    applied = apply_damage(target, 10, "Fire", is_magical=True, source=source)
+
+    assert applied == 10
+    assert target.hp == 10
