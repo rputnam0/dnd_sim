@@ -31,6 +31,10 @@ class ActorView:
     save_mods: dict[str, int]
     resources: dict[str, int]
     conditions: set[str]
+    speed_ft: int
+    movement_remaining: float
+    position: tuple[float, float, float]
+    traits: dict[str, dict[str, Any]]
 
 
 @dataclass(slots=True)
