@@ -639,6 +639,7 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.death_successes = 0
     actor.downed_count = 0
     actor.concentrating = False
+    actor.concentration_conditions.clear()
     actor.movement_remaining = float(actor.speed_ft)
 
 
@@ -933,9 +934,13 @@ def _break_concentration(
         return
     actor.concentrating = False
     for target_id in list(actor.concentrated_targets):
-        if target_id in actors and actor.concentrated_spell:
-            _remove_condition(actors[target_id], actor.concentrated_spell)
+        if target_id in actors:
+            for condition in actor.concentration_conditions:
+                _remove_condition(actors[target_id], condition)
+            if actor.concentrated_spell:
+                _remove_condition(actors[target_id], actor.concentrated_spell)
     actor.concentrated_targets.clear()
+    actor.concentration_conditions.clear()
 
     if actor.concentrated_spell:
         active_hazards[:] = [h for h in active_hazards if h.get("source_id") != actor.actor_id]
@@ -1180,7 +1185,7 @@ def _apply_action_effects(
     for effect in action.effects + action.mechanics:
         if _effect_matches_event(effect, event):
             recipient = _resolve_effect_target(effect, actor=actor, target=target)
-            if action.concentration and effect.get("effect_type") in ("condition", "hazard"):
+            if action.concentration and effect.get("effect_type") in ("apply_condition", "hazard"):
                 actor.concentrated_targets.add(recipient.actor_id)
             _apply_effect(
                 action=action,
@@ -1412,6 +1417,12 @@ def _execute_action(
             _break_concentration(actor, actors, active_hazards)
             actor.concentrating = True
             actor.concentrated_spell = action.name
+            actor.concentration_conditions = {
+                str(effect.get("condition", "")).lower()
+                for effect in action.effects + action.mechanics
+                if effect.get("effect_type") == "apply_condition"
+                and str(effect.get("condition", "")).strip()
+            }
 
         # Mage Slayer reaction attack
         for enemy in list(actors.values()):
@@ -1707,6 +1718,7 @@ def _execute_action(
                     )
                     empowered_rerolls = max(1, actor.cha_mod)
                 damage_expr = action.damage
+                sneak_damage_expr: str | None = None
 
                 # Sneak Attack Logic
                 if (
@@ -1745,7 +1757,7 @@ def _execute_action(
                         if has_sneak:
                             actor.sneak_attack_used_this_turn = True
                             sa_dice = (actor.level + 1) // 2
-                            damage_expr += f"+{sa_dice}d6"
+                            sneak_damage_expr = f"{sa_dice}d6"
 
                 if power_attack_active and damage_expr:
                     damage_expr += f"{damage_bonus:+d}"
@@ -1757,6 +1769,14 @@ def _execute_action(
                     source=actor,
                     damage_type=action.damage_type,
                 )
+                if sneak_damage_expr:
+                    raw_damage += roll_damage(
+                        rng,
+                        sneak_damage_expr,
+                        crit=roll.crit,
+                        source=actor,
+                        damage_type=action.damage_type,
+                    )
 
                 # Divine Smite Logic
                 if _has_trait(actor, "divine smite") and not is_ranged and target.hp > 0:

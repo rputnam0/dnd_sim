@@ -154,6 +154,7 @@ class ActorRuntimeState:
     took_attack_action_this_turn: bool = False
     sneak_attack_used_this_turn: bool = False
     concentrated_targets: set[str] = field(default_factory=set)
+    concentration_conditions: set[str] = field(default_factory=set)
     concentrated_spell: str | None = None
     level: int = 1
 

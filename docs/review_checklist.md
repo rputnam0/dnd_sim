@@ -40,10 +40,10 @@ Each section is intended to be delivered and reviewed in a separate pull request
 
 ## PR-5: Integration and Simulation Invariants
 
-- [ ] Add integration tests for newly introduced action/effect combinations.
-- [ ] Add invariants for resource accounting and per-round state resets.
-- [ ] Add invariants for concentration and condition duration lifecycle.
-- [ ] Ensure full test suite passes.
+- [x] Add integration tests for newly introduced action/effect combinations.
+- [x] Add invariants for resource accounting and per-round state resets.
+- [x] Add invariants for concentration and condition duration lifecycle.
+- [x] Ensure full test suite passes.
 
 ## Review Gate (for every PR)
 
