@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 from dnd_sim.parse_monsters import parse_monsters
@@ -73,3 +74,111 @@ def test_sanitize_name_normalizes_punctuation_and_spacing() -> None:
     assert module.sanitize_name("Melf's Acid Arrow") == "melf_s_acid_arrow"
     assert module.sanitize_name("Tasha: Hideous/Laughter") == "tasha_hideous_laughter"
     assert module.sanitize_name("  Chain-Lightning  ") == "chain_lightning"
+
+
+def _write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def test_collect_jobs_builds_multi_kind_worklist(tmp_path: Path) -> None:
+    module = _load_oss_parser_module()
+
+    _write_json(
+        tmp_path / "db" / "raw" / "5etools" / "spells" / "spells-phb.json",
+        {"spell": [{"name": "Fireball", "source": "PHB"}]},
+    )
+    _write_json(
+        tmp_path / "db" / "raw" / "5etools" / "feats.json",
+        {"feat": [{"name": "Alert", "source": "PHB"}]},
+    )
+    _write_json(
+        tmp_path / "db" / "raw" / "5etools" / "classes" / "class-monk.json",
+        {
+            "classFeature": [{"name": "Ki", "source": "PHB", "entries": ["text"]}],
+            "subclassFeature": [
+                {"name": "Open Hand Technique", "source": "PHB", "entries": ["text"]}
+            ],
+        },
+    )
+    _write_json(
+        tmp_path / "db" / "raw" / "5etools" / "races" / "races.json",
+        {
+            "race": [
+                {
+                    "name": "Elf",
+                    "source": "PHB",
+                    "entries": [{"name": "Fey Ancestry", "entries": ["text"]}],
+                }
+            ]
+        },
+    )
+    _write_json(
+        tmp_path / "db" / "raw" / "5etools" / "backgrounds" / "backgrounds.json",
+        {
+            "background": [
+                {
+                    "name": "Acolyte",
+                    "source": "PHB",
+                    "entries": [
+                        {
+                            "name": "Feature: Shelter of the Faithful",
+                            "entries": ["text"],
+                            "data": {"isFeature": True},
+                        }
+                    ],
+                }
+            ]
+        },
+    )
+
+    jobs = module.collect_jobs(
+        tmp_path,
+        kinds=[
+            "spells",
+            "feats",
+            "class_features",
+            "subclass_features",
+            "race_traits",
+            "background_features",
+        ],
+        overwrite=False,
+        max_items=None,
+    )
+
+    assert len(jobs) == 6
+    stems = {job.out_path.stem for job in jobs}
+    assert "fireball" in stems
+    assert "alert" in stems
+    assert "ki" in stems
+    assert "open_hand_technique" in stems
+    assert "fey_ancestry" in stems
+    assert "shelter_of_the_faithful" in stems
+
+
+def test_collect_jobs_skips_existing_outputs_when_not_overwriting(tmp_path: Path) -> None:
+    module = _load_oss_parser_module()
+
+    _write_json(
+        tmp_path / "db" / "raw" / "5etools" / "spells" / "spells-phb.json",
+        {"spell": [{"name": "Fireball", "source": "PHB"}]},
+    )
+    existing = tmp_path / "db" / "rules" / "2014" / "spells" / "fireball.json"
+    existing.parent.mkdir(parents=True, exist_ok=True)
+    existing.write_text("{}", encoding="utf-8")
+
+    jobs = module.collect_jobs(
+        tmp_path,
+        kinds=["spells"],
+        overwrite=False,
+        max_items=None,
+    )
+    assert jobs == []
+
+    jobs_overwrite = module.collect_jobs(
+        tmp_path,
+        kinds=["spells"],
+        overwrite=True,
+        max_items=None,
+    )
+    assert len(jobs_overwrite) == 1
