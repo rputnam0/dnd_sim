@@ -17,6 +17,7 @@ from dnd_sim.models import (
     SummaryMetric,
     TrialResult,
 )
+from dnd_sim.spatial import AABB
 from dnd_sim.rules_2014 import (
     AttackRollResult,
     apply_damage,
@@ -89,6 +90,34 @@ _CANTRIP_SCALE_TIERS = [(17, 4), (11, 3), (5, 2), (1, 1)]
 def _calculate_proficiency_bonus(level: int) -> int:
     """5e proficiency bonus progression by character level."""
     return 2 + max(0, (max(level, 1) - 1) // 4)
+
+
+def _to_position3(value: Any) -> tuple[float, float, float] | None:
+    if isinstance(value, (list, tuple)) and len(value) == 3:
+        try:
+            return (float(value[0]), float(value[1]), float(value[2]))
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
+def _build_battlefield_obstacles(raw_obstacles: Any) -> list[AABB]:
+    if not isinstance(raw_obstacles, list):
+        return []
+
+    obstacles: list[AABB] = []
+    for row in raw_obstacles:
+        if not isinstance(row, dict):
+            continue
+        min_pos = _to_position3(row.get("min_pos") or row.get("min"))
+        max_pos = _to_position3(row.get("max_pos") or row.get("max"))
+        if min_pos is None or max_pos is None:
+            continue
+        cover_level = str(row.get("cover_level", "NONE")).upper()
+        if cover_level not in {"HALF", "THREE_QUARTERS", "TOTAL"}:
+            continue
+        obstacles.append(AABB(min_pos=min_pos, max_pos=max_pos, cover_level=cover_level))
+    return obstacles
 
 
 def _scale_cantrip_dice(base_dice: str, character_level: int) -> str:
@@ -1092,12 +1121,16 @@ def _apply_effect(
     if effect_type == "hazard":
         duration = int(effect.get("duration", 10))
         hazard_type = str(effect.get("hazard_type", "generic"))
+        hazard_position = _to_position3(effect.get("position")) or recipient.position
+        hazard_radius = float(effect.get("radius", effect.get("radius_ft", 15)))
         active_hazards.append(
             {
                 "type": hazard_type,
                 "source_id": actor.actor_id,
                 "target_id": recipient.actor_id,
                 "hazard_type": hazard_type,
+                "position": hazard_position,
+                "radius": hazard_radius,
                 "duration": duration,
             }
         )
@@ -1335,9 +1368,13 @@ def _execute_action(
     threat_scores: dict[str, int],
     resources_spent: dict[str, dict[str, int]],
     active_hazards: list[dict[str, Any]],
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
 ) -> None:
     if not targets:
         return
+    if obstacles is None:
+        obstacles = []
 
     # Counterspell check
     if "spell" in action.tags:
@@ -1399,6 +1436,8 @@ def _execute_action(
                         threat_scores=threat_scores,
                         resources_spent=resources_spent,
                         active_hazards=active_hazards,
+                        obstacles=obstacles,
+                        light_level=light_level,
                     )
 
     # Phase 11: Contested Grapple/Shove Checks
@@ -1467,6 +1506,8 @@ def _execute_action(
                         threat_scores=threat_scores,
                         resources_spent=resources_spent,
                         active_hazards=active_hazards,
+                        obstacles=obstacles,
+                        light_level=light_level,
                     )
         if action.action_cost == "action":
             actor.took_attack_action_this_turn = True
@@ -1510,7 +1551,7 @@ def _execute_action(
             force_crit = bool(target_conditions.intersection(_AUTO_CRIT_CONDITIONS))
 
             # Phase 12: Illumination & Vision Mechanics
-            from .spatial import can_see
+            from .spatial import can_see, check_cover
 
             # Attacker's vision of the target
             attacker_can_see = can_see(
@@ -1519,6 +1560,7 @@ def _execute_action(
                 observer_traits=actor.traits,
                 target_conditions=target.conditions,
                 active_hazards=active_hazards,
+                light_level=light_level,
             )
             # Target's vision of the attacker
             target_can_see = can_see(
@@ -1527,6 +1569,7 @@ def _execute_action(
                 observer_traits=target.traits,
                 target_conditions=actor.conditions,
                 active_hazards=active_hazards,
+                light_level=light_level,
             )
 
             # Apply RAW Unseen Attacker / Unseen Target rules
@@ -1560,16 +1603,26 @@ def _execute_action(
                 )
 
                 # Phase 9: Dynamic 3D Raycasting Cover
-                if is_ranged:
-                    from .spatial import check_cover
-
-                    # We pass an empty list if obstacles are not wired into the state view yet
-                    obstacles = []
-                    cover_state = check_cover(actor.position, target.position, obstacles)
-                    if cover_state == "HALF":
-                        target_ac += 2
-                    elif cover_state == "THREE_QUARTERS":
-                        target_ac += 5
+                cover_state = check_cover(actor.position, target.position, obstacles)
+                if cover_state == "TOTAL":
+                    _apply_action_effects(
+                        action=action,
+                        event="miss",
+                        rng=rng,
+                        actor=actor,
+                        target=target,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        actors=actors,
+                        active_hazards=active_hazards,
+                    )
+                    continue
+                if cover_state == "HALF":
+                    target_ac += 2
+                elif cover_state == "THREE_QUARTERS":
+                    target_ac += 5
 
                 if _has_trait(actor, "sharpshooter") and is_ranged:
                     if target_ac <= 16 or advantage:
@@ -1949,11 +2002,13 @@ def _build_round_metadata(
     threat_scores: dict[str, int],
     burst_round_threshold: int,
     active_hazards: list[dict[str, Any]] | None = None,
+    light_level: str = "bright",
 ) -> dict[str, Any]:
     return {
         "threat_scores": dict(threat_scores),
         "burst_round_threshold": burst_round_threshold,
         "active_hazards": list(active_hazards or []),
+        "light_level": str(light_level),
         "available_actions": {
             actor_id: [action.name for action in actor.actions if _action_available(actor, action)]
             for actor_id, actor in actors.items()
@@ -2001,6 +2056,8 @@ def _run_lair_actions(
     threat_scores: dict[str, int],
     resources_spent: dict[str, dict[str, int]],
     active_hazards: list[dict[str, Any]],
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
 ) -> None:
     for actor in actors.values():
         if actor.dead or actor.hp <= 0:
@@ -2044,6 +2101,8 @@ def _run_lair_actions(
             threat_scores=threat_scores,
             resources_spent=resources_spent,
             active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
         )
 
 
@@ -2057,6 +2116,8 @@ def _run_legendary_actions(
     threat_scores: dict[str, int],
     resources_spent: dict[str, dict[str, int]],
     active_hazards: list[dict[str, Any]],
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
 ) -> None:
     for actor in actors.values():
         if actor.actor_id == trigger_actor.actor_id:
@@ -2100,6 +2161,8 @@ def _run_legendary_actions(
             threat_scores=threat_scores,
             resources_spent=resources_spent,
             active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
         )
 
 
@@ -2138,6 +2201,11 @@ def run_simulation(
     enemy_default_strategy = assumption_overrides.get("enemy_strategy", "optimal_expected_damage")
     actor_strategy_overrides = assumption_overrides.get("actor_strategy", {})
     tracked_resource_names: dict[str, set[str]] = {}
+    battlefield = (
+        scenario.config.battlefield if isinstance(scenario.config.battlefield, dict) else {}
+    )
+    light_level = str(battlefield.get("light_level", "bright")).lower()
+    battlefield_obstacles = _build_battlefield_obstacles(battlefield.get("obstacles", []))
 
     for trial_idx in range(trials):
         actors: dict[str, ActorRuntimeState] = {}
@@ -2224,6 +2292,8 @@ def run_simulation(
                     threat_scores=threat_scores,
                     resources_spent=resources_spent,
                     active_hazards=active_hazards,
+                    obstacles=battlefield_obstacles,
+                    light_level=light_level,
                 )
 
                 metadata = _build_round_metadata(
@@ -2233,6 +2303,7 @@ def run_simulation(
                         scenario.config.resource_policy.get("burst_round_threshold", 3)
                     ),
                     active_hazards=active_hazards,
+                    light_level=light_level,
                 )
                 state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
                 for strategy in strategy_registry.values():
@@ -2281,6 +2352,7 @@ def run_simulation(
                             scenario.config.resource_policy.get("burst_round_threshold", 3)
                         ),
                         active_hazards=active_hazards,
+                        light_level=light_level,
                     )
                     state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
                     actor_view = state_view.actors[actor.actor_id]
@@ -2339,6 +2411,8 @@ def run_simulation(
                         threat_scores=threat_scores,
                         resources_spent=resources_spent,
                         active_hazards=active_hazards,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
                     )
 
                     # --- Bonus action step ---
@@ -2375,6 +2449,8 @@ def run_simulation(
                                         threat_scores=threat_scores,
                                         resources_spent=resources_spent,
                                         active_hazards=active_hazards,
+                                        obstacles=battlefield_obstacles,
+                                        light_level=light_level,
                                     )
 
                     # --- Action Surge step ---
@@ -2430,6 +2506,8 @@ def run_simulation(
                                             threat_scores=threat_scores,
                                             resources_spent=resources_spent,
                                             active_hazards=active_hazards,
+                                            obstacles=battlefield_obstacles,
+                                            light_level=light_level,
                                         )
 
                     _run_legendary_actions(
@@ -2441,6 +2519,8 @@ def run_simulation(
                         threat_scores=threat_scores,
                         resources_spent=resources_spent,
                         active_hazards=active_hazards,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
                     )
 
                 if _party_defeated(actors) or _enemies_defeated(actors):

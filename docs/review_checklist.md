@@ -25,11 +25,11 @@ Each section is intended to be delivered and reviewed in a separate pull request
 
 ## PR-3: Spatial, Vision, and Cover Integration
 
-- [ ] Add attack-loop tests for unseen attacker/unseen target cancellation.
-- [ ] Add tests for magical darkness + darkvision/truesight/blindsight behavior.
-- [ ] Add tests for cover states and AC modification integration.
-- [ ] Verify strategy scoring inputs use current round hazards and geometry fields.
-- [ ] Ensure full test suite passes.
+- [x] Add attack-loop tests for unseen attacker/unseen target cancellation.
+- [x] Add tests for magical darkness + darkvision/truesight/blindsight behavior.
+- [x] Add tests for cover states and AC modification integration.
+- [x] Verify strategy scoring inputs use current round hazards and geometry fields.
+- [x] Ensure full test suite passes.
 
 ## PR-4: Parser and Data Pipeline Validation
 
