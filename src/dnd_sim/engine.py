@@ -482,7 +482,9 @@ def _apply_passive_traits(actor: ActorRuntimeState) -> None:
 def _build_actor_from_character(
     character: dict[str, Any], traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
-    traits_db = traits_db or {}
+    normalized_traits_db = {
+        _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
+    }
     ability_scores = character.get("ability_scores", {})
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
     con_mod = (int(ability_scores.get("con", 10)) - 10) // 2
@@ -514,9 +516,7 @@ def _build_actor_from_character(
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
         traits={
-            _normalize_trait_name(trait): traits_db.get(
-                _normalize_trait_name(trait), traits_db.get(str(trait).lower(), {})
-            )
+            _normalize_trait_name(trait): normalized_traits_db.get(_normalize_trait_name(trait), {})
             for trait in character.get("traits", [])
         },
         level=_parse_character_level(character.get("class_level", "1")),
@@ -528,7 +528,9 @@ def _build_actor_from_character(
 def _build_actor_from_enemy(
     enemy: EnemyConfig, traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
-    traits_db = traits_db or {}
+    normalized_traits_db = {
+        _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
+    }
     actions: list[ActionDefinition] = []
 
     def append_actions(source_actions: list[Any], default_cost: str) -> None:
@@ -578,9 +580,7 @@ def _build_actor_from_enemy(
 
     def _enemy_ability_mod(key: str) -> int:
         explicit = getattr(enemy.stat_block, f"{key}_mod", None)
-        if explicit is not None:
-            return int(explicit)
-        return int(enemy.stat_block.save_mods.get(key, 0))
+        return int(explicit) if explicit is not None else 0
 
     actor = ActorRuntimeState(
         actor_id=enemy.identity.enemy_id,
@@ -610,45 +610,12 @@ def _build_actor_from_enemy(
         proficiencies={str(v).lower() for v in enemy.script_hooks.get("proficiencies", [])},
         expertise={str(v).lower() for v in enemy.script_hooks.get("expertise", [])},
         traits={
-            _normalize_trait_name(trait): traits_db.get(
-                _normalize_trait_name(trait), traits_db.get(str(trait).lower(), {})
-            )
+            _normalize_trait_name(trait): normalized_traits_db.get(_normalize_trait_name(trait), {})
             for trait in enemy.traits
         },
     )
     _apply_passive_traits(actor)
     return actor
-
-
-def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
-    if actor.hp > 0 and not actor.dead:
-        actor.hp = min(actor.max_hp, actor.hp + healing)
-
-    short_rest_resources = {"action_surge", "ki", "channel_divinity"}
-    for res_key in list(actor.resources.keys()):
-        if res_key in short_rest_resources or "warlock_spell_slot" in res_key:
-            actor.resources[res_key] = actor.max_resources.get(res_key, 0)
-
-    for action in actor.actions:
-        if action.name in {"action_surge", "second_wind"} or "short_rest" in action.tags:
-            actor.per_action_uses.pop(action.name, None)
-
-
-def long_rest(actor: ActorRuntimeState) -> None:
-    actor.hp = actor.max_hp
-    actor.temp_hp = 0
-    actor.resources = dict(actor.max_resources)
-    actor.per_action_uses.clear()
-    actor.conditions.clear()
-    actor.condition_durations.clear()
-    actor.death_failures = 0
-    actor.death_successes = 0
-    actor.downed_count = 0
-    actor.concentrating = False
-    actor.concentration_conditions.clear()
-    actor.concentrated_targets.clear()
-    actor.concentrated_spell = None
-    actor.movement_remaining = float(actor.speed_ft)
 
 
 def _build_actor_views(
@@ -2215,20 +2182,7 @@ def run_simulation(
     )
     light_level = str(battlefield.get("light_level", "bright")).lower()
     battlefield_obstacles = _build_battlefield_obstacles(battlefield.get("obstacles", []))
-    raw_encounters = getattr(scenario.config, "encounters", None)
-    if raw_encounters:
-        encounter_enemy_lists: list[list[str]] = []
-        encounter_short_rests: list[bool] = []
-        for row in raw_encounters:
-            if hasattr(row, "enemies"):
-                encounter_enemy_lists.append(list(getattr(row, "enemies")))
-                encounter_short_rests.append(bool(getattr(row, "short_rest_after", False)))
-            elif isinstance(row, dict):
-                encounter_enemy_lists.append(list(row.get("enemies", [])))
-                encounter_short_rests.append(bool(row.get("short_rest_after", False)))
-    else:
-        encounter_enemy_lists = [list(scenario.config.enemies)]
-        encounter_short_rests = [False]
+    encounter_enemy_lists = [list(scenario.config.enemies)]
 
     for trial_idx in range(trials):
         actors: dict[str, ActorRuntimeState] = {}
@@ -2245,8 +2199,6 @@ def run_simulation(
             if character_id not in character_db:
                 raise ValueError(f"Character ID missing from DB: {character_id}")
             actor = _build_actor_from_character(character_db[character_id], traits_db)
-            if not hasattr(actor, "position"):
-                actor.position = (0.0, 0.0, 0.0)
             actors[actor.actor_id] = actor
             damage_taken[actor.actor_id] = 0
             damage_dealt[actor.actor_id] = 0
@@ -2259,7 +2211,6 @@ def run_simulation(
         overall_winner = "draw"
 
         for enc_idx, encounter_enemy_ids in enumerate(encounter_enemy_lists):
-            short_rest_after = encounter_short_rests[enc_idx]
             for aid in list(actors.keys()):
                 if actors[aid].team != "party":
                     downed_counts[aid] = actors[aid].downed_count
@@ -2555,12 +2506,7 @@ def run_simulation(
             if _party_defeated(actors):
                 overall_winner = "enemy"
                 break
-            elif _enemies_defeated(actors):
-                if short_rest_after and enc_idx < len(encounter_enemy_lists) - 1:
-                    for actor in actors.values():
-                        if actor.team == "party":
-                            short_rest(actor)
-            else:
+            elif not _enemies_defeated(actors):
                 party_hp = sum(a.hp for a in actors.values() if a.team == "party" and not a.dead)
                 enemy_hp = sum(a.hp for a in actors.values() if a.team != "party" and not a.dead)
                 overall_winner = "party" if party_hp >= enemy_hp else "enemy"

@@ -67,6 +67,7 @@ def main() -> None:
         artifacts = run_simulation(
             loaded,
             character_db,
+            {},
             strategy_registry,
             trials=args.trials,
             seed=args.seed,

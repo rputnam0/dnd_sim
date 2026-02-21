@@ -120,8 +120,12 @@ def test_fixed_seed_is_deterministic(tmp_path: Path) -> None:
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
-    run_a = run_simulation(loaded, db, registry, trials=30, seed=9, run_id="a").summary.to_dict()
-    run_b = run_simulation(loaded, db, registry, trials=30, seed=9, run_id="b").summary.to_dict()
+    run_a = run_simulation(
+        loaded, db, {}, registry, trials=30, seed=9, run_id="a"
+    ).summary.to_dict()
+    run_b = run_simulation(
+        loaded, db, {}, registry, trials=30, seed=9, run_id="b"
+    ).summary.to_dict()
 
     run_a.pop("run_id", None)
     run_b.pop("run_id", None)
@@ -146,7 +150,7 @@ def test_run_simulation_rejects_non_positive_trials(tmp_path: Path) -> None:
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     with pytest.raises(ValueError, match="trials must be >= 1"):
-        run_simulation(loaded, db, registry, trials=0, seed=9, run_id="invalid")
+        run_simulation(loaded, db, {}, registry, trials=0, seed=9, run_id="invalid")
 
 
 def test_n_vs_n_runs_with_all_combatants_present(tmp_path: Path) -> None:
@@ -172,7 +176,7 @@ def test_n_vs_n_runs_with_all_combatants_present(tmp_path: Path) -> None:
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
-    artifacts = run_simulation(loaded, db, registry, trials=20, seed=3, run_id="n2")
+    artifacts = run_simulation(loaded, db, {}, registry, trials=20, seed=3, run_id="n2")
     actor_ids = set(artifacts.summary.per_actor_damage_taken.keys())
     assert actor_ids == {"alpha", "bravo", "ogre", "mage"}
     assert artifacts.summary.rounds.mean > 0
@@ -208,6 +212,7 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
     always_summary = run_simulation(
         loaded_always,
         db_always,
+        {},
         reg_always,
         trials=40,
         seed=11,
@@ -230,6 +235,7 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
     conserve_summary = run_simulation(
         loaded_conserve,
         db_conserve,
+        {},
         reg_conserve,
         trials=40,
         seed=11,
@@ -271,6 +277,7 @@ def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
     plain_summary = run_simulation(
         loaded_plain,
         db_plain,
+        {},
         reg_plain,
         trials=30,
         seed=19,
@@ -305,6 +312,7 @@ def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
     legendary_summary = run_simulation(
         loaded_legendary,
         db_legendary,
+        {},
         reg_legendary,
         trials=30,
         seed=19,
@@ -346,6 +354,7 @@ def test_optimal_strategy_uses_resources_for_damage(tmp_path: Path) -> None:
     focus_summary = run_simulation(
         loaded_focus,
         db_focus,
+        {},
         reg_focus,
         trials=40,
         seed=31,
@@ -367,6 +376,7 @@ def test_optimal_strategy_uses_resources_for_damage(tmp_path: Path) -> None:
     optimal_summary = run_simulation(
         loaded_optimal,
         db_optimal,
+        {},
         reg_optimal,
         trials=40,
         seed=31,
@@ -441,6 +451,7 @@ def test_schema_target_mode_all_enemies_hits_each_party_member(tmp_path: Path) -
     summary = run_simulation(
         loaded,
         db,
+        {},
         registry,
         trials=20,
         seed=57,
@@ -534,6 +545,7 @@ def test_schema_effect_damage_and_resource_change_are_tracked(tmp_path: Path) ->
     summary = run_simulation(
         loaded,
         db,
+        {},
         registry,
         trials=20,
         seed=58,
