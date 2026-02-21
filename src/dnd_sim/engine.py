@@ -363,7 +363,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             tags=["basic"],
         )
     ]
-    return base + spell_actions + _get_standard_actions()
+    return base + spell_actions
 
 
 def _get_standard_actions() -> list[ActionDefinition]:
@@ -531,6 +531,12 @@ def _build_actor_from_enemy(
 
     recharge_ready = {action.name: True for action in actions if action.recharge}
 
+    def _enemy_ability_mod(key: str) -> int:
+        explicit = getattr(enemy.stat_block, f"{key}_mod", None)
+        if explicit is not None:
+            return int(explicit)
+        return int(enemy.stat_block.save_mods.get(key, 0))
+
     actor = ActorRuntimeState(
         actor_id=enemy.identity.enemy_id,
         team=enemy.identity.team,
@@ -540,12 +546,12 @@ def _build_actor_from_enemy(
         temp_hp=0,
         ac=enemy.stat_block.ac,
         initiative_mod=enemy.stat_block.initiative_mod,
-        str_mod=int(enemy.stat_block.save_mods.get("str", 0)),
-        dex_mod=enemy.stat_block.dex_mod,
-        con_mod=enemy.stat_block.con_mod,
-        int_mod=int(enemy.stat_block.save_mods.get("int", 0)),
-        wis_mod=int(enemy.stat_block.save_mods.get("wis", 0)),
-        cha_mod=int(enemy.stat_block.save_mods.get("cha", 0)),
+        str_mod=_enemy_ability_mod("str"),
+        dex_mod=_enemy_ability_mod("dex"),
+        con_mod=_enemy_ability_mod("con"),
+        int_mod=_enemy_ability_mod("int"),
+        wis_mod=_enemy_ability_mod("wis"),
+        cha_mod=_enemy_ability_mod("cha"),
         save_mods=dict(enemy.stat_block.save_mods),
         actions=actions,
         damage_resistances={v.lower() for v in enemy.damage_resistances},
@@ -589,6 +595,8 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.death_successes = 0
     actor.downed_count = 0
     actor.concentrating = False
+    actor.concentrated_targets.clear()
+    actor.concentrated_spell = None
     actor.movement_remaining = float(actor.speed_ft)
 
 
@@ -613,7 +621,7 @@ def _build_actor_views(
                 speed_ft=actor.speed_ft,
                 movement_remaining=actor.movement_remaining,
                 position=actor.position,
-                traits=actor.traits,
+                traits=dict(actor.traits),
             )
             for actor_id, actor in actors.items()
         },
@@ -1747,7 +1755,7 @@ def _execute_action(
             return
         save_key = action.save_ability.lower()
 
-        # Roll damage once for all targets (AoE)
+        # Roll AoE damage once and apply per-target save outcomes.
         raw_damage = 0
         if action.damage:
             empowered_rerolls = 0
@@ -1762,7 +1770,12 @@ def _execute_action(
                 )
                 empowered_rerolls = max(1, actor.cha_mod)
             raw_damage = roll_damage(
-                rng, action.damage, crit=False, empowered_rerolls=empowered_rerolls
+                rng,
+                action.damage,
+                crit=False,
+                empowered_rerolls=empowered_rerolls,
+                source=actor,
+                damage_type=action.damage_type,
             )
 
         careful_allies = set()
@@ -1814,30 +1827,6 @@ def _execute_action(
                 )
                 success = True
 
-            # Roll damage once for all targets (AoE)
-            raw_damage = 0
-            if action.damage and not (
-                action.half_on_save and success and "evasion" in target.traits
-            ):
-                empowered_rerolls = 0
-                if (
-                    "spell" in action.tags
-                    and "empowered_spell" in actor.traits
-                    and actor.resources.get("sorcery_points", 0) >= 1
-                ):
-                    actor.resources["sorcery_points"] -= 1
-                    resources_spent[actor.actor_id]["sorcery_points"] = (
-                        resources_spent[actor.actor_id].get("sorcery_points", 0) + 1
-                    )
-                    empowered_rerolls = max(1, actor.cha_mod)
-                raw_damage = roll_damage(
-                    rng,
-                    action.damage,
-                    crit=False,
-                    empowered_rerolls=empowered_rerolls,
-                    source=actor,
-                    damage_type=action.damage_type,
-                )
             final_damage = raw_damage
             if success:
                 final_damage = raw_damage // 2 if action.half_on_save else 0
@@ -1864,7 +1853,7 @@ def _execute_action(
                 is_magical="spell" in action.tags or "magical" in action.tags,
                 source=actor,
             )
-            if raw_damage > 0:
+            if applied > 0:
                 if not run_concentration_check(rng, target, applied, source=actor):
                     _break_concentration(target, actors, active_hazards)
                 damage_dealt[actor.actor_id] += applied

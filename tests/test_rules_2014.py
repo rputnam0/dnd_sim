@@ -9,6 +9,8 @@ from dnd_sim.rules_2014 import (
     concentration_check_dc,
     resolve_death_save,
     roll_damage,
+    run_concentration_check,
+    run_contested_check,
 )
 
 
@@ -18,6 +20,16 @@ class FixedRng:
 
     def randint(self, _a, _b):
         return self.values.pop(0)
+
+
+class CountingRng(FixedRng):
+    def __init__(self, values):
+        super().__init__(values)
+        self.calls = 0
+
+    def randint(self, _a, _b):
+        self.calls += 1
+        return super().randint(_a, _b)
 
 
 def _actor() -> ActorRuntimeState:
@@ -79,3 +91,17 @@ def test_death_save_natural_20_recovers() -> None:
     result = resolve_death_save(rng, actor)
     assert result.regained_consciousness is True
     assert actor.hp == 1
+
+
+def test_concentration_check_rolls_once_without_advantage_or_disadvantage() -> None:
+    actor = _actor()
+    actor.hp = 5
+    actor.concentrating = True
+    rng = CountingRng([12])
+    assert run_concentration_check(rng, actor, damage_taken=10) is True
+    assert rng.calls == 1
+
+
+def test_run_contested_check_tie_goes_to_defender() -> None:
+    rng = FixedRng([10, 10])
+    assert run_contested_check(rng, attacker_mod=2, defender_mods=[2]) is False
