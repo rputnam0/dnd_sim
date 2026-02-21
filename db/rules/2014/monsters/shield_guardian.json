@@ -1,0 +1,17 @@
+{
+  "name": "Shield Guardian",
+  "meta": "Large construct, unaligned",
+  "ac": 17,
+  "hp": 142,
+  "hp_formula": "15d10 + 60",
+  "ability_scores": {
+    "str": 18,
+    "dex": 8,
+    "con": 18,
+    "int": 7,
+    "wis": 10,
+    "cha": 3
+  },
+  "cr": "7",
+  "saving_throws_text": ""
+}

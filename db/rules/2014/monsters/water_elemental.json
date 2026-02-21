@@ -1,0 +1,17 @@
+{
+  "name": "Water Elemental",
+  "meta": "Large elemental, neutral",
+  "ac": 14,
+  "hp": 114,
+  "hp_formula": "12d10 + 48",
+  "ability_scores": {
+    "str": 18,
+    "dex": 14,
+    "con": 18,
+    "int": 5,
+    "wis": 10,
+    "cha": 8
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

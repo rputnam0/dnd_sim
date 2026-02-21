@@ -1,0 +1,17 @@
+{
+  "name": "Satyr",
+  "meta": "Medium fey, chaotic neutral",
+  "ac": 14,
+  "hp": 31,
+  "hp_formula": "7d8",
+  "ability_scores": {
+    "str": 12,
+    "dex": 16,
+    "con": 11,
+    "int": 12,
+    "wis": 10,
+    "cha": 14
+  },
+  "cr": "1/2",
+  "saving_throws_text": ""
+}

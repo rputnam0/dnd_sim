@@ -1,0 +1,17 @@
+{
+  "name": "Ancient Blue Dragon",
+  "meta": "Gargantuan dragon, lawful evil",
+  "ac": 22,
+  "hp": 481,
+  "hp_formula": "26d20 + 208",
+  "ability_scores": {
+    "str": 29,
+    "dex": 10,
+    "con": 27,
+    "int": 18,
+    "wis": 17,
+    "cha": 21
+  },
+  "cr": "23",
+  "saving_throws_text": "Dex +7, Con +15, Wis +10, Cha +12"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Adult Gold Dragon",
+  "meta": "Huge dragon, lawful good",
+  "ac": 19,
+  "hp": 256,
+  "hp_formula": "19d12 + 133",
+  "ability_scores": {
+    "str": 27,
+    "dex": 14,
+    "con": 25,
+    "int": 16,
+    "wis": 15,
+    "cha": 24
+  },
+  "cr": "17",
+  "saving_throws_text": "Dex +8, Con +13, Wis +8, Cha +13"
+}

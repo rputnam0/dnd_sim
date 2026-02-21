@@ -1,0 +1,17 @@
+{
+  "name": "Lich",
+  "meta": "Medium undead, any evil alignment",
+  "ac": 17,
+  "hp": 135,
+  "hp_formula": "18d8 + 54",
+  "ability_scores": {
+    "str": 11,
+    "dex": 16,
+    "con": 16,
+    "int": 20,
+    "wis": 14,
+    "cha": 16
+  },
+  "cr": "21",
+  "saving_throws_text": "Con +10, Int +12, Wis +9"
+}

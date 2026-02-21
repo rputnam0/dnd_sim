@@ -1,0 +1,31 @@
+{
+  "name": "Antipathy/Sympathy",
+  "type": "spell",
+  "level": 8,
+  "school": "Enchantment",
+  "casting_time": "minute",
+  "range_ft": 60,
+  "concentration": false,
+  "duration_rounds": 144000,
+  "description": "You target a Huge or smaller object, creature, or an area no larger than a 200\u2011foot cube within 60 feet. Choose a kind of intelligent creature (e.g., red dragons, goblins, vampires) and whether the aura is antipathy or sympathy. Antipathy causes the chosen creatures to become frightened when they can see the target or come within 60 feet, forcing them to move away while they remain within that distance or line of sight. Sympathy compels the chosen creatures to move toward the target when they can see it or are within 60 feet; once they reach the target they cannot willingly move away. Affected creatures can attempt a Wisdom saving throw to end the effect if they are out of range or line of sight, and they may repeat a Wisdom save every 24 hours. A creature that succeeds on a save is immune for 1 minute.",
+  "save_ability": "wis",
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "area",
+      "shape": "cube",
+      "size": 200
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "frightened",
+      "duration": "while within 60 ft or can see the target"
+    },
+    {
+      "effect_type": "forced_movement",
+      "direction": "toward_target",
+      "condition": "sympathy",
+      "restriction": "cannot willingly move away once within reach"
+    }
+  ]
+}

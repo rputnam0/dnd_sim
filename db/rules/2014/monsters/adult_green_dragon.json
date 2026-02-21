@@ -1,0 +1,17 @@
+{
+  "name": "Adult Green Dragon",
+  "meta": "Huge dragon, lawful evil",
+  "ac": 19,
+  "hp": 207,
+  "hp_formula": "18d12 + 90",
+  "ability_scores": {
+    "str": 23,
+    "dex": 12,
+    "con": 21,
+    "int": 18,
+    "wis": 15,
+    "cha": 17
+  },
+  "cr": "15",
+  "saving_throws_text": "Dex +6, Con +10, Wis +7, Cha +8"
+}

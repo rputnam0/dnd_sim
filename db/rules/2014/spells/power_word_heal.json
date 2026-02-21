@@ -1,0 +1,35 @@
+{
+  "name": "Power Word Heal",
+  "type": "spell",
+  "level": 9,
+  "school": "Evocation",
+  "casting_time": "action",
+  "range_ft": 0,
+  "concentration": false,
+  "duration_rounds": 0,
+  "description": "A wave of healing energy washes over the creature you touch. The target regains all its hit points. If the creature is charmed, frightened, paralyzed, or stunned, the condition ends. If the creature is prone, it can use its reaction to stand up. This spell has no effect on undead or constructs.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "restore_hp",
+      "amount": "full"
+    },
+    {
+      "effect_type": "remove_condition",
+      "condition": "charmed"
+    },
+    {
+      "effect_type": "remove_condition",
+      "condition": "frightened"
+    },
+    {
+      "effect_type": "remove_condition",
+      "condition": "paralyzed"
+    },
+    {
+      "effect_type": "remove_condition",
+      "condition": "stunned"
+    }
+  ]
+}

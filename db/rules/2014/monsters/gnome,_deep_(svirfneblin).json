@@ -1,0 +1,17 @@
+{
+  "name": "Gnome, Deep (Svirfneblin)",
+  "meta": "Small humanoid (gnome), neutral good",
+  "ac": 15,
+  "hp": 16,
+  "hp_formula": "3d6 + 6",
+  "ability_scores": {
+    "str": 15,
+    "dex": 14,
+    "con": 14,
+    "int": 12,
+    "wis": 10,
+    "cha": 9
+  },
+  "cr": "1/2",
+  "saving_throws_text": ""
+}

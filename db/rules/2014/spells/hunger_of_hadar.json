@@ -1,0 +1,41 @@
+{
+  "name": "Hunger of Hadar",
+  "type": "spell",
+  "level": 3,
+  "school": "Conjuration",
+  "casting_time": "action",
+  "range_ft": 150,
+  "concentration": true,
+  "duration_rounds": 10,
+  "description": "You open a gateway to the dark between the stars, a region infested with unknown horrors. A 20-foot-radius sphere of blackness and bitter cold appears, centered on a point within range and lasting for the duration. This void is filled with a cacophony of soft whispers and slurping noises that can be heard up to 30 feet away. No light, magical or otherwise, can illuminate the area, and creatures fully within the area are blinded. The void creates a warp in the fabric of space, and the area is difficult terrain. Any creature that starts its turn in the area takes 2d6 cold damage. Any creature that ends its turn in the area must succeed on a Dexterity saving throw or take 2d6 acid damage as milky, otherworldly tentacles rub against it.",
+  "save_ability": "dex",
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "blinded",
+      "duration": null
+    },
+    {
+      "effect_type": "aoe",
+      "shape": "sphere",
+      "radius": 20
+    },
+    {
+      "effect_type": "difficult_terrain"
+    },
+    {
+      "effect_type": "damage",
+      "damage_type": "cold",
+      "dice": "2d6",
+      "trigger": "start_of_turn"
+    },
+    {
+      "effect_type": "damage",
+      "damage_type": "acid",
+      "dice": "2d6",
+      "trigger": "failed_save_end_of_turn",
+      "save": "dex"
+    }
+  ]
+}

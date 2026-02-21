@@ -1,0 +1,17 @@
+{
+  "name": "Spirit Naga",
+  "meta": "Large monstrosity, chaotic evil",
+  "ac": 15,
+  "hp": 75,
+  "hp_formula": "10d10 + 20",
+  "ability_scores": {
+    "str": 18,
+    "dex": 17,
+    "con": 14,
+    "int": 16,
+    "wis": 15,
+    "cha": 16
+  },
+  "cr": "8",
+  "saving_throws_text": "Dex +6, Con +5, Wis +5, Cha +6"
+}

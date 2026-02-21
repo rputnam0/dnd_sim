@@ -1,0 +1,17 @@
+{
+  "name": "Aboleth",
+  "meta": "Large aberration, lawful evil",
+  "ac": 17,
+  "hp": 135,
+  "hp_formula": "18d10 + 36",
+  "ability_scores": {
+    "str": 21,
+    "dex": 9,
+    "con": 15,
+    "int": 18,
+    "wis": 15,
+    "cha": 18
+  },
+  "cr": "10",
+  "saving_throws_text": "Con +6, Int +8, Wis +6"
+}

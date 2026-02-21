@@ -1,0 +1,17 @@
+{
+  "name": "Vampire Spawn",
+  "meta": "Medium undead, neutral evil",
+  "ac": 15,
+  "hp": 82,
+  "hp_formula": "11d8 + 33",
+  "ability_scores": {
+    "str": 16,
+    "dex": 16,
+    "con": 16,
+    "int": 11,
+    "wis": 10,
+    "cha": 12
+  },
+  "cr": "5",
+  "saving_throws_text": "Dex +6, Wis +3"
+}

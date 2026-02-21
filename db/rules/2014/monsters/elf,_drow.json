@@ -1,0 +1,17 @@
+{
+  "name": "Elf, Drow",
+  "meta": "Medium humanoid (elf), neutral evil",
+  "ac": 15,
+  "hp": 13,
+  "hp_formula": "3d8",
+  "ability_scores": {
+    "str": 10,
+    "dex": 14,
+    "con": 10,
+    "int": 11,
+    "wis": 11,
+    "cha": 12
+  },
+  "cr": "1/4",
+  "saving_throws_text": ""
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Magmin",
+  "meta": "Small elemental, chaotic neutral",
+  "ac": 14,
+  "hp": 9,
+  "hp_formula": "2d6 + 2",
+  "ability_scores": {
+    "str": 7,
+    "dex": 15,
+    "con": 12,
+    "int": 8,
+    "wis": 11,
+    "cha": 10
+  },
+  "cr": "1/2",
+  "saving_throws_text": ""
+}

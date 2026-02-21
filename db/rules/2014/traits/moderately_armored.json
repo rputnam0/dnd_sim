@@ -1,0 +1,22 @@
+{
+  "name": "Moderately Armored",
+  "type": "feat",
+  "description": "You gain proficiency with Medium armor and increase your Strength or Dexterity score by 1, to a maximum of 20.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "str",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "str",
+        "dex"
+      ]
+    },
+    {
+      "effect_type": "proficiency",
+      "proficiency_type": "armor",
+      "proficiency": "medium"
+    }
+  ]
+}

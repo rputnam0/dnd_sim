@@ -1,0 +1,17 @@
+{
+  "name": "Horned Devil",
+  "meta": "Large fiend (devil), lawful evil",
+  "ac": 18,
+  "hp": 178,
+  "hp_formula": "17d10 + 85",
+  "ability_scores": {
+    "str": 22,
+    "dex": 17,
+    "con": 21,
+    "int": 12,
+    "wis": 16,
+    "cha": 17
+  },
+  "cr": "11",
+  "saving_throws_text": "Str +10, Dex +7, Wis +7, Cha +7"
+}

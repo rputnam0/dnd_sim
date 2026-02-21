@@ -1,0 +1,17 @@
+{
+  "name": "Half-\u00ad\u2010Red Dragon Veteran",
+  "meta": "Medium humanoid (human), any alignment",
+  "ac": 18,
+  "hp": 65,
+  "hp_formula": "10d8 + 20",
+  "ability_scores": {
+    "str": 16,
+    "dex": 13,
+    "con": 14,
+    "int": 10,
+    "wis": 11,
+    "cha": 10
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

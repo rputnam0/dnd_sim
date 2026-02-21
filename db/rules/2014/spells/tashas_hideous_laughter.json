@@ -1,0 +1,25 @@
+{
+  "name": "Tasha's Hideous Laughter",
+  "type": "spell",
+  "level": 1,
+  "school": "Enchantment",
+  "casting_time": "action",
+  "range_ft": 30,
+  "concentration": true,
+  "duration_rounds": 10,
+  "description": "A creature of your choice that you can see within range perceives everything as hilariously funny and falls into fits of laughter if this spell affects it. The target must succeed on a Wisdom saving throw or fall prone, becoming incapacitated and unable to stand up for the duration. A creature with an Intelligence score of 4 or less isn't affected. At the end of each of its turns, and each time it takes damage, the target can make another Wisdom saving throw. The target has advantage on the saving throw if it's triggered by damage. On a success, the spell ends.",
+  "save_ability": "wis",
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "prone",
+      "duration": 10
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "incapacitated",
+      "duration": 10
+    }
+  ]
+}

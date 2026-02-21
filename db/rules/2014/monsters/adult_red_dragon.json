@@ -1,0 +1,17 @@
+{
+  "name": "Adult Red Dragon",
+  "meta": "Huge dragon, chaotic evil",
+  "ac": 19,
+  "hp": 256,
+  "hp_formula": "19d12 + 133",
+  "ability_scores": {
+    "str": 27,
+    "dex": 10,
+    "con": 25,
+    "int": 16,
+    "wis": 13,
+    "cha": 21
+  },
+  "cr": "17",
+  "saving_throws_text": "Dex +6, Con +13, Wis +7, Cha +11"
+}

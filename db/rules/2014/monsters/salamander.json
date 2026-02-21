@@ -1,0 +1,17 @@
+{
+  "name": "Salamander",
+  "meta": "Large elemental, neutral evil",
+  "ac": 15,
+  "hp": 90,
+  "hp_formula": "12d10 + 24",
+  "ability_scores": {
+    "str": 18,
+    "dex": 14,
+    "con": 15,
+    "int": 11,
+    "wis": 10,
+    "cha": 12
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

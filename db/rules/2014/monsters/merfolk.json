@@ -1,0 +1,17 @@
+{
+  "name": "Merfolk",
+  "meta": "Medium humanoid (merfolk), neutral",
+  "ac": 11,
+  "hp": 11,
+  "hp_formula": "2d8 + 2",
+  "ability_scores": {
+    "str": 10,
+    "dex": 13,
+    "con": 12,
+    "int": 11,
+    "wis": 11,
+    "cha": 12
+  },
+  "cr": "1/8",
+  "saving_throws_text": ""
+}

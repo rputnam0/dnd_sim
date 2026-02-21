@@ -1,0 +1,17 @@
+{
+  "name": "Deva",
+  "meta": "Medium celestial, lawful good",
+  "ac": 17,
+  "hp": 136,
+  "hp_formula": "16d8 + 64",
+  "ability_scores": {
+    "str": 18,
+    "dex": 18,
+    "con": 18,
+    "int": 17,
+    "wis": 20,
+    "cha": 20
+  },
+  "cr": "10",
+  "saving_throws_text": "Wis +9, Cha +9"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Efreeti",
+  "meta": "Large elemental, lawful evil",
+  "ac": 17,
+  "hp": 200,
+  "hp_formula": "16d10 + 112",
+  "ability_scores": {
+    "str": 22,
+    "dex": 12,
+    "con": 24,
+    "int": 16,
+    "wis": 15,
+    "cha": 16
+  },
+  "cr": "11",
+  "saving_throws_text": "Int +7, Wis +6, Cha +7"
+}

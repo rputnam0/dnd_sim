@@ -1,0 +1,17 @@
+{
+  "name": "Young Black Dragon",
+  "meta": "Large dragon, chaotic evil",
+  "ac": 18,
+  "hp": 127,
+  "hp_formula": "15d10 + 45",
+  "ability_scores": {
+    "str": 19,
+    "dex": 14,
+    "con": 17,
+    "int": 12,
+    "wis": 11,
+    "cha": 15
+  },
+  "cr": "7",
+  "saving_throws_text": "Dex +5, Con +6, Wis +3, Cha +5"
+}

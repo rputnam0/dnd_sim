@@ -1,0 +1,17 @@
+{
+  "name": "Weretiger",
+  "meta": "Medium humanoid (human, shapechanger), neutral",
+  "ac": 12,
+  "hp": 120,
+  "hp_formula": "16d8 + 48",
+  "ability_scores": {
+    "str": 17,
+    "dex": 15,
+    "con": 16,
+    "int": 10,
+    "wis": 13,
+    "cha": 11
+  },
+  "cr": "4",
+  "saving_throws_text": ""
+}

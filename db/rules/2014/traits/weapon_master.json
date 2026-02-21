@@ -1,0 +1,29 @@
+{
+  "name": "Weapon Master",
+  "type": "feat",
+  "description": "You increase your Strength or Dexterity score by 1, to a maximum of 20. You gain the ability to use the mastery property of one kind of Simple or Martial weapon of your choice, provided you have proficiency with it. Whenever you finish a Long Rest, you can change the kind of weapon to another eligible kind.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "str",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "dex",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "weapon_mastery_access",
+      "weapon_count": 1,
+      "weapon_categories": [
+        "simple",
+        "martial"
+      ],
+      "requirement": "proficiency",
+      "change_on_long_rest": true
+    }
+  ]
+}

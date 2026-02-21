@@ -1,0 +1,17 @@
+{
+  "name": "Androsphinx",
+  "meta": "Large monstrosity, lawful neutral",
+  "ac": 17,
+  "hp": 199,
+  "hp_formula": "19d10 + 95",
+  "ability_scores": {
+    "str": 22,
+    "dex": 10,
+    "con": 20,
+    "int": 16,
+    "wis": 18,
+    "cha": 23
+  },
+  "cr": "17",
+  "saving_throws_text": "Dex +6, Con +11, Int +9, Wis +10"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Gorgon",
+  "meta": "Large monstrosity, unaligned",
+  "ac": 19,
+  "hp": 114,
+  "hp_formula": "12d10 + 48",
+  "ability_scores": {
+    "str": 20,
+    "dex": 11,
+    "con": 18,
+    "int": 2,
+    "wis": 12,
+    "cha": 7
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

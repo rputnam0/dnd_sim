@@ -1,0 +1,23 @@
+{
+  "name": "Ray of Frost",
+  "type": "spell",
+  "level": 0,
+  "school": "Evocation",
+  "casting_time": "action",
+  "range_ft": 60,
+  "concentration": false,
+  "duration_rounds": 0,
+  "description": "A frigid beam of blue-white light streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, it takes 1d8 cold damage, and its speed is reduced by 10 feet until the start of your next turn. The spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8).",
+  "save_ability": null,
+  "damage_type": "cold",
+  "mechanics": [
+    {
+      "effect_type": "ranged_spell_attack"
+    },
+    {
+      "effect_type": "modify_speed",
+      "amount": -10,
+      "duration": 1
+    }
+  ]
+}

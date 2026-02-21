@@ -1,0 +1,28 @@
+{
+  "name": "Boon of the Night Spirit",
+  "type": "feat",
+  "description": "Increase one ability score by 1, up to a maximum of 30. While in Dim Light or Darkness, you can use a Bonus Action to become Invisible until you take an action, Bonus Action, or Reaction. While in Dim Light or Darkness, you have Resistance to all damage except Psychic and Radiant.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "any",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "bonus_action_condition",
+      "condition": "invisible",
+      "requirement": "dim_light_or_darkness",
+      "expiry": "action_taken"
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "all",
+      "exceptions": [
+        "psychic",
+        "radiant"
+      ],
+      "condition": "dim_light_or_darkness"
+    }
+  ]
+}

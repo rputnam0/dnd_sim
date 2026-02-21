@@ -1,0 +1,17 @@
+{
+  "name": "Troll",
+  "meta": "Large giant, chaotic evil",
+  "ac": 15,
+  "hp": 84,
+  "hp_formula": "8d10 + 40",
+  "ability_scores": {
+    "str": 18,
+    "dex": 13,
+    "con": 20,
+    "int": 7,
+    "wis": 9,
+    "cha": 7
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

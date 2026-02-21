@@ -1,0 +1,17 @@
+{
+  "name": "Ankheg",
+  "meta": "Large monstrosity, unaligned",
+  "ac": 14,
+  "hp": 39,
+  "hp_formula": "6d10 + 6",
+  "ability_scores": {
+    "str": 17,
+    "dex": 11,
+    "con": 13,
+    "int": 1,
+    "wis": 13,
+    "cha": 6
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Sea Hag",
+  "meta": "Medium fey, chaotic evil",
+  "ac": 14,
+  "hp": 52,
+  "hp_formula": "7d8 + 21",
+  "ability_scores": {
+    "str": 16,
+    "dex": 13,
+    "con": 16,
+    "int": 12,
+    "wis": 12,
+    "cha": 13
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

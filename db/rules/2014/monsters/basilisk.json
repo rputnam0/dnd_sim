@@ -1,0 +1,17 @@
+{
+  "name": "Basilisk",
+  "meta": "Medium monstrosity, unaligned",
+  "ac": 15,
+  "hp": 52,
+  "hp_formula": "8d8 + 16",
+  "ability_scores": {
+    "str": 16,
+    "dex": 8,
+    "con": 15,
+    "int": 2,
+    "wis": 8,
+    "cha": 7
+  },
+  "cr": "3",
+  "saving_throws_text": ""
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Hippogriff",
+  "meta": "Large monstrosity, unaligned",
+  "ac": 11,
+  "hp": 19,
+  "hp_formula": "3d10 + 3",
+  "ability_scores": {
+    "str": 17,
+    "dex": 13,
+    "con": 13,
+    "int": 2,
+    "wis": 12,
+    "cha": 8
+  },
+  "cr": "1",
+  "saving_throws_text": ""
+}

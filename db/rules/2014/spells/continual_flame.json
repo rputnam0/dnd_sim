@@ -1,0 +1,9 @@
+{
+  "name": "Continual Flame",
+  "meta": "Continual Flame 2nd-\u00ad\u2010\u2011level evocation",
+  "casting_time": "1 action",
+  "range": "Touch",
+  "components": "V, S, M (ruby dust worth 50 gp, which the spell consumes)",
+  "duration": "Until dispelled",
+  "description": "A flame, equivalent in brightness to a torch, springs forth from an object that you touch. The effect looks like a regular flame, but it creates no heat and doesn\u2019t use oxygen. A continual flame can be covered or hidden but not smothered or quenched. Control Water 4th-\u00ad\u2010\u2011level transmutation"
+}

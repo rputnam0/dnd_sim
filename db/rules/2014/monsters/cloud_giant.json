@@ -1,0 +1,17 @@
+{
+  "name": "Cloud Giant",
+  "meta": "Huge giant, neutral good (50%) or neutral evil (50%)",
+  "ac": 14,
+  "hp": 200,
+  "hp_formula": "16d12 + 96",
+  "ability_scores": {
+    "str": 27,
+    "dex": 10,
+    "con": 22,
+    "int": 12,
+    "wis": 16,
+    "cha": 16
+  },
+  "cr": "9",
+  "saving_throws_text": "Con +10, Wis +7, Cha +7"
+}

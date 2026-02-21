@@ -1,0 +1,17 @@
+{
+  "name": "Lamia",
+  "meta": "Large monstrosity, chaotic evil",
+  "ac": 13,
+  "hp": 97,
+  "hp_formula": "13d10 + 26",
+  "ability_scores": {
+    "str": 16,
+    "dex": 13,
+    "con": 15,
+    "int": 14,
+    "wis": 15,
+    "cha": 16
+  },
+  "cr": "4",
+  "saving_throws_text": ""
+}

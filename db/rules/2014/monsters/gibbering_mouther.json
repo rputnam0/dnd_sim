@@ -1,0 +1,17 @@
+{
+  "name": "Gibbering Mouther",
+  "meta": "Medium aberration, neutral",
+  "ac": 9,
+  "hp": 67,
+  "hp_formula": "9d8 + 27",
+  "ability_scores": {
+    "str": 10,
+    "dex": 8,
+    "con": 16,
+    "int": 3,
+    "wis": 10,
+    "cha": 6
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

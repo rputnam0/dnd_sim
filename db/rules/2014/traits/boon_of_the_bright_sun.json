@@ -1,0 +1,34 @@
+{
+  "name": "Boon of the Bright Sun",
+  "type": "feat",
+  "description": "Increase your Constitution, Wisdom, or Charisma score by 1, to a maximum of 30. As a bonus action, you can radiate a 30-foot emanation of sunlight that dispels darkness spells. While this light is active, you and allies you can see within the emanation gain 10 temporary hit points at the start of each of your turns.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": [
+        "con",
+        "wis",
+        "cha"
+      ],
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "bonus_action",
+      "name": "Daylight Presence"
+    },
+    {
+      "effect_type": "aura_effect",
+      "radius": 30,
+      "type": "sunlight",
+      "dispels": "darkness_spells"
+    },
+    {
+      "effect_type": "aura_temp_hp",
+      "amount": 10,
+      "radius": 30,
+      "trigger": "start_of_turn",
+      "target": "self_and_allies"
+    }
+  ]
+}

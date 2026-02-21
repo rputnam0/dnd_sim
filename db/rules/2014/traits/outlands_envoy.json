@@ -1,0 +1,33 @@
+{
+  "name": "Outlands Envoy",
+  "type": "feat",
+  "description": "You gain a +1 bonus to an ability score of your choice. You learn the Misty Step and Tongues spells. You can cast each spell once per long rest without a spell slot, and you can also cast them using any spell slots you have. When you cast Tongues this way, it requires no material components. Your spellcasting ability for these spells is the one chosen for the Scion of the Outer Planes feat.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choose",
+      "amount": 1,
+      "options": [
+        "str",
+        "dex",
+        "con",
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "misty step",
+      "frequency": "1/long_rest",
+      "use_slots": true
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "tongues",
+      "frequency": "1/long_rest",
+      "use_slots": true,
+      "no_material_components": true
+    }
+  ]
+}

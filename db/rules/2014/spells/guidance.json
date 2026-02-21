@@ -1,0 +1,21 @@
+{
+  "name": "Guidance",
+  "type": "spell",
+  "level": 0,
+  "school": "Divination",
+  "casting_time": "action",
+  "range_ft": 0,
+  "concentration": true,
+  "duration_rounds": 10,
+  "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice. It can roll the die before or after making the ability check. The spell then ends.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "grant_bonus",
+      "bonus": "1d4",
+      "target": "ability_check",
+      "duration": 10
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Purple Dragon Rook",
+  "type": "feat",
+  "description": "You gain proficiency in Insight, Performance, or Persuasion. Additionally, when you roll initiative and are not incapacitated, you can grant Heroic Inspiration to a number of creatures equal to your proficiency bonus within 30 feet. This benefit can be used once per long rest.",
+  "mechanics": [
+    {
+      "effect_type": "skill_proficiency",
+      "options": [
+        "insight",
+        "performance",
+        "persuasion"
+      ]
+    },
+    {
+      "effect_type": "initiative_trigger",
+      "effect": "grant_heroic_inspiration",
+      "target_count": "proficiency_bonus",
+      "range": 30,
+      "reset": "long_rest",
+      "condition": "not_incapacitated"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Shrieker",
+  "meta": "Medium plant, unaligned",
+  "ac": 5,
+  "hp": 13,
+  "hp_formula": "3d8",
+  "ability_scores": {
+    "str": 1,
+    "dex": 1,
+    "con": 10,
+    "int": 1,
+    "wis": 3,
+    "cha": 1
+  },
+  "cr": "0",
+  "saving_throws_text": ""
+}

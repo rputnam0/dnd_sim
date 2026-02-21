@@ -1,0 +1,17 @@
+{
+  "name": "Chuul",
+  "meta": "Large aberration, chaotic evil",
+  "ac": 16,
+  "hp": 93,
+  "hp_formula": "11d10 + 33",
+  "ability_scores": {
+    "str": 19,
+    "dex": 10,
+    "con": 16,
+    "int": 5,
+    "wis": 11,
+    "cha": 5
+  },
+  "cr": "4",
+  "saving_throws_text": ""
+}

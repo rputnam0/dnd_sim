@@ -1,0 +1,17 @@
+{
+  "name": "Black Pudding",
+  "meta": "Large ooze, unaligned",
+  "ac": 7,
+  "hp": 85,
+  "hp_formula": "10d10 + 30",
+  "ability_scores": {
+    "str": 16,
+    "dex": 5,
+    "con": 16,
+    "int": 1,
+    "wis": 6,
+    "cha": 1
+  },
+  "cr": "4",
+  "saving_throws_text": ""
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Slasher",
+  "type": "feat",
+  "description": "You gain a +1 bonus to Strength or Dexterity. Once per turn, when you hit a creature with an attack that deals Slashing damage, you can reduce its speed by 10 feet until the start of your next turn. When you score a critical hit that deals Slashing damage to a creature, it has disadvantage on attack rolls until the start of your next turn.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "str",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "str",
+        "dex"
+      ]
+    },
+    {
+      "effect_type": "on_hit_effect",
+      "damage_type": "slashing",
+      "frequency": "once_per_turn",
+      "effect": "reduce_speed",
+      "amount": 10,
+      "duration": "start_of_next_turn"
+    },
+    {
+      "effect_type": "on_critical_hit",
+      "damage_type": "slashing",
+      "effect": "disadvantage_on_attack_rolls",
+      "target": "enemy",
+      "duration": "start_of_next_turn"
+    }
+  ]
+}

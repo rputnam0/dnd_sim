@@ -1,0 +1,9 @@
+{
+  "name": "Purify Food and Drink",
+  "meta": "Purify Food and Drink 1st-\u00ad\u2010\u2011level transmutation (ritual)",
+  "casting_time": "1 action",
+  "range": "10 feet",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "description": "All nonmagical food and drink within a 5-\u00ad\u2010\u2011foot-\u00ad\u2010\u2011radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease. Raise Dead 5th-\u00ad\u2010\u2011level necromancy"
+}

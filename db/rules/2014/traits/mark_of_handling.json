@@ -1,0 +1,69 @@
+{
+  "name": "Mark of Handling",
+  "type": "feat",
+  "description": "You gain a 1d4 bonus to Intelligence (Nature) and Wisdom (Animal Handling) checks. You always have Animal Friendship and Speak with Animals prepared and can cast each once per long rest without a spell slot using Intelligence, Wisdom, or Charisma as your spellcasting ability. Starting at level 3, these spells can also target Monstrosities with an Intelligence of 3 or lower. Additionally, a specific list of spells is added to your spellcasting class's spell list.",
+  "mechanics": [
+    {
+      "effect_type": "skill_bonus",
+      "skill": "nature",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "skill_bonus",
+      "skill": "animal_handling",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "spell_prepared",
+      "spell": "animal friendship"
+    },
+    {
+      "effect_type": "spell_prepared",
+      "spell": "speak with animals"
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "animal friendship",
+      "frequency": "1/long_rest"
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "speak with animals",
+      "frequency": "1/long_rest"
+    },
+    {
+      "effect_type": "spellcasting_ability_choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "spell_modification",
+      "spell": "animal friendship",
+      "modification": "can target monstrosity (int <= 3)",
+      "level_requirement": 3
+    },
+    {
+      "effect_type": "spell_modification",
+      "spell": "speak with animals",
+      "modification": "can target monstrosity (int <= 3)",
+      "level_requirement": 3
+    },
+    {
+      "effect_type": "spell_list_addition",
+      "spells": [
+        "command",
+        "find familiar",
+        "beast sense",
+        "calm emotions",
+        "beacon of hope",
+        "conjure animals",
+        "aura of life",
+        "dominate beast",
+        "awaken"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Glabrezu",
+  "meta": "Large fiend (demon), chaotic evil",
+  "ac": 17,
+  "hp": 157,
+  "hp_formula": "15d10 + 75",
+  "ability_scores": {
+    "str": 20,
+    "dex": 15,
+    "con": 21,
+    "int": 19,
+    "wis": 17,
+    "cha": 16
+  },
+  "cr": "9",
+  "saving_throws_text": "Str +9, Con +9, Wis +7, Cha +7"
+}

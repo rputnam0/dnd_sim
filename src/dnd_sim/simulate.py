@@ -11,6 +11,7 @@ from dnd_sim.io import (
     load_custom_simulation_runner,
     load_scenario,
     load_strategy_registry,
+    load_traits_db,
     write_json,
     write_trial_rows,
 )
@@ -37,6 +38,7 @@ def main() -> None:
     loaded = load_scenario(args.scenario)
     db_dir = (Path(loaded.config.character_db_dir)).resolve()
     character_db = load_character_db(db_dir)
+    traits_db = load_traits_db(db_dir.parent / "traits")
     results_root = default_results_dir().resolve()
     run_name = args.name or loaded.config.scenario_id
     run_dir = build_run_dir(results_root, run_name)
@@ -47,6 +49,7 @@ def main() -> None:
         custom_output = custom_runner(
             scenario=loaded,
             character_db=character_db,
+            traits_db=traits_db,
             trials=args.trials,
             seed=args.seed,
             run_dir=run_dir,
@@ -67,6 +70,7 @@ def main() -> None:
         artifacts = run_simulation(
             loaded,
             character_db,
+            traits_db,
             strategy_registry,
             trials=args.trials,
             seed=args.seed,

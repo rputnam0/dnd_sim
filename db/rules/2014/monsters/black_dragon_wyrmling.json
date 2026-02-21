@@ -1,0 +1,17 @@
+{
+  "name": "Black Dragon Wyrmling",
+  "meta": "Medium dragon, chaotic evil",
+  "ac": 17,
+  "hp": 33,
+  "hp_formula": "6d8 + 6",
+  "ability_scores": {
+    "str": 15,
+    "dex": 14,
+    "con": 13,
+    "int": 10,
+    "wis": 11,
+    "cha": 13
+  },
+  "cr": "2",
+  "saving_throws_text": "Dex +4, Con +3, Wis +2, Cha +3"
+}

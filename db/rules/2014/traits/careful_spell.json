@@ -1,0 +1,16 @@
+{
+  "name": "Careful Spell",
+  "type": "metamagic",
+  "description": "When you cast a spell that forces other creatures to make a saving throw, you can protect some of those creatures from the spell's full force. To do so, you spend 1 sorcery point and choose a number of those creatures up to your Charisma modifier (minimum of one creature). A chosen creature automatically succeeds on its saving throw against the spell.",
+  "mechanics": [
+    {
+      "effect_type": "auto_save_allies",
+      "trigger": "spell_cast",
+      "target_mode": "all_creatures",
+      "resource_cost": {
+        "sorcery_points": 1
+      },
+      "max_targets": "cha_mod"
+    }
+  ]
+}

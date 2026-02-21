@@ -360,6 +360,7 @@ def run_custom_simulation(
     *,
     scenario: Any,
     character_db: dict[str, dict[str, Any]],
+    traits_db: dict[str, dict[str, Any]],
     trials: int,
     seed: int,
     run_dir: Path,

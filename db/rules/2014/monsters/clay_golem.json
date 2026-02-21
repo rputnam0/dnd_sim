@@ -1,0 +1,17 @@
+{
+  "name": "Clay Golem",
+  "meta": "Large construct, unaligned",
+  "ac": 14,
+  "hp": 133,
+  "hp_formula": "14d10 + 56",
+  "ability_scores": {
+    "str": 20,
+    "dex": 9,
+    "con": 18,
+    "int": 3,
+    "wis": 8,
+    "cha": 1
+  },
+  "cr": "9",
+  "saving_throws_text": ""
+}

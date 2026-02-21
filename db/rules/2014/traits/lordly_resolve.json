@@ -1,0 +1,45 @@
+{
+  "name": "Lordly Resolve",
+  "type": "feat",
+  "description": "You increase your Strength or Charisma score by 1, to a maximum of 20. As a bonus action, you can choose up to three creatures within 60 feet that can see you. Each target can immediately use its reaction to end the prone condition. Additionally, for 1 minute or until you are incapacitated, the targets are immune to being possessed, charmed, or frightened. If a target is already possessed, charmed, or frightened, it has advantage on any new saving throw against that effect. Once you use this benefit, you can't do so again until you finish a long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "str",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "cha",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "bonus_action",
+      "name": "Standard Bearer",
+      "uses": 1,
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "condition_immunity",
+      "condition": "charmed",
+      "duration_rounds": 10
+    },
+    {
+      "effect_type": "condition_immunity",
+      "condition": "frightened",
+      "duration_rounds": 10
+    },
+    {
+      "effect_type": "advantage_save",
+      "condition": "charmed",
+      "trigger": "already_affected"
+    },
+    {
+      "effect_type": "advantage_save",
+      "condition": "frightened",
+      "trigger": "already_affected"
+    }
+  ]
+}

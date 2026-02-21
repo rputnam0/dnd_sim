@@ -1,0 +1,17 @@
+{
+  "name": "Adult Bronze Dragon",
+  "meta": "Huge dragon, lawful good",
+  "ac": 19,
+  "hp": 212,
+  "hp_formula": "17d12 + 102",
+  "ability_scores": {
+    "str": 25,
+    "dex": 10,
+    "con": 23,
+    "int": 16,
+    "wis": 15,
+    "cha": 19
+  },
+  "cr": "15",
+  "saving_throws_text": "Dex +5, Con +11, Wis +7, Cha +9"
+}

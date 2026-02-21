@@ -1,0 +1,24 @@
+{
+  "name": "Boon of Bloodshed",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1, to a maximum of 30. When an enemy you can see is reduced to 0 hit points, you gain advantage on the next attack roll you make before the end of your next turn. Once per turn, when you make an attack roll while bloodied, you can deal extra damage to the target equal to your proficiency bonus. The extra damage's type is the same as the attack's type.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "advantage_attack",
+      "trigger": "enemy_reduced_to_0_hp",
+      "duration": "end_of_next_turn"
+    },
+    {
+      "effect_type": "extra_damage",
+      "condition": "bloodied",
+      "amount": "proficiency_bonus",
+      "frequency": "once_per_turn"
+    }
+  ]
+}

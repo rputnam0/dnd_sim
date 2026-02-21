@@ -1,0 +1,17 @@
+{
+  "name": "Imp",
+  "meta": "Tiny fiend (devil, shapechanger), lawful evil",
+  "ac": 13,
+  "hp": 10,
+  "hp_formula": "3d4 + 3",
+  "ability_scores": {
+    "str": 6,
+    "dex": 17,
+    "con": 13,
+    "int": 11,
+    "wis": 12,
+    "cha": 14
+  },
+  "cr": "1",
+  "saving_throws_text": ""
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Adept of the White Robes",
+  "type": "feat",
+  "description": "You learn one 2nd-level Abjuration or Divination spell and can cast it once per long rest without a spell slot, or using your spell slots. Additionally, as a reaction when you or a creature within 30 feet takes damage, you can expend a spell slot to reduce the damage by a number of d6s equal to the spell level plus your spellcasting ability modifier.",
+  "mechanics": [
+    {
+      "effect_type": "learn_spell",
+      "spell_level": 2,
+      "school": [
+        "abjuration",
+        "divination"
+      ],
+      "free_cast": "1/long_rest",
+      "allow_spell_slots": true
+    },
+    {
+      "effect_type": "reaction",
+      "name": "Protective Ward",
+      "trigger": "damage_taken",
+      "range": 30,
+      "cost": "spell_slot",
+      "reduction_formula": "slot_level * 1d6 + spellcasting_modifier"
+    }
+  ]
+}

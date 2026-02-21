@@ -1,0 +1,17 @@
+{
+  "name": "Rakshasa",
+  "meta": "Medium fiend, lawful evil",
+  "ac": 16,
+  "hp": 110,
+  "hp_formula": "13d8 + 52",
+  "ability_scores": {
+    "str": 14,
+    "dex": 17,
+    "con": 18,
+    "int": 13,
+    "wis": 16,
+    "cha": 20
+  },
+  "cr": "13",
+  "saving_throws_text": ""
+}

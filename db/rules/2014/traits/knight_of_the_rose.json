@@ -1,0 +1,26 @@
+{
+  "name": "Knight of the Rose",
+  "type": "feat",
+  "description": "You increase your Constitution, Wisdom, or Charisma score by 1. As a bonus action, you can grant a creature within 30 feet (including yourself) temporary hit points equal to 1d8 + your proficiency bonus + the modifier of the ability increased by this feat. You can use this a number of times equal to your proficiency bonus per long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "choice": [
+        "con",
+        "wis",
+        "cha"
+      ],
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "bonus_action",
+      "name": "Bolstering Rally",
+      "range": 30,
+      "uses": "proficiency_bonus",
+      "reset": "long_rest",
+      "benefit": "temporary_hit_points",
+      "amount": "1d8 + proficiency_bonus + ability_modifier"
+    }
+  ]
+}

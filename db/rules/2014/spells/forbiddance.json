@@ -1,0 +1,44 @@
+{
+  "name": "Forbiddance",
+  "type": "spell",
+  "level": 6,
+  "school": "Abjuration",
+  "casting_time": "minute",
+  "range_ft": 0,
+  "concentration": false,
+  "duration_rounds": 14400,
+  "description": "You create a ward against magical travel that protects up to 40,000 square feet of floor space to a height of 30 feet above the floor. For the duration, creatures can't teleport into the area or use portals, such as those created by the gate spell, to enter the area. The spell blocks planar travel, preventing access via the Astral Plane, Ethereal Plane, Feywild, Shadowfell, or the plane shift spell. In addition, the spell damages types of creatures that you choose when you cast it. Choose one or more of the following: celestials, elementals, fey, fiends, and undead. When a chosen creature enters the spell's area for the first time on a turn or starts its turn there, the creature takes 5d10 radiant or necrotic damage (your choice when you cast this spell). When you cast this spell, you can designate a password. A creature that speaks the password as it enters the area takes no damage from the spell. The spell's area can't overlap with the area of another forbiddance spell. If you cast forbiddance every day for 30 days in the same location, the spell lasts until it is dispelled, and the material components are consumed on the last casting.",
+  "save_ability": null,
+  "damage_type": "radiant",
+  "mechanics": [
+    {
+      "effect_type": "area",
+      "shape": "custom",
+      "area_sqft": 40000,
+      "height_ft": 30
+    },
+    {
+      "effect_type": "prevent_teleport",
+      "duration": "spell"
+    },
+    {
+      "effect_type": "prevent_planar_travel"
+    },
+    {
+      "effect_type": "damage_on_enter",
+      "creature_types": [
+        "celestial",
+        "elemental",
+        "fey",
+        "fiend",
+        "undead"
+      ],
+      "damage": "5d10",
+      "damage_type": "radiant_or_necrotic"
+    },
+    {
+      "effect_type": "password_exemption",
+      "description": "Creature speaking the designated password takes no damage when entering the area"
+    }
+  ]
+}

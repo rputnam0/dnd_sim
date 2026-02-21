@@ -1,0 +1,17 @@
+{
+  "name": "Warhorse Skeleton",
+  "meta": "Large undead, lawful evil",
+  "ac": 13,
+  "hp": 22,
+  "hp_formula": "3d10 + 6",
+  "ability_scores": {
+    "str": 18,
+    "dex": 12,
+    "con": 15,
+    "int": 2,
+    "wis": 8,
+    "cha": 5
+  },
+  "cr": "1/2",
+  "saving_throws_text": ""
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Ability Score Improvement",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 2, or increase two ability scores of your choice by 1. This feat can't increase an ability score above 20. You can take this feat more than once.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 2,
+      "max": 20
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 1,
+      "max": 20
+    }
+  ]
+}

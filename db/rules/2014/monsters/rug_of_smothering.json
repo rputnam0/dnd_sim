@@ -1,0 +1,17 @@
+{
+  "name": "Rug of Smothering",
+  "meta": "Large construct, unaligned",
+  "ac": 12,
+  "hp": 33,
+  "hp_formula": "6d10",
+  "ability_scores": {
+    "str": 17,
+    "dex": 14,
+    "con": 10,
+    "int": 1,
+    "wis": 3,
+    "cha": 1
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

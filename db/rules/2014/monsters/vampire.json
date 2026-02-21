@@ -1,0 +1,17 @@
+{
+  "name": "Vampire",
+  "meta": "Medium undead (shapechanger), lawful evil",
+  "ac": 16,
+  "hp": 144,
+  "hp_formula": "17d8 + 68",
+  "ability_scores": {
+    "str": 18,
+    "dex": 18,
+    "con": 18,
+    "int": 17,
+    "wis": 15,
+    "cha": 18
+  },
+  "cr": "13",
+  "saving_throws_text": "Dex +9, Wis +7, Cha +9"
+}

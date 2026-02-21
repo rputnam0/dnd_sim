@@ -1,0 +1,17 @@
+{
+  "name": "Homunculus",
+  "meta": "Tiny construct, neutral",
+  "ac": 13,
+  "hp": 5,
+  "hp_formula": "2d4",
+  "ability_scores": {
+    "str": 4,
+    "dex": 15,
+    "con": 11,
+    "int": 10,
+    "wis": 10,
+    "cha": 7
+  },
+  "cr": "0",
+  "saving_throws_text": ""
+}

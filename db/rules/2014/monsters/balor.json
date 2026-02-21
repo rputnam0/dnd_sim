@@ -1,0 +1,17 @@
+{
+  "name": "Balor",
+  "meta": "Huge fiend (demon), chaotic evil",
+  "ac": 19,
+  "hp": 262,
+  "hp_formula": "21d12 + 126",
+  "ability_scores": {
+    "str": 26,
+    "dex": 15,
+    "con": 22,
+    "int": 20,
+    "wis": 16,
+    "cha": 22
+  },
+  "cr": "19",
+  "saving_throws_text": "Str +14, Con +12, Wis +9, Cha +12"
+}

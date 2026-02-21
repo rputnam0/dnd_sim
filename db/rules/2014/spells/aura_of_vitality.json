@@ -1,0 +1,27 @@
+{
+  "name": "Aura of Vitality",
+  "type": "spell",
+  "level": 3,
+  "school": "Evocation",
+  "casting_time": "action",
+  "range_ft": 30,
+  "concentration": true,
+  "duration_rounds": 10,
+  "description": "Healing energy radiates from you in an aura with a 30-foot radius. Until the spell ends, the aura moves with you, centered on you. You can use a bonus action to cause one creature in the aura (including you) to regain 2d6 hit points.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "aoe",
+      "shape": "sphere",
+      "radius": 30,
+      "duration_rounds": 10
+    },
+    {
+      "effect_type": "heal",
+      "amount": "2d6",
+      "trigger": "bonus_action",
+      "target": "creature_in_aura"
+    }
+  ]
+}

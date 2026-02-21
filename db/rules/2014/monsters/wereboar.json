@@ -1,0 +1,17 @@
+{
+  "name": "Wereboar",
+  "meta": "Medium humanoid (human, shapechanger), neutral evil",
+  "ac": 10,
+  "hp": 78,
+  "hp_formula": "12d8 + 24",
+  "ability_scores": {
+    "str": 17,
+    "dex": 10,
+    "con": 15,
+    "int": 10,
+    "wis": 11,
+    "cha": 8
+  },
+  "cr": "4",
+  "saving_throws_text": ""
+}

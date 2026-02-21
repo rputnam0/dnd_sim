@@ -1,0 +1,17 @@
+{
+  "name": "Adult Brass Dragon",
+  "meta": "Huge dragon, chaotic good",
+  "ac": 18,
+  "hp": 172,
+  "hp_formula": "15d12 + 75",
+  "ability_scores": {
+    "str": 23,
+    "dex": 10,
+    "con": 21,
+    "int": 14,
+    "wis": 13,
+    "cha": 17
+  },
+  "cr": "13",
+  "saving_throws_text": "Dex +5, Con +10, Wis +6, Cha +8"
+}

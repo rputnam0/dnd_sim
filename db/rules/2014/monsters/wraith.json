@@ -1,0 +1,17 @@
+{
+  "name": "Wraith",
+  "meta": "Medium undead, neutral evil",
+  "ac": 13,
+  "hp": 67,
+  "hp_formula": "9d8 + 27",
+  "ability_scores": {
+    "str": 6,
+    "dex": 16,
+    "con": 16,
+    "int": 12,
+    "wis": 14,
+    "cha": 15
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

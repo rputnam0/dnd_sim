@@ -1,0 +1,17 @@
+{
+  "name": "Quasit",
+  "meta": "Tiny fiend (demon, shapechanger), chaotic evil",
+  "ac": 13,
+  "hp": 7,
+  "hp_formula": "3d4",
+  "ability_scores": {
+    "str": 5,
+    "dex": 17,
+    "con": 10,
+    "int": 7,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "1",
+  "saving_throws_text": ""
+}

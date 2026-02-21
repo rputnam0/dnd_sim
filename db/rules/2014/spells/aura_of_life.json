@@ -1,0 +1,33 @@
+{
+  "name": "Aura of Life",
+  "type": "spell",
+  "level": 4,
+  "school": "Abjuration",
+  "casting_time": "action",
+  "range_ft": 30,
+  "concentration": true,
+  "duration_rounds": 100,
+  "description": "Life-preserving energy radiates from you in an aura with a 30-foot radius. Until the spell ends, the aura moves with you, centered on you. Each nonhostile creature in the aura (including you) has resistance to necrotic damage, and its hit point maximum can't be reduced. In addition, a nonhostile, living creature regains 1 hit point when it starts its turn in the aura with 0 hit points.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "aoe",
+      "shape": "sphere",
+      "radius": 30
+    },
+    {
+      "effect_type": "grant_resistance",
+      "damage_type": "necrotic"
+    },
+    {
+      "effect_type": "prevent_hp_max_reduction"
+    },
+    {
+      "effect_type": "regain_hp",
+      "amount": 1,
+      "trigger": "start_of_turn",
+      "condition": "hp_equals_0"
+    }
+  ]
+}

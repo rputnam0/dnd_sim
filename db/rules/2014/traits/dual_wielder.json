@@ -1,0 +1,15 @@
+{
+  "name": "Dual Wielder",
+  "type": "feat",
+  "description": "You master fighting with two weapons, gaining the following benefits: You gain a +1 bonus to AC while you are wielding a separate melee weapon in each hand. You can use two-weapon fighting even when the one-handed melee weapons you are wielding aren't light. You can draw or stow two one-handed weapons when you would normally be able to draw or stow only one.",
+  "mechanics": [
+    {
+      "effect_type": "ac_bonus",
+      "amount": 1,
+      "condition": "wielding_two_melee_weapons"
+    },
+    {
+      "effect_type": "ignore_light_property_for_twf"
+    }
+  ]
+}

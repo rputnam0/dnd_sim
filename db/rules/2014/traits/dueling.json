@@ -1,0 +1,12 @@
+{
+  "name": "Dueling",
+  "type": "feat",
+  "description": "When you're holding a Melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon.",
+  "mechanics": [
+    {
+      "effect_type": "damage_bonus",
+      "amount": 2,
+      "condition": "one_handed_melee_weapon_only"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "Harper Teamwork",
+  "type": "feat",
+  "description": "You increase your Dexterity or Charisma score by 1, to a maximum of 20. When you take the Help action to assist an ally's attack roll against an enemy, that enemy also has disadvantage on the first saving throw it makes before the start of your next turn. Additionally, if you succeed on a saving throw to end the Frightened or Paralyzed condition on yourself, you can choose one ally you can see within 30 feet of yourself that has the same condition; that condition immediately ends for that ally.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "dex",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "dex",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "help_action_rider",
+      "trigger": "help_attack",
+      "target": "enemy",
+      "effect": "disadvantage_on_next_saving_throw",
+      "duration": "start_of_next_turn"
+    },
+    {
+      "effect_type": "condition_removal_share",
+      "conditions": [
+        "frightened",
+        "paralyzed"
+      ],
+      "range": 30,
+      "trigger": "successful_save_to_end_condition"
+    }
+  ]
+}

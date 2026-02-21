@@ -1,0 +1,17 @@
+{
+  "name": "Adult Blue Dragon",
+  "meta": "Huge dragon, lawful evil",
+  "ac": 19,
+  "hp": 225,
+  "hp_formula": "18d12 + 108",
+  "ability_scores": {
+    "str": 25,
+    "dex": 10,
+    "con": 23,
+    "int": 16,
+    "wis": 15,
+    "cha": 19
+  },
+  "cr": "16",
+  "saving_throws_text": "Dex +5, Con +11, Wis +7, Cha +9"
+}

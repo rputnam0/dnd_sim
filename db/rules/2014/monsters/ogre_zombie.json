@@ -1,0 +1,17 @@
+{
+  "name": "Ogre Zombie",
+  "meta": "Large undead, neutral evil",
+  "ac": 8,
+  "hp": 85,
+  "hp_formula": "9d10 + 36",
+  "ability_scores": {
+    "str": 19,
+    "dex": 6,
+    "con": 18,
+    "int": 3,
+    "wis": 6,
+    "cha": 5
+  },
+  "cr": "2",
+  "saving_throws_text": "Wis +0"
+}

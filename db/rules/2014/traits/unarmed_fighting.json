@@ -1,0 +1,24 @@
+{
+  "name": "Unarmed Fighting",
+  "type": "feat",
+  "description": "When you hit with your Unarmed Strike and deal damage, you can deal Bludgeoning damage equal to 1d6 plus your Strength modifier instead of the normal damage. If you aren't holding any weapons or a Shield when you make the attack roll, the d6 becomes a d8. At the start of each of your turns, you can deal 1d4 Bludgeoning damage to one creature Grappled by you.",
+  "mechanics": [
+    {
+      "effect_type": "unarmed_strike_damage",
+      "die_size": 6,
+      "stat": "str"
+    },
+    {
+      "effect_type": "unarmed_strike_damage_conditional",
+      "die_size": 8,
+      "stat": "str",
+      "condition": "no_weapons_or_shield"
+    },
+    {
+      "effect_type": "passive_damage_grappled",
+      "damage": "1d4",
+      "damage_type": "bludgeoning",
+      "timing": "start_of_turn"
+    }
+  ]
+}

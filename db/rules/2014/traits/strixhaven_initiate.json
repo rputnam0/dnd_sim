@@ -1,0 +1,34 @@
+{
+  "name": "Strixhaven Initiate",
+  "type": "feat",
+  "description": "You learn two cantrips and one 1st-level spell based on a chosen Strixhaven college (Lorehold, Prismari, Quandrix, Silverquill, or Witherbloom). You can cast the chosen 1st-level spell without a spell slot once per long rest, and you can also cast it using any spell slots you have. Your spellcasting ability for these spells is Intelligence, Wisdom, or Charisma (chosen when you select this feat).",
+  "mechanics": [
+    {
+      "effect_type": "learn_spell",
+      "spell_level": 0,
+      "amount": 2
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell_level": 1,
+      "amount": 1
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell_level": 1,
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "spell_slot_casting",
+      "spell_level": 1
+    },
+    {
+      "effect_type": "spellcasting_ability_choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    }
+  ]
+}

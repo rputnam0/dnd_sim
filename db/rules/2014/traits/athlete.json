@@ -1,0 +1,17 @@
+{
+  "name": "Athlete",
+  "type": "feat",
+  "description": "You have undergone extensive physical training to gain the following benefits: Increase your Strength or Dexterity score by 1, to a maximum of 20. When you are prone, standing up uses only 5 feet of your movement. Climbing doesn't cost you extra movement. You can make a running long jump or a running high jump after moving only 5 feet on foot, rather than 10 feet.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "str_or_dex",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "stand_up_cost_override",
+      "cost": 5
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Conjure Animals",
+  "meta": "Conjure Animals 3rd-\u00ad\u2010\u2011level conjuration",
+  "casting_time": "1 action",
+  "range": "60 feet",
+  "components": "V, S",
+  "duration": "Concentration, up to 1 hour",
+  "description": "You summon fey spirits that take the form of beasts and appear in unoccupied spaces that you can see within range. Choose one of the following options for what appears: \u2022 One beast of challenge rating 2 or lower \u2022 Two beasts of challenge rating 1 or lower \u2022 Four beasts of challenge rating 1/2 or lower \u2022 Eight beasts of challenge rating 1/4 or lower Each beast is also considered fey, and it disappears when it drops to 0 hit points or when the spell ends. The summoned creatures are friendly to you and your companions. Roll initiative for the summoned creatures as a group, which has its own turns. They obey any verbal commands that you issue to them (no action required by you). If you don\u2019t issue any commands to them, they defend themselves from hostile creatures, but otherwise take no actions. The GM has the creatures\u2019 statistics. At Higher Levels. When you cast this spell using certain higher-\u00ad\u2010\u2011level spell slots, you choose one of the summoning options above, and more creatures appear: twice as many with a 5th-\u00ad\u2010\u2011level slot, three times as many with a 7th-\u00ad\u2010\u2011level slot, and four times as many with a 9th-\u00ad\u2010\u2011level slot. Conjure Celestial 7th-\u00ad\u2010\u2011level conjuration"
+}

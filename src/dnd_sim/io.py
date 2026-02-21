@@ -28,6 +28,7 @@ class ActionConfig(BaseModel):
     recharge: str | None = None
     max_uses: int | None = None
     action_cost: Literal["action", "bonus", "reaction", "legendary", "lair"] = "action"
+    event_trigger: str | None = None
     target_mode: Literal[
         "single_enemy",
         "single_ally",
@@ -38,9 +39,14 @@ class ActionConfig(BaseModel):
         "n_enemies",
         "n_allies",
         "random_enemy",
+        "random_enemy",
         "random_ally",
     ] = "single_enemy"
+    range_ft: int | None = None
+    aoe_type: str | None = None
+    aoe_size_ft: int | None = None
     max_targets: int | None = None
+    concentration: bool = False
     include_self: bool = False
     effects: list["EffectConfig"] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
@@ -157,6 +163,7 @@ class EnemyIdentityConfig(BaseModel):
 class EnemyStatBlockConfig(BaseModel):
     max_hp: int
     ac: int
+    speed_ft: int = 30
     initiative_mod: int = 0
     dex_mod: int = 0
     con_mod: int = 0
@@ -177,6 +184,7 @@ class EnemyConfig(BaseModel):
     damage_vulnerabilities: list[str] = Field(default_factory=list)
     condition_immunities: list[str] = Field(default_factory=list)
     script_hooks: dict[str, Any] = Field(default_factory=dict)
+    traits: list[str] = Field(default_factory=list)
 
 
 class StrategyModuleConfig(BaseModel):
@@ -191,6 +199,9 @@ class CustomSimulationConfig(BaseModel):
     module: str
     callable: str = "run_custom_simulation"
 
+class EncounterConfig(BaseModel):
+    enemies: list[str] = Field(default_factory=list)
+    short_rest_after: bool = False
 
 class ScenarioConfig(BaseModel):
     scenario_id: str
@@ -198,7 +209,8 @@ class ScenarioConfig(BaseModel):
     ruleset: str
     character_db_dir: str
     party: list[str]
-    enemies: list[str]
+    enemies: list[str] = Field(default_factory=list)
+    encounters: list[EncounterConfig] = Field(default_factory=list)
     initiative_mode: Literal["individual", "grouped"] = "individual"
     battlefield: dict[str, Any] = Field(default_factory=dict)
     termination_rules: dict[str, Any]
@@ -235,14 +247,38 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
     enemies: dict[str, EnemyConfig] = {}
     enemy_dir = scenario_path.parent.parent / "enemies"
 
-    for enemy_id in scenario.enemies:
+    # Normalize single encounter into the campaign array if used
+    if scenario.enemies and not scenario.encounters:
+        scenario.encounters.append(EncounterConfig(enemies=scenario.enemies))
+
+    all_enemy_ids = set()
+    for enc in scenario.encounters:
+        all_enemy_ids.update(enc.enemies)
+
+    from .db import execute_query
+
+    for enemy_id in all_enemy_ids:
+        # 1. Check local file first (for tests running via tmp_path or local overrides)
         path = enemy_dir / f"{enemy_id}.json"
-        if not path.exists():
-            raise ValueError(f"Enemy definition not found: {path}")
+        
+        enemy_payload = None
+        if path.exists():
+            enemy_payload = _load_json(path)
+        else:
+            # 2. Fallback to SQLite Database for built-ins
+            rows = execute_query("SELECT data_json FROM enemies WHERE enemy_id = ?", (enemy_id,))
+            if rows:
+                enemy_payload = json.loads(rows[0]["data_json"])
+            else:
+                raise ValueError(f"Enemy definition not found on disk or SQLite DB: {enemy_id}")
+            
         try:
-            enemy = EnemyConfig.model_validate(_load_json(path))
+            enemy = EnemyConfig.model_validate(enemy_payload)
         except ValidationError as exc:
-            raise ValueError(f"Invalid enemy schema at {path}: {exc}") from exc
+            raise ValueError(f"Invalid enemy schema for {enemy_id}: {exc}") from exc
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Invalid JSON blob for {enemy_id}: {exc}") from exc
+            
         enemies[enemy_id] = enemy
 
     return LoadedScenario(
@@ -253,18 +289,55 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
 
 
 def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
-    index_path = db_dir / "index.json"
-    if not index_path.exists():
-        raise ValueError(f"Character DB index missing: {index_path}")
-
-    index = _load_json(index_path)
+    from .db import execute_query
+    
     out: dict[str, dict[str, Any]] = {}
-    for row in index.get("characters", []):
-        character_id = row["character_id"]
-        character_path = db_dir / f"{character_id}.json"
-        if not character_path.exists():
-            raise ValueError(f"Character file missing for {character_id}: {character_path}")
-        out[character_id] = _load_json(character_path)
+    
+    # 1. Base load from SQLite
+    rows = execute_query("SELECT character_id, data_json FROM characters")
+    for row in rows:
+        try:
+            out[row["character_id"]] = json.loads(row["data_json"])
+        except json.JSONDecodeError:
+            pass
+            
+    # 2. Local overriding from db_dir (crucial for pytests using tmp_path configurations)
+    index_path = db_dir / "index.json"
+    if index_path.exists():
+        index = _load_json(index_path)
+        for row in index.get("characters", []):
+            character_id = row["character_id"]
+            character_path = db_dir / f"{character_id}.json"
+            if character_path.exists():
+                out[character_id] = _load_json(character_path)
+
+    return out
+
+
+def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
+    from .db import execute_query
+    
+    out: dict[str, dict[str, Any]] = {}
+    
+    # 1. Base SQLite load
+    rows = execute_query("SELECT id, data_json FROM traits")
+    for row in rows:
+        try:
+            trait_data = json.loads(row["data_json"])
+            trait_name = trait_data.get("name", "").lower()
+            if trait_name:
+                out[trait_name] = trait_data
+        except json.JSONDecodeError:
+            pass
+            
+    # 2. Local Path Load overriding
+    if traits_dir.exists():
+        for path in traits_dir.glob("*.json"):
+            trait_data = _load_json(path)
+            trait_name = trait_data.get("name", "").lower()
+            if trait_name:
+                out[trait_name] = trait_data
+            
     return out
 
 
@@ -291,6 +364,9 @@ def load_strategy_registry(
         "conserve_resources_then_burst": "ConserveResourcesThenBurstStrategy",
         "always_use_signature_ability_if_ready": "AlwaysUseSignatureAbilityStrategy",
         "optimal_expected_damage": "OptimalExpectedDamageStrategy",
+        "pack_tactics": "PackTacticsStrategy",
+        "healer": "HealerStrategy",
+        "skirmisher": "SkirmisherStrategy",
     }
     for name, class_name in default_classes.items():
         cls = getattr(default_module, class_name)

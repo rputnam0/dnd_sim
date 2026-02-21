@@ -1,0 +1,26 @@
+{
+  "name": "Ice Storm",
+  "type": "spell",
+  "level": 4,
+  "school": "Evocation",
+  "casting_time": "action",
+  "range_ft": 300,
+  "concentration": false,
+  "duration_rounds": 0,
+  "description": "A hail of rock-hard ice pounds to the ground in a 20-foot-radius, 40-foot-high cylinder centered on a point within range. Each creature in the cylinder must make a Dexterity saving throw. A creature takes 2d8 bludgeoning damage and 4d6 cold damage on a failed save, or half as much damage on a successful one. Hailstones turn the storm's area of effect into difficult terrain until the end of your next turn.",
+  "save_ability": "dex",
+  "damage_type": "bludgeoning",
+  "mechanics": [
+    {
+      "effect_type": "aoe",
+      "shape": "cylinder",
+      "radius": 20,
+      "height": 40
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "difficult_terrain",
+      "duration": 1
+    }
+  ]
+}

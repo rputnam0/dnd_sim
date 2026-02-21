@@ -1,0 +1,67 @@
+{
+  "name": "Scion of the Outer Planes",
+  "type": "feat",
+  "description": "Choose a type of plane: Chaotic Outer Plane (Poison resistance, Minor Illusion), Evil Outer Plane (Necrotic resistance, Chill Touch), Good Outer Plane (Radiant resistance, Sacred Flame), Lawful Outer Plane (Force resistance, Guidance), or The Outlands (Psychic resistance, Mage Hand). You gain the corresponding resistance and cantrip. You can cast the cantrip without material components, using Intelligence, Wisdom, or Charisma as your spellcasting ability.",
+  "mechanics": [
+    {
+      "effect_type": "resistance",
+      "damage_type": "poison",
+      "choice": "Chaotic Outer Plane"
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "necrotic",
+      "choice": "Evil Outer Plane"
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "radiant",
+      "choice": "Good Outer Plane"
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "force",
+      "choice": "Lawful Outer Plane"
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "psychic",
+      "choice": "The Outlands"
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "minor illusion",
+      "choice": "Chaotic Outer Plane",
+      "spellcasting_ability": "int, wis, or cha",
+      "no_material_components": true
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "chill touch",
+      "choice": "Evil Outer Plane",
+      "spellcasting_ability": "int, wis, or cha",
+      "no_material_components": true
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "sacred flame",
+      "choice": "Good Outer Plane",
+      "spellcasting_ability": "int, wis, or cha",
+      "no_material_components": true
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "guidance",
+      "choice": "Lawful Outer Plane",
+      "spellcasting_ability": "int, wis, or cha",
+      "no_material_components": true
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "mage hand",
+      "choice": "The Outlands",
+      "spellcasting_ability": "int, wis, or cha",
+      "no_material_components": true
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Marilith",
+  "meta": "Large fiend (demon), chaotic evil",
+  "ac": 18,
+  "hp": 189,
+  "hp_formula": "18d10 + 90",
+  "ability_scores": {
+    "str": 18,
+    "dex": 20,
+    "con": 20,
+    "int": 18,
+    "wis": 16,
+    "cha": 20
+  },
+  "cr": "16",
+  "saving_throws_text": "Str +9, Con +10, Wis +8, Cha +10"
+}

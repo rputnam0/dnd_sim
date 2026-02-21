@@ -1,0 +1,22 @@
+{
+  "name": "Cartomancer",
+  "type": "feat",
+  "description": "You can use a card deck as a spellcasting focus. You learn the Prestidigitation cantrip and can conceal its verbal and somatic components as ordinary conversation and card handling. When you finish a long rest, you can choose one spell from your class's spell list (1 action casting time, level for which you have slots) and imbue it into a card for 8 hours. You can cast this spell as a bonus action.",
+  "mechanics": [
+    {
+      "effect_type": "learn_spell",
+      "spell": "Prestidigitation"
+    },
+    {
+      "effect_type": "spellcasting_focus",
+      "item": "card deck"
+    },
+    {
+      "effect_type": "bonus_action_cast",
+      "feature_name": "Hidden Ace",
+      "limit": "1/long_rest",
+      "casting_time_restriction": "1 action",
+      "duration": "8 hours"
+    }
+  ]
+}

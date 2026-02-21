@@ -1,0 +1,26 @@
+{
+  "name": "Greater Mark of Detection",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1, to a maximum of 20. Your Deductive Intuition die increases from a d4 to a d6. When you cast See Invisibility using your Magical Detection benefit, you can choose one creature you can see within 30 feet to also gain the benefits of the spell for its duration.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "feature_upgrade",
+      "feature": "deductive_intuition",
+      "die_from": "d4",
+      "die_to": "d6"
+    },
+    {
+      "effect_type": "spell_enhancement",
+      "spell": "see invisibility",
+      "benefit": "share_with_ally",
+      "range": 30,
+      "target_count": 1
+    }
+  ]
+}

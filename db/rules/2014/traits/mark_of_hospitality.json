@@ -1,0 +1,63 @@
+{
+  "name": "Mark of Hospitality",
+  "type": "feat",
+  "description": "You gain a 1d4 bonus to Charisma (Persuasion) checks and ability checks with Brewer's Supplies or Cook's Utensils. You always have Purify Food and Drink and Unseen Servant prepared, and at level 3, you also have Calm Emotions prepared. You can cast each of these spells once per long rest without a spell slot, or using your own spell slots, using Intelligence, Wisdom, or Charisma as your spellcasting ability. Additionally, a specific list of hospitality-themed spells is added to your spellcasting class list.",
+  "mechanics": [
+    {
+      "effect_type": "skill_die_bonus",
+      "skill": "persuasion",
+      "die": "1d4"
+    },
+    {
+      "effect_type": "tool_die_bonus",
+      "tool": "brewer's supplies",
+      "die": "1d4"
+    },
+    {
+      "effect_type": "tool_die_bonus",
+      "tool": "cook's utensils",
+      "die": "1d4"
+    },
+    {
+      "effect_type": "spellcasting_ability_choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "purify food and drink",
+      "frequency": "1/long_rest",
+      "allow_slots": true
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "unseen servant",
+      "frequency": "1/long_rest",
+      "allow_slots": true
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "calm emotions",
+      "frequency": "1/long_rest",
+      "level_required": 3,
+      "allow_slots": true
+    },
+    {
+      "effect_type": "expanded_spell_list",
+      "spells": [
+        "goodberry",
+        "sleep",
+        "aid",
+        "enhance ability",
+        "create food and water",
+        "leomund's tiny hut",
+        "aura of purity",
+        "mordenkainen's private sanctum",
+        "hallow"
+      ]
+    }
+  ]
+}

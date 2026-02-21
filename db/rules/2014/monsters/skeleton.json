@@ -1,0 +1,17 @@
+{
+  "name": "Skeleton",
+  "meta": "Medium undead, lawful evil",
+  "ac": 13,
+  "hp": 13,
+  "hp_formula": "2d8 + 4",
+  "ability_scores": {
+    "str": 10,
+    "dex": 14,
+    "con": 15,
+    "int": 6,
+    "wis": 8,
+    "cha": 5
+  },
+  "cr": "1/4",
+  "saving_throws_text": ""
+}

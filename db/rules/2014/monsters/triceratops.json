@@ -1,0 +1,17 @@
+{
+  "name": "Triceratops",
+  "meta": "Huge beast, unaligned",
+  "ac": 13,
+  "hp": 95,
+  "hp_formula": "10d12 + 30",
+  "ability_scores": {
+    "str": 22,
+    "dex": 9,
+    "con": 17,
+    "int": 2,
+    "wis": 11,
+    "cha": 5
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

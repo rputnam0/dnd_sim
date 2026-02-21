@@ -1,0 +1,17 @@
+{
+  "name": "Stone Golem",
+  "meta": "Large construct, unaligned",
+  "ac": 17,
+  "hp": 178,
+  "hp_formula": "17d10 + 85",
+  "ability_scores": {
+    "str": 22,
+    "dex": 9,
+    "con": 20,
+    "int": 3,
+    "wis": 11,
+    "cha": 1
+  },
+  "cr": "10",
+  "saving_throws_text": ""
+}

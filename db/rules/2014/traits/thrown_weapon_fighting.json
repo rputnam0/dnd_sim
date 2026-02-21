@@ -1,0 +1,13 @@
+{
+  "name": "Thrown Weapon Fighting",
+  "type": "feat",
+  "description": "When you hit with a ranged attack roll using a weapon that has the Thrown property, you gain a +2 bonus to the damage roll.",
+  "mechanics": [
+    {
+      "effect_type": "damage_bonus",
+      "amount": 2,
+      "attack_type": "ranged",
+      "weapon_property": "thrown"
+    }
+  ]
+}

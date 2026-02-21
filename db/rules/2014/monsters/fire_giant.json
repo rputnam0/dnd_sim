@@ -1,0 +1,17 @@
+{
+  "name": "Fire Giant",
+  "meta": "Huge giant, lawful evil",
+  "ac": 18,
+  "hp": 162,
+  "hp_formula": "13d12 + 78",
+  "ability_scores": {
+    "str": 25,
+    "dex": 9,
+    "con": 23,
+    "int": 10,
+    "wis": 14,
+    "cha": 13
+  },
+  "cr": "9",
+  "saving_throws_text": "Dex +3, Con +10, Cha +5"
+}

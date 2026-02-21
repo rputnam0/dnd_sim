@@ -1,0 +1,17 @@
+{
+  "name": "Grick",
+  "meta": "Medium monstrosity, neutral",
+  "ac": 14,
+  "hp": 27,
+  "hp_formula": "6d8",
+  "ability_scores": {
+    "str": 14,
+    "dex": 14,
+    "con": 11,
+    "int": 3,
+    "wis": 14,
+    "cha": 5
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

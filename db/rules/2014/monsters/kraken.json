@@ -1,0 +1,17 @@
+{
+  "name": "Kraken",
+  "meta": "Gargantuan monstrosity (titan), chaotic evil",
+  "ac": 18,
+  "hp": 472,
+  "hp_formula": "27d20 + 189",
+  "ability_scores": {
+    "str": 30,
+    "dex": 11,
+    "con": 25,
+    "int": 22,
+    "wis": 18,
+    "cha": 20
+  },
+  "cr": "23",
+  "saving_throws_text": "Str +17, Dex +7, Con +14, Int +13, Wis"
+}

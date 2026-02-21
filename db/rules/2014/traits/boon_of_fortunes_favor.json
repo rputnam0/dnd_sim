@@ -1,0 +1,18 @@
+{
+  "name": "Boon of Fortune's Favor",
+  "type": "feat",
+  "description": "You increase one ability score of your choice by 1, to a maximum of 30. When you fail a saving throw, you can reroll it and must use the new roll. Once you use this benefit, you can't do so again until the start of your next turn.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "reroll_saving_throw",
+      "trigger": "fail",
+      "limit": "once_per_round"
+    }
+  ]
+}

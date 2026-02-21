@@ -1,0 +1,26 @@
+{
+  "name": "Inspiring Leader",
+  "type": "feat",
+  "description": "You increase your Wisdom or Charisma score by 1, to a maximum of 20. When you finish a Short or Long Rest, you can give an inspiring performance (speech, song, or dance). Choose up to six allies (including yourself) within 30 feet who witness the performance. Each chosen creature gains Temporary Hit Points equal to your character level plus the modifier of the ability increased by this feat.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "wis",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "cha",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "grant_temp_hp",
+      "trigger": "rest_finished",
+      "targets": 6,
+      "range": 30,
+      "amount_formula": "character_level + ability_modifier"
+    }
+  ]
+}

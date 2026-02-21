@@ -1,0 +1,17 @@
+{
+  "name": "Drider",
+  "meta": "Large monstrosity, chaotic evil",
+  "ac": 19,
+  "hp": 123,
+  "hp_formula": "13d10 + 52",
+  "ability_scores": {
+    "str": 16,
+    "dex": 16,
+    "con": 18,
+    "int": 13,
+    "wis": 14,
+    "cha": 12
+  },
+  "cr": "6",
+  "saving_throws_text": ""
+}

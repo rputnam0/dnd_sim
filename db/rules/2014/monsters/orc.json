@@ -1,0 +1,17 @@
+{
+  "name": "Orc",
+  "meta": "Medium humanoid (orc), chaotic evil",
+  "ac": 13,
+  "hp": 15,
+  "hp_formula": "2d8 + 6",
+  "ability_scores": {
+    "str": 16,
+    "dex": 12,
+    "con": 16,
+    "int": 7,
+    "wis": 11,
+    "cha": 10
+  },
+  "cr": "1/2",
+  "saving_throws_text": ""
+}

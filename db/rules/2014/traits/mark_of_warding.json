@@ -1,0 +1,55 @@
+{
+  "name": "Mark of Warding",
+  "type": "feat",
+  "description": "You gain a 1d4 bonus to Intelligence (Investigation) checks and ability checks using Thieves' Tools. You always have the Alarm and Mage Armor spells prepared, and can cast each once per long rest without a spell slot. At level 3, you also prepare and can cast Arcane Lock once per long rest. You can also cast these spells using your spell slots. Choose Intelligence, Wisdom, or Charisma as your spellcasting ability. Additionally, if you have Spellcasting or Pact Magic, several specific spells are added to your spell list.",
+  "mechanics": [
+    {
+      "effect_type": "skill_check_bonus",
+      "skill": "investigation",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "tool_check_bonus",
+      "tool": "thieves' tools",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "spellcasting_ability_choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "alarm",
+      "frequency": "1/long_rest"
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "mage armor",
+      "frequency": "1/long_rest"
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "arcane lock",
+      "frequency": "1/long_rest",
+      "level_requirement": 3
+    },
+    {
+      "effect_type": "spell_list_expansion",
+      "spells": [
+        "armor of agathys",
+        "sanctuary",
+        "knock",
+        "nystul's magic aura",
+        "glyph of warding",
+        "magic circle",
+        "leomund's secret chest",
+        "mordenkainen's faithful hound",
+        "antilife shell"
+      ]
+    }
+  ]
+}

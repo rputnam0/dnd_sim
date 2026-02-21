@@ -1,0 +1,17 @@
+{
+  "name": "Ancient Black Dragon",
+  "meta": "Gargantuan dragon, chaotic evil",
+  "ac": 22,
+  "hp": 367,
+  "hp_formula": "21d20 + 147",
+  "ability_scores": {
+    "str": 27,
+    "dex": 14,
+    "con": 25,
+    "int": 16,
+    "wis": 15,
+    "cha": 19
+  },
+  "cr": "21",
+  "saving_throws_text": "Dex +9, Con +14, Wis +9, Cha +11"
+}

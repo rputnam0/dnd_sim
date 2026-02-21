@@ -1,0 +1,36 @@
+{
+  "name": "Gift of the Chromatic Dragon",
+  "type": "feat",
+  "description": "You've manifested some of the power of chromatic dragons. As a bonus action, you can infuse a weapon with acid, cold, fire, lightning, or poison damage for 1 minute, dealing an extra 1d4 damage on hits (1/long rest). When you take damage of one of those types, you can use your reaction to gain resistance to that instance of damage (uses equal to proficiency bonus per long rest).",
+  "mechanics": [
+    {
+      "effect_type": "bonus_action_buff",
+      "name": "Chromatic Infusion",
+      "damage_bonus": "1d4",
+      "damage_types": [
+        "acid",
+        "cold",
+        "fire",
+        "lightning",
+        "poison"
+      ],
+      "duration": "1 minute",
+      "uses": 1,
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "reaction_resistance",
+      "name": "Reactive Resistance",
+      "trigger": "taking_damage",
+      "damage_types": [
+        "acid",
+        "cold",
+        "fire",
+        "lightning",
+        "poison"
+      ],
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    }
+  ]
+}

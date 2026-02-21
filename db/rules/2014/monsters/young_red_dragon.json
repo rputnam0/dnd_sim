@@ -1,0 +1,17 @@
+{
+  "name": "Young Red Dragon",
+  "meta": "Large dragon, chaotic evil",
+  "ac": 18,
+  "hp": 178,
+  "hp_formula": "17d10 + 85",
+  "ability_scores": {
+    "str": 23,
+    "dex": 10,
+    "con": 21,
+    "int": 14,
+    "wis": 11,
+    "cha": 19
+  },
+  "cr": "10",
+  "saving_throws_text": "Dex +4, Con +9, Wis +4, Cha +8"
+}

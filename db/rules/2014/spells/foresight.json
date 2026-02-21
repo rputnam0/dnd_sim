@@ -1,0 +1,9 @@
+{
+  "name": "Foresight",
+  "meta": "Foresight 9th-\u00ad\u2010\u2011level divination",
+  "casting_time": "1 minute",
+  "range": "Touch",
+  "components": "V, S, M (a hummingbird feather)",
+  "duration": "8 hours",
+  "description": "You touch a willing creature and bestow a limited ability to see into the immediate future. For the duration, the target can\u2019t be surprised and has advantage on attack rolls, ability checks, and saving throws. Additionally, other creatures have disadvantage on attack rolls against the target for the duration. This spell immediately ends if you cast it again before its duration ends."
+}

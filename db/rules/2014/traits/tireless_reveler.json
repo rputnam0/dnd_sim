@@ -1,0 +1,14 @@
+{
+  "name": "Tireless Reveler",
+  "type": "feat",
+  "description": "When an ally you can see within 60 feet of yourself expends Heroic Inspiration, you can gain Heroic Inspiration if you lack it. You can use this benefit a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Short or Long Rest.",
+  "mechanics": [
+    {
+      "effect_type": "gain_inspiration",
+      "trigger": "ally_expends_inspiration",
+      "range": 60,
+      "uses": "proficiency_bonus",
+      "reset": "short_rest"
+    }
+  ]
+}

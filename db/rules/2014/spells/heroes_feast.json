@@ -1,0 +1,45 @@
+{
+  "name": "Heroes' Feast",
+  "type": "spell",
+  "level": 6,
+  "school": "Conjuration",
+  "casting_time": "minute",
+  "range_ft": 30,
+  "concentration": false,
+  "duration_rounds": 14400,
+  "description": "You bring forth a great feast, including magnificent food and drink. The feast takes 1 hour to consume and disappears at the end of that time, and the beneficial effects don't set in until this hour is over. Up to twelve creatures can partake of the feast. A creature that partakes of the feast gains several benefits. The creature is cured of all diseases and poison, becomes immune to poison and being frightened, and makes all Wisdom saving throws with advantage. Its hit point maximum also increases by 2d10, and it gains the same number of hit points. These benefits last for 24 hours.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "cure_condition",
+      "conditions": [
+        "disease",
+        "poison"
+      ]
+    },
+    {
+      "effect_type": "grant_immunity",
+      "condition": "poison"
+    },
+    {
+      "effect_type": "grant_immunity",
+      "condition": "frightened"
+    },
+    {
+      "effect_type": "advantage_on_save",
+      "ability": "wis",
+      "duration": 14400
+    },
+    {
+      "effect_type": "increase_max_hp",
+      "dice": "2d10",
+      "duration": 14400
+    },
+    {
+      "effect_type": "grant_hit_points",
+      "dice": "2d10",
+      "duration": 14400
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Elven Accuracy",
+  "type": "feat",
+  "description": "Prerequisite: Elf or half-elf. Increase your Dexterity, Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. Whenever you have advantage on an attack roll using Dexterity, Intelligence, Wisdom, or Charisma, you can reroll one of the dice once.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat_options": [
+        "dex",
+        "int",
+        "wis",
+        "cha"
+      ],
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "advantage_reroll",
+      "attack_stats": [
+        "dex",
+        "int",
+        "wis",
+        "cha"
+      ],
+      "trigger": "advantage"
+    }
+  ]
+}

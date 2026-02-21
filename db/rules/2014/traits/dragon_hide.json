@@ -1,0 +1,32 @@
+{
+  "name": "Dragon Hide",
+  "type": "feat",
+  "description": "You manifest scales and claws reminiscent of your draconic ancestors. You increase your Strength, Constitution, or Charisma score by 1, to a maximum of 20. While you aren't wearing armor, your AC equals 13 + your Dexterity modifier (shields allowed). You grow claws that are natural weapons for unarmed strikes, dealing 1d4 + Strength modifier slashing damage.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "str",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "str",
+        "con",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "unarmored_ac",
+      "base": 13,
+      "stat": "dex",
+      "shield_compatible": true
+    },
+    {
+      "effect_type": "natural_weapon",
+      "name": "claws",
+      "damage": "1d4",
+      "damage_type": "slashing",
+      "stat": "str",
+      "replaces_unarmed_strike": true
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Pit Fiend",
+  "meta": "Large fiend (devil), lawful evil",
+  "ac": 19,
+  "hp": 300,
+  "hp_formula": "24d10 + 168",
+  "ability_scores": {
+    "str": 26,
+    "dex": 14,
+    "con": 24,
+    "int": 22,
+    "wis": 18,
+    "cha": 24
+  },
+  "cr": "20",
+  "saving_throws_text": "Dex +8, Con +13, Wis +10"
+}

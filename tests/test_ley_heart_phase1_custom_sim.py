@@ -18,6 +18,7 @@ def test_phase1_custom_sim_outputs_damage_metrics(tmp_path: Path) -> None:
     out = runner(
         scenario=loaded,
         character_db=db,
+        traits_db={},
         trials=5,
         seed=1,
         run_dir=tmp_path / "run",
@@ -49,6 +50,7 @@ def test_phase1_custom_sim_accepts_breakpoint_threshold_overrides(tmp_path: Path
     out = runner(
         scenario=loaded,
         character_db=db,
+        traits_db={},
         trials=5,
         seed=2,
         run_dir=tmp_path / "run_bp",
@@ -71,6 +73,7 @@ def test_phase1_custom_sim_tracks_boss_phase1_metrics(tmp_path: Path) -> None:
     out = runner(
         scenario=loaded,
         character_db=db,
+        traits_db={},
         trials=8,
         seed=7,
         run_dir=tmp_path / "run_boss",
@@ -110,6 +113,7 @@ def test_phase1_custom_sim_allows_disabling_boss_phase1(tmp_path: Path) -> None:
     out = runner(
         scenario=loaded,
         character_db=db,
+        traits_db={},
         trials=8,
         seed=9,
         run_dir=tmp_path / "run_no_boss",
@@ -141,6 +145,7 @@ def test_phase1_custom_sim_parallel_mode_runs(tmp_path: Path) -> None:
     out = runner(
         scenario=loaded,
         character_db=db,
+        traits_db={},
         trials=5,
         seed=11,
         run_dir=tmp_path / "run_parallel",

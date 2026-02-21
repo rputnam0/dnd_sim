@@ -1,0 +1,17 @@
+{
+  "name": "Doppelganger",
+  "meta": "Medium monstrosity (shapechanger), neutral",
+  "ac": 14,
+  "hp": 52,
+  "hp_formula": "8d8 + 16",
+  "ability_scores": {
+    "str": 11,
+    "dex": 18,
+    "con": 14,
+    "int": 11,
+    "wis": 12,
+    "cha": 14
+  },
+  "cr": "3",
+  "saving_throws_text": ""
+}

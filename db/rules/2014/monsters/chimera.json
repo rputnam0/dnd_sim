@@ -1,0 +1,17 @@
+{
+  "name": "Chimera",
+  "meta": "Large monstrosity, chaotic evil",
+  "ac": 14,
+  "hp": 114,
+  "hp_formula": "12d10 + 48",
+  "ability_scores": {
+    "str": 19,
+    "dex": 11,
+    "con": 19,
+    "int": 3,
+    "wis": 14,
+    "cha": 10
+  },
+  "cr": "6",
+  "saving_throws_text": ""
+}

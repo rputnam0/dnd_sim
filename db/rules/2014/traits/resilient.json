@@ -1,0 +1,17 @@
+{
+  "name": "Resilient",
+  "type": "feat",
+  "description": "Choose one ability score. You gain the following benefits: Increase the chosen ability score by 1, to a maximum of 20. You gain proficiency in saving throws using the chosen ability.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "ANY_ABILITY",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "gain_proficiency",
+      "proficiency": "ANY_SAVING_THROW"
+    }
+  ]
+}

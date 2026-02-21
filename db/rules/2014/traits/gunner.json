@@ -1,0 +1,25 @@
+{
+  "name": "Gunner",
+  "type": "feat",
+  "description": "You gain proficiency with firearms, increase your Dexterity score by 1, ignore the loading property of firearms, and being within 5 feet of a hostile creature doesn't impose disadvantage on your ranged attack rolls.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "dex",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "proficiency",
+      "category": "firearms"
+    },
+    {
+      "effect_type": "ignore_weapon_property",
+      "property": "loading",
+      "weapon_category": "firearms"
+    },
+    {
+      "effect_type": "no_disadvantage_ranged_in_melee"
+    }
+  ]
+}

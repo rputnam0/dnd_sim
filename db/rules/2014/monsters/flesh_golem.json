@@ -1,0 +1,17 @@
+{
+  "name": "Flesh Golem",
+  "meta": "Medium construct, neutral",
+  "ac": 9,
+  "hp": 93,
+  "hp_formula": "11d8 + 44",
+  "ability_scores": {
+    "str": 19,
+    "dex": 9,
+    "con": 18,
+    "int": 6,
+    "wis": 10,
+    "cha": 5
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

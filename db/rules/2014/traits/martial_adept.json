@@ -1,0 +1,28 @@
+{
+  "name": "Martial Adept",
+  "type": "feat",
+  "description": "You learn two maneuvers from the Battle Master archetype. If a maneuver requires a saving throw, the DC is 8 + your proficiency bonus + your Strength or Dexterity modifier (your choice). You gain one d6 superiority die, which is expended when used and regained after a short or long rest.",
+  "mechanics": [
+    {
+      "effect_type": "learn_maneuvers",
+      "count": 2,
+      "source": "Battle Master"
+    },
+    {
+      "effect_type": "resource_gain",
+      "resource_name": "superiority_dice",
+      "amount": 1,
+      "die_size": "d6",
+      "reset": "short_rest"
+    },
+    {
+      "effect_type": "maneuver_dc_calculation",
+      "base": 8,
+      "include_pb": true,
+      "ability_options": [
+        "str",
+        "dex"
+      ]
+    }
+  ]
+}

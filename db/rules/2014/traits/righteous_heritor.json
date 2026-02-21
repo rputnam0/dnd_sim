@@ -1,0 +1,21 @@
+{
+  "name": "Righteous Heritor",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1, to a maximum of 20. When you or a creature within 30 feet of you takes damage, you can use your reaction to reduce that damage by 1d10 + your proficiency bonus. You can use this benefit a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "any",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "reaction_damage_reduction",
+      "trigger": "damage_taken",
+      "range": 30,
+      "amount": "1d10 + proficiency_bonus",
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    }
+  ]
+}

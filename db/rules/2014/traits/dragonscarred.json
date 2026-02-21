@@ -1,0 +1,41 @@
+{
+  "name": "Dragonscarred",
+  "type": "feat",
+  "description": "You increase your Constitution or Charisma score by 1, to a maximum of 20. You gain resistance to one damage type of your choice: acid, cold, fire, lightning, or poison. When you deal damage to a creature as part of the Attack or Magic action on your turn, you can use the Dragon's Terror benefit of the Cult of the Dragon Initiate feat as a bonus action.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "con",
+      "amount": 1,
+      "max": 20,
+      "is_choice": true
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "cha",
+      "amount": 1,
+      "max": 20,
+      "is_choice": true
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "choice",
+      "options": [
+        "acid",
+        "cold",
+        "fire",
+        "lightning",
+        "poison"
+      ]
+    },
+    {
+      "effect_type": "bonus_action_feature",
+      "trigger": "deal_damage",
+      "prerequisite_action": [
+        "attack",
+        "magic"
+      ],
+      "feature": "Dragon's Terror"
+    }
+  ]
+}

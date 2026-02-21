@@ -1,0 +1,17 @@
+{
+  "name": "Stirge",
+  "meta": "Tiny beast, unaligned",
+  "ac": 14,
+  "hp": 2,
+  "hp_formula": "1d4",
+  "ability_scores": {
+    "str": 4,
+    "dex": 16,
+    "con": 11,
+    "int": 2,
+    "wis": 8,
+    "cha": 6
+  },
+  "cr": "1/8",
+  "saving_throws_text": ""
+}
