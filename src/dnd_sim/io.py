@@ -41,6 +41,7 @@ class ActionConfig(BaseModel):
         "random_ally",
     ] = "single_enemy"
     max_targets: int | None = None
+    concentration: bool = False
     include_self: bool = False
     effects: list["EffectConfig"] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
@@ -181,6 +182,7 @@ class EnemyConfig(BaseModel):
     damage_vulnerabilities: list[str] = Field(default_factory=list)
     condition_immunities: list[str] = Field(default_factory=list)
     script_hooks: dict[str, Any] = Field(default_factory=dict)
+    traits: list[str] = Field(default_factory=list)
 
 
 class StrategyModuleConfig(BaseModel):

@@ -2215,6 +2215,20 @@ def run_simulation(
     )
     light_level = str(battlefield.get("light_level", "bright")).lower()
     battlefield_obstacles = _build_battlefield_obstacles(battlefield.get("obstacles", []))
+    raw_encounters = getattr(scenario.config, "encounters", None)
+    if raw_encounters:
+        encounter_enemy_lists: list[list[str]] = []
+        encounter_short_rests: list[bool] = []
+        for row in raw_encounters:
+            if hasattr(row, "enemies"):
+                encounter_enemy_lists.append(list(getattr(row, "enemies")))
+                encounter_short_rests.append(bool(getattr(row, "short_rest_after", False)))
+            elif isinstance(row, dict):
+                encounter_enemy_lists.append(list(row.get("enemies", [])))
+                encounter_short_rests.append(bool(row.get("short_rest_after", False)))
+    else:
+        encounter_enemy_lists = [list(scenario.config.enemies)]
+        encounter_short_rests = [False]
 
     for trial_idx in range(trials):
         actors: dict[str, ActorRuntimeState] = {}
@@ -2244,7 +2258,8 @@ def run_simulation(
         total_rounds = 0
         overall_winner = "draw"
 
-        for enc_idx, encounter in enumerate(scenario.config.encounters):
+        for enc_idx, encounter_enemy_ids in enumerate(encounter_enemy_lists):
+            short_rest_after = encounter_short_rests[enc_idx]
             for aid in list(actors.keys()):
                 if actors[aid].team != "party":
                     downed_counts[aid] = actors[aid].downed_count
@@ -2253,12 +2268,12 @@ def run_simulation(
                     del actors[aid]
 
             enemy_counts: dict[str, int] = {}
-            for enemy_id in encounter.enemies:
+            for enemy_id in encounter_enemy_ids:
                 count = enemy_counts.get(enemy_id, 0) + 1
                 enemy_counts[enemy_id] = count
                 unique_enemy_id = (
                     f"{enemy_id}_e{enc_idx}_{count}"
-                    if (count > 1 or len(scenario.config.encounters) > 1)
+                    if (count > 1 or len(encounter_enemy_lists) > 1)
                     else enemy_id
                 )
 
@@ -2541,7 +2556,7 @@ def run_simulation(
                 overall_winner = "enemy"
                 break
             elif _enemies_defeated(actors):
-                if encounter.short_rest_after and enc_idx < len(scenario.config.encounters) - 1:
+                if short_rest_after and enc_idx < len(encounter_enemy_lists) - 1:
                     for actor in actors.values():
                         if actor.team == "party":
                             short_rest(actor)
