@@ -6,6 +6,12 @@ __pycache__/
 
 # Simulation outputs
 river_line/results/
+river_line/**/reports/
+river_line/**/outputs/
+river_line/**/output/
+river_line/**/artifacts/
+river_line/encounters/**/sim_results*.json
+river_line/encounters/**/phase_*_sim_results*.json
 
 # secret keys
 .env
