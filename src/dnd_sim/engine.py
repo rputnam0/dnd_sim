@@ -580,7 +580,9 @@ def _build_actor_from_enemy(
 
     def _enemy_ability_mod(key: str) -> int:
         explicit = getattr(enemy.stat_block, f"{key}_mod", None)
-        return int(explicit) if explicit is not None else 0
+        return (
+            int(explicit) if explicit is not None else int(enemy.stat_block.save_mods.get(key, 0))
+        )
 
     actor = ActorRuntimeState(
         actor_id=enemy.identity.enemy_id,
