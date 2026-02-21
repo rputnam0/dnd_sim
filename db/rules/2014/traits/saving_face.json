@@ -1,0 +1,19 @@
+{
+  "name": "Saving Face",
+  "type": "racial_trait",
+  "description": "Hobgoblins are careful not to show weakness in front of their allies, for fear of losing status. If you miss with an attack roll or fail an ability check or a saving throw, you can gain a bonus to the roll equal to the number of allies you can see within 30 feet of you (maximum bonus of +5). Once you use this trait, you can't use it again until you finish a short or long rest.",
+  "mechanics": [
+    {
+      "trigger": "miss attack roll or fail ability check or saving throw",
+      "effect": "add bonus to the roll",
+      "bonus": {
+        "type": "dynamic",
+        "formula": "min(number_of_visible_allies_within_30ft, 5)"
+      },
+      "usage": {
+        "limit": 1,
+        "reset": "short_or_long_rest"
+      }
+    }
+  ]
+}

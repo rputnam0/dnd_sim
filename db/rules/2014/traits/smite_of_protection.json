@@ -1,0 +1,15 @@
+{
+  "name": "Smite of Protection",
+  "type": "subclass_feature",
+  "description": "Your magical smite now radiates protective energy. Whenever you cast Divine Smite, you and your allies have Half Cover while in your Aura of Protection. The aura has this benefit until the start of your next turn.",
+  "mechanics": [
+    {
+      "trigger": "cast_spell",
+      "spell": "Divine Smite",
+      "effect": "grant_cover",
+      "cover_type": "half",
+      "target": "self_and_allies_in_aura_of_protection",
+      "duration": "until_start_of_next_turn"
+    }
+  ]
+}

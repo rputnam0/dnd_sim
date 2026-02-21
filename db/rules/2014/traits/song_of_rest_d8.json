@@ -1,0 +1,13 @@
+{
+  "name": "Song of Rest (d8)",
+  "type": "class_feature",
+  "description": "At 9th level, the extra hit points gained from Song of Rest increases to 1d8.",
+  "mechanics": [
+    {
+      "type": "heal",
+      "trigger": "short_rest",
+      "amount": "1d8",
+      "source": "Song of Rest"
+    }
+  ]
+}

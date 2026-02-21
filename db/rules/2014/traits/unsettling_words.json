@@ -1,0 +1,18 @@
+{
+  "name": "Unsettling Words",
+  "type": "subclass_feature",
+  "description": "You can spin words laced with magic that unsettle a creature and cause it to doubt itself. As a bonus action, you can expend one use of your Bardic Inspiration and choose one creature you can see within 60 feet of you. Roll the Bardic Inspiration die. The creature must subtract the number rolled from the next saving throw it makes before the start of your next turn.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "resource": "Bardic Inspiration",
+      "target": {
+        "type": "creature",
+        "range": 60
+      },
+      "roll": "Bardic Inspiration die",
+      "effect": "subtract roll from target's next saving throw",
+      "duration": "until start of your next turn"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Keeper of Souls",
+  "type": "subclass_feature",
+  "description": "Starting at 17th level, you can seize a trace of vitality from a parting soul and use it to heal the living. When an enemy you can see dies within 60 feet of you, you or one creature of your choice that is within 60 feet of you regains hit points equal to the enemy's number of Hit Dice. You can use this feature only if you aren't incapacitated. Once you use it, you can't do so again until the start of your next turn.",
+  "mechanics": [
+    {
+      "trigger": "enemy_death",
+      "filter": {
+        "visibility": "see",
+        "distance": 60,
+        "type": "enemy"
+      },
+      "condition": "not incapacitated",
+      "usage": {
+        "frequency": "once_per_turn",
+        "reset": "start_of_next_turn"
+      },
+      "effect": {
+        "type": "heal",
+        "target": "chosen_creature_within_60ft",
+        "amount": {
+          "type": "hit_dice",
+          "source": "dead_enemy"
+        }
+      }
+    }
+  ]
+}

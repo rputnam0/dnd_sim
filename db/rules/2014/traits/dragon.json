@@ -1,0 +1,19 @@
+{
+  "name": "Dragon",
+  "type": "subclass_feature",
+  "description": "A constellation of a wise dragon appears on you. When you make an Intelligence or a Wisdom check or a Constitution saving throw to maintain concentration on a spell, you can treat a roll of 9 or lower on the d20 as a 10.",
+  "mechanics": [
+    {
+      "type": "roll_treat_as",
+      "applies_to": [
+        "Intelligence check",
+        "Wisdom check",
+        "Constitution saving throw"
+      ],
+      "condition": "maintaining concentration on a spell",
+      "original_max": 9,
+      "treated_as": 10,
+      "dice": "d20"
+    }
+  ]
+}

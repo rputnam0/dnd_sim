@@ -1,0 +1,10 @@
+{
+  "name": "Versatile",
+  "type": "racial_trait",
+  "description": "You gain an Origin feat of your choice.",
+  "mechanics": [
+    {
+      "grant_feat_category": "Origin"
+    }
+  ]
+}

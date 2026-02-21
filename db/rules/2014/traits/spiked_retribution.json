@@ -1,0 +1,21 @@
+{
+  "name": "Spiked Retribution",
+  "type": "subclass_feature",
+  "description": "Starting at 14th level, when a creature within 5 feet of you hits you with a melee attack, the attacker takes 3 piercing damage if you are raging, aren't incapacitated, and are wearing spiked armor.",
+  "mechanics": [
+    {
+      "trigger": "when you are hit by a melee attack within 5 feet",
+      "condition": [
+        "raging",
+        "not incapacitated",
+        "wearing spiked armor"
+      ],
+      "effect": {
+        "damage": {
+          "type": "piercing",
+          "amount": 3
+        }
+      }
+    }
+  ]
+}

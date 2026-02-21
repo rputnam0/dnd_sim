@@ -1,0 +1,73 @@
+{
+  "name": "Ranger's Companion",
+  "type": "subclass_feature",
+  "description": "You gain a beast companion that accompanies you on your adventures and is trained to fight alongside you. Choose a beast that is no larger than Medium and that has a challenge rating of 1/4 or lower. Add your proficiency bonus to the beast's AC, attack rolls, and damage rolls, as well as to any saving throws and skills it is proficient in. Its hit point maximum equals its normal maximum or four times your ranger level, whichever is higher. Like any creature, the beast can spend Hit Dice during a short rest. The beast obeys your commands as best as it can. It takes its turn on your initiative. On your turn, you can verbally command the beast where to move (no action required by you). You can use your action to verbally command it to take the Attack, Dash, Disengage, or Help action. If you don't issue a command, the beast takes the Dodge action. Once you have the Extra Attack feature, you can make one weapon attack yourself when you command the beast to take the Attack action. If you are incapacitated or absent, your beast companion acts on its own, focusing on protecting you and itself. It never requires your command to use its reaction, such as when making an opportunity attack. While traveling through your favored terrain with only the beast, you can move stealthily at a normal pace. If the beast dies, you can obtain a new companion by spending 8 hours magically bonding with a beast that isn't hostile to you and that meets the requirements.",
+  "mechanics": [
+    {
+      "effect": "add_proficiency_bonus",
+      "target": "companion",
+      "applies_to": [
+        "AC",
+        "attack_rolls",
+        "damage_rolls",
+        "saving_throws",
+        "skill_checks"
+      ]
+    },
+    {
+      "effect": "set_hit_point_maximum",
+      "target": "companion",
+      "formula": "max(normal_max, 4 * character_level)"
+    },
+    {
+      "effect": "shared_initiative",
+      "target": "companion",
+      "with": "character"
+    },
+    {
+      "effect": "command",
+      "action": "move",
+      "type": "free",
+      "trigger": "character_turn"
+    },
+    {
+      "effect": "command",
+      "action": [
+        "Attack",
+        "Dash",
+        "Disengage",
+        "Help"
+      ],
+      "type": "action",
+      "trigger": "character_action"
+    },
+    {
+      "effect": "default_action",
+      "action": "Dodge",
+      "trigger": "no_command"
+    },
+    {
+      "effect": "extra_attack_synergy",
+      "condition": "character_has_extra_attack",
+      "benefit": "character_may_make_one_weapon_attack_when_companion_attacks"
+    },
+    {
+      "effect": "autonomous_when_incapacitated",
+      "behavior": "protect_owner_and_self"
+    },
+    {
+      "effect": "reaction_without_command",
+      "allowed": "opportunity_attack"
+    },
+    {
+      "effect": "stealth_in_favored_terrain",
+      "condition": "only_companion_present",
+      "speed": "normal"
+    },
+    {
+      "effect": "recruit_new_companion",
+      "cost": "8_hours",
+      "requirements": "beast_meets_criteria"
+    }
+  ]
+}

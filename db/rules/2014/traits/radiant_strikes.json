@@ -1,0 +1,13 @@
+{
+  "name": "Radiant Strikes",
+  "type": "class_feature",
+  "description": "Your strikes now carry supernatural power. When you hit a target with an attack roll using a melee weapon or an unarmed strike, the target takes an extra 1d8 radiant damage.",
+  "mechanics": [
+    {
+      "type": "extra_damage",
+      "damage": "1d8",
+      "damage_type": "radiant",
+      "trigger": "hit with melee weapon or unarmed strike"
+    }
+  ]
+}

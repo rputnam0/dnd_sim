@@ -1,0 +1,13 @@
+{
+  "name": "Aggressive",
+  "type": "racial_trait",
+  "description": "As a bonus action, you can move up to your speed toward a hostile creature that you can see.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "type": "move",
+      "distance": "speed",
+      "target": "hostile creature you can see"
+    }
+  ]
+}

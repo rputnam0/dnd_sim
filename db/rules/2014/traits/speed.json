@@ -1,0 +1,13 @@
+{
+  "name": "Speed",
+  "type": "racial_trait",
+  "description": "Your speed is not reduced by wearing heavy armor.",
+  "mechanics": [
+    {
+      "type": "speed_modifier",
+      "source": "heavy_armor",
+      "modifier": 0,
+      "condition": "wearing heavy armor"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Innate Sorcery",
+  "type": "class_feature",
+  "description": "An event in your past left an indelible mark on you, infusing you with simmering magic. As a Bonus Action, you can unleash that magic for 1 minute, during which you gain the following benefits: The spell save DC of your Sorcerer spells increases by 1. You have Advantage on the attack rolls of Sorcerer spells you cast. You can use this feature twice, and you regain all expended uses of it when you finish a Long Rest.",
+  "mechanics": [
+    {
+      "type": "activation",
+      "action": "bonus_action",
+      "duration": "1 minute"
+    },
+    {
+      "type": "increase_spell_save_dc",
+      "amount": 1,
+      "source": "Innate Sorcery"
+    },
+    {
+      "type": "advantage",
+      "scope": "attack_rolls",
+      "filter": "Sorcerer spells",
+      "source": "Innate Sorcery"
+    },
+    {
+      "type": "resource",
+      "uses": 2,
+      "reset": "long_rest"
+    }
+  ]
+}

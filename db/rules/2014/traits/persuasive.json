@@ -1,0 +1,11 @@
+{
+  "name": "Persuasive",
+  "type": "racial_trait",
+  "description": "Your people's lack of history makes you trustworthy and humble. You have proficiency in the Persuasion skill.",
+  "mechanics": [
+    {
+      "type": "skill_proficiency",
+      "skill": "Persuasion"
+    }
+  ]
+}

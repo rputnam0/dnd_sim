@@ -1,0 +1,13 @@
+{
+  "name": "Infusions Known",
+  "type": "class_feature",
+  "description": "When you gain this feature, pick four artificer infusions to learn, choosing from the Artificer Infusions section at the end of the class's description. You learn additional infusions of your choice when you reach certain levels in this class, as shown in the Infusions Known column of the Artificer table. Whenever you gain a level in this class, you can replace one of the artificer infusions you learned with a new one.",
+  "mechanics": [
+    {
+      "type": "learn_infusions",
+      "initial_count": 4,
+      "replace_on_level_up": true,
+      "source_class": "Artificer"
+    }
+  ]
+}

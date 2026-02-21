@@ -1,0 +1,12 @@
+{
+  "name": "Brittle Bones",
+  "type": "racial_trait",
+  "description": "You are vulnerable to bludgeoning damage.",
+  "mechanics": [
+    {
+      "vulnerability": {
+        "damage_type": "bludgeoning"
+      }
+    }
+  ]
+}

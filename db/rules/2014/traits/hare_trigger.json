@@ -1,0 +1,10 @@
+{
+  "name": "Hare-Trigger",
+  "type": "racial_trait",
+  "description": "You can add your proficiency bonus to your initiative rolls.",
+  "mechanics": [
+    {
+      "add_to_initiative": "proficiency_bonus"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "Nature's Wrath",
+  "type": "subclass_feature",
+  "description": "You can use your Channel Divinity to invoke primeval forces to ensnare a foe. As an action, you can cause spectral vines to spring up and reach for a creature within 10 feet of you that you can see. The creature must succeed on a Strength or Dexterity saving throw (its choice) or be restrained. While restrained by the vines, the creature repeats the saving throw at the end of each of its turns. On a success, it frees itself and the vines vanish.",
+  "mechanics": [
+    {
+      "action": "action",
+      "uses": {
+        "type": "channel_divinity"
+      },
+      "range": 10,
+      "target": "creature you can see",
+      "save": {
+        "ability": [
+          "strength",
+          "dexterity"
+        ],
+        "choice": true,
+        "dc": "spell save DC"
+      },
+      "effect": "restrained",
+      "repeat_save": "end_of_turn",
+      "end_condition": "successful save",
+      "end_effect": "vines vanish"
+    }
+  ]
+}

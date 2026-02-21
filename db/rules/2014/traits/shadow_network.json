@@ -1,0 +1,20 @@
+{
+  "name": "Shadow Network",
+  "type": "background_feature",
+  "description": "You have access to the Volstrucker shadow network, which allows you to communicate with other members of the order over long distances. If you write a letter in a special arcane ink, address it to a member of the Volstrucker, and cast it into a fire, the letter will burn to cinders and materialize whole again on the person of the agent you addressed it to. The ink used to send a letter across the shadow network is the same as that used by a wizard to scribe spells in a spellbook. Writing a letter in this ink costs 10 gp per page.",
+  "mechanics": [
+    {
+      "type": "communication",
+      "method": "shadow network letter",
+      "cost": {
+        "gp": 10,
+        "per": "page"
+      },
+      "requirements": [
+        "special arcane ink",
+        "fire"
+      ],
+      "effect": "letter delivered to addressed agent"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "The Fiend",
+  "type": "subclass_feature",
+  "description": "You have made a pact with a fiend from the lower planes of existence, a being whose aims are evil, even if you strive against those aims. Such beings desire the corruption or destruction of all things, ultimately including you. Fiends powerful enough to forge a pact include demon lords such as Demogorgon, Orcus, Fraz-Urb'luu, and Baphomet; archdevils such as Asmodeus, Dispater, Mephistopheles, and Belial; pit fiends and balors that are especially mighty; and ultroloths and other lords of the yugoloths.\nExpanded Spell List: 1st – burning hands, command; 2nd – blindness/deafness, scorching ray; 3rd – fireball, stinking cloud; 4th – fire shield, wall of fire; 5th – flame strike, hallow.",
+  "mechanics": [
+    {
+      "type": "expanded_spell_list",
+      "spells": {
+        "1": [
+          "burning hands",
+          "command"
+        ],
+        "2": [
+          "blindness/deafness",
+          "scorching ray"
+        ],
+        "3": [
+          "fireball",
+          "stinking cloud"
+        ],
+        "4": [
+          "fire shield",
+          "wall of fire"
+        ],
+        "5": [
+          "flame strike",
+          "hallow"
+        ]
+      }
+    }
+  ]
+}

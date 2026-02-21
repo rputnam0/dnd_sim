@@ -1,0 +1,38 @@
+{
+  "name": "Power of the Wilds",
+  "type": "subclass_feature",
+  "description": "Whenever you activate your Rage, you gain one of the following options of your choice.\n\nFalcon: While your Rage is active, you have a fly speed equal to your speed if you aren't wearing any armor.\n\nLion: While your Rage is active, any of your enemies within 5 feet of you have disadvantage on attack rolls against targets other than you or another Barbarian who has this option active.\n\nRam: While your Rage is active, you can cause a Large or smaller creature to be prone when you hit it with a melee attack.",
+  "mechanics": [
+    {
+      "effect": "grant_fly_speed",
+      "speed": "equal_to_walking_speed",
+      "condition": {
+        "and": [
+          {
+            "feature_active": "Rage"
+          },
+          {
+            "not_wearing_armor": true
+          }
+        ]
+      }
+    },
+    {
+      "effect": "grant_disadvantage",
+      "target": "enemies_within_5_feet",
+      "against": "targets_not_self_or_ally_with_option",
+      "condition": {
+        "feature_active": "Rage"
+      }
+    },
+    {
+      "effect": "prone_on_hit",
+      "target": "creature",
+      "size_limit": "Large_or_smaller",
+      "attack_type": "melee",
+      "condition": {
+        "feature_active": "Rage"
+      }
+    }
+  ]
+}

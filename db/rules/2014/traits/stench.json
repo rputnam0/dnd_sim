@@ -1,0 +1,20 @@
+{
+  "name": "Stench",
+  "type": "racial_trait",
+  "description": "Any creature other than a troglodyte that starts its turn within 5 ft. of you must succeed on a DC 12 Constitution saving throw or be poisoned until the start of the creature's next turn. On a successful saving throw, the creature is immune to the stench of all troglodytes for 1 hour.",
+  "mechanics": [
+    {
+      "type": "saving_throw",
+      "ability": "constitution",
+      "dc": 12,
+      "on_fail": {
+        "condition": "poisoned",
+        "duration": "until_start_of_next_turn"
+      },
+      "on_success": {
+        "immunity": "troglodyte_stench",
+        "duration": "1 hour"
+      }
+    }
+  ]
+}

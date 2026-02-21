@@ -1,0 +1,37 @@
+{
+  "name": "Horizon Walker Magic",
+  "type": "subclass_feature",
+  "description": "Starting at 3rd level, you learn an additional spell when you reach certain levels in this class, as shown in the Horizon Walker Spells table. The spell counts as a ranger spell for you, but it doesn't count against the number of ranger spells you know. Horizon Walker Spells: 3rd – protection from evil and good; 5th – misty step; 9th – haste; 13th – banishment; 17th – teleportation circle.",
+  "mechanics": [
+    {
+      "effect": "grant_spell",
+      "spell": "protection from evil and good",
+      "required_level": 3,
+      "source": "Horizon Walker Magic"
+    },
+    {
+      "effect": "grant_spell",
+      "spell": "misty step",
+      "required_level": 5,
+      "source": "Horizon Walker Magic"
+    },
+    {
+      "effect": "grant_spell",
+      "spell": "haste",
+      "required_level": 9,
+      "source": "Horizon Walker Magic"
+    },
+    {
+      "effect": "grant_spell",
+      "spell": "banishment",
+      "required_level": 13,
+      "source": "Horizon Walker Magic"
+    },
+    {
+      "effect": "grant_spell",
+      "spell": "teleportation circle",
+      "required_level": 17,
+      "source": "Horizon Walker Magic"
+    }
+  ]
+}

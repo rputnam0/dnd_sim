@@ -1,0 +1,13 @@
+{
+  "name": "Creature Type",
+  "type": "racial_trait",
+  "description": "You are a Humanoid. You are also considered an elf for any prerequisite or effect that requires you to be an elf.",
+  "mechanics": [
+    {
+      "creature_type": "Humanoid"
+    },
+    {
+      "elf_considered_for_prerequisites": true
+    }
+  ]
+}

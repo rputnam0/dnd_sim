@@ -1,0 +1,28 @@
+{
+  "name": "Healing Machine",
+  "type": "racial_trait",
+  "description": "If the mending spell is cast on you, you can spend a Hit Die, roll it, and regain a number of hit points equal to the roll plus your Constitution modifier (minimum of 1 hit point). In addition, your creator designed you to benefit from several spells that preserve life but that normally don't affect Constructs: cure wounds, healing word, mass cure wounds, mass healing word, and spare the dying.",
+  "mechanics": [
+    {
+      "trigger": "spell_cast",
+      "spell": "mending",
+      "effect": {
+        "type": "heal",
+        "method": "spend_hit_die",
+        "amount": "hit_die_roll + con_modifier",
+        "minimum": 1
+      }
+    },
+    {
+      "type": "spell_compatibility",
+      "spells": [
+        "cure wounds",
+        "healing word",
+        "mass cure wounds",
+        "mass healing word",
+        "spare the dying"
+      ],
+      "note": "These spells affect the Autognome as if it were not a construct."
+    }
+  ]
+}

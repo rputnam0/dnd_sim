@@ -1,0 +1,20 @@
+{
+  "name": "Umbral Sight",
+  "type": "subclass_feature",
+  "description": "At 3rd level, you gain darkvision out to a range of 60 feet. If you already have darkvision from your race, its range increases by 30 feet. You are also adept at evading creatures that rely on darkvision. While in darkness, you are invisible to any creature that relies on darkvision to see you in that darkness.",
+  "mechanics": [
+    {
+      "type": "grant_darkvision",
+      "range": 60
+    },
+    {
+      "type": "increase_darkvision",
+      "additional_range": 30,
+      "condition": "if you already have darkvision from your race"
+    },
+    {
+      "type": "invisibility",
+      "condition": "while in darkness against creatures that rely on darkvision"
+    }
+  ]
+}

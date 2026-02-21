@@ -1,0 +1,13 @@
+{
+  "name": "Otherworldly Presence",
+  "type": "racial_trait",
+  "description": "You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy Trait.",
+  "mechanics": [
+    {
+      "grant_cantrip": "Thaumaturgy"
+    },
+    {
+      "spellcasting_ability_source": "Fiendish Legacy Trait"
+    }
+  ]
+}

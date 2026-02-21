@@ -1,0 +1,12 @@
+{
+  "name": "Divine Intervention Improvement",
+  "type": "class_feature",
+  "description": "At 20th level, your call for intervention succeeds automatically, no roll required.",
+  "mechanics": [
+    {
+      "effect": "Divine Intervention",
+      "automaticSuccess": true,
+      "requiresRoll": false
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Natural Affinity",
+  "type": "racial_trait",
+  "description": "Your fey connection to nature gives you an intuitive connection to the natural world and the animals within it. You therefore have proficiency in one of the following skills of your choice: Animal Handling, Medicine, Nature, or Survival.",
+  "mechanics": [
+    {
+      "grantProficiency": {
+        "type": "skill",
+        "choices": [
+          "Animal Handling",
+          "Medicine",
+          "Nature",
+          "Survival"
+        ],
+        "selection": "one of the above"
+      }
+    }
+  ]
+}

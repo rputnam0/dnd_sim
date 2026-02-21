@@ -1,0 +1,26 @@
+{
+  "name": "Lucky Footwork",
+  "type": "racial_trait",
+  "description": "When you fail a Dexterity saving throw, you can use your reaction to roll a d4 and add it to the save, potentially turning the failure into a success. You can't use this reaction if you're prone or your speed is 0.",
+  "mechanics": [
+    {
+      "trigger": "fail Dexterity saving throw",
+      "action": "reaction",
+      "effect": {
+        "roll": "d4",
+        "apply_to": "saving throw",
+        "modifier": "add",
+        "conditions": [
+          {
+            "type": "not_prone",
+            "description": "You are not prone"
+          },
+          {
+            "type": "speed_positive",
+            "description": "Your speed is greater than 0"
+          }
+        ]
+      }
+    }
+  ]
+}

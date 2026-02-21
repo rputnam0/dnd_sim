@@ -1,0 +1,18 @@
+{
+  "name": "Large Form",
+  "type": "racial_trait",
+  "description": "Starting at character level 5, you can change your size to Large as a Bonus Action if you're in a big enough space. This transformation lasts for 10 minutes or until you end it (no action required). For that duration, you have Advantage on Strength checks, and your Speed increases by 10 feet. Once you use this trait, you can't use it again until you finish a Long Rest.",
+  "mechanics": [
+    {
+      "activation": "bonus_action",
+      "min_level": 5,
+      "duration": "10 minutes (or until ended)",
+      "effects": {
+        "size_change": "Large",
+        "advantage_on": "Strength checks",
+        "speed_increase_feet": 10
+      },
+      "recharge": "long_rest"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "name": "Primal Awareness",
+  "type": "class_feature",
+  "description": "3rd-level ranger optional class feature, which replaces the Primeval Awareness feature. You can focus your awareness through the interconnections of nature: you learn additional spells when you reach certain levels in this class if you don't already know them, as shown in the Primal Awareness Spells table. These spells don't count against the number of ranger spells you know. You can cast each of these spells once without expending a spell slot. Once you cast a spell in this way, you can't do so again until you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "add_spells_known",
+      "spells": [
+        {
+          "ranger_level": 3,
+          "spell": "speak with animals"
+        },
+        {
+          "ranger_level": 5,
+          "spell": "beast sense"
+        },
+        {
+          "ranger_level": 9,
+          "spell": "speak with plants"
+        },
+        {
+          "ranger_level": 13,
+          "spell": "locate creature"
+        },
+        {
+          "ranger_level": 17,
+          "spell": "commune with nature"
+        }
+      ],
+      "ignore_spell_limit": true
+    },
+    {
+      "type": "free_spell_cast",
+      "spells": [
+        {
+          "spell": "speak with animals",
+          "uses_per_long_rest": 1
+        },
+        {
+          "spell": "beast sense",
+          "uses_per_long_rest": 1
+        },
+        {
+          "spell": "speak with plants",
+          "uses_per_long_rest": 1
+        },
+        {
+          "spell": "locate creature",
+          "uses_per_long_rest": 1
+        },
+        {
+          "spell": "commune with nature",
+          "uses_per_long_rest": 1
+        }
+      ],
+      "slot_cost": 0
+    }
+  ]
+}

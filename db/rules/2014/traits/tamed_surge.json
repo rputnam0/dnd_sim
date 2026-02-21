@@ -1,0 +1,16 @@
+{
+  "name": "Tamed Surge",
+  "type": "subclass_feature",
+  "description": "Immediately after you cast a Sorcerer spell with a spell slot, you can create an effect of your choice from the Wild Magic Surge table instead of rolling on that table. You can choose any effect in the table except for the final row, and if the chosen effect involves a roll, you must make it. Once you use this feature, you can't do so again until you finish a Long Rest.",
+  "mechanics": [
+    {
+      "mechanic": "replace_wild_magic_surge",
+      "trigger": "after_spell_cast",
+      "spell_class": "Sorcerer",
+      "requires_spell_slot": true,
+      "choice": "any_effect_except_final_row",
+      "requires_roll_if_effect_has_roll": true,
+      "uses_per_long_rest": 1
+    }
+  ]
+}

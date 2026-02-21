@@ -1,0 +1,12 @@
+{
+  "name": "Agile Strikes",
+  "type": "subclass_feature",
+  "description": "When you expend a use of your Bardic Inspiration as part of an action, a Bonus Action, or a Reaction, you can make one Unarmed Strike as part of that action, Bonus Action, or Reaction.",
+  "mechanics": [
+    {
+      "trigger": "expend Bardic Inspiration use",
+      "action": "make unarmed strike",
+      "timing": "same as the expended inspiration (action, bonus action, or reaction)"
+    }
+  ]
+}

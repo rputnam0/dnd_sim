@@ -1,0 +1,21 @@
+{
+  "name": "Martial Training",
+  "type": "racial_trait",
+  "description": "You are proficient with two martial weapons of your choice and with light armor.",
+  "mechanics": [
+    {
+      "proficiency": {
+        "category": "weapon",
+        "type": "martial",
+        "count": 2,
+        "choice": true
+      }
+    },
+    {
+      "proficiency": {
+        "category": "armor",
+        "type": "light"
+      }
+    }
+  ]
+}

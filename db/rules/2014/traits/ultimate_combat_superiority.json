@@ -1,0 +1,11 @@
+{
+  "name": "Ultimate Combat Superiority",
+  "type": "subclass_feature",
+  "description": "Your Superiority Die becomes a d12.",
+  "mechanics": [
+    {
+      "effect": "set_superiority_die",
+      "die": "d12"
+    }
+  ]
+}

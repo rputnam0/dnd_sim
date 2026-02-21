@@ -1,0 +1,12 @@
+{
+  "name": "Powered Steps",
+  "type": "subclass_feature",
+  "description": "Your walking speed increases by 5 feet.",
+  "mechanics": [
+    {
+      "type": "speed_modifier",
+      "value": 5,
+      "unit": "feet"
+    }
+  ]
+}

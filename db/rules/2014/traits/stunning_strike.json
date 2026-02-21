@@ -1,0 +1,20 @@
+{
+  "name": "Stunning Strike",
+  "type": "class_feature",
+  "description": "Starting at 5th level, you can interfere with the flow of ki in an opponent's body. When you hit another creature with a melee weapon attack, you can spend 1 ki point to attempt a stunning strike. The target must succeed on a Constitution saving throw or be stunned until the end of your next turn.",
+  "mechanics": [
+    {
+      "type": "resource_spend",
+      "resource": "Ki",
+      "amount": 1,
+      "trigger": "hit_melee_weapon_attack",
+      "saving_throw": {
+        "ability": "Constitution",
+        "failure": {
+          "condition": "stunned",
+          "duration": "until_end_of_next_turn"
+        }
+      }
+    }
+  ]
+}

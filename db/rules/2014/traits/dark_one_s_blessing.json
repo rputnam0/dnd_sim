@@ -1,0 +1,18 @@
+{
+  "name": "Dark One's Blessing",
+  "type": "subclass_feature",
+  "description": "Starting at 1st level, when you reduce a hostile creature to 0 hit points, you gain temporary hit points equal to your Charisma modifier + your warlock level (minimum of 1).",
+  "mechanics": [
+    {
+      "trigger": "reduce_creature_to_0_hp",
+      "condition": {
+        "target": "hostile_creature",
+        "state": "0_hp"
+      },
+      "effect": {
+        "type": "gain_temp_hp",
+        "amount": "max(1, charisma_mod + warlock_level)"
+      }
+    }
+  ]
+}

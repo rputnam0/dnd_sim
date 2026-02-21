@@ -1,0 +1,16 @@
+{
+  "name": "Aura of the Sentinel",
+  "type": "subclass_feature",
+  "description": "You emit an aura of alertness while you aren't incapacitated. When you and any creatures of your choice within 10 feet of you roll initiative, you all gain a bonus to initiative equal to your proficiency bonus. At 18th level, the range of this aura increases to 30 feet.",
+  "mechanics": [
+    {
+      "type": "initiative_bonus",
+      "value": "proficiency",
+      "range": 10,
+      "condition": "not incapacitated",
+      "target": "self_and_allies",
+      "range_increase_at_level": 18,
+      "range_at_18": 30
+    }
+  ]
+}

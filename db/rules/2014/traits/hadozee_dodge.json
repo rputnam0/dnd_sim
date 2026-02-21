@@ -1,0 +1,17 @@
+{
+  "name": "Hadozee Dodge",
+  "type": "racial_trait",
+  "description": "The magic that runs in your veins heightens your natural defenses. When you take damage, you can use your reaction to roll a d6. Add your proficiency bonus to the number rolled, and reduce the damage you take by an amount equal to that total (minimum of 0 damage). You can use this trait a number of times equal to your proficiency bonus. You regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "reaction",
+      "trigger": "when you take damage",
+      "action": "roll d6 and add proficiency bonus",
+      "effect": "reduce the damage you take by the total rolled (minimum 0)",
+      "uses": {
+        "per": "proficiency bonus",
+        "reset": "long rest"
+      }
+    }
+  ]
+}

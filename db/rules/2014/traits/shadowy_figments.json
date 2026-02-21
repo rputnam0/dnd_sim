@@ -1,0 +1,14 @@
+{
+  "name": "Shadowy Figments",
+  "type": "subclass_feature",
+  "description": "You know the Minor Illusion spell. Wisdom is your spellcasting ability for it.",
+  "mechanics": [
+    {
+      "grantSpell": {
+        "name": "Minor Illusion",
+        "level": 0,
+        "castingAbility": "wisdom"
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Animal Speaker",
+  "type": "subclass_feature",
+  "description": "You can cast the Beast Sense and Speak with Animals spells but only as Rituals. Wisdom is your spellcasting ability for them.",
+  "mechanics": [
+    {
+      "type": "spell_grant",
+      "spells": [
+        "Beast Sense",
+        "Speak with Animals"
+      ],
+      "ritual_only": true,
+      "ability": "wisdom"
+    }
+  ]
+}

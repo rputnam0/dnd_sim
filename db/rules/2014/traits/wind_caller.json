@@ -1,0 +1,20 @@
+{
+  "name": "Wind Caller",
+  "type": "racial_trait",
+  "description": "Starting at 3rd level, you can cast the gust of wind spell with this trait, without requiring a material component. Once you cast the spell with this trait, you can't do so again until you finish a long rest. You can also cast the spell using any spell slots you have of 2nd level or higher. Intelligence, Wisdom, or Charisma is your spellcasting ability for when you cast gust of wind with this trait (choose when you select this race).",
+  "mechanics": [
+    {
+      "action": "cast_spell",
+      "spell": "gust of wind",
+      "uses_per_long_rest": 1,
+      "requires_material": false,
+      "spell_slot_casting_allowed": true,
+      "minimum_spell_slot_level": 2,
+      "spellcasting_ability_options": [
+        "Intelligence",
+        "Wisdom",
+        "Charisma"
+      ]
+    }
+  ]
+}

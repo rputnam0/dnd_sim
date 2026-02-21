@@ -1,0 +1,18 @@
+{
+  "name": "Blessed Healer",
+  "type": "subclass_feature",
+  "description": "Beginning at 6th level, the healing spells you cast on others heal you as well. When you cast a spell of 1st level or higher that restores hit points to a creature other than you, you regain hit points equal to 2 + the spell's level.",
+  "mechanics": [
+    {
+      "trigger": "cast_spell",
+      "filter": {
+        "spell_level_min": 1,
+        "restores_hit_points": true,
+        "target_not_self": true
+      },
+      "effect": {
+        "heal_self": "2 + spell_level"
+      }
+    }
+  ]
+}

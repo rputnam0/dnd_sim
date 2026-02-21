@@ -1,0 +1,33 @@
+{
+  "name": "Githzerai Psionics",
+  "type": "racial_trait",
+  "description": "You know the mage hand cantrip, and the hand is invisible when you cast the cantrip with this trait. Starting at 3rd level, you can cast the shield spell with this trait. Starting at 5th level, you can also cast the detect thoughts spell with it. Once you cast shield or detect thoughts with this trait, you can't cast that spell with it again until you finish a long rest. You can also cast either of those spells using any spell slots you have of the appropriate level. Intelligence, Wisdom, or Charisma is your spellcasting ability for these spells when you cast them with this trait (choose when you select this race). None of these spells require spell components when you cast them with this trait.",
+  "mechanics": [
+    {
+      "grant_cantrip": "mage hand",
+      "invisible_when_cast": true
+    },
+    {
+      "grant_spell": "shield",
+      "required_level": 3,
+      "once_per_long_rest": true,
+      "can_use_spell_slots": true
+    },
+    {
+      "grant_spell": "detect thoughts",
+      "required_level": 5,
+      "once_per_long_rest": true,
+      "can_use_spell_slots": true
+    },
+    {
+      "spellcasting_ability_choice": [
+        "Intelligence",
+        "Wisdom",
+        "Charisma"
+      ]
+    },
+    {
+      "requires_components": false
+    }
+  ]
+}

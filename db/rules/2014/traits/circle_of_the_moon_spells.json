@@ -1,0 +1,30 @@
+{
+  "name": "Circle of the Moon Spells",
+  "type": "subclass_feature",
+  "description": "When you reach a Druid level specified in the Circle of the Moon Spells table, you thereafter always have the listed spells prepared. In addition, you can cast the spells from this feature while you're in a Wild Shape form. Circle of the Moon Spells table: 3rd level – Cure Wounds, Moonbeam, Starry Wisp; 5th level – Conjure Animals; 7th level – Fount of Moonlight; 9th level – Mass Cure Wounds.",
+  "mechanics": [
+    {
+      "type": "always_prepared_spells",
+      "spells_by_level": {
+        "3": [
+          "Cure Wounds",
+          "Moonbeam",
+          "Starry Wisp"
+        ],
+        "5": [
+          "Conjure Animals"
+        ],
+        "7": [
+          "Fount of Moonlight"
+        ],
+        "9": [
+          "Mass Cure Wounds"
+        ]
+      }
+    },
+    {
+      "type": "cast_in_wild_shape",
+      "allowed": true
+    }
+  ]
+}

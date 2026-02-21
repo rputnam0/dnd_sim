@@ -1,0 +1,20 @@
+{
+  "name": "Perfect Self",
+  "type": "class_feature",
+  "description": "At 20th level, when you roll for initiative and have no ki points remaining, you regain 4 ki points.",
+  "mechanics": [
+    {
+      "trigger": "initiative roll",
+      "condition": {
+        "resource": "ki points",
+        "operator": "==",
+        "value": 0
+      },
+      "effect": {
+        "type": "restore_resource",
+        "resource": "ki points",
+        "amount": 4
+      }
+    }
+  ]
+}

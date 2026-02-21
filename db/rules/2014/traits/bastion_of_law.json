@@ -1,0 +1,30 @@
+{
+  "name": "Bastion of Law",
+  "type": "subclass_feature",
+  "description": "You can tap into the grand equation of existence to imbue a creature with a shimmering shield of order. As an action, you can expend 1 to 5 sorcery points to create a magical ward around yourself or another creature you can see within 30 feet of you. The ward lasts until you finish a long rest or until you use this feature again. The ward is represented by a number of d8s equal to the number of sorcery points spent to create it. When the warded creature takes damage, it can expend a number of those dice, roll them, and reduce the damage taken by the total rolled on those dice.",
+  "mechanics": [
+    {
+      "action": "action",
+      "cost": {
+        "resource": "sorcery point",
+        "min": 1,
+        "max": 5
+      },
+      "effect": {
+        "type": "ward",
+        "duration": "until long rest or re‑use",
+        "dice": "d8",
+        "diceCount": "equal to sorcery points spent"
+      }
+    },
+    {
+      "trigger": "when warded creature takes damage",
+      "effect": {
+        "type": "damage_reduction",
+        "dice": "d8",
+        "diceAvailable": "remaining ward dice",
+        "usage": "expend any number of ward dice, roll them, and subtract the total from the damage taken"
+      }
+    }
+  ]
+}

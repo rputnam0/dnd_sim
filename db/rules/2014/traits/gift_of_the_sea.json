@@ -1,0 +1,17 @@
+{
+  "name": "Gift of the Sea",
+  "type": "subclass_feature",
+  "description": "You gain a swimming speed of 40 feet, and you can breathe underwater.",
+  "mechanics": [
+    {
+      "type": "speed",
+      "mode": "swim",
+      "value": 40,
+      "unit": "feet"
+    },
+    {
+      "type": "breathing",
+      "allows": "underwater"
+    }
+  ]
+}

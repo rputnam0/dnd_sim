@@ -1,0 +1,32 @@
+{
+  "name": "Arcane Jolt",
+  "type": "subclass_feature",
+  "description": "When either you hit a target with an attack roll using a magic weapon or your Steel Defender hits a target, you can channel magical energy through the strike to create one of the following effects: Destructive Energy: The target takes an extra 2d6 force damage. Restorative Energy: Choose one creature or object you can see within 30 feet of the target. Healing energy flows into the chosen recipient, restoring 2d6 hit points to it. You can use this energy a number of times equal to your Intelligence modifier (minimum of once), but you can do so no more than once per turn. You regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "damage",
+      "trigger": "hit with magic weapon or Steel Defender hit",
+      "damage": {
+        "dice": "2d6",
+        "damage_type": "force"
+      },
+      "option_name": "Destructive Energy"
+    },
+    {
+      "type": "heal",
+      "trigger": "hit with magic weapon or Steel Defender hit",
+      "heal": {
+        "dice": "2d6",
+        "target": "creature or object within 30 feet of the target"
+      },
+      "option_name": "Restorative Energy"
+    },
+    {
+      "type": "resource",
+      "uses": "Intelligence modifier",
+      "minimum_uses": 1,
+      "reset": "long rest",
+      "per_turn_limit": 1
+    }
+  ]
+}

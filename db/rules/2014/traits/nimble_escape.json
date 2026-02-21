@@ -1,0 +1,14 @@
+{
+  "name": "Nimble Escape",
+  "type": "racial_trait",
+  "description": "You can take the Disengage or Hide action as a bonus action on each of your turns.",
+  "mechanics": [
+    {
+      "grant_bonus_action": [
+        "Disengage",
+        "Hide"
+      ],
+      "limit": "once per turn"
+    }
+  ]
+}

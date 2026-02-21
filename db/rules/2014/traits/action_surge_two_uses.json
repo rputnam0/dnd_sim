@@ -1,0 +1,13 @@
+{
+  "name": "Action Surge (two uses)",
+  "type": "class_feature",
+  "description": "At 17th level, you can use Action Surge twice before a rest, but only once on the same turn.",
+  "mechanics": [
+    {
+      "effect": "action_surge",
+      "uses": 2,
+      "reset": "rest",
+      "oncePerTurn": true
+    }
+  ]
+}

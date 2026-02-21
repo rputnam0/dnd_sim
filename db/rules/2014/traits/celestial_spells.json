@@ -1,0 +1,32 @@
+{
+  "name": "Celestial Spells",
+  "type": "subclass_feature",
+  "description": "The magic of your patron ensures you always have certain spells ready; when you reach a Warlock level specified in the Celestial Spells table, you thereafter always have the listed spells prepared.",
+  "mechanics": [
+    {
+      "type": "always_prepared_spells",
+      "spells_by_level": {
+        "3": [
+          "Aid",
+          "Cure Wounds",
+          "Guiding Bolt",
+          "Lesser Restoration",
+          "Light",
+          "Sacred Flame"
+        ],
+        "5": [
+          "Daylight",
+          "Revivify"
+        ],
+        "7": [
+          "Guardian of Faith",
+          "Wall of Fire"
+        ],
+        "9": [
+          "Greater Restoration",
+          "Summon Celestial"
+        ]
+      }
+    }
+  ]
+}

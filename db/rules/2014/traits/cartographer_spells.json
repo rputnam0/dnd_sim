@@ -1,0 +1,33 @@
+{
+  "name": "Cartographer Spells",
+  "type": "subclass_feature",
+  "description": "When you reach an Artificer level specified in the Cartographer Spells table, you thereafter always have the listed spells prepared.\n\nCartographer Spells:\n- 3rd level: Faerie Fire, Guiding Bolt, Healing Word\n- 5th level: Locate Object, Mind Spike\n- 9th level: Call Lightning, Clairvoyance\n- 13th level: Banishment, Locate Creature\n- 17th level: Scrying, Teleportation Circle",
+  "mechanics": [
+    {
+      "type": "always_prepared_spells",
+      "spells_by_level": {
+        "3": [
+          "Faerie Fire",
+          "Guiding Bolt",
+          "Healing Word"
+        ],
+        "5": [
+          "Locate Object",
+          "Mind Spike"
+        ],
+        "9": [
+          "Call Lightning",
+          "Clairvoyance"
+        ],
+        "13": [
+          "Banishment",
+          "Locate Creature"
+        ],
+        "17": [
+          "Scrying",
+          "Teleportation Circle"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Improved Abjuration",
+  "type": "subclass_feature",
+  "description": "Beginning at 10th level, when you cast an abjuration spell that requires you to make an ability check as a part of casting that spell (as in counterspell and dispel magic), you add your proficiency bonus to that ability check.",
+  "mechanics": [
+    {
+      "type": "add_proficiency_to_ability_check",
+      "spell_school": "abjuration",
+      "condition": "spell_requires_ability_check"
+    }
+  ]
+}

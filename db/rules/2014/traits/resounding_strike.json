@@ -1,0 +1,12 @@
+{
+  "name": "Resounding Strike",
+  "type": "subclass_feature",
+  "description": "At 6th level, when you deal thunder damage to a Large or smaller creature, you can also push it up to 10 feet away from you.",
+  "mechanics": [
+    {
+      "type": "push",
+      "distance": 10,
+      "condition": "when you deal thunder damage to a Large or smaller creature"
+    }
+  ]
+}

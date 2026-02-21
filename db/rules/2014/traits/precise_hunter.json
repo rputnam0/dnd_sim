@@ -1,0 +1,12 @@
+{
+  "name": "Precise Hunter",
+  "type": "class_feature",
+  "description": "You have advantage on attack rolls against the creature currently marked by your Hunter's Mark.",
+  "mechanics": [
+    {
+      "effect": "advantage",
+      "trigger": "attack roll",
+      "condition": "target is marked by your Hunter's Mark"
+    }
+  ]
+}

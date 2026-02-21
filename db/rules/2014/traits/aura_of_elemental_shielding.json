@@ -1,0 +1,25 @@
+{
+  "name": "Aura of Elemental Shielding",
+  "type": "subclass_feature",
+  "description": "Choose one of the following damage types: Acid, Cold, Fire, Lightning, or Thunder. You and your allies have Resistance to that damage type while in your Aura of Protection. At the start of each of your turns, you can change the damage type affected by this feature to one of the other listed options (no action required).",
+  "mechanics": [
+    {
+      "type": "resistance",
+      "damage_type": "chosen",
+      "source": "Aura of Elemental Shielding",
+      "condition": "while within Aura of Protection"
+    },
+    {
+      "type": "change_damage_type",
+      "trigger": "start_of_turn",
+      "action_required": false,
+      "options": [
+        "Acid",
+        "Cold",
+        "Fire",
+        "Lightning",
+        "Thunder"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Divine Order",
+  "type": "class_feature",
+  "description": "You have dedicated yourself to one of the following sacred roles of your choice: Protector, Thaumaturge.",
+  "mechanics": [
+    {
+      "type": "choice",
+      "options": [
+        "Protector",
+        "Thaumaturge"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Elemental Fury",
+  "type": "class_feature",
+  "description": "The might of the elements flows through you. You gain one of the following options of your choice: Potent Spellcasting or Primal Strike.",
+  "mechanics": [
+    {
+      "type": "choice",
+      "options": [
+        "Potent Spellcasting",
+        "Primal Strike"
+      ]
+    }
+  ]
+}

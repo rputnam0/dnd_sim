@@ -1,0 +1,12 @@
+{
+  "name": "Savage Attacks",
+  "type": "racial_trait",
+  "description": "When you score a critical hit with a melee weapon attack, you can roll one of the weapon's damage dice one additional time and add it to the extra damage of the critical hit.",
+  "mechanics": [
+    {
+      "effect": "add_extra_damage_die_on_critical",
+      "trigger": "critical_melee_weapon_attack",
+      "detail": "roll one of the weapon's damage dice and add it to the damage"
+    }
+  ]
+}

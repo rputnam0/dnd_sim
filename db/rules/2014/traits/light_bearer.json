@@ -1,0 +1,13 @@
+{
+  "name": "Light Bearer",
+  "type": "racial_trait",
+  "description": "You know the light cantrip. Charisma is your spellcasting ability for it.",
+  "mechanics": [
+    {
+      "grant_cantrip": {
+        "name": "light",
+        "ability": "Charisma"
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "name": "Lunar Empowerment",
+  "type": "subclass_feature",
+  "description": "14th-Level Lunar Sorcery Feature. The power of a lunar phase saturates your being. While you are in a Lunar Embodiment phase, you also gain the following benefit associated with that phase: Full Moon: You can use a bonus action to shed bright light in a 10-foot radius and dim light for an additional 10 feet or to douse the light. In addition, you and creatures of your choice have advantage on Intelligence (Investigation) and Wisdom (Perception) checks while within the bright light you shed. New Moon: You have advantage on Dexterity (Stealth) checks. In addition, while you are entirely in darkness, attack rolls have disadvantage against you. Crescent Moon: You have resistance to necrotic and radiant damage.",
+  "mechanics": [
+    {
+      "phase": "Full Moon",
+      "action": "bonus",
+      "effect": "light",
+      "bright_radius": 10,
+      "dim_radius": 10,
+      "optional": "douse"
+    },
+    {
+      "phase": "Full Moon",
+      "target": "self_and_chosen_creatures",
+      "advantage_on": [
+        "Intelligence (Investigation)",
+        "Wisdom (Perception)"
+      ],
+      "condition": "within bright light"
+    },
+    {
+      "phase": "New Moon",
+      "advantage_on": [
+        "Dexterity (Stealth)"
+      ]
+    },
+    {
+      "phase": "New Moon",
+      "condition": "entirely in darkness",
+      "disadvantage_on": "attack rolls against you"
+    },
+    {
+      "phase": "Crescent Moon",
+      "damage_resistance": [
+        "necrotic",
+        "radiant"
+      ]
+    }
+  ]
+}

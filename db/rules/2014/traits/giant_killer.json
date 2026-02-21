@@ -1,0 +1,21 @@
+{
+  "name": "Giant Killer",
+  "type": "subclass_feature",
+  "description": "When a Large or larger creature within 5 feet of you hits or misses you with an attack, you can use your reaction to attack that creature immediately after its attack, provided that you can see the creature.",
+  "mechanics": [
+    {
+      "type": "reaction",
+      "trigger": "A Large or larger creature within 5 feet of you hits or misses you with an attack",
+      "condition": {
+        "size": "Large or larger",
+        "range": "5 ft",
+        "visibility": "can see the creature"
+      },
+      "effect": {
+        "action": "make a melee weapon attack",
+        "target": "the triggering creature",
+        "timing": "immediately after the creature's attack"
+      }
+    }
+  ]
+}

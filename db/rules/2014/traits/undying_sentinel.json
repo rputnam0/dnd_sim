@@ -1,0 +1,25 @@
+{
+  "name": "Undying Sentinel",
+  "type": "subclass_feature",
+  "description": "Starting at 15th level, when you are reduced to 0 hit points and are not killed outright, you can choose to drop to 1 hit point instead. Once you use this ability, you can't use it again until you finish a long rest. Additionally, you suffer none of the drawbacks of old age, and you can't be aged magically.",
+  "mechanics": [
+    {
+      "type": "conditional_healing",
+      "trigger": "reduced_to_0_hp",
+      "condition": "not_killed_outright",
+      "effect": "set_hp_to_1",
+      "usage": {
+        "limit": 1,
+        "reset": "long_rest"
+      }
+    },
+    {
+      "type": "immunity",
+      "source": "aging",
+      "details": [
+        "no_drawbacks_of_old_age",
+        "cannot_be_aged_magically"
+      ]
+    }
+  ]
+}

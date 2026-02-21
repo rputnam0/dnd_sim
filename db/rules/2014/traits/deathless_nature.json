@@ -1,0 +1,10 @@
+{
+  "name": "Deathless Nature",
+  "type": "racial_trait",
+  "description": "You don't need to breathe.",
+  "mechanics": [
+    {
+      "type": "noBreathing"
+    }
+  ]
+}

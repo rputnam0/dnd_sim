@@ -1,0 +1,22 @@
+{
+  "name": "Beguiling Defenses",
+  "type": "subclass_feature",
+  "description": "You are immune to being charmed, and when another creature attempts to charm you, you can use your reaction to attempt to turn the charm back on that creature. The creature must succeed on a Wisdom saving throw against your warlock spell save DC or be charmed by you for 1 minute or until the creature takes any damage.",
+  "mechanics": [
+    {
+      "type": "immunity",
+      "condition": "charmed"
+    },
+    {
+      "type": "reaction",
+      "trigger": "when you would be charmed",
+      "effect": {
+        "save": "wisdom",
+        "dcSource": "warlock_spell_save_dc",
+        "target": "creature",
+        "condition": "charmed",
+        "duration": "1 minute or until the creature takes any damage"
+      }
+    }
+  ]
+}

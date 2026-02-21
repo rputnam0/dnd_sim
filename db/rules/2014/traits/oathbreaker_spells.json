@@ -1,0 +1,47 @@
+{
+  "name": "Oathbreaker Spells",
+  "type": "subclass_feature",
+  "description": "You gain oathbreaker spells at the paladin levels listed.\n\nOathbreaker Spells:\n- Paladin Level 3rd: hellish rebuke, inflict wounds\n- Paladin Level 5th: crown of madness, darkness\n- Paladin Level 9th: animate dead, bestow curse\n- Paladin Level 13th: blight, confusion\n- Paladin Level 17th: contagion, dominate person",
+  "mechanics": [
+    {
+      "type": "grant_spells",
+      "level": 3,
+      "spells": [
+        "hellish rebuke",
+        "inflict wounds"
+      ]
+    },
+    {
+      "type": "grant_spells",
+      "level": 5,
+      "spells": [
+        "crown of madness",
+        "darkness"
+      ]
+    },
+    {
+      "type": "grant_spells",
+      "level": 9,
+      "spells": [
+        "animate dead",
+        "bestow curse"
+      ]
+    },
+    {
+      "type": "grant_spells",
+      "level": 13,
+      "spells": [
+        "blight",
+        "confusion"
+      ]
+    },
+    {
+      "type": "grant_spells",
+      "level": 17,
+      "spells": [
+        "contagion",
+        "dominate person"
+      ]
+    }
+  ]
+}

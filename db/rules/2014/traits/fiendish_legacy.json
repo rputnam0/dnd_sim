@@ -1,0 +1,37 @@
+{
+  "name": "Fiendish Legacy",
+  "type": "racial_trait",
+  "description": "You are the recipient of a legacy that grants you supernatural abilities. Choose a legacy from the Fiendish Legacies table. You gain the level 1 benefit of the chosen legacy. When you reach character levels 3 and 5, you learn a higher‑level spell, as shown on the table. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a long rest. You can also cast the spell using any spell slots you have of the appropriate level. Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the legacy).\n\nFiendish Legacies:\n- Abyssal: Resistance to poison damage; you also know the poison spray cantrip. Level 3 spell: ray of sickness. Level 5 spell: hold person.\n- Chthonic: Resistance to necrotic damage; you also know the chill touch cantrip. Level 3 spell: false life. Level 5 spell: ray of enfeeblement.\n- Infernal: Resistance to fire damage; you also know the fire bolt cantrip. Level 3 spell: hellish rebuke. Level 5 spell: darkness.",
+  "mechanics": [
+    {
+      "type": "choose_spellcasting_ability",
+      "choices": [
+        "Intelligence",
+        "Wisdom",
+        "Charisma"
+      ]
+    },
+    {
+      "type": "grant_resistance",
+      "damage_type": "variable"
+    },
+    {
+      "type": "grant_cantrip",
+      "cantrip": "variable"
+    },
+    {
+      "type": "grant_spell",
+      "level_acquired": 3,
+      "once_per_long_rest": true,
+      "always_prepared": true,
+      "cast_using_slots_allowed": true
+    },
+    {
+      "type": "grant_spell",
+      "level_acquired": 5,
+      "once_per_long_rest": true,
+      "always_prepared": true,
+      "cast_using_slots_allowed": true
+    }
+  ]
+}

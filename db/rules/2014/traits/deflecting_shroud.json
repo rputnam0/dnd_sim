@@ -1,0 +1,20 @@
+{
+  "name": "Deflecting Shroud",
+  "type": "subclass_feature",
+  "description": "At 14th level, your Arcane Deflection becomes infused with deadly magic. When you use your Arcane Deflection feature, you can cause magical energy to arc from you. Up to three creatures of your choice that you can see within 60 feet of you each take force damage equal to half your wizard level.",
+  "mechanics": [
+    {
+      "trigger": "use Arcane Deflection",
+      "action": "damage",
+      "target": {
+        "type": "creature",
+        "quantity": "up to 3",
+        "selection": "creatures you can see within 60 feet"
+      },
+      "damage": {
+        "type": "force",
+        "formula": "floor(wizard_level / 2)"
+      }
+    }
+  ]
+}

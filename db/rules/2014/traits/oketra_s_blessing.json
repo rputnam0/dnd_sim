@@ -1,0 +1,18 @@
+{
+  "name": "Oketra's Blessing",
+  "type": "subclass_feature",
+  "description": "At 6th level, when a creature within 30 feet of you makes an attack roll, you can use your reaction to grant that creature a +10 bonus to the roll, using your Channel Divinity. You make this choice after you see the roll, but before the DM says whether the attack hits or misses.",
+  "mechanics": [
+    {
+      "action_type": "reaction",
+      "trigger": "a creature within 30 feet makes an attack roll",
+      "timing": "after you see the roll, before the outcome is determined",
+      "effect": {
+        "type": "bonus",
+        "target": "attack roll",
+        "value": 10
+      },
+      "resource": "Channel Divinity"
+    }
+  ]
+}

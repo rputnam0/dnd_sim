@@ -1,0 +1,21 @@
+{
+  "name": "Little Giant",
+  "type": "racial_trait",
+  "description": "You have proficiency in the Athletics skill, and you count as one size larger when determining your carrying weight and the weight you can push, drag, or lift.",
+  "mechanics": [
+    {
+      "type": "skill_proficiency",
+      "skill": "Athletics"
+    },
+    {
+      "type": "size_based_modifier",
+      "applies_to": [
+        "carrying weight",
+        "push",
+        "drag",
+        "lift"
+      ],
+      "modifier": "count as one size larger"
+    }
+  ]
+}

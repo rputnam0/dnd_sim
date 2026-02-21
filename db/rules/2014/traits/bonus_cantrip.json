@@ -1,0 +1,12 @@
+{
+  "name": "Bonus Cantrip",
+  "type": "subclass_feature",
+  "description": "When you choose this domain at 1st level, you gain the light cantrip if you don't already know it. This cantrip doesn't count against the number of cleric cantrips you know.",
+  "mechanics": [
+    {
+      "type": "grant_cantrip",
+      "spell": "light",
+      "ignore_cantrip_limit": true
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "Radiance of the Dawn",
+  "type": "subclass_feature",
+  "description": "As a Magic action, you present your Holy Symbol and expend a use of your Channel Divinity to emit a flash of light in a 30-foot emanation originating from yourself. Any magical Darkness—such as that created by the Darkness spell—in that area is dispelled. Additionally, each creature of your choice in that area must make a Constitution saving throw, taking Radiant damage equal to 2d10 plus your Cleric level on a failed save or half as much damage on a successful one.",
+  "mechanics": [
+    {
+      "action": "Magic",
+      "resource": "Channel Divinity",
+      "area": {
+        "shape": "emanation",
+        "radius": 30,
+        "units": "feet"
+      },
+      "effects": [
+        {
+          "type": "dispel",
+          "target": "magical darkness"
+        },
+        {
+          "type": "damage",
+          "damage": "2d10",
+          "modifier": "@level",
+          "damage_type": "radiant",
+          "save": {
+            "ability": "Constitution",
+            "on_success": "half",
+            "on_failure": "full"
+          }
+        }
+      ]
+    }
+  ]
+}

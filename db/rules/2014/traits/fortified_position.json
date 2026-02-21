@@ -1,0 +1,23 @@
+{
+  "name": "Fortified Position",
+  "type": "subclass_feature",
+  "description": "You're a master at forming well-defended emplacements using your Eldritch Cannon. You gain the following benefits. Double Firepower: You can now have two cannons at the same time, and you can create two with the same Magic action. (If you expend a spell slot to create the first cannon, you must expend another spell slot to create the second.) You can activate both of them with the same Bonus Action, ordering them to use the same activation option or different ones. You can't create a third cannon while you have two. Shimmering Field Projection: You and your allies have Half Cover while within 10 feet of your Eldritch Cannon.",
+  "mechanics": [
+    {
+      "name": "Double Firepower",
+      "type": "cannon_limit",
+      "max_cannons": 2,
+      "creation_action": "action",
+      "creation_spell_slot_required": true,
+      "activation_action": "bonus",
+      "activation_both_allowed": true
+    },
+    {
+      "name": "Shimmering Field Projection",
+      "type": "cover",
+      "cover_type": "half",
+      "radius_feet": 10,
+      "source": "Eldritch Cannon"
+    }
+  ]
+}

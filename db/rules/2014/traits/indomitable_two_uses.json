@@ -1,0 +1,12 @@
+{
+  "name": "Indomitable (two uses)",
+  "type": "class_feature",
+  "description": "At 13th level, you can use Indomitable twice between long rests.",
+  "mechanics": [
+    {
+      "type": "limited_use",
+      "uses": 2,
+      "reset": "long_rest"
+    }
+  ]
+}

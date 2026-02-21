@@ -1,0 +1,17 @@
+{
+  "name": "Improved Duplicity",
+  "type": "subclass_feature",
+  "description": "At 17th level, you can create up to four duplicates of yourself, instead of one, when you use Invoke Duplicity. As a bonus action on your turn, you can move any number of them up to 30 feet, to a maximum range of 120 feet.",
+  "mechanics": [
+    {
+      "effect": "increase_duplicate_limit",
+      "new_limit": 4
+    },
+    {
+      "effect": "duplicate_movement",
+      "action_type": "bonus",
+      "distance_per_duplicate": 30,
+      "maximum_total_range": 120
+    }
+  ]
+}

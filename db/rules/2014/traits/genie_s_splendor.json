@@ -1,0 +1,27 @@
+{
+  "name": "Genie's Splendor",
+  "type": "subclass_feature",
+  "description": "When you aren't wearing any armor, your base Armor Class equals 10 plus your Dexterity and Charisma modifiers. You can use a Shield and still gain this benefit. You also gain proficiency in one of the following skills of your choice: Acrobatics, Intimidation, Performance, or Persuasion.",
+  "mechanics": [
+    {
+      "type": "ac_calculation",
+      "base": 10,
+      "add_modifiers": [
+        "dexterity",
+        "charisma"
+      ],
+      "condition": "no armor",
+      "shield_allowed": true
+    },
+    {
+      "type": "gain_skill_proficiency",
+      "choices": [
+        "Acrobatics",
+        "Intimidation",
+        "Performance",
+        "Persuasion"
+      ],
+      "selection": "choose_one"
+    }
+  ]
+}

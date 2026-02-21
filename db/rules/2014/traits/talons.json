@@ -1,0 +1,17 @@
+{
+  "name": "Talons",
+  "type": "racial_trait",
+  "description": "You are proficient with your unarmed strikes, which deal 1d4 slashing damage on a hit.",
+  "mechanics": [
+    {
+      "type": "proficiency",
+      "target": "unarmed_strike"
+    },
+    {
+      "type": "damage",
+      "weapon": "unarmed_strike",
+      "dice": "1d4",
+      "damage_type": "slashing"
+    }
+  ]
+}

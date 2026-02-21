@@ -1,0 +1,38 @@
+{
+  "name": "Warping Implosion",
+  "type": "subclass_feature",
+  "description": "You can unleash your aberrant power as a space-warping anomaly. As an action, you can teleport to an unoccupied space you can see within 120 feet of you. Immediately after you disappear, each creature within 30 feet of the space you left must make a Strength saving throw against your spell save DC. On a failed save, a creature takes 3d10 force damage and is pulled straight toward the space you left, ending in an unoccupied space as close to your former space as possible. On a successful save, the creature takes half as much damage and isn’t pulled. Once you use this feature, you can’t do so again until you finish a long rest, unless you spend 5 sorcery points to use it again.",
+  "mechanics": [
+    {
+      "type": "action",
+      "name": "Teleport",
+      "cost": "action",
+      "range": 120,
+      "target": "self",
+      "condition": "unoccupied space you can see"
+    },
+    {
+      "type": "save",
+      "ability": "Strength",
+      "dc": "spell save DC",
+      "targets": "creatures within 30 ft of original space"
+    },
+    {
+      "type": "damage",
+      "dice": "3d10",
+      "damage_type": "force",
+      "target": "creatures that fail the save"
+    },
+    {
+      "type": "movement",
+      "description": "pull toward original space to nearest unoccupied space",
+      "trigger": "failed save"
+    },
+    {
+      "type": "resource",
+      "resource": "sorcery points",
+      "cost": 5,
+      "usage": "additional uses after long rest"
+    }
+  ]
+}

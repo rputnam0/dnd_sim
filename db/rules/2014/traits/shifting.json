@@ -1,0 +1,65 @@
+{
+  "name": "Shifting",
+  "type": "racial_trait",
+  "description": "As a bonus action, you can shift into a more bestial appearance for up to 1 minute or until you use a bonus action to revert. While shifted you gain temporary hit points equal to 2 × your proficiency bonus. You can shift a number of times equal to your proficiency bonus, and all expended uses are regained after a long rest. When you shift you choose one of the following options: Beasthide – you gain an additional 1d6 temporary hit points and a +1 bonus to AC while shifted; Longtooth – while shifted you can use a bonus action on your turn to make an unarmed strike with your fangs that deals 1d6 + your Strength modifier piercing damage on a hit; Swiftstride – your speed increases by 10 feet while shifted, and you can use a reaction to move up to 10 feet when a creature ends its turn within 5 feet of you, without provoking opportunity attacks; Wildhunt – you have advantage on Wisdom checks while shifted, and no creature within 30 feet of you can have advantage on an attack roll against you unless you are incapacitated.",
+  "mechanics": [
+    {
+      "action_type": "bonus_action",
+      "name": "Shift",
+      "duration": "1 minute or until you end it",
+      "effect": {
+        "temporary_hit_points": "2 * proficiency_bonus"
+      },
+      "uses_per_long_rest": "proficiency_bonus"
+    },
+    {
+      "option": "Beasthide",
+      "effect": {
+        "additional_temporary_hit_points": "1d6",
+        "armor_class_bonus": 1
+      },
+      "condition": "while_shifted"
+    },
+    {
+      "option": "Longtooth",
+      "action_type": "bonus_action",
+      "name": "Fanged Unarmed Strike",
+      "damage": "1d6 + Strength modifier",
+      "damage_type": "piercing",
+      "condition": "while_shifted"
+    },
+    {
+      "option": "Swiftstride",
+      "effect": [
+        {
+          "type": "speed_increase",
+          "amount": 10,
+          "unit": "feet"
+        },
+        {
+          "action_type": "reaction",
+          "trigger": "creature ends its turn within 5 feet",
+          "movement": "10 feet",
+          "no_opportunity_attack": true
+        }
+      ],
+      "condition": "while_shifted"
+    },
+    {
+      "option": "Wildhunt",
+      "effect": [
+        {
+          "type": "advantage",
+          "on": "Wisdom checks"
+        },
+        {
+          "type": "prevent_advantage",
+          "target": "creatures within 30 feet",
+          "on": "attack rolls against you",
+          "unless_condition": "incapacitated"
+        }
+      ],
+      "condition": "while_shifted"
+    }
+  ]
+}

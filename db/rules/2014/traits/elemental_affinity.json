@@ -1,0 +1,23 @@
+{
+  "name": "Elemental Affinity",
+  "type": "subclass_feature",
+  "description": "Starting at 6th level, when you cast a spell that deals damage of the type associated with your draconic ancestry, you can add your Charisma modifier to one damage roll of that spell. At the same time, you can spend 1 sorcery point to gain resistance to that damage type for 1 hour.",
+  "mechanics": [
+    {
+      "effect": "damage_modifier",
+      "modifier": "Charisma",
+      "applies_to": "damage_roll",
+      "condition": "spell deals damage of draconic ancestry type",
+      "limit": "once per spell cast"
+    },
+    {
+      "effect": "grant_resistance",
+      "damage_type": "draconic ancestry type",
+      "duration": "1 hour",
+      "cost": {
+        "resource": "Sorcery Point",
+        "amount": 1
+      }
+    }
+  ]
+}

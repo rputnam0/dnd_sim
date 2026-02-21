@@ -1,0 +1,37 @@
+{
+  "name": "Peerless Athlete",
+  "type": "subclass_feature",
+  "description": "As a bonus action, you can use your Channel Divinity to augment your athleticism. For the next 10 minutes, you have advantage on Strength (Athletics) and Dexterity (Acrobatics) checks; you can carry, push, drag, and lift twice as much weight as normal; and the distance of your long and high jumps increases by 10 feet (this extra distance costs movement as normal).",
+  "mechanics": [
+    {
+      "type": "action",
+      "subtype": "bonus",
+      "resource": "Channel Divinity"
+    },
+    {
+      "type": "duration",
+      "value": "10 minutes"
+    },
+    {
+      "type": "advantage",
+      "target": "skill_check",
+      "skill": "Athletics"
+    },
+    {
+      "type": "advantage",
+      "target": "skill_check",
+      "skill": "Acrobatics"
+    },
+    {
+      "type": "modify",
+      "target": "carrying_capacity",
+      "multiplier": 2
+    },
+    {
+      "type": "modify",
+      "target": "jump_distance",
+      "increase": 10,
+      "unit": "feet"
+    }
+  ]
+}

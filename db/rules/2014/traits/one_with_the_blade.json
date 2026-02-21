@@ -1,0 +1,24 @@
+{
+  "name": "One with the Blade",
+  "type": "subclass_feature",
+  "description": "At 6th level, you extend your ki into your kensei weapons, granting you the following benefits. Magic Kensei Weapons: Your attacks with your kensei weapons count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage. Deft Strike: When you hit a target with a kensei weapon, you can spend 1 ki point to cause the weapon to deal extra damage to the target equal to your Martial Arts die. You can use this feature only once on each of your turns.",
+  "mechanics": [
+    {
+      "type": "weapon_property",
+      "property": "magical",
+      "applies_to": "kensei weapons",
+      "description": "Attacks with kensei weapons count as magical for overcoming resistance and immunity to nonmagical attacks and damage."
+    },
+    {
+      "type": "extra_damage",
+      "trigger": "hit with kensei weapon",
+      "cost": {
+        "resource": "ki",
+        "amount": 1
+      },
+      "damage": "Martial Arts die",
+      "usage_limit": "once per turn",
+      "description": "Spend 1 ki point to add extra damage equal to your Martial Arts die when you hit a target with a kensei weapon."
+    }
+  ]
+}

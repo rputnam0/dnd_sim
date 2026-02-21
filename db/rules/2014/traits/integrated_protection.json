@@ -1,0 +1,16 @@
+{
+  "name": "Integrated Protection",
+  "type": "racial_trait",
+  "description": "You gain a +1 bonus to your Armor Class. In addition, armor you have donned can't be removed against your will while you're alive.",
+  "mechanics": [
+    {
+      "type": "ac_bonus",
+      "value": 1
+    },
+    {
+      "type": "armor_removal_restriction",
+      "cannot_be_removed": true,
+      "condition": "against your will while alive"
+    }
+  ]
+}

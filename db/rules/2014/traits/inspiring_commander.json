@@ -1,0 +1,23 @@
+{
+  "name": "Inspiring Commander",
+  "type": "subclass_feature",
+  "description": "You gain the following benefits. Bolstered Rally: The area of effect for both Group Recovery and Rallying Surge is now a 60-foot emanation. Unshakable Bravery: You have immunity to the Charmed and Frightened conditions.",
+  "mechanics": [
+    {
+      "type": "area_change",
+      "affected_features": [
+        "Group Recovery",
+        "Rallying Surge"
+      ],
+      "radius": 60,
+      "shape": "emanation"
+    },
+    {
+      "type": "immunity",
+      "conditions": [
+        "Charmed",
+        "Frightened"
+      ]
+    }
+  ]
+}

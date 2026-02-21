@@ -1,0 +1,47 @@
+{
+  "name": "Oath of Glory Spells",
+  "type": "subclass_feature",
+  "description": "The magic of your oath ensures you always have certain spells ready; when you reach a Paladin level specified in the Oath of Glory Spells table, you thereafter always have the listed spells prepared.\n\nLevel 3: Guiding Bolt, Heroism\nLevel 5: Enhance Ability, Magic Weapon\nLevel 9: Haste, Protection from Energy\nLevel 13: Compulsion, Freedom of Movement\nLevel 17: Legend Lore, Yolande's Regal Presence",
+  "mechanics": [
+    {
+      "type": "spell_prepared",
+      "requiredLevel": 3,
+      "spells": [
+        "Guiding Bolt",
+        "Heroism"
+      ]
+    },
+    {
+      "type": "spell_prepared",
+      "requiredLevel": 5,
+      "spells": [
+        "Enhance Ability",
+        "Magic Weapon"
+      ]
+    },
+    {
+      "type": "spell_prepared",
+      "requiredLevel": 9,
+      "spells": [
+        "Haste",
+        "Protection from Energy"
+      ]
+    },
+    {
+      "type": "spell_prepared",
+      "requiredLevel": 13,
+      "spells": [
+        "Compulsion",
+        "Freedom of Movement"
+      ]
+    },
+    {
+      "type": "spell_prepared",
+      "requiredLevel": 17,
+      "spells": [
+        "Legend Lore",
+        "Yolande's Regal Presence"
+      ]
+    }
+  ]
+}

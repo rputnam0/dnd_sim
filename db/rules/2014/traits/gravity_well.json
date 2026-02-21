@@ -1,0 +1,17 @@
+{
+  "name": "Gravity Well",
+  "type": "subclass_feature",
+  "description": "6th-level Graviturgy Magic feature. You've learned how to manipulate gravity around a living being: whenever you cast a spell on a creature, you can move the target 5 feet to an unoccupied space of your choice if the target is willing to move, the spell hits it with an attack, or it fails a saving throw against the spell.",
+  "mechanics": [
+    {
+      "trigger": "cast_spell_on_creature",
+      "action": "move_target",
+      "distance_feet": 5,
+      "conditions": [
+        "target_is_willing_to_move",
+        "spell_hits_target",
+        "target_fails_saving_throw"
+      ]
+    }
+  ]
+}

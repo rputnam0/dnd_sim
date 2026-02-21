@@ -1,0 +1,18 @@
+{
+  "name": "Death's Friend",
+  "type": "subclass_feature",
+  "description": "17th-level Phantom feature. Your association with death has become so close that you gain the following benefits: When you use your Wails from the Grave, you can deal the necrotic damage to both the first and the second creature. At the end of a long rest, a soul trinket appears in your hand if you don't have any soul trinkets, as the spirits of the dead are drawn to you.",
+  "mechanics": [
+    {
+      "type": "modify_feature",
+      "target": "Wails from the Grave",
+      "effect": "Deal necrotic damage to both the first and the second creature when the feature is used."
+    },
+    {
+      "type": "grant_item",
+      "item": "Soul Trinket",
+      "condition": "You do not already have a soul trinket",
+      "trigger": "At the end of a long rest"
+    }
+  ]
+}

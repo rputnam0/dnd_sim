@@ -1,0 +1,15 @@
+{
+  "name": "Sleepless",
+  "type": "racial_trait",
+  "description": "You do not require sleep and can remain conscious during a long rest, though you must still refrain from strenuous activity to gain the benefit of the rest.",
+  "mechanics": [
+    {
+      "type": "sleepRequirement",
+      "required": false
+    },
+    {
+      "type": "restActivityRestriction",
+      "allowsStrenuousActivity": false
+    }
+  ]
+}

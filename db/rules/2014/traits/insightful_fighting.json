@@ -1,0 +1,24 @@
+{
+  "name": "Insightful Fighting",
+  "type": "subclass_feature",
+  "description": "At 3rd level, you gain the ability to decipher an opponent's tactics and develop a counter to them. As a bonus action, you can make a Wisdom (Insight) check against a creature you can see that isn't incapacitated, contested by the target's Charisma (Deception) check. If you succeed, you can use your Sneak Attack against that target even if you don't have advantage on the attack roll, but not if you have disadvantage on it. This benefit lasts for 1 minute or until you successfully use this feature against a different target.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "type": "contested_check",
+      "initiator": {
+        "ability": "wisdom",
+        "skill": "insight"
+      },
+      "opponent": {
+        "ability": "charisma",
+        "skill": "deception"
+      },
+      "effect": {
+        "allow_sneak_attack_without_advantage": true,
+        "disallow_if_disadvantage": true
+      },
+      "duration": "1 minute or until used on a different target"
+    }
+  ]
+}

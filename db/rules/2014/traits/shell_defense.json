@@ -1,0 +1,57 @@
+{
+  "name": "Shell Defense",
+  "type": "racial_trait",
+  "description": "You can withdraw into your shell as an action. Until you emerge, you gain a +4 bonus to your AC, and you have advantage on Strength and Constitution saving throws. While in your shell, you are prone, your speed is 0 and can't increase, you have disadvantage on Dexterity saving throws, you can't take reactions, and the only action you can take is a bonus action to emerge from your shell.",
+  "mechanics": [
+    {
+      "type": "action",
+      "name": "Withdraw into shell",
+      "grant": [
+        {
+          "type": "bonus",
+          "target": "AC",
+          "value": 4
+        },
+        {
+          "type": "advantage",
+          "target": "saving_throw",
+          "ability": [
+            "Strength",
+            "Constitution"
+          ]
+        },
+        {
+          "type": "condition",
+          "name": "prone"
+        },
+        {
+          "type": "set_speed",
+          "value": 0,
+          "cannot_increase": true
+        },
+        {
+          "type": "disadvantage",
+          "target": "saving_throw",
+          "ability": [
+            "Dexterity"
+          ]
+        },
+        {
+          "type": "no_reactions"
+        },
+        {
+          "type": "restrict_actions",
+          "allowed": [
+            "bonus_action_emerge"
+          ]
+        }
+      ],
+      "duration": "until you emerge"
+    },
+    {
+      "type": "bonus_action",
+      "name": "Emerge from shell",
+      "effect": "ends Shell Defense effects"
+    }
+  ]
+}

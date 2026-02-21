@@ -1,0 +1,16 @@
+{
+  "name": "Supernatural Resistance",
+  "type": "subclass_feature",
+  "description": "At 15th level, the paladin gains resistance to bludgeoning, piercing, and slashing damage from nonmagical weapons.",
+  "mechanics": [
+    {
+      "effect": "damage_resistance",
+      "damage_types": [
+        "bludgeoning",
+        "piercing",
+        "slashing"
+      ],
+      "condition": "damage from nonmagical weapons"
+    }
+  ]
+}

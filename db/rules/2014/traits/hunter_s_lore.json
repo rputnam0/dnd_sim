@@ -1,0 +1,20 @@
+{
+  "name": "Hunter's Lore",
+  "type": "racial_trait",
+  "description": "You gain proficiency with two of the following skills of your choice: Animal Handling, Nature, Perception, Stealth, and Survival.",
+  "mechanics": [
+    {
+      "gainProficiency": {
+        "type": "skill",
+        "choices": [
+          "Animal Handling",
+          "Nature",
+          "Perception",
+          "Stealth",
+          "Survival"
+        ],
+        "count": 2
+      }
+    }
+  ]
+}

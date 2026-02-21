@@ -1,0 +1,42 @@
+{
+  "name": "Djinni's Escape",
+  "type": "subclass_feature",
+  "description": "You teleport to an unoccupied space you can see within 30 feet of yourself and take on a semi-incorporeal form, which lasts until the end of your next turn. While in this form, you have resistance to Bludgeoning, Piercing, and Slashing damage, and you have immunity to the Grappled, Prone, and Restrained conditions.",
+  "mechanics": [
+    {
+      "type": "resource",
+      "resource": "Channel Divinity",
+      "cost": 1
+    },
+    {
+      "type": "teleport",
+      "range": 30,
+      "unit": "feet",
+      "target": "self",
+      "condition": "unoccupied space you can see"
+    },
+    {
+      "type": "grant_resistance",
+      "damage_types": [
+        "bludgeoning",
+        "piercing",
+        "slashing"
+      ],
+      "duration": "until end of next turn"
+    },
+    {
+      "type": "grant_immunity",
+      "conditions": [
+        "grappled",
+        "prone",
+        "restrained"
+      ],
+      "duration": "until end of next turn"
+    },
+    {
+      "type": "status",
+      "name": "semi-incorporeal form",
+      "duration": "until end of next turn"
+    }
+  ]
+}

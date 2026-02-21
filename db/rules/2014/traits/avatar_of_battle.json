@@ -1,0 +1,17 @@
+{
+  "name": "Avatar of Battle",
+  "type": "subclass_feature",
+  "description": "At 17th level, you gain resistance to bludgeoning, piercing, and slashing damage from nonmagical attacks.",
+  "mechanics": [
+    {
+      "resistance": {
+        "damageTypes": [
+          "bludgeoning",
+          "piercing",
+          "slashing"
+        ],
+        "source": "nonmagical attacks"
+      }
+    }
+  ]
+}

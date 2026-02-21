@@ -1,0 +1,6 @@
+{
+  "name": "Artificer Specialist",
+  "type": "class_feature",
+  "description": "3rd-level artificer feature. Choose the type of specialist you are, each of which is detailed at the end of the class's description. Your choice grants you features at 5th level and again at 9th and 15th level.",
+  "mechanics": []
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Master of Tactics",
+  "type": "subclass_feature",
+  "description": "Starting at 3rd level, you can use the Help action as a bonus action. Additionally, when you use the Help action to aid an ally in attacking a creature, the target of that attack can be within 30 feet of you, rather than within 5 feet of you, if the target can see or hear you.",
+  "mechanics": [
+    {
+      "action": "Help",
+      "usage": "bonus_action"
+    },
+    {
+      "action": "Help",
+      "effect": "extended_range",
+      "range": 30,
+      "original_range": 5,
+      "condition": "target can see or hear you"
+    }
+  ]
+}

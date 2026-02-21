@@ -1,0 +1,81 @@
+{
+  "name": "Lunar Phenomenon",
+  "type": "subclass_feature",
+  "description": "At 18th level, you can use a bonus action to tap into a special power of your current Lunar Embodiment phase, or as part of the bonus action you take to change your lunar phase using the Waxing and Waning feature, you can immediately use the power of the lunar phase you are entering. Full Moon: You radiate moonlight for a moment. Each creature of your choice within 30 feet must succeed on a Constitution saving throw against your spell save DC or be blinded until the end of its next turn. In addition, one creature of your choice in that area regains 3d8 hit points. New Moon: You momentarily emanate gloom. Each creature of your choice within 30 feet must succeed on a Dexterity saving throw against your spell save DC or take 3d10 necrotic damage and have its speed reduced to 0 until the end of its next turn. In addition, you become invisible until the end of your next turn, or until immediately after you make an attack roll or cast a spell. Crescent Moon: You can magically teleport to an unoccupied space you can see within 60 feet. You can bring along one willing creature you can see within 5 feet; that creature teleports to an unoccupied space of your choice that you can see within 5 feet of the destination space. In addition, you and that creature gain resistance to all damage until the start of your next turn. Once you use one of these bonus action benefits, you can't use that benefit again until you finish a long rest, unless you spend 5 sorcery points to use it again.",
+  "mechanics": [
+    {
+      "name": "Full Moon",
+      "action": "bonus",
+      "effects": [
+        {
+          "type": "save",
+          "ability": "Constitution",
+          "dc": "spell_save_dc",
+          "target": "creature of your choice within 30 ft",
+          "failure": {
+            "condition": "blinded",
+            "duration": "until end of next turn"
+          }
+        },
+        {
+          "type": "heal",
+          "amount": "3d8",
+          "target": "one creature of your choice in the area"
+        }
+      ]
+    },
+    {
+      "name": "New Moon",
+      "action": "bonus",
+      "effects": [
+        {
+          "type": "save",
+          "ability": "Dexterity",
+          "dc": "spell_save_dc",
+          "target": "creature of your choice within 30 ft",
+          "failure": {
+            "damage": "3d10 necrotic",
+            "condition": "speed reduced to 0",
+            "duration": "until end of next turn"
+          }
+        },
+        {
+          "type": "condition",
+          "condition": "invisible",
+          "duration": "until end of next turn or until you make an attack roll or cast a spell"
+        }
+      ]
+    },
+    {
+      "name": "Crescent Moon",
+      "action": "bonus",
+      "effects": [
+        {
+          "type": "teleport",
+          "range": "60 ft",
+          "target": "self"
+        },
+        {
+          "type": "teleport",
+          "range": "5 ft",
+          "target": "willing creature within 5 ft",
+          "destination": "unoccupied space of your choice within 5 ft of your destination space"
+        },
+        {
+          "type": "resistance",
+          "damage_type": "all",
+          "targets": [
+            "self",
+            "willing creature"
+          ],
+          "duration": "until start of next turn"
+        }
+      ]
+    },
+    {
+      "type": "recharge",
+      "reset": "long_rest",
+      "cost": "5 sorcery points"
+    }
+  ]
+}

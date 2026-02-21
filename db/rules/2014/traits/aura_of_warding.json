@@ -1,0 +1,28 @@
+{
+  "name": "Aura of Warding",
+  "type": "subclass_feature",
+  "description": "Beginning at 7th level, ancient magic lies so heavily upon you that it forms an eldritch ward. You and friendly creatures within 10 feet of you have resistance to damage from spells. At 18th level, the range of this aura increases to 30 feet.",
+  "mechanics": [
+    {
+      "effect": "damage_resistance",
+      "damage_type": "spell",
+      "range": 10,
+      "targets": [
+        "self",
+        "friendly_creatures"
+      ]
+    },
+    {
+      "effect": "damage_resistance",
+      "damage_type": "spell",
+      "range": 30,
+      "targets": [
+        "self",
+        "friendly_creatures"
+      ],
+      "condition": {
+        "minimum_level": 18
+      }
+    }
+  ]
+}

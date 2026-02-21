@@ -1,0 +1,18 @@
+{
+  "name": "Deft Explorer",
+  "type": "class_feature",
+  "description": "1st-level ranger optional class features, which replaces the Natural Explorer feature. You are an unsurpassed explorer and survivor, both in the wilderness and in dealing with others on your travels. You gain the Canny benefit below, and you gain an additional benefit below when you reach 6th level and 10th level in this class. Canny: Choose one of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make that uses the chosen skill. You can also speak, read, and write two additional languages of your choice.",
+  "mechanics": [
+    {
+      "type": "skill_proficiency_bonus_multiplier",
+      "skill": "chosen",
+      "multiplier": 2,
+      "description": "Proficiency bonus is doubled for ability checks using the chosen skill."
+    },
+    {
+      "type": "gain_languages",
+      "count": 2,
+      "description": "Gain two additional languages of your choice."
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "Kobold Legacy",
+  "type": "racial_trait",
+  "description": "Kobold's connections to dragons can manifest in unpredictable ways in an individual kobold. Choose one of the following legacy options for your kobold. Craftiness: You have proficiency in one of the following skills of your choice: Arcana, Investigation, Medicine, Sleight of Hand, or Survival. Defiance: You have advantage on saving throws to avoid or end the frightened condition on yourself. Draconic Sorcery: You know one cantrip of your choice from the sorcerer spell list. Intelligence, Wisdom, or Charisma is your spellcasting ability for that cantrip (choose when you select this race).",
+  "mechanics": [
+    {
+      "type": "skill_proficiency",
+      "choice": true,
+      "options": [
+        "Arcana",
+        "Investigation",
+        "Medicine",
+        "Sleight of Hand",
+        "Survival"
+      ]
+    },
+    {
+      "type": "advantage",
+      "on": "saving_throw",
+      "condition": "frightened"
+    },
+    {
+      "type": "spell_known",
+      "spell_level": 0,
+      "class": "Sorcerer",
+      "choice": true,
+      "spellcasting_ability_choice": [
+        "Intelligence",
+        "Wisdom",
+        "Charisma"
+      ]
+    }
+  ]
+}

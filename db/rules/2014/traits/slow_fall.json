@@ -1,0 +1,13 @@
+{
+  "name": "Slow Fall",
+  "type": "class_feature",
+  "description": "Beginning at 4th level, you can use your reaction when you fall to reduce any falling damage you take by an amount equal to five times your monk level.",
+  "mechanics": [
+    {
+      "action": "reaction",
+      "trigger": "fall",
+      "effect": "reduce_falling_damage",
+      "amount": "5 * monk_level"
+    }
+  ]
+}

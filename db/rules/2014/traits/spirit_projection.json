@@ -1,0 +1,63 @@
+{
+  "name": "Spirit Projection",
+  "type": "subclass_feature",
+  "description": "14th-level Undead feature. Your spirit can become untethered from your physical form. As an action, you can project your spirit from your body. The body you leave behind is unconscious and in a state of suspended animation. Your spirit resembles your mortal form in almost every way, replicating your game statistics but not your possessions. Any damage or other effects that apply to your spirit or physical body affects the other. Your spirit can remain outside your body for up to 1 hour or until your concentration is broken (as if concentrating on a spell). When your projection ends, your spirit returns to your body or your body magically teleports to your spirit's space (your choice). While projecting your spirit, you gain the following benefits: Your spirit and body gain resistance to bludgeoning, piercing, and slashing damage. When you cast a spell of the conjuration or necromancy school, the spell doesn't require verbal or somatic components or material components that lack a gold cost. You have a flying speed equal to your walking speed and can hover. You can move through creatures and objects as if they were difficult terrain, but you take 1d10 force damage if you end your turn inside a creature or an object. While you are using your Form of Dread, once during each of your turns when you deal necrotic damage to a creature, you regain hit points equal to half the amount of necrotic damage dealt. Once you use this feature, you can't do so again until you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "action",
+      "name": "Spirit Projection",
+      "activation": "action",
+      "duration": "up to 1 hour or until concentration ends",
+      "effect": "Your spirit separates from your body; the body becomes unconscious and in suspended animation. The spirit has the same game statistics as your normal form (excluding possessions) and shares damage with the body. When the projection ends, you may return the spirit to the body or teleport the body to the spirit's space."
+    },
+    {
+      "type": "resistance",
+      "targets": [
+        "spirit",
+        "body"
+      ],
+      "damageTypes": [
+        "bludgeoning",
+        "piercing",
+        "slashing"
+      ]
+    },
+    {
+      "type": "spell_component_exemption",
+      "schools": [
+        "conjuration",
+        "necromancy"
+      ],
+      "exemptions": [
+        "verbal",
+        "somatic",
+        "material without gold cost"
+      ]
+    },
+    {
+      "type": "fly",
+      "speed": "walk",
+      "hover": true
+    },
+    {
+      "type": "movement_through_objects",
+      "terrain": "difficult",
+      "damageOnEndTurn": {
+        "dice": "1d10",
+        "damageType": "force",
+        "condition": "ending turn inside a creature or object"
+      }
+    },
+    {
+      "type": "conditional_healing",
+      "condition": "while using Form of Dread and dealing necrotic damage",
+      "oncePerTurn": true,
+      "heal": "half the necrotic damage dealt"
+    },
+    {
+      "type": "recharge",
+      "frequency": "long rest",
+      "feature": "Spirit Projection"
+    }
+  ]
+}

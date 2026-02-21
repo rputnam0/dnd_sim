@@ -1,0 +1,16 @@
+{
+  "name": "Full of Stars",
+  "type": "subclass_feature",
+  "description": "While in your Starry Form, you become partially incorporeal, giving you resistance to bludgeoning, piercing, and slashing damage.",
+  "mechanics": [
+    {
+      "type": "damage_resistance",
+      "damage_types": [
+        "bludgeoning",
+        "piercing",
+        "slashing"
+      ],
+      "condition": "while in Starry Form"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Survivalist",
+  "type": "subclass_feature",
+  "description": "When you choose this archetype at 3rd level, you gain proficiency in the Nature and Survival skills if you don't already have it. Your proficiency bonus is doubled for any ability check you make that uses either of those proficiencies.",
+  "mechanics": [
+    {
+      "effect": "grant_proficiency",
+      "skills": [
+        "Nature",
+        "Survival"
+      ]
+    },
+    {
+      "effect": "double_proficiency_bonus",
+      "applies_to": "ability_check",
+      "skills": [
+        "Nature",
+        "Survival"
+      ]
+    }
+  ]
+}

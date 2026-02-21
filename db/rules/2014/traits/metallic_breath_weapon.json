@@ -1,0 +1,41 @@
+{
+  "name": "Metallic Breath Weapon",
+  "type": "racial_trait",
+  "description": "At 5th level, you gain a second breath weapon. When you take the Attack action on your turn, you can replace one of your attacks with an exhalation in a 15-foot cone. The save DC for this breath is 8 + your Constitution modifier + your proficiency bonus. Whenever you use this trait, choose one: Enervating Breath – each creature in the cone must succeed on a Constitution saving throw or become incapacitated until the start of your next turn. Repulsion Breath – each creature in the cone must succeed on a Strength saving throw or be pushed 20 feet away from you and be knocked prone. Once you use your Metallic Breath Weapon, you can't do so again until you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "action",
+      "name": "Attack",
+      "replaceAttackWith": "Metallic Breath Weapon",
+      "range": "15-foot cone",
+      "saveDC": "8 + Constitution modifier + proficiency bonus"
+    },
+    {
+      "type": "option",
+      "name": "Enervating Breath",
+      "effect": {
+        "save": "Constitution",
+        "onFail": {
+          "condition": "incapacitated",
+          "duration": "until the start of your next turn"
+        }
+      }
+    },
+    {
+      "type": "option",
+      "name": "Repulsion Breath",
+      "effect": {
+        "save": "Strength",
+        "onFail": {
+          "push": "20 feet",
+          "direction": "away from you",
+          "condition": "prone"
+        }
+      }
+    },
+    {
+      "type": "recharge",
+      "frequency": "once per long rest"
+    }
+  ]
+}

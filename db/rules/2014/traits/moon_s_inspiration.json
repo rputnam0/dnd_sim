@@ -1,0 +1,41 @@
+{
+  "name": "Moon's Inspiration",
+  "type": "subclass_feature",
+  "description": "The primal and ever-changing power of the moon flows through you, granting you the following benefits.\n\nInspired Eclipse: When you take a Bonus Action to give a creature a Bardic Inspiration die, you can have the Invisible condition and teleport up to 30 feet to an unoccupied space you can see as part of that Bonus Action. This invisibility lasts until the start of your next turn and ends early immediately after you make an attack roll, deal damage, or cast a spell.\n\nLunar Vitality: Once per turn when you restore Hit Points to a creature with a spell, you can expend a Bardic Inspiration die and increase the amount of Hit Points restored by a number equal to a roll of the Bardic Inspiration die. The creature's Speed also increases by 10 feet until the end of its next turn.",
+  "mechanics": [
+    {
+      "name": "Inspired Eclipse",
+      "trigger": "when you take a Bonus Action to give Bardic Inspiration",
+      "action": "bonus",
+      "effects": [
+        {
+          "type": "condition",
+          "condition": "Invisible",
+          "duration": "until start of next turn or until you make an attack roll, deal damage, or cast a spell"
+        },
+        {
+          "type": "teleport",
+          "distance": 30,
+          "target": "self",
+          "restriction": "to an unoccupied space you can see"
+        }
+      ]
+    },
+    {
+      "name": "Lunar Vitality",
+      "trigger": "once per turn when you restore Hit Points to a creature with a spell",
+      "action": "spend Bardic Inspiration die",
+      "effects": [
+        {
+          "type": "heal",
+          "extra": "roll Bardic Inspiration die"
+        },
+        {
+          "type": "speed_increase",
+          "amount": 10,
+          "duration": "until end of target's next turn"
+        }
+      ]
+    }
+  ]
+}

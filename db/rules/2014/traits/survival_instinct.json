@@ -1,0 +1,11 @@
+{
+  "name": "Survival Instinct",
+  "type": "racial_trait",
+  "description": "You gain proficiency in the Survival skill. Tortles have finely honed survival instincts.",
+  "mechanics": [
+    {
+      "type": "proficiency",
+      "skill": "Survival"
+    }
+  ]
+}

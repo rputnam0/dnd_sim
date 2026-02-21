@@ -1,0 +1,12 @@
+{
+  "name": "Trickster's Transposition",
+  "type": "subclass_feature",
+  "description": "Whenever you take the Bonus Action to create or move the illusion of your Invoke Duplicity, you can teleport, swapping places with the illusion.",
+  "mechanics": [
+    {
+      "trigger": "Bonus Action to create or move Invoke Duplicity illusion",
+      "type": "teleport",
+      "effect": "Swap places with the illusion"
+    }
+  ]
+}

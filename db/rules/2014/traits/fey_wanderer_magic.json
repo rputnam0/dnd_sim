@@ -1,0 +1,49 @@
+{
+  "name": "Fey Wanderer Magic",
+  "type": "subclass_feature",
+  "description": "You learn an additional spell when you reach certain levels in this class, as shown in the Fey Wanderer Spells table. Each spell counts as a ranger spell for you, but it doesn't count against the number of ranger spells you know.\n\nFey Wanderer Spells:\n- 3rd level – charm person\n- 5th level – misty step\n- 9th level – dispel magic\n- 13th level – dimension door\n- 17th level – mislead\n\nYou also possess a preternatural blessing from a fey ally or a place of fey power. Choose your blessing from the Feywild Gifts table or determine it randomly.\n\nFeywild Gifts (d6):\n1 – Illusory butterflies flutter around you while you take a short or long rest.\n2 – Fresh, seasonal flowers sprout from your hair each dawn.\n3 – You faintly smell of cinnamon, lavender, nutmeg, or another comforting herb or spice.\n4 – Your shadow dances while no one is looking directly at it.\n5 – Horns or antlers sprout from your head.\n6 – Your skin and hair change color to match the season at each dawn.",
+  "mechanics": [
+    {
+      "type": "grant_spell",
+      "spell": "charm person",
+      "required_level": 3,
+      "counts_against_known": false
+    },
+    {
+      "type": "grant_spell",
+      "spell": "misty step",
+      "required_level": 5,
+      "counts_against_known": false
+    },
+    {
+      "type": "grant_spell",
+      "spell": "dispel magic",
+      "required_level": 9,
+      "counts_against_known": false
+    },
+    {
+      "type": "grant_spell",
+      "spell": "dimension door",
+      "required_level": 13,
+      "counts_against_known": false
+    },
+    {
+      "type": "grant_spell",
+      "spell": "mislead",
+      "required_level": 17,
+      "counts_against_known": false
+    },
+    {
+      "type": "choice",
+      "name": "Feywild Gift",
+      "options": [
+        "Illusory butterflies flutter around you while you take a short or long rest.",
+        "Fresh, seasonal flowers sprout from your hair each dawn.",
+        "You faintly smell of cinnamon, lavender, nutmeg, or another comforting herb or spice.",
+        "Your shadow dances while no one is looking directly at it.",
+        "Horns or antlers sprout from your head.",
+        "Your skin and hair change color to match the season at each dawn."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Born of Aether",
+  "type": "racial_trait",
+  "description": "You have resistance to necrotic damage.",
+  "mechanics": [
+    {
+      "type": "damage_resistance",
+      "damage_type": "necrotic"
+    }
+  ]
+}

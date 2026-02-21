@@ -1,0 +1,15 @@
+{
+  "name": "Trade Contact",
+  "type": "background_feature",
+  "description": "You and your family have trade contacts such as caravan masters, shopkeepers, sailors, artisans, and farmers throughout the Moonsea region and all along the Sword Coast. Once per game session, when adventuring in either of those areas, you can use those contacts to get information about the local area or to pass a message to someone in those areas, even across the great distance between the two areas. Note: This feature is a variant of the Criminal Contact and Researcher features.",
+  "mechanics": [
+    {
+      "usage": "once per game session",
+      "condition": "adventuring in the Moonsea region or the Sword Coast",
+      "effects": [
+        "obtain information about the local area",
+        "send a message to a contact in the region"
+      ]
+    }
+  ]
+}
