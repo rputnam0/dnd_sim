@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from dnd_sim.rules_2014 import parse_damage_expression
+from dnd_sim.spatial import distance_chebyshev
 from dnd_sim.strategy_api import ActionIntent, BaseStrategy, TargetRef
 
 
@@ -128,6 +129,56 @@ def _expected_damage_against(action: dict, target, *, save_mod: int = 0) -> floa
     return 0.0
 
 
+def _evaluate_action_score(action: dict, target, actor, state) -> float:
+    from dnd_sim.spatial import can_see
+
+    multiplier = 1.0
+    if not can_see(
+        observer_pos=actor.position,
+        target_pos=target.position,
+        observer_traits=actor.traits,
+        target_conditions=target.conditions,
+        active_hazards=state.metadata.get("active_hazards", []),
+        light_level=str(state.metadata.get("light_level", "bright")),
+    ):
+        multiplier = 0.5
+
+    aoe_type = action.get("aoe_type")
+    aoe_size = action.get("aoe_size_ft")
+    if aoe_type and aoe_size:
+        radius = float(aoe_size)
+        score = 0.0
+        for candidate in state.actors.values():
+            if candidate.hp <= 0:
+                continue
+            if distance_chebyshev(target.position, candidate.position) > radius:
+                continue
+            if candidate.actor_id == actor.actor_id and not action.get("include_self", False):
+                continue
+            save_mod = (
+                int(candidate.save_mods.get(action.get("save_ability", ""), 0))
+                if action.get("action_type") == "save"
+                else 0
+            )
+            expected = _expected_damage_against(action, candidate, save_mod=save_mod)
+            if candidate.team != actor.team:
+                score += expected
+            else:
+                score -= expected * 1.5
+        return score * multiplier
+
+    save_mod = (
+        int(target.save_mods.get(action.get("save_ability", ""), 0))
+        if action.get("action_type") == "save"
+        else 0
+    )
+    return (
+        _expected_damage_against(action, target, save_mod=save_mod)
+        * multiplier
+        * max(1, _target_count_for_action(actor, state, action))
+    )
+
+
 def _can_pay(actor, action: dict) -> bool:
     for key, amount in (action.get("resource_cost") or {}).items():
         if actor.resources.get(key, 0) < int(amount):
@@ -179,20 +230,7 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             if not _can_pay(actor, action):
                 continue
 
-            score = 0.0
-            if action.get("action_type") == "save":
-                save_ability = str(action.get("save_ability") or "").lower()
-                score = max(
-                    _expected_damage_against(
-                        action,
-                        target,
-                        save_mod=int(target.save_mods.get(save_ability, 0)),
-                    )
-                    for target in enemies
-                )
-            else:
-                score = max(_expected_damage_against(action, target) for target in enemies)
-            score *= max(1, _target_count_for_action(actor, state, action))
+            score = max(_evaluate_action_score(action, target, actor, state) for target in enemies)
 
             cost = sum(int(v) for v in (action.get("resource_cost") or {}).values())
             if score > best_score or (score == best_score and cost < best_cost):

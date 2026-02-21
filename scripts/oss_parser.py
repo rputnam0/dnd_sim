@@ -4,7 +4,10 @@ import re
 import time
 from pathlib import Path
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:  # pragma: no cover - optional dependency at runtime only
+    OpenAI = None  # type: ignore[assignment]
 
 try:
     from dotenv import load_dotenv
@@ -21,6 +24,10 @@ def sanitize_name(name: str) -> str:
 
 
 def main() -> None:
+    if OpenAI is None:
+        print("Install the 'openai' package to use this parser.")
+        return
+
     load_dotenv()
     api_key = os.environ.get("DEEPINFRA_API_KEY")
     if not api_key:
@@ -89,6 +96,9 @@ Return ONLY valid JSON. Your response will be parsed directly via json.loads().
             )
 
             parsed_text = response.choices[0].message.content
+            if not parsed_text:
+                print(f"Failed to parse {safe_name}: empty response content")
+                continue
             parsed_json = json.loads(parsed_text)
             out_path = spells_db_dir / f"{safe_name}.json"
             out_path.write_text(json.dumps(parsed_json, indent=2), encoding="utf-8")
