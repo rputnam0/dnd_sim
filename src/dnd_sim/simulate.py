@@ -18,6 +18,18 @@ from dnd_sim.io import (
 from dnd_sim.reporting import build_report_markdown, generate_plots_from_trials
 
 
+def _load_traits_db_for_run(character_db_dir: Path) -> dict:
+    # Canonical rules DB traits live in repo-root `db/rules/2014/traits`.
+    canonical = (Path(__file__).resolve().parents[2] / "db" / "rules" / "2014" / "traits").resolve()
+    traits = load_traits_db(canonical)
+
+    # Scenario-local overrides are optional: `<character_db_dir>/../traits`.
+    local = (character_db_dir.parent / "traits").resolve()
+    if local.exists():
+        traits.update(load_traits_db(local))
+    return traits
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run encounter simulation.")
     parser.add_argument("--scenario", required=True, type=Path, help="Path to scenario JSON")
@@ -38,7 +50,7 @@ def main() -> None:
     loaded = load_scenario(args.scenario)
     db_dir = (Path(loaded.config.character_db_dir)).resolve()
     character_db = load_character_db(db_dir)
-    traits_db = load_traits_db(db_dir.parent / "traits")
+    traits_db = _load_traits_db_for_run(db_dir)
     results_root = default_results_dir().resolve()
     run_name = args.name or loaded.config.scenario_id
     run_dir = build_run_dir(results_root, run_name)
