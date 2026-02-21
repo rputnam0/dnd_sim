@@ -134,6 +134,11 @@ def can_see(
     if truesight is not None and distance <= truesight:
         return True
 
+    # Fighting Initiate (Blind Fighting): treat as 10ft blindsight.
+    if "blind fighting" in observer_traits:
+        if distance <= 10:
+            return True
+
     blindsight = _sense_range(observer_traits, "blindsight", 60)
     if blindsight is not None and distance <= blindsight:
         return True
