@@ -1,0 +1,51 @@
+{
+  "name": "Boon of Spell Recall",
+  "type": "feat",
+  "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30. Whenever you cast a spell with a level 1-4 spell slot, roll 1d4. If the number you roll is the same as the slot's level, the slot isn't expended.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "int",
+      "amount": 1,
+      "max": 30,
+      "choice": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "wis",
+      "amount": 1,
+      "max": 30,
+      "choice": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "cha",
+      "amount": 1,
+      "max": 30,
+      "choice": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "spell_slot_preservation",
+      "slot_levels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "trigger": "cast_spell",
+      "condition": "1d4 roll equals slot level"
+    }
+  ]
+}

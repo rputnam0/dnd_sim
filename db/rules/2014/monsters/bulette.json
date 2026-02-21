@@ -1,0 +1,17 @@
+{
+  "name": "Bulette",
+  "meta": "Large monstrosity, unaligned",
+  "ac": 17,
+  "hp": 94,
+  "hp_formula": "9d10 + 45",
+  "ability_scores": {
+    "str": 19,
+    "dex": 11,
+    "con": 21,
+    "int": 2,
+    "wis": 10,
+    "cha": 5
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

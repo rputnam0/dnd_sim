@@ -1,0 +1,32 @@
+{
+  "name": "Aberrant Dragonmark",
+  "type": "feat",
+  "description": "Increase your Constitution score by 1, to a maximum of 20. You learn a cantrip and a 1st-level spell from the sorcerer spell list, using Constitution as your spellcasting ability. You can cast the 1st-level spell once per short or long rest. When you cast it, you can expend a Hit Die to roll it: an even result grants temporary hit points equal to the roll, while an odd result deals force damage equal to the roll to a random creature within 30 feet (or you if no others are present).",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "con",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell_type": "cantrip",
+      "list": "sorcerer",
+      "ability": "con"
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell_type": "1st-level",
+      "list": "sorcerer",
+      "ability": "con",
+      "usage": "1/short_rest"
+    },
+    {
+      "effect_type": "hit_die_expenditure",
+      "trigger": "cast_feat_spell",
+      "effect": "even_temp_hp_odd_force_damage",
+      "range": 30
+    }
+  ]
+}

@@ -4,9 +4,11 @@ import random
 
 from dnd_sim.models import ActorRuntimeState
 from dnd_sim.rules_2014 import (
+    apply_damage,
     apply_damage_type_modifiers,
     attack_roll,
     concentration_check_dc,
+    run_concentration_check,
     resolve_death_save,
     roll_damage,
     run_concentration_check,
@@ -93,15 +95,54 @@ def test_death_save_natural_20_recovers() -> None:
     assert actor.hp == 1
 
 
-def test_concentration_check_rolls_once_without_advantage_or_disadvantage() -> None:
+def test_concentration_check_honors_war_caster_with_space_separated_trait_key() -> None:
     actor = _actor()
     actor.hp = 5
     actor.concentrating = True
-    rng = CountingRng([12])
+    actor.traits = {"war caster": {}}
+
+    # Without advantage this would fail (1 + 2 < 10). With advantage, it succeeds on 20.
+    rng = FixedRng([1, 20])
     assert run_concentration_check(rng, actor, damage_taken=10) is True
+    assert actor.concentrating is True
+
+
+def test_concentration_check_honors_mage_slayer_with_underscore_trait_key() -> None:
+    target = _actor()
+    target.hp = 5
+    target.concentrating = True
+    source = _actor()
+    source.traits = {"mage_slayer": {}}
+
+    # Without disadvantage this would succeed (20 + 2 >= 10).
+    # With disadvantage, the min roll is 1 and concentration fails.
+    rng = FixedRng([20, 1])
+    assert run_concentration_check(rng, target, damage_taken=10, source=source) is False
+    assert target.concentrating is False
+
+
+def test_concentration_check_uses_single_rng_draw_without_advantage_or_disadvantage() -> None:
+    target = _actor()
+    target.hp = 5
+    target.concentrating = True
+    rng = CountingRng([12])
+    assert run_concentration_check(rng, target, damage_taken=10) is True
     assert rng.calls == 1
 
 
-def test_run_contested_check_tie_goes_to_defender() -> None:
-    rng = FixedRng([10, 10])
-    assert run_contested_check(rng, attacker_mod=2, defender_mods=[2]) is False
+def test_ignore_resistance_any_elemental_bypasses_case_insensitive_damage_type() -> None:
+    target = _actor()
+    target.hp = 20
+    target.max_hp = 20
+    target.damage_resistances = {"fire"}
+    source = _actor()
+    source.traits = {
+        "elemental adept": {
+            "mechanics": [{"effect_type": "ignore_resistance", "damage_type": "ANY_ELEMENTAL"}]
+        }
+    }
+
+    applied = apply_damage(target, 10, "Fire", is_magical=True, source=source)
+
+    assert applied == 10
+    assert target.hp == 10

@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
   "matplotlib>=3.9",
+  "openai>=2.21.0",
   "pydantic>=2.9",
+  "pymupdf>=1.27.1",
   "seaborn>=0.13",
 ]
 

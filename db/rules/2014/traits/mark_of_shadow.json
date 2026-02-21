@@ -1,0 +1,50 @@
+{
+  "name": "Mark of Shadow",
+  "type": "feat",
+  "description": "You gain a 1d4 bonus to Dexterity (Stealth) and Charisma (Performance) checks. You learn the Minor Illusion cantrip and the Invisibility spell. You can cast Invisibility once per long rest without a spell slot, or use your own spell slots. You choose Intelligence, Wisdom, or Charisma as your spellcasting ability for these. Additionally, several illusion and stealth-themed spells are added to your spellcasting class's spell list.",
+  "mechanics": [
+    {
+      "effect_type": "skill_bonus",
+      "skill": "stealth",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "skill_bonus",
+      "skill": "performance",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "minor illusion",
+      "type": "cantrip"
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "invisibility",
+      "free_cast": "once_per_long_rest",
+      "use_spell_slots": true
+    },
+    {
+      "effect_type": "spellcasting_ability_choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "expanded_spell_list",
+      "spells": [
+        "disguise self",
+        "silent image",
+        "darkness",
+        "pass without trace",
+        "clairvoyance",
+        "major image",
+        "greater invisibility",
+        "hallucinatory terrain",
+        "mislead"
+      ]
+    }
+  ]
+}

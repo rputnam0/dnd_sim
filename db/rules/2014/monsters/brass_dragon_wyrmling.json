@@ -1,0 +1,17 @@
+{
+  "name": "Brass Dragon Wyrmling",
+  "meta": "Medium dragon, chaotic good",
+  "ac": 16,
+  "hp": 16,
+  "hp_formula": "3d8 + 3",
+  "ability_scores": {
+    "str": 15,
+    "dex": 10,
+    "con": 13,
+    "int": 10,
+    "wis": 11,
+    "cha": 13
+  },
+  "cr": "1",
+  "saving_throws_text": "Dex +2, Con +3, Wis +2, Cha +3"
+}

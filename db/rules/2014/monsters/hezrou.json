@@ -1,0 +1,17 @@
+{
+  "name": "Hezrou",
+  "meta": "Large fiend (demon), chaotic evil",
+  "ac": 16,
+  "hp": 136,
+  "hp_formula": "13d10 + 65",
+  "ability_scores": {
+    "str": 19,
+    "dex": 17,
+    "con": 20,
+    "int": 5,
+    "wis": 12,
+    "cha": 13
+  },
+  "cr": "8",
+  "saving_throws_text": "Str +7, Con +8, Wis +4"
+}

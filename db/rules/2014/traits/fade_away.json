@@ -1,0 +1,28 @@
+{
+  "name": "Fade Away",
+  "type": "feat",
+  "description": "Prerequisite: Gnome. Increase your Dexterity or Intelligence score by 1, to a maximum of 20. Immediately after you take damage, you can use a reaction to magically become invisible until the end of your next turn or until you attack, deal damage, or force someone to make a saving throw. Once you use this ability, you can't do so again until you finish a short or long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "dex",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "dex",
+        "int"
+      ]
+    },
+    {
+      "effect_type": "reaction_invisibility",
+      "trigger": "take_damage",
+      "duration": "end_of_next_turn",
+      "reset": "short_or_long_rest",
+      "break_conditions": [
+        "attack",
+        "deal_damage",
+        "force_saving_throw"
+      ]
+    }
+  ]
+}

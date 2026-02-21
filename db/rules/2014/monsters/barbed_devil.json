@@ -1,0 +1,17 @@
+{
+  "name": "Barbed Devil",
+  "meta": "Medium fiend (devil), lawful evil",
+  "ac": 15,
+  "hp": 110,
+  "hp_formula": "13d8 + 52",
+  "ability_scores": {
+    "str": 16,
+    "dex": 17,
+    "con": 18,
+    "int": 12,
+    "wis": 14,
+    "cha": 14
+  },
+  "cr": "5",
+  "saving_throws_text": "Str +6, Con +7, Wis +5, Cha +5"
+}

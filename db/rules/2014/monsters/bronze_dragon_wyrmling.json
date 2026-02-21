@@ -1,0 +1,17 @@
+{
+  "name": "Bronze Dragon Wyrmling",
+  "meta": "Medium dragon, lawful good",
+  "ac": 17,
+  "hp": 32,
+  "hp_formula": "5d8 + 10",
+  "ability_scores": {
+    "str": 17,
+    "dex": 10,
+    "con": 15,
+    "int": 12,
+    "wis": 11,
+    "cha": 15
+  },
+  "cr": "2",
+  "saving_throws_text": "Dex +2, Con +4, Wis +2, Cha +4"
+}

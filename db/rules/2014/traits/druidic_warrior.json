@@ -1,0 +1,15 @@
+{
+  "name": "Druidic Warrior",
+  "type": "feat",
+  "description": "You learn two Druid cantrips of your choice. The chosen cantrips count as Ranger spells for you, and Wisdom is your spellcasting ability for them. Whenever you gain a Ranger level, you can replace one of these cantrips with another Druid cantrip.",
+  "mechanics": [
+    {
+      "effect_type": "learn_spells",
+      "spell_list": "druid",
+      "level": 0,
+      "count": 2,
+      "ability": "wis",
+      "class_count_as": "ranger"
+    }
+  ]
+}

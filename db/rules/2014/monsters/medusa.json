@@ -1,0 +1,17 @@
+{
+  "name": "Medusa",
+  "meta": "Medium monstrosity, lawful evil",
+  "ac": 15,
+  "hp": 127,
+  "hp_formula": "17d8 + 51",
+  "ability_scores": {
+    "str": 10,
+    "dex": 15,
+    "con": 16,
+    "int": 12,
+    "wis": 13,
+    "cha": 15
+  },
+  "cr": "6",
+  "saving_throws_text": ""
+}

@@ -1,0 +1,29 @@
+{
+  "name": "Gift of the Gem Dragon",
+  "type": "feat",
+  "description": "You increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. When you take damage from a creature within 10 feet of you, you can use your reaction to emanate telekinetic energy. The creature must make a Strength saving throw (DC 8 + proficiency bonus + the ability modifier of the score increased by this feat). On a failed save, the creature takes 2d8 force damage and is pushed up to 10 feet away from you. On a successful save, it takes half as much damage and isn't pushed. You can use this reaction a number of times equal to your proficiency bonus, regaining all uses on a long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ],
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "reaction",
+      "trigger": "take_damage",
+      "range": 10,
+      "damage": "2d8",
+      "damage_type": "force",
+      "save_type": "str",
+      "push": 10,
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    }
+  ]
+}

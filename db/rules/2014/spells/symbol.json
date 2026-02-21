@@ -1,0 +1,47 @@
+{
+  "name": "Symbol",
+  "type": "spell",
+  "level": 7,
+  "school": "Abjuration",
+  "casting_time": "minute",
+  "range_ft": 0,
+  "concentration": false,
+  "duration_rounds": 0,
+  "description": "Symbol is a 7th\u2011level abjuration spell with a casting time of 1 minute. You inscribe a nearly invisible glyph on a surface up to 10 feet in diameter or within a closed object. The glyph can be triggered by any condition you specify, such as touching, stepping on, opening the object, or meeting certain creature characteristics. When triggered, the glyph glows, filling a 60\u2011foot\u2011radius sphere with dim light for 10 minutes. Each creature in the sphere when it activates, or that enters the sphere for the first time on a turn or ends its turn there, is affected by the chosen effect. Options include: Death (10d10 necrotic damage, Constitution save, half damage on success), Discord (Constitution save, the target cannot communicate and has disadvantage on attack rolls and ability checks for 1 minute), Fear (Wisdom save, frightened for 1 minute and must move away), Hopelessness (Charisma save, cannot attack or target any creature with harmful abilities for 1 minute), Insanity (Intelligence save, driven insane for 1 minute, unable to act or understand), Pain (Constitution save, incapacitated with excruciating pain for 1 minute), Sleep (Wisdom save, unconscious for 10 minutes), and Stunning (Wisdom save, stunned for 1 minute). The glyph remains until dispelled or triggered.",
+  "save_ability": null,
+  "damage_type": "necrotic",
+  "mechanics": [
+    {
+      "effect_type": "aoe",
+      "shape": "sphere",
+      "radius": 60
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "frightened",
+      "duration": 10
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "incapacitated",
+      "duration": 10
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "stunned",
+      "duration": 10
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "unconscious",
+      "duration": 10
+    },
+    {
+      "effect_type": "damage",
+      "damage_type": "necrotic",
+      "dice": "10d10",
+      "save": "con",
+      "save_effect": "half"
+    }
+  ]
+}

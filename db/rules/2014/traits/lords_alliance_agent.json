@@ -1,0 +1,19 @@
+{
+  "name": "Lords' Alliance Agent",
+  "type": "feat",
+  "description": "Once per turn when you score a critical hit against a creature, you can grant Heroic Inspiration to an ally within 30 feet who can see or hear you. When an enemy you can see deals damage to an ally within 5 feet of you, you gain advantage on your next attack roll against that enemy before the end of your next turn.",
+  "mechanics": [
+    {
+      "effect_type": "grant_heroic_inspiration",
+      "trigger": "critical_hit",
+      "range": 30,
+      "frequency": "once_per_turn"
+    },
+    {
+      "effect_type": "advantage_attack",
+      "trigger": "ally_within_5ft_damaged",
+      "target": "attacker",
+      "duration": "end_of_next_turn"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Wight",
+  "meta": "Medium undead, neutral evil",
+  "ac": 14,
+  "hp": 45,
+  "hp_formula": "6d8 + 18",
+  "ability_scores": {
+    "str": 15,
+    "dex": 14,
+    "con": 16,
+    "int": 10,
+    "wis": 13,
+    "cha": 15
+  },
+  "cr": "3",
+  "saving_throws_text": ""
+}

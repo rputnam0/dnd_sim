@@ -1,0 +1,17 @@
+{
+  "name": "Minotaur Skeleton",
+  "meta": "Large undead, lawful evil",
+  "ac": 12,
+  "hp": 67,
+  "hp_formula": "9d10 + 18",
+  "ability_scores": {
+    "str": 18,
+    "dex": 11,
+    "con": 15,
+    "int": 6,
+    "wis": 8,
+    "cha": 5
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

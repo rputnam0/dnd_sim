@@ -1,0 +1,79 @@
+{
+  "name": "Strike of the Giants",
+  "type": "feat",
+  "description": "Once per turn, when you hit a target with a melee weapon attack or a ranged weapon attack using a thrown weapon, you can imbue the attack with an additional effect based on a chosen giant type. You can use this feat a number of times equal to your proficiency bonus, regaining all uses on a long rest. The saving throw DC for these effects equals 8 + your proficiency bonus + your Strength or Constitution modifier.",
+  "mechanics": [
+    {
+      "effect_type": "resource",
+      "name": "Strike of the Giants Uses",
+      "amount": "proficiency_bonus",
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "on_hit_effect",
+      "trigger": "melee_weapon_attack",
+      "limit": "once_per_turn",
+      "uses_resource": "Strike of the Giants Uses"
+    },
+    {
+      "effect_type": "on_hit_effect",
+      "trigger": "thrown_weapon_attack",
+      "limit": "once_per_turn",
+      "uses_resource": "Strike of the Giants Uses"
+    },
+    {
+      "effect_type": "save_dc",
+      "ability": [
+        "str",
+        "con"
+      ],
+      "base": 8
+    },
+    {
+      "effect_type": "strike_option",
+      "name": "Cloud Strike",
+      "damage": "1d4",
+      "damage_type": "thunder",
+      "save_type": "wis",
+      "effect": "invisible_to_target"
+    },
+    {
+      "effect_type": "strike_option",
+      "name": "Fire Strike",
+      "damage": "1d10",
+      "damage_type": "fire"
+    },
+    {
+      "effect_type": "strike_option",
+      "name": "Frost Strike",
+      "damage": "1d6",
+      "damage_type": "cold",
+      "save_type": "con",
+      "effect": "speed_zero"
+    },
+    {
+      "effect_type": "strike_option",
+      "name": "Hill Strike",
+      "damage": "1d6",
+      "damage_type": "weapon",
+      "save_type": "str",
+      "effect": "prone"
+    },
+    {
+      "effect_type": "strike_option",
+      "name": "Stone Strike",
+      "damage": "1d6",
+      "damage_type": "force",
+      "save_type": "str",
+      "effect": "pushed_10ft"
+    },
+    {
+      "effect_type": "strike_option",
+      "name": "Storm Strike",
+      "damage": "1d6",
+      "damage_type": "lightning",
+      "save_type": "con",
+      "effect": "disadvantage_on_attack_rolls"
+    }
+  ]
+}

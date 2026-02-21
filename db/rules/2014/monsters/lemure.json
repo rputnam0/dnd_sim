@@ -1,0 +1,17 @@
+{
+  "name": "Lemure",
+  "meta": "Medium fiend (devil), lawful evil",
+  "ac": 7,
+  "hp": 13,
+  "hp_formula": "3d8",
+  "ability_scores": {
+    "str": 10,
+    "dex": 5,
+    "con": 11,
+    "int": 1,
+    "wis": 11,
+    "cha": 3
+  },
+  "cr": "0",
+  "saving_throws_text": ""
+}

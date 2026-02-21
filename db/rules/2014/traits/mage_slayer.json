@@ -1,0 +1,19 @@
+{
+  "name": "Mage Slayer",
+  "type": "feat",
+  "description": "You have practiced techniques useful in melee combat against spellcasters, gaining the following benefits: When a creature within 5 feet of you casts a spell, you can use your reaction to make a melee weapon attack against that creature. When you damage a creature that is concentrating on a spell, that creature has disadvantage on the saving throw it makes to maintain its concentration. You have advantage on saving throws against spells cast by creatures within 5 feet of you.",
+  "mechanics": [
+    {
+      "effect_type": "reaction_attack",
+      "trigger": "spell_cast_within_5ft"
+    },
+    {
+      "effect_type": "impose_disadvantage",
+      "trigger": "damage_concentrating_creature"
+    },
+    {
+      "effect_type": "advantage_save",
+      "trigger": "spell_cast_by_creature_within_5ft"
+    }
+  ]
+}

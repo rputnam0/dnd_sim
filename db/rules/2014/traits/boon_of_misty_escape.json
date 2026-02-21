@@ -1,0 +1,50 @@
+{
+  "name": "Boon of Misty Escape",
+  "type": "feat",
+  "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30. If you drop to 0 hit points but aren't killed outright, you can instead drop to 1 hit point and cast Gaseous Form without expending a spell slot (no action required). When cast this way, you can target only yourself, your fly speed is 20 feet, and you regain 10 hit points at the start of each of your turns for the duration. Once you use this benefit, you can't do so again until you finish a long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "int",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "wis",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "cha",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "death_prevention",
+      "trigger": "drop_to_0_hp",
+      "replacement_hp": 1,
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "cast_spell",
+      "spell": "Gaseous Form",
+      "trigger": "drop_to_0_hp",
+      "no_action": true,
+      "target": "self",
+      "limit": "1/long_rest"
+    },
+    {
+      "effect_type": "regeneration",
+      "amount": 10,
+      "condition": "while_under_feat_gaseous_form"
+    },
+    {
+      "effect_type": "speed_set",
+      "speed_type": "fly",
+      "value": 20,
+      "condition": "while_under_feat_gaseous_form"
+    }
+  ]
+}

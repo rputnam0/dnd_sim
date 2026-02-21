@@ -1,0 +1,17 @@
+{
+  "name": "Ancient Red Dragon",
+  "meta": "Gargantuan dragon, chaotic evil",
+  "ac": 22,
+  "hp": 546,
+  "hp_formula": "28d20 + 252",
+  "ability_scores": {
+    "str": 30,
+    "dex": 10,
+    "con": 29,
+    "int": 18,
+    "wis": 15,
+    "cha": 23
+  },
+  "cr": "24",
+  "saving_throws_text": "Dex +7, Con +16, Wis +9, Cha +13"
+}

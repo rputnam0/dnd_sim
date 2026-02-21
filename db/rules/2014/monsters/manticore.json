@@ -1,0 +1,17 @@
+{
+  "name": "Manticore",
+  "meta": "Large monstrosity, lawful evil",
+  "ac": 14,
+  "hp": 68,
+  "hp_formula": "8d10 + 24",
+  "ability_scores": {
+    "str": 17,
+    "dex": 16,
+    "con": 17,
+    "int": 7,
+    "wis": 12,
+    "cha": 8
+  },
+  "cr": "3",
+  "saving_throws_text": ""
+}

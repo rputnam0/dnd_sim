@@ -1,0 +1,17 @@
+{
+  "name": "Duergar",
+  "meta": "Medium humanoid (dwarf), lawful evil",
+  "ac": 16,
+  "hp": 26,
+  "hp_formula": "4d8 + 8",
+  "ability_scores": {
+    "str": 14,
+    "dex": 11,
+    "con": 14,
+    "int": 11,
+    "wis": 10,
+    "cha": 9
+  },
+  "cr": "1",
+  "saving_throws_text": ""
+}

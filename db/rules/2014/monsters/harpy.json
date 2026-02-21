@@ -1,0 +1,17 @@
+{
+  "name": "Harpy",
+  "meta": "Medium monstrosity, chaotic evil",
+  "ac": 11,
+  "hp": 38,
+  "hp_formula": "7d8 + 7",
+  "ability_scores": {
+    "str": 12,
+    "dex": 13,
+    "con": 12,
+    "int": 7,
+    "wis": 10,
+    "cha": 13
+  },
+  "cr": "1",
+  "saving_throws_text": ""
+}

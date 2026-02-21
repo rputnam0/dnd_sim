@@ -1,0 +1,17 @@
+{
+  "name": "Kobold",
+  "meta": "Small humanoid (kobold), lawful evil",
+  "ac": 12,
+  "hp": 5,
+  "hp_formula": "2d6 \u2212 2",
+  "ability_scores": {
+    "str": 7,
+    "dex": 15,
+    "con": 9,
+    "int": 8,
+    "wis": 7,
+    "cha": 8
+  },
+  "cr": "1/8",
+  "saving_throws_text": ""
+}

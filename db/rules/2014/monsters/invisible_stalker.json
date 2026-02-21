@@ -1,0 +1,17 @@
+{
+  "name": "Invisible Stalker",
+  "meta": "Medium elemental, neutral",
+  "ac": 14,
+  "hp": 104,
+  "hp_formula": "16d8 + 32",
+  "ability_scores": {
+    "str": 16,
+    "dex": 19,
+    "con": 14,
+    "int": 10,
+    "wis": 15,
+    "cha": 11
+  },
+  "cr": "6",
+  "saving_throws_text": ""
+}

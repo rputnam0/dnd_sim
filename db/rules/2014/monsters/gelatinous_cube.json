@@ -1,0 +1,17 @@
+{
+  "name": "Gelatinous Cube",
+  "meta": "Large ooze, unaligned",
+  "ac": 6,
+  "hp": 84,
+  "hp_formula": "8d10 + 40",
+  "ability_scores": {
+    "str": 14,
+    "dex": 3,
+    "con": 20,
+    "int": 1,
+    "wis": 6,
+    "cha": 1
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

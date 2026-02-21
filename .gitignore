@@ -6,3 +6,6 @@ __pycache__/
 
 # Simulation outputs
 river_line/results/
+
+# secret keys
+.env

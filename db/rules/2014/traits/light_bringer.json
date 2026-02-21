@@ -1,0 +1,49 @@
+{
+  "name": "Light Bringer",
+  "type": "feat",
+  "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. You learn the Light spell and can cast it without material components. If you already know it, you learn a different Cleric cantrip. Once per long rest, the light from your Light spell can be sunlight. As a bonus action while in sunlight, you can expend one Hit Die to regain hit points equal to the roll (once per short or long rest).",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "int",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "wis",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "cha",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "Light",
+      "no_material": true
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell_list": "Cleric",
+      "level": 0,
+      "count": 1,
+      "note": "Only if Light is already known"
+    },
+    {
+      "effect_type": "special_ability",
+      "name": "Solar Luminance",
+      "usage": "1/long_rest",
+      "description": "Light spell produces sunlight"
+    },
+    {
+      "effect_type": "bonus_action_healing",
+      "condition": "in_sunlight",
+      "cost": "1_hit_die",
+      "usage": "1/short_rest"
+    }
+  ]
+}

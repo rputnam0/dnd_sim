@@ -1,0 +1,48 @@
+{
+  "name": "Divinely Favored",
+  "type": "feat",
+  "description": "You learn one cleric cantrip and the Augury spell. You also learn a 1st-level spell based on your alignment: Warlock (Evil), Cleric (Good), or Druid (Neutral). You can cast the 1st-level spell and Augury once per long rest without a spell slot, or using your own slots. Your spellcasting ability for these is Intelligence, Wisdom, or Charisma. You can use a holy symbol as a focus for spells using that ability.",
+  "mechanics": [
+    {
+      "effect_type": "learn_spell",
+      "spell_list": "cleric",
+      "level": 0,
+      "count": 1
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "augury",
+      "level": 2
+    },
+    {
+      "effect_type": "learn_spell",
+      "alignment_evil_list": "warlock",
+      "alignment_good_list": "cleric",
+      "alignment_neutral_list": "druid",
+      "level": 1,
+      "count": 1
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "augury",
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "alignment_1st_level_spell",
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "spellcasting_ability_choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "spellcasting_focus",
+      "focus": "holy_symbol"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Tyrannosaurus Rex",
+  "meta": "Huge beast, unaligned",
+  "ac": 13,
+  "hp": 136,
+  "hp_formula": "13d12 + 52",
+  "ability_scores": {
+    "str": 25,
+    "dex": 10,
+    "con": 19,
+    "int": 2,
+    "wis": 12,
+    "cha": 9
+  },
+  "cr": "8",
+  "saving_throws_text": ""
+}

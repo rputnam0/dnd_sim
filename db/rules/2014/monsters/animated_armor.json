@@ -1,0 +1,17 @@
+{
+  "name": "Animated Armor",
+  "meta": "Medium construct, unaligned",
+  "ac": 18,
+  "hp": 33,
+  "hp_formula": "6d8 + 6",
+  "ability_scores": {
+    "str": 14,
+    "dex": 11,
+    "con": 13,
+    "int": 1,
+    "wis": 3,
+    "cha": 1
+  },
+  "cr": "1",
+  "saving_throws_text": ""
+}

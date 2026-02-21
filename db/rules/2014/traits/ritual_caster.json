@@ -1,0 +1,33 @@
+{
+  "name": "Ritual Caster",
+  "type": "feat",
+  "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. You always have a number of level 1 ritual spells prepared equal to your Proficiency Bonus, and you gain an additional one whenever your Proficiency Bonus increases. You can cast these spells using any spell slots you have. Additionally, once per long rest, you can cast a prepared ritual spell using its regular casting time without expending a spell slot.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ],
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "prepare_spells",
+      "count": "proficiency_bonus",
+      "level": 1,
+      "tags": [
+        "ritual"
+      ]
+    },
+    {
+      "effect_type": "free_cast",
+      "spell_type": "ritual",
+      "casting_time_override": "standard",
+      "reset": "long_rest",
+      "count": 1
+    }
+  ]
+}

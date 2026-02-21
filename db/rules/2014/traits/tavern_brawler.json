@@ -1,0 +1,30 @@
+{
+  "name": "Tavern Brawler",
+  "type": "feat",
+  "description": "You gain proficiency with improvised weapons. Your unarmed strikes deal 1d4 + Strength modifier bludgeoning damage. When you roll a 1 on an unarmed strike damage die, you can reroll it and must use the new roll. Once per turn when you hit with an unarmed strike as part of the Attack action, you can push the target 5 feet away.",
+  "mechanics": [
+    {
+      "effect_type": "unarmed_strike_damage",
+      "die_count": 1,
+      "die_size": 4,
+      "stat": "str"
+    },
+    {
+      "effect_type": "damage_reroll",
+      "trigger": "unarmed_strike",
+      "die_value": 1,
+      "must_use_new": true
+    },
+    {
+      "effect_type": "proficiency",
+      "item_type": "improvised_weapons"
+    },
+    {
+      "effect_type": "on_hit_push",
+      "trigger": "unarmed_strike",
+      "distance": 5,
+      "frequency": "once_per_turn",
+      "prerequisite_action": "attack"
+    }
+  ]
+}

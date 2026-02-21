@@ -1,0 +1,17 @@
+{
+  "name": "Mummy",
+  "meta": "Medium undead, lawful evil",
+  "ac": 11,
+  "hp": 58,
+  "hp_formula": "9d8 + 18",
+  "ability_scores": {
+    "str": 16,
+    "dex": 8,
+    "con": 15,
+    "int": 6,
+    "wis": 10,
+    "cha": 12
+  },
+  "cr": "3",
+  "saving_throws_text": "Wis +2"
+}

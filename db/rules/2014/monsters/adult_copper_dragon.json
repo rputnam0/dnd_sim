@@ -1,0 +1,17 @@
+{
+  "name": "Adult Copper Dragon",
+  "meta": "Huge dragon, chaotic good",
+  "ac": 18,
+  "hp": 184,
+  "hp_formula": "16d12 + 80",
+  "ability_scores": {
+    "str": 23,
+    "dex": 12,
+    "con": 21,
+    "int": 18,
+    "wis": 15,
+    "cha": 17
+  },
+  "cr": "14",
+  "saving_throws_text": "Dex +6, Con +10, Wis +7, Cha +8"
+}

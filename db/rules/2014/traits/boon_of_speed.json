@@ -1,0 +1,25 @@
+{
+  "name": "Boon of Speed",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1, to a maximum of 30. Your speed increases by 30 feet. As a Bonus Action, you can take the Disengage action, which also ends the Grappled condition on you.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "speed_increase",
+      "amount": 30
+    },
+    {
+      "effect_type": "bonus_action_disengage"
+    },
+    {
+      "effect_type": "condition_removal",
+      "condition": "grappled",
+      "trigger": "disengage"
+    }
+  ]
+}

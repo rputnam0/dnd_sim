@@ -1,0 +1,20 @@
+{
+  "name": "Dwarven Fortitude",
+  "type": "feat",
+  "description": "Increase your Constitution score by 1, to a maximum of 20. Whenever you take the Dodge action in combat, you can spend one Hit Die to heal yourself. Roll the die, add your Constitution modifier, and regain a number of hit points equal to the total (minimum of 1).",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "con",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "dodge_healing",
+      "trigger": "dodge_action",
+      "resource": "hit_die",
+      "amount": "1d_hit_die + con_mod",
+      "minimum": 1
+    }
+  ]
+}

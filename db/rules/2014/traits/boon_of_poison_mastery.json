@@ -1,0 +1,27 @@
+{
+  "name": "Boon of Poison Mastery",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1, to a maximum of 30. You gain immunity to poison damage and the poisoned condition. Once per turn, when you roll dice to determine poison damage a creature takes from your attack, spell, or feature, you can use the highest number possible for each die.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "any",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "damage_immunity",
+      "damage_type": "poison"
+    },
+    {
+      "effect_type": "condition_immunity",
+      "condition": "poisoned"
+    },
+    {
+      "effect_type": "maximize_damage_dice",
+      "damage_type": "poison",
+      "frequency": "once_per_turn",
+      "trigger": "attack_spell_or_feature"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Shambling Mound",
+  "meta": "Large plant, unaligned",
+  "ac": 15,
+  "hp": 136,
+  "hp_formula": "16d10 + 48",
+  "ability_scores": {
+    "str": 18,
+    "dex": 8,
+    "con": 16,
+    "int": 5,
+    "wis": 10,
+    "cha": 5
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

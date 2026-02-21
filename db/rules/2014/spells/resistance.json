@@ -1,0 +1,23 @@
+{
+  "name": "Resistance",
+  "type": "spell",
+  "level": 0,
+  "school": "Abjuration",
+  "casting_time": "action",
+  "range_ft": 0,
+  "concentration": true,
+  "duration_rounds": 10,
+  "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. It can roll the die before or after making the saving throw. The spell then ends.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "grant_save_bonus",
+      "bonus_die": "d4",
+      "once": true
+    },
+    {
+      "effect_type": "single_target"
+    }
+  ]
+}

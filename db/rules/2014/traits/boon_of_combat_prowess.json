@@ -1,0 +1,17 @@
+{
+  "name": "Boon of Combat Prowess",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1, to a maximum of 30. When you miss with an attack roll, you can hit instead. Once you use this benefit, you can't use it again until the start of your next turn.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "auto_hit_on_miss",
+      "frequency": "once_per_round"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Shocking Grasp",
+  "type": "spell",
+  "level": 0,
+  "school": "Evocation",
+  "casting_time": "action",
+  "range_ft": 0,
+  "concentration": false,
+  "duration_rounds": 0,
+  "description": "Lightning springs from your hand to deliver a shock to a creature you try to touch. Make a melee spell attack against the target. You have advantage on the attack roll if the target is wearing armor made of metal. On a hit, the target takes 1d8 lightning damage, and it can't take reactions until the start of its next turn. The spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8).",
+  "save_ability": null,
+  "damage_type": "lightning",
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "no_reaction",
+      "duration": 1
+    },
+    {
+      "effect_type": "melee_spell_attack"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Guardian Naga",
+  "meta": "Large monstrosity, lawful good",
+  "ac": 18,
+  "hp": 127,
+  "hp_formula": "15d10 + 45",
+  "ability_scores": {
+    "str": 19,
+    "dex": 18,
+    "con": 16,
+    "int": 16,
+    "wis": 19,
+    "cha": 18
+  },
+  "cr": "10",
+  "saving_throws_text": "Dex +8, Con +7, Int +7, Wis +8, Cha +8"
+}

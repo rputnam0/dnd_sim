@@ -1,0 +1,9 @@
+{
+  "name": "Spare the Dying Necromancy",
+  "meta": "Spare the Dying Necromancy cantrip",
+  "casting_time": "1 action",
+  "range": "Touch",
+  "components": "V, S",
+  "duration": "Instantaneous You touch a living creature that has 0 hit points. The creature becomes stable. This spell has no effect on undead or constructs.",
+  "description": "Speak with Animals 1st-\u00ad\u2010\u2011level divination (ritual)"
+}

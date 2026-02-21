@@ -1,0 +1,17 @@
+{
+  "name": "Chain Devil",
+  "meta": "Medium fiend (devil), lawful evil",
+  "ac": 16,
+  "hp": 85,
+  "hp_formula": "10d8 + 40",
+  "ability_scores": {
+    "str": 18,
+    "dex": 15,
+    "con": 18,
+    "int": 11,
+    "wis": 12,
+    "cha": 14
+  },
+  "cr": "8",
+  "saving_throws_text": "Con +7, Wis +4, Cha +5"
+}

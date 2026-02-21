@@ -1,0 +1,33 @@
+{
+  "name": "Eldritch Blast",
+  "type": "spell",
+  "level": 0,
+  "school": "Evocation",
+  "casting_time": "action",
+  "range_ft": 120,
+  "concentration": false,
+  "duration_rounds": 0,
+  "description": "A beam of crackling energy streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 force damage. The spell creates more than one beam when you reach higher levels: two beams at 5th level, three beams at 11th level, and four beams at 17th level. You can direct the beams at the same target or at different ones. Make a separate attack roll for each beam.",
+  "save_ability": null,
+  "damage_type": "force",
+  "mechanics": [
+    {
+      "effect_type": "ranged_spell_attack",
+      "damage_type": "force",
+      "range_ft": 120
+    },
+    {
+      "effect_type": "scaling_beams",
+      "levels": [
+        5,
+        11,
+        17
+      ],
+      "beams": [
+        2,
+        3,
+        4
+      ]
+    }
+  ]
+}

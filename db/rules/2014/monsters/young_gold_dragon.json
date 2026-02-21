@@ -1,0 +1,17 @@
+{
+  "name": "Young Gold Dragon",
+  "meta": "Large dragon, lawful good",
+  "ac": 18,
+  "hp": 178,
+  "hp_formula": "17d10 + 85",
+  "ability_scores": {
+    "str": 23,
+    "dex": 14,
+    "con": 21,
+    "int": 16,
+    "wis": 13,
+    "cha": 20
+  },
+  "cr": "10",
+  "saving_throws_text": "Dex +6, Con +9, Wis +5, Cha +9"
+}

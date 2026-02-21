@@ -1,0 +1,17 @@
+{
+  "name": "Adult White Dragon",
+  "meta": "Huge dragon, chaotic evil",
+  "ac": 18,
+  "hp": 200,
+  "hp_formula": "16d12 + 96",
+  "ability_scores": {
+    "str": 22,
+    "dex": 10,
+    "con": 22,
+    "int": 8,
+    "wis": 12,
+    "cha": 12
+  },
+  "cr": "13",
+  "saving_throws_text": "Dex +5, Con +11, Wis +6, Cha +6"
+}

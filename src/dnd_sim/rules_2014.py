@@ -89,9 +89,10 @@ def run_contested_check(
     attacker_mod: int,
     defender_mods: list[int],
 ) -> bool:
-    """Resolve contested checks. Ties go to the defender."""
+    """Evaluates a contested check. Ties go to the defender."""
     attacker_roll = rng.randint(1, 20) + attacker_mod
-    defender_roll = rng.randint(1, 20) + (max(defender_mods) if defender_mods else 0)
+    defender_mod = max(defender_mods) if defender_mods else 0
+    defender_roll = rng.randint(1, 20) + defender_mod
     return attacker_roll > defender_roll
 
 
@@ -108,27 +109,22 @@ def roll_damage(
     total = flat
     if n_dice and dice_size:
         rolls = [rng.randint(1, dice_size) for _ in range(n_dice * (2 if crit else 1))]
-
-        if empowered_rerolls > 0 and rolls:
-            lowest_indices = sorted(range(len(rolls)), key=lambda i: rolls[i])[
-                : min(empowered_rerolls, len(rolls))
-            ]
-            for idx in lowest_indices:
-                reroll = rng.randint(1, dice_size)
-                if reroll > rolls[idx]:
-                    rolls[idx] = reroll
+        if empowered_rerolls > 0:
+            rolls.sort()
+            for i in range(min(empowered_rerolls, len(rolls))):
+                if rolls[i] <= dice_size // 2:
+                    rolls[i] = rng.randint(1, dice_size)
 
         if source and damage_type:
             floor = 1
             for trait_data in source.traits.values():
                 for mechanic in trait_data.get("mechanics", []):
-                    if mechanic.get("effect_type") != "damage_roll_floor":
-                        continue
-                    req_type = str(mechanic.get("damage_type", "")).lower()
-                    if req_type in {damage_type.lower(), "any_elemental"}:
-                        floor = max(floor, int(mechanic.get("floor", 1)))
+                    if mechanic.get("effect_type") == "damage_roll_floor":
+                        req_type = mechanic.get("damage_type", "").lower()
+                        if req_type == damage_type.lower() or req_type == "any_elemental":
+                            floor = max(floor, mechanic.get("floor", 1))
             if floor > 1:
-                rolls = [max(roll, floor) for roll in rolls]
+                rolls = [max(r, floor) for r in rolls]
 
         total += sum(rolls)
     return max(total, 0)
@@ -179,26 +175,28 @@ def apply_damage(
 
     for trait_data in target.traits.values():
         for mechanic in trait_data.get("mechanics", []):
-            if mechanic.get("effect_type") != "reduce_damage_taken":
-                continue
-            if damage_type not in mechanic.get("damage_types", []):
-                continue
-            if mechanic.get("condition") == "nonmagical" and is_magical:
-                continue
-            adjusted = max(0, adjusted - int(mechanic.get("amount", 0)))
+            if mechanic.get("effect_type") == "reduce_damage_taken":
+                if damage_type in mechanic.get("damage_types", []):
+                    cond = mechanic.get("condition")
+                    if cond == "nonmagical" and is_magical:
+                        continue
+                    amt = mechanic.get("amount", 0)
+                    adjusted = max(0, adjusted - amt)
 
+    # Check attacker traits for resistance bypass (e.g. Elemental Adept)
     effective_resistances = set(target.damage_resistances)
+
+    # Phase 10: Barbarian Rage Resistance
     if "raging" in target.conditions:
-        effective_resistances.update({"bludgeoning", "piercing", "slashing"})
+        effective_resistances.update(["bludgeoning", "piercing", "slashing"])
 
     if source:
         for trait_data in source.traits.values():
             for mechanic in trait_data.get("mechanics", []):
-                if mechanic.get("effect_type") != "ignore_resistance":
-                    continue
-                bypass_type = str(mechanic.get("damage_type", "")).lower()
-                if bypass_type in {damage_type.lower(), "any_elemental"}:
-                    effective_resistances.discard(damage_type.lower())
+                if mechanic.get("effect_type") == "ignore_resistance":
+                    bypass_type = mechanic.get("damage_type", "").lower()
+                    if bypass_type in {damage_type.lower(), "any_elemental"}:
+                        effective_resistances.discard(damage_type.lower())
 
     adjusted = apply_damage_type_modifiers(
         adjusted,

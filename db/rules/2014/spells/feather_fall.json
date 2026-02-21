@@ -1,0 +1,24 @@
+{
+  "name": "Feather Fall",
+  "type": "spell",
+  "level": 1,
+  "school": "Transmutation",
+  "casting_time": "reaction",
+  "range_ft": 60,
+  "concentration": false,
+  "duration_rounds": 10,
+  "description": "Choose up to five falling creatures within range. A falling creature's rate of descent slows to 60 feet per round until the spell ends. If the creature lands before the spell ends, it takes no falling damage and can land on its feet, and the spell ends for that creature.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "target_limit",
+      "max_targets": 5
+    },
+    {
+      "effect_type": "modify_fall_speed",
+      "new_speed_ft_per_round": 60,
+      "duration_rounds": 10
+    }
+  ]
+}

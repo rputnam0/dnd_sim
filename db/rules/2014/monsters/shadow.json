@@ -1,0 +1,17 @@
+{
+  "name": "Shadow",
+  "meta": "Medium undead, chaotic evil",
+  "ac": 12,
+  "hp": 16,
+  "hp_formula": "3d8 + 3",
+  "ability_scores": {
+    "str": 6,
+    "dex": 14,
+    "con": 13,
+    "int": 6,
+    "wis": 10,
+    "cha": 8
+  },
+  "cr": "1/2",
+  "saving_throws_text": ""
+}

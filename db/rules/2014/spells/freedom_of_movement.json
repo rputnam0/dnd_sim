@@ -1,0 +1,33 @@
+{
+  "name": "Freedom of Movement",
+  "type": "spell",
+  "level": 4,
+  "school": "Abjuration",
+  "casting_time": "action",
+  "range_ft": 0,
+  "concentration": false,
+  "duration_rounds": 600,
+  "description": "You touch a willing creature. For the duration, the target's movement is unaffected by difficult terrain, and spells and other magical effects can neither reduce the target's speed nor cause the target to be paralyzed or restrained. The target can also spend 5 feet of movement to automatically escape from nonmagical restraints, such as manacles or a creature that has it grappled. Finally, being underwater imposes no penalties on the target's movement or attacks.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "immune_condition",
+      "condition": "paralyzed"
+    },
+    {
+      "effect_type": "immune_condition",
+      "condition": "restrained"
+    },
+    {
+      "effect_type": "ignore_difficult_terrain"
+    },
+    {
+      "effect_type": "escape_restraints",
+      "cost_ft": 5
+    },
+    {
+      "effect_type": "ignore_underwater_penalties"
+    }
+  ]
+}

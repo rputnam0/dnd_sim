@@ -1,0 +1,17 @@
+{
+  "name": "Bone Devil",
+  "meta": "Large fiend (devil), lawful evil",
+  "ac": 19,
+  "hp": 142,
+  "hp_formula": "15d10 + 60",
+  "ability_scores": {
+    "str": 18,
+    "dex": 16,
+    "con": 18,
+    "int": 13,
+    "wis": 14,
+    "cha": 16
+  },
+  "cr": "9",
+  "saving_throws_text": "Int +5, Wis +6, Cha +7"
+}

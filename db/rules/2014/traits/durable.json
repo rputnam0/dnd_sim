@@ -1,0 +1,17 @@
+{
+  "name": "Durable",
+  "type": "feat",
+  "description": "Hardy and resilient, you gain the following benefits: Increase your Constitution score by 1, to a maximum of 20. When you roll a Hit Die to regain hit points, the minimum number of hit points you regain from the roll equals twice your Constitution modifier (minimum of 2).",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "con",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "hit_die_recovery_floor",
+      "calculation": "con_mod * 2"
+    }
+  ]
+}

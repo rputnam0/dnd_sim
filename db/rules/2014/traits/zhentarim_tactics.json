@@ -1,0 +1,26 @@
+{
+  "name": "Zhentarim Tactics",
+  "type": "feat",
+  "description": "Increase your Dexterity or Charisma score by 1, to a maximum of 20. Immediately after a creature within 5 feet of you hits you with a melee attack, you can make an Opportunity Attack against that creature. When you finish a Long Rest, you can choose one skill you are proficient in to gain Expertise in until your next Long Rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "choice": [
+        "dex",
+        "cha"
+      ],
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "reaction_attack",
+      "trigger": "hit_by_melee_attack_within_5ft",
+      "attack_type": "opportunity_attack"
+    },
+    {
+      "effect_type": "expertise_selection",
+      "condition": "on_long_rest",
+      "target": "proficient_skill"
+    }
+  ]
+}

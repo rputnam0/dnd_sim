@@ -1,0 +1,32 @@
+{
+  "name": "Cult of the Dragon Initiate",
+  "type": "feat",
+  "description": "You learn Draconic and one other language. You can use an action to frighten a creature within 30 feet (Wisdom save DC 8 + Wis + PB). If you cause a creature to be frightened, you can gain Heroic Inspiration (once per short or long rest).",
+  "mechanics": [
+    {
+      "effect_type": "language_proficiency",
+      "language": "draconic"
+    },
+    {
+      "effect_type": "language_proficiency",
+      "language": "any",
+      "count": 1
+    },
+    {
+      "effect_type": "action",
+      "name": "Dragon's Terror",
+      "range": 30,
+      "condition": "frightened",
+      "save_type": "wis",
+      "save_dc_stat": "wis",
+      "duration": "end_of_next_turn",
+      "immunity_duration": "24 hours"
+    },
+    {
+      "effect_type": "resource_gain",
+      "trigger": "inflict_frightened",
+      "resource": "heroic_inspiration",
+      "limit": "1/short_rest"
+    }
+  ]
+}

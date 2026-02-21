@@ -1,0 +1,33 @@
+{
+  "name": "Telekinetic",
+  "type": "feat",
+  "description": "You increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. You learn the Mage Hand spell, which you can cast without verbal or somatic components and make invisible, with its range increased by 30 feet. As a bonus action, you can telekinetically shove a creature within 30 feet; the target must succeed on a Strength saving throw (DC 8 + your spellcasting ability modifier + your proficiency bonus) or be moved 5 feet toward or away from you. The spellcasting ability for these effects is the ability increased by this feat.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "int",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "Mage Hand",
+      "no_components": true,
+      "range_increase": 30,
+      "invisible": true
+    },
+    {
+      "effect_type": "bonus_action",
+      "name": "Telekinetic Shove",
+      "range": 30,
+      "save_type": "str",
+      "save_dc_ability": "choice",
+      "effect": "move_target_5ft"
+    }
+  ]
+}

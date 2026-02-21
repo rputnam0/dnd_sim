@@ -1,0 +1,17 @@
+{
+  "name": "Unicorn",
+  "meta": "Large celestial, lawful good",
+  "ac": 12,
+  "hp": 67,
+  "hp_formula": "9d10 + 18",
+  "ability_scores": {
+    "str": 18,
+    "dex": 14,
+    "con": 15,
+    "int": 11,
+    "wis": 17,
+    "cha": 16
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

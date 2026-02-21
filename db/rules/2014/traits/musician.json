@@ -1,0 +1,22 @@
+{
+  "name": "Musician",
+  "type": "feat",
+  "description": "You gain proficiency with three musical instruments of your choice. After finishing a Short or Long Rest, you can play a song on a musical instrument you are proficient with to grant Heroic Inspiration to a number of allies equal to your Proficiency Bonus.",
+  "mechanics": [
+    {
+      "effect_type": "proficiency",
+      "type": "tool",
+      "count": 3,
+      "category": "musical_instrument"
+    },
+    {
+      "effect_type": "rest_benefit",
+      "rest_type": [
+        "short",
+        "long"
+      ],
+      "benefit": "grant_heroic_inspiration",
+      "target_count": "proficiency_bonus"
+    }
+  ]
+}

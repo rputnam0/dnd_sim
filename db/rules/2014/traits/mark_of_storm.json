@@ -1,0 +1,46 @@
+{
+  "name": "Mark of Storm",
+  "type": "feat",
+  "description": "You gain a 1d4 bonus to Acrobatics and Navigator's Tools checks. You have resistance to lightning damage. You learn the Thunderclap cantrip and, at level 3, the Gust of Wind spell, which you can cast once per long rest without a spell slot. You also add several storm-themed spells to your class spell list.",
+  "mechanics": [
+    {
+      "effect_type": "skill_bonus",
+      "skill": "acrobatics",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "tool_bonus",
+      "tool": "navigator's tools",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "lightning"
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "thunderclap",
+      "type": "cantrip"
+    },
+    {
+      "effect_type": "grant_spell",
+      "spell": "gust of wind",
+      "level_requirement": 3,
+      "free_cast": "long_rest"
+    },
+    {
+      "effect_type": "spell_list_expansion",
+      "spells": [
+        "feather fall",
+        "fog cloud",
+        "levitate",
+        "shatter",
+        "sleet storm",
+        "wind wall",
+        "conjure minor elementals",
+        "control water",
+        "conjure elemental"
+      ]
+    }
+  ]
+}

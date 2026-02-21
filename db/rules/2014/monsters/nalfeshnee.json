@@ -1,0 +1,17 @@
+{
+  "name": "Nalfeshnee",
+  "meta": "Large fiend (demon), chaotic evil",
+  "ac": 18,
+  "hp": 184,
+  "hp_formula": "16d10 + 96",
+  "ability_scores": {
+    "str": 21,
+    "dex": 10,
+    "con": 22,
+    "int": 19,
+    "wis": 12,
+    "cha": 15
+  },
+  "cr": "13",
+  "saving_throws_text": "Con +11, Int +9, Wis +6, Cha +7"
+}

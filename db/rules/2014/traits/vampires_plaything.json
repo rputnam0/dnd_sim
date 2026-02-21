@@ -1,0 +1,31 @@
+{
+  "name": "Vampire's Plaything",
+  "type": "feat",
+  "description": "When you finish a long rest, you can create one Potion of Healing or an Antitoxin if you have an empty vial or flask; these evaporate after your next long rest. You can take the Dash or Disengage action as a bonus action a number of times equal to your proficiency bonus per long rest. You also share a telepathic connection with your former vampire master while on the same plane.",
+  "mechanics": [
+    {
+      "effect_type": "item_creation",
+      "trigger": "long_rest",
+      "options": [
+        "Potion of Healing",
+        "Antitoxin"
+      ],
+      "duration": "until_long_rest"
+    },
+    {
+      "effect_type": "bonus_action_dash",
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "bonus_action_disengage",
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "telepathy",
+      "target": "vampire_master",
+      "range": "same_plane"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Fire Elemental",
+  "meta": "Large elemental, neutral",
+  "ac": 13,
+  "hp": 102,
+  "hp_formula": "12d10 + 36",
+  "ability_scores": {
+    "str": 10,
+    "dex": 17,
+    "con": 16,
+    "int": 6,
+    "wis": 10,
+    "cha": 7
+  },
+  "cr": "5",
+  "saving_throws_text": ""
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Boon of Skill",
+  "type": "feat",
+  "description": "You gain proficiency in all skills and expertise in one skill of your choice. Additionally, you increase one ability score of your choice by 1, to a maximum of 30.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "any",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "skill_proficiency",
+      "skill": "all"
+    },
+    {
+      "effect_type": "expertise",
+      "skill": "any"
+    }
+  ]
+}

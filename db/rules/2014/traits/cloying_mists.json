@@ -1,0 +1,33 @@
+{
+  "name": "Cloying Mists",
+  "type": "feat",
+  "description": "You increase your Intelligence, Wisdom, or Charisma by 1. You always have the Fog Cloud spell prepared and can cast it once per long rest without a spell slot. When you cast Fog Cloud, nonmagical flames in the area are extinguished, and enemies have their speed reduced by 5 feet while inside the area.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "int",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "spell_prepared",
+      "spell": "Fog Cloud"
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "Fog Cloud",
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "speed_reduction",
+      "amount": 5,
+      "target": "enemy",
+      "condition": "inside_fog_cloud"
+    }
+  ]
+}

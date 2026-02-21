@@ -1,0 +1,47 @@
+{
+  "name": "Mythal Touched",
+  "type": "feat",
+  "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. When a spell attack hits you or you fail a saving throw against a spell, you can use a reaction to roll on the Mythal-Touched Magic table to create a magical effect. Potential effects include dealing force damage to nearby creatures, creating a telepathic link, reversing gravity, stunning the caster, gaining a +2 AC bonus, or causing the spell to dissipate entirely. You can use this benefit a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "int",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "resource",
+      "name": "Mythal Ward",
+      "quantity": "proficiency_bonus",
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "reaction",
+      "trigger": "hit_by_spell_attack"
+    },
+    {
+      "effect_type": "reaction",
+      "trigger": "failed_spell_save"
+    },
+    {
+      "effect_type": "save_dc",
+      "ability": [
+        "int",
+        "wis",
+        "cha"
+      ],
+      "base": 8
+    },
+    {
+      "effect_type": "ac_bonus",
+      "amount": 2,
+      "duration": "1 minute",
+      "condition": "roll_14_17_on_mythal_table"
+    }
+  ]
+}

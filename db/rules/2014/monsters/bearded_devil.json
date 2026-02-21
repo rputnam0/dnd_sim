@@ -1,0 +1,17 @@
+{
+  "name": "Bearded Devil",
+  "meta": "Medium fiend (devil), lawful evil",
+  "ac": 13,
+  "hp": 52,
+  "hp_formula": "8d8 + 16",
+  "ability_scores": {
+    "str": 16,
+    "dex": 15,
+    "con": 15,
+    "int": 9,
+    "wis": 11,
+    "cha": 11
+  },
+  "cr": "3",
+  "saving_throws_text": "Str +5, Con +4, Wis +2"
+}

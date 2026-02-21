@@ -1,0 +1,45 @@
+{
+  "name": "Warding Bond",
+  "type": "spell",
+  "level": 2,
+  "school": "Abjuration",
+  "casting_time": "action",
+  "range_ft": 0,
+  "concentration": false,
+  "duration_rounds": 600,
+  "description": "This spell wards a willing creature you touch and creates a mystic connection between you and the target until the spell ends. While the target is within 60 feet of you, it gains a +1 bonus to AC and saving throws, and it has resistance to all damage. Also, each time it takes damage, you take the same amount of damage. The spell ends if you drop to 0 hit points or if you and the target become separated by more than 60 feet. It also ends if the spell is cast again on either of the connected creatures. You can also dismiss the spell as an action.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "grant_bonus",
+      "target": "target",
+      "bonus_type": "ac",
+      "value": 1
+    },
+    {
+      "effect_type": "grant_bonus",
+      "target": "target",
+      "bonus_type": "saving_throw",
+      "value": 1
+    },
+    {
+      "effect_type": "grant_resistance",
+      "target": "target",
+      "damage_type": "all"
+    },
+    {
+      "effect_type": "share_damage",
+      "source": "target",
+      "receiver": "caster"
+    },
+    {
+      "effect_type": "range_limit",
+      "max_distance_ft": 60
+    },
+    {
+      "effect_type": "dismissible",
+      "action": "action"
+    }
+  ]
+}

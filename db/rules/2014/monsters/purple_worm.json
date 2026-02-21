@@ -1,0 +1,17 @@
+{
+  "name": "Purple Worm",
+  "meta": "Gargantuan monstrosity, unaligned",
+  "ac": 18,
+  "hp": 247,
+  "hp_formula": "15d20 + 90",
+  "ability_scores": {
+    "str": 28,
+    "dex": 7,
+    "con": 22,
+    "int": 1,
+    "wis": 8,
+    "cha": 4
+  },
+  "cr": "15",
+  "saving_throws_text": "Con +11, Wis +4"
+}

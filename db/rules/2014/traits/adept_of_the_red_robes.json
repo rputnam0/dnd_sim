@@ -1,0 +1,33 @@
+{
+  "name": "Adept of the Red Robes",
+  "type": "feat",
+  "description": "You learn one 2nd-level spell from the illusion or transmutation school. You can cast this spell once without a spell slot per long rest, and also using any spell slots you have. Your spellcasting ability for this is the one chosen for the Initiate of High Sorcery feat. Additionally, when you roll a 9 or lower on an attack roll or ability check, you can treat the roll as a 10. You can do this a number of times equal to your proficiency bonus, regaining uses on a long rest.",
+  "mechanics": [
+    {
+      "effect_type": "learn_spell",
+      "spell_level": 2,
+      "schools": [
+        "illusion",
+        "transmutation"
+      ],
+      "free_cast": "1/long_rest",
+      "use_spell_slots": true
+    },
+    {
+      "effect_type": "minimum_roll",
+      "roll_type": "attack_roll",
+      "threshold": 9,
+      "value": 10,
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "minimum_roll",
+      "roll_type": "ability_check",
+      "threshold": 9,
+      "value": 10,
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    }
+  ]
+}

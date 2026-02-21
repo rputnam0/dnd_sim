@@ -1,0 +1,23 @@
+{
+  "name": "Prodigy",
+  "type": "feat",
+  "description": "You gain one skill proficiency, one tool proficiency, and fluency in one language of your choice. Additionally, you gain expertise in one skill you are already proficient in, doubling your proficiency bonus for checks with that skill.",
+  "mechanics": [
+    {
+      "effect_type": "skill_proficiency",
+      "count": 1
+    },
+    {
+      "effect_type": "tool_proficiency",
+      "count": 1
+    },
+    {
+      "effect_type": "language_proficiency",
+      "count": 1
+    },
+    {
+      "effect_type": "expertise",
+      "count": 1
+    }
+  ]
+}

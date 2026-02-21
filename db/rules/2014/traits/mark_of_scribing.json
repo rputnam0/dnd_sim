@@ -1,0 +1,56 @@
+{
+  "name": "Mark of Scribing",
+  "type": "feat",
+  "description": "You gain a 1d4 bonus to Intelligence (History) checks and ability checks using Calligrapher's Supplies. You learn the Message cantrip. You also always have Comprehend Languages prepared and, starting at 3rd level, Magic Mouth prepared. You can cast each of these spells once per long rest without a spell slot, or use your own spell slots. Your spellcasting ability for these is Intelligence, Wisdom, or Charisma (chosen when you take the feat). Additionally, a list of specific spells is added to your class spell list if you have the Spellcasting or Pact Magic feature.",
+  "mechanics": [
+    {
+      "effect_type": "skill_bonus",
+      "skill": "history",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "tool_bonus",
+      "tool": "calligrapher's supplies",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "message"
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "comprehend languages",
+      "free_cast": "1/long_rest",
+      "use_slots": true
+    },
+    {
+      "effect_type": "learn_spell",
+      "spell": "magic mouth",
+      "free_cast": "1/long_rest",
+      "use_slots": true,
+      "level_requirement": 3
+    },
+    {
+      "effect_type": "spellcasting_ability_choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "expanded_spell_list",
+      "spells": [
+        "command",
+        "illusory script",
+        "animal messenger",
+        "silence",
+        "sending",
+        "tongues",
+        "arcane eye",
+        "confusion",
+        "dream"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Gift of the Metallic Dragon",
+  "type": "feat",
+  "description": "You learn the cure wounds spell and can cast it once per long rest without a spell slot, or using your own slots, using Intelligence, Wisdom, or Charisma. Additionally, as a reaction when you or a creature within 5 feet is hit by an attack, you can grant a bonus to AC equal to your proficiency bonus for that attack. You can use this reaction a number of times equal to your proficiency bonus per long rest.",
+  "mechanics": [
+    {
+      "effect_type": "learn_spell",
+      "spell": "cure wounds",
+      "free_casts": 1,
+      "reset": "long_rest",
+      "use_slots": true,
+      "ability_choice": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "reaction_ac_bonus",
+      "trigger": "hit_by_attack",
+      "target": "self_or_ally_within_5ft",
+      "bonus": "proficiency_bonus",
+      "duration": "single_attack",
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    }
+  ]
+}

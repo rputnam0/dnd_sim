@@ -1,0 +1,31 @@
+{
+  "name": "Fury of the Frost Giant",
+  "type": "feat",
+  "description": "You gain resistance to cold damage. Immediately after a creature you can see within 30 feet of you hits you with an attack roll and deals damage, you can use your reaction to force a Constitution saving throw. On a failed save, the creature takes 1d8 + proficiency bonus cold damage and its speed is reduced to 0 until the end of its next turn. You can use this reaction a number of times equal to your proficiency bonus per long rest. You also increase your Strength, Constitution, or Wisdom score by 1.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "choice": [
+        "str",
+        "con",
+        "wis"
+      ],
+      "amount": 1
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "cold"
+    },
+    {
+      "effect_type": "reaction",
+      "trigger": "damaged_by_attack",
+      "range": 30,
+      "save_type": "con",
+      "damage": "1d8 + proficiency_bonus",
+      "damage_type": "cold",
+      "effect": "speed_zero",
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "White Dragon Wyrmling",
+  "meta": "Medium dragon, chaotic evil",
+  "ac": 16,
+  "hp": 32,
+  "hp_formula": "5d8 + 10",
+  "ability_scores": {
+    "str": 14,
+    "dex": 10,
+    "con": 14,
+    "int": 5,
+    "wis": 10,
+    "cha": 11
+  },
+  "cr": "2",
+  "saving_throws_text": "Dex +2, Con +4, Wis +2, Cha +2"
+}

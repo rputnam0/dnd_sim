@@ -1,0 +1,17 @@
+{
+  "name": "Zombie",
+  "meta": "Medium undead, neutral evil",
+  "ac": 8,
+  "hp": 22,
+  "hp_formula": "3d8 + 9",
+  "ability_scores": {
+    "str": 13,
+    "dex": 6,
+    "con": 16,
+    "int": 3,
+    "wis": 6,
+    "cha": 5
+  },
+  "cr": "1/4",
+  "saving_throws_text": "Wis +0"
+}

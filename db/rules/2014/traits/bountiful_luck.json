@@ -1,0 +1,23 @@
+{
+  "name": "Bountiful Luck",
+  "type": "feat",
+  "description": "When an ally you can see within 30 feet of you rolls a 1 on the d20 for an attack roll, an ability check, or a saving throw, you can use your reaction to let the ally reroll the die. The ally must use the new roll. When you use this ability, you can't use your Lucky racial trait before the end of your next turn.",
+  "mechanics": [
+    {
+      "effect_type": "reaction_reroll",
+      "trigger": "ally_rolls_1",
+      "range": 30,
+      "target": "ally",
+      "roll_types": [
+        "attack",
+        "ability_check",
+        "saving_throw"
+      ]
+    },
+    {
+      "effect_type": "trait_lockout",
+      "trait": "Lucky",
+      "duration": "end_of_next_turn"
+    }
+  ]
+}

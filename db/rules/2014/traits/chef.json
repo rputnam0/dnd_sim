@@ -1,0 +1,34 @@
+{
+  "name": "Chef",
+  "type": "feat",
+  "description": "You gain proficiency with Cook's Utensils and increase your Constitution or Wisdom score by 1. During a Short Rest, you can cook a meal for up to 4 + your Proficiency Bonus creatures; those who eat it and spend Hit Dice regain an extra 1d8 Hit Points. You can also cook treats equal to your Proficiency Bonus during a Long Rest or 1 hour of work; a creature can eat a treat as a Bonus Action to gain Temporary Hit Points equal to your Proficiency Bonus.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "con",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "stat_increase",
+      "stat": "wis",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "tool_proficiency",
+      "tool": "cook's utensils"
+    },
+    {
+      "effect_type": "short_rest_healing_bonus",
+      "amount": "1d8",
+      "condition": "spent_hit_dice"
+    },
+    {
+      "effect_type": "bonus_action_temp_hp",
+      "amount": "proficiency_bonus",
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    }
+  ]
+}

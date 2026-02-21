@@ -1,0 +1,25 @@
+{
+  "name": "Knight of the Crown",
+  "type": "feat",
+  "description": "You gain a +1 bonus to Strength, Dexterity, or Constitution. As a bonus action, you can command an ally within 30 feet to make a weapon attack as a reaction. If the attack hits, the ally adds 1d8 to the damage. You can use this feature a number of times equal to your proficiency bonus, regaining all uses after a long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat_choice": [
+        "str",
+        "dex",
+        "con"
+      ],
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "bonus_action_command_attack",
+      "range": 30,
+      "ally_reaction": true,
+      "bonus_damage": "1d8",
+      "uses": "proficiency_bonus",
+      "reset": "long_rest"
+    }
+  ]
+}

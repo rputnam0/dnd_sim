@@ -1,0 +1,23 @@
+{
+  "name": "Boon of Dimensional Travel",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1, to a maximum of 30. Immediately after you take the Attack action or the Magic action, you can teleport up to 30 feet to an unoccupied space you can see.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "any",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "teleport",
+      "trigger": "after_attack_action",
+      "distance": 30
+    },
+    {
+      "effect_type": "teleport",
+      "trigger": "after_magic_action",
+      "distance": 30
+    }
+  ]
+}

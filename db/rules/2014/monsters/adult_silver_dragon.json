@@ -1,0 +1,17 @@
+{
+  "name": "Adult Silver Dragon",
+  "meta": "Huge dragon, lawful good",
+  "ac": 19,
+  "hp": 243,
+  "hp_formula": "18d12 + 126",
+  "ability_scores": {
+    "str": 27,
+    "dex": 10,
+    "con": 25,
+    "int": 16,
+    "wis": 13,
+    "cha": 21
+  },
+  "cr": "16",
+  "saving_throws_text": "Dex +5, Con +12, Wis +6, Cha +10"
+}

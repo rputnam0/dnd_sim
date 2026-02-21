@@ -1,0 +1,39 @@
+{
+  "name": "Boon of Energy Resistance",
+  "type": "feat",
+  "description": "You increase one ability score of your choice by 1, up to a maximum of 30. You gain resistance to two damage types of your choice from acid, cold, fire, lightning, necrotic, poison, psychic, radiant, or thunder, and you can change these choices whenever you finish a long rest. When you take damage of one of your chosen types, you can use your reaction to force a creature you can see within 60 feet to make a Dexterity saving throw (DC 8 + Con modifier + Proficiency Bonus) or take 2d12 + Con modifier damage of that type.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "resistance",
+      "damage_types": [
+        "acid",
+        "cold",
+        "fire",
+        "lightning",
+        "necrotic",
+        "poison",
+        "psychic",
+        "radiant",
+        "thunder"
+      ],
+      "count": 2,
+      "changeable": "long_rest"
+    },
+    {
+      "effect_type": "reaction_damage",
+      "trigger": "take_damage",
+      "damage_type_filter": "chosen_resistances",
+      "range": 60,
+      "save_type": "dex",
+      "save_dc_stat": "con",
+      "damage_dice": "2d12",
+      "damage_bonus_stat": "con"
+    }
+  ]
+}

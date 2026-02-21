@@ -1,0 +1,41 @@
+{
+  "name": "Greater Mark of Handling",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1. Your Wild Intuition die increases to 1d6. While mounted, immediately after you hit a target within 5 feet of your mount with a melee attack roll, your mount can use its reaction to move up to its speed or take the Attack action to make one attack. As a Magic action, you can force a Beast or Monstrosity within 30 feet to make a Wisdom saving throw (DC 8 + Wisdom modifier + Proficiency Bonus) or be Frightened until the start of your next turn. You can use this action a number of times equal to your Proficiency Bonus per long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "any",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "feature_upgrade",
+      "feature": "Wild Intuition",
+      "die_size": 6
+    },
+    {
+      "effect_type": "mounted_combat_reaction",
+      "trigger": "melee_hit_within_5ft_of_mount",
+      "mount_options": [
+        "move",
+        "attack"
+      ]
+    },
+    {
+      "effect_type": "limited_use_action",
+      "name": "Subdue Animal",
+      "action_type": "magic",
+      "range": 30,
+      "target_type": [
+        "beast",
+        "monstrosity"
+      ],
+      "save_dc_stat": "wis",
+      "condition": "frightened",
+      "duration": "start_of_next_turn",
+      "uses": "pb",
+      "reset": "long_rest"
+    }
+  ]
+}

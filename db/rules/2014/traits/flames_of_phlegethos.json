@@ -1,0 +1,33 @@
+{
+  "name": "Flames of Phlegethos",
+  "type": "feat",
+  "description": "Prerequisite: Tiefling. Increase your Intelligence or Charisma score by 1, to a maximum of 20. When you roll fire damage for a spell you cast, you can reroll any roll of 1 on the fire damage dice, but you must use the new roll, even if it is another 1. Whenever you cast a spell that deals fire damage, you can cause flames to wreathe you until the end of your next turn. The flames don't harm you or your possessions, and they shed bright light out to 30 feet and dim light for an additional 30 feet. While the flames are present, any creature within 5 feet of you that hits you with a melee attack takes 1d4 fire damage.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "int",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "int",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "reroll_damage_dice",
+      "damage_type": "fire",
+      "trigger": "spell_cast",
+      "dice_value": 1,
+      "mandatory_new_roll": true
+    },
+    {
+      "effect_type": "reactive_damage",
+      "trigger": "hit_by_melee_attack",
+      "range": 5,
+      "damage": "1d4",
+      "damage_type": "fire",
+      "activation_condition": "cast_fire_spell",
+      "duration": "end_of_next_turn"
+    }
+  ]
+}

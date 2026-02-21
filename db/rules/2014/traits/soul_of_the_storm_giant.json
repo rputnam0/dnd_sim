@@ -1,0 +1,51 @@
+{
+  "name": "Soul of the Storm Giant",
+  "type": "feat",
+  "description": "You gain a +1 bonus to Strength, Wisdom, or Charisma. As a bonus action, you can activate a 10-foot Maelstrom Aura that lasts until the start of your next turn or until you are incapacitated. While active, you have resistance to lightning and thunder damage, and attack rolls against you have disadvantage. Additionally, any creature that starts its turn within the aura must succeed on a Strength saving throw (DC 8 + proficiency bonus + ability modifier) or have its speed halved until the start of its next turn. You can use this bonus action a number of times equal to your proficiency bonus per long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "str",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "str",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "resource",
+      "name": "Maelstrom Aura",
+      "max_uses": "proficiency_bonus",
+      "reset": "long_rest"
+    },
+    {
+      "effect_type": "bonus_action_activation",
+      "name": "Maelstrom Aura",
+      "duration": "start_of_next_turn"
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "lightning",
+      "condition": "maelstrom_aura_active"
+    },
+    {
+      "effect_type": "resistance",
+      "damage_type": "thunder",
+      "condition": "maelstrom_aura_active"
+    },
+    {
+      "effect_type": "disadvantage_on_attacks_against_you",
+      "condition": "maelstrom_aura_active"
+    },
+    {
+      "effect_type": "aura_save_effect",
+      "radius": 10,
+      "trigger": "start_of_turn",
+      "save_type": "str",
+      "on_fail": "half_speed",
+      "condition": "maelstrom_aura_active"
+    }
+  ]
+}

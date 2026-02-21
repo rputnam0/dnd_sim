@@ -1,0 +1,17 @@
+{
+  "name": "Djinni",
+  "meta": "Large elemental, chaotic good",
+  "ac": 17,
+  "hp": 161,
+  "hp_formula": "14d10 + 84",
+  "ability_scores": {
+    "str": 21,
+    "dex": 15,
+    "con": 22,
+    "int": 15,
+    "wis": 16,
+    "cha": 20
+  },
+  "cr": "11",
+  "saving_throws_text": "Dex +6, Wis +7, Cha +9"
+}

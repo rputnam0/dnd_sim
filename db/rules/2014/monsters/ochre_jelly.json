@@ -1,0 +1,17 @@
+{
+  "name": "Ochre Jelly",
+  "meta": "Large ooze, unaligned",
+  "ac": 8,
+  "hp": 45,
+  "hp_formula": "6d10 + 12",
+  "ability_scores": {
+    "str": 15,
+    "dex": 6,
+    "con": 14,
+    "int": 2,
+    "wis": 6,
+    "cha": 1
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

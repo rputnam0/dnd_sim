@@ -1,0 +1,17 @@
+{
+  "name": "Ancient Silver Dragon",
+  "meta": "Gargantuan dragon, lawful good",
+  "ac": 22,
+  "hp": 487,
+  "hp_formula": "25d20 + 225",
+  "ability_scores": {
+    "str": 30,
+    "dex": 10,
+    "con": 29,
+    "int": 18,
+    "wis": 15,
+    "cha": 23
+  },
+  "cr": "23",
+  "saving_throws_text": "Dex +7, Con +16, Wis +9, Cha +13"
+}

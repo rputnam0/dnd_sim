@@ -1,0 +1,17 @@
+{
+  "name": "Ancient White Dragon",
+  "meta": "Gargantuan dragon, chaotic evil",
+  "ac": 20,
+  "hp": 333,
+  "hp_formula": "18d20 + 144",
+  "ability_scores": {
+    "str": 26,
+    "dex": 10,
+    "con": 26,
+    "int": 10,
+    "wis": 13,
+    "cha": 14
+  },
+  "cr": "20",
+  "saving_throws_text": "Dex +6, Con +14, Wis +7, Cha +8"
+}

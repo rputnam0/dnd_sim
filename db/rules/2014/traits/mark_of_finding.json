@@ -1,0 +1,59 @@
+{
+  "name": "Mark of Finding",
+  "type": "feat",
+  "description": "You gain a 1d4 bonus to Wisdom (Perception) and Wisdom (Survival) checks. You always have Hunter's Mark prepared and can cast it once per long rest without a spell slot. At level 3, you gain the same benefit for Locate Object. You can also cast these spells using your spell slots. Additionally, a specific list of spells is added to your spellcasting class's spell list.",
+  "mechanics": [
+    {
+      "effect_type": "skill_bonus",
+      "skill": "perception",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "skill_bonus",
+      "skill": "survival",
+      "bonus": "1d4"
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "hunter's mark",
+      "frequency": "1/long_rest"
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "locate object",
+      "frequency": "1/long_rest",
+      "level_requirement": 3
+    },
+    {
+      "effect_type": "spell_prepared",
+      "spell": "hunter's mark"
+    },
+    {
+      "effect_type": "spell_prepared",
+      "spell": "locate object",
+      "level_requirement": 3
+    },
+    {
+      "effect_type": "spellcasting_ability_choice",
+      "options": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "spell_list_expansion",
+      "spells": [
+        "faerie fire",
+        "longstrider",
+        "locate animals or plants",
+        "mind spike",
+        "clairvoyance",
+        "speak with plants",
+        "divination",
+        "locate creature",
+        "commune with nature"
+      ]
+    }
+  ]
+}

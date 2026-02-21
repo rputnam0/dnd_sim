@@ -1,0 +1,17 @@
+{
+  "name": "Cloaker",
+  "meta": "Large aberration, chaotic neutral",
+  "ac": 14,
+  "hp": 78,
+  "hp_formula": "12d10 + 12",
+  "ability_scores": {
+    "str": 17,
+    "dex": 15,
+    "con": 12,
+    "int": 13,
+    "wis": 12,
+    "cha": 14
+  },
+  "cr": "8",
+  "saving_throws_text": ""
+}

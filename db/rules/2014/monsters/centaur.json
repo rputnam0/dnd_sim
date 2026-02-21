@@ -1,0 +1,17 @@
+{
+  "name": "Centaur",
+  "meta": "Large monstrosity, neutral good",
+  "ac": 12,
+  "hp": 45,
+  "hp_formula": "6d10 + 12",
+  "ability_scores": {
+    "str": 18,
+    "dex": 14,
+    "con": 14,
+    "int": 9,
+    "wis": 13,
+    "cha": 11
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

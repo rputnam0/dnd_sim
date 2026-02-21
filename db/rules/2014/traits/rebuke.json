@@ -1,0 +1,28 @@
+{
+  "name": "Rebuke",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1. When you make a damage roll that deals Radiant damage, you can cause one Huge or smaller creature taking the damage to have the Prone condition. Once you use this benefit, you can't use it again until you finish a Short or Long Rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 1,
+      "options": [
+        "str",
+        "dex",
+        "con",
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "prone",
+      "trigger": "deal_radiant_damage",
+      "target_size_max": "huge",
+      "uses": 1,
+      "reset": "short_rest"
+    }
+  ]
+}

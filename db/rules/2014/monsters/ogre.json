@@ -1,0 +1,17 @@
+{
+  "name": "Ogre",
+  "meta": "Large giant, chaotic evil",
+  "ac": 11,
+  "hp": 59,
+  "hp_formula": "7d10 + 21",
+  "ability_scores": {
+    "str": 19,
+    "dex": 8,
+    "con": 16,
+    "int": 5,
+    "wis": 7,
+    "cha": 7
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

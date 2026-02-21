@@ -1,0 +1,11 @@
+{
+  "name": "War Caster",
+  "type": "feat",
+  "description": "You have advantage on Constitution saving throws that you make to maintain your concentration on a spell when you take damage.",
+  "mechanics": [
+    {
+      "effect_type": "advantage",
+      "trigger": "concentration_save"
+    }
+  ]
+}

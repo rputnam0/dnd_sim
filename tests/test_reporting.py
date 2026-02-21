@@ -103,7 +103,7 @@ def test_report_contains_required_sections_and_pngs(tmp_path: Path) -> None:
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
-    artifacts = run_simulation(loaded, db, registry, trials=12, seed=5, run_id="report")
+    artifacts = run_simulation(loaded, db, {}, registry, trials=12, seed=5, run_id="report")
     summary = artifacts.summary.to_dict()
 
     assert "rounds" in summary
@@ -134,7 +134,7 @@ def test_report_cli_uses_trial_rows_path_from_run_config(
     loaded = load_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
-    artifacts = run_simulation(loaded, db, registry, trials=6, seed=7, run_id="report")
+    artifacts = run_simulation(loaded, db, {}, registry, trials=6, seed=7, run_id="report")
 
     run_dir = tmp_path / "run"
     run_dir.mkdir(parents=True, exist_ok=True)

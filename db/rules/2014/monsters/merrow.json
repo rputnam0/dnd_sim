@@ -1,0 +1,17 @@
+{
+  "name": "Merrow",
+  "meta": "Large monstrosity, chaotic evil",
+  "ac": 13,
+  "hp": 45,
+  "hp_formula": "6d10 + 12",
+  "ability_scores": {
+    "str": 18,
+    "dex": 10,
+    "con": 15,
+    "int": 8,
+    "wis": 10,
+    "cha": 9
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

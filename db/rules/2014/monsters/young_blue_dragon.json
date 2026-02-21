@@ -1,0 +1,17 @@
+{
+  "name": "Young Blue Dragon",
+  "meta": "Large dragon, lawful evil",
+  "ac": 18,
+  "hp": 152,
+  "hp_formula": "16d10 + 64",
+  "ability_scores": {
+    "str": 21,
+    "dex": 10,
+    "con": 19,
+    "int": 14,
+    "wis": 13,
+    "cha": 17
+  },
+  "cr": "9",
+  "saving_throws_text": "Dex +4, Con +8, Wis +5, Cha +7"
+}

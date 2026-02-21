@@ -1,0 +1,15 @@
+{
+  "name": "Blessed Warrior",
+  "type": "feat",
+  "description": "You learn two Cleric cantrips of your choice. They count as Paladin spells for you, and Charisma is your spellcasting ability for them. Whenever you gain a Paladin level, you can replace one of these cantrips with another Cleric cantrip.",
+  "mechanics": [
+    {
+      "effect_type": "learn_spells",
+      "spell_list": "cleric",
+      "spell_level": 0,
+      "count": 2,
+      "spellcasting_ability": "cha",
+      "class_association": "paladin"
+    }
+  ]
+}

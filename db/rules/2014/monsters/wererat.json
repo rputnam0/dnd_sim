@@ -1,0 +1,17 @@
+{
+  "name": "Wererat",
+  "meta": "Medium humanoid (human, shapechanger), lawful evil",
+  "ac": 12,
+  "hp": 33,
+  "hp_formula": "6d8 + 6",
+  "ability_scores": {
+    "str": 10,
+    "dex": 15,
+    "con": 12,
+    "int": 11,
+    "wis": 10,
+    "cha": 8
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

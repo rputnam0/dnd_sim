@@ -1,0 +1,22 @@
+{
+  "name": "Boon of Fortitude",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1, to a maximum of 30. Your Hit Point maximum increases by 40. Whenever you regain Hit Points, you can regain additional Hit Points equal to your Constitution modifier. Once you've regained these additional Hit Points, you can't do so again until the start of your next turn.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "choice",
+      "amount": 1,
+      "max": 30
+    },
+    {
+      "effect_type": "hp_max_increase",
+      "amount": 40
+    },
+    {
+      "effect_type": "healing_bonus",
+      "amount": "con_modifier",
+      "frequency": "once_per_turn"
+    }
+  ]
+}

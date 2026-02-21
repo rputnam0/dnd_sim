@@ -1,0 +1,27 @@
+{
+  "name": "Protection from Poison",
+  "type": "spell",
+  "level": 2,
+  "school": "Abjuration",
+  "casting_time": "action",
+  "range_ft": 0,
+  "concentration": false,
+  "duration_rounds": 600,
+  "description": "You touch a creature. If it is poisoned, you neutralize the poison. If more than one poison afflicts the target, you neutralize one poison that you know is present, or you neutralize one at random. For the duration, the target has advantage on saving throws against being poisoned, and it has resistance to poison damage.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": [
+    {
+      "effect_type": "remove_condition",
+      "condition": "poisoned"
+    },
+    {
+      "effect_type": "advantage_on_saves",
+      "condition": "poisoned"
+    },
+    {
+      "effect_type": "damage_resistance",
+      "damage_type": "poison"
+    }
+  ]
+}

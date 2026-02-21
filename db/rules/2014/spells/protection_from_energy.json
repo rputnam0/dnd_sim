@@ -1,0 +1,9 @@
+{
+  "name": "Protection from Energy",
+  "meta": "Protection from Energy 3rd-\u00ad\u2010\u2011level abjuration",
+  "casting_time": "1 action",
+  "range": "Touch",
+  "components": "V, S",
+  "duration": "Concentration, up to 1 hour",
+  "description": "For the duration, the willing creature you touch has resistance to one damage type of your choice: acid, cold, fire, lightning, or thunder."
+}

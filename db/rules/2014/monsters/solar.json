@@ -1,0 +1,17 @@
+{
+  "name": "Solar",
+  "meta": "Large celestial, lawful good",
+  "ac": 21,
+  "hp": 243,
+  "hp_formula": "18d10 + 144",
+  "ability_scores": {
+    "str": 26,
+    "dex": 22,
+    "con": 26,
+    "int": 25,
+    "wis": 25,
+    "cha": 30
+  },
+  "cr": "21",
+  "saving_throws_text": "Int +14, Wis +14, Cha +17"
+}

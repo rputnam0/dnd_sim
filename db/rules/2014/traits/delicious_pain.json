@@ -1,0 +1,25 @@
+{
+  "name": "Delicious Pain",
+  "type": "feat",
+  "description": "Increase one ability score of your choice by 1, to a maximum of 20. Immediately after you take Bludgeoning, Piercing, or Slashing damage, you can use your reaction to gain resistance to Bludgeoning, Piercing, and Slashing damage until the start of your next turn. Once you use this benefit, you can't use it again until you finish a short or long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "any",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "reaction_resistance",
+      "trigger": "take_damage_bps",
+      "resistance": [
+        "bludgeoning",
+        "piercing",
+        "slashing"
+      ],
+      "duration": "start_of_next_turn",
+      "usage": 1,
+      "reset": "short_rest"
+    }
+  ]
+}

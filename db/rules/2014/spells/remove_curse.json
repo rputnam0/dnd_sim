@@ -1,0 +1,9 @@
+{
+  "name": "Remove Curse",
+  "meta": "Remove Curse 3rd-\u00ad\u2010\u2011level abjuration",
+  "casting_time": "1 action",
+  "range": "Touch",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "description": "At your touch, all curses affecting one creature or object end. If the object is a cursed magic item, its curse remains, but the spell breaks its owner\u2019s attunement to the object so it can be removed or discarded."
+}

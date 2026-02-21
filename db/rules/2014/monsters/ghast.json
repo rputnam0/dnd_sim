@@ -1,0 +1,17 @@
+{
+  "name": "Ghast",
+  "meta": "Medium undead, chaotic evil",
+  "ac": 13,
+  "hp": 36,
+  "hp_formula": "8d8",
+  "ability_scores": {
+    "str": 16,
+    "dex": 17,
+    "con": 10,
+    "int": 11,
+    "wis": 10,
+    "cha": 8
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

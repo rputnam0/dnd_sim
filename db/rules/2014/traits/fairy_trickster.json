@@ -1,0 +1,33 @@
+{
+  "name": "Fairy Trickster",
+  "type": "feat",
+  "description": "You increase your Dexterity or Charisma score by 1, to a maximum of 20. When you take the Disengage action on your turn, difficult terrain doesn't cost you extra movement for the rest of that turn. Additionally, when you hit a creature with an attack roll, you can force the target to make a Wisdom saving throw (DC 8 + the ability modifier of the score increased by this feat + your proficiency bonus). On a failure, the target has disadvantage on saving throws until the end of your next turn. You can use this benefit a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "dex",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "dex",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "ignore_difficult_terrain",
+      "trigger": "disengage_action",
+      "duration": "turn_end"
+    },
+    {
+      "effect_type": "on_hit_save",
+      "save_type": "wis",
+      "dc_base": 8,
+      "dc_mod": "chosen_stat",
+      "dc_pb": true,
+      "fail_effect": "disadvantage_saving_throws",
+      "duration": "end_of_next_turn",
+      "uses": "pb",
+      "reset": "long_rest"
+    }
+  ]
+}

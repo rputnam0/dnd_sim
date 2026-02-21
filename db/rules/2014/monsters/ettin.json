@@ -1,0 +1,17 @@
+{
+  "name": "Ettin",
+  "meta": "Large giant, chaotic evil",
+  "ac": 12,
+  "hp": 85,
+  "hp_formula": "10d10 + 30",
+  "ability_scores": {
+    "str": 21,
+    "dex": 8,
+    "con": 17,
+    "int": 6,
+    "wis": 10,
+    "cha": 8
+  },
+  "cr": "4",
+  "saving_throws_text": ""
+}

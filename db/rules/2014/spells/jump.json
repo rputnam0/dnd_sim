@@ -1,0 +1,9 @@
+{
+  "name": "Jump",
+  "meta": "Jump 1st-\u00ad\u2010\u2011level transmutation",
+  "casting_time": "1 action",
+  "range": "Touch",
+  "components": "V, S, M (a grasshopper\u2019s hind leg)",
+  "duration": "1 minute",
+  "description": "You touch a creature. The creature\u2019s jump distance is tripled until the spell ends. Knock 2nd-\u00ad\u2010\u2011level transmutation"
+}

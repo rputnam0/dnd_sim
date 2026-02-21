@@ -1,0 +1,17 @@
+{
+  "name": "Gargoyle",
+  "meta": "Medium elemental, chaotic evil",
+  "ac": 15,
+  "hp": 52,
+  "hp_formula": "7d8 + 21",
+  "ability_scores": {
+    "str": 15,
+    "dex": 11,
+    "con": 16,
+    "int": 6,
+    "wis": 11,
+    "cha": 7
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

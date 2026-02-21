@@ -1,0 +1,17 @@
+{
+  "name": "Tarrasque",
+  "meta": "Gargantuan monstrosity (titan), unaligned",
+  "ac": 25,
+  "hp": 676,
+  "hp_formula": "33d20 + 330",
+  "ability_scores": {
+    "str": 30,
+    "dex": 11,
+    "con": 30,
+    "int": 3,
+    "wis": 11,
+    "cha": 11
+  },
+  "cr": "30",
+  "saving_throws_text": "Int +5, Wis +9, Cha +9"
+}

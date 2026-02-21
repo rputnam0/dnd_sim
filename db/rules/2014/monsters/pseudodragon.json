@@ -1,0 +1,17 @@
+{
+  "name": "Pseudodragon",
+  "meta": "Tiny dragon, neutral good",
+  "ac": 13,
+  "hp": 7,
+  "hp_formula": "2d4 + 2",
+  "ability_scores": {
+    "str": 6,
+    "dex": 15,
+    "con": 13,
+    "int": 10,
+    "wis": 12,
+    "cha": 10
+  },
+  "cr": "1/4",
+  "saving_throws_text": ""
+}

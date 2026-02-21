@@ -1,0 +1,17 @@
+{
+  "name": "Vrock",
+  "meta": "Large fiend (demon), chaotic evil",
+  "ac": 15,
+  "hp": 104,
+  "hp_formula": "11d10 + 44",
+  "ability_scores": {
+    "str": 17,
+    "dex": 15,
+    "con": 18,
+    "int": 8,
+    "wis": 13,
+    "cha": 8
+  },
+  "cr": "6",
+  "saving_throws_text": "Dex +5, Wis +4, Cha +2"
+}

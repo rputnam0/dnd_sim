@@ -1,0 +1,17 @@
+{
+  "name": "Young Bronze Dragon",
+  "meta": "Large dragon, lawful good",
+  "ac": 18,
+  "hp": 142,
+  "hp_formula": "15d10 + 60",
+  "ability_scores": {
+    "str": 21,
+    "dex": 10,
+    "con": 19,
+    "int": 14,
+    "wis": 13,
+    "cha": 17
+  },
+  "cr": "8",
+  "saving_throws_text": "Dex +3, Con +7, Wis +4, Cha +6"
+}

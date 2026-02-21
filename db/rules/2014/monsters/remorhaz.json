@@ -1,0 +1,17 @@
+{
+  "name": "Remorhaz",
+  "meta": "Huge monstrosity, unaligned",
+  "ac": 17,
+  "hp": 195,
+  "hp_formula": "17d12 + 85",
+  "ability_scores": {
+    "str": 24,
+    "dex": 13,
+    "con": 21,
+    "int": 4,
+    "wis": 10,
+    "cha": 5
+  },
+  "cr": "11",
+  "saving_throws_text": ""
+}

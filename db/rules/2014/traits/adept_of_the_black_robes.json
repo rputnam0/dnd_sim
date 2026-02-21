@@ -1,0 +1,26 @@
+{
+  "name": "Adept of the Black Robes",
+  "type": "feat",
+  "description": "You learn one 2nd-level enchantment or necromancy spell and can cast it once per long rest without a spell slot, or using your own spell slots. Additionally, when a creature within 60 feet fails a saving throw against a damaging spell you cast, you can expend Hit Dice equal to the spell's level to increase the damage by the total rolled on those Hit Dice.",
+  "mechanics": [
+    {
+      "effect_type": "learn_spell",
+      "level": 2,
+      "school": [
+        "enchantment",
+        "necromancy"
+      ],
+      "free_cast": "1/long_rest",
+      "use_slots": true
+    },
+    {
+      "effect_type": "damage_bonus",
+      "trigger": "failed_save",
+      "range": 60,
+      "condition": "spell_deals_damage",
+      "cost": "hit_dice",
+      "cost_amount": "spell_level",
+      "bonus_roll": "hit_dice"
+    }
+  ]
+}

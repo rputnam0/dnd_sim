@@ -1,0 +1,29 @@
+{
+  "name": "Dungeon Delver",
+  "type": "feat",
+  "description": "You have advantage on Wisdom (Perception) and Intelligence (Investigation) checks made to detect the presence of secret doors. You have advantage on saving throws made to avoid or resist traps. You have resistance to the damage dealt by traps. Traveling at a fast pace doesn't impose the normal -5 penalty on your passive Wisdom (Perception) score.",
+  "mechanics": [
+    {
+      "effect_type": "advantage_skill",
+      "skill": "perception",
+      "condition": "detecting secret doors"
+    },
+    {
+      "effect_type": "advantage_skill",
+      "skill": "investigation",
+      "condition": "detecting secret doors"
+    },
+    {
+      "effect_type": "advantage_save",
+      "condition": "avoid or resist traps"
+    },
+    {
+      "effect_type": "damage_resistance",
+      "source": "traps"
+    },
+    {
+      "effect_type": "ignore_passive_perception_penalty",
+      "condition": "fast pace travel"
+    }
+  ]
+}

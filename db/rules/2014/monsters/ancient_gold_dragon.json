@@ -1,0 +1,17 @@
+{
+  "name": "Ancient Gold Dragon",
+  "meta": "Gargantuan dragon, lawful good",
+  "ac": 22,
+  "hp": 546,
+  "hp_formula": "28d20 + 252",
+  "ability_scores": {
+    "str": 30,
+    "dex": 14,
+    "con": 29,
+    "int": 18,
+    "wis": 17,
+    "cha": 28
+  },
+  "cr": "24",
+  "saving_throws_text": "Dex +9, Con +16, Wis +10, Cha +16"
+}

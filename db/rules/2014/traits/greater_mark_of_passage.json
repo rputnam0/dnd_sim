@@ -1,0 +1,24 @@
+{
+  "name": "Greater Mark of Passage",
+  "type": "feat",
+  "description": "You increase an ability score of your choice by 1. Your Intuitive Motion die increases from a d4 to a d6. When you use your Magical Passage feature to cast Misty Step, you can choose up to two willing creatures within 30 feet; each can use their reaction to teleport up to 30 feet to an unoccupied space they can see.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "any",
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "modify_feature_die",
+      "feature": "Intuitive Motion",
+      "die": "1d6"
+    },
+    {
+      "effect_type": "spell_enhancement",
+      "spell": "Misty Step",
+      "feature": "Magical Passage",
+      "description": "Up to two willing creatures within 30 feet can use a reaction to teleport 30 feet."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Armor of Agathys",
+  "type": "spell",
+  "level": 1,
+  "school": "Abjuration",
+  "casting_time": "action",
+  "range_ft": 0,
+  "concentration": false,
+  "duration_rounds": 600,
+  "description": "A protective magical force surrounds you, manifesting as a spectral frost that covers you and your gear. You gain 5 temporary hit points for the duration. If a creature hits you with a melee attack while you have these hit points, the creature takes 5 cold damage. At Higher Levels: When you cast this spell using a spell slot of 2nd level or higher, both the temporary hit points and the cold damage increase by 5 for each slot level above 1st.",
+  "save_ability": null,
+  "damage_type": "cold",
+  "mechanics": [
+    {
+      "effect_type": "grant_temporary_hit_points",
+      "amount": 5,
+      "duration_rounds": 600
+    },
+    {
+      "effect_type": "damage_on_melee_hit",
+      "damage": 5,
+      "damage_type": "cold"
+    }
+  ]
+}

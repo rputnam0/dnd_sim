@@ -1,0 +1,17 @@
+{
+  "name": "Ancient Brass Dragon",
+  "meta": "Gargantuan dragon, chaotic good",
+  "ac": 20,
+  "hp": 297,
+  "hp_formula": "17d20 + 119",
+  "ability_scores": {
+    "str": 27,
+    "dex": 10,
+    "con": 25,
+    "int": 16,
+    "wis": 15,
+    "cha": 19
+  },
+  "cr": "20",
+  "saving_throws_text": "Dex +6, Con +13, Wis +8, Cha +10"
+}

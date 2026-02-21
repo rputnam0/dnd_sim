@@ -1,0 +1,17 @@
+{
+  "name": "Green Hag",
+  "meta": "Medium fey, neutral evil",
+  "ac": 17,
+  "hp": 82,
+  "hp_formula": "11d8 + 33",
+  "ability_scores": {
+    "str": 18,
+    "dex": 12,
+    "con": 16,
+    "int": 13,
+    "wis": 14,
+    "cha": 14
+  },
+  "cr": "3",
+  "saving_throws_text": ""
+}

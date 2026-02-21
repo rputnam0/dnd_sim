@@ -15,7 +15,7 @@ Each section is intended to be delivered and reviewed in a separate pull request
 
 ## PR-2: Feat/Class Behavior Correctness
 
-- [ ] Audit trait key normalization (`space`, `_`, `-`) and unify checks.
+- [x] Audit trait key normalization (`space`, `_`, `-`) and unify checks.
 - [ ] Verify Lucky attacker/defender/save behavior with deterministic tests.
 - [ ] Verify GWM/Sharpshooter toggles and damage math under advantage/disadvantage.
 - [ ] Verify Shield Master / War Caster / Mage Slayer interactions.
@@ -25,25 +25,25 @@ Each section is intended to be delivered and reviewed in a separate pull request
 
 ## PR-3: Spatial, Vision, and Cover Integration
 
-- [ ] Add attack-loop tests for unseen attacker/unseen target cancellation.
-- [ ] Add tests for magical darkness + darkvision/truesight/blindsight behavior.
-- [ ] Add tests for cover states and AC modification integration.
+- [x] Add attack-loop tests for unseen attacker/unseen target cancellation.
+- [x] Add tests for magical darkness + darkvision/truesight/blindsight behavior.
+- [x] Add tests for cover states and AC modification integration.
 - [ ] Verify strategy scoring inputs use current round hazards and geometry fields.
-- [ ] Ensure full test suite passes.
+- [x] Ensure full test suite passes.
 
 ## PR-4: Parser and Data Pipeline Validation
 
-- [ ] Add contract tests for parser outputs (`spells`, `monsters`, `traits`) against expected schema.
-- [ ] Validate normalization assumptions for generated JSON names/keys.
-- [ ] Add fixture-based tests for key parser edge cases.
-- [ ] Ensure full test suite passes.
+- [x] Add contract tests for parser outputs (`spells`, `monsters`, `traits`) against expected schema.
+- [x] Validate normalization assumptions for generated JSON names/keys.
+- [x] Add fixture-based tests for key parser edge cases.
+- [x] Ensure full test suite passes.
 
 ## PR-5: Integration and Simulation Invariants
 
-- [ ] Add integration tests for newly introduced action/effect combinations.
-- [ ] Add invariants for resource accounting and per-round state resets.
-- [ ] Add invariants for concentration and condition duration lifecycle.
-- [ ] Ensure full test suite passes.
+- [x] Add integration tests for newly introduced action/effect combinations.
+- [x] Add invariants for resource accounting and per-round state resets.
+- [x] Add invariants for concentration and condition duration lifecycle.
+- [x] Ensure full test suite passes.
 
 ## Review Gate (for every PR)
 

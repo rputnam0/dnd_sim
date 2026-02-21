@@ -1,0 +1,17 @@
+{
+  "name": "Planetar",
+  "meta": "Large celestial, lawful good",
+  "ac": 19,
+  "hp": 200,
+  "hp_formula": "16d10 + 112",
+  "ability_scores": {
+    "str": 24,
+    "dex": 20,
+    "con": 24,
+    "int": 19,
+    "wis": 22,
+    "cha": 25
+  },
+  "cr": "16",
+  "saving_throws_text": "Con +12, Wis +11, Cha +12"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Magma Mephit",
+  "meta": "Small elemental, neutral evil",
+  "ac": 11,
+  "hp": 22,
+  "hp_formula": "5d6 + 5",
+  "ability_scores": {
+    "str": 8,
+    "dex": 12,
+    "con": 12,
+    "int": 7,
+    "wis": 10,
+    "cha": 10
+  },
+  "cr": "1/2",
+  "saving_throws_text": ""
+}

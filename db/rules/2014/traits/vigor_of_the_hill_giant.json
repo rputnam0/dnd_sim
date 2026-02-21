@@ -1,0 +1,31 @@
+{
+  "name": "Vigor of the Hill Giant",
+  "type": "feat",
+  "description": "You increase your Strength, Constitution, or Wisdom score by 1, to a maximum of 20. When you are subjected to an effect that would move you at least 5 feet or give you the prone condition, you can use your reaction to not be moved and not become prone. Additionally, when you spend Hit Dice to regain hit points during a short rest, you regain additional hit points equal to your Constitution modifier plus your proficiency bonus.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "choice": [
+        "str",
+        "con",
+        "wis"
+      ],
+      "amount": 1,
+      "max": 20
+    },
+    {
+      "effect_type": "reaction_negate_forced_movement",
+      "trigger": "subjected_to_forced_movement"
+    },
+    {
+      "effect_type": "reaction_negate_condition",
+      "condition": "prone",
+      "trigger": "subjected_to_prone"
+    },
+    {
+      "effect_type": "short_rest_healing_bonus",
+      "bonus_stat": "con",
+      "bonus_pb": true
+    }
+  ]
+}

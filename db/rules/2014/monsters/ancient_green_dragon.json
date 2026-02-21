@@ -1,0 +1,17 @@
+{
+  "name": "Ancient Green Dragon",
+  "meta": "Gargantuan dragon, lawful evil",
+  "ac": 21,
+  "hp": 385,
+  "hp_formula": "22d20 + 154",
+  "ability_scores": {
+    "str": 27,
+    "dex": 12,
+    "con": 25,
+    "int": 20,
+    "wis": 17,
+    "cha": 19
+  },
+  "cr": "22",
+  "saving_throws_text": "Dex +8, Con +14, Wis +10, Cha +11"
+}

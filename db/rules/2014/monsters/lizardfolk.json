@@ -1,0 +1,17 @@
+{
+  "name": "Lizardfolk",
+  "meta": "Medium humanoid (lizardfolk), neutral",
+  "ac": 15,
+  "hp": 22,
+  "hp_formula": "4d8 + 4",
+  "ability_scores": {
+    "str": 15,
+    "dex": 10,
+    "con": 13,
+    "int": 7,
+    "wis": 12,
+    "cha": 7
+  },
+  "cr": "1/2",
+  "saving_throws_text": ""
+}

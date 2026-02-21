@@ -1,0 +1,17 @@
+{
+  "name": "Wyvern",
+  "meta": "Large dragon, unaligned",
+  "ac": 13,
+  "hp": 110,
+  "hp_formula": "13d10 + 39",
+  "ability_scores": {
+    "str": 19,
+    "dex": 10,
+    "con": 16,
+    "int": 5,
+    "wis": 12,
+    "cha": 6
+  },
+  "cr": "6",
+  "saving_throws_text": ""
+}

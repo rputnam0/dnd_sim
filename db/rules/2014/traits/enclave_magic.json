@@ -1,0 +1,37 @@
+{
+  "name": "Enclave Magic",
+  "type": "feat",
+  "description": "You increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. You have advantage on ability checks when taking the Influence action with Beasts. You always have the Beast Sense spell prepared. You can cast it once without a spell slot and without requiring concentration, regaining the ability to do so after a long rest. You can also cast it using any spell slots you have. The spellcasting ability is the one increased by this feat.",
+  "mechanics": [
+    {
+      "effect_type": "stat_increase",
+      "stat": "int",
+      "amount": 1,
+      "max": 20,
+      "choice": [
+        "int",
+        "wis",
+        "cha"
+      ]
+    },
+    {
+      "effect_type": "advantage_check",
+      "action": "influence",
+      "target": "beasts"
+    },
+    {
+      "effect_type": "spell_prepared",
+      "spell": "Beast Sense"
+    },
+    {
+      "effect_type": "free_spell_cast",
+      "spell": "Beast Sense",
+      "frequency": "long_rest",
+      "no_concentration": true
+    },
+    {
+      "effect_type": "spell_slot_casting",
+      "spell": "Beast Sense"
+    }
+  ]
+}

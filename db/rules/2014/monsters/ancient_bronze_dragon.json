@@ -1,0 +1,17 @@
+{
+  "name": "Ancient Bronze Dragon",
+  "meta": "Gargantuan dragon, lawful good",
+  "ac": 22,
+  "hp": 444,
+  "hp_formula": "24d20 + 192",
+  "ability_scores": {
+    "str": 29,
+    "dex": 10,
+    "con": 27,
+    "int": 18,
+    "wis": 17,
+    "cha": 21
+  },
+  "cr": "22",
+  "saving_throws_text": "Dex +7, Con +15, Wis +10, Cha +12"
+}

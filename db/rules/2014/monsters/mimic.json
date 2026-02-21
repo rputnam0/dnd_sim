@@ -1,0 +1,17 @@
+{
+  "name": "Mimic",
+  "meta": "Medium monstrosity (shapechanger), neutral",
+  "ac": 12,
+  "hp": 58,
+  "hp_formula": "9d8 + 18",
+  "ability_scores": {
+    "str": 17,
+    "dex": 12,
+    "con": 15,
+    "int": 5,
+    "wis": 13,
+    "cha": 8
+  },
+  "cr": "2",
+  "saving_throws_text": ""
+}

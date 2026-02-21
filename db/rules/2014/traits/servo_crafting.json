@@ -1,0 +1,26 @@
+{
+  "name": "Servo Crafting",
+  "type": "feat",
+  "description": "You can cast the find familiar spell as a ritual to create a servo. You can communicate telepathically and perceive through its senses while on the same plane. When you take the Attack action, you can forgo one attack to allow your servo to make one attack.",
+  "mechanics": [
+    {
+      "effect_type": "spell_cast",
+      "spell": "find familiar",
+      "ritual_only": true
+    },
+    {
+      "effect_type": "familiar_replacement",
+      "creature": "servo"
+    },
+    {
+      "effect_type": "telepathy",
+      "range": "same_plane",
+      "target": "familiar"
+    },
+    {
+      "effect_type": "attack_replacement",
+      "trigger": "attack_action",
+      "replacement": "familiar_attack"
+    }
+  ]
+}

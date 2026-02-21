@@ -1,0 +1,12 @@
+{
+  "name": "Blind Fighting",
+  "type": "feat",
+  "description": "You have Blindsight with a range of 10 feet.",
+  "mechanics": [
+    {
+      "effect_type": "sense",
+      "sense": "blindsight",
+      "range": 10
+    }
+  ]
+}

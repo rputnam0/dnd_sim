@@ -1,0 +1,17 @@
+{
+  "name": "Minotaur",
+  "meta": "Large monstrosity, chaotic evil",
+  "ac": 14,
+  "hp": 76,
+  "hp_formula": "9d10 + 27",
+  "ability_scores": {
+    "str": 18,
+    "dex": 11,
+    "con": 16,
+    "int": 6,
+    "wis": 16,
+    "cha": 9
+  },
+  "cr": "3",
+  "saving_throws_text": ""
+}
