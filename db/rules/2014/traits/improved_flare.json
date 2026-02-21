@@ -1,0 +1,13 @@
+{
+  "name": "Improved Flare",
+  "type": "subclass_feature",
+  "description": "Starting at 6th level, you can also use your Warding Flare feature when a creature that you can see within 30 feet of you attacks a creature other than you.",
+  "mechanics": [
+    {
+      "trigger": "creature attacks another creature",
+      "range": 30,
+      "visibility": "see",
+      "effect": "use Warding Flare"
+    }
+  ]
+}

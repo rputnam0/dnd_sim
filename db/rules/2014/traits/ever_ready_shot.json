@@ -1,0 +1,20 @@
+{
+  "name": "Ever-Ready Shot",
+  "type": "subclass_feature",
+  "description": "Starting at 15th level, your magical archery is available whenever battle starts. If you roll initiative and have no uses of Arcane Shot remaining, you regain one use of it.",
+  "mechanics": [
+    {
+      "trigger": "roll_initiative",
+      "condition": {
+        "feature": "Arcane Shot",
+        "uses_remaining": 0
+      },
+      "effect": {
+        "restore_uses": {
+          "feature": "Arcane Shot",
+          "amount": 1
+        }
+      }
+    }
+  ]
+}

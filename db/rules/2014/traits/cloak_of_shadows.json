@@ -1,0 +1,13 @@
+{
+  "name": "Cloak of Shadows",
+  "type": "subclass_feature",
+  "description": "By 11th level, you have learned to become one with the shadows. When you are in an area of dim light or darkness, you can use your action to become invisible. You remain invisible until you make an attack, cast a spell, or are in an area of bright light.",
+  "mechanics": [
+    {
+      "type": "invisibility",
+      "activation": "action",
+      "activation_condition": "area of dim light or darkness",
+      "duration": "until you make an attack, cast a spell, or are in an area of bright light"
+    }
+  ]
+}

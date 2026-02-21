@@ -1,0 +1,26 @@
+{
+  "name": "Aura of Hate",
+  "type": "subclass_feature",
+  "description": "Starting at 7th level, the paladin, as well any fiends and undead within 10 feet of the paladin, gains a bonus to melee weapon damage rolls equal to the paladin's Charisma modifier (minimum of +1). A creature can benefit from this feature from only one paladin at a time. At 18th level, the range of this aura increases to 30 feet.",
+  "mechanics": [
+    {
+      "mechanic_type": "aura",
+      "range": 10,
+      "range_at_18": 30,
+      "affected_creatures": [
+        "paladin",
+        "fiend",
+        "undead"
+      ],
+      "effect": {
+        "damage_type": "melee_weapon",
+        "bonus": {
+          "type": "ability_modifier",
+          "ability": "charisma",
+          "minimum": 1
+        }
+      },
+      "stacking": "no"
+    }
+  ]
+}

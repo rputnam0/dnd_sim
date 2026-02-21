@@ -1,0 +1,20 @@
+{
+  "name": "Dexterous Attacks",
+  "type": "class_feature",
+  "description": "You can use your Dexterity modifier instead of your Strength modifier for the attack and damage rolls of your Unarmed Strikes and Monk weapons. In addition, when you use the Grapple or Shove option of your Unarmed Strike, you can use your Dexterity modifier instead of your Strength modifier to determine the save DC.",
+  "mechanics": [
+    {
+      "effect": "use_dexterity_for_attack_and_damage",
+      "applies_to": [
+        "Unarmed Strikes",
+        "Monk weapons"
+      ],
+      "replaces": "Strength"
+    },
+    {
+      "effect": "use_dexterity_for_grapple_shove_dc",
+      "applies_to": "Unarmed Strike",
+      "replaces": "Strength"
+    }
+  ]
+}

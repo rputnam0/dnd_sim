@@ -1,0 +1,30 @@
+{
+  "name": "Trickery Domain Spells",
+  "type": "subclass_feature",
+  "description": "Your connection to this divine domain ensures you always have certain spells ready. When you reach a Cleric level specified in the Trickery Domain Spells table, you thereafter always have the listed spells prepared.",
+  "mechanics": [
+    {
+      "type": "always_prepared_spells",
+      "spells_by_level": {
+        "3": [
+          "Charm Person",
+          "Disguise Self",
+          "Invisibility",
+          "Pass without Trace"
+        ],
+        "5": [
+          "Hypnotic Pattern",
+          "Nondetection"
+        ],
+        "7": [
+          "Confusion",
+          "Dimension Door"
+        ],
+        "9": [
+          "Dominate Person",
+          "Modify Memory"
+        ]
+      }
+    }
+  ]
+}

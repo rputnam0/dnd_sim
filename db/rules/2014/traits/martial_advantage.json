@@ -1,0 +1,14 @@
+{
+  "name": "Martial Advantage",
+  "type": "racial_trait",
+  "description": "Once per turn, you can deal an extra 2d6 damage to a creature you hit with a weapon attack if that creature is within 5 ft. of an ally of yours that isn't incapacitated.",
+  "mechanics": [
+    {
+      "effect_type": "extra_damage",
+      "damage": "2d6",
+      "trigger": "weapon_attack_hit",
+      "condition": "target within 5 ft of a non-incapacitated ally",
+      "frequency": "once_per_turn"
+    }
+  ]
+}

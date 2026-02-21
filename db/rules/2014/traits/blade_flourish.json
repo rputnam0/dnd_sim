@@ -1,0 +1,15 @@
+{
+  "name": "Blade Flourish",
+  "type": "subclass_feature",
+  "description": "At 3rd level, you learn to perform impressive displays of martial prowess and speed. Whenever you take the Attack action on your turn, your walking speed increases by 10 feet until the end of the turn, and if a weapon attack that you make as part of this action hits a creature, you can use one of the following Blade Flourish options of your choice. You can use only one Blade Flourish option per turn. Options: Defensive Flourish, Slashing Flourish, Mobile Flourish.",
+  "mechanics": [
+    {
+      "type": "speed_modifier",
+      "value": 10,
+      "unit": "feet",
+      "duration": "until end of turn",
+      "trigger": "when you take the Attack action",
+      "once_per_turn": true
+    }
+  ]
+}

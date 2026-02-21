@@ -1,0 +1,62 @@
+{
+  "name": "Panache",
+  "type": "subclass_feature",
+  "description": "At 9th level, your charm becomes extraordinarily beguiling. As an action, you can make a Charisma (Persuasion) check contested by a creature's Wisdom (Insight) check. The creature must be able to hear you, and the two of you must share a language. If you succeed on the check and the creature is hostile to you, it has disadvantage on attack rolls against targets other than you and can't make opportunity attacks against targets other than you. This effect lasts for 1 minute, until one of your companions attacks the target or affects it with a spell, or until you and the target are more than 60 feet apart. If you succeed on the check and the creature isn't hostile to you, it is charmed by you for 1 minute. While charmed, it regards you as a friendly acquaintance. This effect ends immediately if you or your companions do anything harmful to it.",
+  "mechanics": [
+    {
+      "action": "action",
+      "type": "contested_check",
+      "your_check": {
+        "ability": "Charisma",
+        "skill": "Persuasion"
+      },
+      "target_check": {
+        "ability": "Wisdom",
+        "skill": "Insight"
+      },
+      "requirements": {
+        "target_can_hear": true,
+        "shared_language": true
+      },
+      "on_success": [
+        {
+          "condition": "target_hostile",
+          "effects": [
+            {
+              "type": "grant_disadvantage",
+              "target": "target",
+              "against": "any_target_except_you",
+              "duration": "1 minute"
+            },
+            {
+              "type": "prevent_opportunity_attacks",
+              "target": "target",
+              "against": "any_target_except_you",
+              "duration": "1 minute"
+            }
+          ],
+          "ends_if": [
+            "companion_attacks_target",
+            "companion_spells_target",
+            "distance_greater_than_60_feet"
+          ]
+        },
+        {
+          "condition": "target_not_hostile",
+          "effects": [
+            {
+              "type": "apply_condition",
+              "condition": "charmed",
+              "target": "target",
+              "duration": "1 minute",
+              "notes": "Target regards you as a friendly acquaintance"
+            }
+          ],
+          "ends_if": [
+            "you_or_companion_harm_target"
+          ]
+        }
+      ]
+    }
+  ]
+}

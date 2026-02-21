@@ -1,0 +1,53 @@
+{
+  "name": "Tinker's Magic",
+  "type": "class_feature",
+  "description": "You know the Mending cantrip. As a Magic action while holding Tinker's Tools, you can create one item in an unoccupied space within 5 feet of yourself, choosing the item from the following list: Ball Bearings, Basket, Bedroll, Bell, Blanket, Block and Tackle, Glass Bottle, Bucket, Caltrops, Candle, Crowbar, Flask, Grappling Hook, Hunting Trap, Jug, Lamp, Manacles, Net, Oil, Paper, Parchment, Pole, Pouch, Rope, Sack, Shovel, Iron Spikes, String, Tinderbox, Torch, Vial. See the rules for the item in the Player's Handbook. The item lasts until you finish a Long Rest, at which point it vanishes. You can use this feature a number of times equal to your Intelligence modifier (minimum of once), and you regain all expended uses when you finish a Long Rest.",
+  "mechanics": [
+    {
+      "type": "grant_cantrip",
+      "cantrip": "Mending"
+    },
+    {
+      "type": "item_creation",
+      "action": "Magic",
+      "requires": "Tinker's Tools",
+      "range": "5 ft",
+      "items": [
+        "Ball Bearings",
+        "Basket",
+        "Bedroll",
+        "Bell",
+        "Blanket",
+        "Block and Tackle",
+        "Glass Bottle",
+        "Bucket",
+        "Caltrops",
+        "Candle",
+        "Crowbar",
+        "Flask",
+        "Grappling Hook",
+        "Hunting Trap",
+        "Jug",
+        "Lamp",
+        "Manacles",
+        "Net",
+        "Oil",
+        "Paper",
+        "Parchment",
+        "Pole",
+        "Pouch",
+        "Rope",
+        "Sack",
+        "Shovel",
+        "Iron Spikes",
+        "String",
+        "Tinderbox",
+        "Torch",
+        "Vial"
+      ],
+      "uses_per_long_rest": "int_mod",
+      "min_uses": 1,
+      "reset": "long_rest"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Horns",
+  "type": "racial_trait",
+  "description": "Your horns are natural melee weapons, which you can use to make unarmed strikes. If you hit with them, you deal piercing damage equal to 1d6 + your Strength modifier, instead of the bludgeoning damage normal for an unarmed strike.",
+  "mechanics": [
+    {
+      "effect": "natural_weapon",
+      "weapon_name": "Horns",
+      "damage": "1d6+STR",
+      "damage_type": "piercing",
+      "usage": "unarmed strike"
+    }
+  ]
+}

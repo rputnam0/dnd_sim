@@ -1,0 +1,31 @@
+{
+  "name": "Frigid Explorer",
+  "type": "subclass_feature",
+  "description": "You gain the following benefits. Biting Cold: Damage from your weapon attacks, Ranger spells, and Ranger features ignores Resistance to Cold damage. Frost Resistance: You have Resistance to Cold damage. Polar Strikes: When you hit a creature with an attack roll using a weapon, you can deal an extra 1d4 Cold damage to the target, which can take this extra damage only once per turn. When you reach Ranger level 11, this extra damage increases to 1d6.",
+  "mechanics": [
+    {
+      "type": "ignore_resistance",
+      "damage_type": "cold",
+      "applies_to": [
+        "weapon_attacks",
+        "ranger_spells",
+        "ranger_features"
+      ]
+    },
+    {
+      "type": "grant_resistance",
+      "damage_type": "cold"
+    },
+    {
+      "type": "extra_damage",
+      "damage": "1d4",
+      "damage_type": "cold",
+      "trigger": "weapon_attack_hit",
+      "once_per_turn": true,
+      "scale": {
+        "level": 11,
+        "damage": "1d6"
+      }
+    }
+  ]
+}

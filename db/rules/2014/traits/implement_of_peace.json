@@ -1,0 +1,16 @@
+{
+  "name": "Implement of Peace",
+  "type": "subclass_feature",
+  "description": "1st-level Peace Domain feature. You gain proficiency in the Insight, Performance, or Persuasion skill (your choice).",
+  "mechanics": [
+    {
+      "type": "grant_skill_proficiency",
+      "skillOptions": [
+        "Insight",
+        "Performance",
+        "Persuasion"
+      ],
+      "choice": true
+    }
+  ]
+}

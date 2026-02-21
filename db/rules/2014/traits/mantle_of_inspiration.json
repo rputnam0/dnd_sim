@@ -1,0 +1,33 @@
+{
+  "name": "Mantle of Inspiration",
+  "type": "subclass_feature",
+  "description": "When you join the College of Glamour at 3rd level, you gain the ability to weave a song of fey magic that imbues your allies with vigor and speed. As a bonus action, you can expend one use of your Bardic Inspiration to grant yourself a wondrous appearance. When you do so, choose a number of creatures you can see and that can see you within 60 feet of you, up to a number equal to your Charisma modifier (minimum of one). Each of them gains 5 temporary hit points. When a creature gains these temporary hit points, it can immediately use its reaction to move up to its speed, without provoking opportunity attacks. The number of temporary hit points increases when you reach certain levels in this class, increasing to 8 at 5th level, 11 at 10th level, and 14 at 15th level.",
+  "mechanics": [
+    {
+      "action_type": "bonus",
+      "resource_cost": {
+        "type": "Bardic Inspiration",
+        "amount": 1
+      },
+      "target": {
+        "type": "creature",
+        "range_feet": 60,
+        "max_per_charisma_modifier": true,
+        "minimum": 1
+      },
+      "temporary_hit_points": {
+        "base": 5,
+        "scale_by_level": {
+          "5": 8,
+          "10": 11,
+          "15": 14
+        }
+      },
+      "reaction": {
+        "allows_movement": true,
+        "movement": "speed",
+        "no_opportunity_attack": true
+      }
+    }
+  ]
+}

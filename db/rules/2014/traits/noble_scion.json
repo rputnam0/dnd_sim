@@ -1,0 +1,32 @@
+{
+  "name": "Noble Scion",
+  "type": "subclass_feature",
+  "description": "As a Bonus Action, you gain the benefits below for 10 minutes or until you end them (no action required). Once you use this feature, you can't use it again until you finish a Long Rest. You can also restore your use of it by expending a level 5 spell slot (no action required).\n\nFlight: You have a Fly Speed of 60 feet and can hover.\n\nMinor Wish: When you or an ally in your Aura of Protection fails a D20 Test, you can take a Reaction to make the D20 Test succeed instead.",
+  "mechanics": [
+    {
+      "type": "activation",
+      "cost": "bonus action",
+      "duration": "10 minutes",
+      "recharge": {
+        "type": "rest",
+        "rest": "long"
+      },
+      "alternativeRecharge": {
+        "type": "spellSlot",
+        "level": 5
+      }
+    },
+    {
+      "type": "grant_speed",
+      "mode": "fly",
+      "speed": 60,
+      "hover": true
+    },
+    {
+      "type": "reaction",
+      "trigger": "failed D20 test",
+      "target": "self or ally within Aura of Protection",
+      "effect": "replace failed test with success"
+    }
+  ]
+}

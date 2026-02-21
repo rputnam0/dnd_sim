@@ -1,0 +1,16 @@
+{
+  "name": "Superior Hunter's Defense",
+  "type": "subclass_feature",
+  "description": "At 15th level, you gain one of the following features of your choice: Evasion, Stand Against the Tide, or Uncanny Dodge.",
+  "mechanics": [
+    {
+      "type": "choice",
+      "options": [
+        "Evasion",
+        "Stand Against the Tide",
+        "Uncanny Dodge"
+      ],
+      "count": 1
+    }
+  ]
+}

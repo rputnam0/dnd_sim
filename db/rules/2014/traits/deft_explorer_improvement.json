@@ -1,0 +1,13 @@
+{
+  "name": "Deft Explorer Improvement",
+  "type": "class_feature",
+  "description": "You gain an additional benefit when you reach 6th level in this class. Roving: Your walking speed increases by 5, and you gain a climbing speed and a swimming speed equal to your walking speed.",
+  "mechanics": [
+    {
+      "effect": "increase_speed",
+      "walk_increment": 5,
+      "climb_speed": "equal_to_walk",
+      "swim_speed": "equal_to_walk"
+    }
+  ]
+}

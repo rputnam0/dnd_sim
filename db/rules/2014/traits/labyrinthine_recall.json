@@ -1,0 +1,17 @@
+{
+  "name": "Labyrinthine Recall",
+  "type": "racial_trait",
+  "description": "You always know which direction is north, and you have advantage on any Wisdom (Survival) check you make to navigate or track.",
+  "mechanics": [
+    {
+      "type": "sense",
+      "detail": "always knows north direction"
+    },
+    {
+      "type": "advantage",
+      "ability": "Wisdom",
+      "skill": "Survival",
+      "condition": "navigate or track"
+    }
+  ]
+}

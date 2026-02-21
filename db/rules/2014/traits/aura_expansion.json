@@ -1,0 +1,12 @@
+{
+  "name": "Aura Expansion",
+  "type": "class_feature",
+  "description": "Your Aura of Protection is now a 30-foot emanation.",
+  "mechanics": [
+    {
+      "effect": "Aura of Protection radius",
+      "radius_feet": 30,
+      "area_type": "emanation"
+    }
+  ]
+}

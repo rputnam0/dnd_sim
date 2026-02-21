@@ -1,0 +1,19 @@
+{
+  "name": "Restorative Reagents",
+  "type": "subclass_feature",
+  "description": "You can cast Lesser Restoration without expending a spell slot and without preparing the spell, provided you use Alchemist's Supplies as the Spellcasting Focus. You can do so a number of times equal to your Intelligence modifier (minimum of once), and you regain all expended uses when you finish a Long Rest.",
+  "mechanics": [
+    {
+      "type": "spell_cast",
+      "spell": "Lesser Restoration",
+      "slot_cost": 0,
+      "requires_prepared": false,
+      "focus_item": "Alchemist's Supplies",
+      "uses": {
+        "per_long_rest": true,
+        "max_uses": "Intelligence modifier",
+        "minimum": 1
+      }
+    }
+  ]
+}

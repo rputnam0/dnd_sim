@@ -1,0 +1,37 @@
+{
+  "name": "Summon Wildfire Spirit",
+  "type": "subclass_feature",
+  "description": "2nd-level Circle of Wildfire feature. You can summon the primal spirit bound to your soul. As an action, you can expend one use of your Wild Shape feature to summon your wildfire spirit, rather than assuming a beast form. The spirit appears in an unoccupied space of your choice that you can see within 30 feet of you. Each creature within 10 feet of the spirit (other than you) when it appears must succeed on a Dexterity saving throw against your spell save DC or take 2d6 fire damage. The spirit is friendly to you and your companions and obeys your commands. See this creature's game statistics in the Wildfire Spirit stat block, which uses your proficiency bonus (PB) in several places. You determine the spirit's appearance. In combat, the spirit shares your initiative count, but it takes its turn immediately after yours. The only action it takes on its turn is the Dodge action, unless you take a bonus action on your turn to command it to take another action. That action can be one in its stat block or some other action. If you are incapacitated, the spirit can take any action of its choice, not just Dodge. The spirit manifests for 1 hour, until it is reduced to 0 hit points, until you use this feature to summon the spirit again, or until you die.",
+  "mechanics": [
+    {
+      "action": "action",
+      "resource": "Wild Shape",
+      "effect": "Summon wildfire spirit"
+    },
+    {
+      "range": 30,
+      "target": "point",
+      "effect": "Spirit appears in chosen unoccupied space"
+    },
+    {
+      "area": "10 ft radius",
+      "target": "creatures (excluding you)",
+      "save": "Dexterity",
+      "dc": "spell save DC",
+      "damage": "2d6 fire"
+    },
+    {
+      "duration": "1 hour or until reduced to 0 HP, re-summoned, or you die"
+    },
+    {
+      "initiative": "Shares your initiative count and acts immediately after you"
+    },
+    {
+      "default_action": "Dodge",
+      "command_option": "Bonus action can command spirit to take another action"
+    },
+    {
+      "incapacitated": "If you are incapacitated, spirit can take any action of its choice"
+    }
+  ]
+}

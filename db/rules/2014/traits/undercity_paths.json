@@ -1,0 +1,16 @@
+{
+  "name": "Undercity Paths",
+  "type": "background_feature",
+  "description": "You know hidden, underground pathways that you can use to bypass crowds, obstacles, and observation as you move through the city. When you aren't in combat, you and companions you lead can travel between any two locations in the city twice as fast as your speed would normally allow. The paths of the undercity are haunted by dangers that rarely brave the light of the surface world, so your journey isn't guaranteed to be safe.",
+  "mechanics": [
+    {
+      "type": "speed_multiplier",
+      "value": 2,
+      "condition": "not in combat",
+      "applies_to": [
+        "self",
+        "companions_you_lead"
+      ]
+    }
+  ]
+}

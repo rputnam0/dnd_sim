@@ -1,0 +1,29 @@
+{
+  "name": "Draconic Presence",
+  "type": "subclass_feature",
+  "description": "Beginning at 18th level, you can channel the dread presence of your dragon ancestor, causing those around you to become awestruck or frightened. As an action, you spend 5 sorcery points to draw on this power and exude an aura of awe or fear (your choice) to a distance of 60 feet. For 1 minute or until you lose your concentration (as if you were casting a concentration spell), each hostile creature that starts its turn in this aura must succeed on a Wisdom saving throw or be charmed (if you chose awe) or frightened (if you chose fear) until the aura ends. A creature that succeeds on this saving throw is immune to your aura for 24 hours.",
+  "mechanics": [
+    {
+      "activation": "action",
+      "resource": {
+        "type": "sorcery_point",
+        "amount": 5
+      },
+      "duration": "concentration, up to 1 minute",
+      "range": 60,
+      "area": "aura",
+      "target": "hostile creature that starts its turn in the aura",
+      "save": {
+        "type": "wisdom",
+        "dc_source": "spell save DC"
+      },
+      "on_fail": {
+        "condition": "charmed or frightened (choice made when activating the aura)"
+      },
+      "on_success": {
+        "immunity": "aura",
+        "duration": "24 hours"
+      }
+    }
+  ]
+}

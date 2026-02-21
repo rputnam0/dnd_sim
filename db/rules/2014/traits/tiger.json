@@ -1,0 +1,13 @@
+{
+  "name": "Tiger",
+  "type": "subclass_feature",
+  "description": "While raging, you can add 10 feet to your long jump distance and 3 feet to your high jump distance. The spirit of the tiger empowers your leaps.",
+  "mechanics": [
+    {
+      "effect": "jump_distance_bonus",
+      "condition": "raging",
+      "long_jump_extra_feet": 10,
+      "high_jump_extra_feet": 3
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "Taunt",
+  "type": "racial_trait",
+  "description": "You have an extraordinary ability to fluster creatures. As a bonus action, you can unleash a string of provoking words at a creature within 60 feet of yourself that can hear and understand you. The target must succeed on a Wisdom saving throw, or it has disadvantage on attack rolls against targets other than you until the start of your next turn. The DC equals 8 + your proficiency bonus + your Intelligence, Wisdom, or Charisma modifier (choose when you select this race). You can use this bonus action a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "action_type": "bonus",
+      "range_feet": 60,
+      "target": "creature that can hear and understand you",
+      "save": {
+        "ability": "wisdom",
+        "dc_formula": "8 + proficiency_bonus + chosen_ability_mod"
+      },
+      "effect": {
+        "type": "disadvantage_on_attack_rolls",
+        "condition": "against targets other than you",
+        "duration": "until the start of your next turn"
+      },
+      "uses": {
+        "per_long_rest": "proficiency_bonus"
+      }
+    }
+  ]
+}

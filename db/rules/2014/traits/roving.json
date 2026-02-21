@@ -1,0 +1,21 @@
+{
+  "name": "Roving",
+  "type": "class_feature",
+  "description": "Your speed increases by 10 feet while you aren't wearing heavy armor. You also have a climb speed and a swim speed equal to your speed.",
+  "mechanics": [
+    {
+      "type": "speed_increase",
+      "amount": 10,
+      "unit": "feet",
+      "condition": "not wearing heavy armor"
+    },
+    {
+      "type": "grant_speed",
+      "modes": [
+        "climb",
+        "swim"
+      ],
+      "value": "equal to current speed"
+    }
+  ]
+}

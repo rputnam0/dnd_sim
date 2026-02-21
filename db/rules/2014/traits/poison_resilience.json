@@ -1,0 +1,19 @@
+{
+  "name": "Poison Resilience",
+  "type": "racial_trait",
+  "description": "You have advantage on saving throws you make to avoid or end the poisoned condition on yourself. You also have resistance to poison damage.",
+  "mechanics": [
+    {
+      "type": "advantage",
+      "target": "self",
+      "on": "saving_throw",
+      "condition": "poisoned",
+      "note": "applies when trying to avoid or end the poisoned condition"
+    },
+    {
+      "type": "resistance",
+      "target": "self",
+      "damage_type": "poison"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Mindless Rage",
+  "type": "subclass_feature",
+  "description": "Beginning at 6th level, you can't be charmed or frightened while raging. If you are charmed or frightened when you enter your rage, the effect is suspended for the duration of the rage.",
+  "mechanics": [
+    {
+      "effect": "grant_immunity",
+      "condition": "charmed",
+      "source": "raging"
+    },
+    {
+      "effect": "grant_immunity",
+      "condition": "frightened",
+      "source": "raging"
+    },
+    {
+      "effect": "suspend_condition",
+      "conditions": [
+        "charmed",
+        "frightened"
+      ],
+      "trigger": "enter_rage",
+      "duration": "rage"
+    }
+  ]
+}

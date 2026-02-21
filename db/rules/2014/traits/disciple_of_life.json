@@ -1,0 +1,13 @@
+{
+  "name": "Disciple of Life",
+  "type": "subclass_feature",
+  "description": "Also starting at 1st level, your healing spells are more effective. Whenever you use a spell of 1st level or higher to restore hit points to a creature, the creature regains additional hit points equal to 2 + the spell's level.",
+  "mechanics": [
+    {
+      "effect": "additional_healing",
+      "formula": "2 + spell_level",
+      "trigger": "spell_healing",
+      "condition": "spell_level >= 1"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Retaliation",
+  "type": "subclass_feature",
+  "description": "Starting at 14th level, when you take damage from a creature that is within 5 feet of you, you can use your reaction to make a melee weapon attack against that creature.",
+  "mechanics": [
+    {
+      "type": "reaction",
+      "trigger": "you take damage from a creature within 5 feet",
+      "action": "make a melee weapon attack against that creature"
+    }
+  ]
+}

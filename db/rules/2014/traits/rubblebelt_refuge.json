@@ -1,0 +1,19 @@
+{
+  "name": "Rubblebelt Refuge",
+  "type": "background_feature",
+  "description": "You are intimately familiar with areas of the city that most people shun: ruined neighborhoods where wurms rampaged, overgrown parks that no hand has tended in decades, and the vast, sprawling rubblebelts of broken terrain that civilized folk have long abandoned. You can find a suitable place for you and your allies to hide or rest in these areas. In addition, you can find food and fresh water in these areas for yourself and up to five other people each day.",
+  "mechanics": [
+    {
+      "type": "safety",
+      "effect": "find suitable place to hide or rest",
+      "condition": "in ruined neighborhoods, overgrown parks, or rubblebelts"
+    },
+    {
+      "type": "resource_provision",
+      "resource": "food_and_water",
+      "quantity": "up to 6 people (self + 5 others)",
+      "frequency": "per day",
+      "condition": "in ruined neighborhoods, overgrown parks, or rubblebelts"
+    }
+  ]
+}

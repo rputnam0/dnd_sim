@@ -1,0 +1,34 @@
+{
+  "name": "Blessing of Moonlight",
+  "type": "subclass_feature",
+  "description": "You always have the Moonbeam spell prepared. When you cast Moonbeam, you can modify the spell so that you glow faintly while the spell is active. While glowing, you shed dim light out to 5 feet, and whenever a creature fails its saving throw against the effects of this Moonbeam, another creature of your choice that you can see within 60 feet of you regains 2d4 hit points. Once you use this feature to modify a casting of Moonbeam, you can't use it again until you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "always_prepared",
+      "spell": "Moonbeam"
+    },
+    {
+      "type": "spell_modification",
+      "spell": "Moonbeam",
+      "effects": [
+        {
+          "type": "glow",
+          "light": "dim",
+          "radius_feet": 5
+        },
+        {
+          "type": "on_failed_save",
+          "heal": {
+            "amount": "2d4",
+            "target": "creature",
+            "range_feet": 60
+          }
+        }
+      ],
+      "usage": {
+        "frequency": "once",
+        "reset": "long_rest"
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "Channel Divinity: Turn Undead",
+  "type": "class_feature",
+  "description": "As an action, you present your holy symbol and speak a prayer censuring the undead. Each undead that can see or hear you within 30 feet must make a Wisdom saving throw. On a failed save the creature is turned for 1 minute or until it takes any damage. A turned creature must spend its turns trying to move as far away from you as it can, and it can't willingly move to a space within 30 feet of you. It also can't take reactions. For its action, it can use only the Dash action or try to escape from an effect that prevents it from moving. If there's nowhere to move, the creature can use the Dodge action.",
+  "mechanics": [
+    {
+      "type": "resource_consumption",
+      "resource": "Channel Divinity",
+      "cost": 1
+    },
+    {
+      "type": "action",
+      "name": "Turn Undead",
+      "activation": "action",
+      "range": 30,
+      "target_filter": "undead that can see or hear you",
+      "save": {
+        "ability": "Wisdom",
+        "dc_source": "spell save DC"
+      },
+      "on_fail": {
+        "condition": "Turned",
+        "duration": "1 minute or until the creature takes damage"
+      }
+    },
+    {
+      "type": "condition",
+      "name": "Turned",
+      "effects": [
+        {
+          "effect": "must move away from the source as far as possible"
+        },
+        {
+          "effect": "cannot willingly move within 30 feet of the source"
+        },
+        {
+          "effect": "cannot take reactions"
+        },
+        {
+          "effect": "on its turn, may only use the Dash action, attempt to escape a movement‑preventing effect, or if unable to move, use the Dodge action"
+        }
+      ]
+    }
+  ]
+}

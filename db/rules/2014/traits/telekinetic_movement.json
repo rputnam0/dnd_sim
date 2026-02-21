@@ -1,0 +1,30 @@
+{
+  "name": "Telekinetic Movement",
+  "type": "subclass_feature",
+  "description": "You can move an object or a creature with your mind. As an action, you target one loose object that is Large or smaller or one willing creature, other than yourself. If you can see the target and it is within 30 feet of you, you can move it up to 30 feet to an unoccupied space you can see. Alternatively, if it is a Tiny object, you can move it to or from your hand. Either way, you can move the target horizontally, vertically, or both. Once you take this action, you can't do so again until you finish a short or long rest, unless you expend a Psionic Energy die to take it again.",
+  "mechanics": [
+    {
+      "action_type": "action",
+      "effect": "move",
+      "target": {
+        "type": "object_or_willing_creature",
+        "size_limit": "Large",
+        "willing": true,
+        "tiny_hand_interaction": true
+      },
+      "range": 30,
+      "distance": 30,
+      "usage": {
+        "reset": "short_or_long_rest",
+        "extra_use_resource": {
+          "resource_type": "psionic_energy_die",
+          "amount": 1
+        }
+      },
+      "movement_axes": [
+        "horizontal",
+        "vertical"
+      ]
+    }
+  ]
+}

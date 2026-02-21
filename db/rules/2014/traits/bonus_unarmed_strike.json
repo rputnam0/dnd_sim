@@ -1,0 +1,11 @@
+{
+  "name": "Bonus Unarmed Strike",
+  "type": "class_feature",
+  "description": "You can make an Unarmed Strike as a Bonus Action.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "grants": "unarmed strike"
+    }
+  ]
+}

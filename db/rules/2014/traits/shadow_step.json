@@ -1,0 +1,20 @@
+{
+  "name": "Shadow Step",
+  "type": "subclass_feature",
+  "description": "You gain the ability to step from one shadow into another. When you are in dim light or darkness, as a bonus action you can teleport up to 60 feet to an unoccupied space you can see that is also in dim light or darkness. You then have advantage on the first melee attack you make before the end of the turn.",
+  "mechanics": [
+    {
+      "type": "teleport",
+      "range": 60,
+      "unit": "feet",
+      "action": "bonus",
+      "condition": "in_dim_light_or_darkness",
+      "target": "unoccupied_space_you_can_see_in_dim_light_or_darkness"
+    },
+    {
+      "type": "advantage",
+      "target": "first_melee_attack",
+      "duration": "until_end_of_turn"
+    }
+  ]
+}

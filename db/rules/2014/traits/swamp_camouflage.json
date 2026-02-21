@@ -1,0 +1,13 @@
+{
+  "name": "Swamp Camouflage",
+  "type": "racial_trait",
+  "description": "You have advantage on Dexterity (Stealth) checks made to hide in swampy terrain.",
+  "mechanics": [
+    {
+      "type": "advantage",
+      "target": "skill",
+      "skill": "Stealth",
+      "condition": "hide in swampy terrain"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "Arcane Firearm",
+  "type": "subclass_feature",
+  "description": "When you finish a Long Rest, you can use Woodcarver's Tools to carve special sigils into a Rod, Staff, Wand, or martial ranged weapon and thereby turn it into your Arcane Firearm. The sigils disappear from the object if you later carve them on a different item. The sigils otherwise last indefinitely. You can use your Arcane Firearm as a Spellcasting Focus for your Artificer spells. When you cast an Artificer spell through the firearm, roll 1d8, and you gain a bonus to one of the spell's damage rolls equal to the number rolled.",
+  "mechanics": [
+    {
+      "type": "item_transformation",
+      "trigger": "Long Rest",
+      "action": "carve_sigils",
+      "tools": "Woodcarver's Tools",
+      "valid_items": [
+        "Rod",
+        "Staff",
+        "Wand",
+        "martial ranged weapon"
+      ],
+      "result": "Arcane Firearm",
+      "duration": "indefinite",
+      "notes": "Sigils can be moved to a different item, causing them to disappear from the previous item."
+    },
+    {
+      "type": "spell_damage_bonus",
+      "source": "Arcane Firearm",
+      "trigger": "cast_artificer_spell_through_firearm",
+      "roll": "1d8",
+      "effect": "add_roll_to_one_damage_roll"
+    }
+  ]
+}

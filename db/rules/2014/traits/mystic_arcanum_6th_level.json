@@ -1,0 +1,42 @@
+{
+  "name": "Mystic Arcanum (6th level)",
+  "type": "class_feature",
+  "description": "At 11th level, your patron bestows upon you a magical secret called an arcanum. Choose one 6th-level spell from the warlock spell list as this arcanum. You can cast your arcanum spell once without expending a spell slot. You must finish a long rest before you can do so again. At higher levels, you gain more warlock spells of your choice that can be cast in this way: one 7th-level spell at 13th level, one 8th-level spell at 15th level, and one 9th-level spell at 17th level. You regain all uses of your Mystic Arcanum when you finish a long rest.",
+  "mechanics": [
+    {
+      "effect": "grant_spell",
+      "spell_level": 6,
+      "source_class": "Warlock",
+      "uses_per_long_rest": 1,
+      "slot_cost": 0
+    },
+    {
+      "effect": "progressive_spell_grant",
+      "progression": [
+        {
+          "available_at_level": 13,
+          "spell_level": 7,
+          "uses_per_long_rest": 1,
+          "slot_cost": 0
+        },
+        {
+          "available_at_level": 15,
+          "spell_level": 8,
+          "uses_per_long_rest": 1,
+          "slot_cost": 0
+        },
+        {
+          "available_at_level": 17,
+          "spell_level": 9,
+          "uses_per_long_rest": 1,
+          "slot_cost": 0
+        }
+      ]
+    },
+    {
+      "effect": "reset_uses",
+      "trigger": "long_rest",
+      "applies_to": "Mystic Arcanum"
+    }
+  ]
+}

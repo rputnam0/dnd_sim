@@ -1,0 +1,14 @@
+{
+  "name": "Team Tactics",
+  "type": "subclass_feature",
+  "description": "When you use Group Recovery, each chosen ally has Advantage on D20 Tests until the start of your next turn.",
+  "mechanics": [
+    {
+      "type": "grant_advantage",
+      "trigger": "use Group Recovery",
+      "targets": "chosen allies",
+      "scope": "all d20 rolls",
+      "duration": "until the start of your next turn"
+    }
+  ]
+}

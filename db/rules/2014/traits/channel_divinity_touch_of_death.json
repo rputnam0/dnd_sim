@@ -1,0 +1,20 @@
+{
+  "name": "Channel Divinity: Touch of Death",
+  "type": "subclass_feature",
+  "description": "Starting at 2nd level, the cleric can use Channel Divinity to destroy another creature's life force by touch. When the cleric hits a creature with a melee attack, the cleric can use Channel Divinity to deal extra necrotic damage to the target. The damage equals 5 + twice his or her cleric level.",
+  "mechanics": [
+    {
+      "type": "damage",
+      "trigger": "hit_melee",
+      "cost": {
+        "resource": "Channel Divinity",
+        "amount": 1
+      },
+      "damage": {
+        "damage_type": "necrotic",
+        "formula": "5 + 2 * cleric_level"
+      },
+      "description": "Add necrotic damage equal to 5 + twice the cleric's level when you hit with a melee attack and spend Channel Divinity."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Magician",
+  "type": "class_feature",
+  "description": "You know one extra cantrip from the Druid spell list. In addition, your mystical connection to nature gives you a bonus to your Intelligence (Arcana or Nature) checks. The bonus equals your Wisdom modifier (minimum bonus of +1).",
+  "mechanics": [
+    {
+      "effect": "extra_cantrip",
+      "spell_list": "Druid"
+    },
+    {
+      "effect": "skill_bonus",
+      "skill": "Intelligence (Arcana or Nature)",
+      "bonus": "Wisdom modifier (minimum +1)"
+    }
+  ]
+}

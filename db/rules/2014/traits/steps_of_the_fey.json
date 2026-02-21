@@ -1,0 +1,30 @@
+{
+  "name": "Steps of the Fey",
+  "type": "subclass_feature",
+  "description": "Your patron grants you the ability to move between the boundaries of the planes. You can cast Misty Step without expending a spell slot a number of times equal to your Charisma modifier (minimum of once), and you regain all expended uses when you finish a Long Rest. In addition, whenever you cast that spell, you can choose one of the following additional effects.\n\nRefreshing Step: Immediately after you teleport, you or one creature you can see within 10 feet of yourself gains 1d10 Temporary Hit Points.\n\nTaunting Step: Creatures within 5 feet of the space you left must succeed on a Wisdom saving throw against your spell save DC or have Disadvantage on attack rolls against creatures other than you until the start of your next turn.",
+  "mechanics": [
+    {
+      "type": "spell_use",
+      "spell": "Misty Step",
+      "cost": "none",
+      "uses": "ability_modifier",
+      "ability": "Charisma",
+      "min_uses": 1,
+      "recharge": "long_rest"
+    },
+    {
+      "type": "temporary_hit_points",
+      "trigger": "after_teleport",
+      "target": "self_or_creature_within_10ft",
+      "amount": "1d10"
+    },
+    {
+      "type": "saving_throw",
+      "save": "Wisdom",
+      "dc_source": "spell_save_dc",
+      "effect": "disadvantage_on_attack_rolls_against_others",
+      "area": "within_5ft_of_origin",
+      "duration": "until_start_of_next_turn"
+    }
+  ]
+}

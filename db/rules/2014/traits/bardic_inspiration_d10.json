@@ -1,0 +1,12 @@
+{
+  "name": "Bardic Inspiration (d10)",
+  "type": "class_feature",
+  "description": "At 10th level, your Bardic Inspiration die changes to a d10.",
+  "mechanics": [
+    {
+      "effect": "bardic_inspiration_die_change",
+      "new_die": "d10",
+      "applies_at_level": 10
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "Light Domain Spells",
+  "type": "subclass_feature",
+  "description": "Your connection to this divine domain ensures you always have certain spells ready. When you reach a Cleric level specified in the Light Domain Spells table, you thereafter always have the listed spells prepared. At 3rd level you have Burning Hands, Faerie Fire, Scorching Ray, and See Invisibility prepared. At 5th level you have Daylight and Fireball prepared. At 7th level you have Arcane Eye and Wall of Fire prepared. At 9th level you have Flame Strike and Scrying prepared.",
+  "mechanics": [
+    {
+      "type": "prepared_spells",
+      "level": 3,
+      "spells": [
+        "Burning Hands",
+        "Faerie Fire",
+        "Scorching Ray",
+        "See Invisibility"
+      ]
+    },
+    {
+      "type": "prepared_spells",
+      "level": 5,
+      "spells": [
+        "Daylight",
+        "Fireball"
+      ]
+    },
+    {
+      "type": "prepared_spells",
+      "level": 7,
+      "spells": [
+        "Arcane Eye",
+        "Wall of Fire"
+      ]
+    },
+    {
+      "type": "prepared_spells",
+      "level": 9,
+      "spells": [
+        "Flame Strike",
+        "Scrying"
+      ]
+    }
+  ]
+}

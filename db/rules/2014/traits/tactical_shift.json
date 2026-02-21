@@ -1,0 +1,13 @@
+{
+  "name": "Tactical Shift",
+  "type": "class_feature",
+  "description": "Whenever you activate your Second Wind with a Bonus Action, you can move up to half your Speed without provoking Opportunity Attacks.",
+  "mechanics": [
+    {
+      "trigger": "Second Wind activation (Bonus Action)",
+      "effect": "move",
+      "distance": "0.5*speed",
+      "noOpportunityAttack": true
+    }
+  ]
+}

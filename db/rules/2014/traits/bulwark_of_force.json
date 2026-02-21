@@ -1,0 +1,22 @@
+{
+  "name": "Bulwark of Force",
+  "type": "subclass_feature",
+  "description": "15th-level Psi Warrior feature. You can shield yourself and others with telekinetic force. As a bonus action, you can choose creatures, which can include you, that you can see within 30 feet of you, up to a number of creatures equal to your Intelligence modifier (minimum of one creature). Each of the chosen creatures is protected by half cover for 1 minute or until you're incapacitated. Once you take this bonus action, you can't do so again until you finish a long rest, unless you expend a Psionic Energy die to take it again.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "effect": "grant_cover",
+      "cover_type": "half",
+      "target_criteria": "creatures you can see within 30 feet, up to your Intelligence modifier (minimum 1)",
+      "duration": "1 minute or until you are incapacitated",
+      "usage": {
+        "reset": "long_rest",
+        "charges": 1,
+        "extra_use_cost": {
+          "resource": "Psionic Energy die",
+          "type": "expend"
+        }
+      }
+    }
+  ]
+}

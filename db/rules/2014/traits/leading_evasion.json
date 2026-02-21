@@ -1,0 +1,22 @@
+{
+  "name": "Leading Evasion",
+  "type": "subclass_feature",
+  "description": "When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed on the saving throw and only half damage if you fail. If any creatures within 5 feet of you are making the same Dexterity saving throw, you can share this benefit with them for that save. You can't use this feature if you have the Incapacitated condition.",
+  "mechanics": [
+    {
+      "type": "saving_throw_damage_modification",
+      "saving_throw": "dexterity",
+      "on_success": "no_damage",
+      "on_failure": "half_damage",
+      "share_with_allies": {
+        "range_feet": 5,
+        "shared_when": "making_same_save"
+      }
+    },
+    {
+      "type": "usage_restriction",
+      "condition": "incapacitated",
+      "cannot_use": true
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Planar Infusion",
+  "type": "background_feature",
+  "description": "Living in a gate-town or a similar location steeped you in planar energy. You gain the Scion of the Outer Planes feat. In addition, you know where to find free, modest lodging and food in the community you grew up in.",
+  "mechanics": [
+    {
+      "type": "grant_feat",
+      "feat": "Scion of the Outer Planes"
+    }
+  ]
+}

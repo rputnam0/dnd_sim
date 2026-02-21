@@ -1,0 +1,13 @@
+{
+  "name": "Nature Speaker",
+  "type": "subclass_feature",
+  "description": "You can cast the Commune with Nature spell but only as a Ritual. Wisdom is your spellcasting ability for it.",
+  "mechanics": [
+    {
+      "action": "cast_spell",
+      "spell": "Commune with Nature",
+      "ritual": true,
+      "ability": "wisdom"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Blessings of Knowledge",
+  "type": "subclass_feature",
+  "description": "At each indicated cleric level, you add the listed spells to your spells prepared.",
+  "mechanics": [
+    {
+      "type": "addDomainSpells",
+      "spellsByLevel": {
+        "1": [
+          "command",
+          "identify"
+        ],
+        "3": [
+          "augury",
+          "suggestion"
+        ],
+        "5": [
+          "nondetection",
+          "speak with dead"
+        ],
+        "7": [
+          "arcane eye",
+          "confusion"
+        ],
+        "9": [
+          "legend lore",
+          "scrying"
+        ]
+      }
+    }
+  ]
+}

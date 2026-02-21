@@ -1,0 +1,28 @@
+{
+  "name": "Efreeti's Fury",
+  "type": "subclass_feature",
+  "description": "The target of your Divine Smite takes an extra 2d4 Fire damage, and fire jumps from the target to another creature you can see within 30 feet of yourself. The second creature also takes 2d4 Fire damage.",
+  "mechanics": [
+    {
+      "type": "resource",
+      "resource": "Channel Divinity",
+      "amount": 1,
+      "consumed": true
+    },
+    {
+      "type": "damage",
+      "damage_type": "fire",
+      "dice": "2d4",
+      "target": "primary",
+      "trigger": "Divine Smite"
+    },
+    {
+      "type": "damage",
+      "damage_type": "fire",
+      "dice": "2d4",
+      "target": "secondary",
+      "range": "30 ft",
+      "trigger": "Divine Smite"
+    }
+  ]
+}

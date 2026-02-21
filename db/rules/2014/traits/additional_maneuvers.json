@@ -1,0 +1,12 @@
+{
+  "name": "Additional Maneuvers",
+  "type": "subclass_feature",
+  "description": "At 7th level, you learn two additional maneuvers of your choice.",
+  "mechanics": [
+    {
+      "action": "learn",
+      "target": "maneuver",
+      "quantity": 2
+    }
+  ]
+}

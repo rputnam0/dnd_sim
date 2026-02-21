@@ -1,0 +1,47 @@
+{
+  "name": "The Great Old One",
+  "type": "subclass_feature",
+  "description": "Your patron is a mysterious entity whose nature is utterly foreign to the fabric of reality. It might come from the Far Realm, the space beyond reality, or it could be one of the elder gods known only in legends. Its motives are incomprehensible to mortals, and its knowledge so immense and ancient that even the greatest libraries pale in comparison to the vast secrets it holds. The Great Old One might be unaware of your existence or entirely indifferent to you, but the secrets you have learned allow you to draw your magic from it. Entities of this type include Ghaunadar, called That Which Lurks; Tharizdun, the Chained God; Dendar, the Night Serpent; Zargon, the Returner; Great Cthulhu; and other unfathomable beings.\n\nExpanded Spell List: The Great Old One lets you choose from an expanded list of spells when you learn a warlock spell. The following spells are added to the warlock spell list for you.\n1st level – dissonant whispers, Tasha's hideous laughter\n2nd level – detect thoughts, phantasmal force\n3rd level – clairvoyance, sending\n4th level – dominate beast, Evard's black tentacles\n5th level – dominate person, telekinesis",
+  "mechanics": [
+    {
+      "type": "expanded_spell_list",
+      "spells": [
+        {
+          "level": 1,
+          "spells": [
+            "dissonant whispers",
+            "Tasha's hideous laughter"
+          ]
+        },
+        {
+          "level": 2,
+          "spells": [
+            "detect thoughts",
+            "phantasmal force"
+          ]
+        },
+        {
+          "level": 3,
+          "spells": [
+            "clairvoyance",
+            "sending"
+          ]
+        },
+        {
+          "level": 4,
+          "spells": [
+            "dominate beast",
+            "Evard's black tentacles"
+          ]
+        },
+        {
+          "level": 5,
+          "spells": [
+            "dominate person",
+            "telekinesis"
+          ]
+        }
+      ]
+    }
+  ]
+}

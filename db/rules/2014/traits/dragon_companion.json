@@ -1,0 +1,21 @@
+{
+  "name": "Dragon Companion",
+  "type": "subclass_feature",
+  "description": "You can cast Summon Dragon spell without a material component. You can also cast it once without a spell slot, and you regain the ability to cast it in this way when you finish a Long Rest. Whenever you start casting the spell, you can modify it so that it doesn't require Concentration. If you do so, the spell's duration becomes 1 minute for that casting.",
+  "mechanics": [
+    {
+      "type": "spell_casting",
+      "spell": "Summon Dragon",
+      "material_component": false,
+      "free_casts_per_long_rest": 1,
+      "requires_spell_slot": false,
+      "regain": "long_rest"
+    },
+    {
+      "type": "spell_modification",
+      "spell": "Summon Dragon",
+      "no_concentration": true,
+      "duration": "1 minute"
+    }
+  ]
+}

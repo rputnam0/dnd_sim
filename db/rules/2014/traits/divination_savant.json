@@ -1,0 +1,13 @@
+{
+  "name": "Divination Savant",
+  "type": "subclass_feature",
+  "description": "Beginning when you select this school at 2nd level, the gold and time you must spend to copy a divination spell into your spellbook is halved.",
+  "mechanics": [
+    {
+      "effect": "cost_reduction",
+      "resource": "gold_and_time",
+      "target": "copy_divination_spell",
+      "multiplier": 0.5
+    }
+  ]
+}

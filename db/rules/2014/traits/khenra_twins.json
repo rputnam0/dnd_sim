@@ -1,0 +1,18 @@
+{
+  "name": "Khenra Twins",
+  "type": "racial_trait",
+  "description": "If your twin is alive and you can see your twin, whenever you roll a 1 on an attack roll, ability check, or saving throw, you can reroll the die and must use the new roll. If your twin is dead (or if you were born without a twin), you can't be frightened.",
+  "mechanics": [
+    {
+      "type": "reroll_on_one",
+      "trigger": "attack roll, ability check, or saving throw",
+      "condition": "twin is alive and you can see the twin",
+      "effect": "reroll the die and must use the new result"
+    },
+    {
+      "type": "condition_immunity",
+      "condition": "frightened",
+      "condition_source": "twin is dead or you have no twin"
+    }
+  ]
+}

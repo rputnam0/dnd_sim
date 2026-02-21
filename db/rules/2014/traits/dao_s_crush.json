@@ -1,0 +1,22 @@
+{
+  "name": "Dao's Crush",
+  "type": "subclass_feature",
+  "description": "Earth rises up around the target of your Divine Smite. The target is Grappled (escape DC equal to your spell save DC). While Grappled, the target is Restrained.",
+  "mechanics": [
+    {
+      "type": "resource",
+      "resource": "Channel Divinity",
+      "cost": 1
+    },
+    {
+      "type": "condition",
+      "condition": "Grappled",
+      "escapeDC": "spell save DC"
+    },
+    {
+      "type": "condition",
+      "condition": "Restrained",
+      "source": "Grappled"
+    }
+  ]
+}

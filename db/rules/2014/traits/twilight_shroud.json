@@ -1,0 +1,17 @@
+{
+  "name": "Twilight Shroud",
+  "type": "subclass_feature",
+  "description": "The twilight that you summon offers a protective embrace: you and your allies have half cover while in the sphere created by your Twilight Sanctuary.",
+  "mechanics": [
+    {
+      "grantCover": {
+        "type": "half",
+        "targets": [
+          "self",
+          "allies"
+        ],
+        "condition": "while in Twilight Sanctuary sphere"
+      }
+    }
+  ]
+}

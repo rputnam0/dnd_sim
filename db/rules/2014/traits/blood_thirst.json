@@ -1,0 +1,36 @@
+{
+  "name": "Blood Thirst",
+  "type": "racial_trait",
+  "description": "You can drain blood and life energy from a willing creature, or one that is grappled by you, incapacitated, or restrained. Make a melee attack against the target. If you hit, you deal 1 piercing damage and 1d6 necrotic damage. The target's hit point maximum is reduced by an amount equal to the necrotic damage taken, and you regain hit points equal to that amount. The reduction lasts until the target finishes a long rest. The target dies if this effect reduces its hit point maximum to 0.",
+  "mechanics": [
+    {
+      "type": "special_attack",
+      "attack_type": "melee",
+      "damage": [
+        {
+          "dice": "1",
+          "type": "piercing"
+        },
+        {
+          "dice": "1d6",
+          "type": "necrotic"
+        }
+      ],
+      "target_conditions": [
+        "willing",
+        "grappled",
+        "incapacitated",
+        "restrained"
+      ],
+      "max_hp_reduction": {
+        "amount": "necrotic_damage"
+      },
+      "healing": {
+        "target": "self",
+        "amount": "necrotic_damage"
+      },
+      "duration": "until_long_rest",
+      "death_condition": "max_hp_reduced_to_0"
+    }
+  ]
+}

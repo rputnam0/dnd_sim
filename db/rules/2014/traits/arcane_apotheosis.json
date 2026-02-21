@@ -1,0 +1,13 @@
+{
+  "name": "Arcane Apotheosis",
+  "type": "class_feature",
+  "description": "While your Innate Sorcery feature is active, you can use one Metamagic option on each of your turns without spending Sorcery Points on it.",
+  "mechanics": [
+    {
+      "type": "metamagic",
+      "free": true,
+      "perTurn": 1,
+      "condition": "Innate Sorcery active"
+    }
+  ]
+}

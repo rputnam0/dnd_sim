@@ -1,0 +1,21 @@
+{
+  "name": "Improved Brutal Strike",
+  "type": "class_feature",
+  "description": "You have honed new ways to attack furiously. The following effects are now among your Brutal Strike options. Staggering Blow: The target has Disadvantage on the next saving throw it makes, and it can't make Opportunity Attacks until the start of your next turn. Sundering Blow: Before the start of your next turn, the next attack roll made by another creature against the target gains a +5 bonus to the roll. An attack roll can gain only one Sundering Blow bonus.",
+  "mechanics": [
+    {
+      "name": "Staggering Blow",
+      "effect": "target_disadvantage_next_save",
+      "duration": "until the start of your next turn",
+      "additionalRestriction": "target cannot make Opportunity Attacks"
+    },
+    {
+      "name": "Sundering Blow",
+      "effect": "grant_bonus_to_attack_roll",
+      "bonus": 5,
+      "target": "next attack roll made by another creature against the target",
+      "duration": "until the start of your next turn",
+      "limit": "once per target"
+    }
+  ]
+}

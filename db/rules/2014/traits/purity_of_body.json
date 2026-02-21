@@ -1,0 +1,13 @@
+{
+  "name": "Purity of Body",
+  "type": "class_feature",
+  "description": "At 10th level, your mastery of the ki flowing through you makes you immune to disease and poison.",
+  "mechanics": [
+    {
+      "immunity": [
+        "disease",
+        "poison"
+      ]
+    }
+  ]
+}

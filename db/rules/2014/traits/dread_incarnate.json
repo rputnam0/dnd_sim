@@ -1,0 +1,19 @@
+{
+  "name": "Dread Incarnate",
+  "type": "subclass_feature",
+  "description": "You gain the following benefits. Cutthroat: You regain one expended use of Bloodthirst when you finish a Short Rest. Murderous Intent: When you roll for your Sneak Attack damage, you can treat a roll of a 1 or 2 on the die as a 3.",
+  "mechanics": [
+    {
+      "type": "resource_regain",
+      "resource": "Bloodthirst",
+      "amount": 1,
+      "trigger": "short_rest"
+    },
+    {
+      "type": "dice_modification",
+      "source": "Sneak Attack",
+      "condition": "roll <= 2",
+      "new_value": 3
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Eldritch Cannon",
+  "type": "subclass_feature",
+  "description": "Using Smith's Tools or Woodcarver's Tools, you can take a Magic action to create a Small or Tiny Eldritch Cannon in an unoccupied space on a horizontal surface within 5 feet of yourself. You determine its appearance, including whether you carry it or not (and your choice of legs or wheels, for the latter). It disappears if it is reduced to 0 Hit Points or after 1 hour. You can dismiss it early as a Magic action. Once you create a cannon, you can't do so again until you finish a Long Rest or expend a spell slot to create one. You can have only one cannon at a time and can't create one while you already have one.",
+  "mechanics": [
+    {
+      "action": "Magic",
+      "type": "create",
+      "object": "Eldritch Cannon",
+      "size_options": [
+        "Small",
+        "Tiny"
+      ],
+      "range": "5 feet",
+      "duration": "1 hour or until reduced to 0 Hit Points",
+      "usage": {
+        "reset": "Long Rest",
+        "alternative": "expend a spell slot"
+      },
+      "limit": "one at a time",
+      "dismissible": true,
+      "requires_tools": [
+        "Smith's Tools",
+        "Woodcarver's Tools"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "Nature Domain",
+  "type": "subclass_feature",
+  "description": "Gods of nature are as varied as the natural world itself, from inscrutable gods of the deep forests (such as Silvanus, Obad-Hai, Chislev, Balinor, and Pan) to friendly deities associated with particular springs and groves (such as Eldath). Druids revere nature as a whole and might serve one of these deities, practicing mysterious rites and reciting all-but-forgotten prayers in their own secret tongue. But many of these gods have clerics as well, champions who take a more active role in advancing the interests of a particular nature god. These clerics might hunt the evil monstrosities that despoil the woodlands, bless the harvest of the faithful, or wither the crops of those who anger their gods. At each indicated cleric level, you add the listed spells to your spells prepared.",
+  "mechanics": [
+    {
+      "effect": "add_domain_spells",
+      "level": 1,
+      "spells": [
+        "animal friendship",
+        "speak with animals"
+      ]
+    },
+    {
+      "effect": "add_domain_spells",
+      "level": 3,
+      "spells": [
+        "barkskin",
+        "spike growth"
+      ]
+    },
+    {
+      "effect": "add_domain_spells",
+      "level": 5,
+      "spells": [
+        "plant growth",
+        "wind wall"
+      ]
+    },
+    {
+      "effect": "add_domain_spells",
+      "level": 7,
+      "spells": [
+        "dominate beast",
+        "grasping vine"
+      ]
+    },
+    {
+      "effect": "add_domain_spells",
+      "level": 9,
+      "spells": [
+        "insect plague",
+        "tree stride"
+      ]
+    }
+  ]
+}

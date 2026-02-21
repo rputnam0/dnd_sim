@@ -1,0 +1,13 @@
+{
+  "name": "Swimming",
+  "type": "racial_trait",
+  "description": "You have a swimming speed of 30 feet.",
+  "mechanics": [
+    {
+      "effect_type": "speed",
+      "mode": "swim",
+      "value": 30,
+      "unit": "feet"
+    }
+  ]
+}

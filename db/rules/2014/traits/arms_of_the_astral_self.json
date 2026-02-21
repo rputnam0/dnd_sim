@@ -1,0 +1,50 @@
+{
+  "name": "Arms of the Astral Self",
+  "type": "subclass_feature",
+  "description": "3rd-level Way of the Astral Self feature. Your mastery of your ki allows you to summon a portion of your astral self. As a bonus action, you can spend 1 ki point to summon the arms of your astral self. When you do so, each creature of your choice that you can see within 10 feet of you must succeed on a Dexterity saving throw or take force damage equal to two rolls of your Martial Arts die. For 10 minutes, these spectral arms hover near your shoulders or surround your arms (your choice). You determine the arms' appearance, and they vanish early if you are incapacitated or die. While the spectral arms are present, you gain the following benefits: You can use your Wisdom modifier in place of your Strength modifier when making Strength checks and Strength saving throws. You can use the spectral arms to make unarmed strikes. When you make an unarmed strike with the arms on your turn, your reach for it is 5 feet greater than normal. The unarmed strikes you make with the arms can use your Wisdom modifier in place of your Strength or Dexterity modifier for the attack and damage rolls, and their damage type is force.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "cost": {
+        "resource": "ki",
+        "amount": 1
+      },
+      "effect": "Summon spectral arms of the Astral Self",
+      "duration": "10 minutes",
+      "termination_conditions": [
+        "incapacitated",
+        "dead"
+      ]
+    },
+    {
+      "type": "damage",
+      "trigger": "when arms are summoned",
+      "target": "creature of your choice within 10 feet you can see",
+      "save": {
+        "ability": "Dexterity",
+        "type": "saving throw"
+      },
+      "damage": {
+        "dice": 2,
+        "die": "Martial Arts die",
+        "damage_type": "force"
+      }
+    },
+    {
+      "type": "ability_modifier_override",
+      "applies_to": [
+        "Strength checks",
+        "Strength saving throws"
+      ],
+      "use_modifier": "Wisdom"
+    },
+    {
+      "type": "unarmed_strike",
+      "source": "spectral arms",
+      "reach_bonus": 5,
+      "attack_modifier": "Wisdom",
+      "damage_modifier": "Wisdom",
+      "damage_type": "force"
+    }
+  ]
+}

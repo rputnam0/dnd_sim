@@ -1,0 +1,10 @@
+{
+  "name": "Spellcasting Focus",
+  "type": "class_feature",
+  "description": "2nd-level ranger optional class feature. You can use a druidic focus as a spellcasting focus for your ranger spells. A druidic focus might be a sprig of mistletoe or holly, a wand or rod made of yew or another special wood, a staff drawn whole from a living tree, or an object incorporating feathers, fur, bones, and teeth from sacred animals.",
+  "mechanics": [
+    {
+      "effect": "use_druidic_focus_as_spellcasting_focus"
+    }
+  ]
+}

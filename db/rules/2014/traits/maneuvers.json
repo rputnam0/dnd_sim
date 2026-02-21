@@ -1,0 +1,29 @@
+{
+  "name": "Maneuvers",
+  "type": "subclass_feature",
+  "description": "The maneuvers are presented in alphabetical order. Choose three of the following maneuvers: Commander's Strike, Disarming Attack, Distracting Strike, Evasive Footwork, Feinting Attack, Goading Attack, Lunging Attack, Maneuvering Attack, Menacing Attack, Parry, Precision Attack, Pushing Attack, Rally, Riposte, Sweeping Attack, Trip Attack.",
+  "mechanics": [
+    {
+      "type": "choice",
+      "count": 3,
+      "options": [
+        "Commander's Strike",
+        "Disarming Attack",
+        "Distracting Strike",
+        "Evasive Footwork",
+        "Feinting Attack",
+        "Goading Attack",
+        "Lunging Attack",
+        "Maneuvering Attack",
+        "Menacing Attack",
+        "Parry",
+        "Precision Attack",
+        "Pushing Attack",
+        "Rally",
+        "Riposte",
+        "Sweeping Attack",
+        "Trip Attack"
+      ]
+    }
+  ]
+}

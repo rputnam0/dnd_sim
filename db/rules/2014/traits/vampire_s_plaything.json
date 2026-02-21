@@ -1,0 +1,35 @@
+{
+  "name": "Vampire's Plaything",
+  "type": "feat",
+  "description": "You gain the following benefits. Decanting: When you finish a Long Rest, you can create one Potion of Healing or an Antitoxin, as long as you have an empty vial or flask. These liquids evaporate when you finish another Long Rest. Timely Retreat: You can take a Bonus Action to take the Dash action or the Disengage action. You can use this benefit a number of times equal to your Proficiency Bonus, and you recover all expended uses when you finish a Long Rest. Vampiric Connection: The DM determines the fate of your former vampire master. While you and your former vampire master are on the same plane of existence, the vampire can communicate with you telepathically, and you can choose to allow the vampire to perceive through your senses.",
+  "mechanics": [
+    {
+      "type": "create_item",
+      "trigger": "long_rest",
+      "item_options": [
+        "Potion of Healing",
+        "Antitoxin"
+      ],
+      "requires": [
+        "empty vial",
+        "empty flask"
+      ],
+      "expires": "next_long_rest"
+    },
+    {
+      "type": "action_replacement",
+      "action": "bonus",
+      "options": [
+        "Dash",
+        "Disengage"
+      ],
+      "uses_per_long_rest": "proficiency_bonus"
+    },
+    {
+      "type": "telepathic_communication",
+      "condition": "same_plane",
+      "source": "former_vampire_master",
+      "allow_perception_sharing": true
+    }
+  ]
+}

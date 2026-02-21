@@ -1,0 +1,19 @@
+{
+  "name": "Improved Blessed Strikes",
+  "type": "class_feature",
+  "description": "The option you chose for Blessed Strikes grows more powerful. Divine Strike: The extra damage of your Divine Strike increases to 2d8. Potent Spellcasting: When you cast a Cleric cantrip that deals damage, you can grant temporary hit points to yourself or another creature within 60 feet equal to twice your Wisdom modifier.",
+  "mechanics": [
+    {
+      "type": "damage_increase",
+      "source": "Divine Strike",
+      "dice": "2d8"
+    },
+    {
+      "type": "temporary_hit_points",
+      "trigger": "cast_cleric_cantrip_dealing_damage",
+      "amount": "2 * Wisdom_modifier",
+      "range": 60,
+      "target": "self_or_creature_within_range"
+    }
+  ]
+}

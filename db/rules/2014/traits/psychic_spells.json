@@ -1,0 +1,22 @@
+{
+  "name": "Psychic Spells",
+  "type": "subclass_feature",
+  "description": "When you cast a Warlock spell that deals damage, you can change its damage type to Psychic. In addition, when you cast a Warlock spell that is an Enchantment or Illusion, you can do so without Verbal or Somatic components.",
+  "mechanics": [
+    {
+      "effect": "damage_type_change",
+      "applies_to": "Warlock spell",
+      "condition": "spell deals damage",
+      "new_damage_type": "Psychic"
+    },
+    {
+      "effect": "component_waiver",
+      "applies_to": "Warlock spell",
+      "condition": "spell school is Enchantment or Illusion",
+      "waived_components": [
+        "Verbal",
+        "Somatic"
+      ]
+    }
+  ]
+}

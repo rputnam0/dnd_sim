@@ -1,0 +1,51 @@
+{
+  "name": "Elemental Epitome",
+  "type": "subclass_feature",
+  "description": "While your Elemental Attunement is active, you also gain the following benefits. Damage Resistance: You gain resistance to one of the following damage types of your choice: Acid, Cold, Fire, Lightning, or Thunder. At the start of each of your turns, you can change this choice. Destructive Stride: When you use your Step of the Wind, your speed increases by 20 feet until the end of the turn. For that duration, any creature of your choice takes damage equal to one roll of your Martial Arts die when you enter a space within 5 feet of it. The damage type is your choice of Acid, Cold, Fire, Lightning, or Thunder. A creature can take this damage only once per turn. Empowered Strikes: Once on each of your turns, you can deal extra damage to a target equal to one roll of your Martial Arts die when you hit it with an Unarmed Strike. The extra damage is the same type dealt by that strike.",
+  "mechanics": [
+    {
+      "type": "damage_resistance",
+      "choices": [
+        "Acid",
+        "Cold",
+        "Fire",
+        "Lightning",
+        "Thunder"
+      ],
+      "change_frequency": "start_of_turn"
+    },
+    {
+      "trigger": "use_step_of_the_wind",
+      "effects": [
+        {
+          "type": "increase_speed",
+          "amount": 20,
+          "unit": "feet",
+          "duration": "end_of_turn"
+        },
+        {
+          "type": "damage_on_enter",
+          "damage_die": "martial_arts",
+          "range": 5,
+          "range_unit": "feet",
+          "once_per_turn": true,
+          "damage_type_choices": [
+            "Acid",
+            "Cold",
+            "Fire",
+            "Lightning",
+            "Thunder"
+          ]
+        }
+      ]
+    },
+    {
+      "trigger": "hit_with_unarmed_strike",
+      "once_per_turn": true,
+      "extra_damage": {
+        "dice": "martial_arts",
+        "type": "same_as_attack"
+      }
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "name": "Knowledge Domain Spells",
+  "type": "subclass_feature",
+  "description": "When you reach a Cleric level specified in the Knowledge Domain Spells table, you thereafter always have the listed spells prepared.\n\nCleric Level 3: Command, Comprehend Languages, Detect Magic* (Divination), Detect Thoughts* (Divination), Identify* (Divination), Mind Spike* (Divination)\nCleric Level 5: Dispel Magic, Nondetection, Tongues* (Divination)\nCleric Level 7: Arcane Eye* (Divination), Banishment, Confusion\nCleric Level 9: Legend Lore* (Divination), Scrying* (Divination), Synaptic Static\n\n*Spells of the Divination school.",
+  "mechanics": [
+    {
+      "type": "always_prepared_spells",
+      "spells_by_level": {
+        "3": [
+          {
+            "name": "Command"
+          },
+          {
+            "name": "Comprehend Languages"
+          },
+          {
+            "name": "Detect Magic",
+            "school": "Divination"
+          },
+          {
+            "name": "Detect Thoughts",
+            "school": "Divination"
+          },
+          {
+            "name": "Identify",
+            "school": "Divination"
+          },
+          {
+            "name": "Mind Spike",
+            "school": "Divination"
+          }
+        ],
+        "5": [
+          {
+            "name": "Dispel Magic"
+          },
+          {
+            "name": "Nondetection"
+          },
+          {
+            "name": "Tongues",
+            "school": "Divination"
+          }
+        ],
+        "7": [
+          {
+            "name": "Arcane Eye",
+            "school": "Divination"
+          },
+          {
+            "name": "Banishment"
+          },
+          {
+            "name": "Confusion"
+          }
+        ],
+        "9": [
+          {
+            "name": "Legend Lore",
+            "school": "Divination"
+          },
+          {
+            "name": "Scrying",
+            "school": "Divination"
+          },
+          {
+            "name": "Synaptic Static"
+          }
+        ]
+      }
+    }
+  ]
+}

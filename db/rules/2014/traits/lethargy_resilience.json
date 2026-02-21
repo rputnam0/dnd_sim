@@ -1,0 +1,13 @@
+{
+  "name": "Lethargy Resilience",
+  "type": "racial_trait",
+  "description": "When you fail a saving throw to avoid or end the Unconscious condition, you can succeed instead. Once you use this trait, you can't do so again until you finish 1d4 Long Rests.",
+  "mechanics": [
+    {
+      "type": "save_replacement",
+      "trigger": "fail saving throw to avoid or end Unconscious condition",
+      "replacement": "success",
+      "recharge": "1d4 long rests"
+    }
+  ]
+}

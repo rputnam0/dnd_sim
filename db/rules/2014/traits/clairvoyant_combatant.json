@@ -1,0 +1,40 @@
+{
+  "name": "Clairvoyant Combatant",
+  "type": "subclass_feature",
+  "description": "When you form a telepathic bond with a creature using your Awakened Mind, you can force that creature to make a Wisdom saving throw against your spell save DC. On a failed save, the creature has disadvantage on attack rolls against you, and you have advantage on attack rolls against that creature for the duration of the bond. Once you use this feature, you can't use it again until you finish a short rest or long rest unless you expend a Pact Magic spell slot (no action required) to restore your use of it.",
+  "mechanics": [
+    {
+      "type": "save",
+      "ability": "wisdom",
+      "dc_source": "spell_save_dc",
+      "target": "bonded_creature",
+      "on_fail": [
+        {
+          "type": "grant_advantage",
+          "subject": "self",
+          "against": "bonded_creature",
+          "duration": "bond"
+        },
+        {
+          "type": "grant_disadvantage",
+          "subject": "bonded_creature",
+          "against": "self",
+          "duration": "bond"
+        }
+      ]
+    },
+    {
+      "type": "recharge",
+      "uses": 1,
+      "reset": [
+        "short_rest",
+        "long_rest"
+      ],
+      "alternative_reset": {
+        "resource": "pact_magic_spell_slot",
+        "cost": 1,
+        "action_required": false
+      }
+    }
+  ]
+}

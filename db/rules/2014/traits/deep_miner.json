@@ -1,0 +1,21 @@
+{
+  "name": "Deep Miner",
+  "type": "background_feature",
+  "description": "You are used to navigating the deep places of the earth. You never get lost in caves or mines if you have either seen an accurate map of them or have been through them before. Furthermore, you are able to scrounge fresh water and food for yourself and as many as five other people each day if you are in a mine or natural caves. Note: This feature is a variant of the Outlander feature.",
+  "mechanics": [
+    {
+      "type": "navigation",
+      "environment": "cave_or_mine",
+      "condition": "has_map_or_previous_visit",
+      "effect": "cannot_get_lost"
+    },
+    {
+      "type": "resource_generation",
+      "resource": "food_and_water",
+      "quantity": 6,
+      "per": "day",
+      "environment": "mine_or_natural_cave",
+      "note": "includes self and up to five others"
+    }
+  ]
+}

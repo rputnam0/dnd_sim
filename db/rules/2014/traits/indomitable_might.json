@@ -1,0 +1,12 @@
+{
+  "name": "Indomitable Might",
+  "type": "class_feature",
+  "description": "Beginning at 18th level, if your total for a Strength check is less than your Strength score, you can use that score in place of the total.",
+  "mechanics": [
+    {
+      "type": "strength_check_override",
+      "condition": "total < ability_score",
+      "use_score_instead_of_total": true
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Gnomish Cunning",
+  "type": "racial_trait",
+  "description": "You have Advantage on Intelligence, Wisdom, and Charisma saving throws.",
+  "mechanics": [
+    {
+      "type": "advantage_on_saving_throws",
+      "abilities": [
+        "intelligence",
+        "wisdom",
+        "charisma"
+      ]
+    }
+  ]
+}

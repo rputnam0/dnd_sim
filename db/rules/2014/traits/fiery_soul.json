@@ -1,0 +1,16 @@
+{
+  "name": "Fiery Soul",
+  "type": "subclass_feature",
+  "description": "At 18th level, you gain immunity to fire damage. In addition, any spell or effect you create ignores resistance to fire damage and treats immunity to fire damage as resistance to fire damage.",
+  "mechanics": [
+    {
+      "type": "damage_immunity",
+      "damage_type": "fire"
+    },
+    {
+      "type": "spell_effect_modification",
+      "ignore_resistance_to": "fire",
+      "treat_immunity_as_resistance_to": "fire"
+    }
+  ]
+}

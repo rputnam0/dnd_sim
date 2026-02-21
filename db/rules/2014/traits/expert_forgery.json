@@ -1,0 +1,12 @@
+{
+  "name": "Expert Forgery",
+  "type": "racial_trait",
+  "description": "You can duplicate other creatures' handwriting and craftwork. You have advantage on all checks made to produce forgeries or duplicates of existing objects.",
+  "mechanics": [
+    {
+      "type": "advantage",
+      "applies_to": "ability_check",
+      "condition": "checks to produce forgeries or duplicates of existing objects"
+    }
+  ]
+}

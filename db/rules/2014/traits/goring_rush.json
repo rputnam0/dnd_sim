@@ -1,0 +1,11 @@
+{
+  "name": "Goring Rush",
+  "type": "racial_trait",
+  "description": "Immediately after you use the Dash action on your turn and move at least 20 feet, you can make one melee attack with your horns as a bonus action.",
+  "mechanics": [
+    {
+      "trigger": "after Dash action and moving at least 20 feet",
+      "action": "bonus action melee attack with horns (1 attack)"
+    }
+  ]
+}

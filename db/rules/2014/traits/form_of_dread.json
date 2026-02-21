@@ -1,0 +1,43 @@
+{
+  "name": "Form of Dread",
+  "type": "subclass_feature",
+  "description": "You manifest an aspect of your patron's dreadful power. As a bonus action, you transform for 1 minute. While transformed you gain the following benefits: you gain temporary hit points equal to 1d10 plus your warlock level; once during each of your turns, when you hit a creature with an attack roll, you can force it to make a Wisdom saving throw, and on a failure the target is frightened of you until the end of your next turn; you are immune to the frightened condition. You can transform a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest. The appearance of your Form of Dread reflects some aspect of your patron.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "name": "Transform",
+      "duration": "1 minute",
+      "description": "You assume a dread form granting temporary hit points, a frightened effect on hit, and immunity to frightened."
+    },
+    {
+      "type": "temporary_hit_points",
+      "formula": "1d10 + warlock_level",
+      "source": "Form of Dread"
+    },
+    {
+      "trigger": "hit_with_attack",
+      "once_per_turn": true,
+      "save": {
+        "ability": "wisdom",
+        "type": "ability",
+        "dc_source": "spell_save_dc"
+      },
+      "on_failure": {
+        "condition": "frightened",
+        "duration": "until end of your next turn"
+      },
+      "description": "Force target to make a Wisdom saving throw; on failure it becomes frightened of you."
+    },
+    {
+      "immunity": [
+        "frightened"
+      ]
+    },
+    {
+      "resource": "uses",
+      "max_uses": "proficiency_bonus",
+      "reset": "long_rest",
+      "description": "Number of transformations per long rest."
+    }
+  ]
+}

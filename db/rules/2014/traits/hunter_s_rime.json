@@ -1,0 +1,21 @@
+{
+  "name": "Hunter's Rime",
+  "type": "subclass_feature",
+  "description": "Ice rimes you and your prey, protecting you and slowing them. When you cast Hunter's Mark, you gain Temporary Hit Points equal to 1d10 plus your Ranger level. Additionally, while a creature is marked by your Hunter's Mark, it can't take the Disengage action.",
+  "mechanics": [
+    {
+      "trigger": "cast_spell",
+      "spell": "Hunter's Mark",
+      "effect": {
+        "temporary_hit_points": "1d10 + ranger_level"
+      }
+    },
+    {
+      "condition": "target_marked_by_hunters_mark",
+      "restriction": {
+        "action": "Disengage",
+        "cannot": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Fey Ancestry",
+  "type": "racial_trait",
+  "description": "You have advantage on saving throws you make to avoid or end the charmed condition on yourself.",
+  "mechanics": [
+    {
+      "type": "advantage",
+      "scope": "saving_throws",
+      "target": "self",
+      "condition": "charmed",
+      "purpose": "avoid_or_end"
+    }
+  ]
+}

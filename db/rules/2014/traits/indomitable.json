@@ -1,0 +1,21 @@
+{
+  "name": "Indomitable",
+  "type": "class_feature",
+  "description": "Beginning at 9th level, you can reroll a saving throw that you fail. If you do so, you must use the new roll, and you can't use this feature again until you finish a long rest. You can use this feature twice between long rests starting at 13th level and three times between long rests starting at 17th level.",
+  "mechanics": [
+    {
+      "effect": "saving_throw_reroll",
+      "uses_per_long_rest": 1,
+      "scaling": [
+        {
+          "level": 13,
+          "uses_per_long_rest": 2
+        },
+        {
+          "level": 17,
+          "uses_per_long_rest": 3
+        }
+      ]
+    }
+  ]
+}

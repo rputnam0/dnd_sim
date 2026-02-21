@@ -1,0 +1,41 @@
+{
+  "name": "Constructed Resilience",
+  "type": "racial_trait",
+  "description": "You were created to have remarkable fortitude, represented by the following benefits: You have advantage on saving throws against being poisoned, and you have resistance to poison damage. You don't need to eat, drink, or breathe. You are immune to disease. You don't need to sleep, and magic can't put you to sleep.",
+  "mechanics": [
+    {
+      "type": "advantage",
+      "target": "saving_throw",
+      "condition": "poisoned"
+    },
+    {
+      "type": "resistance",
+      "damage_type": "poison"
+    },
+    {
+      "type": "no_need",
+      "resource": "food"
+    },
+    {
+      "type": "no_need",
+      "resource": "water"
+    },
+    {
+      "type": "no_need",
+      "resource": "air"
+    },
+    {
+      "type": "immunity",
+      "condition": "disease"
+    },
+    {
+      "type": "no_need",
+      "resource": "sleep"
+    },
+    {
+      "type": "cannot_be",
+      "effect": "sleep",
+      "source": "magic"
+    }
+  ]
+}

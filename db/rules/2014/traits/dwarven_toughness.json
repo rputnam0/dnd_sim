@@ -1,0 +1,12 @@
+{
+  "name": "Dwarven Toughness",
+  "type": "racial_trait",
+  "description": "Your Hit Point maximum increases by 1, and it increases by 1 again whenever you gain a level.",
+  "mechanics": [
+    {
+      "effect": "increase_max_hp",
+      "amount": 1,
+      "per_level": true
+    }
+  ]
+}

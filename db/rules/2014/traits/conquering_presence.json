@@ -1,0 +1,24 @@
+{
+  "name": "Conquering Presence",
+  "type": "subclass_feature",
+  "description": "You can use your Channel Divinity to exude a terrifying presence. As an action, you force each creature of your choice that you can see within 30 feet of you to make a Wisdom saving throw. On a failed save, a creature becomes frightened of you for 1 minute. The frightened creature can repeat this saving throw at the end of each of its turns, ending the effect on itself on a success.",
+  "mechanics": [
+    {
+      "uses": {
+        "name": "Channel Divinity"
+      },
+      "action": "action",
+      "range": 30,
+      "target": "creature",
+      "targetSelection": "creature of your choice you can see",
+      "save": {
+        "ability": "wisdom"
+      },
+      "effect": {
+        "condition": "frightened",
+        "duration": "1 minute",
+        "repeatSave": "end of each turn"
+      }
+    }
+  ]
+}

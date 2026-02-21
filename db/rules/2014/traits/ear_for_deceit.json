@@ -1,0 +1,16 @@
+{
+  "name": "Ear for Deceit",
+  "type": "subclass_feature",
+  "description": "When you choose this archetype at 3rd level, you develop a talent for picking out lies. Whenever you make a Wisdom (Insight) check to determine whether a creature is lying, treat a roll of 7 or lower on the d20 as an 8.",
+  "mechanics": [
+    {
+      "type": "roll_substitution",
+      "ability": "Wisdom",
+      "skill": "Insight",
+      "purpose": "detect_lie",
+      "dice": "d20",
+      "threshold": 7,
+      "substitute": 8
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Unyielding Spirit",
+  "type": "subclass_feature",
+  "description": "Starting at 15th level, you have advantage on saving throws to avoid becoming paralyzed or stunned.",
+  "mechanics": [
+    {
+      "effect": "advantage",
+      "target": "saving throws",
+      "restriction": "to avoid becoming paralyzed or stunned"
+    }
+  ]
+}

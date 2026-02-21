@@ -1,0 +1,11 @@
+{
+  "name": "Hellish Resistance",
+  "type": "racial_trait",
+  "description": "You have resistance to fire damage.",
+  "mechanics": [
+    {
+      "type": "damage_resistance",
+      "damage_type": "fire"
+    }
+  ]
+}

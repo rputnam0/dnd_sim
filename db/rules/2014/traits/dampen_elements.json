@@ -1,0 +1,24 @@
+{
+  "name": "Dampen Elements",
+  "type": "subclass_feature",
+  "description": "Starting at 6th level, when you or a creature within 30 feet of you takes acid, cold, fire, lightning, or thunder damage, you can use your reaction to grant resistance to the creature against that instance of the damage.",
+  "mechanics": [
+    {
+      "trigger": "when you or a creature within 30 feet takes acid, cold, fire, lightning, or thunder damage",
+      "action": "reaction",
+      "effect": {
+        "type": "grant_resistance",
+        "target": "creature",
+        "damageTypes": [
+          "acid",
+          "cold",
+          "fire",
+          "lightning",
+          "thunder"
+        ],
+        "appliesTo": "the specific instance of damage taken",
+        "duration": "instantaneous"
+      }
+    }
+  ]
+}

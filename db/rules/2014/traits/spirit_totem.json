@@ -1,0 +1,83 @@
+{
+  "name": "Spirit Totem",
+  "type": "subclass_feature",
+  "description": "Starting at 2nd level, you can call forth nature spirits to influence the world around you. As a bonus action, you can magically summon an incorporeal spirit to a point you can see within 60 feet. The spirit creates an aura in a 30‑foot radius around that point. It counts as neither a creature nor an object, though it has the spectral appearance of the creature it represents. As a bonus action, you can move the spirit up to 60 feet to a point you can see. The spirit persists for 1 minute or until you are incapacitated. Once you use this feature, you can't use it again until you finish a short or long rest. The effect of the spirit's aura depends on the type of spirit you summon: Bear Spirit, Hawk Spirit, or Unicorn Spirit.",
+  "mechanics": [
+    {
+      "name": "Summon Spirit",
+      "type": "action",
+      "action_type": "bonus",
+      "range": 60,
+      "duration": "1 minute or until incapacitated",
+      "recharge": "short or long rest",
+      "description": "Summon an incorporeal spirit to a point you can see within 60 feet, creating a 30‑foot radius aura."
+    },
+    {
+      "name": "Move Spirit",
+      "type": "action",
+      "action_type": "bonus",
+      "range": 60,
+      "description": "Move the spirit up to 60 feet to a point you can see."
+    },
+    {
+      "name": "Bear Spirit Aura",
+      "type": "aura_effect",
+      "radius": 30,
+      "effects": [
+        {
+          "effect_type": "temporary_hit_points",
+          "amount": "5 + druid_level",
+          "target": "creature of your choice in the aura when the spirit appears"
+        },
+        {
+          "effect_type": "advantage",
+          "on": [
+            "Strength checks",
+            "Strength saving throws"
+          ],
+          "target": "you and your allies in the aura"
+        }
+      ]
+    },
+    {
+      "name": "Hawk Spirit Aura",
+      "type": "aura_effect",
+      "radius": 30,
+      "effects": [
+        {
+          "effect_type": "reaction",
+          "trigger": "when a creature makes an attack roll against a target in the aura",
+          "result": "grant advantage to that attack roll",
+          "target": "the attacking creature"
+        },
+        {
+          "effect_type": "advantage",
+          "on": [
+            "Wisdom (Perception) checks"
+          ],
+          "target": "you and your allies in the aura"
+        }
+      ]
+    },
+    {
+      "name": "Unicorn Spirit Aura",
+      "type": "aura_effect",
+      "radius": 30,
+      "effects": [
+        {
+          "effect_type": "advantage",
+          "on": [
+            "ability checks to detect creatures"
+          ],
+          "target": "you and your allies in the aura"
+        },
+        {
+          "effect_type": "healing",
+          "trigger": "when you cast a spell using a spell slot that restores hit points",
+          "amount": "druid_level",
+          "target": "creature of your choice in the aura"
+        }
+      ]
+    }
+  ]
+}

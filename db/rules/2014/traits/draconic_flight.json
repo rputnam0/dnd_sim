@@ -1,0 +1,22 @@
+{
+  "name": "Draconic Flight",
+  "type": "racial_trait",
+  "description": "When you reach character level 5, you can channel draconic magic to give yourself temporary flight. As a Bonus Action, you sprout spectral wings on your back that last for 10 minutes or until you retract the wings (no action required) or have the Incapacitated condition. During that time, you have a Fly Speed equal to your Speed. Your wings appear to be made of the same energy as your Breath Weapon. Once you use this trait, you can't use it again until you finish a Long Rest.",
+  "mechanics": [
+    {
+      "effect": "grant_fly_speed",
+      "activation": "bonus_action",
+      "required_level": 5,
+      "duration": "10 minutes",
+      "speed": "equal to your walking speed",
+      "end_conditions": [
+        "wings retracted (no action)",
+        "incapacitated condition"
+      ],
+      "recharge": {
+        "type": "long_rest",
+        "uses_per_long_rest": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Glorious Defense",
+  "type": "subclass_feature",
+  "description": "You can turn defense into a sudden strike. When you or another creature you can see within 10 feet of you is hit by an attack roll, you can use your reaction to grant a bonus to the target's AC against that attack, potentially causing it to miss. The bonus equals your Charisma modifier (minimum of +1). If the attack misses, you can make one weapon attack against the attacker as part of this reaction, provided the attacker is within your weapon's range. You can use this feature a number of times equal to your Charisma modifier (minimum of once), and you regain all expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "reaction",
+      "trigger": "You or a creature you can see within 10 feet is hit by an attack roll",
+      "effect": "Grant target a bonus to AC equal to your Charisma modifier (minimum +1) against that attack",
+      "additionalEffect": "If the attack misses, make one weapon attack against the attacker (if within weapon range)",
+      "uses": {
+        "perLongRest": true,
+        "maxUses": "Charisma modifier (minimum 1)"
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Form of the Beast",
+  "type": "subclass_feature",
+  "description": "When you enter your rage, you can transform, revealing the bestial power within you. Until the rage ends, you manifest a natural weapon that counts as a simple melee weapon and you add your Strength modifier to its attack and damage rolls. You choose the weapon’s form each time you rage: Bite – your mouth becomes a muzzle or great mandibles; it deals 1d8 piercing damage. Once on each of your turns when you damage a creature with this bite, you regain hit points equal to your proficiency bonus, provided you have fewer than half your hit points. Claws – each hand becomes a claw that can be used as a weapon if empty; it deals 1d6 slashing damage. Once on each of your turns when you attack with a claw using the Attack action, you can make one additional claw attack as part of the same action. Tail – you grow a lashing, spiny tail that deals 1d8 piercing damage, has the reach property, and can be used with a reaction: when a creature you can see within 10 feet hits you with an attack roll, you can use your reaction to swipe the tail, roll a d8, and add the result to your AC, potentially causing the attack to miss.",
+  "mechanics": [
+    {
+      "type": "weapon",
+      "name": "natural weapon",
+      "category": "simple melee",
+      "strength_modifier_to_attack_and_damage": true
+    },
+    {
+      "type": "healing",
+      "trigger": "on hit",
+      "weapon": "bite",
+      "amount": "proficiency bonus",
+      "condition": "once per turn and target HP less than half max"
+    },
+    {
+      "type": "extra_attack",
+      "trigger": "on attack",
+      "weapon": "claws",
+      "condition": "once per turn when using Attack action"
+    },
+    {
+      "type": "reaction",
+      "trigger": "when hit by attack within 10 ft",
+      "weapon": "tail",
+      "effect": "add d8 roll to AC until start of next turn"
+    }
+  ]
+}

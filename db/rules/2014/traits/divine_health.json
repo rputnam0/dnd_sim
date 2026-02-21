@@ -1,0 +1,11 @@
+{
+  "name": "Divine Health",
+  "type": "class_feature",
+  "description": "By 3rd level, the divine magic flowing through you makes you immune to disease.",
+  "mechanics": [
+    {
+      "type": "immunity",
+      "condition": "disease"
+    }
+  ]
+}

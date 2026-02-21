@@ -1,0 +1,20 @@
+{
+  "name": "Hippo Build",
+  "type": "racial_trait",
+  "description": "You have advantage on Strength-based ability checks and Strength saving throws. In addition, you count as one size larger when determining your carrying capacity and the weight you can push, drag, or lift.",
+  "mechanics": [
+    {
+      "type": "advantage",
+      "applies_to": [
+        "strength_ability_checks",
+        "strength_saving_throws"
+      ]
+    },
+    {
+      "type": "size_modifier",
+      "category": "carrying_capacity",
+      "modifier": 1,
+      "description": "Count as one size larger for carrying capacity and push/drag/lift calculations."
+    }
+  ]
+}

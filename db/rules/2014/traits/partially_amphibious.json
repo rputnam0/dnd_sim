@@ -1,0 +1,12 @@
+{
+  "name": "Partially Amphibious",
+  "type": "racial_trait",
+  "description": "By absorbing oxygen through your skin, you can breathe underwater for up to 1 hour. Once you've reached that limit, you can't use this trait again until you finish a long rest.",
+  "mechanics": [
+    {
+      "effect": "breathe underwater",
+      "duration": "1 hour",
+      "usage": "once per long rest"
+    }
+  ]
+}

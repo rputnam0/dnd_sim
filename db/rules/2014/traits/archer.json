@@ -1,0 +1,18 @@
+{
+  "name": "Archer",
+  "type": "subclass_feature",
+  "description": "A constellation of an archer appears on you. When you activate this form, and as a bonus action on your subsequent turns while it lasts, you can make a ranged spell attack, hurling a luminous arrow that targets one creature within 60 feet of you. On a hit, the attack deals radiant damage equal to 1d8 + your Wisdom modifier.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "type": "ranged_spell_attack",
+      "range": 60,
+      "damage": {
+        "dice": "1d8",
+        "type": "radiant",
+        "modifier": "Wisdom"
+      },
+      "usage": "once per turn while the form is active"
+    }
+  ]
+}

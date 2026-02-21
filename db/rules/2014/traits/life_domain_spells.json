@@ -1,0 +1,30 @@
+{
+  "name": "Life Domain Spells",
+  "type": "subclass_feature",
+  "description": "Your connection to this divine domain ensures you always have certain spells ready. When you reach a Cleric level specified in the Life Domain Spells table, you thereafter always have the listed spells prepared.\n\nLife Domain Spells:\n- 3rd level – Aid, Bless, Cure Wounds, Lesser Restoration\n- 5th level – Mass Healing Word, Revivify\n- 7th level – Aura of Life, Death Ward\n- 9th level – Greater Restoration, Mass Cure Wounds",
+  "mechanics": [
+    {
+      "type": "always_prepared_spells",
+      "spells_by_level": {
+        "3": [
+          "Aid",
+          "Bless",
+          "Cure Wounds",
+          "Lesser Restoration"
+        ],
+        "5": [
+          "Mass Healing Word",
+          "Revivify"
+        ],
+        "7": [
+          "Aura of Life",
+          "Death Ward"
+        ],
+        "9": [
+          "Greater Restoration",
+          "Mass Cure Wounds"
+        ]
+      }
+    }
+  ]
+}

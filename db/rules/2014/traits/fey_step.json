@@ -1,0 +1,75 @@
+{
+  "name": "Fey Step",
+  "type": "racial_trait",
+  "description": "As a bonus action, you can magically teleport up to 30 feet to an unoccupied space you can see. You can use this trait a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest. When you reach 3rd level, your Fey Step gains an additional effect based on your chosen season (Autumn, Winter, Spring, or Summer). Autumn: after you use Fey Step, up to two creatures you can see within 10 feet must succeed on a Wisdom saving throw or be charmed for 1 minute or until you or your companions deal damage to them. Winter: when you use Fey Step, one creature you can see within 5 feet must succeed on a Wisdom saving throw or be frightened until the end of your next turn. Spring: when you use Fey Step, you can touch one willing creature within 5 feet, and that creature teleports instead of you to an unoccupied space you choose within 30 feet. Summer: after you use Fey Step, each creature you choose that you can see within 5 feet takes fire damage equal to your proficiency bonus.",
+  "mechanics": [
+    {
+      "action": "bonus",
+      "effect": "teleport",
+      "distance": 30,
+      "target": "self",
+      "requires": "unoccupied space you can see",
+      "uses": {
+        "per": "long rest",
+        "max": "proficiency bonus"
+      }
+    },
+    {
+      "level": 3,
+      "season": "Autumn",
+      "trigger": "after teleport",
+      "effect": "charm",
+      "targets": {
+        "type": "creature",
+        "choice": "up to two",
+        "range": 10
+      },
+      "saving_throw": {
+        "ability": "Wisdom",
+        "dc": "8 + proficiency bonus + ability_mod (Int/Wis/Cha)"
+      },
+      "duration": "1 minute or until damage dealt"
+    },
+    {
+      "level": 3,
+      "season": "Winter",
+      "trigger": "when teleport",
+      "effect": "frightened",
+      "targets": {
+        "type": "creature",
+        "choice": "one",
+        "range": 5
+      },
+      "saving_throw": {
+        "ability": "Wisdom",
+        "dc": "8 + proficiency bonus + ability_mod (Int/Wis/Cha)"
+      },
+      "duration": "until end of your next turn"
+    },
+    {
+      "level": 3,
+      "season": "Spring",
+      "trigger": "when teleport",
+      "effect": "swap_teleport",
+      "target": {
+        "type": "creature",
+        "choice": "one willing",
+        "range": 5
+      },
+      "description": "The chosen creature teleports instead of you to an unoccupied space you choose within 30 feet."
+    },
+    {
+      "level": 3,
+      "season": "Summer",
+      "trigger": "after teleport",
+      "effect": "damage",
+      "damage_type": "fire",
+      "damage": "proficiency bonus",
+      "targets": {
+        "type": "creature",
+        "choice": "any number",
+        "range": 5
+      }
+    }
+  ]
+}

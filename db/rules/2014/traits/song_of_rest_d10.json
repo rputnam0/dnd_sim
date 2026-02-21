@@ -1,0 +1,12 @@
+{
+  "name": "Song of Rest (d10)",
+  "type": "class_feature",
+  "description": "At 13th level, the extra hit points gained from Song of Rest increases to 1d10.",
+  "mechanics": [
+    {
+      "effect": "extra_hit_points",
+      "dice": "1d10",
+      "source": "Song of Rest"
+    }
+  ]
+}

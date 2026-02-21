@@ -1,0 +1,19 @@
+{
+  "name": "Solidarity's Action",
+  "type": "subclass_feature",
+  "description": "Also at 1st level, when you take the Help action to aid an ally's attack, you can make one weapon attack as a bonus action. You can use this feature a number of times equal to your Wisdom modifier (minimum of once). You regain expended uses when you finish a long rest.",
+  "mechanics": [
+    {
+      "type": "extraAttack",
+      "trigger": "Help action",
+      "attackType": "weapon",
+      "action": "bonus"
+    },
+    {
+      "type": "resource",
+      "name": "Solidarity's Action uses",
+      "maxUses": "Wisdom modifier (minimum 1)",
+      "reset": "long rest"
+    }
+  ]
+}

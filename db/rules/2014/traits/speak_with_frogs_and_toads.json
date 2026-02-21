@@ -1,0 +1,13 @@
+{
+  "name": "Speak with Frogs and Toads",
+  "type": "racial_trait",
+  "description": "You can communicate simple concepts to frogs and toads when you speak in Bullywug.",
+  "mechanics": [
+    {
+      "type": "communication",
+      "target": "frogs and toads",
+      "condition": "speaking in Bullywug",
+      "detail": "simple concepts"
+    }
+  ]
+}

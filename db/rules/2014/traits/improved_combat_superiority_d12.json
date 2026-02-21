@@ -1,0 +1,11 @@
+{
+  "name": "Improved Combat Superiority (d12)",
+  "type": "subclass_feature",
+  "description": "At 18th level, your superiority dice turn into d12s.",
+  "mechanics": [
+    {
+      "effect": "superiority_dice_size",
+      "size": 12
+    }
+  ]
+}
