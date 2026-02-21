@@ -30,8 +30,12 @@ def _actor() -> ActorRuntimeState:
         temp_hp=0,
         ac=10,
         initiative_mod=0,
+        str_mod=0,
         dex_mod=0,
         con_mod=2,
+        int_mod=0,
+        wis_mod=0,
+        cha_mod=0,
         save_mods={"con": 2},
         actions=[],
     )

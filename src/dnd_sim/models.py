@@ -71,7 +71,7 @@ class CharacterRecord:
 @dataclass(slots=True)
 class ActionDefinition:
     name: str
-    action_type: str
+    action_type: str  # "attack", "spell", "heal", "buff", "dodge", "dash", "disengage", "ready", "grapple", "shove", "none" = None
     to_hit: int | None = None
     damage: str | None = None
     damage_type: str = "bludgeoning"
@@ -83,10 +83,16 @@ class ActionDefinition:
     recharge: str | None = None
     max_uses: int | None = None
     action_cost: str = "action"
+    event_trigger: str | None = None
     target_mode: str = "single_enemy"
+    range_ft: int | None = None
+    aoe_type: str | None = None
+    aoe_size_ft: int | None = None
     max_targets: int | None = None
+    concentration: bool = False
     include_self: bool = False
     effects: list[dict[str, Any]] = field(default_factory=list)
+    mechanics: list[dict[str, Any]] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
 
 
@@ -107,16 +113,23 @@ class ActorRuntimeState:
     temp_hp: int
     ac: int
     initiative_mod: int
+    str_mod: int
     dex_mod: int
     con_mod: int
+    int_mod: int
+    wis_mod: int
+    cha_mod: int
     save_mods: dict[str, int]
     actions: list[ActionDefinition]
+    proficiencies: set[str] = field(default_factory=set)
+    expertise: set[str] = field(default_factory=set)
     damage_resistances: set[str] = field(default_factory=set)
     damage_immunities: set[str] = field(default_factory=set)
     damage_vulnerabilities: set[str] = field(default_factory=set)
     condition_immunities: set[str] = field(default_factory=set)
     conditions: set[str] = field(default_factory=set)
     resources: dict[str, int] = field(default_factory=dict)
+    max_resources: dict[str, int] = field(default_factory=dict)
     concentrating: bool = False
     concentration_dc: int = 10
     death_successes: int = 0
@@ -131,10 +144,18 @@ class ActorRuntimeState:
     recharge_ready: dict[str, bool] = field(default_factory=dict)
     legendary_actions_remaining: int = 0
     lair_action_used_this_round: bool = False
-    traits: set[str] = field(default_factory=set)
+    traits: dict[str, dict[str, Any]] = field(default_factory=dict)
     condition_durations: dict[str, ConditionTracker] = field(default_factory=dict)
     next_attack_advantage: bool = False
     next_attack_disadvantage: bool = False
+    speed_ft: int = 30
+    movement_remaining: float = 0.0
+    position: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    took_attack_action_this_turn: bool = False
+    sneak_attack_used_this_turn: bool = False
+    concentrated_targets: set[str] = field(default_factory=set)
+    concentrated_spell: str | None = None
+    level: int = 1
 
     def is_active(self) -> bool:
         return not self.dead
