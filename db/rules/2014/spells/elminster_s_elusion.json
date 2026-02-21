@@ -1,0 +1,14 @@
+{
+  "name": "Elminster's Elusion",
+  "type": "spell",
+  "level": 2,
+  "school": "Abjuration",
+  "casting_time": "bonus action",
+  "range_ft": 0,
+  "concentration": true,
+  "duration_rounds": 100,
+  "description": "Arcane wards protect you against magic for the duration. You have Advantage on saving throws against spells and magical effects. Additionally, if you succeed on a saving throw against a spell or magical effect and would normally take half as much damage, you instead take no damage.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Kinetic Jaunt",
+  "type": "spell",
+  "level": 2,
+  "school": "Transmutation",
+  "casting_time": "bonus action",
+  "range_ft": 0,
+  "concentration": true,
+  "duration_rounds": 10,
+  "description": "You magically empower your movement with dance-like steps, giving yourself the following benefits for the duration. Your walking speed increases by 10 feet. You don't provoke opportunity attacks. You can move through the space of another creature, and it doesn't count as difficult terrain. If you end your turn in another creature's space, you are shunted to the last unoccupied space you occupied, and you take 1d8 force damage.",
+  "save_ability": null,
+  "damage_type": "force",
+  "mechanics": []
+}

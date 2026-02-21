@@ -1,0 +1,14 @@
+{
+  "name": "Wardaway",
+  "type": "spell",
+  "level": 1,
+  "school": "Abjuration",
+  "casting_time": "action",
+  "range_ft": 60,
+  "concentration": false,
+  "duration_rounds": 0,
+  "description": "You hurl a disorienting magical force toward one creature within range. The target makes a Constitution saving throw; Constructs and Undead automatically succeed on this save. On a failed save, the target takes 2d4 Force damage, its Speed is halved until the start of your next turn, and on its next turn, it can take only an action or a Bonus Action (but not both). On a successful save, the target takes half as much damage only. The damage increases by 2d4 for every spell slot level above 1.",
+  "save_ability": "con",
+  "damage_type": "force",
+  "mechanics": []
+}
