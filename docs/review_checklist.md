@@ -28,15 +28,15 @@ Each section is intended to be delivered and reviewed in a separate pull request
 - [x] Add attack-loop tests for unseen attacker/unseen target cancellation.
 - [x] Add tests for magical darkness + darkvision/truesight/blindsight behavior.
 - [x] Add tests for cover states and AC modification integration.
-- [x] Verify strategy scoring inputs use current round hazards and geometry fields.
+- [ ] Verify strategy scoring inputs use current round hazards and geometry fields.
 - [x] Ensure full test suite passes.
 
 ## PR-4: Parser and Data Pipeline Validation
 
-- [ ] Add contract tests for parser outputs (`spells`, `monsters`, `traits`) against expected schema.
-- [ ] Validate normalization assumptions for generated JSON names/keys.
-- [ ] Add fixture-based tests for key parser edge cases.
-- [ ] Ensure full test suite passes.
+- [x] Add contract tests for parser outputs (`spells`, `monsters`, `traits`) against expected schema.
+- [x] Validate normalization assumptions for generated JSON names/keys.
+- [x] Add fixture-based tests for key parser edge cases.
+- [x] Ensure full test suite passes.
 
 ## PR-5: Integration and Simulation Invariants
 
