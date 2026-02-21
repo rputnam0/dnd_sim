@@ -1,0 +1,50 @@
+{
+  "scenario_id": "ley_heart_phase_2",
+  "encounter_id": "ley_heart",
+  "ruleset": "5e-2014",
+  "character_db_dir": "/Users/rexputnam/Documents/projects/dnd_sim/river_line/db/characters",
+  "party": [
+    "squanch_161607569",
+    "furyen_fury",
+    "isak_wissa"
+  ],
+  "enemies": [
+    "unanchored_engine"
+  ],
+  "initiative_mode": "individual",
+  "battlefield": {
+    "description": "Ley Heart Phase 2 boss arena (abstracted)",
+    "max_distance_ft": 60
+  },
+  "termination_rules": {
+    "party_defeat": "all_unconscious_or_dead",
+    "enemy_defeat": "all_dead",
+    "max_rounds": 20
+  },
+  "strategy_modules": [
+    {
+      "name": "focus_fire_lowest_hp",
+      "source": "builtin",
+      "class_name": "FocusFireLowestHPStrategy"
+    },
+    {
+      "name": "boss_highest_threat_target",
+      "source": "builtin",
+      "class_name": "BossHighestThreatTargetStrategy"
+    },
+    {
+      "name": "optimal_expected_damage",
+      "source": "builtin",
+      "class_name": "OptimalExpectedDamageStrategy"
+    }
+  ],
+  "resource_policy": {
+    "mode": "combat_and_utility",
+    "burst_round_threshold": 2
+  },
+  "assumption_overrides": {
+    "party_strategy": "optimal_expected_damage",
+    "enemy_strategy": "optimal_expected_damage"
+  }
+}
+

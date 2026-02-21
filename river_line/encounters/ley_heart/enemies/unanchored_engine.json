@@ -1,0 +1,246 @@
+{
+  "identity": {
+    "enemy_id": "unanchored_engine",
+    "name": "Unanchored Engine",
+    "team": "enemy"
+  },
+  "stat_block": {
+    "max_hp": 225,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "dex_mod": 1,
+    "con_mod": 4,
+    "save_mods": {
+      "str": 9,
+      "con": 8,
+      "wis": 6
+    }
+  },
+  "actions": [
+    {
+      "name": "multi_slam",
+      "action_type": "attack",
+      "to_hit": 9,
+      "damage": "2d8+6",
+      "damage_type": "bludgeoning",
+      "attack_count": 2,
+      "target_mode": "single_enemy",
+      "range_ft": 10,
+      "tags": [
+        "melee"
+      ]
+    },
+    {
+      "name": "harpoon_winch",
+      "action_type": "attack",
+      "to_hit": 8,
+      "damage": "2d10+4",
+      "damage_type": "piercing",
+      "attack_count": 1,
+      "target_mode": "single_enemy",
+      "range_ft": 60,
+      "effects": [
+        {
+          "effect_type": "apply_condition",
+          "apply_on": "hit",
+          "target": "target",
+          "condition": "grappled",
+          "save_dc": 16,
+          "save_ability": "str"
+        }
+      ],
+      "tags": [
+        "ranged",
+        "harpoon"
+      ]
+    },
+    {
+      "name": "boiler_vent",
+      "action_type": "save",
+      "damage": "4d8",
+      "damage_type": "fire",
+      "save_dc": 16,
+      "save_ability": "con",
+      "half_on_save": true,
+      "target_mode": "self",
+      "aoe_type": "radius",
+      "aoe_size_ft": 15,
+      "include_self": false,
+      "recharge": "5-6",
+      "effects": [
+        {
+          "effect_type": "forced_movement",
+          "apply_on": "save_fail",
+          "target": "target",
+          "distance_ft": 10,
+          "direction": "away_from_source"
+        }
+      ],
+      "tags": [
+        "steam",
+        "aoe"
+      ]
+    }
+  ],
+  "bonus_actions": [],
+  "reactions": [],
+  "legendary_actions": [
+    {
+      "name": "stomp",
+      "action_type": "save",
+      "save_dc": 15,
+      "save_ability": "str",
+      "half_on_save": false,
+      "target_mode": "self",
+      "aoe_type": "radius",
+      "aoe_size_ft": 10,
+      "include_self": false,
+      "effects": [
+        {
+          "effect_type": "forced_movement",
+          "apply_on": "save_fail",
+          "target": "target",
+          "distance_ft": 10,
+          "direction": "away_from_source"
+        },
+        {
+          "effect_type": "apply_condition",
+          "apply_on": "save_fail",
+          "target": "target",
+          "condition": "prone",
+          "duration_rounds": 1
+        }
+      ],
+      "tags": [
+        "legendary_cost:1"
+      ]
+    },
+    {
+      "name": "winch_pull",
+      "action_type": "utility",
+      "target_mode": "single_enemy",
+      "range_ft": 60,
+      "effects": [
+        {
+          "effect_type": "forced_movement",
+          "apply_on": "always",
+          "target": "target",
+          "distance_ft": 20,
+          "direction": "toward_source"
+        }
+      ],
+      "tags": [
+        "requires_condition:grappled",
+        "legendary_cost:1"
+      ]
+    },
+    {
+      "name": "chronal_step",
+      "action_type": "utility",
+      "target_mode": "self",
+      "effects": [
+        {
+          "effect_type": "apply_condition",
+          "apply_on": "always",
+          "target": "source",
+          "condition": "disengaging",
+          "duration_rounds": 1
+        }
+      ],
+      "tags": [
+        "legendary_cost:1"
+      ]
+    },
+    {
+      "name": "tail_sweep",
+      "action_type": "save",
+      "damage": "2d8+6",
+      "damage_type": "bludgeoning",
+      "save_dc": 15,
+      "save_ability": "str",
+      "half_on_save": true,
+      "target_mode": "self",
+      "aoe_type": "radius",
+      "aoe_size_ft": 10,
+      "include_self": false,
+      "effects": [
+        {
+          "effect_type": "apply_condition",
+          "apply_on": "save_fail",
+          "target": "target",
+          "condition": "prone",
+          "duration_rounds": 1
+        }
+      ],
+      "tags": [
+        "legendary_cost:2"
+      ]
+    }
+  ],
+  "lair_actions": [
+    {
+      "name": "rising_flood",
+      "action_type": "utility",
+      "target_mode": "self",
+      "effects": [
+        {
+          "effect_type": "note",
+          "apply_on": "always",
+          "target": "source",
+          "text": "Rising Flood: difficult terrain not modeled (placeholder)."
+        }
+      ]
+    },
+    {
+      "name": "falling_debris",
+      "action_type": "save",
+      "damage": "2d8",
+      "damage_type": "bludgeoning",
+      "save_dc": 15,
+      "save_ability": "dex",
+      "half_on_save": true,
+      "target_mode": "random_enemy",
+      "aoe_type": "radius",
+      "aoe_size_ft": 10,
+      "include_self": false
+    },
+    {
+      "name": "steam_burst",
+      "action_type": "save",
+      "damage": "2d6",
+      "damage_type": "fire",
+      "save_dc": 15,
+      "save_ability": "con",
+      "half_on_save": true,
+      "target_mode": "random_enemy",
+      "aoe_type": "radius",
+      "aoe_size_ft": 10,
+      "include_self": false,
+      "effects": [
+        {
+          "effect_type": "note",
+          "apply_on": "always",
+          "target": "source",
+          "text": "Steam Burst: lightly obscured not modeled (placeholder)."
+        }
+      ]
+    }
+  ],
+  "resources": {
+    "legendary_actions": 2,
+    "legendary_resistance": 3
+  },
+  "damage_resistances": [],
+  "damage_immunities": [
+    "poison"
+  ],
+  "damage_vulnerabilities": [],
+  "condition_immunities": [
+    "poisoned"
+  ],
+  "script_hooks": {},
+  "traits": [
+    "Immutable Form"
+  ]
+}

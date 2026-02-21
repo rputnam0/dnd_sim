@@ -5,11 +5,13 @@ from types import SimpleNamespace
 
 from dnd_sim.engine import (
     _apply_effect,
+    _action_available,
     _build_actor_from_character,
     _build_actor_views,
     _build_actor_from_enemy,
     _build_round_metadata,
     _execute_action,
+    _run_legendary_actions,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
@@ -189,6 +191,110 @@ def test_hazard_effect_uses_type_key_for_spatial_visibility() -> None:
     )
 
     assert active_hazards and active_hazards[0].get("type") == "magical_darkness"
+
+
+def test_forced_movement_effect_updates_position() -> None:
+    pusher = _base_actor(actor_id="pusher", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    pusher.position = (0.0, 0.0, 0.0)
+    target.position = (0.0, 10.0, 0.0)
+
+    _apply_effect(
+        effect={
+            "effect_type": "forced_movement",
+            "distance_ft": 10,
+            "direction": "away_from_source",
+            "target": "target",
+        },
+        rng=random.Random(1),
+        actor=pusher,
+        target=target,
+        damage_dealt={pusher.actor_id: 0, target.actor_id: 0},
+        damage_taken={pusher.actor_id: 0, target.actor_id: 0},
+        threat_scores={pusher.actor_id: 0, target.actor_id: 0},
+        resources_spent={pusher.actor_id: {}, target.actor_id: {}},
+        actors={pusher.actor_id: pusher, target.actor_id: target},
+        active_hazards=[],
+    )
+    assert target.position == (0.0, 20.0, 0.0)
+
+    _apply_effect(
+        effect={
+            "effect_type": "forced_movement",
+            "distance_ft": 5,
+            "direction": "toward_source",
+            "target": "target",
+        },
+        rng=random.Random(1),
+        actor=pusher,
+        target=target,
+        damage_dealt={pusher.actor_id: 0, target.actor_id: 0},
+        damage_taken={pusher.actor_id: 0, target.actor_id: 0},
+        threat_scores={pusher.actor_id: 0, target.actor_id: 0},
+        resources_spent={pusher.actor_id: {}, target.actor_id: {}},
+        actors={pusher.actor_id: pusher, target.actor_id: target},
+        active_hazards=[],
+    )
+    assert target.position == (0.0, 15.0, 0.0)
+
+
+def test_legendary_action_cost_tag_gates_availability() -> None:
+    boss = _base_actor(actor_id="boss", team="enemy")
+    boss.legendary_actions_remaining = 1
+    expensive = ActionDefinition(
+        name="tail_sweep",
+        action_type="save",
+        action_cost="legendary",
+        save_dc=10,
+        save_ability="str",
+        tags=["legendary_cost:2"],
+    )
+    assert _action_available(boss, expensive) is False
+
+
+def test_legendary_action_runner_skips_untargetable_action() -> None:
+    rng = random.Random(2)
+    hero = _base_actor(actor_id="hero", team="party")
+    boss = _base_actor(actor_id="boss", team="enemy")
+    boss.legendary_actions_remaining = 1
+    hero.ac = 1  # make sure attacks land
+
+    untargetable = ActionDefinition(
+        name="winch_pull",
+        action_type="utility",
+        action_cost="legendary",
+        target_mode="single_enemy",
+        effects=[{"effect_type": "forced_movement", "distance_ft": 20, "direction": "toward_source"}],
+        tags=["requires_condition:grappled"],
+    )
+    strike = ActionDefinition(
+        name="legendary_strike",
+        action_type="attack",
+        action_cost="legendary",
+        to_hit=20,
+        damage="1d4+1",
+        target_mode="single_enemy",
+    )
+    boss.actions = [untargetable, strike]
+
+    actors = {hero.actor_id: hero, boss.actor_id: boss}
+    damage_dealt = {hero.actor_id: 0, boss.actor_id: 0}
+    damage_taken = {hero.actor_id: 0, boss.actor_id: 0}
+    threat_scores = {hero.actor_id: 0, boss.actor_id: 0}
+    resources_spent = {hero.actor_id: {}, boss.actor_id: {}}
+
+    _run_legendary_actions(
+        rng=rng,
+        trigger_actor=hero,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[boss.actor_id] > 0
 
 
 def test_round_metadata_includes_strategy_relevant_action_fields() -> None:
