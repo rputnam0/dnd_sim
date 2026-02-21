@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dnd_sim.spatial import (
     AABB,
     can_see,
@@ -8,32 +10,19 @@ from dnd_sim.spatial import (
 )
 
 
-def test_distance_metrics():
+def test_distance_metrics() -> None:
     pos1 = (0.0, 0.0, 0.0)
-    pos2 = (15.0, 20.0, 0.0)  # 3 squares right, 4 squares up
-
-    # Euclidean forms a 3-4-5 triangle equivalent, hypotenuse is 25
+    pos2 = (15.0, 20.0, 0.0)
     assert distance_euclidean(pos1, pos2) == 25.0
-
-    # Chebyshev is the max(dx, dy) = max(15, 20) = 20
     assert distance_chebyshev(pos1, pos2) == 20.0
 
 
-def test_move_towards():
+def test_move_towards() -> None:
     start = (0.0, 0.0, 0.0)
-    target = (30.0, 40.0, 0.0)  # distance 50
-
-    # Move 25 feet towards
-    midpoint = move_towards(start, target, max_distance=25.0)
-    assert midpoint == (15.0, 20.0, 0.0)
-
-    # Move more than distance
-    overshoot = move_towards(start, target, max_distance=100.0)
-    assert overshoot == target
-
-    # Move towards self
-    self_move = move_towards(start, start, max_distance=30.0)
-    assert self_move == start
+    target = (30.0, 40.0, 0.0)
+    assert move_towards(start, target, max_distance=25.0) == (15.0, 20.0, 0.0)
+    assert move_towards(start, target, max_distance=100.0) == target
+    assert move_towards(start, start, max_distance=30.0) == start
 
 
 def test_can_see_darkvision_blocked_by_magical_darkness() -> None:
@@ -76,3 +65,22 @@ def test_check_cover_picks_highest_cover_level() -> None:
         AABB(min_pos=(15.0, -1.0, -1.0), max_pos=(20.0, 1.0, 1.0), cover_level="THREE_QUARTERS"),
     ]
     assert check_cover(pos1, pos2, obstacles) == "THREE_QUARTERS"
+
+
+def test_ray_intersects_axis_aligned_boundary_without_nan_false_negative() -> None:
+    cover = AABB(min_pos=(0.0, 5.0, -1.0), max_pos=(3.0, 10.0, 1.0), cover_level="TOTAL")
+    result = check_cover((0.0, 0.0, 0.0), (0.0, 30.0, 0.0), [cover])
+    assert result == "TOTAL"
+
+
+def test_can_see_matches_normalized_trait_keys() -> None:
+    observer_traits = {"dark_vision": 60}
+    visible = can_see(
+        observer_pos=(0.0, 0.0, 0.0),
+        target_pos=(30.0, 0.0, 0.0),
+        observer_traits=observer_traits,
+        target_conditions=set(),
+        active_hazards=[],
+        light_level="darkness",
+    )
+    assert visible is True

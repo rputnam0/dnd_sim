@@ -158,8 +158,12 @@ class EnemyStatBlockConfig(BaseModel):
     max_hp: int
     ac: int
     initiative_mod: int = 0
+    str_mod: int | None = None
     dex_mod: int = 0
     con_mod: int = 0
+    int_mod: int | None = None
+    wis_mod: int | None = None
+    cha_mod: int | None = None
     save_mods: dict[str, int] = Field(default_factory=dict)
 
 

@@ -7,9 +7,10 @@ from dnd_sim.rules_2014 import (
     apply_damage_type_modifiers,
     attack_roll,
     concentration_check_dc,
-    run_concentration_check,
     resolve_death_save,
     roll_damage,
+    run_concentration_check,
+    run_contested_check,
 )
 
 
@@ -19,6 +20,16 @@ class FixedRng:
 
     def randint(self, _a, _b):
         return self.values.pop(0)
+
+
+class CountingRng(FixedRng):
+    def __init__(self, values):
+        super().__init__(values)
+        self.calls = 0
+
+    def randint(self, _a, _b):
+        self.calls += 1
+        return super().randint(_a, _b)
 
 
 def _actor() -> ActorRuntimeState:
@@ -106,3 +117,17 @@ def test_concentration_check_honors_mage_slayer_with_underscore_trait_key() -> N
     rng = FixedRng([20, 1])
     assert run_concentration_check(rng, target, damage_taken=10, source=source) is False
     assert target.concentrating is False
+
+
+def test_concentration_check_rolls_once_without_advantage_or_disadvantage() -> None:
+    actor = _actor()
+    actor.hp = 5
+    actor.concentrating = True
+    rng = CountingRng([12])
+    assert run_concentration_check(rng, actor, damage_taken=10) is True
+    assert rng.calls == 1
+
+
+def test_run_contested_check_tie_goes_to_defender() -> None:
+    rng = FixedRng([10, 10])
+    assert run_contested_check(rng, attacker_mod=2, defender_mods=[2]) is False
