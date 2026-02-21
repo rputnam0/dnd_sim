@@ -1,0 +1,14 @@
+{
+  "name": "Borrowed Knowledge",
+  "type": "spell",
+  "level": 2,
+  "school": "Divination",
+  "casting_time": "action",
+  "range_ft": 0,
+  "concentration": false,
+  "duration_rounds": 600,
+  "description": "You draw on knowledge from spirits of the past. Choose one skill in which you lack proficiency. For the spell's duration, you have proficiency in the chosen skill. The spell ends early if you cast it again.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
+}

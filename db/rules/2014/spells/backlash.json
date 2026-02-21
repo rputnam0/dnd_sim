@@ -1,0 +1,14 @@
+{
+  "name": "Backlash",
+  "type": "spell",
+  "level": 4,
+  "school": "Abjuration",
+  "casting_time": "reaction",
+  "range_ft": 60,
+  "concentration": false,
+  "duration_rounds": null,
+  "description": "You ward yourself against destructive energy, reducing the damage taken by 4d6 plus your spellcasting ability modifier. If the triggering damage was from a creature within range, you can force the creature to make a Constitution saving throw. The creature takes 4d6 Force damage on a failed save or half as much damage on a successful one.",
+  "save_ability": "constitution",
+  "damage_type": "force",
+  "mechanics": []
+}

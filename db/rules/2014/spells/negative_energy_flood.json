@@ -1,0 +1,17 @@
+{
+  "name": "Negative Energy Flood",
+  "type": "spell",
+  "level": 5,
+  "school": "Necromancy",
+  "casting_time": "action",
+  "range_ft": 60,
+  "concentration": false,
+  "duration_rounds": 0,
+  "description": "You send ribbons of negative energy at one creature you can see within range. Unless the target is undead, it must make a Constitution saving throw, taking 5d12 necrotic damage on a failed save, or half as much damage on a successful one. A target killed by this damage rises up as a zombie at the start of your next turn. The zombie pursues whatever creature it can see that is closest to it. Statistics for the zombie are in the Monster Manual. If you target an undead with this spell, the target doesn't make a saving throw. Instead, roll 5d12. The target gains half the total as temporary hit points.",
+  "save_ability": "constitution",
+  "damage_type": "necrotic",
+  "mechanics": [
+    "Target undead does not make a saving throw and gains temporary hit points equal to half the rolled damage.",
+    "If the spell kills a non‑undead creature, it rises as a zombie at the start of the caster's next turn."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Homunculus Servant",
+  "type": "spell",
+  "level": 2,
+  "school": "Conjuration",
+  "casting_time": "hour",
+  "range_ft": 10,
+  "concentration": false,
+  "duration_rounds": 0,
+  "description": "You summon a special homunculus in an unoccupied space within range. This creature uses the Homunculus Servant stat block. If you already have a homunculus from this spell, the homunculus is replaced by the new one. You determine the homunculus's appearance, such as a mechanical-looking bird, winged vial, or miniature animate cauldron. The homunculus is an ally to you and your allies. In combat, it shares your Initiative count, but it takes its turn immediately after yours. It obeys your commands (no action required by you). If you don't issue any, it takes the Dodge action and uses its movement to avoid danger. Use the spell slot's level for the spell's level in the stat block.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
+}

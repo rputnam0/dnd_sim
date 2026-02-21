@@ -5,6 +5,7 @@ import random
 import re
 import statistics
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from dnd_sim.io import EnemyConfig, LoadedScenario
@@ -46,6 +47,10 @@ _IMPLIED_CONDITION_MAP: dict[str, set[str]] = {
     "paralyzed": {"incapacitated"},
 }
 _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
+_TRAIT_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
+_SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
+_SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
+_SPELL_INDEX_CACHE: tuple[Path, dict[str, Path]] | None = None
 
 
 @dataclass(slots=True)
@@ -68,6 +73,127 @@ def _metric(values: list[float]) -> SummaryMetric:
 
 def _normalize_trait_name(name: str) -> str:
     return _TRAIT_NORMALIZE_RE.sub(" ", str(name).strip().lower())
+
+
+def _trait_lookup_key(name: str) -> str:
+    text = _normalize_trait_name(name)
+    text = (
+        text.replace("’", "'")
+        .replace("`", "'")
+        .replace("'", "")
+        .replace("[r]", "")
+        .replace("[c]", "")
+        .replace("[x]", "")
+    )
+    text = _TRAIT_PUNCT_RE.sub(" ", text)
+    return _TRAIT_NORMALIZE_RE.sub(" ", text).strip()
+
+
+def _trait_name_variants(name: str) -> list[str]:
+    raw = str(name).strip()
+    variants = {raw}
+    normalized = raw.replace("’", "'")
+    variants.add(normalized)
+    variants.add(re.sub(r"^\d+\s*:\s*", "", normalized).strip())
+    variants.add(re.sub(r"\([^)]*\)", "", normalized).strip())
+    variants.add(re.sub(r"\[[^]]*\]", "", normalized).strip())
+    collapsed = re.sub(r"^\d+\s*:\s*", "", re.sub(r"\([^)]*\)", "", normalized)).strip()
+    variants.add(collapsed)
+    stripped_markers = re.sub(r"\[[^]]*\]", "", collapsed).strip()
+    variants.add(stripped_markers)
+    if re.search(r"ability score improvements?$", stripped_markers, flags=re.IGNORECASE):
+        variants.add("Ability Score Improvement")
+    if re.search(r"lineage spells$", stripped_markers, flags=re.IGNORECASE):
+        variants.add(re.sub(r"\s+spells$", "", stripped_markers, flags=re.IGNORECASE).strip())
+    if re.search(r"^core .+ traits$", stripped_markers, flags=re.IGNORECASE):
+        variants.add(
+            re.sub(
+                r"^core\s+", "", re.sub(r"\s+traits$", "", stripped_markers, flags=re.IGNORECASE)
+            ).strip()
+        )
+    return [value for value in variants if value]
+
+
+def _is_non_feature_sheet_section(name: str) -> bool:
+    key = _trait_lookup_key(name)
+    if key in {"hit points", "proficiencies", "skills"}:
+        return True
+    if re.fullmatch(r"core .+ traits", key):
+        return True
+    return False
+
+
+def _extract_trait_candidates_from_raw_fields(character: dict[str, Any]) -> set[str]:
+    candidates: set[str] = set()
+    for row in character.get("raw_fields", []) or []:
+        field = str(row.get("field", ""))
+        if not field.startswith("FeaturesTraits"):
+            continue
+        text = str(row.get("value", ""))
+        for line in text.splitlines():
+            stripped = line.strip()
+            # Primary bullet headings: "* Trait Name • Source"
+            if stripped.startswith("* "):
+                title = stripped[2:].split("•", 1)[0].strip()
+                if title:
+                    candidates.add(title)
+                continue
+            # Nested bullet selections: "| Blind Fighting • TCoE 41"
+            pipe_line = stripped.lstrip("\\").strip()
+            if pipe_line.startswith("|"):
+                title = pipe_line[1:].strip().split("•", 1)[0].strip()
+                if title:
+                    candidates.add(title)
+    return candidates
+
+
+def _resolve_character_traits(
+    character: dict[str, Any], traits_db: dict[str, dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
+    """Resolve character traits/features to canonical DB traits where possible.
+
+    Keeps unresolved traits as empty dict entries so existing name-based hooks still work.
+    """
+    db_index: dict[str, dict[str, Any]] = {}
+    for key, data in traits_db.items():
+        if not isinstance(data, dict):
+            continue
+        name = str(data.get("name", key))
+        db_index[_trait_lookup_key(name)] = data
+        db_index[_trait_lookup_key(key)] = data
+
+    resolved: dict[str, dict[str, Any]] = {}
+
+    def find_match(candidate: str) -> dict[str, Any] | None:
+        match: dict[str, Any] | None = None
+        for variant in _trait_name_variants(candidate):
+            matched = db_index.get(_trait_lookup_key(variant))
+            if matched is not None:
+                match = matched
+                break
+        return match
+
+    explicit_candidates: set[str] = set(str(value) for value in (character.get("traits", []) or []))
+    for candidate in explicit_candidates:
+        match = find_match(candidate)
+        if match is not None:
+            canonical_name = _normalize_trait_name(str(match.get("name", candidate)))
+            resolved[canonical_name] = match
+        else:
+            if _is_non_feature_sheet_section(candidate):
+                continue
+            resolved[_normalize_trait_name(candidate)] = {}
+
+    # Raw feature bullets are only used to discover selected sub-options that exist in the
+    # canonical trait DB (e.g. "Blind Fighting" under Fighting Initiate).
+    for candidate in _extract_trait_candidates_from_raw_fields(character):
+        match = find_match(candidate)
+        if match is None:
+            continue
+        canonical_name = _normalize_trait_name(str(match.get("name", candidate)))
+        resolved[canonical_name] = match
+
+    return resolved
 
 
 def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
@@ -135,6 +261,385 @@ def _scale_cantrip_dice(base_dice: str, character_level: int) -> str:
     return base_dice
 
 
+def _slugify_spell_name(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+
+
+def _spell_lookup_key(name: str) -> str:
+    text = str(name).strip().lower()
+    text = text.replace("’", "'").replace("`", "'")
+    text = re.sub(r"\[[^]]*\]", " ", text)
+    text = re.sub(r"\((?:ritual|concentration|materials?|somatic|verbal|v,s,m)[^)]*\)", " ", text)
+    text = text.replace("'", "")
+    text = _SPELL_PUNCT_RE.sub(" ", text)
+    return _SPELL_NORMALIZE_RE.sub(" ", text).strip()
+
+
+def _spell_name_variants(name: str) -> list[str]:
+    raw = str(name).strip()
+    variants = {raw}
+    normalized = raw.replace("’", "'")
+    variants.add(normalized)
+    variants.add(re.sub(r"\[[^]]*\]", "", normalized).strip())
+    variants.add(re.sub(r"\([^)]*\)", "", normalized).strip())
+    collapsed = re.sub(r"\[[^]]*\]", "", re.sub(r"\([^)]*\)", "", normalized)).strip()
+    variants.add(collapsed)
+    variants.add(re.sub(r"\s+", " ", collapsed).strip())
+    return [v for v in variants if v]
+
+
+def _build_spell_index(root: Path) -> dict[str, Path]:
+    index: dict[str, Path] = {}
+    for path in root.glob("*.json"):
+        # Index by stem immediately; this does not require JSON parsing.
+        stem_key = _spell_lookup_key(path.stem)
+        if stem_key and stem_key not in index:
+            index[stem_key] = path
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        name = str(payload.get("name", "")).strip()
+        if not name:
+            continue
+        for variant in _spell_name_variants(name):
+            key = _spell_lookup_key(variant)
+            if key and key not in index:
+                index[key] = path
+    return index
+
+
+def _get_spell_index(root: Path) -> dict[str, Path]:
+    global _SPELL_INDEX_CACHE
+    if _SPELL_INDEX_CACHE is None or _SPELL_INDEX_CACHE[0] != root:
+        _SPELL_INDEX_CACHE = (root, _build_spell_index(root))
+    return _SPELL_INDEX_CACHE[1]
+
+
+def _spell_root_dir() -> Path:
+    # repo_root/db/rules/2014/spells
+    return Path(__file__).resolve().parents[2] / "db" / "rules" / "2014" / "spells"
+
+
+def _load_spell_definition(name: str) -> dict[str, Any] | None:
+    root = _spell_root_dir()
+    candidate_paths: list[Path] = []
+    for variant in _spell_name_variants(name):
+        slug = _slugify_spell_name(variant)
+        if slug:
+            candidate_paths.append(root / f"{slug}.json")
+    for path in candidate_paths:
+        if not path.exists():
+            continue
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+
+    index = _get_spell_index(root)
+    for variant in _spell_name_variants(name):
+        key = _spell_lookup_key(variant)
+        path = index.get(key)
+        if path is None or not path.exists():
+            continue
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
+_LEVEL_HEADER_RE = re.compile(r"===\s*(CANTRIPS|\d+\w{2}\s+LEVEL)\s*===", re.IGNORECASE)
+_LEVEL_NUMBER_RE = re.compile(r"(\d+)(?:st|nd|rd|th)", re.IGNORECASE)
+
+
+def _parse_spell_level_from_header(header: str) -> int | None:
+    text = header.strip()
+    match = _LEVEL_HEADER_RE.search(text)
+    if not match:
+        return None
+    value = match.group(1).strip().lower()
+    if "cantrip" in value:
+        return 0
+    num = _LEVEL_NUMBER_RE.search(value)
+    if not num:
+        return None
+    try:
+        return int(num.group(1))
+    except ValueError:
+        return None
+
+
+_SAVE_HIT_RE = re.compile(
+    r"(?:(STR|DEX|CON|INT|WIS|CHA)\s*(\d+))?\s*(?:/\s*)?(\+\d+)?",
+    re.IGNORECASE,
+)
+
+
+def _parse_save_hit_field(value: str) -> tuple[str | None, int | None, int | None]:
+    raw = value.strip()
+    if not raw or raw == "--":
+        return None, None, None
+    match = _SAVE_HIT_RE.fullmatch(raw.replace(" ", ""))
+    if not match:
+        # Fallback: attempt to recover components from messy strings.
+        ability = None
+        dc = None
+        to_hit = None
+        for ab in ("STR", "DEX", "CON", "INT", "WIS", "CHA"):
+            if ab in raw.upper():
+                ability = ab.lower()
+                break
+        numbers = re.findall(r"\d+", raw)
+        if numbers:
+            try:
+                dc = int(numbers[0])
+            except ValueError:
+                dc = None
+        hit = re.search(r"\+(\d+)", raw)
+        if hit:
+            to_hit = int(hit.group(1))
+        return ability, dc, to_hit
+    ability_code, dc_raw, to_hit_raw = match.groups()
+    ability = ability_code.lower() if ability_code else None
+    dc = int(dc_raw) if dc_raw else None
+    to_hit = int(to_hit_raw) if to_hit_raw else None
+    return ability, dc, to_hit
+
+
+def _extract_spellcasting_profile_from_raw_fields(character: dict[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    raw_fields = character.get("raw_fields", []) or []
+    for row in raw_fields:
+        field = str(row.get("field", ""))
+        value = str(row.get("value", ""))
+        if field == "spellCastingAbility0":
+            out["casting_ability"] = value.strip().lower()
+        elif field == "spellSaveDC0":
+            try:
+                out["save_dc"] = int(value.strip())
+            except ValueError:
+                pass
+        elif field == "spellAtkBonus0":
+            hit = re.search(r"\+?(\d+)", value)
+            if hit:
+                out["to_hit"] = int(hit.group(1))
+    return out
+
+
+def _classify_casting_time_action_cost(casting_time: str) -> str:
+    compact = re.sub(r"[^a-z0-9]+", "", casting_time.strip().lower())
+    if compact in {"ba", "1ba", "bonusaction", "1bonusaction"}:
+        return "bonus"
+    if compact in {"r", "1r", "reaction", "1reaction"}:
+        return "reaction"
+    return "action"
+
+
+def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract a minimal spell list from PDF raw_fields.
+
+    This produces spell dicts compatible with `_build_spell_actions`, but it relies on
+    the local spell definition DB to infer damage/healing/mechanics when possible.
+    """
+    raw_fields = character.get("raw_fields", []) or []
+    profile = _extract_spellcasting_profile_from_raw_fields(character)
+    global_to_hit = profile.get("to_hit")
+    global_save_dc = profile.get("save_dc")
+
+    current_level: int | None = None
+    entries: dict[int, dict[str, Any]] = {}
+
+    field_re = re.compile(
+        r"^spell(Name|Prepared|SaveHit|CastingTime|Range|Duration|Notes|Source)(\d+)$"
+    )
+
+    for row in raw_fields:
+        field = str(row.get("field", ""))
+        value = str(row.get("value", "") or "")
+        if field.startswith("spellHeader"):
+            parsed = _parse_spell_level_from_header(value)
+            if parsed is not None:
+                current_level = parsed
+            continue
+
+        match = field_re.match(field)
+        if not match:
+            continue
+        key = match.group(1).lower()
+        idx = int(match.group(2))
+        entry = entries.setdefault(idx, {})
+        entry[key] = value
+        if key == "name" and "level" not in entry:
+            entry["level"] = current_level if current_level is not None else 0
+
+    spells: list[dict[str, Any]] = []
+    for idx, entry in sorted(entries.items()):
+        name = str(entry.get("name", "")).strip()
+        if not name or name == "--":
+            continue
+
+        spell_level = int(entry.get("level", 0))
+        prepared = str(entry.get("prepared", "") or "").strip()
+        if spell_level > 0 and not prepared:
+            continue
+
+        save_hit = str(entry.get("savehit", "") or "").strip()
+        save_ability, save_dc, to_hit = _parse_save_hit_field(save_hit)
+
+        casting_time = str(entry.get("castingtime", "") or "").strip()
+        range_text = str(entry.get("range", "") or "").strip()
+        duration = str(entry.get("duration", "") or "").strip()
+
+        spell_def = _load_spell_definition(name)
+        hydrated: dict[str, Any] = {
+            "name": name,
+            "level": (
+                int(spell_def.get("level"))
+                if isinstance(spell_def, dict) and "level" in spell_def
+                else spell_level
+            ),
+            "to_hit": to_hit if to_hit is not None else global_to_hit,
+            "save_dc": save_dc if save_dc is not None else global_save_dc,
+            "save_ability": save_ability,
+            "concentration": "concentration" in duration.lower() if duration else False,
+        }
+
+        range_ft = None
+        range_match = re.search(r"(\d+)\s*ft", range_text.lower())
+        if range_match:
+            range_ft = int(range_match.group(1))
+        else:
+            feet_match = re.search(r"(\d+)\s*feet", range_text.lower())
+            if feet_match:
+                range_ft = int(feet_match.group(1))
+        if range_ft is not None:
+            hydrated["range_ft"] = range_ft
+
+        # Try to infer combat-relevant fields from the spell definition.
+        if isinstance(spell_def, dict):
+            hydrated.setdefault("level", spell_def.get("level"))
+            if "save_ability" in spell_def:
+                hydrated["save_ability"] = str(
+                    spell_def.get("save_ability") or ""
+                ).lower() or hydrated.get("save_ability")
+            if "damage_type" in spell_def:
+                hydrated["damage_type"] = str(spell_def.get("damage_type") or "fire").lower()
+            if "range_ft" in spell_def and isinstance(spell_def.get("range_ft"), (int, float)):
+                hydrated["range_ft"] = int(spell_def["range_ft"])
+            if "concentration" in spell_def:
+                hydrated["concentration"] = bool(spell_def["concentration"])
+            if "mechanics" in spell_def and isinstance(spell_def.get("mechanics"), list):
+                hydrated["mechanics"] = list(spell_def["mechanics"])
+
+            description = str(
+                spell_def.get("description") or spell_def.get("description_raw") or ""
+            )
+            if not description and "meta" in spell_def and "description" in spell_def:
+                description = str(spell_def.get("description", ""))
+
+            # Damage: "take 8d6 fire damage"
+            if "damage" not in hydrated:
+                dmg = re.search(
+                    r"take[s]?\s+(\d+d\d+(?:\s*[+-]\s*\d+)?)\s+([a-z]+)\s+damage",
+                    description,
+                    re.IGNORECASE,
+                )
+                if dmg:
+                    hydrated["damage"] = dmg.group(1).replace(" ", "")
+                    hydrated.setdefault("damage_type", dmg.group(2).lower())
+
+            # Save ability: "make a Dexterity saving throw"
+            if not hydrated.get("save_ability"):
+                sv = re.search(
+                    r"make\s+a\s+(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+saving throw",
+                    description,
+                    re.IGNORECASE,
+                )
+                if sv:
+                    hydrated["save_ability"] = sv.group(1)[:3].lower()
+
+            # Half on save hints.
+            if "half as much" in description.lower():
+                hydrated["half_on_save"] = True
+
+            # Healing: Cure Wounds / Healing Word baseline parsing.
+            if re.search(
+                r"regains?(?:\s+a\s+number\s+of)?\s+hit\s+points?\s+equal\s+to\s+(\d+d\d+)",
+                description,
+                re.IGNORECASE,
+            ):
+                # Use spellcasting mod from the sheet if known.
+                casting = str(profile.get("casting_ability") or "wis").lower()
+                ability_scores = character.get("ability_scores", {}) or {}
+                mod = (int(ability_scores.get(casting, 10)) - 10) // 2
+                dice = re.search(r"(\d+d\d+)", description, re.IGNORECASE)
+                if dice:
+                    hydrated["healing"] = f"{dice.group(1)}+{mod}"
+
+        # Determine action_cost from casting_time abbreviations used in raw fields.
+        if casting_time:
+            action_cost = _classify_casting_time_action_cost(casting_time)
+            if action_cost == "bonus":
+                hydrated["action_cost"] = "bonus"
+            elif action_cost == "reaction":
+                hydrated["action_cost"] = "reaction"
+            else:
+                hydrated["action_cost"] = "action"
+
+        # Determine action_type if missing.
+        if "action_type" not in hydrated:
+            if hydrated.get("save_ability") and hydrated.get("save_dc"):
+                hydrated["action_type"] = "save"
+            elif hydrated.get("to_hit") is not None:
+                hydrated["action_type"] = "attack"
+            else:
+                hydrated["action_type"] = "utility"
+
+        spells.append(hydrated)
+
+    # Dedupe by spell name while preserving the richest available payload.
+    by_name: dict[str, dict[str, Any]] = {}
+    for spell in spells:
+        key = _trait_lookup_key(str(spell.get("name", "")))
+        if not key:
+            continue
+        if key not in by_name:
+            by_name[key] = dict(spell)
+            continue
+        existing = by_name[key]
+        for field in (
+            "damage",
+            "damage_type",
+            "healing",
+            "save_ability",
+            "save_dc",
+            "to_hit",
+            "action_type",
+            "action_cost",
+            "range_ft",
+            "aoe_type",
+            "aoe_size_ft",
+            "concentration",
+        ):
+            existing_value = existing.get(field)
+            candidate_value = spell.get(field)
+            if field == "concentration":
+                existing_missing = existing_value is None
+                candidate_present = candidate_value is not None
+            else:
+                existing_missing = existing_value in (None, "", 0)
+                candidate_present = candidate_value not in (None, "", 0)
+            if existing_missing and candidate_present:
+                existing[field] = spell.get(field)
+        existing_level = int(existing.get("level", 0))
+        candidate_level = int(spell.get("level", 0))
+        if existing_level <= 0 and candidate_level > 0:
+            existing["level"] = candidate_level
+
+    return list(by_name.values())
+
+
 def _build_spell_actions(
     character: dict[str, Any],
     *,
@@ -160,6 +665,8 @@ def _build_spell_actions(
       tags: list[str]
     """
     spells = character.get("spells", [])
+    if not spells:
+        spells = _extract_spells_from_raw_fields(character)
     if not spells:
         return []
 
@@ -206,7 +713,7 @@ def _build_spell_actions(
                     "effect_type": "heal",
                     "target": "target",
                     "amount": str(healing_expr),
-                    "trigger": "always",
+                    "apply_on": "always",
                 }
             )
             if action_type == "utility":
@@ -224,6 +731,9 @@ def _build_spell_actions(
             resource_cost=resource_cost,
             action_cost=action_cost,
             target_mode=target_mode,
+            range_ft=int(spell.get("range_ft")) if spell.get("range_ft") is not None else None,
+            aoe_type=spell.get("aoe_type"),
+            aoe_size_ft=spell.get("aoe_size_ft"),
             max_targets=max_targets,
             concentration=bool(spell.get("concentration", False)),
             effects=effects,
@@ -462,7 +972,7 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
 
 
 def _apply_passive_traits(actor: ActorRuntimeState) -> None:
-    for trait_data in actor.traits.values():
+    for trait_data in list(actor.traits.values()):
         for mechanic in trait_data.get("mechanics", []):
             etype = mechanic.get("effect_type")
             if etype == "max_hp_increase":
@@ -477,6 +987,16 @@ def _apply_passive_traits(actor: ActorRuntimeState) -> None:
                         pass
             elif etype == "speed_increase":
                 actor.speed_ft += mechanic.get("amount", 0)
+            elif etype == "sense":
+                # Promote senses into trait keys used by spatial.can_see().
+                sense = str(mechanic.get("sense", "")).lower().strip()
+                if not sense:
+                    continue
+                raw_range = mechanic.get(
+                    "range_ft", mechanic.get("range", mechanic.get("distance"))
+                )
+                if isinstance(raw_range, (int, float)):
+                    actor.traits[sense] = {"range_ft": float(raw_range)}
 
 
 def _build_actor_from_character(
@@ -513,12 +1033,7 @@ def _build_actor_from_character(
         expertise={str(v).lower() for v in character.get("expertise", [])},
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
-        traits={
-            _normalize_trait_name(trait): traits_db.get(
-                _normalize_trait_name(trait), traits_db.get(str(trait).lower(), {})
-            )
-            for trait in character.get("traits", [])
-        },
+        traits=_resolve_character_traits(character, traits_db),
         level=_parse_character_level(character.get("class_level", "1")),
     )
     _apply_passive_traits(actor)
@@ -841,6 +1356,30 @@ def _resolve_targets_for_action(
     )
     if not candidates:
         return []
+
+    required_conditions: set[str] = set()
+    excluded_conditions: set[str] = set()
+    for tag in getattr(action, "tags", []) or []:
+        text = str(tag)
+        if text.startswith("requires_condition:"):
+            required_conditions.add(text.split(":", 1)[1].strip().lower())
+        elif text.startswith("excludes_condition:"):
+            excluded_conditions.add(text.split(":", 1)[1].strip().lower())
+
+    if required_conditions:
+        candidates = [
+            target
+            for target in candidates
+            if all(cond in target.conditions for cond in required_conditions)
+        ]
+    if excluded_conditions:
+        candidates = [
+            target
+            for target in candidates
+            if not any(cond in target.conditions for cond in excluded_conditions)
+        ]
+    if not candidates:
+        return []
     by_id = {target.actor_id: target for target in candidates}
 
     if mode in {"all_enemies", "all_allies", "all_creatures"}:
@@ -1106,7 +1645,20 @@ def _apply_effect(
         save_ability = effect.get("save_ability")
         if save_dc is not None and save_ability:
             save_key = str(save_ability).lower()
-            save_total = rng.randint(1, 20) + int(recipient.save_mods.get(save_key, 0))
+            save_mod = int(recipient.save_mods.get(save_key, 0))
+            save_total = rng.randint(1, 20) + save_mod
+            if (
+                action
+                and getattr(action, "tags", None)
+                and "spell" in action.tags
+                and _has_trait(recipient, "gnomish cunning")
+                and save_key in {"int", "wis", "cha"}
+            ):
+                save_total = max(save_total, rng.randint(1, 20) + save_mod)
+            if str(effect.get("condition", "")).lower() == "charmed" and _has_trait(
+                recipient, "fey ancestry"
+            ):
+                save_total = max(save_total, rng.randint(1, 20) + save_mod)
             condition_saved = save_total >= int(save_dc)
             if not condition_saved and recipient.resources.get("legendary_resistance", 0) > 0:
                 recipient.resources["legendary_resistance"] -= 1
@@ -1170,7 +1722,44 @@ def _apply_effect(
         recipient.next_attack_advantage = False
         return
 
-    # forced_movement and note are schema-valid but non-positional in v1.
+    if effect_type == "forced_movement":
+        # v2: Minimal positional forced-movement support. This is intentionally simple:
+        # it moves the recipient along the straight line away from/toward the source.
+        from .spatial import distance_euclidean, move_towards
+
+        distance_ft = float(effect.get("distance_ft", 0))
+        direction = str(effect.get("direction", "away_from_source"))
+        if distance_ft <= 0:
+            return
+
+        src = actor.position
+        cur = recipient.position
+        if direction == "toward_source":
+            recipient.position = move_towards(cur, src, distance_ft)
+            recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
+            return
+
+        if direction == "away_from_source":
+            # Project a point further away from the source and move toward it.
+            dist = distance_euclidean(src, cur)
+            if dist <= 0:
+                # Arbitrary axis push if co-located.
+                recipient.position = (cur[0] + distance_ft, cur[1], cur[2])
+                recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
+                return
+            unit = ((cur[0] - src[0]) / dist, (cur[1] - src[1]) / dist, (cur[2] - src[2]) / dist)
+            dest = (
+                cur[0] + unit[0] * distance_ft,
+                cur[1] + unit[1] * distance_ft,
+                cur[2] + unit[2] * distance_ft,
+            )
+            recipient.position = dest
+            recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
+            return
+
+        return
+
+    # note is schema-valid but non-mechanical in v1/v2.
     return
 
 
@@ -1252,11 +1841,26 @@ def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> boo
         return False
     if action.action_cost == "reaction" and not actor.reaction_available:
         return False
-    if action.action_cost == "legendary" and actor.legendary_actions_remaining <= 0:
+    if action.action_cost == "legendary" and actor.legendary_actions_remaining < _legendary_cost(
+        action
+    ):
         return False
     if action.action_cost == "lair" and actor.lair_action_used_this_round:
         return False
     return True
+
+
+def _legendary_cost(action: ActionDefinition) -> int:
+    cost = 1
+    for tag in getattr(action, "tags", []) or []:
+        text = str(tag)
+        if text.startswith("legendary_cost:"):
+            _, raw = text.split(":", 1)
+            try:
+                cost = max(cost, int(raw))
+            except ValueError:
+                continue
+    return cost
 
 
 def _mark_action_cost_used(actor: ActorRuntimeState, action: ActionDefinition) -> None:
@@ -1265,7 +1869,9 @@ def _mark_action_cost_used(actor: ActorRuntimeState, action: ActionDefinition) -
     elif action.action_cost == "reaction":
         actor.reaction_available = False
     elif action.action_cost == "legendary":
-        actor.legendary_actions_remaining = max(0, actor.legendary_actions_remaining - 1)
+        actor.legendary_actions_remaining = max(
+            0, actor.legendary_actions_remaining - _legendary_cost(action)
+        )
     elif action.action_cost == "lair":
         actor.lair_action_used_this_round = True
 
@@ -1894,6 +2500,12 @@ def _execute_action(
                 continue
             save_mod = int(target.save_mods.get(save_key, 0))
             save_roll = rng.randint(1, 20)
+            if (
+                "spell" in action.tags
+                and _has_trait(target, "gnomish cunning")
+                and save_key in {"int", "wis", "cha"}
+            ):
+                save_roll = max(save_roll, rng.randint(1, 20))
             if save_key == "dex" and "dodging" in target.conditions:
                 save_roll = max(save_roll, rng.randint(1, 20))
             if "spell" in action.tags and _has_trait(target, "mage slayer"):
@@ -2074,19 +2686,23 @@ def _run_lair_actions(
         lair_actions = [action for action in actor.actions if action.action_cost == "lair"]
         if not lair_actions:
             continue
-        action = next(
-            (candidate for candidate in lair_actions if _action_available(actor, candidate)), None
-        )
-        if action is None:
-            continue
-        targets = _resolve_targets_for_action(
-            rng=rng,
-            actor=actor,
-            action=action,
-            actors=actors,
-            requested=[],
-        )
-        if not targets:
+        action: ActionDefinition | None = None
+        targets: list[ActorRuntimeState] = []
+        for candidate in lair_actions:
+            if not _action_available(actor, candidate):
+                continue
+            resolved = _resolve_targets_for_action(
+                rng=rng,
+                actor=actor,
+                action=candidate,
+                actors=actors,
+                requested=[],
+            )
+            if resolved:
+                action = candidate
+                targets = resolved
+                break
+        if action is None or not targets:
             continue
         spent = _spend_resources(actor, action.resource_cost)
         for key, amount in spent.items():
@@ -2134,19 +2750,23 @@ def _run_legendary_actions(
         legendary = [action for action in actor.actions if action.action_cost == "legendary"]
         if not legendary:
             continue
-        action = next(
-            (candidate for candidate in legendary if _action_available(actor, candidate)), None
-        )
-        if action is None:
-            continue
-        targets = _resolve_targets_for_action(
-            rng=rng,
-            actor=actor,
-            action=action,
-            actors=actors,
-            requested=[],
-        )
-        if not targets:
+        action: ActionDefinition | None = None
+        targets: list[ActorRuntimeState] = []
+        for candidate in legendary:
+            if not _action_available(actor, candidate):
+                continue
+            resolved = _resolve_targets_for_action(
+                rng=rng,
+                actor=actor,
+                action=candidate,
+                actors=actors,
+                requested=[],
+            )
+            if resolved:
+                action = candidate
+                targets = resolved
+                break
+        if action is None or not targets:
             continue
         spent = _spend_resources(actor, action.resource_cost)
         for key, amount in spent.items():
@@ -2322,6 +2942,8 @@ def run_simulation(
                     actor.took_attack_action_this_turn = False
                     _roll_recharge_for_actor(rng, actor)
                     _tick_conditions_for_actor(rng, actor)
+                    if "grappled" in actor.conditions:
+                        actor.movement_remaining = 0.0
                     actor.bonus_available = True
                     actor.reaction_available = True
                     actor.sneak_attack_used_this_turn = False

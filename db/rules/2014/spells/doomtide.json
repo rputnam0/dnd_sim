@@ -1,0 +1,14 @@
+{
+  "name": "Doomtide",
+  "type": "spell",
+  "level": 4,
+  "school": "Conjuration",
+  "casting_time": "action",
+  "range_ft": 120,
+  "concentration": true,
+  "duration_rounds": 10,
+  "description": "You create a 20-foot-radius sphere of inky fog within range. The fog is magical darkness and lasts for the duration or until a strong wind (such as the one created by the Gust of Wind spell) disperses it, ending the spell. Each creature in the sphere when it appears makes a Wisdom saving throw. On a failed save, a creature takes 5d6 psychic damage and subtracts 1d6 from its saving throws until the end of its next turn. On a successful save, a creature takes half as much damage only. A creature also makes this save when the sphere moves into its space, when it enters the sphere, or when it ends its turn inside the sphere. A creature makes this save only once per turn. The sphere moves 10 feet away from you at the start of each of your turns. Casting this as a Circle spell requires a minimum of five secondary casters. In addition to the spell's usual components, you must provide a special component (a string of three black pearls from Pandemonium), which the spell consumes. The spell's range increases to 1 mile, and its duration increases to until dispelled (no concentration required). The spell ends early if any caster who participated in this casting contributes to another casting of Doomtide as a Circle spell. When the spell is cast, each secondary caster must expend a level 3+ spell slot; otherwise, the spell fails.",
+  "save_ability": "wisdom",
+  "damage_type": "psychic",
+  "mechanics": []
+}
