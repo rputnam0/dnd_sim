@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from dnd_sim.models import ActorRuntimeState
 
 _DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
+_TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
 
 
 @dataclass(slots=True)
@@ -28,6 +29,15 @@ class DeathSaveResult:
 class DamageRollResult:
     rolled: int
     applied: int
+
+
+def _normalize_trait_name(name: str) -> str:
+    return _TRAIT_NORMALIZE_RE.sub(" ", str(name).strip().lower())
+
+
+def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
+    needle = _normalize_trait_name(trait_name)
+    return any(_normalize_trait_name(key) == needle for key in actor.traits.keys())
 
 
 def roll_dice(rng: random.Random, sides: int, count: int = 1) -> int:
@@ -74,11 +84,49 @@ def attack_roll(
     return AttackRollResult(hit=hit, crit=crit, natural_roll=natural_roll, total=total)
 
 
-def roll_damage(rng: random.Random, expr: str, *, crit: bool = False) -> int:
+def run_contested_check(
+    rng: random.Random,
+    attacker_mod: int,
+    defender_mods: list[int],
+) -> bool:
+    """Evaluates a contested check. Ties go to the defender."""
+    attacker_roll = rng.randint(1, 20) + attacker_mod
+    defender_mod = max(defender_mods) if defender_mods else 0
+    defender_roll = rng.randint(1, 20) + defender_mod
+    return attacker_roll > defender_roll
+
+
+def roll_damage(
+    rng: random.Random,
+    expr: str,
+    *,
+    crit: bool = False,
+    empowered_rerolls: int = 0,
+    source: ActorRuntimeState | None = None,
+    damage_type: str = "",
+) -> int:
     n_dice, dice_size, flat = parse_damage_expression(expr)
     total = flat
     if n_dice and dice_size:
-        total += roll_dice(rng, dice_size, n_dice * (2 if crit else 1))
+        rolls = [rng.randint(1, dice_size) for _ in range(n_dice * (2 if crit else 1))]
+        if empowered_rerolls > 0:
+            rolls.sort()
+            for i in range(min(empowered_rerolls, len(rolls))):
+                if rolls[i] <= dice_size // 2:
+                    rolls[i] = rng.randint(1, dice_size)
+
+        if source and damage_type:
+            floor = 1
+            for trait_data in source.traits.values():
+                for mechanic in trait_data.get("mechanics", []):
+                    if mechanic.get("effect_type") == "damage_roll_floor":
+                        req_type = mechanic.get("damage_type", "").lower()
+                        if req_type == damage_type.lower() or req_type == "any_elemental":
+                            floor = max(floor, mechanic.get("floor", 1))
+            if floor > 1:
+                rolls = [max(r, floor) for r in rolls]
+
+        total += sum(rolls)
     return max(total, 0)
 
 
@@ -120,11 +168,40 @@ def apply_damage(
     damage_type: str,
     *,
     is_critical: bool = False,
+    is_magical: bool = False,
+    source: ActorRuntimeState | None = None,
 ) -> int:
+    adjusted = amount
+
+    for trait_data in target.traits.values():
+        for mechanic in trait_data.get("mechanics", []):
+            if mechanic.get("effect_type") == "reduce_damage_taken":
+                if damage_type in mechanic.get("damage_types", []):
+                    cond = mechanic.get("condition")
+                    if cond == "nonmagical" and is_magical:
+                        continue
+                    amt = mechanic.get("amount", 0)
+                    adjusted = max(0, adjusted - amt)
+
+    # Check attacker traits for resistance bypass (e.g. Elemental Adept)
+    effective_resistances = set(target.damage_resistances)
+
+    # Phase 10: Barbarian Rage Resistance
+    if "raging" in target.conditions:
+        effective_resistances.update(["bludgeoning", "piercing", "slashing"])
+
+    if source:
+        for trait_data in source.traits.values():
+            for mechanic in trait_data.get("mechanics", []):
+                if mechanic.get("effect_type") == "ignore_resistance":
+                    bypass_type = mechanic.get("damage_type", "").lower()
+                    if bypass_type in effective_resistances or bypass_type == damage_type:
+                        effective_resistances.discard(damage_type)
+
     adjusted = apply_damage_type_modifiers(
-        amount,
+        adjusted,
         damage_type,
-        resistances=target.damage_resistances,
+        resistances=effective_resistances,
         immunities=target.damage_immunities,
         vulnerabilities=target.damage_vulnerabilities,
     )
@@ -160,13 +237,27 @@ def run_concentration_check(
     rng: random.Random,
     target: ActorRuntimeState,
     damage_taken: int,
+    source: ActorRuntimeState | None = None,
 ) -> bool:
     if not target.concentrating:
         return True
 
     dc = concentration_check_dc(damage_taken)
-    roll = rng.randint(1, 20) + target.con_mod
-    success = roll >= dc
+    roll_1 = rng.randint(1, 20)
+    roll_2 = rng.randint(1, 20)
+
+    advantage = _has_trait(target, "war caster")
+    disadvantage = bool(source and _has_trait(source, "mage slayer"))
+
+    if advantage and not disadvantage:
+        roll = max(roll_1, roll_2)
+    elif disadvantage and not advantage:
+        roll = min(roll_1, roll_2)
+    else:
+        roll = roll_1
+
+    save_mod = target.save_mods.get("con", target.con_mod)
+    success = (roll + save_mod) >= dc
     if not success:
         target.concentrating = False
     return success

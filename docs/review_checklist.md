@@ -15,7 +15,7 @@ Each section is intended to be delivered and reviewed in a separate pull request
 
 ## PR-2: Feat/Class Behavior Correctness
 
-- [ ] Audit trait key normalization (`space`, `_`, `-`) and unify checks.
+- [x] Audit trait key normalization (`space`, `_`, `-`) and unify checks.
 - [ ] Verify Lucky attacker/defender/save behavior with deterministic tests.
 - [ ] Verify GWM/Sharpshooter toggles and damage math under advantage/disadvantage.
 - [ ] Verify Shield Master / War Caster / Mage Slayer interactions.

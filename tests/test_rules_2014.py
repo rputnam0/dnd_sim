@@ -7,6 +7,7 @@ from dnd_sim.rules_2014 import (
     apply_damage_type_modifiers,
     attack_roll,
     concentration_check_dc,
+    run_concentration_check,
     resolve_death_save,
     roll_damage,
 )
@@ -79,3 +80,29 @@ def test_death_save_natural_20_recovers() -> None:
     result = resolve_death_save(rng, actor)
     assert result.regained_consciousness is True
     assert actor.hp == 1
+
+
+def test_concentration_check_honors_war_caster_with_space_separated_trait_key() -> None:
+    actor = _actor()
+    actor.hp = 5
+    actor.concentrating = True
+    actor.traits = {"war caster": {}}
+
+    # Without advantage this would fail (1 + 2 < 10). With advantage, it succeeds on 20.
+    rng = FixedRng([1, 20])
+    assert run_concentration_check(rng, actor, damage_taken=10) is True
+    assert actor.concentrating is True
+
+
+def test_concentration_check_honors_mage_slayer_with_underscore_trait_key() -> None:
+    target = _actor()
+    target.hp = 5
+    target.concentrating = True
+    source = _actor()
+    source.traits = {"mage_slayer": {}}
+
+    # Without disadvantage this would succeed (20 + 2 >= 10).
+    # With disadvantage, the min roll is 1 and concentration fails.
+    rng = FixedRng([20, 1])
+    assert run_concentration_check(rng, target, damage_taken=10, source=source) is False
+    assert target.concentrating is False

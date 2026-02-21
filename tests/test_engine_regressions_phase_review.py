@@ -102,7 +102,7 @@ def test_grapple_action_executes_without_attribute_or_signature_errors(monkeypat
 
 def test_divine_smite_attack_does_not_crash_and_spends_slot() -> None:
     paladin = _base_actor(actor_id="paladin", team="party")
-    paladin.traits = {"divine_smite": {}}
+    paladin.traits = {"divine smite": {}}
     paladin.resources = {"spell_slot_1": 1}
 
     enemy = _base_actor(actor_id="enemy", team="enemy")
