@@ -96,7 +96,10 @@ def _expected_damage_against(action: dict, target, *, save_mod: int = 0) -> floa
             return 2.0 * duration
         return 0.0
 
-    all_effects = action.get("effects", []) + action.get("mechanics", [])
+    all_effects: list[dict[str, Any]] = []
+    for raw_effect in action.get("effects", []) + action.get("mechanics", []):
+        if isinstance(raw_effect, dict):
+            all_effects.append(raw_effect)
 
     if action["action_type"] == "attack":
         to_hit = int(action.get("to_hit") or 0)

@@ -94,12 +94,86 @@ def test_character_without_attacks_gets_single_copy_of_standard_actions() -> Non
         "source": {"pdf_name": "fixture.pdf"},
     }
 
-    actor = _build_actor_from_character(character)
+    actor = _build_actor_from_character(character, traits_db={})
     names = [action.name for action in actor.actions]
     assert names.count("dodge") == 1
     assert names.count("dash") == 1
     assert names.count("disengage") == 1
     assert names.count("ready") == 1
+
+
+def test_build_actor_respects_current_hp_override_after_passives() -> None:
+    character = {
+        "character_id": "hero",
+        "name": "Hero",
+        "class_level": "Fighter 8",
+        "max_hp": 20,
+        "current_hp": 18,
+        "ac": 15,
+        "speed_ft": 30,
+        "ability_scores": {
+            "str": 16,
+            "dex": 14,
+            "con": 14,
+            "int": 10,
+            "wis": 10,
+            "cha": 10,
+        },
+        "save_mods": {"str": 3, "dex": 2, "con": 2, "int": 0, "wis": 0, "cha": 0},
+        "skill_mods": {},
+        "attacks": [
+            {"name": "Longsword", "to_hit": 6, "damage": "1d8+3", "damage_type": "slashing"}
+        ],
+        "resources": {},
+        "traits": ["Tough"],
+        "raw_fields": [],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+    traits_db = {
+        "tough": {
+            "name": "Tough",
+            "mechanics": [{"effect_type": "max_hp_increase", "calculation": "character_level * 2"}],
+        }
+    }
+
+    actor = _build_actor_from_character(character, traits_db)
+
+    assert actor.max_hp == 36
+    assert actor.hp == 18
+
+
+def test_build_actor_applies_current_resources_override() -> None:
+    character = {
+        "character_id": "hero",
+        "name": "Hero",
+        "class_level": "Monk 8",
+        "max_hp": 20,
+        "ac": 15,
+        "speed_ft": 30,
+        "ability_scores": {
+            "str": 10,
+            "dex": 16,
+            "con": 14,
+            "int": 10,
+            "wis": 14,
+            "cha": 10,
+        },
+        "save_mods": {"str": 0, "dex": 3, "con": 2, "int": 0, "wis": 2, "cha": 0},
+        "skill_mods": {},
+        "attacks": [
+            {"name": "Unarmed Strike", "to_hit": 6, "damage": "1d6+3", "damage_type": "bludgeoning"}
+        ],
+        "resources": {"ki": {"max": 8}},
+        "current_resources": {"ki": 3},
+        "traits": [],
+        "raw_fields": [],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+
+    actor = _build_actor_from_character(character, traits_db={})
+
+    assert actor.max_resources["ki"] == 8
+    assert actor.resources["ki"] == 3
 
 
 def test_grapple_action_executes_without_attribute_or_signature_errors(monkeypatch) -> None:
@@ -252,6 +326,40 @@ def test_legendary_action_cost_tag_gates_availability() -> None:
     assert _action_available(boss, expensive) is False
 
 
+def test_execute_action_ignores_non_dict_effect_entries() -> None:
+    attacker = _base_actor(actor_id="attacker", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    action = ActionDefinition(
+        name="legacy_spell",
+        action_type="save",
+        save_dc=12,
+        save_ability="dex",
+        damage="2d6",
+        half_on_save=True,
+        effects=["legacy_effect_string"],  # type: ignore[list-item]
+        mechanics=["legacy_mechanic_string"],  # type: ignore[list-item]
+    )
+
+    actors = {attacker.actor_id: attacker, target.actor_id: target}
+    damage_dealt = {attacker.actor_id: 0, target.actor_id: 0}
+    damage_taken = {attacker.actor_id: 0, target.actor_id: 0}
+    threat_scores = {attacker.actor_id: 0, target.actor_id: 0}
+    resources_spent = {attacker.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=random.Random(11),
+        actor=attacker,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[attacker.actor_id] >= 0
 def test_legendary_action_runner_skips_untargetable_action() -> None:
     rng = random.Random(2)
     hero = _base_actor(actor_id="hero", team="party")
