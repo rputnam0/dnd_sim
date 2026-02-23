@@ -1012,12 +1012,13 @@ def _build_actor_from_character(
     ability_mods = {k: (int(ability_scores.get(k, 10)) - 10) // 2 for k in ABILITY_KEYS}
     explicit_saves = {k: int(v) for k, v in character.get("save_mods", {}).items()}
     save_mods = {k: explicit_saves.get(k, ability_mods.get(k, 0)) for k in ABILITY_KEYS}
+    max_hp = int(character.get("max_hp", 1))
     actor = ActorRuntimeState(
         actor_id=character["character_id"],
         team="party",
         name=character["name"],
-        max_hp=int(character.get("max_hp", 1)),
-        hp=int(character.get("max_hp", 1)),
+        max_hp=max_hp,
+        hp=max_hp,
         temp_hp=0,
         ac=int(character.get("ac", 10)),
         initiative_mod=int(initiative_mod),
@@ -1037,6 +1038,23 @@ def _build_actor_from_character(
         level=_parse_character_level(character.get("class_level", "1")),
     )
     _apply_passive_traits(actor)
+    current_hp = character.get("current_hp")
+    if current_hp is not None:
+        try:
+            actor.hp = max(0, min(actor.max_hp, int(current_hp)))
+        except (TypeError, ValueError):
+            pass
+
+    current_resources = character.get("current_resources")
+    if isinstance(current_resources, dict):
+        for resource_name, resource_amount in current_resources.items():
+            if not isinstance(resource_amount, int):
+                continue
+            if resource_name not in actor.max_resources:
+                continue
+            actor.resources[resource_name] = max(
+                0, min(int(actor.max_resources[resource_name]), resource_amount)
+            )
     return actor
 
 
@@ -1269,6 +1287,8 @@ def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
     if action.action_type == "utility":
         return True
     for effect in action.effects:
+        if not isinstance(effect, dict):
+            continue
         if effect.get("target") != "target":
             continue
         if effect.get("effect_type") in {"heal", "temp_hp", "remove_condition", "resource_change"}:
@@ -1772,6 +1792,8 @@ def _apply_action_effects(
     active_hazards: list[dict[str, Any]],
 ) -> None:
     for effect in action.effects + action.mechanics:
+        if not isinstance(effect, dict):
+            continue
         if _effect_matches_event(effect, event):
             recipient = _resolve_effect_target(effect, actor=actor, target=target)
             if action.concentration and effect.get("effect_type") in ("apply_condition", "hazard"):
@@ -2026,6 +2048,7 @@ def _execute_action(
             actor.concentration_conditions = {
                 str(effect.get("condition", "")).lower()
                 for effect in action.effects + action.mechanics
+                if isinstance(effect, dict)
                 if effect.get("effect_type") == "apply_condition"
                 and str(effect.get("condition", "")).strip()
             }
