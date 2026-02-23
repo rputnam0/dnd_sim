@@ -8,32 +8,19 @@ from dnd_sim.spatial import (
 )
 
 
-def test_distance_metrics():
+def test_distance_metrics() -> None:
     pos1 = (0.0, 0.0, 0.0)
-    pos2 = (15.0, 20.0, 0.0)  # 3 squares right, 4 squares up
-
-    # Euclidean forms a 3-4-5 triangle equivalent, hypotenuse is 25
+    pos2 = (15.0, 20.0, 0.0)
     assert distance_euclidean(pos1, pos2) == 25.0
-
-    # Chebyshev is the max(dx, dy) = max(15, 20) = 20
     assert distance_chebyshev(pos1, pos2) == 20.0
 
 
-def test_move_towards():
+def test_move_towards() -> None:
     start = (0.0, 0.0, 0.0)
-    target = (30.0, 40.0, 0.0)  # distance 50
-
-    # Move 25 feet towards
-    midpoint = move_towards(start, target, max_distance=25.0)
-    assert midpoint == (15.0, 20.0, 0.0)
-
-    # Move more than distance
-    overshoot = move_towards(start, target, max_distance=100.0)
-    assert overshoot == target
-
-    # Move towards self
-    self_move = move_towards(start, start, max_distance=30.0)
-    assert self_move == start
+    target = (30.0, 40.0, 0.0)
+    assert move_towards(start, target, max_distance=25.0) == (15.0, 20.0, 0.0)
+    assert move_towards(start, target, max_distance=100.0) == target
+    assert move_towards(start, start, max_distance=30.0) == start
 
 
 def test_can_see_darkvision_blocked_by_magical_darkness() -> None:

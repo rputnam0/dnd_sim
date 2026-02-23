@@ -127,9 +127,7 @@ def test_report_contains_required_sections_and_pngs(tmp_path: Path) -> None:
     assert "## Resource Consumption" in report
 
 
-def test_report_cli_uses_trial_rows_path_from_run_config(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_report_cli_uses_trial_rows_path_from_run_config(tmp_path: Path, monkeypatch) -> None:
     scenario_path = _setup_reporting_fixture(tmp_path)
     loaded = load_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
@@ -182,9 +180,7 @@ def test_report_cli_uses_trial_rows_path_from_run_config(
     assert "## Visualizations" in report_text
 
 
-def test_load_trial_results_supports_parquet_without_engine(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_load_trial_results_supports_parquet_without_engine(tmp_path: Path, monkeypatch) -> None:
     parquet_path = tmp_path / "trial_rows.parquet"
     parquet_path.write_text("placeholder", encoding="utf-8")
 

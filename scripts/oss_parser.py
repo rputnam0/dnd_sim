@@ -10,7 +10,10 @@ from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Iterable, NamedTuple
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:  # pragma: no cover - optional dependency at runtime only
+    OpenAI = None  # type: ignore[assignment]
 
 try:
     from dotenv import load_dotenv
