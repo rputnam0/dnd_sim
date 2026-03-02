@@ -205,6 +205,8 @@ def apply_damage(
         immunities=target.damage_immunities,
         vulnerabilities=target.damage_vulnerabilities,
     )
+    if adjusted > 0 and "raging" in target.conditions:
+        target.rage_sustained_since_last_turn = True
 
     if target.hp <= 0 and not target.dead:
         # Failed death save from taking damage while at 0.
@@ -229,6 +231,14 @@ def apply_damage(
         if not target.was_downed:
             target.downed_count += 1
             target.was_downed = True
+
+    if adjusted > 0 and "turned" in target.conditions:
+        for condition in ("turned", "frightened"):
+            target.conditions.discard(condition)
+            target.condition_durations.pop(condition, None)
+        if target.hp > 0:
+            target.conditions.discard("incapacitated")
+            target.condition_durations.pop("incapacitated", None)
 
     return adjusted
 
@@ -255,6 +265,13 @@ def run_concentration_check(
 
     save_mod = target.save_mods.get("con", target.con_mod)
     success = (roll + save_mod) >= dc
+    if (
+        not success
+        and _has_trait(target, "mind sharpener")
+        and target.resources.get("mind_sharpener_charges", 0) > 0
+    ):
+        target.resources["mind_sharpener_charges"] -= 1
+        success = True
     if not success:
         target.concentrating = False
     return success

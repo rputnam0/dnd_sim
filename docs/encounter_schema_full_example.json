@@ -66,9 +66,31 @@
       "furyen_fury",
       "isak_wissa"
     ],
-    "enemies": [
-      "example_boss",
-      "example_minion"
+    "encounters": [
+      {
+        "enemies": [
+          "example_boss"
+        ],
+        "short_rest_after": true,
+        "checkpoint": "phase_1_clear",
+        "branches": {
+          "enemy": 2,
+          "default": 1
+        }
+      },
+      {
+        "enemies": [
+          "example_minion"
+        ],
+        "checkpoint": "phase_2_clear"
+      },
+      {
+        "enemies": [
+          "example_boss",
+          "example_minion"
+        ],
+        "checkpoint": "fallback_retry"
+      }
     ],
     "initiative_mode": "individual",
     "battlefield": {
@@ -81,8 +103,13 @@
     },
     "termination_rules": {
       "party_defeat": "all_unconscious_or_dead",
-      "enemy_defeat": "all_dead",
-      "max_rounds": 20
+      "enemy_defeat": {
+        "metric": "alive_count",
+        "op": "<=",
+        "value": 0
+      },
+      "max_rounds": 20,
+      "max_encounter_steps": 9
     },
     "strategy_modules": [
       {

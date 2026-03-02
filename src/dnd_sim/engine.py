@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import json
+import math
 import random
 import re
 import statistics
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
-from dnd_sim.io import EnemyConfig, LoadedScenario
+from dnd_sim.inventory import InventoryState
+from dnd_sim.io import EncounterConfig, EnemyConfig, LoadedScenario
 from dnd_sim.models import (
     ABILITY_KEYS,
     ActionDefinition,
@@ -18,7 +20,7 @@ from dnd_sim.models import (
     SummaryMetric,
     TrialResult,
 )
-from dnd_sim.spatial import AABB
+from dnd_sim.spatial import AABB, distance_chebyshev, find_path
 from dnd_sim.rules_2014 import (
     AttackRollResult,
     apply_damage,
@@ -31,14 +33,15 @@ from dnd_sim.rules_2014 import (
 from dnd_sim.strategy_api import ActorView, BattleStateView, TargetRef
 
 _CONTROL_BLOCKING_CONDITIONS = {"incapacitated", "stunned", "unconscious", "paralyzed"}
+_CONCENTRATION_FORCED_END_CONDITIONS = _CONTROL_BLOCKING_CONDITIONS
 _DISADVANTAGE_CONDITIONS = {"poisoned", "frightened", "restrained", "blinded", "prone"}
 _ATTACKER_ADVANTAGE_CONDITIONS = {
     "blinded",
     "paralyzed",
     "stunned",
     "unconscious",
-    "prone",
     "restrained",
+    "reckless_attacking",
 }
 _AUTO_CRIT_CONDITIONS = {"paralyzed", "stunned", "unconscious"}
 _IMPLIED_CONDITION_MAP: dict[str, set[str]] = {
@@ -50,7 +53,77 @@ _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _TRAIT_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
+_SPELL_COMPONENT_TOKEN_RE = re.compile(r"\b([vsm])\b", flags=re.IGNORECASE)
 _SPELL_INDEX_CACHE: tuple[Path, dict[str, Path]] | None = None
+_WARLOCK_INVOCATION_ALIASES: dict[str, str] = {
+    "agonizing blast": "agonizing blast",
+    "repelling blast": "repelling blast",
+}
+_RANGED_ATTACK_KEYWORDS = (
+    "bow",
+    "crossbow",
+    "sling",
+    "dart",
+    "blowgun",
+    "javelin",
+    "net",
+    "thrown",
+)
+_RANGED_WEAPON_HINTS = _RANGED_ATTACK_KEYWORDS
+_ARTIFICER_OPTION_TRAITS = {
+    "enhanced defense",
+    "enhanced weapon",
+    "mind sharpener",
+    "radiant weapon",
+    "repeating shot",
+    "repulsion shield",
+    "homunculus servant",
+    "steel defender",
+}
+_SPELL_SLOT_CREATION_COSTS: dict[int, int] = {1: 2, 2: 3, 3: 5, 4: 6, 5: 7}
+_TRAVEL_PACE_MILES_PER_DAY: dict[str, float] = {"slow": 18.0, "normal": 24.0, "fast": 30.0}
+_TRAVEL_PACE_HAZARD_DC_MODIFIER: dict[str, int] = {"slow": -2, "normal": 0, "fast": 2}
+_MULTIATTACK_DEFENSE_PREFIX = "multiattack_defense_from:"
+_SPELL_SCHOOL_ORDER = (
+    "abjuration",
+    "conjuration",
+    "divination",
+    "enchantment",
+    "evocation",
+    "illusion",
+    "necromancy",
+    "transmutation",
+)
+_SPELL_SCHOOLS = set(_SPELL_SCHOOL_ORDER)
+_WIZARD_SCHOOL_TRAIT_TO_SCHOOL = {
+    "school of abjuration": "abjuration",
+    "school of conjuration": "conjuration",
+    "school of divination": "divination",
+    "school of enchantment": "enchantment",
+    "school of evocation": "evocation",
+    "school of illusion": "illusion",
+    "school of necromancy": "necromancy",
+    "school of transmutation": "transmutation",
+}
+_KNOWN_MANEUVERS = {
+    "commander's strike",
+    "disarming attack",
+    "distracting strike",
+    "evasive footwork",
+    "feinting attack",
+    "goading attack",
+    "lunging attack",
+    "maneuvering attack",
+    "menacing attack",
+    "parry",
+    "precision attack",
+    "pushing attack",
+    "rally",
+    "riposte",
+    "sweeping attack",
+    "trip attack",
+}
+_DEFAULT_BATTLEMASTER_MANEUVERS = ("trip attack", "menacing attack", "precision attack")
 
 
 @dataclass(slots=True)
@@ -147,15 +220,19 @@ def _extract_trait_candidates_from_raw_fields(character: dict[str, Any]) -> set[
     return candidates
 
 
+def _is_supported_artificer_option(name: str) -> bool:
+    return _normalize_trait_name(name) in _ARTIFICER_OPTION_TRAITS
+
+
 def _resolve_character_traits(
-    character: dict[str, Any], traits_db: dict[str, dict[str, Any]]
+    character: dict[str, Any], traits_db: dict[str, dict[str, Any]] | None
 ) -> dict[str, dict[str, Any]]:
     """Resolve character traits/features to canonical DB traits where possible.
 
     Keeps unresolved traits as empty dict entries so existing name-based hooks still work.
     """
     db_index: dict[str, dict[str, Any]] = {}
-    for key, data in traits_db.items():
+    for key, data in (traits_db or {}).items():
         if not isinstance(data, dict):
             continue
         name = str(data.get("name", key))
@@ -189,6 +266,8 @@ def _resolve_character_traits(
     for candidate in _extract_trait_candidates_from_raw_fields(character):
         match = find_match(candidate)
         if match is None:
+            if _is_supported_artificer_option(candidate):
+                resolved[_normalize_trait_name(candidate)] = {}
             continue
         canonical_name = _normalize_trait_name(str(match.get("name", candidate)))
         resolved[canonical_name] = match
@@ -201,12 +280,441 @@ def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
     return any(_normalize_trait_name(key) == needle for key in actor.traits.keys())
 
 
+def _has_any_trait(actor: ActorRuntimeState, names: list[str]) -> bool:
+    return any(_has_trait(actor, name) for name in names)
+
+
+def _has_trait_marker(actor: ActorRuntimeState, marker: str) -> bool:
+    needle = _trait_lookup_key(marker)
+    if not needle:
+        return False
+    for trait_name in actor.traits.keys():
+        normalized = _trait_lookup_key(trait_name)
+        if normalized == needle:
+            return True
+        if needle in normalized.split():
+            return True
+    return False
+
+
+def _is_channel_divinity_resource_name(name: str) -> bool:
+    key = _trait_lookup_key(name)
+    words = set(key.split())
+    return "channel" in words and "divinity" in words
+
+
+def _find_channel_divinity_resource_key(resources: dict[str, Any]) -> str | None:
+    for key in resources.keys():
+        if _is_channel_divinity_resource_name(str(key)):
+            return str(key)
+    return None
+
+
+def _channel_divinity_uses_for_level(level: int) -> int:
+    if level >= 18:
+        return 3
+    if level >= 6:
+        return 2
+    if level >= 2:
+        return 1
+    return 0
+
+
+def _infer_spell_save_dc(
+    character: dict[str, Any],
+    *,
+    character_level: int,
+    default_ability: str = "wis",
+) -> int:
+    explicit = character.get("spell_save_dc")
+    if isinstance(explicit, int):
+        return explicit
+
+    profile = _extract_spellcasting_profile_from_raw_fields(character)
+    dc_from_profile = profile.get("save_dc")
+    if isinstance(dc_from_profile, int):
+        return dc_from_profile
+
+    ability_scores = character.get("ability_scores", {}) or {}
+    ability_mod = (int(ability_scores.get(default_ability, 10)) - 10) // 2
+    return 8 + _calculate_proficiency_bonus(character_level) + ability_mod
+
+
+def _spend_channel_divinity(
+    actor: ActorRuntimeState,
+    resources_spent: dict[str, dict[str, int]],
+    *,
+    amount: int = 1,
+) -> bool:
+    if amount <= 0:
+        return True
+    resource_key = _find_channel_divinity_resource_key(actor.resources)
+    if resource_key is None:
+        return False
+    current = int(actor.resources.get(resource_key, 0))
+    if current < amount:
+        return False
+    actor.resources[resource_key] = current - amount
+    resources_spent[actor.actor_id][resource_key] = (
+        resources_spent[actor.actor_id].get(resource_key, 0) + amount
+    )
+    return True
+
+
+def _has_destructive_wrath(actor: ActorRuntimeState) -> bool:
+    return _has_any_trait(
+        actor,
+        [
+            "destructive wrath",
+            "channel divinity: destructive wrath",
+        ],
+    )
+
+
+def _max_damage_expression(expr: str, *, crit: bool = False) -> int:
+    n_dice, dice_size, flat = parse_damage_expression(expr)
+    die_count = n_dice * (2 if crit else 1)
+    return max(0, (die_count * dice_size) + flat)
+
+
+def _roll_damage_with_channel_divinity_hooks(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    expr: str,
+    damage_type: str,
+    resources_spent: dict[str, dict[str, int]],
+    crit: bool = False,
+    empowered_rerolls: int = 0,
+) -> int:
+    normalized_type = str(damage_type).lower()
+    if normalized_type in {"lightning", "thunder"} and _has_destructive_wrath(actor):
+        if _spend_channel_divinity(actor, resources_spent):
+            return _max_damage_expression(expr, crit=crit)
+    return roll_damage(
+        rng,
+        expr,
+        crit=crit,
+        empowered_rerolls=empowered_rerolls,
+        source=actor,
+        damage_type=damage_type,
+    )
+
+
 def _parse_character_level(class_level: str) -> int:
     """Extract the numeric level from a class_level string like 'Fighter 8' or 'Wizard 5 / Cleric 3'."""
-    import re
-
+    class_levels = _parse_class_levels(class_level)
+    if class_levels:
+        return sum(class_levels.values())
     numbers = re.findall(r"\d+", class_level)
     return sum(int(n) for n in numbers) if numbers else 1
+
+
+def _parse_class_level(class_level_text: str, class_name: str) -> int:
+    pattern = re.compile(rf"\b{re.escape(class_name)}\b[^0-9]*(\d+)", re.IGNORECASE)
+    return sum(int(match.group(1)) for match in pattern.finditer(class_level_text or ""))
+
+
+def _parse_class_levels(class_level_text: str) -> dict[str, int]:
+    levels: dict[str, int] = {}
+    for class_name, raw_level in re.findall(
+        r"([A-Za-z][A-Za-z' -]+?)\s*(\d+)", class_level_text or ""
+    ):
+        key = class_name.strip().lower()
+        levels[key] = levels.get(key, 0) + int(raw_level)
+    return levels
+
+
+def _normalize_spell_school(value: Any) -> str | None:
+    text = re.sub(r"[^a-z]+", " ", str(value).lower()).strip()
+    if not text:
+        return None
+    text = re.sub(r"\s+", " ", text)
+    if text in _SPELL_SCHOOLS:
+        return text
+    return None
+
+
+def _extract_spell_school_from_meta(meta: Any) -> str | None:
+    cleaned = re.sub(r"[^a-z]+", " ", str(meta).lower())
+    for school in _SPELL_SCHOOL_ORDER:
+        if re.search(rf"\b{school}\b", cleaned):
+            return school
+    return None
+
+
+def _extract_spell_school(spell: dict[str, Any]) -> str | None:
+    explicit = _normalize_spell_school(spell.get("school"))
+    if explicit is not None:
+        return explicit
+    return _extract_spell_school_from_meta(spell.get("meta", ""))
+
+
+def _append_tag_once(action: ActionDefinition, tag: str) -> None:
+    if tag and tag not in action.tags:
+        action.tags.append(tag)
+
+
+def _append_mechanic_once(action: ActionDefinition, mechanic: dict[str, Any]) -> None:
+    if mechanic not in action.mechanics:
+        action.mechanics.append(mechanic)
+
+
+def _hook_tag_school_matched_spell(
+    *,
+    action: ActionDefinition,
+    wizard_school: str,
+    spell_school: str,
+) -> None:
+    if wizard_school != spell_school:
+        return
+    _append_tag_once(action, "wizard_school_hook")
+    _append_tag_once(action, f"wizard_school_hook:{wizard_school}")
+    _append_mechanic_once(
+        action,
+        {
+            "type": "wizard_school_hook",
+            "school": wizard_school,
+        },
+    )
+
+
+_WIZARD_SCHOOL_ACTION_HOOKS: dict[str, tuple[Callable[..., None], ...]] = {
+    school: (_hook_tag_school_matched_spell,) for school in _SPELL_SCHOOL_ORDER
+}
+
+
+def _school_from_action_tags(action: ActionDefinition) -> str | None:
+    for tag in action.tags:
+        if not tag.startswith("school:"):
+            continue
+        school = _normalize_spell_school(tag.split(":", 1)[1])
+        if school is not None:
+            return school
+    return None
+
+
+def _apply_wizard_school_action_hooks(
+    actions: list[ActionDefinition],
+    *,
+    traits: set[str],
+) -> None:
+    active_schools = [
+        school for trait_key, school in _WIZARD_SCHOOL_TRAIT_TO_SCHOOL.items() if trait_key in traits
+    ]
+    if not active_schools:
+        return
+
+    for action in actions:
+        if "spell" not in action.tags:
+            continue
+        spell_school = _school_from_action_tags(action)
+        if spell_school is None:
+            continue
+        for wizard_school in active_schools:
+            for hook in _WIZARD_SCHOOL_ACTION_HOOKS.get(wizard_school, ()):
+                hook(action=action, wizard_school=wizard_school, spell_school=spell_school)
+
+
+def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
+    if max_value <= 0:
+        return
+    existing_max = int(actor.max_resources.get(resource, 0))
+    if existing_max < max_value:
+        actor.max_resources[resource] = max_value
+    cap = int(actor.max_resources[resource])
+    if resource not in actor.resources:
+        actor.resources[resource] = cap
+    else:
+        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+
+
+def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    _ensure_resource_cap(actor, "arcane_recovery", 1)
+
+
+def _iter_spell_slot_levels_desc(actor: ActorRuntimeState) -> list[int]:
+    levels: set[int] = set()
+    for key in actor.max_resources.keys():
+        if not str(key).startswith("spell_slot_"):
+            continue
+        try:
+            level = int(str(key).rsplit("_", 1)[1])
+        except ValueError:
+            continue
+        if level > 0:
+            levels.add(level)
+    return sorted(levels, reverse=True)
+
+
+def _recover_spell_slots_with_budget(
+    actor: ActorRuntimeState,
+    *,
+    budget: int,
+    max_individual_slot_level: int,
+) -> int:
+    if budget <= 0:
+        return 0
+    recovered_levels = 0
+    for slot_level in _iter_spell_slot_levels_desc(actor):
+        if slot_level > max_individual_slot_level or budget < slot_level:
+            continue
+        slot_key = f"spell_slot_{slot_level}"
+        max_slots = int(actor.max_resources.get(slot_key, 0))
+        current_slots = min(int(actor.resources.get(slot_key, 0)), max_slots)
+        missing_slots = max(0, max_slots - current_slots)
+        recoverable_slots = min(missing_slots, budget // slot_level)
+        if recoverable_slots <= 0:
+            continue
+        actor.resources[slot_key] = current_slots + recoverable_slots
+        recovered_levels += recoverable_slots * slot_level
+        budget -= recoverable_slots * slot_level
+        if budget <= 0:
+            break
+    return recovered_levels
+
+
+def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    uses_remaining = int(actor.resources.get("arcane_recovery", 0))
+    if uses_remaining <= 0:
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    recovery_budget = max(1, (wizard_level + 1) // 2)
+    recovered_levels = _recover_spell_slots_with_budget(
+        actor,
+        budget=recovery_budget,
+        max_individual_slot_level=5,
+    )
+    if recovered_levels <= 0:
+        return
+    actor.resources["arcane_recovery"] = uses_remaining - 1
+
+
+def _fighter_superiority_dice_count(fighter_level: int) -> int:
+    if fighter_level >= 15:
+        return 6
+    if fighter_level >= 7:
+        return 5
+    if fighter_level >= 3:
+        return 4
+    return 0
+
+
+def _fighter_superiority_die_size(
+    fighter_level: int,
+    *,
+    traits: set[str] | None = None,
+) -> int:
+    trait_keys = traits or set()
+    if fighter_level >= 18 or "ultimate combat superiority" in trait_keys:
+        return 12
+    if fighter_level >= 10 or {
+        "improved combat superiority",
+        "improved combat superiority (d10)",
+    }.intersection(trait_keys):
+        return 10
+    return 8
+
+
+def _warlock_level_from_character(character: dict[str, Any]) -> int:
+    class_level_text = str(character.get("class_level", ""))
+    return _parse_class_level(class_level_text, "warlock")
+
+
+def _warlock_pact_slot_profile_for_level(warlock_level: int) -> tuple[int, int] | None:
+    if warlock_level <= 0:
+        return None
+    if warlock_level == 1:
+        slot_count = 1
+    elif warlock_level <= 10:
+        slot_count = 2
+    elif warlock_level <= 16:
+        slot_count = 3
+    else:
+        slot_count = 4
+
+    if warlock_level <= 2:
+        slot_level = 1
+    elif warlock_level <= 4:
+        slot_level = 2
+    elif warlock_level <= 6:
+        slot_level = 3
+    elif warlock_level <= 8:
+        slot_level = 4
+    else:
+        slot_level = 5
+    return slot_level, slot_count
+
+
+def _extract_pact_slot_profile_from_spell_slots(raw_slots: Any) -> tuple[int, int] | None:
+    if not isinstance(raw_slots, dict):
+        return None
+    positive_slots: list[tuple[int, int]] = []
+    for level_raw, count_raw in raw_slots.items():
+        try:
+            level = int(level_raw)
+            count = int(count_raw)
+        except (TypeError, ValueError):
+            continue
+        if level <= 0 or count <= 0:
+            continue
+        if level > 5:
+            continue
+        positive_slots.append((level, count))
+    if len(positive_slots) == 1:
+        return positive_slots[0]
+    return None
+
+
+def _is_pact_magic_character(character: dict[str, Any]) -> bool:
+    if _warlock_level_from_character(character) > 0:
+        return True
+    trait_names = {
+        _normalize_trait_name(str(value)) for value in (character.get("traits", []) or [])
+    }
+    return "pact magic" in trait_names
+
+
+def _warlock_mystic_arcanum_max_level(warlock_level: int) -> int:
+    if warlock_level >= 17:
+        return 9
+    if warlock_level >= 15:
+        return 8
+    if warlock_level >= 13:
+        return 7
+    if warlock_level >= 11:
+        return 6
+    return 0
+
+
+def _extract_warlock_invocations(character: dict[str, Any]) -> set[str]:
+    candidates: set[str] = set()
+    for trait in character.get("traits", []) or []:
+        key = _normalize_trait_name(str(trait))
+        canonical = _WARLOCK_INVOCATION_ALIASES.get(key)
+        if canonical is not None:
+            candidates.add(canonical)
+
+    for candidate in _extract_trait_candidates_from_raw_fields(character):
+        key = _normalize_trait_name(candidate)
+        canonical = _WARLOCK_INVOCATION_ALIASES.get(key)
+        if canonical is not None:
+            candidates.add(canonical)
+
+    return candidates
 
 
 # Cantrip damage scaling: at level 5, 11, 17 add an extra die
@@ -216,6 +724,458 @@ _CANTRIP_SCALE_TIERS = [(17, 4), (11, 3), (5, 2), (1, 1)]
 def _calculate_proficiency_bonus(level: int) -> int:
     """5e proficiency bonus progression by character level."""
     return 2 + max(0, (max(level, 1) - 1) // 4)
+
+
+def _damage_expr_with_flat_bonus(expr: str, bonus: int) -> str:
+    if bonus == 0:
+        return expr
+    try:
+        n_dice, dice_size, flat = parse_damage_expression(expr)
+    except ValueError:
+        return f"{expr}+{bonus}" if bonus > 0 else f"{expr}{bonus}"
+
+    updated_flat = flat + bonus
+    if n_dice == 0 and dice_size == 0:
+        return str(updated_flat)
+
+    suffix = ""
+    if updated_flat > 0:
+        suffix = f"+{updated_flat}"
+    elif updated_flat < 0:
+        suffix = str(updated_flat)
+    return f"{n_dice}d{dice_size}{suffix}"
+
+
+def _is_weapon_attack_action(action: ActionDefinition) -> bool:
+    return action.action_type == "attack" and "spell" not in set(action.tags or [])
+
+
+def _is_ranged_weapon_action(action: ActionDefinition) -> bool:
+    if not _is_weapon_attack_action(action):
+        return False
+    if action.range_ft is not None and action.range_ft > 5:
+        return True
+    name = action.name.lower()
+    return any(hint in name for hint in _RANGED_WEAPON_HINTS)
+
+
+def _ensure_action(actor: ActorRuntimeState, action: ActionDefinition) -> None:
+    if any(
+        existing.name == action.name and existing.action_cost == action.action_cost
+        for existing in actor.actions
+    ):
+        return
+    actor.actions.append(action)
+
+
+def _construct_command_action() -> ActionDefinition:
+    return ActionDefinition(
+        name="command_construct_companion",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        effects=[
+            {
+                "effect_type": "command_construct_companion",
+                "target": "source",
+            }
+        ],
+        tags=["bonus", "construct_command"],
+    )
+
+
+def _discover_construct_companion_kinds(actor: ActorRuntimeState) -> set[str]:
+    kinds: set[str] = set()
+    if _has_trait(actor, "steel defender"):
+        kinds.add("steel_defender")
+    if _has_trait(actor, "homunculus servant"):
+        kinds.add("homunculus_servant")
+
+    for trait_data in actor.traits.values():
+        for mechanic in trait_data.get("mechanics", []):
+            if not isinstance(mechanic, dict):
+                continue
+            if str(mechanic.get("type", "")).lower() != "summon":
+                continue
+            creature = _normalize_trait_name(str(mechanic.get("creature", "")))
+            if creature == "steel defender":
+                kinds.add("steel_defender")
+            elif creature == "homunculus servant":
+                kinds.add("homunculus_servant")
+    return kinds
+
+
+def _apply_artificer_infusion_passives(actor: ActorRuntimeState) -> None:
+    if _has_trait(actor, "enhanced defense"):
+        actor.ac += 2 if actor.level >= 10 else 1
+
+    if _has_trait(actor, "repulsion shield"):
+        actor.ac += 1
+
+    if _has_trait(actor, "enhanced weapon"):
+        bonus = 2 if actor.level >= 10 else 1
+        for action in actor.actions:
+            if not _is_weapon_attack_action(action):
+                continue
+            if action.to_hit is not None:
+                action.to_hit += bonus
+            if action.damage:
+                action.damage = _damage_expr_with_flat_bonus(action.damage, bonus)
+
+    if _has_trait(actor, "radiant weapon"):
+        for action in actor.actions:
+            if not _is_weapon_attack_action(action):
+                continue
+            if action.to_hit is not None:
+                action.to_hit += 1
+            if action.damage:
+                action.damage = _damage_expr_with_flat_bonus(action.damage, 1)
+
+    if _has_trait(actor, "repeating shot"):
+        for action in actor.actions:
+            if not _is_ranged_weapon_action(action):
+                continue
+            if action.to_hit is not None:
+                action.to_hit += 1
+            if action.damage:
+                action.damage = _damage_expr_with_flat_bonus(action.damage, 1)
+            if "magical" not in action.tags:
+                action.tags.append("magical")
+
+    if _has_trait(actor, "mind sharpener"):
+        actor.resources["mind_sharpener_charges"] = int(actor.resources.get("mind_sharpener_charges", 4))
+        actor.max_resources["mind_sharpener_charges"] = int(
+            actor.max_resources.get("mind_sharpener_charges", 4)
+        )
+
+    if _discover_construct_companion_kinds(actor):
+        _ensure_action(actor, _construct_command_action())
+
+
+def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRuntimeState:
+    proficiency = _calculate_proficiency_bonus(owner.level)
+    if kind == "steel_defender":
+        max_hp = max(1, 2 + owner.int_mod + (5 * owner.level))
+        attack = ActionDefinition(
+            name="basic",
+            action_type="attack",
+            to_hit=owner.int_mod + proficiency,
+            damage=f"1d8+{proficiency}",
+            damage_type="force",
+            target_mode="single_enemy",
+            range_ft=5,
+            tags=["basic", "construct_companion", "magical"],
+        )
+        actor_id = f"{owner.actor_id}__steel_defender"
+        name = f"{owner.name} Steel Defender"
+        speed = 40
+        str_mod, dex_mod, con_mod, int_mod, wis_mod, cha_mod = 2, 2, 2, -4, 0, -4
+        ac = 15
+    else:
+        max_hp = max(1, 1 + owner.int_mod + owner.level)
+        attack = ActionDefinition(
+            name="basic",
+            action_type="attack",
+            to_hit=owner.int_mod + proficiency,
+            damage=f"1d4+{proficiency}",
+            damage_type="force",
+            target_mode="single_enemy",
+            range_ft=30,
+            tags=["basic", "construct_companion", "magical"],
+        )
+        actor_id = f"{owner.actor_id}__homunculus_servant"
+        name = f"{owner.name} Homunculus"
+        speed = 20
+        str_mod, dex_mod, con_mod, int_mod, wis_mod, cha_mod = -2, 2, 0, -4, 0, -2
+        ac = 13
+
+    save_mods = {
+        "str": str_mod,
+        "dex": dex_mod + proficiency,
+        "con": con_mod + proficiency,
+        "int": int_mod,
+        "wis": wis_mod,
+        "cha": cha_mod,
+    }
+    traits = {
+        "construct companion": {
+            "owner_id": owner.actor_id,
+            "requires_command": True,
+            "kind": kind,
+        }
+    }
+    if kind == "steel_defender":
+        traits["steel defender"] = {}
+    else:
+        traits["homunculus servant"] = {}
+
+    companion = ActorRuntimeState(
+        actor_id=actor_id,
+        team=owner.team,
+        name=name,
+        max_hp=max_hp,
+        hp=max_hp,
+        temp_hp=0,
+        ac=ac,
+        initiative_mod=owner.initiative_mod,
+        str_mod=str_mod,
+        dex_mod=dex_mod,
+        con_mod=con_mod,
+        int_mod=int_mod,
+        wis_mod=wis_mod,
+        cha_mod=cha_mod,
+        save_mods=save_mods,
+        actions=[attack] + _get_standard_actions(),
+        resources={},
+        max_resources={},
+        traits=traits,
+        level=owner.level,
+        speed_ft=speed,
+        companion_owner_id=owner.actor_id,
+        requires_command=True,
+    )
+    companion.position = owner.position
+    return companion
+
+
+def _build_construct_companions(owner: ActorRuntimeState) -> list[ActorRuntimeState]:
+    companions: list[ActorRuntimeState] = []
+    for kind in sorted(_discover_construct_companion_kinds(owner)):
+        companions.append(_build_construct_companion(owner, kind))
+    return companions
+
+
+def _owner_is_incapacitated(owner: ActorRuntimeState | None) -> bool:
+    if owner is None:
+        return True
+    if owner.dead or owner.hp <= 0:
+        return True
+    return bool(owner.conditions.intersection(_CONTROL_BLOCKING_CONDITIONS))
+
+
+def _reorder_initiative_for_construct_companions(
+    order: list[str], actors: dict[str, ActorRuntimeState]
+) -> list[str]:
+    working = [actor_id for actor_id in order if actor_id in actors]
+    companions = [aid for aid in working if actors[aid].companion_owner_id]
+    for companion_id in companions:
+        companion = actors.get(companion_id)
+        if companion is None or not companion.companion_owner_id:
+            continue
+        owner_id = companion.companion_owner_id
+        if owner_id not in working:
+            continue
+        working = [aid for aid in working if aid != companion_id]
+        insert_at = working.index(owner_id) + 1
+        working.insert(insert_at, companion_id)
+    return working
+
+
+def _is_smite_spell_name(name: str) -> bool:
+    key = _trait_lookup_key(name)
+    return key.endswith("smite") and key != "divine smite"
+
+
+def _is_smite_setup_action(action: ActionDefinition) -> bool:
+    return "spell" in action.tags and _is_smite_spell_name(action.name)
+
+
+def _aura_of_protection_radius(actor: ActorRuntimeState) -> float:
+    radius = 10.0
+    trait_payload = actor.traits.get(_normalize_trait_name("aura of protection"), {})
+    mechanics = trait_payload.get("mechanics", []) if isinstance(trait_payload, dict) else []
+    for mechanic in mechanics:
+        if not isinstance(mechanic, dict):
+            continue
+        if str(mechanic.get("type", "")).lower() != "aura":
+            continue
+        raw_base = mechanic.get("range")
+        if isinstance(raw_base, (int, float)):
+            radius = float(raw_base)
+        raw_at_level = mechanic.get("range_at_level")
+        if isinstance(raw_at_level, dict):
+            for level_text, ranged in raw_at_level.items():
+                try:
+                    threshold = int(level_text)
+                except (TypeError, ValueError):
+                    continue
+                if actor.level >= threshold and isinstance(ranged, (int, float)):
+                    radius = float(ranged)
+    if actor.level >= 18:
+        radius = max(radius, 30.0)
+    return radius
+
+
+def _smite_of_protection_half_cover_bonus(
+    target: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+) -> int:
+    from .spatial import distance_chebyshev
+
+    for ally in actors.values():
+        if ally.team != target.team:
+            continue
+        if ally.dead or ally.hp <= 0:
+            continue
+        if "smite_of_protection_window" not in ally.conditions:
+            continue
+        if not _has_trait(ally, "smite of protection"):
+            continue
+        if not _has_trait(ally, "aura of protection"):
+            continue
+        if distance_chebyshev(ally.position, target.position) <= _aura_of_protection_radius(ally):
+            return 2
+    return 0
+
+
+def _smite_extra_damage_components(action: ActionDefinition) -> list[tuple[str, str]]:
+    components: list[tuple[str, str]] = []
+    for mechanic in action.mechanics:
+        if not isinstance(mechanic, dict):
+            continue
+        effect_type = str(mechanic.get("effect_type", "")).lower()
+        if effect_type == "extra_damage":
+            raw_expr = mechanic.get("damage", mechanic.get("dice"))
+            if isinstance(raw_expr, str) and raw_expr.strip():
+                components.append(
+                    (
+                        raw_expr.strip().replace(" ", ""),
+                        str(mechanic.get("damage_type", action.damage_type or "radiant")).lower(),
+                    )
+                )
+            continue
+        raw_inline = mechanic.get("extra_damage")
+        if isinstance(raw_inline, str):
+            match = re.search(r"(\d+d\d+(?:\s*[+-]\s*\d+)?)", raw_inline, flags=re.IGNORECASE)
+            if not match:
+                continue
+            expr = match.group(1).replace(" ", "")
+            dtype_match = re.search(
+                r"\d+d\d+(?:\s*[+-]\s*\d+)?\s+([a-z]+)",
+                raw_inline,
+                flags=re.IGNORECASE,
+            )
+            dtype = (
+                dtype_match.group(1).lower()
+                if dtype_match
+                else str(action.damage_type or "radiant").lower()
+            )
+            components.append((expr, dtype))
+    if not components and action.damage and _is_smite_setup_action(action):
+        components.append((action.damage, str(action.damage_type or "radiant").lower()))
+    return components
+
+
+def _smite_rider_effects(action: ActionDefinition) -> list[dict[str, Any]]:
+    riders: list[dict[str, Any]] = []
+    for mechanic in action.mechanics:
+        if not isinstance(mechanic, dict):
+            continue
+        effect_type = str(mechanic.get("effect_type", "")).lower()
+        if effect_type == "apply_condition":
+            duration = mechanic.get("duration_rounds")
+            if duration is None and mechanic.get("duration") is not None:
+                duration = mechanic.get("duration")
+            parsed_duration: int | None = None
+            if duration is not None:
+                try:
+                    parsed_duration = int(duration)
+                except (TypeError, ValueError):
+                    parsed_duration = None
+            if parsed_duration is not None and parsed_duration <= 0:
+                parsed_duration = 1
+            riders.append(
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "condition": str(mechanic.get("condition", "")),
+                    "duration_rounds": parsed_duration,
+                }
+            )
+            continue
+        if effect_type == "push":
+            distance = mechanic.get("distance", 0)
+            riders.append(
+                {
+                    "effect_type": "forced_movement",
+                    "target": "target",
+                    "distance_ft": int(distance) if distance else 0,
+                    "direction": str(mechanic.get("direction", "away_from_source")),
+                }
+            )
+            continue
+        if effect_type == "forced_movement":
+            riders.append(dict(mechanic))
+    return riders
+
+
+def _arm_pending_smite(actor: ActorRuntimeState, action: ActionDefinition) -> None:
+    actor.pending_smite = {
+        "name": action.name,
+        "save_dc": action.save_dc,
+        "save_ability": action.save_ability.lower() if action.save_ability else None,
+        "extra_damage": _smite_extra_damage_components(action),
+        "rider_effects": _smite_rider_effects(action),
+    }
+
+
+def _apply_pending_smite_on_hit(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    target: ActorRuntimeState,
+    roll_crit: bool,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> int:
+    pending = actor.pending_smite
+    if not pending:
+        return 0
+
+    extra_damage = 0
+    for payload in pending.get("extra_damage", []):
+        if (
+            not isinstance(payload, (list, tuple))
+            or len(payload) != 2
+            or not isinstance(payload[0], str)
+        ):
+            continue
+        expr = payload[0]
+        dtype = str(payload[1]).lower()
+        extra_damage += roll_damage(rng, expr, crit=roll_crit, source=actor, damage_type=dtype)
+
+    rider_effects = [
+        effect for effect in pending.get("rider_effects", []) if isinstance(effect, dict)
+    ]
+    save_dc = pending.get("save_dc")
+    save_ability = pending.get("save_ability")
+    rider_saved = False
+    if rider_effects and save_dc is not None and isinstance(save_ability, str):
+        save_mod = int(target.save_mods.get(save_ability, 0))
+        rider_saved = (rng.randint(1, 20) + save_mod) >= int(save_dc)
+    if not rider_saved:
+        for effect in rider_effects:
+            _apply_effect(
+                effect=effect,
+                rng=rng,
+                actor=actor,
+                target=target,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                actors=actors,
+                active_hazards=active_hazards,
+            )
+
+    actor.pending_smite = None
+    if actor.concentrating and _is_smite_spell_name(actor.concentrated_spell or ""):
+        _break_concentration(actor, actors, active_hazards)
+    return extra_damage
 
 
 def _to_position3(value: Any) -> tuple[float, float, float] | None:
@@ -259,6 +1219,43 @@ def _scale_cantrip_dice(base_dice: str, character_level: int) -> str:
     if match:
         return f"{dice_count}d{match.group(2)}{match.group(3)}"
     return base_dice
+
+
+def _upcast_damage(base_damage: str, per_level_damage: str, extra_levels: int) -> str:
+    if extra_levels <= 0:
+        return base_damage
+    base_num, base_die, base_flat = parse_damage_expression(base_damage)
+    up_num, up_die, up_flat = parse_damage_expression(per_level_damage)
+    if base_num <= 0 or up_num <= 0 or base_die != up_die or up_flat != 0:
+        return base_damage
+    total_num = base_num + (up_num * extra_levels)
+    if base_flat:
+        sign = "+" if base_flat > 0 else "-"
+        return f"{total_num}d{base_die}{sign}{abs(base_flat)}"
+    return f"{total_num}d{base_die}"
+
+
+def _component_tags_from_components(components: str) -> set[str]:
+    tags: set[str] = set()
+    if not components:
+        return tags
+    for token in _SPELL_COMPONENT_TOKEN_RE.findall(components):
+        if token.lower() == "v":
+            tags.add("component:verbal")
+        elif token.lower() == "s":
+            tags.add("component:somatic")
+        elif token.lower() == "m":
+            tags.add("component:material")
+    return tags
+
+
+def _critical_bonus_dice_expr(base_damage: str, extra_dice: int) -> str | None:
+    if extra_dice <= 0:
+        return None
+    num_dice, die_size, _flat = parse_damage_expression(base_damage)
+    if num_dice <= 0:
+        return None
+    return f"{num_dice * extra_dice}d{die_size}"
 
 
 def _slugify_spell_name(name: str) -> str:
@@ -427,6 +1424,21 @@ def _extract_spellcasting_profile_from_raw_fields(character: dict[str, Any]) -> 
     return out
 
 
+def _character_has_magical_secrets(character: dict[str, Any]) -> bool:
+    for trait in character.get("traits", []) or []:
+        key = _trait_lookup_key(str(trait))
+        if key in {"magical secrets", "additional magical secrets", "magical discoveries"}:
+            return True
+    return False
+
+
+def _is_magical_secrets_spell_entry(entry: dict[str, Any]) -> bool:
+    source = str(entry.get("source", "") or "").lower()
+    notes = str(entry.get("notes", "") or "").lower()
+    blob = f"{source} {notes}"
+    return "magical secret" in blob or "magical discover" in blob
+
+
 def _classify_casting_time_action_cost(casting_time: str) -> str:
     compact = re.sub(r"[^a-z0-9]+", "", casting_time.strip().lower())
     if compact in {"ba", "1ba", "bonusaction", "1bonusaction"}:
@@ -444,6 +1456,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
     """
     raw_fields = character.get("raw_fields", []) or []
     profile = _extract_spellcasting_profile_from_raw_fields(character)
+    has_magical_secrets = _character_has_magical_secrets(character)
     global_to_hit = profile.get("to_hit")
     global_save_dc = profile.get("save_dc")
 
@@ -451,7 +1464,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
     entries: dict[int, dict[str, Any]] = {}
 
     field_re = re.compile(
-        r"^spell(Name|Prepared|SaveHit|CastingTime|Range|Duration|Notes|Source)(\d+)$"
+        r"^spell(Name|Prepared|SaveHit|CastingTime|Range|Duration|Components|Notes|Source)(\d+)$"
     )
 
     for row in raw_fields:
@@ -481,7 +1494,13 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
 
         spell_level = int(entry.get("level", 0))
         prepared = str(entry.get("prepared", "") or "").strip()
-        if spell_level > 0 and not prepared:
+        magical_secrets_entry = _is_magical_secrets_spell_entry(entry)
+        if (
+            spell_level > 0
+            and not prepared
+            and not magical_secrets_entry
+            and not has_magical_secrets
+        ):
             continue
 
         save_hit = str(entry.get("savehit", "") or "").strip()
@@ -490,6 +1509,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
         casting_time = str(entry.get("castingtime", "") or "").strip()
         range_text = str(entry.get("range", "") or "").strip()
         duration = str(entry.get("duration", "") or "").strip()
+        components = str(entry.get("components", "") or "").strip()
 
         spell_def = _load_spell_definition(name)
         hydrated: dict[str, Any] = {
@@ -504,6 +1524,8 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "save_ability": save_ability,
             "concentration": "concentration" in duration.lower() if duration else False,
         }
+        if magical_secrets_entry:
+            hydrated["tags"] = ["magical_secrets"]
 
         range_ft = None
         range_match = re.search(r"(\d+)\s*ft", range_text.lower())
@@ -515,14 +1537,21 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 range_ft = int(feet_match.group(1))
         if range_ft is not None:
             hydrated["range_ft"] = range_ft
+        if components:
+            hydrated["components"] = components
 
         # Try to infer combat-relevant fields from the spell definition.
         if isinstance(spell_def, dict):
             hydrated.setdefault("level", spell_def.get("level"))
+            school = _extract_spell_school(spell_def)
+            if school is not None:
+                hydrated["school"] = school
             if "save_ability" in spell_def:
                 hydrated["save_ability"] = str(
                     spell_def.get("save_ability") or ""
                 ).lower() or hydrated.get("save_ability")
+            if "components" in spell_def:
+                hydrated["components"] = str(spell_def.get("components") or "")
             if "damage_type" in spell_def:
                 hydrated["damage_type"] = str(spell_def.get("damage_type") or "fire").lower()
             if "range_ft" in spell_def and isinstance(spell_def.get("range_ft"), (int, float)):
@@ -621,6 +1650,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "aoe_type",
             "aoe_size_ft",
             "concentration",
+            "components",
         ):
             existing_value = existing.get(field)
             candidate_value = spell.get(field)
@@ -640,10 +1670,246 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
     return list(by_name.values())
 
 
+def _clone_action(action: ActionDefinition, **overrides: Any) -> ActionDefinition:
+    payload: dict[str, Any] = {
+        "name": action.name,
+        "action_type": action.action_type,
+        "to_hit": action.to_hit,
+        "damage": action.damage,
+        "damage_type": action.damage_type,
+        "attack_count": action.attack_count,
+        "save_dc": action.save_dc,
+        "save_ability": action.save_ability,
+        "half_on_save": action.half_on_save,
+        "resource_cost": dict(action.resource_cost),
+        "recharge": action.recharge,
+        "max_uses": action.max_uses,
+        "action_cost": action.action_cost,
+        "event_trigger": action.event_trigger,
+        "target_mode": action.target_mode,
+        "range_ft": action.range_ft,
+        "aoe_type": action.aoe_type,
+        "aoe_size_ft": action.aoe_size_ft,
+        "max_targets": action.max_targets,
+        "concentration": action.concentration,
+        "include_self": action.include_self,
+        "effects": [
+            dict(effect) if isinstance(effect, dict) else effect for effect in action.effects
+        ],
+        "mechanics": [
+            dict(mechanic) if isinstance(mechanic, dict) else mechanic
+            for mechanic in action.mechanics
+        ],
+        "tags": list(action.tags),
+    }
+    payload.update(overrides)
+    return ActionDefinition(**payload)
+
+
+def _add_resource_cost(base_cost: dict[str, int], key: str, amount: int) -> dict[str, int]:
+    result = dict(base_cost)
+    result[key] = result.get(key, 0) + int(amount)
+    return result
+
+
+def _action_has_duration_payload(action: ActionDefinition) -> bool:
+    for entry in action.effects + action.mechanics:
+        if not isinstance(entry, dict):
+            continue
+        for key in ("duration_rounds", "duration"):
+            raw_value = entry.get(key)
+            if isinstance(raw_value, int) and raw_value > 0:
+                return True
+    return False
+
+
+def _double_duration_payload(entries: list[Any]) -> list[Any]:
+    doubled: list[Any] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            doubled.append(entry)
+            continue
+        updated = dict(entry)
+        for key in ("duration_rounds", "duration"):
+            raw_value = updated.get(key)
+            if isinstance(raw_value, int) and raw_value > 0:
+                updated[key] = raw_value * 2
+        doubled.append(updated)
+    return doubled
+
+
+def _build_metamagic_spell_actions(
+    action: ActionDefinition,
+    *,
+    spell_level: int,
+    traits: set[str],
+) -> list[ActionDefinition]:
+    if "spell" not in action.tags or not traits:
+        return []
+
+    variants: list[ActionDefinition] = []
+    has_damage = bool(action.damage)
+    has_duration = action.concentration or _action_has_duration_payload(action)
+    is_single_target = (
+        action.target_mode in {"single_enemy", "single_ally"}
+        and action.max_targets in (None, 1)
+        and not action.aoe_type
+        and not action.include_self
+    )
+    can_range_extend = (
+        action.range_ft is not None and action.range_ft > 0 and action.target_mode != "self"
+    )
+    is_save_spell = (
+        action.action_type == "save" and action.save_dc is not None and bool(action.save_ability)
+    )
+    is_action_spell = action.action_cost == "action"
+
+    def has_trait(name: str) -> bool:
+        return _normalize_trait_name(name) in traits
+
+    def add_variant(
+        option: str,
+        *,
+        sorcery_cost: int,
+        target_mode: str | None = None,
+        max_targets: int | None = None,
+        action_cost: str | None = None,
+        range_ft: int | None = None,
+        effects: list[dict[str, Any]] | None = None,
+        mechanics: list[dict[str, Any]] | None = None,
+    ) -> None:
+        label = option.capitalize()
+        tags = list(action.tags)
+        tags.extend(["metamagic", f"metamagic:{option}"])
+        variant = _clone_action(
+            action,
+            name=f"{action.name} [{label}]",
+            resource_cost=_add_resource_cost(action.resource_cost, "sorcery_points", sorcery_cost),
+            tags=tags,
+            target_mode=target_mode if target_mode is not None else action.target_mode,
+            max_targets=max_targets if max_targets is not None else action.max_targets,
+            action_cost=action_cost if action_cost is not None else action.action_cost,
+            range_ft=range_ft if range_ft is not None else action.range_ft,
+            effects=effects if effects is not None else action.effects,
+            mechanics=mechanics if mechanics is not None else action.mechanics,
+        )
+        variants.append(variant)
+
+    if has_trait("careful spell") and is_save_spell:
+        add_variant("careful", sorcery_cost=1)
+    if has_trait("distant spell") and can_range_extend and action.range_ft is not None:
+        add_variant("distant", sorcery_cost=1, range_ft=action.range_ft * 2)
+    if has_trait("empowered spell") and has_damage:
+        add_variant("empowered", sorcery_cost=1)
+    if has_trait("extended spell") and has_duration:
+        effects = action.effects
+        mechanics = action.mechanics
+        if _action_has_duration_payload(action):
+            effects = _double_duration_payload(action.effects)
+            mechanics = _double_duration_payload(action.mechanics)
+        add_variant("extended", sorcery_cost=1, effects=effects, mechanics=mechanics)
+    if has_trait("heightened spell") and is_save_spell:
+        add_variant("heightened", sorcery_cost=3)
+    if has_trait("quickened spell") and is_action_spell:
+        add_variant("quickened", sorcery_cost=2, action_cost="bonus")
+    if has_trait("subtle spell"):
+        add_variant("subtle", sorcery_cost=1)
+    if has_trait("twinned spell") and is_single_target:
+        twin_mode = "n_enemies" if action.target_mode == "single_enemy" else "n_allies"
+        add_variant(
+            "twinned",
+            sorcery_cost=max(1, int(spell_level)),
+            target_mode=twin_mode,
+            max_targets=2,
+        )
+
+    return variants
+
+
+def _build_font_of_magic_actions(resources: dict[str, Any]) -> list[ActionDefinition]:
+    sorcery_points_raw = resources.get("sorcery_points")
+    has_sorcery_points = isinstance(sorcery_points_raw, int) or (
+        isinstance(sorcery_points_raw, dict) and int(sorcery_points_raw.get("max", 0)) > 0
+    )
+    if not has_sorcery_points:
+        return []
+
+    actions: list[ActionDefinition] = []
+    for level, cost in _SPELL_SLOT_CREATION_COSTS.items():
+        actions.append(
+            ActionDefinition(
+                name=f"font_of_magic_create_slot_{level}",
+                action_type="utility",
+                action_cost="bonus",
+                target_mode="self",
+                resource_cost={"sorcery_points": cost},
+                tags=[
+                    "class_feature",
+                    "font_of_magic",
+                    "conversion:points_to_slot",
+                    f"slot_level:{level}",
+                ],
+            )
+        )
+
+    raw_slots = resources.get("spell_slots", {})
+    if isinstance(raw_slots, dict):
+        slot_levels: list[int] = []
+        for key in raw_slots:
+            try:
+                level = int(key)
+            except (TypeError, ValueError):
+                continue
+            if level > 0:
+                slot_levels.append(level)
+        for level in sorted(set(slot_levels)):
+            actions.append(
+                ActionDefinition(
+                    name=f"font_of_magic_convert_slot_{level}",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="self",
+                    resource_cost={f"spell_slot_{level}": 1},
+                    tags=[
+                        "class_feature",
+                        "font_of_magic",
+                        "conversion:slot_to_points",
+                        f"slot_level:{level}",
+                    ],
+                )
+            )
+
+    return actions
+
+
+def _extract_tag_value(tags: list[str], prefix: str) -> str | None:
+    for tag in tags:
+        text = str(tag)
+        if text.startswith(prefix):
+            return text.split(":", 1)[1]
+    return None
+
+
+def _slot_level_from_action(action: ActionDefinition) -> int | None:
+    raw_level = _extract_tag_value(list(action.tags), "slot_level:")
+    if raw_level is None:
+        return None
+    try:
+        level = int(raw_level)
+    except ValueError:
+        return None
+    return level if level > 0 else None
+
+
+def _has_tag(action: ActionDefinition, tag: str) -> bool:
+    return any(str(value) == tag for value in action.tags)
+
+
 def _build_spell_actions(
     character: dict[str, Any],
     *,
     character_level: int,
+    traits: set[str] | None = None,
 ) -> list[ActionDefinition]:
     """Build ActionDefinition entries from a character's spell list.
 
@@ -671,14 +1937,38 @@ def _build_spell_actions(
         return []
 
     actions: list[ActionDefinition] = []
+    known_traits = set(traits or set())
     resources = character.get("resources", {})
-    available_slots = {}
-    if isinstance(resources.get("spell_slots"), dict):
-        available_slots = resources["spell_slots"]
+    raw_spell_slots = resources.get("spell_slots")
+    available_slots: dict[str, Any] = {}
+    if isinstance(raw_spell_slots, dict):
+        available_slots = raw_spell_slots
+
+    has_pact_magic = _is_pact_magic_character(character)
+    warlock_level = _warlock_level_from_character(character)
+    arcanum_max_level = _warlock_mystic_arcanum_max_level(warlock_level)
+
+    pact_profile = _extract_pact_slot_profile_from_spell_slots(raw_spell_slots)
+    has_any_positive_slot = False
+    if isinstance(raw_spell_slots, dict):
+        for value in raw_spell_slots.values():
+            try:
+                if int(value) > 0:
+                    has_any_positive_slot = True
+                    break
+            except (TypeError, ValueError):
+                continue
+    if pact_profile is None and has_pact_magic and not has_any_positive_slot:
+        pact_profile = _warlock_pact_slot_profile_for_level(warlock_level)
+    pact_slot_key: str | None = None
+    if pact_profile is not None:
+        pact_slot_level, _pact_slot_count = pact_profile
+        pact_slot_key = f"warlock_spell_slot_{pact_slot_level}"
 
     for spell in spells:
         name = str(spell.get("name", "unknown_spell"))
         spell_level = int(spell.get("level", 0))
+        smite_setup = _is_smite_spell_name(name)
         action_type = str(spell.get("action_type", "attack"))
         damage = spell.get("damage")
         damage_type = str(spell.get("damage_type", "fire"))
@@ -693,13 +1983,35 @@ def _build_spell_actions(
         mechanics = spell.get("mechanics", [])
         tags = list(spell.get("tags", []))
         tags.append("spell")
+        spell_school = _extract_spell_school(spell)
+        if spell_school is not None:
+            tags.append(f"school:{spell_school}")
+        components = str(spell.get("components") or "")
+        if components:
+            tags.extend(sorted(_component_tags_from_components(components)))
+        tags = list(dict.fromkeys(tags))
+        smite_setup = _is_smite_spell_name(name)
+        if smite_setup:
+            action_type = "utility"
+            target_mode = "self"
+            damage = None
+            half_on_save = False
+            if "smite_variant" not in tags:
+                tags.append("smite_variant")
 
         resource_cost: dict[str, int] = {}
+        max_uses: int | None = None
 
         if spell_level == 0:
             # Cantrip: no slot cost, scale damage by level
             if damage:
                 damage = _scale_cantrip_dice(str(damage), character_level)
+        elif has_pact_magic and spell_level >= 6 and arcanum_max_level >= spell_level:
+            max_uses = 1
+            tags.append("mystic_arcanum")
+        elif has_pact_magic and pact_slot_key is not None and spell_level <= 5:
+            resource_cost[pact_slot_key] = 1
+            tags.append("pact_magic")
         else:
             # Leveled spell: consume a spell slot
             slot_key = f"spell_slot_{spell_level}"
@@ -729,6 +2041,7 @@ def _build_spell_actions(
             save_ability=str(save_ability) if save_ability else None,
             half_on_save=half_on_save,
             resource_cost=resource_cost,
+            max_uses=max_uses,
             action_cost=action_cost,
             target_mode=target_mode,
             range_ft=int(spell.get("range_ft")) if spell.get("range_ft") is not None else None,
@@ -736,22 +2049,351 @@ def _build_spell_actions(
             aoe_size_ft=spell.get("aoe_size_ft"),
             max_targets=max_targets,
             concentration=bool(spell.get("concentration", False)),
+            include_self=smite_setup,
             effects=effects,
             mechanics=mechanics,
             tags=tags,
         )
         actions.append(action)
+        actions.extend(
+            _build_metamagic_spell_actions(action, spell_level=spell_level, traits=known_traits)
+        )
+
+        upcast_step = str(spell.get("upcast_dice_per_level") or "").strip()
+        if spell_level > 0 and damage and upcast_step and isinstance(available_slots, dict):
+            for slot_level in sorted(int(level) for level in available_slots.keys()):
+                if slot_level <= spell_level:
+                    continue
+                if int(available_slots.get(str(slot_level), 0)) <= 0:
+                    continue
+                extra_levels = slot_level - spell_level
+                upcast_damage = _upcast_damage(str(damage), upcast_step, extra_levels)
+                if upcast_damage == str(damage):
+                    continue
+                actions.append(
+                    ActionDefinition(
+                        name=f"{name} ({slot_level}th level)",
+                        action_type=action_type,
+                        to_hit=int(to_hit) if to_hit is not None else None,
+                        damage=upcast_damage,
+                        damage_type=damage_type,
+                        save_dc=int(save_dc) if save_dc is not None else None,
+                        save_ability=str(save_ability) if save_ability else None,
+                        half_on_save=half_on_save,
+                        resource_cost={f"spell_slot_{slot_level}": 1},
+                        action_cost=action_cost,
+                        target_mode=target_mode,
+                        range_ft=(
+                            int(spell.get("range_ft"))
+                            if spell.get("range_ft") is not None
+                            else None
+                        ),
+                        aoe_type=spell.get("aoe_type"),
+                        aoe_size_ft=spell.get("aoe_size_ft"),
+                        max_targets=max_targets,
+                        concentration=bool(spell.get("concentration", False)),
+                        include_self=smite_setup,
+                        effects=list(effects),
+                        mechanics=list(mechanics),
+                        tags=list(tags) + [f"upcast_level:{slot_level}"],
+                        )
+                )
+
+    _apply_wizard_school_action_hooks(actions, traits=known_traits)
+    return actions
+
+
+def _build_cleric_channel_divinity_actions(
+    *,
+    character: dict[str, Any],
+    character_level: int,
+    traits: set[str],
+) -> list[ActionDefinition]:
+    def has_trait(name: str) -> bool:
+        return _normalize_trait_name(name) in traits
+
+    def has_any_trait(*names: str) -> bool:
+        return any(has_trait(name) for name in names)
+
+    channel_resource_key = _find_channel_divinity_resource_key(character.get("resources", {}))
+    if channel_resource_key is None:
+        channel_resource_key = "channel_divinity"
+    channel_cost = {channel_resource_key: 1}
+    cleric_save_dc = _infer_spell_save_dc(
+        character, character_level=character_level, default_ability="wis"
+    )
+
+    actions: list[ActionDefinition] = []
+
+    if has_any_trait("turn undead", "channel divinity: turn undead"):
+        actions.append(
+            ActionDefinition(
+                name="turn_undead",
+                action_type="save",
+                save_dc=cleric_save_dc,
+                save_ability="wis",
+                half_on_save=False,
+                resource_cost=dict(channel_cost),
+                target_mode="all_enemies",
+                range_ft=30,
+                effects=[
+                    {
+                        "effect_type": "apply_condition",
+                        "apply_on": "save_fail",
+                        "target": "target",
+                        "condition": "turned",
+                        "duration_rounds": 10,
+                    },
+                    {
+                        "effect_type": "apply_condition",
+                        "apply_on": "save_fail",
+                        "target": "target",
+                        "condition": "frightened",
+                        "duration_rounds": 10,
+                    },
+                    {
+                        "effect_type": "apply_condition",
+                        "apply_on": "save_fail",
+                        "target": "target",
+                        "condition": "incapacitated",
+                        "duration_rounds": 10,
+                    },
+                ],
+                tags=["channel_divinity", "turn_undead", "requires_target_trait:undead"],
+            )
+        )
+
+    if has_any_trait("preserve life", "channel divinity: preserve life"):
+        actions.append(
+            ActionDefinition(
+                name="preserve_life",
+                action_type="utility",
+                resource_cost=dict(channel_cost),
+                target_mode="single_ally",
+                include_self=True,
+                range_ft=30,
+                effects=[
+                    {
+                        "effect_type": "heal",
+                        "target": "target",
+                        "amount": str(max(1, 5 * character_level)),
+                        "apply_on": "always",
+                    }
+                ],
+                tags=["channel_divinity", "domain_life"],
+            )
+        )
+
+    if has_any_trait("radiance of the dawn", "channel divinity: radiance of the dawn"):
+        actions.append(
+            ActionDefinition(
+                name="radiance_of_the_dawn",
+                action_type="save",
+                save_dc=cleric_save_dc,
+                save_ability="con",
+                half_on_save=True,
+                damage=f"2d10+{character_level}",
+                damage_type="radiant",
+                resource_cost=dict(channel_cost),
+                target_mode="all_enemies",
+                range_ft=30,
+                tags=["channel_divinity", "domain_light"],
+            )
+        )
+
+    if has_any_trait("twilight sanctuary", "channel divinity: twilight sanctuary"):
+        actions.append(
+            ActionDefinition(
+                name="twilight_sanctuary",
+                action_type="utility",
+                resource_cost=dict(channel_cost),
+                target_mode="all_allies",
+                include_self=True,
+                range_ft=30,
+                effects=[
+                    {
+                        "effect_type": "temp_hp",
+                        "target": "target",
+                        "amount": f"1d6+{character_level}",
+                        "apply_on": "always",
+                    },
+                    {
+                        "effect_type": "remove_condition",
+                        "target": "target",
+                        "condition": "charmed",
+                        "apply_on": "always",
+                    },
+                    {
+                        "effect_type": "remove_condition",
+                        "target": "target",
+                        "condition": "frightened",
+                        "apply_on": "always",
+                    },
+                ],
+                tags=["channel_divinity", "domain_twilight"],
+            )
+        )
 
     return actions
+
+
+def _apply_warlock_invocations_to_actions(
+    character: dict[str, Any], actions: list[ActionDefinition]
+) -> None:
+    invocations = _extract_warlock_invocations(character)
+    if not invocations:
+        return
+
+    for action in actions:
+        if _trait_lookup_key(action.name) != "eldritch blast":
+            continue
+        if "agonizing blast" in invocations and "agonizing_blast" not in action.tags:
+            action.tags.append("agonizing_blast")
+        if "repelling blast" in invocations:
+            has_repelling = any(
+                isinstance(effect, dict)
+                and effect.get("effect_type") == "forced_movement"
+                and effect.get("distance_ft") == 10
+                and effect.get("direction") == "away_from_source"
+                for effect in action.mechanics
+            )
+            if not has_repelling:
+                action.mechanics.append(
+                    {
+                        "effect_type": "forced_movement",
+                        "target": "target",
+                        "distance_ft": 10,
+                        "direction": "away_from_source",
+                        "apply_on": "hit",
+                    }
+                )
+
+
+def _extract_selected_maneuvers(character: dict[str, Any], traits: set[str]) -> list[str]:
+    known_by_key = {_trait_lookup_key(name): name for name in _KNOWN_MANEUVERS}
+    candidates: set[str] = set(str(value) for value in (character.get("traits", []) or []))
+    candidates.update(_extract_trait_candidates_from_raw_fields(character))
+
+    selected: list[str] = []
+    seen: set[str] = set()
+    for candidate in sorted(candidates):
+        maneuver_name = known_by_key.get(_trait_lookup_key(candidate))
+        if maneuver_name is None or maneuver_name in seen:
+            continue
+        selected.append(maneuver_name)
+        seen.add(maneuver_name)
+
+    if selected:
+        return selected
+    if {"combat superiority", "maneuvers", "battle master"}.intersection(traits):
+        return list(_DEFAULT_BATTLEMASTER_MANEUVERS)
+    return []
+
+
+def _build_maneuver_attack_action(
+    *,
+    maneuver_name: str,
+    best_attack: dict[str, Any],
+    attack_count: int,
+    superiority_die_size: int,
+    save_dc: int,
+) -> ActionDefinition:
+    slug = re.sub(r"[^a-z0-9]+", "_", maneuver_name.lower()).strip("_")
+    base_to_hit = int(best_attack.get("to_hit", 0))
+    to_hit_bonus = 0
+    effects: list[dict[str, Any]] = []
+    weapon_damage_type = str(best_attack.get("damage_type", "bludgeoning"))
+
+    if maneuver_name == "precision attack":
+        to_hit_bonus = max(1, (superiority_die_size + 1) // 2)
+    else:
+        effects.append(
+            {
+                "effect_type": "damage",
+                "target": "target",
+                "apply_on": "hit",
+                "damage": f"1d{superiority_die_size}",
+                "damage_type": weapon_damage_type,
+                "once_per_action": True,
+            }
+        )
+        if maneuver_name == "trip attack":
+            effects.append(
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "apply_on": "hit",
+                    "condition": "prone",
+                    "save_dc": save_dc,
+                    "save_ability": "str",
+                    "once_per_action": True,
+                }
+            )
+        elif maneuver_name == "menacing attack":
+            effects.append(
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "apply_on": "hit",
+                    "condition": "frightened",
+                    "save_dc": save_dc,
+                    "save_ability": "wis",
+                    "once_per_action": True,
+                }
+            )
+        elif maneuver_name == "pushing attack":
+            effects.append(
+                {
+                    "effect_type": "forced_movement",
+                    "target": "target",
+                    "apply_on": "hit",
+                    "direction": "away_from_source",
+                    "distance_ft": 15,
+                    "save_dc": save_dc,
+                    "save_ability": "str",
+                    "once_per_action": True,
+                }
+            )
+        elif maneuver_name == "goading attack":
+            effects.append(
+                {
+                    "effect_type": "next_attack_disadvantage",
+                    "target": "target",
+                    "apply_on": "hit",
+                    "once_per_action": True,
+                }
+            )
+
+    return ActionDefinition(
+        name=f"maneuver_{slug}",
+        action_type="attack",
+        to_hit=base_to_hit + to_hit_bonus,
+        damage=str(best_attack.get("damage", "1")),
+        damage_type=weapon_damage_type,
+        attack_count=attack_count,
+        resource_cost={"superiority_dice": 1},
+        effects=effects,
+        tags=["attack_option", "maneuver", f"maneuver:{slug}"],
+    )
 
 
 def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition]:
     attacks = character.get("attacks", [])
     resources = character.get("resources", {})
     traits = {_normalize_trait_name(trait) for trait in character.get("traits", [])}
+    class_level_text = str(character.get("class_level", "1"))
+    character_level = _parse_character_level(class_level_text)
+    fighter_level = _parse_class_level(class_level_text, "fighter")
 
     def has_trait(name: str) -> bool:
         return _normalize_trait_name(name) in traits
+
+    def resource_pool_max(resource_name: str) -> int:
+        value = resources.get(resource_name, 0)
+        if isinstance(value, dict):
+            raw = value.get("max", 0)
+            return int(raw) if isinstance(raw, (int, float)) else 0
+        return int(value) if isinstance(value, int) else 0
 
     if attacks:
 
@@ -823,8 +2465,27 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
             )
 
+        superiority_traits = {"combat superiority", "maneuvers", "battle master", "martial adept"}
+        if superiority_traits.intersection(traits):
+            selected_maneuvers = _extract_selected_maneuvers(character, traits)
+            die_size = _fighter_superiority_die_size(fighter_level, traits=traits)
+            ability_scores = character.get("ability_scores", {})
+            str_mod = (int(ability_scores.get("str", 10)) - 10) // 2
+            dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
+            save_dc = 8 + _calculate_proficiency_bonus(character_level) + max(str_mod, dex_mod)
+            for maneuver_name in selected_maneuvers:
+                actions.append(
+                    _build_maneuver_attack_action(
+                        maneuver_name=maneuver_name,
+                        best_attack=best_attack,
+                        attack_count=attack_count,
+                        superiority_die_size=die_size,
+                        save_dc=save_dc,
+                    )
+                )
+
         # --- Bonus actions ---
-        if has_trait("martial arts") and "ki" in resources:
+        if has_trait("martial arts"):
             actions.append(
                 ActionDefinition(
                     name="martial_arts_bonus",
@@ -833,11 +2494,27 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     damage=str(best_attack.get("damage", "1")),
                     damage_type=str(best_attack.get("damage_type", "bludgeoning")),
                     attack_count=1,
-                    resource_cost={"ki": 1},
                     action_cost="bonus",
                     tags=["bonus", "martial_arts"],
                 )
             )
+            if has_trait("flurry of blows") and resources.get("ki", {}).get("max", 0) > 0:
+                tags = ["bonus", "martial_arts", "flurry_of_blows"]
+                if has_trait("open hand technique"):
+                    tags.append("open_hand_technique")
+                actions.append(
+                    ActionDefinition(
+                        name="flurry_of_blows",
+                        action_type="attack",
+                        to_hit=int(best_attack.get("to_hit", 0)),
+                        damage=str(best_attack.get("damage", "1")),
+                        damage_type=str(best_attack.get("damage_type", "bludgeoning")),
+                        attack_count=2,
+                        resource_cost={"ki": 1},
+                        action_cost="bonus",
+                        tags=tags,
+                    )
+                )
 
         if has_trait("polearm master"):
             weapon_name = best_attack.get("name", "").lower()
@@ -886,6 +2563,39 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
             )
 
+        if has_trait("second wind"):
+            second_wind_level = max(1, fighter_level or character_level)
+            actions.append(
+                ActionDefinition(
+                    name="second_wind",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="self",
+                    resource_cost={"second_wind": 1},
+                    effects=[
+                        {
+                            "effect_type": "heal",
+                            "target": "target",
+                            "amount": f"1d10+{second_wind_level}",
+                        }
+                    ],
+                    tags=["bonus", "short_rest", "second_wind"],
+                )
+            )
+
+        if has_trait("bardic inspiration") and resource_pool_max("bardic_inspiration") > 0:
+            actions.append(
+                ActionDefinition(
+                    name="bardic_inspiration",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="single_ally",
+                    range_ft=60,
+                    resource_cost={"bardic_inspiration": 1},
+                    tags=["bonus", "bardic_inspiration"],
+                )
+            )
+
         # --- Reactions ---
         if has_trait("shield"):
             actions.append(
@@ -896,15 +2606,45 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     tags=["reaction", "shield_spell"],
                 )
             )
+        if has_trait("lay on hands"):
+            actions.append(
+                ActionDefinition(
+                    name="lay_on_hands",
+                    action_type="utility",
+                    action_cost="action",
+                    target_mode="single_ally",
+                    include_self=True,
+                    tags=["healing", "lay_on_hands"],
+                )
+            )
         # --- Spell actions ---
-        character_level = _parse_character_level(character.get("class_level", "1"))
-        actions.extend(_build_spell_actions(character, character_level=character_level))
+        spell_actions = _build_spell_actions(
+            character,
+            character_level=character_level,
+            traits=traits,
+        )
+        _apply_warlock_invocations_to_actions(character, spell_actions)
+        actions.extend(spell_actions)
+        actions.extend(_build_font_of_magic_actions(resources))
+        actions.extend(
+            _build_cleric_channel_divinity_actions(
+                character=character,
+                character_level=character_level,
+                traits=traits,
+            )
+        )
 
         return actions
 
     # Fallback: no attacks defined
-    character_level = _parse_character_level(character.get("class_level", "1"))
-    spell_actions = _build_spell_actions(character, character_level=character_level)
+    spell_actions = _build_spell_actions(character, character_level=character_level, traits=traits)
+    font_of_magic_actions = _build_font_of_magic_actions(resources)
+    _apply_warlock_invocations_to_actions(character, spell_actions)
+    cleric_actions = _build_cleric_channel_divinity_actions(
+        character=character,
+        character_level=character_level,
+        traits=traits,
+    )
     base = [
         ActionDefinition(
             name="basic",
@@ -915,7 +2655,38 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             tags=["basic"],
         )
     ]
-    return base + spell_actions
+    if has_trait("bardic inspiration") and resource_pool_max("bardic_inspiration") > 0:
+        base.append(
+            ActionDefinition(
+                name="bardic_inspiration",
+                action_type="utility",
+                action_cost="bonus",
+                target_mode="single_ally",
+                range_ft=60,
+                resource_cost={"bardic_inspiration": 1},
+                tags=["bonus", "bardic_inspiration"],
+            )
+        )
+    if has_trait("second wind"):
+        second_wind_level = max(1, fighter_level or character_level)
+        base.append(
+            ActionDefinition(
+                name="second_wind",
+                action_type="utility",
+                action_cost="bonus",
+                target_mode="self",
+                resource_cost={"second_wind": 1},
+                effects=[
+                    {
+                        "effect_type": "heal",
+                        "target": "target",
+                        "amount": f"1d10+{second_wind_level}",
+                    }
+                ],
+                tags=["bonus", "short_rest", "second_wind"],
+            )
+        )
+    return base + spell_actions + font_of_magic_actions + cleric_actions
 
 
 def _get_standard_actions() -> list[ActionDefinition]:
@@ -953,21 +2724,57 @@ def _get_standard_actions() -> list[ActionDefinition]:
 
 def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
     result: dict[str, int] = {}
+    feature_resource_aliases = {
+        "action_surge": "action_surge",
+        "second_wind": "second_wind",
+        "superiority_dice": "superiority_dice",
+    }
     raw = character.get("resources", {})
+    has_pact_magic = _is_pact_magic_character(character)
+    warlock_level = _warlock_level_from_character(character)
+    raw_spell_slots = raw.get("spell_slots")
+    pact_slot_profile = _extract_pact_slot_profile_from_spell_slots(raw_spell_slots)
+    has_any_positive_slot = False
+    if isinstance(raw_spell_slots, dict):
+        for value in raw_spell_slots.values():
+            try:
+                if int(value) > 0:
+                    has_any_positive_slot = True
+                    break
+            except (TypeError, ValueError):
+                continue
+    if pact_slot_profile is None and has_pact_magic and not has_any_positive_slot:
+        pact_slot_profile = _warlock_pact_slot_profile_for_level(warlock_level)
+
     for key, value in raw.items():
         if isinstance(value, dict):
             max_value = value.get("max")
             if isinstance(max_value, int):
                 result[key] = max_value
             elif key == "spell_slots":
-                for level, slots in value.items():
-                    result[f"spell_slot_{level}"] = int(slots)
+                if has_pact_magic and pact_slot_profile is not None:
+                    pact_slot_level, pact_slot_count = pact_slot_profile
+                    result[f"warlock_spell_slot_{pact_slot_level}"] = pact_slot_count
+                else:
+                    for level, slots in value.items():
+                        result[f"spell_slot_{level}"] = int(slots)
             else:
                 for name, amount in value.items():
                     if isinstance(amount, int):
-                        result[f"{key}_{name}"] = amount
+                        mapped = feature_resource_aliases.get(str(name))
+                        if key == "feature_uses" and mapped is not None:
+                            result[mapped] = amount
+                        else:
+                            result[f"{key}_{name}"] = amount
         elif isinstance(value, int):
             result[key] = value
+    traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
+    if _normalize_trait_name("lay on hands") in traits and "lay_on_hands_pool" not in result:
+        result["lay_on_hands_pool"] = max(
+            0, _parse_character_level(character.get("class_level", "1")) * 5
+        )
+    if _normalize_trait_name("paladin's smite") in traits and "paladins_smite_free" not in result:
+        result["paladins_smite_free"] = 1
     return result
 
 
@@ -999,12 +2806,174 @@ def _apply_passive_traits(actor: ActorRuntimeState) -> None:
                     actor.traits[sense] = {"range_ft": float(raw_range)}
 
 
+def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
+    if max_value <= 0:
+        return
+    existing_max = int(actor.max_resources.get(resource, 0))
+    if existing_max < max_value:
+        actor.max_resources[resource] = max_value
+    cap = int(actor.max_resources[resource])
+    if resource not in actor.resources:
+        actor.resources[resource] = cap
+    else:
+        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+
+
+def _apply_inferred_fighter_resources(
+    actor: ActorRuntimeState,
+    *,
+    class_level_text: str,
+) -> None:
+    fighter_level = _parse_class_level(class_level_text, "fighter")
+
+    if _has_trait(actor, "action surge"):
+        action_surge_uses = (
+            2 if fighter_level >= 17 or _has_trait(actor, "action surge (two uses)") else 1
+        )
+        _ensure_resource_cap(actor, "action_surge", action_surge_uses)
+
+    if _has_trait(actor, "second wind"):
+        _ensure_resource_cap(actor, "second_wind", 1)
+
+    superiority_sources = ("combat superiority", "maneuvers", "battle master", "martial adept")
+    if any(_has_trait(actor, trait_name) for trait_name in superiority_sources):
+        superiority_dice = _fighter_superiority_dice_count(fighter_level)
+        if superiority_dice <= 0 and _has_trait(actor, "martial adept"):
+            superiority_dice = 1
+        if superiority_dice > 0:
+            _ensure_resource_cap(actor, "superiority_dice", superiority_dice)
+
+
+def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    _ensure_resource_cap(actor, "arcane_recovery", 1)
+
+
+def _iter_spell_slot_levels_desc(actor: ActorRuntimeState) -> list[int]:
+    levels: set[int] = set()
+    for key in actor.max_resources.keys():
+        if not str(key).startswith("spell_slot_"):
+            continue
+        try:
+            level = int(str(key).rsplit("_", 1)[1])
+        except ValueError:
+            continue
+        if level > 0:
+            levels.add(level)
+    return sorted(levels, reverse=True)
+
+
+def _recover_spell_slots_with_budget(
+    actor: ActorRuntimeState,
+    *,
+    budget: int,
+    max_individual_slot_level: int,
+) -> int:
+    if budget <= 0:
+        return 0
+    recovered_levels = 0
+    for slot_level in _iter_spell_slot_levels_desc(actor):
+        if slot_level > max_individual_slot_level or budget < slot_level:
+            continue
+        slot_key = f"spell_slot_{slot_level}"
+        max_slots = int(actor.max_resources.get(slot_key, 0))
+        current_slots = min(int(actor.resources.get(slot_key, 0)), max_slots)
+        missing_slots = max(0, max_slots - current_slots)
+        recoverable_slots = min(missing_slots, budget // slot_level)
+        if recoverable_slots <= 0:
+            continue
+        actor.resources[slot_key] = current_slots + recoverable_slots
+        recovered_levels += recoverable_slots * slot_level
+        budget -= recoverable_slots * slot_level
+        if budget <= 0:
+            break
+    return recovered_levels
+
+
+def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    uses_remaining = int(actor.resources.get("arcane_recovery", 0))
+    if uses_remaining <= 0:
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    recovery_budget = max(1, (wizard_level + 1) // 2)
+    recovered_levels = _recover_spell_slots_with_budget(
+        actor,
+        budget=recovery_budget,
+        max_individual_slot_level=5,
+    )
+    if recovered_levels <= 0:
+        return
+    actor.resources["arcane_recovery"] = uses_remaining - 1
+
+
+def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
+    has_channel_divinity_feature = _has_trait(actor, "channel divinity") or any(
+        _normalize_trait_name(name).startswith("channel divinity:") for name in actor.traits.keys()
+    )
+    if not has_channel_divinity_feature:
+        return
+
+    resource_key = _find_channel_divinity_resource_key(actor.max_resources)
+    if resource_key is None:
+        resource_key = _find_channel_divinity_resource_key(actor.resources)
+    if resource_key is None:
+        resource_key = "channel_divinity"
+
+    existing_max = int(actor.max_resources.get(resource_key, 0))
+    if existing_max > 0:
+        return
+
+    uses = _channel_divinity_uses_for_level(actor.level)
+    if uses <= 0:
+        return
+
+    actor.max_resources[resource_key] = uses
+    if actor.resources.get(resource_key, 0) <= 0:
+        actor.resources[resource_key] = uses
+
+
+def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
+    if max_value <= 0:
+        return
+    existing_max = int(actor.max_resources.get(resource, 0))
+    if existing_max < max_value:
+        actor.max_resources[resource] = max_value
+    cap = int(actor.max_resources[resource])
+    if resource not in actor.resources:
+        actor.resources[resource] = cap
+    else:
+        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    _ensure_resource_cap(actor, "arcane_recovery", 1)
+
+
 def _build_actor_from_character(
     character: dict[str, Any], traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
     normalized_traits_db = {
         _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
     }
+    class_level_text = str(character.get("class_level", "1"))
+    class_levels = _parse_class_levels(class_level_text)
     ability_scores = character.get("ability_scores", {})
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
     con_mod = (int(ability_scores.get("con", 10)) - 10) // 2
@@ -1037,9 +3006,15 @@ def _build_actor_from_character(
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
         traits=_resolve_character_traits(character, traits_db),
-        level=_parse_character_level(character.get("class_level", "1")),
+        level=_parse_character_level(class_level_text),
+        class_levels=class_levels,
+        inventory=InventoryState.from_character_payload(character),
     )
+    _ensure_channel_divinity_resource(actor)
     _apply_passive_traits(actor)
+    _apply_artificer_infusion_passives(actor)
+    _apply_inferred_wizard_resources(actor)
+    _apply_inferred_fighter_resources(actor, class_level_text=class_level_text)
     current_hp = character.get("current_hp")
     if current_hp is not None:
         try:
@@ -1092,6 +3067,10 @@ def _build_actor_from_enemy(
                     action_cost=resolved_cost,
                     target_mode=action.target_mode,
                     max_targets=action.max_targets,
+                    event_trigger=getattr(action, "event_trigger", None),
+                    trigger_duration_rounds=getattr(action, "trigger_duration_rounds", None),
+                    trigger_limit_per_turn=getattr(action, "trigger_limit_per_turn", None),
+                    trigger_once_per_round=bool(getattr(action, "trigger_once_per_round", False)),
                     concentration=action.concentration,
                     include_self=action.include_self,
                     effects=[effect.model_dump() for effect in action.effects],
@@ -1159,10 +3138,22 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
     if actor.hp > 0 and not actor.dead:
         actor.hp = min(actor.max_hp, actor.hp + healing)
 
-    short_rest_resources = {"action_surge", "ki", "channel_divinity"}
+    short_rest_resources = {
+        "action_surge",
+        "second_wind",
+        "superiority_dice",
+        "ki",
+        "channel_divinity",
+    }
     for res_key in list(actor.resources.keys()):
-        if res_key in short_rest_resources or "warlock_spell_slot" in res_key:
+        if (
+            res_key in short_rest_resources
+            or "warlock_spell_slot" in res_key
+            or _is_channel_divinity_resource_name(res_key)
+        ):
             actor.resources[res_key] = actor.max_resources.get(res_key, 0)
+
+    _apply_arcane_recovery(actor)
 
     for action in actor.actions:
         if action.name in {"action_surge", "second_wind"} or "short_rest" in action.tags:
@@ -1180,8 +3171,183 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.death_successes = 0
     actor.downed_count = 0
     actor.concentrating = False
+    actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
+    actor.concentrated_spell = None
+    actor.concentrated_spell_level = None
     actor.movement_remaining = float(actor.speed_ft)
+
+
+def _normalize_travel_pace(value: Any) -> str:
+    pace = str(value or "normal").lower().strip()
+    if pace not in _TRAVEL_PACE_MILES_PER_DAY:
+        return "normal"
+    return pace
+
+
+def _parse_resource_loss(raw: Any) -> dict[str, int]:
+    if not isinstance(raw, dict):
+        return {}
+
+    parsed: dict[str, int] = {}
+    for key, value in raw.items():
+        try:
+            amount = int(value)
+        except (TypeError, ValueError):
+            continue
+        if amount > 0:
+            parsed[str(key)] = amount
+    return parsed
+
+
+def _parse_damage_expression(raw: Any) -> str | None:
+    if raw is None:
+        return None
+    if isinstance(raw, (int, float)):
+        return str(int(raw))
+    text = str(raw).strip()
+    if not text:
+        return None
+    return text
+
+
+def _spend_exploration_resources(
+    actor: ActorRuntimeState,
+    resource_loss: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    if not resource_loss:
+        return
+
+    for key, amount in resource_loss.items():
+        current = int(actor.resources.get(key, 0))
+        spent = min(current, int(amount))
+        if spent <= 0:
+            continue
+        actor.resources[key] = current - spent
+        resources_spent[actor.actor_id][key] = resources_spent[actor.actor_id].get(key, 0) + spent
+
+
+def _apply_exploration_damage(
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    damage_expr: Any,
+    damage_type: str,
+    damage_taken: dict[str, int],
+) -> None:
+    expr = _parse_damage_expression(damage_expr)
+    if expr is None:
+        return
+    try:
+        rolled = roll_damage(rng, expr)
+    except ValueError:
+        return
+    if rolled <= 0:
+        return
+
+    applied = apply_damage(actor, rolled, damage_type or "environmental")
+    damage_taken[actor.actor_id] = damage_taken.get(actor.actor_id, 0) + applied
+
+
+def _determine_exploration_segments(leg_config: dict[str, Any], travel_pace: str) -> int:
+    segments = leg_config.get("segments")
+    try:
+        explicit_segments = int(segments)
+    except (TypeError, ValueError):
+        explicit_segments = 0
+    if explicit_segments > 0:
+        return explicit_segments
+
+    distance = leg_config.get("distance_miles", 0)
+    try:
+        miles = float(distance)
+    except (TypeError, ValueError):
+        miles = 0.0
+    if miles > 0:
+        miles_per_day = _TRAVEL_PACE_MILES_PER_DAY.get(
+            travel_pace, _TRAVEL_PACE_MILES_PER_DAY["normal"]
+        )
+        return max(1, int(math.ceil(miles / miles_per_day)))
+
+    has_effects = (
+        bool(leg_config.get("hazard_checks"))
+        or bool(leg_config.get("resource_attrition"))
+        or bool(_parse_damage_expression(leg_config.get("hp_attrition")))
+    )
+    return 1 if has_effects else 0
+
+
+def _run_exploration_leg(
+    *,
+    rng: random.Random,
+    actors: dict[str, ActorRuntimeState],
+    damage_taken: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    leg_config: dict[str, Any],
+) -> None:
+    if not isinstance(leg_config, dict):
+        return
+
+    travel_pace = _normalize_travel_pace(leg_config.get("travel_pace", "normal"))
+    segments = _determine_exploration_segments(leg_config, travel_pace)
+    if segments <= 0:
+        return
+
+    hazard_dc_modifier = _TRAVEL_PACE_HAZARD_DC_MODIFIER.get(travel_pace, 0)
+    attrition_resource_loss = _parse_resource_loss(leg_config.get("resource_attrition", {}))
+    hazard_rows = leg_config.get("hazard_checks", [])
+    hazard_checks = hazard_rows if isinstance(hazard_rows, list) else []
+
+    for _ in range(segments):
+        for actor in actors.values():
+            if actor.team != "party" or actor.hp <= 0 or actor.dead:
+                continue
+
+            _apply_exploration_damage(
+                rng=rng,
+                actor=actor,
+                damage_expr=leg_config.get("hp_attrition"),
+                damage_type="environmental",
+                damage_taken=damage_taken,
+            )
+            _spend_exploration_resources(
+                actor=actor,
+                resource_loss=attrition_resource_loss,
+                resources_spent=resources_spent,
+            )
+
+            if actor.hp <= 0 or actor.dead:
+                continue
+
+            for hazard in hazard_checks:
+                if not isinstance(hazard, dict) or actor.hp <= 0 or actor.dead:
+                    continue
+                ability = str(hazard.get("ability", "con")).lower()
+                if ability not in ABILITY_KEYS:
+                    ability = "con"
+                save_mod = int(actor.save_mods.get(ability, 0))
+
+                try:
+                    dc = int(hazard.get("dc", 10))
+                except (TypeError, ValueError):
+                    dc = 10
+                effective_dc = dc + hazard_dc_modifier
+                check_total = rng.randint(1, 20) + save_mod
+                if check_total >= effective_dc:
+                    continue
+
+                _apply_exploration_damage(
+                    rng=rng,
+                    actor=actor,
+                    damage_expr=hazard.get("damage"),
+                    damage_type=str(hazard.get("damage_type", "environmental")),
+                    damage_taken=damage_taken,
+                )
+                _spend_exploration_resources(
+                    actor=actor,
+                    resource_loss=_parse_resource_loss(hazard.get("resource_loss", {})),
+                    resources_spent=resources_spent,
+                )
 
 
 def _build_actor_views(
@@ -1206,6 +3372,7 @@ def _build_actor_views(
                 movement_remaining=actor.movement_remaining,
                 position=actor.position,
                 traits=dict(actor.traits),
+                concentrating=actor.concentrating,
             )
             for actor_id, actor in actors.items()
         },
@@ -1218,14 +3385,156 @@ def _actor_defeated(actor: ActorRuntimeState) -> bool:
     return actor.dead or actor.hp <= 0
 
 
-def _party_defeated(actors: dict[str, ActorRuntimeState]) -> bool:
-    party = [actor for actor in actors.values() if actor.team == "party"]
-    return bool(party) and all(_actor_defeated(actor) for actor in party)
+def _team_actors(actors: dict[str, ActorRuntimeState], *, team: str) -> list[ActorRuntimeState]:
+    if team == "party":
+        return [actor for actor in actors.values() if actor.team == "party"]
+    return [actor for actor in actors.values() if actor.team != "party"]
 
 
-def _enemies_defeated(actors: dict[str, ActorRuntimeState]) -> bool:
-    enemies = [actor for actor in actors.values() if actor.team != "party"]
-    return bool(enemies) and all(_actor_defeated(actor) for actor in enemies)
+def _compare_numeric(lhs: float, op: str, rhs: float) -> bool:
+    if op in {"<", "lt"}:
+        return lhs < rhs
+    if op in {"<=", "le"}:
+        return lhs <= rhs
+    if op in {">", "gt"}:
+        return lhs > rhs
+    if op in {">=", "ge"}:
+        return lhs >= rhs
+    if op in {"==", "eq"}:
+        return lhs == rhs
+    if op in {"!=", "ne"}:
+        return lhs != rhs
+    raise ValueError(f"Unsupported predicate operator: {op}")
+
+
+def _team_metric_value(team_actors: list[ActorRuntimeState], metric: str) -> float:
+    key = str(metric).lower()
+    if key in {"alive_count", "conscious_count"}:
+        return float(sum(1 for actor in team_actors if actor.hp > 0 and not actor.dead))
+    if key in {"active_count"}:
+        return float(sum(1 for actor in team_actors if not actor.dead))
+    if key in {"downed_count"}:
+        return float(sum(1 for actor in team_actors if _actor_defeated(actor)))
+    if key in {"dead_count"}:
+        return float(sum(1 for actor in team_actors if actor.dead))
+    if key == "total_hp":
+        return float(sum(max(0, int(actor.hp)) for actor in team_actors if not actor.dead))
+    if key == "max_hp":
+        return float(sum(int(actor.max_hp) for actor in team_actors))
+    raise ValueError(f"Unsupported predicate metric: {metric}")
+
+
+def _evaluate_custom_termination_predicate(
+    predicate: dict[str, Any], team_actors: list[ActorRuntimeState]
+) -> bool:
+    if "all" in predicate:
+        clauses = predicate.get("all")
+        if not isinstance(clauses, list):
+            raise ValueError("Custom predicate 'all' must be a list")
+        return all(
+            _evaluate_custom_termination_predicate(clause, team_actors)
+            for clause in clauses
+            if isinstance(clause, dict)
+        )
+    if "any" in predicate:
+        clauses = predicate.get("any")
+        if not isinstance(clauses, list):
+            raise ValueError("Custom predicate 'any' must be a list")
+        return any(
+            _evaluate_custom_termination_predicate(clause, team_actors)
+            for clause in clauses
+            if isinstance(clause, dict)
+        )
+
+    metric = predicate.get("metric", "alive_count")
+    op = str(predicate.get("op", "<=")).lower()
+    value = float(predicate.get("value", 0))
+    lhs = _team_metric_value(team_actors, str(metric))
+    return _compare_numeric(lhs, op, value)
+
+
+def _team_defeated(
+    actors: dict[str, ActorRuntimeState], *, team: str, rule_spec: Any, default_rule: str
+) -> bool:
+    team_members = _team_actors(actors, team=team)
+    if not team_members:
+        return False
+
+    rule = rule_spec if rule_spec is not None else default_rule
+    if isinstance(rule, dict):
+        return _evaluate_custom_termination_predicate(rule, team_members)
+    if not isinstance(rule, str):
+        raise ValueError(f"Unsupported termination rule type for team '{team}': {type(rule)}")
+
+    key = rule.strip().lower()
+    if key in {"all_unconscious_or_dead", "all_downed", "all_defeated", "none_conscious"}:
+        return all(_actor_defeated(actor) for actor in team_members)
+    if key in {"all_dead", "none_alive"}:
+        return all(actor.dead for actor in team_members)
+    if key in {"any_unconscious_or_dead", "any_downed"}:
+        return any(_actor_defeated(actor) for actor in team_members)
+    if key in {"any_dead"}:
+        return any(actor.dead for actor in team_members)
+    raise ValueError(f"Unsupported termination rule for team '{team}': {rule}")
+
+
+def _party_defeated(actors: dict[str, ActorRuntimeState], rule_spec: Any = None) -> bool:
+    return _team_defeated(
+        actors,
+        team="party",
+        rule_spec=rule_spec,
+        default_rule="all_unconscious_or_dead",
+    )
+
+
+def _enemies_defeated(actors: dict[str, ActorRuntimeState], rule_spec: Any = None) -> bool:
+    return _team_defeated(
+        actors,
+        team="enemy",
+        rule_spec=rule_spec,
+        default_rule="all_dead",
+    )
+
+
+def _resolve_next_encounter_index(
+    *,
+    encounter: EncounterConfig,
+    encounter_outcome: str,
+    encounter_winner: str,
+    default_next: int,
+    encounter_count: int,
+) -> tuple[int | None, str | None]:
+    branches = encounter.branches if isinstance(encounter.branches, dict) else {}
+    branch_key: str | None = None
+    next_idx: int | None = None
+
+    for candidate_key in (encounter_outcome, encounter_winner, "default"):
+        if candidate_key in branches:
+            branch_key = candidate_key
+            next_idx = int(branches[candidate_key])
+            break
+
+    if next_idx is None:
+        next_idx = default_next
+
+    if next_idx >= encounter_count:
+        return None, branch_key
+    if next_idx < 0:
+        raise ValueError(f"Encounter branch index must be >= 0, got {next_idx}")
+    return next_idx, branch_key
+
+
+def _actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
+    return {
+        "name": actor.name,
+        "hp": actor.hp,
+        "max_hp": actor.max_hp,
+        "temp_hp": actor.temp_hp,
+        "dead": actor.dead,
+        "downed_count": actor.downed_count,
+        "conditions": sorted(actor.conditions),
+        "resources": dict(sorted(actor.resources.items())),
+    }
 
 
 def _build_initiative_order(
@@ -1257,6 +3566,25 @@ def _build_initiative_order(
     return [actor_id for _, _, actor_id in rolls]
 
 
+def _sync_initiative_order(
+    initiative_order: list[str], actors: dict[str, ActorRuntimeState]
+) -> list[str]:
+    existing = [actor_id for actor_id in initiative_order if actor_id in actors]
+    known = set(existing)
+    missing = [actor for actor in actors.values() if actor.actor_id not in known]
+    missing.sort(
+        key=lambda actor: (actor.initiative_mod, actor.dex_mod, actor.actor_id), reverse=True
+    )
+    return existing + [actor.actor_id for actor in missing]
+
+
+def _reorder_initiative_for_construct_companions(
+    initiative_order: list[str], _actors: dict[str, ActorRuntimeState]
+) -> list[str]:
+    """Preserve initiative order when no construct-companion rules are active."""
+    return initiative_order
+
+
 def _has_resources(actor: ActorRuntimeState, cost: dict[str, int]) -> bool:
     for key, amount in cost.items():
         if actor.resources.get(key, 0) < amount:
@@ -1276,6 +3604,19 @@ def _spend_resources(actor: ActorRuntimeState, cost: dict[str, int]) -> dict[str
     return spent
 
 
+def _spend_action_resource_cost(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    resources_spent: dict[str, dict[str, int]],
+) -> bool:
+    if not _can_pay_resource_cost(actor, action):
+        return False
+    spent = _spend_resources(actor, action.resource_cost)
+    for key, amount in spent.items():
+        resources_spent[actor.actor_id][key] = resources_spent[actor.actor_id].get(key, 0) + amount
+    return True
+
+
 def _default_target(
     actor: ActorRuntimeState,
     actors: dict[str, ActorRuntimeState],
@@ -1291,8 +3632,381 @@ def _default_target(
     return [TargetRef(target.actor_id)]
 
 
-def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
+def _has_action_tag(action: ActionDefinition, tag: str) -> bool:
+    target = tag.lower()
+    return any(str(candidate).lower() == target for candidate in action.tags)
+
+
+def _is_probably_ranged_attack(action: ActionDefinition) -> bool:
+    if _has_action_tag(action, "ranged") or _has_action_tag(action, "ranged_attack"):
+        return True
+    name = action.name.lower()
+    return any(keyword in name for keyword in _RANGED_ATTACK_KEYWORDS)
+
+
+def _action_range_ft(action: ActionDefinition) -> float | None:
+    if action.target_mode == "self":
+        return None
+    if action.range_ft is not None:
+        return float(action.range_ft)
+    if action.action_type in {"grapple", "shove"}:
+        return 5.0
+    if action.action_type == "attack":
+        if _has_action_tag(action, "spell"):
+            return 60.0
+        if _is_probably_ranged_attack(action):
+            return 60.0
+        return 5.0
     if action.action_type == "utility":
+        return 30.0
+    if _has_action_tag(action, "spell"):
+        return 60.0
+    return 60.0
+
+
+def _requires_range_resolution(action: ActionDefinition) -> bool:
+    if action.target_mode == "self":
+        return False
+    if action.action_type == "utility" and action.name in {"dodge", "dash", "disengage", "ready"}:
+        return False
+    return _action_range_ft(action) is not None
+
+
+def _path_distance(path: list[tuple[float, float, float]]) -> float:
+    if len(path) < 2:
+        return 0.0
+    total = 0.0
+    for idx in range(1, len(path)):
+        total += distance_chebyshev(path[idx - 1], path[idx])
+    return total
+
+
+def _path_prefix_for_distance(
+    path: list[tuple[float, float, float]],
+    distance_ft: float,
+) -> list[tuple[float, float, float]]:
+    if not path:
+        return []
+    if len(path) == 1 or distance_ft <= 0:
+        return [path[0]]
+
+    traveled: list[tuple[float, float, float]] = [path[0]]
+    remaining = distance_ft
+    current = path[0]
+    for waypoint in path[1:]:
+        segment = distance_chebyshev(current, waypoint)
+        if segment <= 0:
+            current = waypoint
+            continue
+        if segment <= remaining:
+            traveled.append(waypoint)
+            remaining -= segment
+            current = waypoint
+            if remaining <= 0:
+                break
+            continue
+        ratio = remaining / segment
+        traveled.append(
+            (
+                current[0] + (waypoint[0] - current[0]) * ratio,
+                current[1] + (waypoint[1] - current[1]) * ratio,
+                current[2] + (waypoint[2] - current[2]) * ratio,
+            )
+        )
+        break
+    return traveled
+
+
+def _expand_path_points(
+    path: list[tuple[float, float, float]],
+    *,
+    step_ft: float = 5.0,
+) -> list[tuple[float, float, float]]:
+    if len(path) < 2:
+        return path
+    expanded: list[tuple[float, float, float]] = [path[0]]
+    for idx in range(1, len(path)):
+        start = path[idx - 1]
+        end = path[idx]
+        segment = distance_chebyshev(start, end)
+        if segment <= 0:
+            continue
+        steps = max(1, int(segment / step_ft))
+        if (steps * step_ft) < segment:
+            steps += 1
+        for step in range(1, steps + 1):
+            ratio = step / steps
+            expanded.append(
+                (
+                    start[0] + (end[0] - start[0]) * ratio,
+                    start[1] + (end[1] - start[1]) * ratio,
+                    start[2] + (end[2] - start[2]) * ratio,
+                )
+            )
+    return expanded
+
+
+def _advance_along_path(
+    path: list[tuple[float, float, float]], distance_ft: float
+) -> tuple[float, float, float]:
+    if not path:
+        return (0.0, 0.0, 0.0)
+    if len(path) == 1 or distance_ft <= 0:
+        return path[0]
+    remaining = distance_ft
+    current = path[0]
+    for waypoint in path[1:]:
+        segment = distance_chebyshev(current, waypoint)
+        if segment <= 0:
+            current = waypoint
+            continue
+        if segment <= remaining:
+            remaining -= segment
+            current = waypoint
+            continue
+        ratio = remaining / segment
+        return (
+            current[0] + (waypoint[0] - current[0]) * ratio,
+            current[1] + (waypoint[1] - current[1]) * ratio,
+            current[2] + (waypoint[2] - current[2]) * ratio,
+        )
+    return current
+
+
+def _prepare_voluntary_movement(actor: ActorRuntimeState) -> tuple[float, bool]:
+    if actor.movement_remaining <= 0:
+        return 0.0, False
+    if actor.conditions.intersection({"grappled", "restrained"}):
+        return 0.0, False
+    if "prone" not in actor.conditions:
+        return actor.movement_remaining, False
+
+    stand_cost = float(actor.speed_ft) / 2.0
+    if actor.movement_remaining >= stand_cost:
+        actor.movement_remaining -= stand_cost
+        _remove_condition(actor, "prone")
+        return actor.movement_remaining, False
+
+    # RAW crawl when prone: each moved foot costs 2 feet.
+    return actor.movement_remaining / 2.0, True
+
+
+def _find_opportunity_attack_action(actor: ActorRuntimeState) -> ActionDefinition | None:
+    best: ActionDefinition | None = None
+    for action in actor.actions:
+        if action.action_type != "attack":
+            continue
+        if action.action_cost in {"legendary", "lair"}:
+            continue
+        if not _can_pay_resource_cost(actor, action):
+            continue
+        if _action_range_ft(action) is None or _action_range_ft(action) > 5.0:
+            continue
+        if best is None:
+            best = action
+            continue
+        current_to_hit = action.to_hit if action.to_hit is not None else -999
+        best_to_hit = best.to_hit if best.to_hit is not None else -999
+        if current_to_hit > best_to_hit:
+            best = action
+    if best is None:
+        return None
+    return replace(best, attack_count=1, action_cost="reaction")
+
+
+def _run_opportunity_attacks_for_movement(
+    *,
+    rng: random.Random,
+    mover: ActorRuntimeState,
+    start_pos: tuple[float, float, float],
+    end_pos: tuple[float, float, float],
+    movement_path: list[tuple[float, float, float]] | None,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+) -> None:
+    if mover.dead or mover.hp <= 0:
+        return
+    if "disengaging" in mover.conditions:
+        return
+    if start_pos == end_pos:
+        return
+
+    path_points = _expand_path_points(movement_path or [start_pos, end_pos])
+    if len(path_points) < 2:
+        return
+
+    for enemy in actors.values():
+        if enemy.team == mover.team or enemy.dead or enemy.hp <= 0:
+            continue
+        if not enemy.reaction_available:
+            continue
+        trigger_point: tuple[float, float, float] | None = None
+        previous = path_points[0]
+        was_in_reach = distance_chebyshev(enemy.position, previous) <= 5.0
+        for point in path_points[1:]:
+            is_in_reach = distance_chebyshev(enemy.position, point) <= 5.0
+            if was_in_reach and not is_in_reach:
+                trigger_point = previous
+                break
+            was_in_reach = is_in_reach
+            previous = point
+        if trigger_point is None:
+            continue
+        reaction_attack = _find_opportunity_attack_action(enemy)
+        if reaction_attack is None:
+            continue
+        if not _spend_action_resource_cost(enemy, reaction_attack, resources_spent):
+            continue
+        enemy.reaction_available = False
+        original_position = mover.position
+        mover.position = trigger_point
+        _execute_action(
+            rng=rng,
+            actor=enemy,
+            action=reaction_attack,
+            targets=[mover],
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
+        )
+        mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
+        if mover.dead or mover.hp <= 0:
+            break
+
+
+def _move_actor_for_action_range(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    targets: list[ActorRuntimeState],
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+) -> bool:
+    if not targets:
+        return False
+    action_range = _action_range_ft(action)
+    if action_range is None:
+        return True
+
+    primary = targets[0]
+    current_distance = distance_chebyshev(actor.position, primary.position)
+    if current_distance <= action_range:
+        return True
+
+    # Reactions do not include movement unless explicitly modeled by the reaction action itself.
+    if action.action_cost == "reaction":
+        return False
+
+    available_distance, crawling = _prepare_voluntary_movement(actor)
+    if available_distance <= 0:
+        return False
+
+    target_ids = {target.actor_id for target in targets}
+    occupied_positions = [
+        other.position
+        for other in actors.values()
+        if other.actor_id != actor.actor_id
+        and other.team == actor.team
+        and other.actor_id not in target_ids
+        and not other.dead
+        and other.hp > 0
+    ]
+    path = find_path(
+        actor.position,
+        primary.position,
+        obstacles,
+        occupied_positions=occupied_positions,
+    )
+    path_distance = _path_distance(path)
+    if path_distance <= action_range:
+        return True
+
+    required_move = max(0.0, path_distance - action_range)
+    move_distance = min(available_distance, required_move)
+    if move_distance <= 0:
+        return distance_chebyshev(actor.position, primary.position) <= action_range
+
+    start_pos = actor.position
+    movement_path = _path_prefix_for_distance(path, move_distance)
+    end_pos = movement_path[-1] if movement_path else _advance_along_path(path, move_distance)
+    moved = distance_chebyshev(start_pos, end_pos)
+    if moved <= 0:
+        return distance_chebyshev(actor.position, primary.position) <= action_range
+
+    actor.position = end_pos
+    movement_spent = moved * (2.0 if crawling else 1.0)
+    actor.movement_remaining = max(0.0, actor.movement_remaining - movement_spent)
+
+    _run_opportunity_attacks_for_movement(
+        rng=rng,
+        mover=actor,
+        start_pos=start_pos,
+        end_pos=end_pos,
+        movement_path=movement_path,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        obstacles=obstacles,
+        light_level=light_level,
+    )
+
+    if actor.dead or actor.hp <= 0:
+        return False
+    return distance_chebyshev(actor.position, primary.position) <= action_range
+
+
+def _filter_targets_in_range(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    targets: list[ActorRuntimeState],
+) -> list[ActorRuntimeState]:
+    action_range = _action_range_ft(action)
+    if action_range is None:
+        return targets
+    if not targets:
+        return []
+    if action.aoe_type:
+        primary = targets[0]
+        if distance_chebyshev(actor.position, primary.position) > action_range:
+            return []
+        if action.aoe_size_ft:
+            radius = float(action.aoe_size_ft)
+            return [
+                target
+                for target in targets
+                if distance_chebyshev(primary.position, target.position) <= radius
+            ]
+        return targets
+    return [
+        target
+        for target in targets
+        if distance_chebyshev(actor.position, target.position) <= action_range
+    ]
+
+
+def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
+    if action.action_type in {"utility", "buff"}:
         return True
     for effect in action.effects:
         if not isinstance(effect, dict):
@@ -1358,6 +4072,95 @@ def _target_sort_key(
     return (0.0, target.hp, target.max_hp, target.actor_id)
 
 
+def _distance_2d(a: tuple[float, float, float], b: tuple[float, float, float]) -> float:
+    return math.hypot(b[0] - a[0], b[1] - a[1])
+
+
+def _in_area_template(
+    *,
+    actor: ActorRuntimeState,
+    primary: ActorRuntimeState,
+    candidate: ActorRuntimeState,
+    aoe_type: str,
+    aoe_size_ft: float,
+) -> bool:
+    template = aoe_type.strip().lower()
+    if template in {"sphere", "cylinder"}:
+        return _distance_2d(primary.position, candidate.position) <= aoe_size_ft
+
+    if template == "cube":
+        half = aoe_size_ft / 2.0
+        dx = abs(candidate.position[0] - primary.position[0])
+        dy = abs(candidate.position[1] - primary.position[1])
+        dz = abs(candidate.position[2] - primary.position[2])
+        return dx <= half and dy <= half and dz <= half
+
+    axis = (
+        primary.position[0] - actor.position[0],
+        primary.position[1] - actor.position[1],
+    )
+    axis_len = math.hypot(axis[0], axis[1])
+    if axis_len <= 0:
+        return _distance_2d(primary.position, candidate.position) <= aoe_size_ft
+    unit = (axis[0] / axis_len, axis[1] / axis_len)
+    rel = (
+        candidate.position[0] - actor.position[0],
+        candidate.position[1] - actor.position[1],
+    )
+    projection = rel[0] * unit[0] + rel[1] * unit[1]
+
+    if template == "line":
+        if projection < 0 or projection > aoe_size_ft:
+            return False
+        perp_sq = max(0.0, (rel[0] * rel[0] + rel[1] * rel[1]) - (projection * projection))
+        return math.sqrt(perp_sq) <= 5.0
+
+    if template == "cone":
+        distance = math.hypot(rel[0], rel[1])
+        if distance > aoe_size_ft:
+            return False
+        if distance == 0:
+            return True
+        cos_theta = projection / distance
+        return cos_theta >= math.cos(math.radians(30))
+
+    return _distance_2d(primary.position, candidate.position) <= aoe_size_ft
+
+
+def _resolve_template_targets(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    mode: str,
+    primaries: list[ActorRuntimeState],
+    candidates: list[ActorRuntimeState],
+) -> list[ActorRuntimeState]:
+    aoe_type = str(action.aoe_type or "").lower().strip()
+    if not aoe_type or not action.aoe_size_ft or not primaries:
+        return primaries
+    size = float(action.aoe_size_ft)
+    victims: set[str] = set()
+    for primary in primaries:
+        for candidate in candidates:
+            if _in_area_template(
+                actor=actor,
+                primary=primary,
+                candidate=candidate,
+                aoe_type=aoe_type,
+                aoe_size_ft=size,
+            ):
+                victims.add(candidate.actor_id)
+    if not action.include_self:
+        victims.discard(actor.actor_id)
+    return [
+        target
+        for target in sorted(
+            candidates, key=lambda value: _target_sort_key(actor, value, mode=mode)
+        )
+        if target.actor_id in victims
+    ]
+
+
 def _resolve_targets_for_action(
     *,
     rng: random.Random,
@@ -1381,12 +4184,18 @@ def _resolve_targets_for_action(
 
     required_conditions: set[str] = set()
     excluded_conditions: set[str] = set()
+    required_target_traits: set[str] = set()
+    excluded_target_traits: set[str] = set()
     for tag in getattr(action, "tags", []) or []:
         text = str(tag)
         if text.startswith("requires_condition:"):
             required_conditions.add(text.split(":", 1)[1].strip().lower())
         elif text.startswith("excludes_condition:"):
             excluded_conditions.add(text.split(":", 1)[1].strip().lower())
+        elif text.startswith("requires_target_trait:"):
+            required_target_traits.add(text.split(":", 1)[1].strip().lower())
+        elif text.startswith("excludes_target_trait:"):
+            excluded_target_traits.add(text.split(":", 1)[1].strip().lower())
 
     if required_conditions:
         candidates = [
@@ -1400,61 +4209,85 @@ def _resolve_targets_for_action(
             for target in candidates
             if not any(cond in target.conditions for cond in excluded_conditions)
         ]
+    if required_target_traits:
+        candidates = [
+            target
+            for target in candidates
+            if all(_has_trait_marker(target, marker) for marker in required_target_traits)
+        ]
+    if excluded_target_traits:
+        candidates = [
+            target
+            for target in candidates
+            if not any(_has_trait_marker(target, marker) for marker in excluded_target_traits)
+        ]
     if not candidates:
         return []
     by_id = {target.actor_id: target for target in candidates}
+    ordered_candidates = sorted(
+        candidates, key=lambda value: _target_sort_key(actor, value, mode=mode)
+    )
+    selected: list[ActorRuntimeState]
 
     if mode in {"all_enemies", "all_allies", "all_creatures"}:
-        return sorted(
-            candidates,
-            key=lambda value: _target_sort_key(actor, value, mode=mode),
-        )
-
-    if mode in {"random_enemy", "random_ally"}:
+        max_targets = action.max_targets or len(ordered_candidates)
+        selected = ordered_candidates[:max_targets]
+    elif mode in {"random_enemy", "random_ally"}:
         valid_requested = [ref.actor_id for ref in requested if ref.actor_id in by_id]
         if valid_requested:
-            return [by_id[valid_requested[0]]]
-        return [rng.choice(candidates)]
+            selected = [by_id[valid_requested[0]]]
+        else:
+            selected = [rng.choice(candidates)]
+    elif mode == "self":
+        selected = [actor]
+    else:
+        max_targets = 1
+        if mode in {"n_enemies", "n_allies"}:
+            max_targets = action.max_targets or 1
+        selected = []
+        seen: set[str] = set()
+        for ref in requested:
+            target = by_id.get(ref.actor_id)
+            if target is None or target.actor_id in seen:
+                continue
+            selected.append(target)
+            seen.add(target.actor_id)
+            if len(selected) >= max_targets:
+                break
+        if len(selected) < max_targets:
+            for target in ordered_candidates:
+                if target.actor_id in seen:
+                    continue
+                selected.append(target)
+                seen.add(target.actor_id)
+                if len(selected) >= max_targets:
+                    break
 
-    if mode == "self":
-        return [actor]
-
-    max_targets = 1
-    if mode in {"n_enemies", "n_allies"}:
-        max_targets = action.max_targets or 1
-
-    selected: list[ActorRuntimeState] = []
-    seen: set[str] = set()
-    for ref in requested:
-        target = by_id.get(ref.actor_id)
-        if target is None or target.actor_id in seen:
-            continue
-        selected.append(target)
-        seen.add(target.actor_id)
-        if len(selected) >= max_targets:
-            return selected
-
-    for target in sorted(candidates, key=lambda value: _target_sort_key(actor, value, mode=mode)):
-        if target.actor_id in seen:
-            continue
-        selected.append(target)
-        seen.add(target.actor_id)
-        if len(selected) >= max_targets:
-            break
-
-    if action.aoe_type and action.aoe_size_ft:
+    # Preserve legacy radius behavior when size is present without a template.
+    if action.aoe_size_ft and not action.aoe_type and selected:
         radius = float(action.aoe_size_ft)
-        aoe_victims = set()
+        aoe_victims: set[str] = set()
         for primary in selected:
             for cand in actors.values():
-                if cand.hp > 0 or include_downed_allies:
-                    if distance_chebyshev(primary.position, cand.position) <= radius:
-                        aoe_victims.add(cand.actor_id)
+                if cand.dead:
+                    continue
+                if cand.hp <= 0 and not include_downed_allies:
+                    continue
+                if distance_chebyshev(primary.position, cand.position) <= radius:
+                    aoe_victims.add(cand.actor_id)
         if not action.include_self and actor.actor_id in aoe_victims:
             aoe_victims.remove(actor.actor_id)
-        return [actors[aid] for aid in aoe_victims]
-
-    return selected
+        return sorted(
+            [actors[aid] for aid in aoe_victims],
+            key=lambda value: _target_sort_key(actor, value, mode=mode),
+        )
+    return _resolve_template_targets(
+        actor=actor,
+        action=action,
+        mode=mode,
+        primaries=selected,
+        candidates=ordered_candidates,
+    )
 
 
 def _resolve_action_selection(
@@ -1487,6 +4320,9 @@ def _remove_condition(actor: ActorRuntimeState, condition: str) -> None:
     key = condition.lower()
     actor.conditions.discard(key)
     actor.condition_durations.pop(key, None)
+    if key == "readying":
+        actor.readied_action_name = None
+        actor.readied_trigger = None
     for implied in _IMPLIED_CONDITION_MAP.get(key, set()):
         actor.conditions.discard(implied)
         actor.condition_durations.pop(implied, None)
@@ -1497,11 +4333,20 @@ def _break_concentration(
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
 ) -> None:
-    if not actor.concentrating:
+    if (
+        not actor.concentrating
+        and not actor.concentrated_targets
+        and not actor.concentrated_spell
+        and not actor.concentrated_spell_level
+        and not actor.concentration_conditions
+    ):
         return
     actor.concentrating = False
     for target_id in list(actor.concentrated_targets):
         if target_id in actors:
+            if "summoned" in actors[target_id].conditions:
+                del actors[target_id]
+                continue
             for condition in actor.concentration_conditions:
                 _remove_condition(actors[target_id], condition)
             if actor.concentrated_spell:
@@ -1509,10 +4354,31 @@ def _break_concentration(
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
 
-    if actor.concentrated_spell:
+    if actor.concentrated_spell or actor.concentrated_spell_level:
         active_hazards[:] = [h for h in active_hazards if h.get("source_id") != actor.actor_id]
 
     actor.concentrated_spell = None
+    actor.concentrated_spell_level = None
+
+
+def _concentration_forced_end(actor: ActorRuntimeState) -> bool:
+    if not actor.concentrating:
+        return False
+    if actor.dead or actor.hp <= 0:
+        return True
+    return bool(actor.conditions.intersection(_CONCENTRATION_FORCED_END_CONDITIONS))
+
+
+def _force_end_concentration_if_needed(
+    actor: ActorRuntimeState,
+    *,
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> bool:
+    if not _concentration_forced_end(actor):
+        return False
+    _break_concentration(actor, actors, active_hazards)
+    return True
 
 
 def _apply_condition(
@@ -1557,6 +4423,10 @@ def _tick_conditions_for_actor(rng: random.Random, actor: ActorRuntimeState) -> 
 
     Conditions with a repeating save allow the actor to roll each turn.
     """
+    if "raging" in actor.conditions and not actor.rage_sustained_since_last_turn:
+        _remove_condition(actor, "raging")
+    actor.rage_sustained_since_last_turn = False
+
     for condition, tracker in list(actor.condition_durations.items()):
         # Attempt repeating save if available
         if tracker.save_dc is not None and tracker.save_ability:
@@ -1629,40 +4499,106 @@ def _apply_effect(
     resources_spent: dict[str, dict[str, int]],
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
+    telemetry: list[dict[str, Any]] | None = None,
+    action_name: str | None = None,
+    trigger_event: str = "always",
+    source_bucket: str = "effects",
+    round_number: int | None = None,
+    strategy_name: str | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
 ) -> None:
     recipient = _resolve_effect_target(effect, actor=actor, target=target)
     effect_type = str(effect.get("effect_type"))
+    telemetry: list[dict[str, Any]] | None = None
 
     if effect_type == "damage":
         is_magical = False
         if action and getattr(action, "tags", None):
             is_magical = "spell" in action.tags or "magical" in action.tags
         damage_type = str(effect.get("damage_type", "bludgeoning"))
-        raw_damage = roll_damage(
-            rng, str(effect.get("damage", "0")), crit=False, source=actor, damage_type=damage_type
+        raw_damage = _roll_damage_with_channel_divinity_hooks(
+            rng=rng,
+            actor=actor,
+            expr=str(effect.get("damage", "0")),
+            damage_type=damage_type,
+            resources_spent=resources_spent,
+            crit=False,
         )
         applied = apply_damage(
             recipient, raw_damage, damage_type, is_magical=is_magical, source=actor
         )
-        if not run_concentration_check(rng, recipient, applied, source=actor):
-            _break_concentration(recipient, actors, active_hazards)
+        if applied > 0:
+            if not _force_end_concentration_if_needed(
+                recipient, actors=actors, active_hazards=active_hazards
+            ) and not run_concentration_check(rng, recipient, applied, source=actor):
+                _break_concentration(recipient, actors, active_hazards)
         damage_dealt[actor.actor_id] += applied
         damage_taken[recipient.actor_id] += applied
         threat_scores[actor.actor_id] += applied
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "damage",
+                    "damage_type": damage_type,
+                    "applied_amount": applied,
+                }
+            )
         return
 
     if effect_type == "heal":
+        before = recipient.hp
         amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
         _apply_healing(recipient, amount)
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "heal",
+                    "applied_amount": max(0, recipient.hp - before),
+                }
+            )
         return
 
     if effect_type == "temp_hp":
         amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
+        before = recipient.temp_hp
         if amount > 0:
             recipient.temp_hp = max(recipient.temp_hp, amount)
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "temp_hp",
+                    "applied_amount": max(0, recipient.temp_hp - before),
+                }
+            )
         return
 
     if effect_type == "apply_condition":
+        before_conditions = set(recipient.conditions)
         save_dc = effect.get("save_dc")
         save_ability = effect.get("save_ability")
         if save_dc is not None and save_ability:
@@ -1697,10 +4633,28 @@ def _apply_effect(
             save_dc=int(save_dc) if save_dc is not None else None,
             save_ability=str(save_ability) if save_ability else None,
         )
+        _force_end_concentration_if_needed(recipient, actors=actors, active_hazards=active_hazards)
         return
 
     if effect_type == "remove_condition":
+        before_conditions = set(recipient.conditions)
         _remove_condition(recipient, str(effect.get("condition", "")))
+        if telemetry is not None and recipient.conditions != before_conditions:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "remove_condition",
+                    "condition": str(effect.get("condition", "")).lower(),
+                    "applied_amount": 1,
+                }
+            )
         return
 
     if effect_type == "hazard":
@@ -1719,6 +4673,83 @@ def _apply_effect(
                 "duration": duration,
             }
         )
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "hazard",
+                    "hazard_type": hazard_type,
+                    "applied_amount": 1,
+                }
+            )
+        return
+
+    if effect_type in {"summon", "conjure"}:
+        summon_id = str(effect.get("actor_id", "")).strip() or (
+            f"{actor.actor_id}_summon_{len([key for key in actors if key.startswith(actor.actor_id)])}"
+        )
+        if summon_id in actors:
+            return
+        summon_name = str(effect.get("name", summon_id))
+        summon_hp = int(effect.get("max_hp", effect.get("hp", 10)))
+        summon_ac = int(effect.get("ac", 10))
+        summon_to_hit = effect.get("to_hit")
+        summon_damage = effect.get("damage")
+        summon_damage_type = str(effect.get("damage_type", "force"))
+        summon_actions: list[ActionDefinition] = []
+        if summon_to_hit is not None and summon_damage:
+            summon_actions.append(
+                ActionDefinition(
+                    name=f"{summon_name.lower().replace(' ', '_')}_attack",
+                    action_type="attack",
+                    to_hit=int(summon_to_hit),
+                    damage=str(summon_damage),
+                    damage_type=summon_damage_type,
+                    tags=["summon"],
+                )
+            )
+
+        summoned_actor = ActorRuntimeState(
+            actor_id=summon_id,
+            team=actor.team,
+            name=summon_name,
+            max_hp=summon_hp,
+            hp=summon_hp,
+            temp_hp=0,
+            ac=summon_ac,
+            initiative_mod=actor.initiative_mod,
+            str_mod=0,
+            dex_mod=0,
+            con_mod=0,
+            int_mod=0,
+            wis_mod=0,
+            cha_mod=0,
+            save_mods={"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+            actions=summon_actions,
+            speed_ft=int(effect.get("speed_ft", actor.speed_ft)),
+            position=_to_position3(effect.get("position")) or actor.position,
+        )
+        summoned_actor.conditions.add("summoned")
+        if effect_type == "conjure":
+            summoned_actor.conditions.add("conjured")
+        summoned_actor.traits["summoned"] = {
+            "source_id": actor.actor_id,
+            "concentration_linked": bool(action and action.concentration),
+        }
+        actors[summon_id] = summoned_actor
+        damage_dealt.setdefault(summon_id, 0)
+        damage_taken.setdefault(summon_id, 0)
+        threat_scores.setdefault(summon_id, 0)
+        resources_spent.setdefault(summon_id, {})
+        if action and action.concentration:
+            actor.concentrated_targets.add(summon_id)
         return
 
     if effect_type == "resource_change":
@@ -1732,6 +4763,34 @@ def _apply_effect(
             resources_spent[recipient.actor_id][resource] = resources_spent[recipient.actor_id].get(
                 resource, 0
             ) + (before - after)
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "resource_change",
+                    "resource": resource,
+                    "applied_amount": after - before,
+                }
+            )
+        return
+
+    if effect_type == "command_construct_companion":
+        for ally in actors.values():
+            if ally.team != actor.team:
+                continue
+            if getattr(ally, "companion_owner_id", None) != actor.actor_id:
+                continue
+            if ally.dead or ally.hp <= 0:
+                continue
+            if hasattr(ally, "commanded_this_round"):
+                ally.commanded_this_round = True
         return
 
     if effect_type == "next_attack_advantage":
@@ -1757,8 +4816,31 @@ def _apply_effect(
         src = actor.position
         cur = recipient.position
         if direction == "toward_source":
+            old_position = recipient.position
             recipient.position = move_towards(cur, src, distance_ft)
             recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
+            if (
+                round_number is not None
+                and turn_token is not None
+                and old_position != recipient.position
+                and action is not None
+            ):
+                _dispatch_combat_event(
+                    rng=rng,
+                    event="on_move",
+                    trigger_actor=actor,
+                    trigger_target=recipient,
+                    trigger_action=action,
+                    actors=actors,
+                    round_number=round_number,
+                    turn_token=turn_token,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    active_hazards=active_hazards,
+                    rule_trace=rule_trace,
+                )
             return
 
         if direction == "away_from_source":
@@ -1766,8 +4848,31 @@ def _apply_effect(
             dist = distance_euclidean(src, cur)
             if dist <= 0:
                 # Arbitrary axis push if co-located.
+                old_position = recipient.position
                 recipient.position = (cur[0] + distance_ft, cur[1], cur[2])
                 recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
+                if (
+                    round_number is not None
+                    and turn_token is not None
+                    and old_position != recipient.position
+                    and action is not None
+                ):
+                    _dispatch_combat_event(
+                        rng=rng,
+                        event="on_move",
+                        trigger_actor=actor,
+                        trigger_target=recipient,
+                        trigger_action=action,
+                        actors=actors,
+                        round_number=round_number,
+                        turn_token=turn_token,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=rule_trace,
+                    )
                 return
             unit = ((cur[0] - src[0]) / dist, (cur[1] - src[1]) / dist, (cur[2] - src[2]) / dist)
             dest = (
@@ -1775,8 +4880,31 @@ def _apply_effect(
                 cur[1] + unit[1] * distance_ft,
                 cur[2] + unit[2] * distance_ft,
             )
+            old_position = recipient.position
             recipient.position = dest
             recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
+            if (
+                round_number is not None
+                and turn_token is not None
+                and old_position != recipient.position
+                and action is not None
+            ):
+                _dispatch_combat_event(
+                    rng=rng,
+                    event="on_move",
+                    trigger_actor=actor,
+                    trigger_target=recipient,
+                    trigger_action=action,
+                    actors=actors,
+                    round_number=round_number,
+                    turn_token=turn_token,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    active_hazards=active_hazards,
+                    rule_trace=rule_trace,
+                )
             return
 
         return
@@ -1798,14 +4926,48 @@ def _apply_action_effects(
     resources_spent: dict[str, dict[str, int]],
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
+    strategy_name: str | None = None,
+    once_per_action_used: set[tuple[str, int]] | None = None,
 ) -> None:
-    for effect in action.effects + action.mechanics:
-        if not isinstance(effect, dict):
-            continue
-        if _effect_matches_event(effect, event):
+    for source_bucket, effect_list in (
+        ("effects", action.effects),
+        ("mechanics", action.mechanics),
+    ):
+        for index, effect in enumerate(effect_list):
+            if not isinstance(effect, dict):
+                continue
+            if not _effect_matches_event(effect, event):
+                continue
+            if effect.get("once_per_action"):
+                marker = (source_bucket, index)
+                if once_per_action_used is not None and marker in once_per_action_used:
+                    continue
+                if once_per_action_used is not None:
+                    once_per_action_used.add(marker)
             recipient = _resolve_effect_target(effect, actor=actor, target=target)
             if action.concentration and effect.get("effect_type") in ("apply_condition", "hazard"):
                 actor.concentrated_targets.add(recipient.actor_id)
+
+            if telemetry is not None:
+                telemetry.append(
+                    {
+                        "telemetry_type": "trigger_provenance",
+                        "round": round_number,
+                        "strategy": strategy_name,
+                        "actor_id": actor.actor_id,
+                        "target_id": recipient.actor_id,
+                        "action_name": action.name,
+                        "source_bucket": source_bucket,
+                        "trigger_event": event,
+                        "apply_on": str(effect.get("apply_on", "always")),
+                        "effect_type": str(effect.get("effect_type", "")),
+                    }
+                )
+
             _apply_effect(
                 action=action,
                 effect=effect,
@@ -1818,6 +4980,14 @@ def _apply_action_effects(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                telemetry=telemetry,
+                action_name=action.name,
+                trigger_event=event,
+                source_bucket=source_bucket,
+                round_number=round_number,
+                strategy_name=strategy_name,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
             )
 
 
@@ -1850,20 +5020,76 @@ def _roll_recharge_for_actor(rng: random.Random, actor: ActorRuntimeState) -> No
             actor.recharge_ready[action_name] = True
 
 
+def _action_component_tags(action: ActionDefinition) -> set[str]:
+    return {
+        str(tag).strip().lower()
+        for tag in action.tags
+        if str(tag).strip().lower().startswith("component:")
+    }
+
+
+def _can_cast_spell_with_components(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if "spell" not in action.tags:
+        return True
+    components = _action_component_tags(action)
+    if not components:
+        return True
+
+    if "component:verbal" in components and actor.conditions.intersection(
+        {"silenced", "gagged", "mute"}
+    ):
+        return False
+
+    free_hands = int(actor.resources.get("free_hands", 1))
+    has_free_hand = free_hands > 0
+    has_focus = bool(actor.resources.get("spellcasting_focus", 0)) or _has_trait(
+        actor, "spellcasting focus"
+    )
+
+    needs_material = "component:material" in components
+    needs_somatic = "component:somatic" in components
+
+    if needs_material and not (has_focus or has_free_hand):
+        return False
+
+    if needs_somatic and not has_free_hand and not _has_trait(actor, "war caster"):
+        # A hand holding an M component/focus can satisfy S+M together.
+        if not (needs_material and has_focus):
+            return False
+
+    return True
+
+
 def _can_pay_resource_cost(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
     return _has_resources(actor, action.resource_cost)
 
 
+def _can_take_reaction(actor: ActorRuntimeState) -> bool:
+    if not actor.reaction_available:
+        return False
+    if actor.dead or actor.hp <= 0:
+        return False
+    if actor.conditions.intersection(_CONTROL_BLOCKING_CONDITIONS):
+        return False
+    if "open_hand_no_reactions" in actor.conditions:
+        return False
+    return True
+
+
 def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if action.name == "lay_on_hands" and actor.resources.get("lay_on_hands_pool", 0) <= 0:
+        return False
     if action.max_uses is not None and actor.per_action_uses.get(action.name, 0) >= action.max_uses:
         return False
     if action.recharge and not actor.recharge_ready.get(action.name, True):
         return False
     if not _can_pay_resource_cost(actor, action):
         return False
+    if not _can_cast_spell_with_components(actor, action):
+        return False
     if action.action_cost == "bonus" and not actor.bonus_available:
         return False
-    if action.action_cost == "reaction" and not actor.reaction_available:
+    if action.action_cost == "reaction" and not _can_take_reaction(actor):
         return False
     if action.action_cost == "legendary" and actor.legendary_actions_remaining < _legendary_cost(
         action
@@ -1871,6 +5097,19 @@ def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> boo
         return False
     if action.action_cost == "lair" and actor.lair_action_used_this_round:
         return False
+    if _has_tag(action, "conversion:slot_to_points"):
+        slot_level = _slot_level_from_action(action)
+        if slot_level is None:
+            return False
+        current_points = int(actor.resources.get("sorcery_points", 0))
+        max_points = actor.max_resources.get("sorcery_points")
+        if isinstance(max_points, int) and max_points >= 0:
+            if current_points + slot_level > int(max_points):
+                return False
+    if _has_tag(action, "conversion:points_to_slot"):
+        slot_level = _slot_level_from_action(action)
+        if slot_level is None or slot_level > 5:
+            return False
     return True
 
 
@@ -1900,6 +5139,514 @@ def _mark_action_cost_used(actor: ActorRuntimeState, action: ActionDefinition) -
         actor.lair_action_used_this_round = True
 
 
+def _event_trigger_priority(action: ActionDefinition) -> int:
+    for tag in action.tags:
+        value = str(tag)
+        if not value.startswith("trigger_priority:"):
+            continue
+        _, raw = value.split(":", 1)
+        try:
+            return int(raw)
+        except ValueError:
+            return 0
+    return 0
+
+
+def _event_trigger_int_tag(action: ActionDefinition, prefix: str) -> int | None:
+    for tag in action.tags:
+        value = str(tag)
+        if not value.startswith(prefix):
+            continue
+        _, raw = value.split(":", 1)
+        try:
+            parsed = int(raw)
+        except ValueError:
+            return None
+        return parsed if parsed > 0 else None
+    return None
+
+
+def _event_trigger_duration_rounds(action: ActionDefinition) -> int | None:
+    if action.trigger_duration_rounds is not None and action.trigger_duration_rounds > 0:
+        return action.trigger_duration_rounds
+    return _event_trigger_int_tag(action, "trigger_duration_rounds:")
+
+
+def _event_trigger_limit_per_turn(action: ActionDefinition) -> int | None:
+    if action.trigger_limit_per_turn is not None and action.trigger_limit_per_turn > 0:
+        return action.trigger_limit_per_turn
+    return _event_trigger_int_tag(action, "trigger_limit_per_turn:")
+
+
+def _event_trigger_once_per_round(action: ActionDefinition) -> bool:
+    return action.trigger_once_per_round or action.action_cost == "reaction"
+
+
+def _event_trigger_start_key(action: ActionDefinition) -> str:
+    event_name = action.event_trigger or "always"
+    return f"event_trigger_start:{event_name}:{action.name}"
+
+
+def _event_trigger_turn_key(
+    action: ActionDefinition,
+    *,
+    round_number: int,
+    turn_token: str | None,
+) -> str:
+    token = turn_token or f"{round_number}:global"
+    event_name = action.event_trigger or "always"
+    return f"event_turn:{token}:{event_name}:{action.name}"
+
+
+def _event_trigger_is_expired(
+    actor: ActorRuntimeState, action: ActionDefinition, *, round_number: int
+) -> bool:
+    duration = _event_trigger_duration_rounds(action)
+    if duration is None:
+        return False
+    start_key = _event_trigger_start_key(action)
+    started_round = actor.per_action_uses.get(start_key)
+    if started_round is None:
+        actor.per_action_uses[start_key] = round_number
+        return False
+    return int(started_round) + duration - 1 < round_number
+
+
+def _resolve_event_targets(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    actors: dict[str, ActorRuntimeState],
+    trigger_actor: ActorRuntimeState | None,
+    trigger_target: ActorRuntimeState | None,
+) -> list[ActorRuntimeState]:
+    requested: list[TargetRef] = _default_target(actor, actors)
+    preferred = trigger_target if trigger_target is not None else trigger_actor
+    if (
+        preferred is not None
+        and preferred.actor_id in actors
+        and preferred.team != actor.team
+        and preferred.hp > 0
+        and not preferred.dead
+    ):
+        requested = [TargetRef(preferred.actor_id)]
+    return _resolve_targets_for_action(
+        rng=rng,
+        actor=actor,
+        action=action,
+        actors=actors,
+        requested=requested,
+    )
+
+
+def _run_trait_event_handlers(
+    *,
+    rng: random.Random,
+    event: str,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_target: ActorRuntimeState | None,
+    trigger_action: ActionDefinition | None,
+    actors: dict[str, ActorRuntimeState],
+    round_number: int,
+    turn_token: str,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    rule_trace: list[dict[str, Any]],
+    obstacles: list[AABB],
+    light_level: str,
+) -> None:
+    if trigger_actor is None or trigger_action is None:
+        return
+    lock_key = f"event_reaction_round:{round_number}"
+
+    if (
+        event == "after_action"
+        and trigger_action.action_type == "attack"
+        and trigger_target is not None
+    ):
+        reactors = sorted(actors.values(), key=lambda value: value.actor_id)
+        for reactor in reactors:
+            if (
+                reactor.team != trigger_target.team
+                or reactor.actor_id == trigger_target.actor_id
+                or reactor.dead
+                or reactor.hp <= 0
+                or not reactor.reaction_available
+                or not _has_trait(reactor, "sentinel")
+                or _has_trait(trigger_target, "sentinel")
+            ):
+                continue
+            if reactor.per_action_uses.get(lock_key, 0) > 0:
+                rule_trace.append(
+                    {
+                        "event": event,
+                        "round": round_number,
+                        "turn": turn_token,
+                        "handler": "trait:sentinel_reaction",
+                        "actor_id": reactor.actor_id,
+                        "result": "skipped",
+                        "reason": "reaction_lock",
+                    }
+                )
+                continue
+            attack_action = _fallback_action(reactor)
+            if attack_action is None or attack_action.action_type != "attack":
+                continue
+            reactor.reaction_available = False
+            reactor.per_action_uses[lock_key] = 1
+            trigger_actor.movement_remaining = 0.0
+            _execute_action(
+                rng=rng,
+                actor=reactor,
+                action=attack_action,
+                targets=[trigger_actor],
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
+            )
+            rule_trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "handler": "trait:sentinel_reaction",
+                    "actor_id": reactor.actor_id,
+                    "trigger_actor_id": trigger_actor.actor_id,
+                    "result": "executed",
+                }
+            )
+
+    if event == "after_action" and "spell" in trigger_action.tags:
+        reactors = sorted(actors.values(), key=lambda value: value.actor_id)
+        for reactor in reactors:
+            if (
+                reactor.team == trigger_actor.team
+                or reactor.dead
+                or reactor.hp <= 0
+                or not reactor.reaction_available
+                or not _has_trait(reactor, "mage slayer")
+            ):
+                continue
+            if reactor.per_action_uses.get(lock_key, 0) > 0:
+                rule_trace.append(
+                    {
+                        "event": event,
+                        "round": round_number,
+                        "turn": turn_token,
+                        "handler": "trait:mage_slayer_reaction",
+                        "actor_id": reactor.actor_id,
+                        "result": "skipped",
+                        "reason": "reaction_lock",
+                    }
+                )
+                continue
+            attack_action = _fallback_action(reactor)
+            if attack_action is None or attack_action.action_type != "attack":
+                continue
+            reactor.reaction_available = False
+            reactor.per_action_uses[lock_key] = 1
+            _execute_action(
+                rng=rng,
+                actor=reactor,
+                action=attack_action,
+                targets=[trigger_actor],
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
+            )
+            rule_trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "handler": "trait:mage_slayer_reaction",
+                    "actor_id": reactor.actor_id,
+                    "trigger_actor_id": trigger_actor.actor_id,
+                    "result": "executed",
+                }
+            )
+
+
+def _dispatch_combat_event(
+    *,
+    rng: random.Random,
+    event: str,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_target: ActorRuntimeState | None,
+    trigger_action: ActionDefinition | None,
+    actors: dict[str, ActorRuntimeState],
+    round_number: int,
+    turn_token: str,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    rule_trace: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+) -> list[dict[str, Any]]:
+    if obstacles is None:
+        obstacles = []
+    trace = rule_trace if rule_trace is not None else []
+    candidates: list[tuple[int, str, str, ActorRuntimeState, ActionDefinition]] = []
+    for actor in actors.values():
+        if actor.dead or actor.hp <= 0:
+            continue
+        for action in actor.actions:
+            if action.event_trigger != event:
+                continue
+            if not _action_available(actor, action):
+                continue
+            candidates.append(
+                (_event_trigger_priority(action), actor.actor_id, action.name, actor, action)
+            )
+
+    candidates.sort(key=lambda item: (-item[0], item[1], item[2]))
+    for _priority, actor_id, action_name, actor, action in candidates:
+        if _event_trigger_is_expired(actor, action, round_number=round_number):
+            trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "actor_id": actor_id,
+                    "action": action_name,
+                    "result": "skipped",
+                    "reason": "expired",
+                }
+            )
+            continue
+
+        per_turn_limit = _event_trigger_limit_per_turn(action)
+        per_turn_key = _event_trigger_turn_key(
+            action,
+            round_number=round_number,
+            turn_token=turn_token,
+        )
+        if (
+            per_turn_limit is not None
+            and actor.per_action_uses.get(per_turn_key, 0) >= per_turn_limit
+        ):
+            trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "actor_id": actor_id,
+                    "action": action_name,
+                    "result": "skipped",
+                    "reason": "per_turn_limit",
+                }
+            )
+            continue
+
+        lock_key = f"event_reaction_round:{round_number}"
+        if (
+            action.action_cost == "reaction"
+            and _event_trigger_once_per_round(action)
+            and actor.per_action_uses.get(lock_key, 0) > 0
+        ):
+            trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "actor_id": actor_id,
+                    "action": action_name,
+                    "result": "skipped",
+                    "reason": "reaction_lock",
+                }
+            )
+            continue
+
+        targets = _resolve_event_targets(
+            rng=rng,
+            actor=actor,
+            action=action,
+            actors=actors,
+            trigger_actor=trigger_actor,
+            trigger_target=trigger_target,
+        )
+        if not targets:
+            trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "actor_id": actor_id,
+                    "action": action_name,
+                    "result": "skipped",
+                    "reason": "no_targets",
+                }
+            )
+            continue
+
+        spent = _spend_resources(actor, action.resource_cost)
+        for key, amount in spent.items():
+            resources_spent[actor.actor_id][key] = (
+                resources_spent[actor.actor_id].get(key, 0) + amount
+            )
+        actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
+        actor.per_action_uses[per_turn_key] = actor.per_action_uses.get(per_turn_key, 0) + 1
+        _mark_action_cost_used(actor, action)
+        if action.action_cost == "reaction" and _event_trigger_once_per_round(action):
+            actor.per_action_uses[lock_key] = actor.per_action_uses.get(lock_key, 0) + 1
+
+        _execute_action(
+            rng=rng,
+            actor=actor,
+            action=action,
+            targets=targets,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
+            round_number=round_number,
+            turn_token=turn_token,
+            rule_trace=trace,
+        )
+        trace.append(
+            {
+                "event": event,
+                "round": round_number,
+                "turn": turn_token,
+                "actor_id": actor_id,
+                "action": action_name,
+                "result": "executed",
+            }
+        )
+
+    _run_trait_event_handlers(
+        rng=rng,
+        event=event,
+        trigger_actor=trigger_actor,
+        trigger_target=trigger_target,
+        trigger_action=trigger_action,
+        actors=actors,
+        round_number=round_number,
+        turn_token=turn_token,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        rule_trace=trace,
+        obstacles=obstacles,
+        light_level=light_level,
+    )
+    return trace
+
+
+def _run_event_triggered_actions(
+    *,
+    rng: random.Random,
+    event: str,
+    trigger_actor: ActorRuntimeState | None,
+    actors: dict[str, ActorRuntimeState],
+    round_number: int,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    rule_trace: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+) -> list[dict[str, Any]]:
+    turn_token = (
+        f"{round_number}:{trigger_actor.actor_id if trigger_actor is not None else 'global'}"
+    )
+    return _dispatch_combat_event(
+        rng=rng,
+        event=event,
+        trigger_actor=trigger_actor,
+        trigger_target=None,
+        trigger_action=None,
+        actors=actors,
+        round_number=round_number,
+        turn_token=turn_token,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        rule_trace=rule_trace,
+        obstacles=obstacles,
+        light_level=light_level,
+    )
+
+
+def _spell_level_from_action(action: ActionDefinition) -> int:
+    slot_levels = []
+    for key in action.resource_cost.keys():
+        if not key.startswith("spell_slot_"):
+            continue
+        try:
+            slot_levels.append(int(key.split("_")[-1]))
+        except ValueError:
+            continue
+    return max(slot_levels) if slot_levels else 0
+
+
+def _available_spell_slots(actor: ActorRuntimeState, *, minimum: int = 1) -> list[tuple[str, int]]:
+    available: list[tuple[str, int]] = []
+    for key, value in actor.resources.items():
+        if not key.startswith("spell_slot_") or int(value) <= 0:
+            continue
+        try:
+            level = int(key.split("_")[-1])
+        except ValueError:
+            continue
+        if level >= minimum:
+            available.append((key, level))
+    available.sort(key=lambda item: item[1])
+    return available
+
+
+def _lowest_available_spell_slot(
+    actor: ActorRuntimeState, *, minimum: int = 1
+) -> tuple[str, int] | None:
+    slots = _available_spell_slots(actor, minimum=minimum)
+    return slots[0] if slots else None
+
+
+def _select_counterspell_slot(
+    actor: ActorRuntimeState, *, incoming_spell_level: int
+) -> tuple[str, int] | None:
+    available = _available_spell_slots(actor, minimum=3)
+    if not available:
+        return None
+    guaranteed = [slot for slot in available if slot[1] >= max(3, incoming_spell_level)]
+    if guaranteed:
+        return guaranteed[0]
+    return available[0]
+
+
 def _fallback_action(
     actor: ActorRuntimeState, *, allow_special: bool = False
 ) -> ActionDefinition | None:
@@ -1917,6 +5664,449 @@ def _fallback_action(
     return None
 
 
+def _select_readied_action(actor: ActorRuntimeState) -> ActionDefinition | None:
+    preferred_names = {"basic"}
+    for action in actor.actions:
+        if action.name in preferred_names and action.name != "ready":
+            if action.action_cost in {"action", "none"} and _action_available(actor, action):
+                return action
+    for action in actor.actions:
+        if action.name in {"ready", "dodge", "dash", "disengage"}:
+            continue
+        if action.action_cost in {"legendary", "lair", "reaction"}:
+            continue
+        if _action_available(actor, action):
+            return action
+    return None
+
+
+def _normalize_event_trigger(trigger: str | None) -> str | None:
+    if trigger is None:
+        return None
+    text = str(trigger).strip().lower()
+    return text or None
+
+
+def _trigger_readied_actions(
+    *,
+    rng: random.Random,
+    trigger_actor: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+) -> None:
+    for actor in actors.values():
+        if actor.team == trigger_actor.team:
+            continue
+        if actor.dead or actor.hp <= 0:
+            continue
+        if not actor.reaction_available:
+            continue
+
+        if "readying" in actor.conditions:
+            readied_trigger = _normalize_event_trigger(actor.readied_trigger)
+            if readied_trigger in {None, "enemy_turn_start", "on_enemy_turn_start"}:
+                readied = _resolve_action_selection(actor, actor.readied_action_name)
+                if readied.name != "ready":
+                    reaction_action = replace(readied, action_cost="reaction")
+                    if _action_available(actor, reaction_action):
+                        targets = _resolve_targets_for_action(
+                            rng=rng,
+                            actor=actor,
+                            action=reaction_action,
+                            actors=actors,
+                            requested=[TargetRef(trigger_actor.actor_id)],
+                        )
+                        targets = [
+                            target
+                            for target in targets
+                            if target.actor_id == trigger_actor.actor_id
+                        ]
+                        targets = _filter_targets_in_range(actor, reaction_action, targets)
+                        if targets and _spend_action_resource_cost(
+                            actor, reaction_action, resources_spent
+                        ):
+                            actor.reaction_available = False
+                            _execute_action(
+                                rng=rng,
+                                actor=actor,
+                                action=reaction_action,
+                                targets=targets,
+                                actors=actors,
+                                damage_dealt=damage_dealt,
+                                damage_taken=damage_taken,
+                                threat_scores=threat_scores,
+                                resources_spent=resources_spent,
+                                active_hazards=active_hazards,
+                                obstacles=obstacles,
+                                light_level=light_level,
+                            )
+                            _remove_condition(actor, "readying")
+            if trigger_actor.dead or trigger_actor.hp <= 0:
+                break
+
+        if not actor.reaction_available:
+            continue
+
+        for reaction_action in actor.actions:
+            if reaction_action.action_cost != "reaction":
+                continue
+            if reaction_action.name in {"shield", "counterspell"}:
+                continue
+            trigger = _normalize_event_trigger(reaction_action.event_trigger)
+            if trigger not in {"enemy_turn_start", "on_enemy_turn_start"}:
+                continue
+            if not _action_available(actor, reaction_action):
+                continue
+
+            targets = _resolve_targets_for_action(
+                rng=rng,
+                actor=actor,
+                action=reaction_action,
+                actors=actors,
+                requested=[TargetRef(trigger_actor.actor_id)],
+            )
+            targets = [target for target in targets if target.actor_id == trigger_actor.actor_id]
+            targets = _filter_targets_in_range(actor, reaction_action, targets)
+            if not targets:
+                continue
+            if not _spend_action_resource_cost(actor, reaction_action, resources_spent):
+                continue
+
+            actor.reaction_available = False
+            _execute_action(
+                rng=rng,
+                actor=actor,
+                action=reaction_action,
+                targets=targets,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+            )
+            break
+
+        if trigger_actor.dead or trigger_actor.hp <= 0:
+            break
+
+
+def _bardic_inspiration_die_sides(actor: ActorRuntimeState) -> int:
+    if _has_trait(actor, "bardic inspiration (d12)"):
+        return 12
+    if _has_trait(actor, "bardic inspiration (d10)"):
+        return 10
+    if _has_trait(actor, "bardic inspiration (d8)"):
+        return 8
+    return 6
+
+
+def _consume_bardic_inspiration_die(
+    actor: ActorRuntimeState,
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    key = "bardic_inspiration_die"
+    die_sides = int(actor.resources.get(key, 0))
+    if die_sides <= 0:
+        return 0
+    actor.resources[key] = 0
+    resources_spent[actor.actor_id][key] = resources_spent[actor.actor_id].get(key, 0) + 1
+    return die_sides
+
+
+def _try_spend_bardic_inspiration_on_attack_roll(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    roll: AttackRollResult,
+    target_ac: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    if roll.hit or roll.natural_roll == 20:
+        return roll
+    die_sides = int(actor.resources.get("bardic_inspiration_die", 0))
+    if die_sides <= 0:
+        return roll
+    if roll.total + die_sides < target_ac:
+        return roll
+
+    consumed = _consume_bardic_inspiration_die(actor, resources_spent)
+    if consumed <= 0:
+        return roll
+    bonus = rng.randint(1, consumed)
+    total = roll.total + bonus
+    hit = roll.crit or (roll.natural_roll != 1 and total >= target_ac)
+    return AttackRollResult(hit=hit, crit=roll.crit, natural_roll=roll.natural_roll, total=total)
+
+
+def _try_spend_bardic_inspiration_on_save(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    save_roll: int,
+    save_mod: int,
+    dc: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    if save_roll + save_mod >= dc:
+        return save_roll
+    die_sides = int(actor.resources.get("bardic_inspiration_die", 0))
+    if die_sides <= 0:
+        return save_roll
+    if save_roll + save_mod + die_sides < dc:
+        return save_roll
+
+    consumed = _consume_bardic_inspiration_die(actor, resources_spent)
+    if consumed <= 0:
+        return save_roll
+    return save_roll + rng.randint(1, consumed)
+
+
+def _find_cutting_words_reactor(
+    *,
+    attacker: ActorRuntimeState,
+    target: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+) -> ActorRuntimeState | None:
+    from .spatial import distance_chebyshev
+
+    if "all" in attacker.condition_immunities or "charmed" in attacker.condition_immunities:
+        return None
+
+    candidates: list[tuple[int, ActorRuntimeState]] = []
+    for ally in actors.values():
+        if ally.team != target.team:
+            continue
+        if ally.dead or ally.hp <= 0:
+            continue
+        if not ally.reaction_available:
+            continue
+        if not _has_trait(ally, "cutting words"):
+            continue
+        if ally.resources.get("bardic_inspiration", 0) <= 0:
+            continue
+        if distance_chebyshev(ally.position, attacker.position) > 60:
+            continue
+        candidates.append((_bardic_inspiration_die_sides(ally), ally))
+
+    if not candidates:
+        return None
+    candidates.sort(key=lambda row: row[0], reverse=True)
+    return candidates[0][1]
+
+
+def _spend_cutting_words_reaction(
+    *,
+    rng: random.Random,
+    reactor: ActorRuntimeState,
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    die_sides = _bardic_inspiration_die_sides(reactor)
+    if die_sides <= 0:
+        return 0
+    reactor.resources["bardic_inspiration"] = max(
+        0, reactor.resources.get("bardic_inspiration", 0) - 1
+    )
+    reactor.reaction_available = False
+    resources_spent[reactor.actor_id]["bardic_inspiration"] = (
+        resources_spent[reactor.actor_id].get("bardic_inspiration", 0) + 1
+    )
+    return rng.randint(1, die_sides)
+
+
+def _try_cutting_words_on_attack_roll(
+    *,
+    rng: random.Random,
+    attacker: ActorRuntimeState,
+    target: ActorRuntimeState,
+    roll: AttackRollResult,
+    target_ac: int,
+    actors: dict[str, ActorRuntimeState],
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    if not roll.hit or roll.natural_roll == 20:
+        return roll
+    reactor = _find_cutting_words_reactor(attacker=attacker, target=target, actors=actors)
+    if reactor is None:
+        return roll
+    max_reduction = _bardic_inspiration_die_sides(reactor)
+    if roll.total - max_reduction >= target_ac:
+        return roll
+    reduction = _spend_cutting_words_reaction(
+        rng=rng, reactor=reactor, resources_spent=resources_spent
+    )
+    if reduction <= 0:
+        return roll
+    total = roll.total - reduction
+    hit = roll.crit or (roll.natural_roll != 1 and total >= target_ac)
+    return AttackRollResult(hit=hit, crit=roll.crit, natural_roll=roll.natural_roll, total=total)
+
+
+def _try_cutting_words_on_damage_roll(
+    *,
+    rng: random.Random,
+    attacker: ActorRuntimeState,
+    target: ActorRuntimeState,
+    raw_damage: int,
+    actors: dict[str, ActorRuntimeState],
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    if raw_damage <= 0:
+        return raw_damage
+    reactor = _find_cutting_words_reactor(attacker=attacker, target=target, actors=actors)
+    if reactor is None:
+        return raw_damage
+    reduction = _spend_cutting_words_reaction(
+        rng=rng, reactor=reactor, resources_spent=resources_spent
+    )
+    if reduction <= 0:
+        return raw_damage
+    return max(0, raw_damage - reduction)
+
+
+def _ki_save_dc(actor: ActorRuntimeState) -> int:
+    return 8 + _calculate_proficiency_bonus(actor.level) + actor.wis_mod
+
+
+def _saving_throw_succeeds(
+    *,
+    rng: random.Random,
+    target: ActorRuntimeState,
+    ability: str,
+    dc: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> bool:
+    save_key = ability.lower()
+    save_mod = int(target.save_mods.get(save_key, 0))
+    save_total = rng.randint(1, 20) + save_mod
+    success = save_total >= dc
+    if not success and target.resources.get("legendary_resistance", 0) > 0:
+        target.resources["legendary_resistance"] -= 1
+        resources_spent[target.actor_id]["legendary_resistance"] = (
+            resources_spent[target.actor_id].get("legendary_resistance", 0) + 1
+        )
+        return True
+    return success
+
+
+def _choose_open_hand_rider(action: ActionDefinition, target: ActorRuntimeState) -> str:
+    for raw_tag in action.tags:
+        tag = str(raw_tag)
+        if tag.startswith("open_hand_rider:"):
+            choice = tag.split(":", 1)[1].strip().lower()
+            if choice in {"prone", "push", "no_reactions"}:
+                return choice
+
+    if target.reaction_available and "open_hand_no_reactions" not in target.conditions:
+        return "no_reactions"
+    if "prone" not in target.conditions:
+        return "prone"
+    return "push"
+
+
+def _try_stunning_strike(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    target: ActorRuntimeState,
+    is_ranged: bool,
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    if is_ranged or not _has_trait(actor, "stunning strike"):
+        return
+    if actor.resources.get("ki", 0) <= 0:
+        return
+    if target.conditions.intersection({"stunned", "paralyzed", "unconscious", "incapacitated"}):
+        return
+
+    actor.resources["ki"] -= 1
+    resources_spent[actor.actor_id]["ki"] = resources_spent[actor.actor_id].get("ki", 0) + 1
+    dc = _ki_save_dc(actor)
+    if _saving_throw_succeeds(
+        rng=rng,
+        target=target,
+        ability="con",
+        dc=dc,
+        resources_spent=resources_spent,
+    ):
+        return
+    _apply_condition(target, "stunned", duration_rounds=2)
+
+
+def _try_open_hand_technique(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    target: ActorRuntimeState,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    if not _has_trait(actor, "open hand technique"):
+        return
+    if "flurry_of_blows" not in action.tags:
+        return
+
+    dc = _ki_save_dc(actor)
+    rider = _choose_open_hand_rider(action, target)
+    if rider == "prone":
+        if not _saving_throw_succeeds(
+            rng=rng,
+            target=target,
+            ability="dex",
+            dc=dc,
+            resources_spent=resources_spent,
+        ):
+            _apply_condition(target, "prone", duration_rounds=1)
+        return
+
+    if rider == "push":
+        if _saving_throw_succeeds(
+            rng=rng,
+            target=target,
+            ability="str",
+            dc=dc,
+            resources_spent=resources_spent,
+        ):
+            return
+        _apply_effect(
+            action=action,
+            effect={
+                "effect_type": "forced_movement",
+                "target": "target",
+                "distance_ft": 15,
+                "direction": "away_from_source",
+            },
+            rng=rng,
+            actor=actor,
+            target=target,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            actors=actors,
+            active_hazards=active_hazards,
+        )
+        return
+
+    target.reaction_available = False
+    _apply_condition(target, "open_hand_no_reactions", duration_rounds=2)
+
+
+def _multiattack_defense_marker(attacker_id: str) -> str:
+    return f"{_MULTIATTACK_DEFENSE_PREFIX}{attacker_id}"
 def _try_shield_reaction(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
@@ -1926,7 +6116,7 @@ def _try_shield_reaction(
 
     Returns True if the hit was negated.
     """
-    if not target.reaction_available:
+    if not _can_take_reaction(target):
         return False
     shield_action = None
     for action in target.actions:
@@ -1982,6 +6172,8 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
             continue
         if not _action_available(actor, action):
             continue
+        if action.name == "second_wind" and actor.hp >= actor.max_hp:
+            continue
         if (
             "off_hand" in action.tags
             or "martial_arts" in action.tags
@@ -1995,6 +6187,99 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
         if best is None or action.action_type == "attack":
             best = action
     return best
+
+
+def _spellcasting_ability_mod(actor: ActorRuntimeState) -> int:
+    return max(actor.int_mod, actor.wis_mod, actor.cha_mod)
+
+
+def _resolve_dispel_magic(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    targets: list[ActorRuntimeState],
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    dispel_level = max(3, _spell_level_from_action(action))
+    check_mod = _spellcasting_ability_mod(actor)
+    for target in targets:
+        affecting_sources = [
+            source
+            for source in actors.values()
+            if source.concentrating
+            and target.actor_id in source.concentrated_targets
+            and source.actor_id != actor.actor_id
+        ]
+        if not affecting_sources:
+            continue
+        affecting_sources.sort(
+            key=lambda source: (source.concentrated_spell_level or 0, source.actor_id),
+            reverse=True,
+        )
+        source = affecting_sources[0]
+        source_level = int(source.concentrated_spell_level or 0)
+        if source_level <= dispel_level:
+            _break_concentration(source, actors, active_hazards)
+            continue
+        dc = 10 + source_level
+        if (rng.randint(1, 20) + check_mod) >= dc:
+            _break_concentration(source, actors, active_hazards)
+
+
+def _apply_domain_attack_roll_hooks(
+    *,
+    actor: ActorRuntimeState,
+    roll: AttackRollResult,
+    target_ac: int,
+    actors: dict[str, ActorRuntimeState],
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    if roll.hit or roll.natural_roll == 1:
+        return roll
+
+    guided_strike_traits = ["guided strike", "channel divinity: guided strike"]
+    boosted_total = roll.total + 10
+    if boosted_total >= target_ac and _has_any_trait(actor, guided_strike_traits):
+        if _spend_channel_divinity(actor, resources_spent):
+            return AttackRollResult(
+                hit=True,
+                crit=roll.crit,
+                natural_roll=roll.natural_roll,
+                total=boosted_total,
+            )
+
+    war_gods_blessing_traits = [
+        "war god's blessing",
+        "channel divinity: war god's blessing",
+        "oketra's blessing",
+    ]
+    if boosted_total < target_ac:
+        return roll
+
+    from .spatial import distance_chebyshev
+
+    for ally in actors.values():
+        if ally.team != actor.team or ally.actor_id == actor.actor_id:
+            continue
+        if not ally.reaction_available:
+            continue
+        if not _has_any_trait(ally, war_gods_blessing_traits):
+            continue
+        if distance_chebyshev(ally.position, actor.position) > 30:
+            continue
+        if not _spend_channel_divinity(ally, resources_spent):
+            continue
+        ally.reaction_available = False
+        return AttackRollResult(
+            hit=True,
+            crit=roll.crit,
+            natural_roll=roll.natural_roll,
+            total=boosted_total,
+        )
+
+    return roll
 
 
 def _execute_action(
@@ -2011,48 +6296,126 @@ def _execute_action(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
+    strategy_name: str | None = None,
 ) -> None:
     if not targets:
         return
     if obstacles is None:
         obstacles = []
+    is_spell_action = _has_tag(action, "spell")
+    subtle_spell = _has_tag(action, "metamagic:subtle")
+    has_turn_context = round_number is not None and turn_token is not None
+    _force_end_concentration_if_needed(actor, actors=actors, active_hazards=active_hazards)
+
+    def emit_event(
+        event_name: str,
+        *,
+        trigger_target: ActorRuntimeState | None = None,
+    ) -> None:
+        if round_number is None or turn_token is None:
+            return
+        _dispatch_combat_event(
+            rng=rng,
+            event=event_name,
+            trigger_actor=actor,
+            trigger_target=trigger_target,
+            trigger_action=action,
+            actors=actors,
+            round_number=round_number,
+            turn_token=turn_token,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            rule_trace=rule_trace,
+            obstacles=obstacles,
+            light_level=light_level,
+        )
+
+    if _requires_range_resolution(action):
+        movement_was_budgeted = actor.movement_remaining > 0
+        in_range = _move_actor_for_action_range(
+            rng=rng,
+            actor=actor,
+            action=action,
+            targets=targets,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
+        )
+        if not in_range:
+            if (
+                not has_turn_context
+                and action.action_type == "attack"
+                and not movement_was_budgeted
+                and not actor.conditions.intersection({"grappled", "restrained"})
+            ):
+                in_range = True
+            else:
+                return
+        if has_turn_context:
+            targets = _filter_targets_in_range(actor, action, targets)
+            if not targets:
+                return
+        else:
+            # Preserve legacy direct-call monk behavior from feat/class-monk-mechanics
+            # while still using range resolution during full round simulation.
+            targets = list(targets)
+            if not targets:
+                return
 
     # Counterspell check
-    if "spell" in action.tags:
-        for enemy in actors.values():
-            if (
-                enemy.team != actor.team
-                and enemy.hp > 0
-                and not enemy.dead
-                and enemy.reaction_available
-            ):
-                cs_action = next(
-                    (
-                        a
-                        for a in enemy.actions
-                        if a.name == "counterspell" and a.action_cost == "reaction"
-                    ),
-                    None,
-                )
-                if cs_action:
-                    from .spatial import distance_chebyshev
-
-                    if distance_chebyshev(enemy.position, actor.position) <= 60:
-                        slot_key = None
-                        for key in sorted(enemy.resources.keys()):
-                            if key.startswith("spell_slot_") and enemy.resources.get(key, 0) > 0:
-                                if int(key.split("_")[-1]) >= 3:
-                                    slot_key = key
-                                    break
-                        if slot_key:
-                            enemy.resources[slot_key] -= 1
-                            enemy.reaction_available = False
-                            return  # Spell countered!
+    if is_spell_action:
+        if not _can_cast_spell_with_components(actor, action):
+            return
+        spell_level = _spell_level_from_action(action)
+        if not subtle_spell:
+            for enemy in actors.values():
+                if (
+                    enemy.team != actor.team
+                    and enemy.hp > 0
+                    and not enemy.dead
+                    and _can_take_reaction(enemy)
+                ):
+                    cs_action = next(
+                        (
+                            a
+                            for a in enemy.actions
+                            if a.name == "counterspell" and a.action_cost == "reaction"
+                        ),
+                        None,
+                    )
+                    if cs_action:
+                        if distance_chebyshev(enemy.position, actor.position) <= 60:
+                            counter_slot = _select_counterspell_slot(
+                                enemy, incoming_spell_level=spell_level
+                            )
+                            if counter_slot:
+                                slot_key, counter_level = counter_slot
+                                enemy.resources[slot_key] -= 1
+                                enemy.reaction_available = False
+                                if counter_level >= spell_level:
+                                    return  # Spell countered automatically.
+                                check_dc = 10 + spell_level
+                                check_total = rng.randint(1, 20) + enemy.cha_mod
+                                if check_total >= check_dc:
+                                    return  # Spell countered after ability check.
 
         if action.concentration:
             _break_concentration(actor, actors, active_hazards)
             actor.concentrating = True
             actor.concentrated_spell = action.name
+            actor.concentrated_spell_level = spell_level
             actor.concentration_conditions = {
                 str(effect.get("condition", "")).lower()
                 for effect in action.effects + action.mechanics
@@ -2060,39 +6423,17 @@ def _execute_action(
                 if effect.get("effect_type") == "apply_condition"
                 and str(effect.get("condition", "")).strip()
             }
-
-        # Mage Slayer reaction attack
-        for enemy in list(actors.values()):
-            if (
-                enemy.team != actor.team
-                and enemy.hp > 0
-                and not enemy.dead
-                and enemy.reaction_available
-                and _has_trait(enemy, "mage slayer")
-            ):
-                enemy_attack = _fallback_action(enemy)
-                if enemy_attack and enemy_attack.action_type == "attack":
-                    enemy.reaction_available = False
-                    _execute_action(
-                        rng=rng,
-                        actor=enemy,
-                        action=enemy_attack,
-                        targets=[actor],
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=obstacles,
-                        light_level=light_level,
-                    )
+            if _is_smite_setup_action(action):
+                actor.concentration_conditions.clear()
+                actor.concentrated_targets.clear()
 
     # Phase 11: Contested Grapple/Shove Checks
     if action.action_type in ("grapple", "shove") and targets:
         from .rules_2014 import run_contested_check
 
         target = targets[0]
+        if "raging" in actor.conditions and target.team != actor.team:
+            actor.rage_sustained_since_last_turn = True
 
         # Determine attacker mod (Athletics -> STR)
         attacker_mod = actor.str_mod
@@ -2127,47 +6468,32 @@ def _execute_action(
         return
 
     if action.action_type == "attack":
-        # Sentinel reaction attack
-        for ally in list(actors.values()):
-            if (
-                targets
-                and ally.team == targets[0].team
-                and ally.actor_id != targets[0].actor_id
-                and ally.hp > 0
-                and not ally.dead
-                and ally.reaction_available
-                and _has_trait(ally, "sentinel")
-                and not _has_trait(targets[0], "sentinel")
-            ):
-                ally_attack = _fallback_action(ally)
-                if ally_attack and ally_attack.action_type == "attack":
-                    ally.reaction_available = False
-                    actor.movement_remaining = 0.0  # Sentinel movement lock abstract equivalent
-                    _execute_action(
-                        rng=rng,
-                        actor=ally,
-                        action=ally_attack,
-                        targets=[actor],
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=obstacles,
-                        light_level=light_level,
-                    )
         if action.action_cost == "action":
             actor.took_attack_action_this_turn = True
 
         if action.to_hit is None:
             return
-        # Build preferred target queue for multiattack redirect
+        # Build preferred target queue for multiattack redirect.
         preferred_ids = [t.actor_id for t in targets]
+        per_target_attack = "volley" in action.tags or "whirlwind_attack" in action.tags
+        if per_target_attack:
+            attack_iterations = len(preferred_ids)
+        else:
+            attack_iterations = max(1, action.attack_count)
+
         current_target: ActorRuntimeState | None = None
-        for _ in range(max(1, action.attack_count)):
+        once_per_action_used: set[tuple[str, int]] = set()
+        for i in range(attack_iterations):
             # Find a living target: try current, then preferred list, then any enemy
-            if current_target is None or current_target.dead or current_target.hp <= 0:
+            if per_target_attack:
+                current_target = None
+                if i < len(preferred_ids):
+                    candidate = actors.get(preferred_ids[i])
+                    if candidate and not candidate.dead and candidate.hp > 0:
+                        current_target = candidate
+                if current_target is None:
+                    continue
+            elif current_target is None or current_target.dead or current_target.hp <= 0:
                 current_target = None
                 for pid in preferred_ids:
                     candidate = actors.get(pid)
@@ -2189,11 +6515,18 @@ def _execute_action(
                 if current_target is None:
                     break
             target = current_target
+            if "raging" in actor.conditions and target.team != actor.team:
+                actor.rage_sustained_since_last_turn = True
             advantage, disadvantage = _consume_attack_flags(actor)
             # Target condition-based advantage/auto-crit
             target_conditions = target.conditions
             if target_conditions.intersection(_ATTACKER_ADVANTAGE_CONDITIONS):
                 advantage = True
+            if "prone" in target_conditions:
+                if distance_chebyshev(actor.position, target.position) <= 5.0:
+                    advantage = True
+                else:
+                    disadvantage = True
             if "dodging" in target_conditions:
                 disadvantage = True
             force_crit = bool(target_conditions.intersection(_AUTO_CRIT_CONDITIONS))
@@ -2225,18 +6558,29 @@ def _execute_action(
                 disadvantage = True
             if not target_can_see:
                 advantage = True
+            effective_advantage = advantage and not disadvantage
+            effective_disadvantage = disadvantage and not advantage
 
             # Sharpshooter / Great Weapon Master AI Toggle (-5 to hit / +10 damage)
             power_attack_active = False
             target_ac = target.ac
+            if _has_trait(target, "multiattack defense") and (
+                _multiattack_defense_marker(actor.actor_id) in target.conditions
+            ):
+                target_ac += 4
+            cover_bonus = 0
             to_hit_penalty = 0
             damage_bonus = 0
 
             if action.to_hit is not None:
                 weapon_name = action.name.lower()
-                is_ranged = any(
-                    w in weapon_name for w in ["bow", "dart", "sling", "javelin", "blowgun", "net"]
-                ) or (action.range_ft is not None and action.range_ft > 5)
+                inferred_range = _action_range_ft(action)
+                is_ranged = bool(inferred_range is not None and inferred_range > 5.0)
+                if not is_ranged:
+                    is_ranged = any(
+                        w in weapon_name
+                        for w in ["bow", "dart", "sling", "javelin", "blowgun", "net"]
+                    ) or (action.range_ft is not None and action.range_ft > 5)
                 is_heavy = any(
                     w in weapon_name
                     for w in [
@@ -2265,12 +6609,24 @@ def _execute_action(
                         resources_spent=resources_spent,
                         actors=actors,
                         active_hazards=active_hazards,
+                        round_number=round_number,
+                        turn_token=turn_token,
+                        rule_trace=rule_trace,
+                        telemetry=telemetry,
+                        strategy_name=strategy_name,
+                        once_per_action_used=once_per_action_used,
                     )
+                    emit_event("on_miss", trigger_target=target)
                     continue
                 if cover_state == "HALF":
-                    target_ac += 2
+                    cover_bonus = max(cover_bonus, 2)
                 elif cover_state == "THREE_QUARTERS":
-                    target_ac += 5
+                    cover_bonus = max(cover_bonus, 5)
+                cover_bonus = max(
+                    cover_bonus,
+                    _smite_of_protection_half_cover_bonus(target, actors),
+                )
+                target_ac += cover_bonus
 
                 if _has_trait(actor, "sharpshooter") and is_ranged:
                     if target_ac <= 16 or advantage:
@@ -2278,6 +6634,10 @@ def _execute_action(
                 elif _has_trait(actor, "great weapon master") and is_heavy:
                     if target_ac <= 16 or advantage:
                         power_attack_active = True
+
+            if _has_trait(actor, "reckless attack") and not is_ranged:
+                advantage = True
+                _apply_condition(actor, "reckless_attacking", duration_rounds=1)
 
             to_hit_penalty = -5 if power_attack_active else 0
             damage_bonus = 10 if power_attack_active else 0
@@ -2293,6 +6653,13 @@ def _execute_action(
                 target_ac,
                 advantage=advantage,
                 disadvantage=disadvantage,
+            )
+            roll = _try_spend_bardic_inspiration_on_attack_roll(
+                rng=rng,
+                actor=actor,
+                roll=roll,
+                target_ac=target_ac,
+                resources_spent=resources_spent,
             )
 
             # Lucky: Attacker rerolls miss
@@ -2331,10 +6698,27 @@ def _execute_action(
                 hit = crit or (new_natural != 1 and total >= target_ac)
                 roll = AttackRollResult(hit=hit, crit=crit, natural_roll=new_natural, total=total)
 
+            roll = _apply_domain_attack_roll_hooks(
+                actor=actor,
+                roll=roll,
+                target_ac=target_ac,
+                actors=actors,
+                resources_spent=resources_spent,
+            )
+
             if force_crit and roll.hit:
                 roll = AttackRollResult(
                     hit=True, crit=True, natural_roll=roll.natural_roll, total=roll.total
                 )
+            roll = _try_cutting_words_on_attack_roll(
+                rng=rng,
+                attacker=actor,
+                target=target,
+                roll=roll,
+                target_ac=target_ac,
+                actors=actors,
+                resources_spent=resources_spent,
+            )
             event = "hit" if roll.hit else "miss"
             # Shield reaction: always use if available and would negate hit
             if roll.hit and _try_shield_reaction(actor, target, roll):
@@ -2344,8 +6728,10 @@ def _execute_action(
                 )
             if roll.hit and action.damage:
                 empowered_rerolls = 0
-                if (
-                    "spell" in action.tags
+                if is_spell_action and _has_tag(action, "metamagic:empowered"):
+                    empowered_rerolls = max(1, actor.cha_mod)
+                elif (
+                    is_spell_action
                     and _has_trait(actor, "empowered spell")
                     and actor.resources.get("sorcery_points", 0) >= 1
                 ):
@@ -2357,11 +6743,17 @@ def _execute_action(
                 damage_expr = action.damage
                 sneak_damage_expr: str | None = None
 
+                if damage_expr and "agonizing_blast" in action.tags:
+                    cha_bonus = int(actor.cha_mod)
+                    if cha_bonus != 0:
+                        damage_expr += f"{cha_bonus:+d}"
+
                 # Sneak Attack Logic
                 if (
                     _has_trait(actor, "sneak attack")
                     and getattr(actor, "sneak_attack_used_this_turn", False) is False
                     and not getattr(actor, "is_heavy", False)
+                    and "spell" not in action.tags
                 ):
                     # Finesse or ranged
                     if (
@@ -2375,9 +6767,9 @@ def _execute_action(
                         )
                     ):
                         has_sneak = False
-                        if advantage and not disadvantage:
+                        if effective_advantage:
                             has_sneak = True
-                        elif not disadvantage:
+                        elif not effective_disadvantage:
                             # ally within 5ft
                             for cand in actors.values():
                                 if (
@@ -2385,9 +6777,8 @@ def _execute_action(
                                     and cand.actor_id != actor.actor_id
                                     and cand.hp > 0
                                     and not cand.dead
+                                    and "incapacitated" not in cand.conditions
                                 ):
-                                    from .spatial import distance_chebyshev
-
                                     if distance_chebyshev(cand.position, target.position) <= 5:
                                         has_sneak = True
                                         break
@@ -2398,14 +6789,32 @@ def _execute_action(
 
                 if power_attack_active and damage_expr:
                     damage_expr += f"{damage_bonus:+d}"
-                raw_damage = roll_damage(
-                    rng,
-                    damage_expr,
+                raw_damage = _roll_damage_with_channel_divinity_hooks(
+                    rng=rng,
+                    actor=actor,
+                    expr=damage_expr,
+                    damage_type=action.damage_type,
+                    resources_spent=resources_spent,
                     crit=roll.crit,
                     empowered_rerolls=empowered_rerolls,
-                    source=actor,
-                    damage_type=action.damage_type,
                 )
+                if roll.crit and _has_trait(actor, "brutal critical") and not is_ranged:
+                    brutal_extra = 0
+                    if actor.level >= 17:
+                        brutal_extra = 3
+                    elif actor.level >= 13:
+                        brutal_extra = 2
+                    elif actor.level >= 9:
+                        brutal_extra = 1
+                    brutal_expr = _critical_bonus_dice_expr(action.damage, brutal_extra)
+                    if brutal_expr:
+                        raw_damage += roll_damage(
+                            rng,
+                            brutal_expr,
+                            crit=False,
+                            source=actor,
+                            damage_type=action.damage_type,
+                        )
                 if sneak_damage_expr:
                     raw_damage += roll_damage(
                         rng,
@@ -2413,6 +6822,15 @@ def _execute_action(
                         crit=roll.crit,
                         source=actor,
                         damage_type=action.damage_type,
+                    )
+
+                if _has_trait(actor, "improved divine smite") and not is_ranged:
+                    raw_damage += roll_damage(
+                        rng,
+                        "1d8",
+                        crit=roll.crit,
+                        source=actor,
+                        damage_type="radiant",
                     )
 
                 # Divine Smite Logic
@@ -2432,6 +6850,13 @@ def _execute_action(
                         resources_spent[actor.actor_id][sp_key] = (
                             resources_spent[actor.actor_id].get(sp_key, 0) + 1
                         )
+                    elif actor.resources.get("paladins_smite_free", 0) > 0:
+                        actor.resources["paladins_smite_free"] -= 1
+                        resources_spent[actor.actor_id]["paladins_smite_free"] = (
+                            resources_spent[actor.actor_id].get("paladins_smite_free", 0) + 1
+                        )
+                        slot_level = 1
+                    if sp_key or slot_level > 0:
                         smite_dice = min(5, 1 + slot_level)
                         raw_smite = roll_damage(
                             rng,
@@ -2441,6 +6866,38 @@ def _execute_action(
                             damage_type="radiant",
                         )
                         raw_damage += raw_smite
+                        if _has_trait(actor, "smite of protection"):
+                            _apply_condition(actor, "smite_of_protection_window", duration_rounds=1)
+                if actor.pending_smite and not is_ranged and target.hp > 0:
+                    raw_damage += _apply_pending_smite_on_hit(
+                        rng=rng,
+                        actor=actor,
+                        target=target,
+                        roll_crit=roll.crit,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        actors=actors,
+                        active_hazards=active_hazards,
+                    )
+                was_active_before_damage = target.hp > 0 and not target.dead
+                raw_damage = _try_cutting_words_on_damage_roll(
+                    rng=rng,
+                    attacker=actor,
+                    target=target,
+                    raw_damage=raw_damage,
+                    actors=actors,
+                    resources_spent=resources_spent,
+                )
+                if (
+                    _has_trait(target, "uncanny dodge")
+                    and _can_take_reaction(target)
+                    and target_can_see
+                ):
+                    raw_damage //= 2
+                    target.reaction_available = False
+                was_active_before_damage = target.hp > 0 and not target.dead
                 applied = apply_damage(
                     target,
                     raw_damage,
@@ -2449,11 +6906,19 @@ def _execute_action(
                     is_magical="spell" in action.tags or "magical" in action.tags,
                     source=actor,
                 )
-                if not run_concentration_check(rng, target, applied, source=actor):
-                    _break_concentration(target, actors, active_hazards)
+                if applied > 0:
+                    if not _force_end_concentration_if_needed(
+                        target, actors=actors, active_hazards=active_hazards
+                    ) and not run_concentration_check(rng, target, applied, source=actor):
+                        _break_concentration(target, actors, active_hazards)
                 damage_dealt[actor.actor_id] += applied
                 damage_taken[target.actor_id] += applied
                 threat_scores[actor.actor_id] += applied
+                if was_active_before_damage and target.hp <= 0:
+                    emit_event("on_down", trigger_target=target)
+
+                if _has_trait(target, "multiattack defense"):
+                    target.conditions.add(_multiattack_defense_marker(actor.actor_id))
 
                 # GWM Momentum Trigger (Action Economy Buff)
                 if (
@@ -2462,6 +6927,26 @@ def _execute_action(
                     and not is_ranged
                 ):
                     actor.conditions.add("gwm_bonus_triggered")
+            if roll.hit:
+                _try_stunning_strike(
+                    rng=rng,
+                    actor=actor,
+                    target=target,
+                    is_ranged=is_ranged,
+                    resources_spent=resources_spent,
+                )
+                _try_open_hand_technique(
+                    rng=rng,
+                    actor=actor,
+                    action=action,
+                    target=target,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    actors=actors,
+                    active_hazards=active_hazards,
+                )
             _apply_action_effects(
                 action=action,
                 event=event,
@@ -2474,20 +6959,32 @@ def _execute_action(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
+                telemetry=telemetry,
+                strategy_name=strategy_name,
+                once_per_action_used=once_per_action_used,
             )
+            emit_event(f"on_{event}", trigger_target=target)
         return
 
     if action.action_type == "save":
         if action.save_dc is None or not action.save_ability:
             return
         save_key = action.save_ability.lower()
+        careful_metamagic = _has_tag(action, "metamagic:careful")
+        empowered_metamagic = _has_tag(action, "metamagic:empowered")
+        heightened_metamagic = _has_tag(action, "metamagic:heightened")
 
         # Roll AoE damage once and apply per-target save outcomes.
         raw_damage = 0
         if action.damage:
             empowered_rerolls = 0
-            if (
-                "spell" in action.tags
+            if is_spell_action and empowered_metamagic:
+                empowered_rerolls = max(1, actor.cha_mod)
+            elif (
+                is_spell_action
                 and _has_trait(actor, "empowered spell")
                 and actor.resources.get("sorcery_points", 0) >= 1
             ):
@@ -2496,35 +6993,69 @@ def _execute_action(
                     resources_spent[actor.actor_id].get("sorcery_points", 0) + 1
                 )
                 empowered_rerolls = max(1, actor.cha_mod)
-            raw_damage = roll_damage(
-                rng,
-                action.damage,
+            raw_damage = _roll_damage_with_channel_divinity_hooks(
+                rng=rng,
+                actor=actor,
+                expr=action.damage,
+                damage_type=action.damage_type,
+                resources_spent=resources_spent,
                 crit=False,
                 empowered_rerolls=empowered_rerolls,
-                source=actor,
-                damage_type=action.damage_type,
             )
+        if raw_damage > 0:
+            primary_enemy_target = next(
+                (
+                    candidate
+                    for candidate in targets
+                    if candidate.team != actor.team and candidate.hp > 0 and not candidate.dead
+                ),
+                None,
+            )
+            if primary_enemy_target is not None:
+                raw_damage = _try_cutting_words_on_damage_roll(
+                    rng=rng,
+                    attacker=actor,
+                    target=primary_enemy_target,
+                    raw_damage=raw_damage,
+                    actors=actors,
+                    resources_spent=resources_spent,
+                )
 
         careful_allies = set()
-        if (
-            "spell" in action.tags
-            and _has_trait(actor, "careful spell")
-            and actor.resources.get("sorcery_points", 0) >= 1
-        ):
+        can_use_careful = careful_metamagic or (
+            _has_trait(actor, "careful spell") and actor.resources.get("sorcery_points", 0) >= 1
+        )
+        if is_spell_action and can_use_careful:
             allies = [t for t in targets if t.team == actor.team and t.hp > 0 and not t.dead]
             if allies:
-                actor.resources["sorcery_points"] -= 1
-                resources_spent[actor.actor_id]["sorcery_points"] = (
-                    resources_spent[actor.actor_id].get("sorcery_points", 0) + 1
-                )
+                if not careful_metamagic:
+                    actor.resources["sorcery_points"] -= 1
+                    resources_spent[actor.actor_id]["sorcery_points"] = (
+                        resources_spent[actor.actor_id].get("sorcery_points", 0) + 1
+                    )
                 num_careful = max(1, actor.cha_mod)
                 careful_allies = set([a.actor_id for a in allies[:num_careful]])
+
+        heightened_target_id: str | None = None
+        if is_spell_action and heightened_metamagic:
+            for target in targets:
+                if target.team != actor.team and target.hp > 0 and not target.dead:
+                    heightened_target_id = target.actor_id
+                    break
 
         for target in targets:
             if target.dead or target.hp <= 0:
                 continue
             save_mod = int(target.save_mods.get(save_key, 0))
+            if save_key == "dex":
+                save_mod += _smite_of_protection_half_cover_bonus(target, actors)
             save_roll = rng.randint(1, 20)
+            if (
+                save_key == "dex"
+                and _has_trait(target, "danger sense")
+                and not target.conditions.intersection({"blinded", "deafened", "incapacitated"})
+            ):
+                save_roll = max(save_roll, rng.randint(1, 20))
             if (
                 "spell" in action.tags
                 and _has_trait(target, "gnomish cunning")
@@ -2533,9 +7064,21 @@ def _execute_action(
                 save_roll = max(save_roll, rng.randint(1, 20))
             if save_key == "dex" and "dodging" in target.conditions:
                 save_roll = max(save_roll, rng.randint(1, 20))
-            if "spell" in action.tags and _has_trait(target, "mage slayer"):
+            if is_spell_action and not subtle_spell and _has_trait(target, "mage slayer"):
                 save_roll = max(save_roll, rng.randint(1, 20))
+            if target.actor_id == heightened_target_id:
+                save_roll = min(save_roll, rng.randint(1, 20))
             success = (save_roll + save_mod) >= action.save_dc
+            if not success:
+                save_roll = _try_spend_bardic_inspiration_on_save(
+                    rng=rng,
+                    actor=target,
+                    save_roll=save_roll,
+                    save_mod=save_mod,
+                    dc=action.save_dc,
+                    resources_spent=resources_spent,
+                )
+                success = (save_roll + save_mod) >= action.save_dc
 
             # Lucky: Reroll failed save
             if (
@@ -2576,11 +7119,12 @@ def _execute_action(
                 elif (
                     _has_trait(target, "shield master")
                     and action.half_on_save
-                    and target.reaction_available
+                    and _can_take_reaction(target)
                 ):
                     final_damage = 0
                     target.reaction_available = False
 
+            was_active_before_damage = target.hp > 0 and not target.dead
             applied = apply_damage(
                 target,
                 final_damage,
@@ -2589,11 +7133,15 @@ def _execute_action(
                 source=actor,
             )
             if applied > 0:
-                if not run_concentration_check(rng, target, applied, source=actor):
+                if not _force_end_concentration_if_needed(
+                    target, actors=actors, active_hazards=active_hazards
+                ) and not run_concentration_check(rng, target, applied, source=actor):
                     _break_concentration(target, actors, active_hazards)
                 damage_dealt[actor.actor_id] += applied
                 damage_taken[target.actor_id] += applied
                 threat_scores[actor.actor_id] += applied
+                if was_active_before_damage and target.hp <= 0:
+                    emit_event("on_down", trigger_target=target)
 
             _apply_action_effects(
                 action=action,
@@ -2607,10 +7155,67 @@ def _execute_action(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
+                telemetry=telemetry,
+                strategy_name=strategy_name,
             )
+            emit_event("on_save", trigger_target=target)
         return
 
-    if action.action_type == "utility":
+    if action.action_type in {"utility", "buff"}:
+        if _is_smite_setup_action(action):
+            _arm_pending_smite(actor, action)
+            return
+        if action.name == "lay_on_hands":
+            pool = int(actor.resources.get("lay_on_hands_pool", 0))
+            if pool <= 0:
+                return
+            for target in targets:
+                if target.dead:
+                    continue
+                missing_hp = max(0, target.max_hp - target.hp)
+                if missing_hp <= 0:
+                    continue
+                spent = min(pool, missing_hp)
+                if spent <= 0:
+                    continue
+                _apply_healing(target, spent)
+                actor.resources["lay_on_hands_pool"] = max(0, pool - spent)
+                resources_spent[actor.actor_id]["lay_on_hands_pool"] = (
+                    resources_spent[actor.actor_id].get("lay_on_hands_pool", 0) + spent
+                )
+                pool = int(actor.resources.get("lay_on_hands_pool", 0))
+                if pool <= 0:
+                    break
+            return
+        if _has_tag(action, "conversion:points_to_slot"):
+            slot_level = _slot_level_from_action(action)
+            if slot_level is not None and slot_level <= 5:
+                slot_key = f"spell_slot_{slot_level}"
+                actor.resources[slot_key] = actor.resources.get(slot_key, 0) + 1
+            return
+        if _has_tag(action, "conversion:slot_to_points"):
+            slot_level = _slot_level_from_action(action)
+            if slot_level is not None:
+                current_points = int(actor.resources.get("sorcery_points", 0))
+                points_gain = slot_level
+                max_points = actor.max_resources.get("sorcery_points")
+                if isinstance(max_points, int) and max_points >= 0:
+                    points_gain = max(0, min(points_gain, int(max_points) - current_points))
+                actor.resources["sorcery_points"] = current_points + points_gain
+            return
+        if "dispel" in action.tags or action.name.startswith("dispel_magic"):
+            _resolve_dispel_magic(
+                rng=rng,
+                actor=actor,
+                action=action,
+                targets=targets,
+                actors=actors,
+                active_hazards=active_hazards,
+            )
+            return
         if action.name == "dodge":
             _apply_condition(actor, "dodging", duration_rounds=1)
             return
@@ -2622,6 +7227,16 @@ def _execute_action(
             return
         if action.name == "ready":
             _apply_condition(actor, "readying", duration_rounds=1)
+            readied_action = _select_readied_action(actor)
+            actor.readied_action_name = readied_action.name if readied_action else None
+            actor.readied_trigger = action.event_trigger or "enemy_turn_start"
+            return
+        if action.name == "bardic_inspiration":
+            die_sides = _bardic_inspiration_die_sides(actor)
+            for target in targets:
+                if target.actor_id == actor.actor_id:
+                    continue
+                target.resources["bardic_inspiration_die"] = die_sides
             return
 
         for target in targets:
@@ -2637,8 +7252,12 @@ def _execute_action(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
+                telemetry=telemetry,
+                strategy_name=strategy_name,
             )
-
 
 def _build_round_metadata(
     *,
@@ -2647,12 +7266,33 @@ def _build_round_metadata(
     burst_round_threshold: int,
     active_hazards: list[dict[str, Any]] | None = None,
     light_level: str = "bright",
+    strategy_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    overrides = strategy_overrides if isinstance(strategy_overrides, dict) else {}
+    raw_policy = overrides.get("strategy_policy", {})
+    strategy_policy = dict(raw_policy) if isinstance(raw_policy, dict) else {}
+    tactical_branches_raw = overrides.get("tactical_branches", {})
+    tactical_branches = (
+        dict(tactical_branches_raw) if isinstance(tactical_branches_raw, dict) else {}
+    )
+    objective_scores_raw = overrides.get("objective_scores", {})
+    objective_scores = dict(objective_scores_raw) if isinstance(objective_scores_raw, dict) else {}
+    objective_targets_raw = overrides.get("objective_targets", {})
+    objective_targets = (
+        dict(objective_targets_raw) if isinstance(objective_targets_raw, dict) else {}
+    )
+
     return {
         "threat_scores": dict(threat_scores),
         "burst_round_threshold": burst_round_threshold,
         "active_hazards": list(active_hazards or []),
         "light_level": str(light_level),
+        "strategy_policy": strategy_policy,
+        "evaluation_mode": str(overrides.get("evaluation_mode", "greedy")),
+        "lookahead_discount": float(overrides.get("lookahead_discount", 1.0)),
+        "tactical_branches": tactical_branches,
+        "objective_scores": objective_scores,
+        "objective_targets": objective_targets,
         "available_actions": {
             actor_id: [action.name for action in actor.actions if _action_available(actor, action)]
             for actor_id, actor in actors.items()
@@ -2673,12 +7313,17 @@ def _build_round_metadata(
                     "max_uses": action.max_uses,
                     "used_count": actor.per_action_uses.get(action.name, 0),
                     "action_cost": action.action_cost,
+                    "event_trigger": action.event_trigger,
+                    "trigger_duration_rounds": action.trigger_duration_rounds,
+                    "trigger_limit_per_turn": action.trigger_limit_per_turn,
+                    "trigger_once_per_round": action.trigger_once_per_round,
                     "recharge_ready": actor.recharge_ready.get(action.name, True),
                     "target_mode": action.target_mode,
                     "range_ft": action.range_ft,
                     "aoe_type": action.aoe_type,
                     "aoe_size_ft": action.aoe_size_ft,
                     "max_targets": action.max_targets,
+                    "concentration": action.concentration,
                     "include_self": action.include_self,
                     "effects": list(action.effects),
                     "mechanics": list(action.mechanics),
@@ -2702,6 +7347,8 @@ def _run_lair_actions(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    telemetry: list[dict[str, Any]] | None = None,
+    round_number: int | None = None,
 ) -> None:
     for actor in actors.values():
         if actor.dead or actor.hp <= 0:
@@ -2751,6 +7398,9 @@ def _run_lair_actions(
             active_hazards=active_hazards,
             obstacles=obstacles,
             light_level=light_level,
+            telemetry=telemetry,
+            round_number=round_number,
+            strategy_name="lair_action",
         )
 
 
@@ -2766,6 +7416,8 @@ def _run_legendary_actions(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    telemetry: list[dict[str, Any]] | None = None,
+    round_number: int | None = None,
 ) -> None:
     for actor in actors.values():
         if actor.actor_id == trigger_actor.actor_id:
@@ -2815,6 +7467,9 @@ def _run_legendary_actions(
             active_hazards=active_hazards,
             obstacles=obstacles,
             light_level=light_level,
+            telemetry=telemetry,
+            round_number=round_number,
+            strategy_name="legendary_action",
         )
 
 
@@ -2829,6 +7484,9 @@ def _flatten_trial(trial: TrialResult) -> dict[str, Any]:
         "downed_counts": json.dumps(trial.downed_counts, sort_keys=True),
         "death_counts": json.dumps(trial.death_counts, sort_keys=True),
         "remaining_hp": json.dumps(trial.remaining_hp, sort_keys=True),
+        "telemetry": json.dumps(trial.telemetry, sort_keys=True),
+        "encounter_outcomes": json.dumps(trial.encounter_outcomes, sort_keys=True),
+        "state_snapshots": json.dumps(trial.state_snapshots, sort_keys=True),
     }
 
 
@@ -2856,9 +7514,36 @@ def run_simulation(
     battlefield = (
         scenario.config.battlefield if isinstance(scenario.config.battlefield, dict) else {}
     )
+    exploration = (
+        scenario.config.exploration if isinstance(scenario.config.exploration, dict) else {}
+    )
+    exploration_legs = (
+        exploration.get("legs") if isinstance(exploration.get("legs"), list) else None
+    )
     light_level = str(battlefield.get("light_level", "bright")).lower()
     battlefield_obstacles = _build_battlefield_obstacles(battlefield.get("obstacles", []))
-    encounter_enemy_lists = [list(scenario.config.enemies)]
+
+    encounter_plan = list(scenario.config.encounters)
+    if not encounter_plan:
+        encounter_plan = [EncounterConfig(enemies=list(scenario.config.enemies))]
+
+    termination_rules = (
+        scenario.config.termination_rules
+        if isinstance(scenario.config.termination_rules, dict)
+        else {}
+    )
+    party_defeat_rule = termination_rules.get("party_defeat", "all_unconscious_or_dead")
+    enemy_defeat_rule = termination_rules.get("enemy_defeat", "all_dead")
+    max_rounds = int(termination_rules.get("max_rounds", 20))
+    max_encounter_steps = int(
+        termination_rules.get("max_encounter_steps", max(1, len(encounter_plan) * 3))
+    )
+    if max_rounds <= 0:
+        raise ValueError("termination_rules.max_rounds must be >= 1")
+    if max_encounter_steps <= 0:
+        raise ValueError("termination_rules.max_encounter_steps must be >= 1")
+
+    short_rest_healing = int(scenario.config.resource_policy.get("short_rest_healing", 0))
 
     for trial_idx in range(trials):
         actors: dict[str, ActorRuntimeState] = {}
@@ -2870,6 +7555,10 @@ def run_simulation(
         death_counts: dict[str, int] = {}
         remaining_hp: dict[str, int] = {}
         active_hazards: list[dict[str, Any]] = []
+        trial_rule_trace: list[dict[str, Any]] = []
+        trial_telemetry: list[dict[str, Any]] = []
+        encounter_outcomes: list[dict[str, Any]] = []
+        state_snapshots: list[dict[str, Any]] = []
 
         for character_id in scenario.config.party:
             if character_id not in character_db:
@@ -2883,10 +7572,33 @@ def run_simulation(
             downed_counts[actor.actor_id] = 0
             death_counts[actor.actor_id] = 0
 
+            for companion in _build_construct_companions(actor):
+                if companion.actor_id in actors:
+                    continue
+                actors[companion.actor_id] = companion
+                damage_taken[companion.actor_id] = 0
+                damage_dealt[companion.actor_id] = 0
+                resources_spent[companion.actor_id] = {}
+                threat_scores[companion.actor_id] = 0
+                downed_counts[companion.actor_id] = 0
+                death_counts[companion.actor_id] = 0
+
         total_rounds = 0
         overall_winner = "draw"
+        encounter_idx: int | None = 0
+        encounter_step = 0
 
-        for enc_idx, encounter_enemy_ids in enumerate(encounter_enemy_lists):
+        while encounter_idx is not None and encounter_idx < len(encounter_plan):
+            if encounter_step >= max_encounter_steps:
+                raise ValueError(
+                    "Encounter branching exceeded termination_rules.max_encounter_steps"
+                )
+
+            step_index = encounter_step
+            encounter_step += 1
+            encounter = encounter_plan[encounter_idx]
+            encounter_enemy_ids = list(encounter.enemies)
+
             for aid in list(actors.keys()):
                 if actors[aid].team != "party":
                     downed_counts[aid] = actors[aid].downed_count
@@ -2899,8 +7611,8 @@ def run_simulation(
                 count = enemy_counts.get(enemy_id, 0) + 1
                 enemy_counts[enemy_id] = count
                 unique_enemy_id = (
-                    f"{enemy_id}_e{enc_idx}_{count}"
-                    if (count > 1 or len(encounter_enemy_lists) > 1)
+                    f"{enemy_id}_e{step_index}_{count}"
+                    if (count > 1 or len(encounter_plan) > 1)
                     else enemy_id
                 )
 
@@ -2916,19 +7628,23 @@ def run_simulation(
                 downed_counts[actor.actor_id] = 0
                 death_counts[actor.actor_id] = 0
 
-            if trial_idx == 0 and enc_idx == 0:
+            if trial_idx == 0 and step_index == 0:
                 tracked_resource_names = {
                     actor_id: set(actor.resources.keys()) for actor_id, actor in actors.items()
                 }
 
             initiative_order = _build_initiative_order(rng, actors, scenario.config.initiative_mode)
+            initiative_order = _reorder_initiative_for_construct_companions(
+                initiative_order, actors
+            )
             rounds = 0
-            max_rounds = int(scenario.config.termination_rules.get("max_rounds", 20))
 
             while rounds < max_rounds:
                 rounds += 1
                 for actor in actors.values():
                     actor.lair_action_used_this_round = False
+                    if hasattr(actor, "commanded_this_round"):
+                        actor.commanded_this_round = False
                     if any(action.action_cost == "legendary" for action in actor.actions):
                         base_legendary = int(actor.resources.get("legendary_actions", 0))
                         actor.legendary_actions_remaining = (
@@ -2945,6 +7661,8 @@ def run_simulation(
                     active_hazards=active_hazards,
                     obstacles=battlefield_obstacles,
                     light_level=light_level,
+                    telemetry=trial_telemetry,
+                    round_number=rounds,
                 )
 
                 metadata = _build_round_metadata(
@@ -2955,22 +7673,31 @@ def run_simulation(
                     ),
                     active_hazards=active_hazards,
                     light_level=light_level,
+                    strategy_overrides=assumption_overrides,
                 )
                 state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
                 for strategy in strategy_registry.values():
                     strategy.on_round_start(state_view)
 
+                initiative_order = _sync_initiative_order(initiative_order, actors)
                 for actor_id in initiative_order:
+                    if actor_id not in actors:
+                        continue
                     actor = actors[actor_id]
                     actor.movement_remaining = float(actor.speed_ft)
                     actor.took_attack_action_this_turn = False
                     _roll_recharge_for_actor(rng, actor)
                     _tick_conditions_for_actor(rng, actor)
+                    _force_end_concentration_if_needed(
+                        actor, actors=actors, active_hazards=active_hazards
+                    )
                     if "grappled" in actor.conditions:
                         actor.movement_remaining = 0.0
                     actor.bonus_available = True
                     actor.reaction_available = True
                     actor.sneak_attack_used_this_turn = False
+                    actor.colossus_slayer_used_this_turn = False
+                    actor.horde_breaker_used_this_turn = False
 
                     if actor.dead:
                         continue
@@ -2979,10 +7706,121 @@ def run_simulation(
                         resolve_death_save(rng, actor)
                         continue
 
-                    if _party_defeated(actors) or _enemies_defeated(actors):
+                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
+                        actors, enemy_defeat_rule
+                    ):
                         break
 
+                    turn_token = f"{rounds}:{actor.actor_id}"
+                    _dispatch_combat_event(
+                        rng=rng,
+                        event="turn_start",
+                        trigger_actor=actor,
+                        trigger_target=actor,
+                        trigger_action=None,
+                        actors=actors,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=trial_rule_trace,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                    )
+
+                    _trigger_readied_actions(
+                        rng=rng,
+                        trigger_actor=actor,
+                        actors=actors,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                    )
+
+                    if actor.dead or actor.hp <= 0:
+                        continue
+                    if _party_defeated(actors) or _enemies_defeated(actors):
+                        break
                     if not _can_act(actor):
+                        _dispatch_combat_event(
+                            rng=rng,
+                            event="turn_end",
+                            trigger_actor=actor,
+                            trigger_target=actor,
+                            trigger_action=None,
+                            actors=actors,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            rule_trace=trial_rule_trace,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                        )
+                        continue
+
+                    companion_owner_id = getattr(actor, "companion_owner_id", None)
+                    owner = actors.get(companion_owner_id) if companion_owner_id else None
+                    should_force_dodge = (
+                        bool(getattr(actor, "requires_command", False))
+                        and not bool(getattr(actor, "commanded_this_round", False))
+                        and not _owner_is_incapacitated(owner)
+                    )
+                    if should_force_dodge:
+                        action = _resolve_action_selection(actor, "dodge")
+                        if _action_available(actor, action):
+                            resolved_targets = _resolve_targets_for_action(
+                                rng=rng,
+                                actor=actor,
+                                action=action,
+                                actors=actors,
+                                requested=[],
+                            )
+                            if resolved_targets:
+                                actor.per_action_uses[action.name] = (
+                                    actor.per_action_uses.get(action.name, 0) + 1
+                                )
+                                _mark_action_cost_used(actor, action)
+                                _execute_action(
+                                    rng=rng,
+                                    actor=actor,
+                                    action=action,
+                                    targets=resolved_targets,
+                                    actors=actors,
+                                    damage_dealt=damage_dealt,
+                                    damage_taken=damage_taken,
+                                    threat_scores=threat_scores,
+                                    resources_spent=resources_spent,
+                                    active_hazards=active_hazards,
+                                    obstacles=battlefield_obstacles,
+                                    light_level=light_level,
+                                    telemetry=trial_telemetry,
+                                    strategy_name="forced_dodge",
+                                )
+                        if hasattr(actor, "commanded_this_round"):
+                            actor.commanded_this_round = False
+                        _run_legendary_actions(
+                            rng=rng,
+                            trigger_actor=actor,
+                            actors=actors,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                        )
                         continue
 
                     strategy_name = actor_strategy_overrides.get(actor.actor_id)
@@ -3006,17 +7844,38 @@ def run_simulation(
                         ),
                         active_hazards=active_hazards,
                         light_level=light_level,
+                        strategy_overrides=assumption_overrides,
                     )
                     state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
                     actor_view = state_view.actors[actor.actor_id]
                     intent = strategy.choose_action(actor_view, state_view)
                     action = _resolve_action_selection(actor, intent.action_name)
+                    fallback_reason: str | None = None
 
                     if not _action_available(actor, action):
                         fallback = _fallback_action(actor)
                         if fallback is None:
+                            _dispatch_combat_event(
+                                rng=rng,
+                                event="turn_end",
+                                trigger_actor=actor,
+                                trigger_target=actor,
+                                trigger_action=None,
+                                actors=actors,
+                                round_number=rounds,
+                                turn_token=turn_token,
+                                damage_dealt=damage_dealt,
+                                damage_taken=damage_taken,
+                                threat_scores=threat_scores,
+                                resources_spent=resources_spent,
+                                active_hazards=active_hazards,
+                                rule_trace=trial_rule_trace,
+                                obstacles=battlefield_obstacles,
+                                light_level=light_level,
+                            )
                             continue
                         action = fallback
+                        fallback_reason = "intent_unavailable"
 
                     extra_spend = strategy.decide_resource_spend(
                         actor_view, intent, state_view
@@ -3028,6 +7887,7 @@ def run_simulation(
                     if cost and not _has_resources(actor, cost):
                         action = _resolve_action_selection(actor, "basic")
                         cost = dict(action.resource_cost)
+                        fallback_reason = "insufficient_resources"
 
                     targets = strategy.choose_targets(actor_view, intent, state_view)
                     resolved_targets = _resolve_targets_for_action(
@@ -3037,7 +7897,46 @@ def run_simulation(
                         actors=actors,
                         requested=targets,
                     )
+                    trial_telemetry.append(
+                        {
+                            "telemetry_type": "decision",
+                            "round": rounds,
+                            "strategy": strategy_name,
+                            "actor_id": actor.actor_id,
+                            "team": actor.team,
+                            "intent_action": intent.action_name,
+                            "resolved_action": action.name,
+                            "fallback_reason": fallback_reason,
+                            "requested_targets": [target.actor_id for target in targets],
+                            "resolved_targets": [target.actor_id for target in resolved_targets],
+                            "rationale": (
+                                dict(intent.rationale)
+                                if isinstance(getattr(intent, "rationale", {}), dict)
+                                else {}
+                            ),
+                            "extra_resource_request": dict(extra_spend),
+                            "resource_cost": dict(cost),
+                        }
+                    )
                     if not resolved_targets:
+                        _dispatch_combat_event(
+                            rng=rng,
+                            event="turn_end",
+                            trigger_actor=actor,
+                            trigger_target=actor,
+                            trigger_action=None,
+                            actors=actors,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            rule_trace=trial_rule_trace,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                        )
                         continue
 
                     spent = _spend_resources(actor, cost)
@@ -3064,6 +7963,29 @@ def run_simulation(
                         threat_scores=threat_scores,
                         resources_spent=resources_spent,
                         active_hazards=active_hazards,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                        rule_trace=trial_rule_trace,
+                        telemetry=trial_telemetry,
+                        strategy_name=strategy_name,
+                    )
+                    _dispatch_combat_event(
+                        rng=rng,
+                        event="after_action",
+                        trigger_actor=actor,
+                        trigger_target=resolved_targets[0] if resolved_targets else None,
+                        trigger_action=action,
+                        actors=actors,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=trial_rule_trace,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
                     )
@@ -3102,6 +8024,29 @@ def run_simulation(
                                         threat_scores=threat_scores,
                                         resources_spent=resources_spent,
                                         active_hazards=active_hazards,
+                                        obstacles=battlefield_obstacles,
+                                        light_level=light_level,
+                                        round_number=rounds,
+                                        turn_token=turn_token,
+                                        rule_trace=trial_rule_trace,
+                                        telemetry=trial_telemetry,
+                                        strategy_name=strategy_name,
+                                    )
+                                    _dispatch_combat_event(
+                                        rng=rng,
+                                        event="after_action",
+                                        trigger_actor=actor,
+                                        trigger_target=bonus_targets[0] if bonus_targets else None,
+                                        trigger_action=bonus_action,
+                                        actors=actors,
+                                        round_number=rounds,
+                                        turn_token=turn_token,
+                                        damage_dealt=damage_dealt,
+                                        damage_taken=damage_taken,
+                                        threat_scores=threat_scores,
+                                        resources_spent=resources_spent,
+                                        active_hazards=active_hazards,
+                                        rule_trace=trial_rule_trace,
                                         obstacles=battlefield_obstacles,
                                         light_level=light_level,
                                     )
@@ -3161,6 +8106,31 @@ def run_simulation(
                                             active_hazards=active_hazards,
                                             obstacles=battlefield_obstacles,
                                             light_level=light_level,
+                                            round_number=rounds,
+                                            turn_token=turn_token,
+                                            rule_trace=trial_rule_trace,
+                                            telemetry=trial_telemetry,
+                                            strategy_name=strategy_name,
+                                        )
+                                        _dispatch_combat_event(
+                                            rng=rng,
+                                            event="after_action",
+                                            trigger_actor=actor,
+                                            trigger_target=(
+                                                surge_targets[0] if surge_targets else None
+                                            ),
+                                            trigger_action=surge_action,
+                                            actors=actors,
+                                            round_number=rounds,
+                                            turn_token=turn_token,
+                                            damage_dealt=damage_dealt,
+                                            damage_taken=damage_taken,
+                                            threat_scores=threat_scores,
+                                            resources_spent=resources_spent,
+                                            active_hazards=active_hazards,
+                                            rule_trace=trial_rule_trace,
+                                            obstacles=battlefield_obstacles,
+                                            light_level=light_level,
                                         )
 
                     _run_legendary_actions(
@@ -3174,25 +8144,118 @@ def run_simulation(
                         active_hazards=active_hazards,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
+                        telemetry=trial_telemetry,
+                        round_number=rounds,
+                    )
+                    _dispatch_combat_event(
+                        rng=rng,
+                        event="turn_end",
+                        trigger_actor=actor,
+                        trigger_target=actor,
+                        trigger_action=None,
+                        actors=actors,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=trial_rule_trace,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
                     )
 
-                if _party_defeated(actors) or _enemies_defeated(actors):
+                if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
+                    actors, enemy_defeat_rule
+                ):
                     break
 
             total_rounds += rounds
 
-            if _party_defeated(actors):
-                overall_winner = "enemy"
-                break
-            elif not _enemies_defeated(actors):
+            party_is_defeated = _party_defeated(actors, party_defeat_rule)
+            enemies_are_defeated = _enemies_defeated(actors, enemy_defeat_rule)
+            if party_is_defeated:
+                encounter_winner = "enemy"
+                encounter_outcome = "party_defeat"
+            elif enemies_are_defeated:
+                encounter_winner = "party"
+                encounter_outcome = "enemy_defeat"
+            else:
                 party_hp = sum(a.hp for a in actors.values() if a.team == "party" and not a.dead)
                 enemy_hp = sum(a.hp for a in actors.values() if a.team != "party" and not a.dead)
-                overall_winner = "party" if party_hp >= enemy_hp else "enemy"
-                if overall_winner == "enemy":
-                    break
+                encounter_winner = "party" if party_hp >= enemy_hp else "enemy"
+                encounter_outcome = encounter_winner
 
-        if overall_winner == "draw" and _enemies_defeated(actors):
-            overall_winner = "party"
+            next_encounter_idx, branch_key = _resolve_next_encounter_index(
+                encounter=encounter,
+                encounter_outcome=encounter_outcome,
+                encounter_winner=encounter_winner,
+                default_next=encounter_idx + 1,
+                encounter_count=len(encounter_plan),
+            )
+
+            continue_campaign = next_encounter_idx is not None
+            if party_is_defeated:
+                overall_winner = "enemy"
+                continue_campaign = False
+                next_encounter_idx = None
+            elif encounter_winner == "enemy" and branch_key is None:
+                overall_winner = "enemy"
+                continue_campaign = False
+                next_encounter_idx = None
+
+            if continue_campaign and encounter.short_rest_after:
+                for actor in actors.values():
+                    if actor.team == "party":
+                        short_rest(actor, healing=short_rest_healing)
+
+            checkpoint_id = encounter.checkpoint or f"encounter_{step_index}_end"
+            party_snapshot = {
+                actor_id: _actor_state_snapshot(actor)
+                for actor_id, actor in sorted(actors.items())
+                if actor.team == "party"
+            }
+            enemy_snapshot = {
+                actor_id: _actor_state_snapshot(actor)
+                for actor_id, actor in sorted(actors.items())
+                if actor.team != "party"
+            }
+            state_snapshots.append(
+                {
+                    "checkpoint_id": checkpoint_id,
+                    "encounter_index": encounter_idx,
+                    "encounter_step": step_index,
+                    "outcome": encounter_outcome,
+                    "winner": encounter_winner,
+                    "next_encounter_index": next_encounter_idx,
+                    "party": party_snapshot,
+                    "enemies": enemy_snapshot,
+                }
+            )
+            encounter_outcomes.append(
+                {
+                    "encounter_index": encounter_idx,
+                    "encounter_step": step_index,
+                    "outcome": encounter_outcome,
+                    "winner": encounter_winner,
+                    "branch_key": branch_key,
+                    "next_encounter_index": next_encounter_idx,
+                }
+            )
+
+            if not continue_campaign:
+                if overall_winner == "draw":
+                    overall_winner = encounter_winner
+                break
+
+            encounter_idx = next_encounter_idx
+
+        if overall_winner == "draw":
+            if _party_defeated(actors, party_defeat_rule):
+                overall_winner = "enemy"
+            elif _enemies_defeated(actors, enemy_defeat_rule):
+                overall_winner = "party"
 
         for aid, actor in actors.items():
             downed_counts[aid] = actor.downed_count
@@ -3209,6 +8272,9 @@ def run_simulation(
             downed_counts=downed_counts,
             death_counts=death_counts,
             remaining_hp=remaining_hp,
+            telemetry=trial_telemetry,
+            encounter_outcomes=encounter_outcomes,
+            state_snapshots=state_snapshots,
         )
         trial_results.append(trial)
 

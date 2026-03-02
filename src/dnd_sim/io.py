@@ -29,6 +29,9 @@ class ActionConfig(BaseModel):
     max_uses: int | None = None
     action_cost: Literal["action", "bonus", "reaction", "legendary", "lair"] = "action"
     event_trigger: str | None = None
+    trigger_duration_rounds: int | None = None
+    trigger_limit_per_turn: int | None = None
+    trigger_once_per_round: bool = False
     target_mode: Literal[
         "single_enemy",
         "single_ally",
@@ -38,7 +41,6 @@ class ActionConfig(BaseModel):
         "all_creatures",
         "n_enemies",
         "n_allies",
-        "random_enemy",
         "random_enemy",
         "random_ally",
     ] = "single_enemy"
@@ -56,6 +58,13 @@ class ActionConfig(BaseModel):
     def validate_max_targets(cls, value: int | None) -> int | None:
         if value is not None and value <= 0:
             raise ValueError("max_targets must be >= 1")
+        return value
+
+    @field_validator("trigger_duration_rounds", "trigger_limit_per_turn")
+    @classmethod
+    def validate_positive_trigger_limits(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            raise ValueError("trigger limits must be >= 1")
         return value
 
     @field_validator("save_ability")
@@ -203,9 +212,26 @@ class CustomSimulationConfig(BaseModel):
     module: str
     callable: str = "run_custom_simulation"
 
+
 class EncounterConfig(BaseModel):
     enemies: list[str] = Field(default_factory=list)
     short_rest_after: bool = False
+    branches: dict[str, int] = Field(default_factory=dict)
+    checkpoint: str | None = None
+
+    @field_validator("branches")
+    @classmethod
+    def validate_branches(cls, value: dict[str, int]) -> dict[str, int]:
+        normalized: dict[str, int] = {}
+        for key, target_index in value.items():
+            idx = int(target_index)
+            if idx < 0:
+                raise ValueError("Encounter branch target index must be >= 0")
+            normalized[str(key)] = idx
+        return normalized
+
+
+
 
 class ScenarioConfig(BaseModel):
     scenario_id: str
@@ -217,6 +243,7 @@ class ScenarioConfig(BaseModel):
     encounters: list[EncounterConfig] = Field(default_factory=list)
     initiative_mode: Literal["individual", "grouped"] = "individual"
     battlefield: dict[str, Any] = Field(default_factory=dict)
+    exploration: dict[str, Any] = Field(default_factory=dict)
     termination_rules: dict[str, Any]
     strategy_modules: list[StrategyModuleConfig]
     resource_policy: dict[str, Any] = Field(default_factory=dict)
@@ -229,6 +256,23 @@ class ScenarioConfig(BaseModel):
         if value != "5e-2014":
             raise ValueError("ruleset must be '5e-2014'")
         return value
+
+    @field_validator("encounters")
+    @classmethod
+    def validate_encounter_branch_targets(
+        cls, encounters: list[EncounterConfig]
+    ) -> list[EncounterConfig]:
+        encounter_count = len(encounters)
+        for encounter_index, encounter in enumerate(encounters):
+            branches = encounter.branches if isinstance(encounter.branches, dict) else {}
+            for branch_key, target_index in branches.items():
+                if target_index >= encounter_count:
+                    raise ValueError(
+                        "Encounter branch target index out of bounds: "
+                        f"encounter {encounter_index} branch '{branch_key}' -> {target_index}, "
+                        f"max allowed {encounter_count - 1}"
+                    )
+        return encounters
 
 
 class LoadedScenario(BaseModel):
@@ -264,7 +308,7 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
     for enemy_id in all_enemy_ids:
         # 1. Check local file first (for tests running via tmp_path or local overrides)
         path = enemy_dir / f"{enemy_id}.json"
-        
+
         enemy_payload = None
         if path.exists():
             enemy_payload = _load_json(path)
@@ -275,14 +319,14 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
                 enemy_payload = json.loads(rows[0]["data_json"])
             else:
                 raise ValueError(f"Enemy definition not found on disk or SQLite DB: {enemy_id}")
-            
+
         try:
             enemy = EnemyConfig.model_validate(enemy_payload)
         except ValidationError as exc:
             raise ValueError(f"Invalid enemy schema for {enemy_id}: {exc}") from exc
         except json.JSONDecodeError as exc:
             raise ValueError(f"Invalid JSON blob for {enemy_id}: {exc}") from exc
-            
+
         enemies[enemy_id] = enemy
 
     return LoadedScenario(
@@ -294,9 +338,9 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
 
 def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
     from .db import execute_query
-    
+
     out: dict[str, dict[str, Any]] = {}
-    
+
     # 1. Base load from SQLite
     rows = execute_query("SELECT character_id, data_json FROM characters")
     for row in rows:
@@ -304,7 +348,7 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
             out[row["character_id"]] = json.loads(row["data_json"])
         except json.JSONDecodeError:
             pass
-            
+
     # 2. Local overriding from db_dir (crucial for pytests using tmp_path configurations)
     index_path = db_dir / "index.json"
     if index_path.exists():
@@ -320,9 +364,9 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
 
 def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
     from .db import execute_query
-    
+
     out: dict[str, dict[str, Any]] = {}
-    
+
     # 1. Base SQLite load
     rows = execute_query("SELECT id, data_json FROM traits")
     for row in rows:
@@ -333,7 +377,7 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
                 out[trait_name] = trait_data
         except json.JSONDecodeError:
             pass
-            
+
     # 2. Local Path Load overriding
     if traits_dir.exists():
         for path in traits_dir.glob("*.json"):
@@ -341,7 +385,7 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
             trait_name = trait_data.get("name", "").lower()
             if trait_name:
                 out[trait_name] = trait_data
-            
+
     return out
 
 

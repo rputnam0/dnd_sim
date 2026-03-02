@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from dnd_sim.inventory import InventoryState
+
 ABILITY_KEYS = ("str", "dex", "con", "int", "wis", "cha")
 
 
@@ -84,6 +86,9 @@ class ActionDefinition:
     max_uses: int | None = None
     action_cost: str = "action"
     event_trigger: str | None = None
+    trigger_duration_rounds: int | None = None
+    trigger_limit_per_turn: int | None = None
+    trigger_once_per_round: bool = False
     target_mode: str = "single_enemy"
     range_ft: int | None = None
     aoe_type: str | None = None
@@ -145,6 +150,7 @@ class ActorRuntimeState:
     legendary_actions_remaining: int = 0
     lair_action_used_this_round: bool = False
     traits: dict[str, dict[str, Any]] = field(default_factory=dict)
+    inventory: InventoryState = field(default_factory=InventoryState)
     condition_durations: dict[str, ConditionTracker] = field(default_factory=dict)
     next_attack_advantage: bool = False
     next_attack_disadvantage: bool = False
@@ -152,11 +158,22 @@ class ActorRuntimeState:
     movement_remaining: float = 0.0
     position: tuple[float, float, float] = (0.0, 0.0, 0.0)
     took_attack_action_this_turn: bool = False
+    rage_sustained_since_last_turn: bool = False
     sneak_attack_used_this_turn: bool = False
+    colossus_slayer_used_this_turn: bool = False
+    horde_breaker_used_this_turn: bool = False
     concentrated_targets: set[str] = field(default_factory=set)
     concentration_conditions: set[str] = field(default_factory=set)
     concentrated_spell: str | None = None
+    readied_action_name: str | None = None
+    readied_trigger: str | None = None
+    concentrated_spell_level: int | None = None
+    class_levels: dict[str, int] = field(default_factory=dict)
     level: int = 1
+    pending_smite: dict[str, Any] | None = None
+    companion_owner_id: str | None = None
+    requires_command: bool = False
+    commanded_this_round: bool = False
 
     def is_active(self) -> bool:
         return not self.dead
@@ -176,6 +193,9 @@ class TrialResult:
     downed_counts: dict[str, int]
     death_counts: dict[str, int]
     remaining_hp: dict[str, int]
+    telemetry: list[dict[str, Any]] = field(default_factory=list)
+    encounter_outcomes: list[dict[str, Any]] = field(default_factory=list)
+    state_snapshots: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(slots=True)
