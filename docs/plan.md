@@ -9,3 +9,4 @@
 - [x] Markdown reporting and chart generation
 - [x] Baseline ley_heart phase 1 encounter conversion
 - [x] Full test pass and docs polish
+- [x] Social subsystem (skill contests, attitude/state changes, consequence modeling)
