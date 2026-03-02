@@ -149,6 +149,294 @@ def test_sneak_attack_applies_once_per_turn_across_multiattack() -> None:
     assert rogue.sneak_attack_used_this_turn is True
 
 
+def test_sneak_attack_applies_when_advantage_and_disadvantage_cancel() -> None:
+    rogue = _actor("rogue", "party")
+    ally = _actor("ally", "party")
+    target = _actor("target", "enemy")
+
+    rogue.level = 3
+    rogue.traits = {"sneak attack": {}}
+    rogue.next_attack_advantage = True
+    rogue.position = (0.0, 0.0, 0.0)
+    ally.position = (5.0, 0.0, 0.0)
+    target.position = (5.0, 0.0, 0.0)
+    target.conditions.add("dodging")
+
+    action = ActionDefinition(
+        name="rapier",
+        action_type="attack",
+        to_hit=10,
+        damage="1d1",
+        damage_type="piercing",
+    )
+
+    actors = {rogue.actor_id: rogue, ally.actor_id: ally, target.actor_id: target}
+    damage_dealt = {rogue.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
+    damage_taken = {rogue.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
+    threat_scores = {rogue.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
+    resources_spent = {rogue.actor_id: {}, ally.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([15, 1, 6, 5]),
+        actor=rogue,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    # Base: 1d1=1, Sneak: 2d6=11
+    assert damage_dealt[rogue.actor_id] == 12
+    assert rogue.sneak_attack_used_this_turn is True
+
+
+def test_sneak_attack_does_not_use_incapacitated_adjacent_ally() -> None:
+    rogue = _actor("rogue", "party")
+    ally = _actor("ally", "party")
+    target = _actor("target", "enemy")
+
+    rogue.level = 3
+    rogue.traits = {"sneak attack": {}}
+    rogue.position = (0.0, 0.0, 0.0)
+    ally.position = (5.0, 0.0, 0.0)
+    ally.conditions.add("incapacitated")
+    target.position = (5.0, 0.0, 0.0)
+
+    action = ActionDefinition(
+        name="rapier",
+        action_type="attack",
+        to_hit=10,
+        damage="1d1",
+        damage_type="piercing",
+    )
+
+    actors = {rogue.actor_id: rogue, ally.actor_id: ally, target.actor_id: target}
+    damage_dealt = {rogue.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
+    damage_taken = {rogue.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
+    threat_scores = {rogue.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
+    resources_spent = {rogue.actor_id: {}, ally.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([15, 1, 6, 5]),
+        actor=rogue,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[rogue.actor_id] == 1
+    assert rogue.sneak_attack_used_this_turn is False
+
+
+def test_sneak_attack_does_not_apply_to_spell_attack() -> None:
+    rogue = _actor("rogue", "party")
+    ally = _actor("ally", "party")
+    target = _actor("target", "enemy")
+
+    rogue.level = 3
+    rogue.traits = {"sneak attack": {}}
+    rogue.position = (0.0, 0.0, 0.0)
+    ally.position = (5.0, 0.0, 0.0)
+    target.position = (5.0, 0.0, 0.0)
+
+    action = ActionDefinition(
+        name="fire bolt",
+        action_type="attack",
+        to_hit=10,
+        damage="1d1",
+        damage_type="fire",
+        range_ft=120,
+        tags=["spell"],
+    )
+
+    actors = {rogue.actor_id: rogue, ally.actor_id: ally, target.actor_id: target}
+    damage_dealt = {rogue.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
+    damage_taken = {rogue.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
+    threat_scores = {rogue.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
+    resources_spent = {rogue.actor_id: {}, ally.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([15, 1, 6, 5]),
+        actor=rogue,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[rogue.actor_id] == 1
+    assert rogue.sneak_attack_used_this_turn is False
+
+
+def test_uncanny_dodge_halves_attack_damage_and_spends_reaction() -> None:
+    attacker = _actor("attacker", "enemy")
+    rogue = _actor("rogue", "party")
+    rogue.traits = {"uncanny dodge": {}}
+    attacker.position = (0.0, 0.0, 0.0)
+    rogue.position = (5.0, 0.0, 0.0)
+
+    action = ActionDefinition(
+        name="longsword",
+        action_type="attack",
+        to_hit=10,
+        damage="1d9",
+        damage_type="slashing",
+    )
+
+    actors = {attacker.actor_id: attacker, rogue.actor_id: rogue}
+    damage_dealt = {attacker.actor_id: 0, rogue.actor_id: 0}
+    damage_taken = {attacker.actor_id: 0, rogue.actor_id: 0}
+    threat_scores = {attacker.actor_id: 0, rogue.actor_id: 0}
+    resources_spent = {attacker.actor_id: {}, rogue.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([15, 7]),
+        actor=attacker,
+        action=action,
+        targets=[rogue],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[attacker.actor_id] == 3
+    assert damage_taken[rogue.actor_id] == 3
+    assert rogue.reaction_available is False
+
+
+def test_uncanny_dodge_requires_attacker_to_be_seen() -> None:
+    attacker = _actor("attacker", "enemy")
+    rogue = _actor("rogue", "party")
+    rogue.traits = {"uncanny dodge": {}}
+    attacker.conditions.add("invisible")
+    attacker.position = (0.0, 0.0, 0.0)
+    rogue.position = (5.0, 0.0, 0.0)
+
+    action = ActionDefinition(
+        name="longsword",
+        action_type="attack",
+        to_hit=10,
+        damage="1d9",
+        damage_type="slashing",
+    )
+
+    actors = {attacker.actor_id: attacker, rogue.actor_id: rogue}
+    damage_dealt = {attacker.actor_id: 0, rogue.actor_id: 0}
+    damage_taken = {attacker.actor_id: 0, rogue.actor_id: 0}
+    threat_scores = {attacker.actor_id: 0, rogue.actor_id: 0}
+    resources_spent = {attacker.actor_id: {}, rogue.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([15, 5, 7]),
+        actor=attacker,
+        action=action,
+        targets=[rogue],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[attacker.actor_id] == 7
+    assert damage_taken[rogue.actor_id] == 7
+    assert rogue.reaction_available is True
+
+
+def test_evasion_failed_dex_save_takes_half_damage() -> None:
+    caster = _actor("caster", "enemy")
+    rogue = _actor("rogue", "party")
+    rogue.traits = {"evasion": {}}
+
+    action = ActionDefinition(
+        name="fireball",
+        action_type="save",
+        save_dc=20,
+        save_ability="dex",
+        half_on_save=True,
+        damage="9",
+        damage_type="fire",
+    )
+
+    actors = {caster.actor_id: caster, rogue.actor_id: rogue}
+    damage_dealt = {caster.actor_id: 0, rogue.actor_id: 0}
+    damage_taken = {caster.actor_id: 0, rogue.actor_id: 0}
+    threat_scores = {caster.actor_id: 0, rogue.actor_id: 0}
+    resources_spent = {caster.actor_id: {}, rogue.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([1]),
+        actor=caster,
+        action=action,
+        targets=[rogue],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[caster.actor_id] == 4
+    assert damage_taken[rogue.actor_id] == 4
+
+
+def test_evasion_does_not_spend_shield_master_reaction_on_success() -> None:
+    caster = _actor("caster", "enemy")
+    rogue = _actor("rogue", "party")
+    rogue.traits = {"evasion": {}, "shield master": {}}
+
+    action = ActionDefinition(
+        name="fireball",
+        action_type="save",
+        save_dc=10,
+        save_ability="dex",
+        half_on_save=True,
+        damage="10",
+        damage_type="fire",
+    )
+
+    actors = {caster.actor_id: caster, rogue.actor_id: rogue}
+    damage_dealt = {caster.actor_id: 0, rogue.actor_id: 0}
+    damage_taken = {caster.actor_id: 0, rogue.actor_id: 0}
+    threat_scores = {caster.actor_id: 0, rogue.actor_id: 0}
+    resources_spent = {caster.actor_id: {}, rogue.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([7]),
+        actor=caster,
+        action=action,
+        targets=[rogue],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[caster.actor_id] == 0
+    assert damage_taken[rogue.actor_id] == 0
+    assert rogue.reaction_available is True
+
+
 def test_action_surge_resource_spend_is_bounded_per_trial(tmp_path: Path) -> None:
     party = [
         build_character(

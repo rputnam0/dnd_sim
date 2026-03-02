@@ -2225,6 +2225,8 @@ def _execute_action(
                 disadvantage = True
             if not target_can_see:
                 advantage = True
+            effective_advantage = advantage and not disadvantage
+            effective_disadvantage = disadvantage and not advantage
 
             # Sharpshooter / Great Weapon Master AI Toggle (-5 to hit / +10 damage)
             power_attack_active = False
@@ -2362,6 +2364,7 @@ def _execute_action(
                     _has_trait(actor, "sneak attack")
                     and getattr(actor, "sneak_attack_used_this_turn", False) is False
                     and not getattr(actor, "is_heavy", False)
+                    and "spell" not in action.tags
                 ):
                     # Finesse or ranged
                     if (
@@ -2375,9 +2378,9 @@ def _execute_action(
                         )
                     ):
                         has_sneak = False
-                        if advantage and not disadvantage:
+                        if effective_advantage:
                             has_sneak = True
-                        elif not disadvantage:
+                        elif not effective_disadvantage:
                             # ally within 5ft
                             for cand in actors.values():
                                 if (
@@ -2385,6 +2388,7 @@ def _execute_action(
                                     and cand.actor_id != actor.actor_id
                                     and cand.hp > 0
                                     and not cand.dead
+                                    and "incapacitated" not in cand.conditions
                                 ):
                                     from .spatial import distance_chebyshev
 
@@ -2441,6 +2445,13 @@ def _execute_action(
                             damage_type="radiant",
                         )
                         raw_damage += raw_smite
+                if (
+                    _has_trait(target, "uncanny dodge")
+                    and target.reaction_available
+                    and target_can_see
+                ):
+                    raw_damage //= 2
+                    target.reaction_available = False
                 applied = apply_damage(
                     target,
                     raw_damage,
@@ -2961,6 +2972,8 @@ def run_simulation(
                     strategy.on_round_start(state_view)
 
                 for actor_id in initiative_order:
+                    for combatant in actors.values():
+                        combatant.sneak_attack_used_this_turn = False
                     actor = actors[actor_id]
                     actor.movement_remaining = float(actor.speed_ft)
                     actor.took_attack_action_this_turn = False
@@ -2970,7 +2983,6 @@ def run_simulation(
                         actor.movement_remaining = 0.0
                     actor.bonus_available = True
                     actor.reaction_available = True
-                    actor.sneak_attack_used_this_turn = False
 
                     if actor.dead:
                         continue
