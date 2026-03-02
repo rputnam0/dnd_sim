@@ -160,15 +160,19 @@ def _extract_trait_candidates_from_raw_fields(character: dict[str, Any]) -> set[
     return candidates
 
 
+def _is_supported_artificer_option(name: str) -> bool:
+    return _normalize_trait_name(name) in _ARTIFICER_OPTION_TRAITS
+
+
 def _resolve_character_traits(
-    character: dict[str, Any], traits_db: dict[str, dict[str, Any]]
+    character: dict[str, Any], traits_db: dict[str, dict[str, Any]] | None
 ) -> dict[str, dict[str, Any]]:
     """Resolve character traits/features to canonical DB traits where possible.
 
     Keeps unresolved traits as empty dict entries so existing name-based hooks still work.
     """
     db_index: dict[str, dict[str, Any]] = {}
-    for key, data in traits_db.items():
+    for key, data in (traits_db or {}).items():
         if not isinstance(data, dict):
             continue
         name = str(data.get("name", key))
@@ -202,6 +206,8 @@ def _resolve_character_traits(
     for candidate in _extract_trait_candidates_from_raw_fields(character):
         match = find_match(candidate)
         if match is None:
+            if _is_supported_artificer_option(candidate):
+                resolved[_normalize_trait_name(candidate)] = {}
             continue
         canonical_name = _normalize_trait_name(str(match.get("name", candidate)))
         resolved[canonical_name] = match
@@ -3459,6 +3465,17 @@ def _apply_effect(
             ) + (before - after)
         return
 
+    if effect_type == "command_construct_companion":
+        for ally in actors.values():
+            if ally.team != actor.team:
+                continue
+            if ally.companion_owner_id != actor.actor_id:
+                continue
+            if ally.dead or ally.hp <= 0:
+                continue
+            ally.commanded_this_round = True
+        return
+
     if effect_type == "next_attack_advantage":
         recipient.next_attack_advantage = True
         recipient.next_attack_disadvantage = False
@@ -5895,6 +5912,17 @@ def run_simulation(
             downed_counts[actor.actor_id] = 0
             death_counts[actor.actor_id] = 0
 
+            for companion in _build_construct_companions(actor):
+                if companion.actor_id in actors:
+                    continue
+                actors[companion.actor_id] = companion
+                damage_taken[companion.actor_id] = 0
+                damage_dealt[companion.actor_id] = 0
+                resources_spent[companion.actor_id] = {}
+                threat_scores[companion.actor_id] = 0
+                downed_counts[companion.actor_id] = 0
+                death_counts[companion.actor_id] = 0
+
         total_rounds = 0
         overall_winner = "draw"
 
@@ -5934,6 +5962,9 @@ def run_simulation(
                 }
 
             initiative_order = _build_initiative_order(rng, actors, scenario.config.initiative_mode)
+            initiative_order = _reorder_initiative_for_construct_companions(
+                initiative_order, actors
+            )
             rounds = 0
             max_rounds = int(scenario.config.termination_rules.get("max_rounds", 20))
 
@@ -5941,6 +5972,7 @@ def run_simulation(
                 rounds += 1
                 for actor in actors.values():
                     actor.lair_action_used_this_round = False
+                    actor.commanded_this_round = False
                     if any(action.action_cost == "legendary" for action in actor.actions):
                         base_legendary = int(actor.resources.get("legendary_actions", 0))
                         actor.legendary_actions_remaining = (
@@ -6055,6 +6087,58 @@ def run_simulation(
                             resources_spent=resources_spent,
                             active_hazards=active_hazards,
                             rule_trace=trial_rule_trace,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                        )
+                        continue
+
+                    owner = (
+                        actors.get(actor.companion_owner_id) if actor.companion_owner_id else None
+                    )
+                    should_force_dodge = (
+                        actor.requires_command
+                        and not actor.commanded_this_round
+                        and not _owner_is_incapacitated(owner)
+                    )
+                    if should_force_dodge:
+                        action = _resolve_action_selection(actor, "dodge")
+                        if _action_available(actor, action):
+                            resolved_targets = _resolve_targets_for_action(
+                                rng=rng,
+                                actor=actor,
+                                action=action,
+                                actors=actors,
+                                requested=[],
+                            )
+                            if resolved_targets:
+                                actor.per_action_uses[action.name] = (
+                                    actor.per_action_uses.get(action.name, 0) + 1
+                                )
+                                _mark_action_cost_used(actor, action)
+                                _execute_action(
+                                    rng=rng,
+                                    actor=actor,
+                                    action=action,
+                                    targets=resolved_targets,
+                                    actors=actors,
+                                    damage_dealt=damage_dealt,
+                                    damage_taken=damage_taken,
+                                    threat_scores=threat_scores,
+                                    resources_spent=resources_spent,
+                                    active_hazards=active_hazards,
+                                    obstacles=battlefield_obstacles,
+                                    light_level=light_level,
+                                )
+                        actor.commanded_this_round = False
+                        _run_legendary_actions(
+                            rng=rng,
+                            trigger_actor=actor,
+                            actors=actors,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
                             obstacles=battlefield_obstacles,
                             light_level=light_level,
                         )
