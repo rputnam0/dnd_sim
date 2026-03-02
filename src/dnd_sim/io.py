@@ -217,6 +217,20 @@ class CustomSimulationConfig(BaseModel):
 class EncounterConfig(BaseModel):
     enemies: list[str] = Field(default_factory=list)
     short_rest_after: bool = False
+    branches: dict[str, int] = Field(default_factory=dict)
+    checkpoint: str | None = None
+
+    @field_validator("branches")
+    @classmethod
+    def validate_branches(cls, value: dict[str, int]) -> dict[str, int]:
+        normalized: dict[str, int] = {}
+        for key, target_index in value.items():
+            idx = int(target_index)
+            if idx < 0:
+                raise ValueError("Encounter branch target index must be >= 0")
+            normalized[str(key)] = idx
+        return normalized
+
 
 
 class ScenarioConfig(BaseModel):

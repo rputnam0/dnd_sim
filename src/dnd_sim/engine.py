@@ -9,7 +9,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Callable
 
-from dnd_sim.io import EnemyConfig, LoadedScenario
+from dnd_sim.io import EncounterConfig, EnemyConfig, LoadedScenario
 from dnd_sim.models import (
     ABILITY_KEYS,
     ActionDefinition,
@@ -2322,14 +2322,156 @@ def _actor_defeated(actor: ActorRuntimeState) -> bool:
     return actor.dead or actor.hp <= 0
 
 
-def _party_defeated(actors: dict[str, ActorRuntimeState]) -> bool:
-    party = [actor for actor in actors.values() if actor.team == "party"]
-    return bool(party) and all(_actor_defeated(actor) for actor in party)
+def _team_actors(actors: dict[str, ActorRuntimeState], *, team: str) -> list[ActorRuntimeState]:
+    if team == "party":
+        return [actor for actor in actors.values() if actor.team == "party"]
+    return [actor for actor in actors.values() if actor.team != "party"]
 
 
-def _enemies_defeated(actors: dict[str, ActorRuntimeState]) -> bool:
-    enemies = [actor for actor in actors.values() if actor.team != "party"]
-    return bool(enemies) and all(_actor_defeated(actor) for actor in enemies)
+def _compare_numeric(lhs: float, op: str, rhs: float) -> bool:
+    if op in {"<", "lt"}:
+        return lhs < rhs
+    if op in {"<=", "le"}:
+        return lhs <= rhs
+    if op in {">", "gt"}:
+        return lhs > rhs
+    if op in {">=", "ge"}:
+        return lhs >= rhs
+    if op in {"==", "eq"}:
+        return lhs == rhs
+    if op in {"!=", "ne"}:
+        return lhs != rhs
+    raise ValueError(f"Unsupported predicate operator: {op}")
+
+
+def _team_metric_value(team_actors: list[ActorRuntimeState], metric: str) -> float:
+    key = str(metric).lower()
+    if key in {"alive_count", "conscious_count"}:
+        return float(sum(1 for actor in team_actors if actor.hp > 0 and not actor.dead))
+    if key in {"active_count"}:
+        return float(sum(1 for actor in team_actors if not actor.dead))
+    if key in {"downed_count"}:
+        return float(sum(1 for actor in team_actors if _actor_defeated(actor)))
+    if key in {"dead_count"}:
+        return float(sum(1 for actor in team_actors if actor.dead))
+    if key == "total_hp":
+        return float(sum(max(0, int(actor.hp)) for actor in team_actors if not actor.dead))
+    if key == "max_hp":
+        return float(sum(int(actor.max_hp) for actor in team_actors))
+    raise ValueError(f"Unsupported predicate metric: {metric}")
+
+
+def _evaluate_custom_termination_predicate(
+    predicate: dict[str, Any], team_actors: list[ActorRuntimeState]
+) -> bool:
+    if "all" in predicate:
+        clauses = predicate.get("all")
+        if not isinstance(clauses, list):
+            raise ValueError("Custom predicate 'all' must be a list")
+        return all(
+            _evaluate_custom_termination_predicate(clause, team_actors)
+            for clause in clauses
+            if isinstance(clause, dict)
+        )
+    if "any" in predicate:
+        clauses = predicate.get("any")
+        if not isinstance(clauses, list):
+            raise ValueError("Custom predicate 'any' must be a list")
+        return any(
+            _evaluate_custom_termination_predicate(clause, team_actors)
+            for clause in clauses
+            if isinstance(clause, dict)
+        )
+
+    metric = predicate.get("metric", "alive_count")
+    op = str(predicate.get("op", "<=")).lower()
+    value = float(predicate.get("value", 0))
+    lhs = _team_metric_value(team_actors, str(metric))
+    return _compare_numeric(lhs, op, value)
+
+
+def _team_defeated(
+    actors: dict[str, ActorRuntimeState], *, team: str, rule_spec: Any, default_rule: str
+) -> bool:
+    team_members = _team_actors(actors, team=team)
+    if not team_members:
+        return False
+
+    rule = rule_spec if rule_spec is not None else default_rule
+    if isinstance(rule, dict):
+        return _evaluate_custom_termination_predicate(rule, team_members)
+    if not isinstance(rule, str):
+        raise ValueError(f"Unsupported termination rule type for team '{team}': {type(rule)}")
+
+    key = rule.strip().lower()
+    if key in {"all_unconscious_or_dead", "all_downed", "all_defeated", "none_conscious"}:
+        return all(_actor_defeated(actor) for actor in team_members)
+    if key in {"all_dead", "none_alive"}:
+        return all(actor.dead for actor in team_members)
+    if key in {"any_unconscious_or_dead", "any_downed"}:
+        return any(_actor_defeated(actor) for actor in team_members)
+    if key in {"any_dead"}:
+        return any(actor.dead for actor in team_members)
+    raise ValueError(f"Unsupported termination rule for team '{team}': {rule}")
+
+
+def _party_defeated(actors: dict[str, ActorRuntimeState], rule_spec: Any = None) -> bool:
+    return _team_defeated(
+        actors,
+        team="party",
+        rule_spec=rule_spec,
+        default_rule="all_unconscious_or_dead",
+    )
+
+
+def _enemies_defeated(actors: dict[str, ActorRuntimeState], rule_spec: Any = None) -> bool:
+    return _team_defeated(
+        actors,
+        team="enemy",
+        rule_spec=rule_spec,
+        default_rule="all_dead",
+    )
+
+
+def _resolve_next_encounter_index(
+    *,
+    encounter: EncounterConfig,
+    encounter_outcome: str,
+    encounter_winner: str,
+    default_next: int,
+    encounter_count: int,
+) -> tuple[int | None, str | None]:
+    branches = encounter.branches if isinstance(encounter.branches, dict) else {}
+    branch_key: str | None = None
+    next_idx: int | None = None
+
+    for candidate_key in (encounter_outcome, encounter_winner, "default"):
+        if candidate_key in branches:
+            branch_key = candidate_key
+            next_idx = int(branches[candidate_key])
+            break
+
+    if next_idx is None:
+        next_idx = default_next
+
+    if next_idx >= encounter_count:
+        return None, branch_key
+    if next_idx < 0:
+        raise ValueError(f"Encounter branch index must be >= 0, got {next_idx}")
+    return next_idx, branch_key
+
+
+def _actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
+    return {
+        "name": actor.name,
+        "hp": actor.hp,
+        "max_hp": actor.max_hp,
+        "temp_hp": actor.temp_hp,
+        "dead": actor.dead,
+        "downed_count": actor.downed_count,
+        "conditions": sorted(actor.conditions),
+        "resources": dict(sorted(actor.resources.items())),
+    }
 
 
 def _build_initiative_order(
@@ -5857,6 +5999,8 @@ def _flatten_trial(trial: TrialResult) -> dict[str, Any]:
         "downed_counts": json.dumps(trial.downed_counts, sort_keys=True),
         "death_counts": json.dumps(trial.death_counts, sort_keys=True),
         "remaining_hp": json.dumps(trial.remaining_hp, sort_keys=True),
+        "encounter_outcomes": json.dumps(trial.encounter_outcomes, sort_keys=True),
+        "state_snapshots": json.dumps(trial.state_snapshots, sort_keys=True),
     }
 
 
@@ -5886,7 +6030,28 @@ def run_simulation(
     )
     light_level = str(battlefield.get("light_level", "bright")).lower()
     battlefield_obstacles = _build_battlefield_obstacles(battlefield.get("obstacles", []))
-    encounter_enemy_lists = [list(scenario.config.enemies)]
+
+    encounter_plan = list(scenario.config.encounters)
+    if not encounter_plan:
+        encounter_plan = [EncounterConfig(enemies=list(scenario.config.enemies))]
+
+    termination_rules = (
+        scenario.config.termination_rules
+        if isinstance(scenario.config.termination_rules, dict)
+        else {}
+    )
+    party_defeat_rule = termination_rules.get("party_defeat", "all_unconscious_or_dead")
+    enemy_defeat_rule = termination_rules.get("enemy_defeat", "all_dead")
+    max_rounds = int(termination_rules.get("max_rounds", 20))
+    max_encounter_steps = int(
+        termination_rules.get("max_encounter_steps", max(1, len(encounter_plan) * 3))
+    )
+    if max_rounds <= 0:
+        raise ValueError("termination_rules.max_rounds must be >= 1")
+    if max_encounter_steps <= 0:
+        raise ValueError("termination_rules.max_encounter_steps must be >= 1")
+
+    short_rest_healing = int(scenario.config.resource_policy.get("short_rest_healing", 0))
 
     for trial_idx in range(trials):
         actors: dict[str, ActorRuntimeState] = {}
@@ -5925,8 +6090,20 @@ def run_simulation(
 
         total_rounds = 0
         overall_winner = "draw"
+        encounter_idx: int | None = 0
+        encounter_step = 0
 
-        for enc_idx, encounter_enemy_ids in enumerate(encounter_enemy_lists):
+        while encounter_idx is not None and encounter_idx < len(encounter_plan):
+            if encounter_step >= max_encounter_steps:
+                raise ValueError(
+                    "Encounter branching exceeded termination_rules.max_encounter_steps"
+                )
+
+            step_index = encounter_step
+            encounter_step += 1
+            encounter = encounter_plan[encounter_idx]
+            encounter_enemy_ids = list(encounter.enemies)
+
             for aid in list(actors.keys()):
                 if actors[aid].team != "party":
                     downed_counts[aid] = actors[aid].downed_count
@@ -5939,8 +6116,8 @@ def run_simulation(
                 count = enemy_counts.get(enemy_id, 0) + 1
                 enemy_counts[enemy_id] = count
                 unique_enemy_id = (
-                    f"{enemy_id}_e{enc_idx}_{count}"
-                    if (count > 1 or len(encounter_enemy_lists) > 1)
+                    f"{enemy_id}_e{step_index}_{count}"
+                    if (count > 1 or len(encounter_plan) > 1)
                     else enemy_id
                 )
 
@@ -5956,7 +6133,7 @@ def run_simulation(
                 downed_counts[actor.actor_id] = 0
                 death_counts[actor.actor_id] = 0
 
-            if trial_idx == 0 and enc_idx == 0:
+            if trial_idx == 0 and step_index == 0:
                 tracked_resource_names = {
                     actor_id: set(actor.resources.keys()) for actor_id, actor in actors.items()
                 }
@@ -5966,7 +6143,6 @@ def run_simulation(
                 initiative_order, actors
             )
             rounds = 0
-            max_rounds = int(scenario.config.termination_rules.get("max_rounds", 20))
 
             while rounds < max_rounds:
                 rounds += 1
@@ -6031,7 +6207,9 @@ def run_simulation(
                         resolve_death_save(rng, actor)
                         continue
 
-                    if _party_defeated(actors) or _enemies_defeated(actors):
+                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
+                        actors, enemy_defeat_rule
+                    ):
                         break
 
                     turn_token = f"{rounds}:{actor.actor_id}"
@@ -6454,23 +6632,96 @@ def run_simulation(
                         light_level=light_level,
                     )
 
-                if _party_defeated(actors) or _enemies_defeated(actors):
+                if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
+                    actors, enemy_defeat_rule
+                ):
                     break
 
             total_rounds += rounds
 
-            if _party_defeated(actors):
-                overall_winner = "enemy"
-                break
-            elif not _enemies_defeated(actors):
+            party_is_defeated = _party_defeated(actors, party_defeat_rule)
+            enemies_are_defeated = _enemies_defeated(actors, enemy_defeat_rule)
+            if party_is_defeated:
+                encounter_winner = "enemy"
+                encounter_outcome = "party_defeat"
+            elif enemies_are_defeated:
+                encounter_winner = "party"
+                encounter_outcome = "enemy_defeat"
+            else:
                 party_hp = sum(a.hp for a in actors.values() if a.team == "party" and not a.dead)
                 enemy_hp = sum(a.hp for a in actors.values() if a.team != "party" and not a.dead)
-                overall_winner = "party" if party_hp >= enemy_hp else "enemy"
-                if overall_winner == "enemy":
-                    break
+                encounter_winner = "party" if party_hp >= enemy_hp else "enemy"
+                encounter_outcome = encounter_winner
 
-        if overall_winner == "draw" and _enemies_defeated(actors):
-            overall_winner = "party"
+            next_encounter_idx, branch_key = _resolve_next_encounter_index(
+                encounter=encounter,
+                encounter_outcome=encounter_outcome,
+                encounter_winner=encounter_winner,
+                default_next=encounter_idx + 1,
+                encounter_count=len(encounter_plan),
+            )
+
+            continue_campaign = next_encounter_idx is not None
+            if party_is_defeated:
+                overall_winner = "enemy"
+                continue_campaign = False
+                next_encounter_idx = None
+            elif encounter_winner == "enemy" and branch_key is None:
+                overall_winner = "enemy"
+                continue_campaign = False
+                next_encounter_idx = None
+
+            if continue_campaign and encounter.short_rest_after:
+                for actor in actors.values():
+                    if actor.team == "party":
+                        short_rest(actor, healing=short_rest_healing)
+
+            checkpoint_id = encounter.checkpoint or f"encounter_{step_index}_end"
+            party_snapshot = {
+                actor_id: _actor_state_snapshot(actor)
+                for actor_id, actor in sorted(actors.items())
+                if actor.team == "party"
+            }
+            enemy_snapshot = {
+                actor_id: _actor_state_snapshot(actor)
+                for actor_id, actor in sorted(actors.items())
+                if actor.team != "party"
+            }
+            state_snapshots.append(
+                {
+                    "checkpoint_id": checkpoint_id,
+                    "encounter_index": encounter_idx,
+                    "encounter_step": step_index,
+                    "outcome": encounter_outcome,
+                    "winner": encounter_winner,
+                    "next_encounter_index": next_encounter_idx,
+                    "party": party_snapshot,
+                    "enemies": enemy_snapshot,
+                }
+            )
+            encounter_outcomes.append(
+                {
+                    "encounter_index": encounter_idx,
+                    "encounter_step": step_index,
+                    "outcome": encounter_outcome,
+                    "winner": encounter_winner,
+                    "branch_key": branch_key,
+                    "next_encounter_index": next_encounter_idx,
+                }
+            )
+
+            if not continue_campaign:
+                if overall_winner == "draw":
+                    overall_winner = encounter_winner
+                break
+
+            encounter_idx = next_encounter_idx
+
+        if overall_winner == "draw":
+            if _party_defeated(actors, party_defeat_rule):
+                overall_winner = "enemy"
+            elif _enemies_defeated(actors, enemy_defeat_rule):
+                overall_winner = "party"
 
         for aid, actor in actors.items():
             downed_counts[aid] = actor.downed_count
@@ -6487,6 +6738,8 @@ def run_simulation(
             downed_counts=downed_counts,
             death_counts=death_counts,
             remaining_hp=remaining_hp,
+            encounter_outcomes=encounter_outcomes,
+            state_snapshots=state_snapshots,
         )
         trial_results.append(trial)
 
