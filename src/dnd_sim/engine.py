@@ -4610,6 +4610,8 @@ def _execute_action(
                 disadvantage = True
             if not target_can_see:
                 advantage = True
+            effective_advantage = advantage and not disadvantage
+            effective_disadvantage = disadvantage and not advantage
 
             # Sharpshooter / Great Weapon Master AI Toggle (-5 to hit / +10 damage)
             power_attack_active = False
@@ -4789,6 +4791,7 @@ def _execute_action(
                     _has_trait(actor, "sneak attack")
                     and getattr(actor, "sneak_attack_used_this_turn", False) is False
                     and not getattr(actor, "is_heavy", False)
+                    and "spell" not in action.tags
                 ):
                     # Finesse or ranged
                     if (
@@ -4802,9 +4805,9 @@ def _execute_action(
                         )
                     ):
                         has_sneak = False
-                        if advantage and not disadvantage:
+                        if effective_advantage:
                             has_sneak = True
-                        elif not disadvantage:
+                        elif not effective_disadvantage:
                             # ally within 5ft
                             for cand in actors.values():
                                 if (
@@ -4812,6 +4815,7 @@ def _execute_action(
                                     and cand.actor_id != actor.actor_id
                                     and cand.hp > 0
                                     and not cand.dead
+                                    and "incapacitated" not in cand.conditions
                                 ):
                                     if distance_chebyshev(cand.position, target.position) <= 5:
                                         has_sneak = True
