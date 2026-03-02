@@ -6744,6 +6744,22 @@ def _execute_action(
         return
 
     if action.action_type in {"utility", "buff"}:
+        if _has_tag(action, "conversion:points_to_slot"):
+            slot_level = _slot_level_from_action(action)
+            if slot_level is not None and slot_level <= 5:
+                slot_key = f"spell_slot_{slot_level}"
+                actor.resources[slot_key] = actor.resources.get(slot_key, 0) + 1
+            return
+        if _has_tag(action, "conversion:slot_to_points"):
+            slot_level = _slot_level_from_action(action)
+            if slot_level is not None:
+                current_points = int(actor.resources.get("sorcery_points", 0))
+                points_gain = slot_level
+                max_points = actor.max_resources.get("sorcery_points")
+                if isinstance(max_points, int) and max_points >= 0:
+                    points_gain = max(0, min(points_gain, int(max_points) - current_points))
+                actor.resources["sorcery_points"] = current_points + points_gain
+            return
         if "dispel" in action.tags or action.name.startswith("dispel_magic"):
             _resolve_dispel_magic(
                 rng=rng,
