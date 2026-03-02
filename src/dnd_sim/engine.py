@@ -352,6 +352,213 @@ def _calculate_proficiency_bonus(level: int) -> int:
     return 2 + max(0, (max(level, 1) - 1) // 4)
 
 
+def _is_smite_spell_name(name: str) -> bool:
+    key = _trait_lookup_key(name)
+    return key.endswith("smite") and key != "divine smite"
+
+
+def _is_smite_setup_action(action: ActionDefinition) -> bool:
+    return "spell" in action.tags and _is_smite_spell_name(action.name)
+
+
+def _aura_of_protection_radius(actor: ActorRuntimeState) -> float:
+    radius = 10.0
+    trait_payload = actor.traits.get(_normalize_trait_name("aura of protection"), {})
+    mechanics = trait_payload.get("mechanics", []) if isinstance(trait_payload, dict) else []
+    for mechanic in mechanics:
+        if not isinstance(mechanic, dict):
+            continue
+        if str(mechanic.get("type", "")).lower() != "aura":
+            continue
+        raw_base = mechanic.get("range")
+        if isinstance(raw_base, (int, float)):
+            radius = float(raw_base)
+        raw_at_level = mechanic.get("range_at_level")
+        if isinstance(raw_at_level, dict):
+            for level_text, ranged in raw_at_level.items():
+                try:
+                    threshold = int(level_text)
+                except (TypeError, ValueError):
+                    continue
+                if actor.level >= threshold and isinstance(ranged, (int, float)):
+                    radius = float(ranged)
+    if actor.level >= 18:
+        radius = max(radius, 30.0)
+    return radius
+
+
+def _smite_of_protection_half_cover_bonus(
+    target: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+) -> int:
+    from .spatial import distance_chebyshev
+
+    for ally in actors.values():
+        if ally.team != target.team:
+            continue
+        if ally.dead or ally.hp <= 0:
+            continue
+        if "smite_of_protection_window" not in ally.conditions:
+            continue
+        if not _has_trait(ally, "smite of protection"):
+            continue
+        if not _has_trait(ally, "aura of protection"):
+            continue
+        if distance_chebyshev(ally.position, target.position) <= _aura_of_protection_radius(ally):
+            return 2
+    return 0
+
+
+def _smite_extra_damage_components(action: ActionDefinition) -> list[tuple[str, str]]:
+    components: list[tuple[str, str]] = []
+    for mechanic in action.mechanics:
+        if not isinstance(mechanic, dict):
+            continue
+        effect_type = str(mechanic.get("effect_type", "")).lower()
+        if effect_type == "extra_damage":
+            raw_expr = mechanic.get("damage", mechanic.get("dice"))
+            if isinstance(raw_expr, str) and raw_expr.strip():
+                components.append(
+                    (
+                        raw_expr.strip().replace(" ", ""),
+                        str(mechanic.get("damage_type", action.damage_type or "radiant")).lower(),
+                    )
+                )
+            continue
+        raw_inline = mechanic.get("extra_damage")
+        if isinstance(raw_inline, str):
+            match = re.search(r"(\d+d\d+(?:\s*[+-]\s*\d+)?)", raw_inline, flags=re.IGNORECASE)
+            if not match:
+                continue
+            expr = match.group(1).replace(" ", "")
+            dtype_match = re.search(
+                r"\d+d\d+(?:\s*[+-]\s*\d+)?\s+([a-z]+)",
+                raw_inline,
+                flags=re.IGNORECASE,
+            )
+            dtype = (
+                dtype_match.group(1).lower()
+                if dtype_match
+                else str(action.damage_type or "radiant").lower()
+            )
+            components.append((expr, dtype))
+    if not components and action.damage and _is_smite_setup_action(action):
+        components.append((action.damage, str(action.damage_type or "radiant").lower()))
+    return components
+
+
+def _smite_rider_effects(action: ActionDefinition) -> list[dict[str, Any]]:
+    riders: list[dict[str, Any]] = []
+    for mechanic in action.mechanics:
+        if not isinstance(mechanic, dict):
+            continue
+        effect_type = str(mechanic.get("effect_type", "")).lower()
+        if effect_type == "apply_condition":
+            duration = mechanic.get("duration_rounds")
+            if duration is None and mechanic.get("duration") is not None:
+                duration = mechanic.get("duration")
+            parsed_duration: int | None = None
+            if duration is not None:
+                try:
+                    parsed_duration = int(duration)
+                except (TypeError, ValueError):
+                    parsed_duration = None
+            if parsed_duration is not None and parsed_duration <= 0:
+                parsed_duration = 1
+            riders.append(
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "condition": str(mechanic.get("condition", "")),
+                    "duration_rounds": parsed_duration,
+                }
+            )
+            continue
+        if effect_type == "push":
+            distance = mechanic.get("distance", 0)
+            riders.append(
+                {
+                    "effect_type": "forced_movement",
+                    "target": "target",
+                    "distance_ft": int(distance) if distance else 0,
+                    "direction": str(mechanic.get("direction", "away_from_source")),
+                }
+            )
+            continue
+        if effect_type == "forced_movement":
+            riders.append(dict(mechanic))
+    return riders
+
+
+def _arm_pending_smite(actor: ActorRuntimeState, action: ActionDefinition) -> None:
+    actor.pending_smite = {
+        "name": action.name,
+        "save_dc": action.save_dc,
+        "save_ability": action.save_ability.lower() if action.save_ability else None,
+        "extra_damage": _smite_extra_damage_components(action),
+        "rider_effects": _smite_rider_effects(action),
+    }
+
+
+def _apply_pending_smite_on_hit(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    target: ActorRuntimeState,
+    roll_crit: bool,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> int:
+    pending = actor.pending_smite
+    if not pending:
+        return 0
+
+    extra_damage = 0
+    for payload in pending.get("extra_damage", []):
+        if (
+            not isinstance(payload, (list, tuple))
+            or len(payload) != 2
+            or not isinstance(payload[0], str)
+        ):
+            continue
+        expr = payload[0]
+        dtype = str(payload[1]).lower()
+        extra_damage += roll_damage(rng, expr, crit=roll_crit, source=actor, damage_type=dtype)
+
+    rider_effects = [
+        effect for effect in pending.get("rider_effects", []) if isinstance(effect, dict)
+    ]
+    save_dc = pending.get("save_dc")
+    save_ability = pending.get("save_ability")
+    rider_saved = False
+    if rider_effects and save_dc is not None and isinstance(save_ability, str):
+        save_mod = int(target.save_mods.get(save_ability, 0))
+        rider_saved = (rng.randint(1, 20) + save_mod) >= int(save_dc)
+    if not rider_saved:
+        for effect in rider_effects:
+            _apply_effect(
+                effect=effect,
+                rng=rng,
+                actor=actor,
+                target=target,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                actors=actors,
+                active_hazards=active_hazards,
+            )
+
+    actor.pending_smite = None
+    if actor.concentrating and _is_smite_spell_name(actor.concentrated_spell or ""):
+        _break_concentration(actor, actors, active_hazards)
+    return extra_damage
+
+
 def _to_position3(value: Any) -> tuple[float, float, float] | None:
     if isinstance(value, (list, tuple)) and len(value) == 3:
         try:
@@ -939,6 +1146,7 @@ def _build_spell_actions(
             aoe_size_ft=spell.get("aoe_size_ft"),
             max_targets=max_targets,
             concentration=bool(spell.get("concentration", False)),
+            include_self=smite_setup,
             effects=effects,
             mechanics=mechanics,
             tags=tags,
@@ -1309,6 +1517,17 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     tags=["reaction", "shield_spell"],
                 )
             )
+        if has_trait("lay on hands"):
+            actions.append(
+                ActionDefinition(
+                    name="lay_on_hands",
+                    action_type="utility",
+                    action_cost="action",
+                    target_mode="single_ally",
+                    include_self=True,
+                    tags=["healing", "lay_on_hands"],
+                )
+            )
         # --- Spell actions ---
         actions.extend(_build_spell_actions(character, character_level=character_level))
         actions.extend(
@@ -1403,6 +1622,13 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
                         result[f"{key}_{name}"] = amount
         elif isinstance(value, int):
             result[key] = value
+    traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
+    if _normalize_trait_name("lay on hands") in traits and "lay_on_hands_pool" not in result:
+        result["lay_on_hands_pool"] = max(
+            0, _parse_character_level(character.get("class_level", "1")) * 5
+        )
+    if _normalize_trait_name("paladin's smite") in traits and "paladins_smite_free" not in result:
+        result["paladins_smite_free"] = 1
     return result
 
 
@@ -3082,6 +3308,8 @@ def _can_take_reaction(actor: ActorRuntimeState) -> bool:
 
 
 def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if action.name == "lay_on_hands" and actor.resources.get("lay_on_hands_pool", 0) <= 0:
+        return False
     if action.max_uses is not None and actor.per_action_uses.get(action.name, 0) >= action.max_uses:
         return False
     if action.recharge and not actor.recharge_ready.get(action.name, True):
@@ -4248,6 +4476,9 @@ def _execute_action(
                 if effect.get("effect_type") == "apply_condition"
                 and str(effect.get("condition", "")).strip()
             }
+            if _is_smite_setup_action(action):
+                actor.concentration_conditions.clear()
+                actor.concentrated_targets.clear()
 
     # Phase 11: Contested Grapple/Shove Checks
     if action.action_type in ("grapple", "shove") and targets:
@@ -4369,6 +4600,7 @@ def _execute_action(
             # Sharpshooter / Great Weapon Master AI Toggle (-5 to hit / +10 damage)
             power_attack_active = False
             target_ac = target.ac
+            cover_bonus = 0
             to_hit_penalty = 0
             damage_bonus = 0
 
@@ -4416,9 +4648,14 @@ def _execute_action(
                     emit_event("on_miss", trigger_target=target)
                     continue
                 if cover_state == "HALF":
-                    target_ac += 2
+                    cover_bonus = max(cover_bonus, 2)
                 elif cover_state == "THREE_QUARTERS":
-                    target_ac += 5
+                    cover_bonus = max(cover_bonus, 5)
+                cover_bonus = max(
+                    cover_bonus,
+                    _smite_of_protection_half_cover_bonus(target, actors),
+                )
+                target_ac += cover_bonus
 
                 if _has_trait(actor, "sharpshooter") and is_ranged:
                     if target_ac <= 16 or advantage:
@@ -4607,6 +4844,15 @@ def _execute_action(
                         damage_type=action.damage_type,
                     )
 
+                if _has_trait(actor, "improved divine smite") and not is_ranged:
+                    raw_damage += roll_damage(
+                        rng,
+                        "1d8",
+                        crit=roll.crit,
+                        source=actor,
+                        damage_type="radiant",
+                    )
+
                 # Divine Smite Logic
                 if _has_trait(actor, "divine smite") and not is_ranged and target.hp > 0:
                     slot_level = 0
@@ -4624,6 +4870,13 @@ def _execute_action(
                         resources_spent[actor.actor_id][sp_key] = (
                             resources_spent[actor.actor_id].get(sp_key, 0) + 1
                         )
+                    elif actor.resources.get("paladins_smite_free", 0) > 0:
+                        actor.resources["paladins_smite_free"] -= 1
+                        resources_spent[actor.actor_id]["paladins_smite_free"] = (
+                            resources_spent[actor.actor_id].get("paladins_smite_free", 0) + 1
+                        )
+                        slot_level = 1
+                    if sp_key or slot_level > 0:
                         smite_dice = min(5, 1 + slot_level)
                         raw_smite = roll_damage(
                             rng,
@@ -4774,6 +5027,8 @@ def _execute_action(
             if target.dead or target.hp <= 0:
                 continue
             save_mod = int(target.save_mods.get(save_key, 0))
+            if save_key == "dex":
+                save_mod += _smite_of_protection_half_cover_bonus(target, actors)
             save_roll = rng.randint(1, 20)
             if (
                 save_key == "dex"

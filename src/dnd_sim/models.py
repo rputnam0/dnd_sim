@@ -164,6 +164,7 @@ class ActorRuntimeState:
     readied_trigger: str | None = None
     concentrated_spell_level: int | None = None
     level: int = 1
+    pending_smite: dict[str, Any] | None = None
 
     def is_active(self) -> bool:
         return not self.dead
