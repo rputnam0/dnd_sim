@@ -214,6 +214,127 @@ def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
     return any(_normalize_trait_name(key) == needle for key in actor.traits.keys())
 
 
+def _has_any_trait(actor: ActorRuntimeState, names: list[str]) -> bool:
+    return any(_has_trait(actor, name) for name in names)
+
+
+def _has_trait_marker(actor: ActorRuntimeState, marker: str) -> bool:
+    needle = _trait_lookup_key(marker)
+    if not needle:
+        return False
+    for trait_name in actor.traits.keys():
+        normalized = _trait_lookup_key(trait_name)
+        if normalized == needle:
+            return True
+        if needle in normalized.split():
+            return True
+    return False
+
+
+def _is_channel_divinity_resource_name(name: str) -> bool:
+    key = _trait_lookup_key(name)
+    words = set(key.split())
+    return "channel" in words and "divinity" in words
+
+
+def _find_channel_divinity_resource_key(resources: dict[str, Any]) -> str | None:
+    for key in resources.keys():
+        if _is_channel_divinity_resource_name(str(key)):
+            return str(key)
+    return None
+
+
+def _channel_divinity_uses_for_level(level: int) -> int:
+    if level >= 18:
+        return 3
+    if level >= 6:
+        return 2
+    if level >= 2:
+        return 1
+    return 0
+
+
+def _infer_spell_save_dc(
+    character: dict[str, Any],
+    *,
+    character_level: int,
+    default_ability: str = "wis",
+) -> int:
+    explicit = character.get("spell_save_dc")
+    if isinstance(explicit, int):
+        return explicit
+
+    profile = _extract_spellcasting_profile_from_raw_fields(character)
+    dc_from_profile = profile.get("save_dc")
+    if isinstance(dc_from_profile, int):
+        return dc_from_profile
+
+    ability_scores = character.get("ability_scores", {}) or {}
+    ability_mod = (int(ability_scores.get(default_ability, 10)) - 10) // 2
+    return 8 + _calculate_proficiency_bonus(character_level) + ability_mod
+
+
+def _spend_channel_divinity(
+    actor: ActorRuntimeState,
+    resources_spent: dict[str, dict[str, int]],
+    *,
+    amount: int = 1,
+) -> bool:
+    if amount <= 0:
+        return True
+    resource_key = _find_channel_divinity_resource_key(actor.resources)
+    if resource_key is None:
+        return False
+    current = int(actor.resources.get(resource_key, 0))
+    if current < amount:
+        return False
+    actor.resources[resource_key] = current - amount
+    resources_spent[actor.actor_id][resource_key] = (
+        resources_spent[actor.actor_id].get(resource_key, 0) + amount
+    )
+    return True
+
+
+def _has_destructive_wrath(actor: ActorRuntimeState) -> bool:
+    return _has_any_trait(
+        actor,
+        [
+            "destructive wrath",
+            "channel divinity: destructive wrath",
+        ],
+    )
+
+
+def _max_damage_expression(expr: str, *, crit: bool = False) -> int:
+    n_dice, dice_size, flat = parse_damage_expression(expr)
+    die_count = n_dice * (2 if crit else 1)
+    return max(0, (die_count * dice_size) + flat)
+
+
+def _roll_damage_with_channel_divinity_hooks(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    expr: str,
+    damage_type: str,
+    resources_spent: dict[str, dict[str, int]],
+    crit: bool = False,
+    empowered_rerolls: int = 0,
+) -> int:
+    normalized_type = str(damage_type).lower()
+    if normalized_type in {"lightning", "thunder"} and _has_destructive_wrath(actor):
+        if _spend_channel_divinity(actor, resources_spent):
+            return _max_damage_expression(expr, crit=crit)
+    return roll_damage(
+        rng,
+        expr,
+        crit=crit,
+        empowered_rerolls=empowered_rerolls,
+        source=actor,
+        damage_type=damage_type,
+    )
+
+
 def _parse_character_level(class_level: str) -> int:
     """Extract the numeric level from a class_level string like 'Fighter 8' or 'Wizard 5 / Cleric 3'."""
     import re
@@ -866,10 +987,145 @@ def _build_spell_actions(
     return actions
 
 
+def _build_cleric_channel_divinity_actions(
+    *,
+    character: dict[str, Any],
+    character_level: int,
+    traits: set[str],
+) -> list[ActionDefinition]:
+    def has_trait(name: str) -> bool:
+        return _normalize_trait_name(name) in traits
+
+    def has_any_trait(*names: str) -> bool:
+        return any(has_trait(name) for name in names)
+
+    channel_resource_key = _find_channel_divinity_resource_key(character.get("resources", {}))
+    if channel_resource_key is None:
+        channel_resource_key = "channel_divinity"
+    channel_cost = {channel_resource_key: 1}
+    cleric_save_dc = _infer_spell_save_dc(
+        character, character_level=character_level, default_ability="wis"
+    )
+
+    actions: list[ActionDefinition] = []
+
+    if has_any_trait("turn undead", "channel divinity: turn undead"):
+        actions.append(
+            ActionDefinition(
+                name="turn_undead",
+                action_type="save",
+                save_dc=cleric_save_dc,
+                save_ability="wis",
+                half_on_save=False,
+                resource_cost=dict(channel_cost),
+                target_mode="all_enemies",
+                range_ft=30,
+                effects=[
+                    {
+                        "effect_type": "apply_condition",
+                        "apply_on": "save_fail",
+                        "target": "target",
+                        "condition": "turned",
+                        "duration_rounds": 10,
+                    },
+                    {
+                        "effect_type": "apply_condition",
+                        "apply_on": "save_fail",
+                        "target": "target",
+                        "condition": "frightened",
+                        "duration_rounds": 10,
+                    },
+                    {
+                        "effect_type": "apply_condition",
+                        "apply_on": "save_fail",
+                        "target": "target",
+                        "condition": "incapacitated",
+                        "duration_rounds": 10,
+                    },
+                ],
+                tags=["channel_divinity", "turn_undead", "requires_target_trait:undead"],
+            )
+        )
+
+    if has_any_trait("preserve life", "channel divinity: preserve life"):
+        actions.append(
+            ActionDefinition(
+                name="preserve_life",
+                action_type="utility",
+                resource_cost=dict(channel_cost),
+                target_mode="single_ally",
+                include_self=True,
+                range_ft=30,
+                effects=[
+                    {
+                        "effect_type": "heal",
+                        "target": "target",
+                        "amount": str(max(1, 5 * character_level)),
+                        "apply_on": "always",
+                    }
+                ],
+                tags=["channel_divinity", "domain_life"],
+            )
+        )
+
+    if has_any_trait("radiance of the dawn", "channel divinity: radiance of the dawn"):
+        actions.append(
+            ActionDefinition(
+                name="radiance_of_the_dawn",
+                action_type="save",
+                save_dc=cleric_save_dc,
+                save_ability="con",
+                half_on_save=True,
+                damage=f"2d10+{character_level}",
+                damage_type="radiant",
+                resource_cost=dict(channel_cost),
+                target_mode="all_enemies",
+                range_ft=30,
+                tags=["channel_divinity", "domain_light"],
+            )
+        )
+
+    if has_any_trait("twilight sanctuary", "channel divinity: twilight sanctuary"):
+        actions.append(
+            ActionDefinition(
+                name="twilight_sanctuary",
+                action_type="utility",
+                resource_cost=dict(channel_cost),
+                target_mode="all_allies",
+                include_self=True,
+                range_ft=30,
+                effects=[
+                    {
+                        "effect_type": "temp_hp",
+                        "target": "target",
+                        "amount": f"1d6+{character_level}",
+                        "apply_on": "always",
+                    },
+                    {
+                        "effect_type": "remove_condition",
+                        "target": "target",
+                        "condition": "charmed",
+                        "apply_on": "always",
+                    },
+                    {
+                        "effect_type": "remove_condition",
+                        "target": "target",
+                        "condition": "frightened",
+                        "apply_on": "always",
+                    },
+                ],
+                tags=["channel_divinity", "domain_twilight"],
+            )
+        )
+
+    return actions
+
+
 def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition]:
     attacks = character.get("attacks", [])
     resources = character.get("resources", {})
     traits = {_normalize_trait_name(trait) for trait in character.get("traits", [])}
+    character_level = _parse_character_level(character.get("class_level", "1"))
 
     def has_trait(name: str) -> bool:
         return _normalize_trait_name(name) in traits
@@ -1038,14 +1294,24 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
             )
         # --- Spell actions ---
-        character_level = _parse_character_level(character.get("class_level", "1"))
         actions.extend(_build_spell_actions(character, character_level=character_level))
+        actions.extend(
+            _build_cleric_channel_divinity_actions(
+                character=character,
+                character_level=character_level,
+                traits=traits,
+            )
+        )
 
         return actions
 
     # Fallback: no attacks defined
-    character_level = _parse_character_level(character.get("class_level", "1"))
     spell_actions = _build_spell_actions(character, character_level=character_level)
+    cleric_actions = _build_cleric_channel_divinity_actions(
+        character=character,
+        character_level=character_level,
+        traits=traits,
+    )
     base = [
         ActionDefinition(
             name="basic",
@@ -1068,7 +1334,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 tags=["bonus", "bardic_inspiration"],
             )
         )
-    return base + spell_actions
+    return base + spell_actions + cleric_actions
 
 
 def _get_standard_actions() -> list[ActionDefinition]:
@@ -1152,6 +1418,32 @@ def _apply_passive_traits(actor: ActorRuntimeState) -> None:
                     actor.traits[sense] = {"range_ft": float(raw_range)}
 
 
+def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
+    has_channel_divinity_feature = _has_trait(actor, "channel divinity") or any(
+        _normalize_trait_name(name).startswith("channel divinity:") for name in actor.traits.keys()
+    )
+    if not has_channel_divinity_feature:
+        return
+
+    resource_key = _find_channel_divinity_resource_key(actor.max_resources)
+    if resource_key is None:
+        resource_key = _find_channel_divinity_resource_key(actor.resources)
+    if resource_key is None:
+        resource_key = "channel_divinity"
+
+    existing_max = int(actor.max_resources.get(resource_key, 0))
+    if existing_max > 0:
+        return
+
+    uses = _channel_divinity_uses_for_level(actor.level)
+    if uses <= 0:
+        return
+
+    actor.max_resources[resource_key] = uses
+    if actor.resources.get(resource_key, 0) <= 0:
+        actor.resources[resource_key] = uses
+
+
 def _build_actor_from_character(
     character: dict[str, Any], traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
@@ -1192,6 +1484,7 @@ def _build_actor_from_character(
         traits=_resolve_character_traits(character, traits_db),
         level=_parse_character_level(character.get("class_level", "1")),
     )
+    _ensure_channel_divinity_resource(actor)
     _apply_passive_traits(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
@@ -1318,7 +1611,11 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
 
     short_rest_resources = {"action_surge", "ki", "channel_divinity"}
     for res_key in list(actor.resources.keys()):
-        if res_key in short_rest_resources or "warlock_spell_slot" in res_key:
+        if (
+            res_key in short_rest_resources
+            or "warlock_spell_slot" in res_key
+            or _is_channel_divinity_resource_name(res_key)
+        ):
             actor.resources[res_key] = actor.max_resources.get(res_key, 0)
 
     for action in actor.actions:
@@ -2028,12 +2325,18 @@ def _resolve_targets_for_action(
 
     required_conditions: set[str] = set()
     excluded_conditions: set[str] = set()
+    required_target_traits: set[str] = set()
+    excluded_target_traits: set[str] = set()
     for tag in getattr(action, "tags", []) or []:
         text = str(tag)
         if text.startswith("requires_condition:"):
             required_conditions.add(text.split(":", 1)[1].strip().lower())
         elif text.startswith("excludes_condition:"):
             excluded_conditions.add(text.split(":", 1)[1].strip().lower())
+        elif text.startswith("requires_target_trait:"):
+            required_target_traits.add(text.split(":", 1)[1].strip().lower())
+        elif text.startswith("excludes_target_trait:"):
+            excluded_target_traits.add(text.split(":", 1)[1].strip().lower())
 
     if required_conditions:
         candidates = [
@@ -2046,6 +2349,18 @@ def _resolve_targets_for_action(
             target
             for target in candidates
             if not any(cond in target.conditions for cond in excluded_conditions)
+        ]
+    if required_target_traits:
+        candidates = [
+            target
+            for target in candidates
+            if all(_has_trait_marker(target, marker) for marker in required_target_traits)
+        ]
+    if excluded_target_traits:
+        candidates = [
+            target
+            for target in candidates
+            if not any(_has_trait_marker(target, marker) for marker in excluded_target_traits)
         ]
     if not candidates:
         return []
@@ -2337,8 +2652,13 @@ def _apply_effect(
         if action and getattr(action, "tags", None):
             is_magical = "spell" in action.tags or "magical" in action.tags
         damage_type = str(effect.get("damage_type", "bludgeoning"))
-        raw_damage = roll_damage(
-            rng, str(effect.get("damage", "0")), crit=False, source=actor, damage_type=damage_type
+        raw_damage = _roll_damage_with_channel_divinity_hooks(
+            rng=rng,
+            actor=actor,
+            expr=str(effect.get("damage", "0")),
+            damage_type=damage_type,
+            resources_spent=resources_spent,
+            crit=False,
         )
         applied = apply_damage(
             recipient, raw_damage, damage_type, is_magical=is_magical, source=actor
@@ -3727,6 +4047,58 @@ def _resolve_dispel_magic(
         dc = 10 + source_level
         if (rng.randint(1, 20) + check_mod) >= dc:
             _break_concentration(source, actors, active_hazards)
+def _apply_domain_attack_roll_hooks(
+    *,
+    actor: ActorRuntimeState,
+    roll: AttackRollResult,
+    target_ac: int,
+    actors: dict[str, ActorRuntimeState],
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    if roll.hit or roll.natural_roll == 1:
+        return roll
+
+    guided_strike_traits = ["guided strike", "channel divinity: guided strike"]
+    boosted_total = roll.total + 10
+    if boosted_total >= target_ac and _has_any_trait(actor, guided_strike_traits):
+        if _spend_channel_divinity(actor, resources_spent):
+            return AttackRollResult(
+                hit=True,
+                crit=roll.crit,
+                natural_roll=roll.natural_roll,
+                total=boosted_total,
+            )
+
+    war_gods_blessing_traits = [
+        "war god's blessing",
+        "channel divinity: war god's blessing",
+        "oketra's blessing",
+    ]
+    if boosted_total < target_ac:
+        return roll
+
+    from .spatial import distance_chebyshev
+
+    for ally in actors.values():
+        if ally.team != actor.team or ally.actor_id == actor.actor_id:
+            continue
+        if not ally.reaction_available:
+            continue
+        if not _has_any_trait(ally, war_gods_blessing_traits):
+            continue
+        if distance_chebyshev(ally.position, actor.position) > 30:
+            continue
+        if not _spend_channel_divinity(ally, resources_spent):
+            continue
+        ally.reaction_available = False
+        return AttackRollResult(
+            hit=True,
+            crit=roll.crit,
+            natural_roll=roll.natural_roll,
+            total=boosted_total,
+        )
+
+    return roll
 
 
 def _execute_action(
@@ -4090,6 +4462,14 @@ def _execute_action(
                 hit = crit or (new_natural != 1 and total >= target_ac)
                 roll = AttackRollResult(hit=hit, crit=crit, natural_roll=new_natural, total=total)
 
+            roll = _apply_domain_attack_roll_hooks(
+                actor=actor,
+                roll=roll,
+                target_ac=target_ac,
+                actors=actors,
+                resources_spent=resources_spent,
+            )
+
             if force_crit and roll.hit:
                 roll = AttackRollResult(
                     hit=True, crit=True, natural_roll=roll.natural_roll, total=roll.total
@@ -4164,13 +4544,14 @@ def _execute_action(
 
                 if power_attack_active and damage_expr:
                     damage_expr += f"{damage_bonus:+d}"
-                raw_damage = roll_damage(
-                    rng,
-                    damage_expr,
+                raw_damage = _roll_damage_with_channel_divinity_hooks(
+                    rng=rng,
+                    actor=actor,
+                    expr=damage_expr,
+                    damage_type=action.damage_type,
+                    resources_spent=resources_spent,
                     crit=roll.crit,
                     empowered_rerolls=empowered_rerolls,
-                    source=actor,
-                    damage_type=action.damage_type,
                 )
                 if roll.crit and _has_trait(actor, "brutal critical") and not is_ranged:
                     brutal_extra = 0
@@ -4298,13 +4679,14 @@ def _execute_action(
                     resources_spent[actor.actor_id].get("sorcery_points", 0) + 1
                 )
                 empowered_rerolls = max(1, actor.cha_mod)
-            raw_damage = roll_damage(
-                rng,
-                action.damage,
+            raw_damage = _roll_damage_with_channel_divinity_hooks(
+                rng=rng,
+                actor=actor,
+                expr=action.damage,
+                damage_type=action.damage_type,
+                resources_spent=resources_spent,
                 crit=False,
                 empowered_rerolls=empowered_rerolls,
-                source=actor,
-                damage_type=action.damage_type,
             )
         if raw_damage > 0:
             primary_enemy_target = next(
