@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+from pathlib import Path
 from types import SimpleNamespace
 
 import dnd_sim.engine as engine_module
@@ -13,8 +14,12 @@ from dnd_sim.engine import (
     _build_round_metadata,
     _execute_action,
     _run_legendary_actions,
+    run_simulation,
 )
+from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from tests.helpers import build_character, build_enemy
+from tests.test_engine_integration import _setup_env
 
 
 def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
@@ -36,6 +41,16 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
         save_mods={"str": 2, "dex": 2, "con": 2, "int": 0, "wis": 0, "cha": 0},
         actions=[],
     )
+
+
+class SequenceRng:
+    def __init__(self, values: list[int]) -> None:
+        self.values = list(values)
+
+    def randint(self, _a: int, _b: int) -> int:
+        if not self.values:
+            raise AssertionError("RNG exhausted")
+        return self.values.pop(0)
 
 
 def test_build_actor_applies_passive_max_hp_trait() -> None:
@@ -904,3 +919,255 @@ def test_ready_action_triggers_readied_attack_on_enemy_turn() -> None:
     assert enemy.hp < enemy.max_hp
     assert ready_actor.reaction_available is False
     assert "readying" not in ready_actor.conditions
+
+
+def test_moving_through_reach_then_leaving_triggers_opportunity_attack() -> None:
+    mover = _base_actor(actor_id="mover", team="party")
+    guard = _base_actor(actor_id="guard", team="enemy")
+    target = _base_actor(actor_id="target", team="enemy")
+
+    mover.position = (0.0, 0.0, 0.0)
+    guard.position = (15.0, 0.0, 0.0)
+    target.position = (35.0, 0.0, 0.0)
+
+    mover.speed_ft = 30
+    mover.movement_remaining = 30.0
+    mover_attack = ActionDefinition(
+        name="slash",
+        action_type="attack",
+        action_cost="action",
+        to_hit=20,
+        damage="1d4",
+        damage_type="slashing",
+        range_ft=5,
+    )
+    mover.actions = [mover_attack]
+    guard.actions = [
+        ActionDefinition(
+            name="spear",
+            action_type="attack",
+            action_cost="action",
+            to_hit=20,
+            damage="1d4",
+            damage_type="piercing",
+            range_ft=5,
+        )
+    ]
+
+    actors = {mover.actor_id: mover, guard.actor_id: guard, target.actor_id: target}
+    damage_dealt = {mover.actor_id: 0, guard.actor_id: 0, target.actor_id: 0}
+    damage_taken = {mover.actor_id: 0, guard.actor_id: 0, target.actor_id: 0}
+    threat_scores = {mover.actor_id: 0, guard.actor_id: 0, target.actor_id: 0}
+    resources_spent = {mover.actor_id: {}, guard.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([15, 3, 15, 3]),
+        actor=mover,
+        action=mover_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert guard.reaction_available is False
+    assert mover.hp < mover.max_hp
+
+
+def test_ranged_attack_against_prone_target_has_disadvantage() -> None:
+    attacker = _base_actor(actor_id="attacker", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    attacker.position = (0.0, 0.0, 0.0)
+    target.position = (30.0, 0.0, 0.0)
+    target.conditions.add("prone")
+
+    attack = ActionDefinition(
+        name="longbow",
+        action_type="attack",
+        action_cost="action",
+        to_hit=5,
+        damage="1d8",
+        damage_type="piercing",
+        range_ft=150,
+    )
+    attacker.actions = [attack]
+
+    actors = {attacker.actor_id: attacker, target.actor_id: target}
+    damage_dealt = {attacker.actor_id: 0, target.actor_id: 0}
+    damage_taken = {attacker.actor_id: 0, target.actor_id: 0}
+    threat_scores = {attacker.actor_id: 0, target.actor_id: 0}
+    resources_spent = {attacker.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([2, 19, 8]),
+        actor=attacker,
+        action=attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp == target.max_hp
+    assert damage_dealt[attacker.actor_id] == 0
+
+
+def test_ranged_attack_without_explicit_range_uses_ranged_default() -> None:
+    attacker = _base_actor(actor_id="attacker", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    attacker.position = (0.0, 0.0, 0.0)
+    target.position = (30.0, 0.0, 0.0)
+    attacker.speed_ft = 0
+    attacker.movement_remaining = 0.0
+
+    attack = ActionDefinition(
+        name="longbow",
+        action_type="attack",
+        action_cost="action",
+        to_hit=20,
+        damage="1d4",
+        damage_type="piercing",
+    )
+    attacker.actions = [attack]
+
+    actors = {attacker.actor_id: attacker, target.actor_id: target}
+    damage_dealt = {attacker.actor_id: 0, target.actor_id: 0}
+    damage_taken = {attacker.actor_id: 0, target.actor_id: 0}
+    threat_scores = {attacker.actor_id: 0, target.actor_id: 0}
+    resources_spent = {attacker.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([15, 3]),
+        actor=attacker,
+        action=attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp < target.max_hp
+    assert damage_dealt[attacker.actor_id] > 0
+
+
+def test_spell_attack_without_explicit_range_uses_spell_default() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    target.position = (30.0, 0.0, 0.0)
+    caster.speed_ft = 0
+    caster.movement_remaining = 0.0
+
+    spell_attack = ActionDefinition(
+        name="fire_bolt",
+        action_type="attack",
+        action_cost="action",
+        to_hit=20,
+        damage="1d10",
+        damage_type="fire",
+        tags=["spell"],
+    )
+    caster.actions = [spell_attack]
+
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt = {caster.actor_id: 0, target.actor_id: 0}
+    damage_taken = {caster.actor_id: 0, target.actor_id: 0}
+    threat_scores = {caster.actor_id: 0, target.actor_id: 0}
+    resources_spent = {caster.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([15, 3]),
+        actor=caster,
+        action=spell_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp < target.max_hp
+    assert damage_dealt[caster.actor_id] > 0
+
+
+def test_enemy_turn_start_triggered_reaction_executes() -> None:
+    reactor = _base_actor(actor_id="reactor", team="party")
+    trigger = _base_actor(actor_id="trigger", team="enemy")
+    reactor.position = (0.0, 0.0, 0.0)
+    trigger.position = (5.0, 0.0, 0.0)
+
+    reactor.actions = [
+        ActionDefinition(
+            name="riposte",
+            action_type="attack",
+            action_cost="reaction",
+            event_trigger="enemy_turn_start",
+            to_hit=20,
+            damage="1d4",
+            damage_type="piercing",
+            range_ft=5,
+        )
+    ]
+
+    actors = {reactor.actor_id: reactor, trigger.actor_id: trigger}
+    damage_dealt = {reactor.actor_id: 0, trigger.actor_id: 0}
+    damage_taken = {reactor.actor_id: 0, trigger.actor_id: 0}
+    threat_scores = {reactor.actor_id: 0, trigger.actor_id: 0}
+    resources_spent = {reactor.actor_id: {}, trigger.actor_id: {}}
+
+    trigger_ready = getattr(engine_module, "_trigger_readied_actions")
+    trigger_ready(
+        rng=SequenceRng([15, 3]),
+        trigger_actor=trigger,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert trigger.hp < trigger.max_hp
+    assert reactor.reaction_available is False
+
+
+def test_run_simulation_invokes_turn_start_reaction_trigger(tmp_path: Path, monkeypatch) -> None:
+    party = [build_character("hero", "Hero", 30, 15, 7, "1d8+4")]
+    enemies = [build_enemy(enemy_id="boss", name="Boss", hp=40, ac=13, to_hit=5, damage="1d10+3")]
+
+    scenario_path = _setup_env(
+        tmp_path,
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+    )
+    loaded = load_scenario(scenario_path)
+    registry = load_strategy_registry(loaded)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    seen = {"count": 0}
+    original = getattr(engine_module, "_trigger_readied_actions")
+
+    def wrapped(*args, **kwargs):
+        seen["count"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(engine_module, "_trigger_readied_actions", wrapped)
+
+    run_simulation(loaded, db, {}, registry, trials=1, seed=21, run_id="trigger_check")
+
+    assert seen["count"] > 0

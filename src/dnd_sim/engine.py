@@ -37,7 +37,6 @@ _ATTACKER_ADVANTAGE_CONDITIONS = {
     "paralyzed",
     "stunned",
     "unconscious",
-    "prone",
     "restrained",
 }
 _AUTO_CRIT_CONDITIONS = {"paralyzed", "stunned", "unconscious"}
@@ -51,6 +50,16 @@ _TRAIT_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_INDEX_CACHE: tuple[Path, dict[str, Path]] | None = None
+_RANGED_ATTACK_KEYWORDS = (
+    "bow",
+    "crossbow",
+    "sling",
+    "dart",
+    "blowgun",
+    "javelin",
+    "net",
+    "thrown",
+)
 
 
 @dataclass(slots=True)
@@ -1276,6 +1285,19 @@ def _spend_resources(actor: ActorRuntimeState, cost: dict[str, int]) -> dict[str
     return spent
 
 
+def _spend_action_resource_cost(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    resources_spent: dict[str, dict[str, int]],
+) -> bool:
+    if not _can_pay_resource_cost(actor, action):
+        return False
+    spent = _spend_resources(actor, action.resource_cost)
+    for key, amount in spent.items():
+        resources_spent[actor.actor_id][key] = resources_spent[actor.actor_id].get(key, 0) + amount
+    return True
+
+
 def _default_target(
     actor: ActorRuntimeState,
     actors: dict[str, ActorRuntimeState],
@@ -1291,15 +1313,35 @@ def _default_target(
     return [TargetRef(target.actor_id)]
 
 
+def _has_action_tag(action: ActionDefinition, tag: str) -> bool:
+    target = tag.lower()
+    return any(str(candidate).lower() == target for candidate in action.tags)
+
+
+def _is_probably_ranged_attack(action: ActionDefinition) -> bool:
+    if _has_action_tag(action, "ranged") or _has_action_tag(action, "ranged_attack"):
+        return True
+    name = action.name.lower()
+    return any(keyword in name for keyword in _RANGED_ATTACK_KEYWORDS)
+
+
 def _action_range_ft(action: ActionDefinition) -> float | None:
     if action.target_mode == "self":
         return None
     if action.range_ft is not None:
         return float(action.range_ft)
-    if action.action_type in {"grapple", "shove", "attack"}:
+    if action.action_type in {"grapple", "shove"}:
+        return 5.0
+    if action.action_type == "attack":
+        if _has_action_tag(action, "spell"):
+            return 60.0
+        if _is_probably_ranged_attack(action):
+            return 60.0
         return 5.0
     if action.action_type == "utility":
         return 30.0
+    if _has_action_tag(action, "spell"):
+        return 60.0
     return 60.0
 
 
@@ -1318,6 +1360,71 @@ def _path_distance(path: list[tuple[float, float, float]]) -> float:
     for idx in range(1, len(path)):
         total += distance_chebyshev(path[idx - 1], path[idx])
     return total
+
+
+def _path_prefix_for_distance(
+    path: list[tuple[float, float, float]],
+    distance_ft: float,
+) -> list[tuple[float, float, float]]:
+    if not path:
+        return []
+    if len(path) == 1 or distance_ft <= 0:
+        return [path[0]]
+
+    traveled: list[tuple[float, float, float]] = [path[0]]
+    remaining = distance_ft
+    current = path[0]
+    for waypoint in path[1:]:
+        segment = distance_chebyshev(current, waypoint)
+        if segment <= 0:
+            current = waypoint
+            continue
+        if segment <= remaining:
+            traveled.append(waypoint)
+            remaining -= segment
+            current = waypoint
+            if remaining <= 0:
+                break
+            continue
+        ratio = remaining / segment
+        traveled.append(
+            (
+                current[0] + (waypoint[0] - current[0]) * ratio,
+                current[1] + (waypoint[1] - current[1]) * ratio,
+                current[2] + (waypoint[2] - current[2]) * ratio,
+            )
+        )
+        break
+    return traveled
+
+
+def _expand_path_points(
+    path: list[tuple[float, float, float]],
+    *,
+    step_ft: float = 5.0,
+) -> list[tuple[float, float, float]]:
+    if len(path) < 2:
+        return path
+    expanded: list[tuple[float, float, float]] = [path[0]]
+    for idx in range(1, len(path)):
+        start = path[idx - 1]
+        end = path[idx]
+        segment = distance_chebyshev(start, end)
+        if segment <= 0:
+            continue
+        steps = max(1, int(segment / step_ft))
+        if (steps * step_ft) < segment:
+            steps += 1
+        for step in range(1, steps + 1):
+            ratio = step / steps
+            expanded.append(
+                (
+                    start[0] + (end[0] - start[0]) * ratio,
+                    start[1] + (end[1] - start[1]) * ratio,
+                    start[2] + (end[2] - start[2]) * ratio,
+                )
+            )
+    return expanded
 
 
 def _advance_along_path(
@@ -1394,6 +1501,7 @@ def _run_opportunity_attacks_for_movement(
     mover: ActorRuntimeState,
     start_pos: tuple[float, float, float],
     end_pos: tuple[float, float, float],
+    movement_path: list[tuple[float, float, float]] | None,
     actors: dict[str, ActorRuntimeState],
     damage_dealt: dict[str, int],
     damage_taken: dict[str, int],
@@ -1410,21 +1518,35 @@ def _run_opportunity_attacks_for_movement(
     if start_pos == end_pos:
         return
 
+    path_points = _expand_path_points(movement_path or [start_pos, end_pos])
+    if len(path_points) < 2:
+        return
+
     for enemy in actors.values():
         if enemy.team == mover.team or enemy.dead or enemy.hp <= 0:
             continue
         if not enemy.reaction_available:
             continue
-        if distance_chebyshev(enemy.position, start_pos) > 5.0:
-            continue
-        if distance_chebyshev(enemy.position, end_pos) <= 5.0:
+        trigger_point: tuple[float, float, float] | None = None
+        previous = path_points[0]
+        was_in_reach = distance_chebyshev(enemy.position, previous) <= 5.0
+        for point in path_points[1:]:
+            is_in_reach = distance_chebyshev(enemy.position, point) <= 5.0
+            if was_in_reach and not is_in_reach:
+                trigger_point = previous
+                break
+            was_in_reach = is_in_reach
+            previous = point
+        if trigger_point is None:
             continue
         reaction_attack = _find_opportunity_attack_action(enemy)
         if reaction_attack is None:
             continue
+        if not _spend_action_resource_cost(enemy, reaction_attack, resources_spent):
+            continue
         enemy.reaction_available = False
         original_position = mover.position
-        mover.position = start_pos
+        mover.position = trigger_point
         _execute_action(
             rng=rng,
             actor=enemy,
@@ -1478,7 +1600,22 @@ def _move_actor_for_action_range(
     if available_distance <= 0:
         return False
 
-    path = find_path(actor.position, primary.position, obstacles)
+    target_ids = {target.actor_id for target in targets}
+    occupied_positions = [
+        other.position
+        for other in actors.values()
+        if other.actor_id != actor.actor_id
+        and other.team == actor.team
+        and other.actor_id not in target_ids
+        and not other.dead
+        and other.hp > 0
+    ]
+    path = find_path(
+        actor.position,
+        primary.position,
+        obstacles,
+        occupied_positions=occupied_positions,
+    )
     path_distance = _path_distance(path)
     if path_distance <= action_range:
         return True
@@ -1489,7 +1626,8 @@ def _move_actor_for_action_range(
         return distance_chebyshev(actor.position, primary.position) <= action_range
 
     start_pos = actor.position
-    end_pos = _advance_along_path(path, move_distance)
+    movement_path = _path_prefix_for_distance(path, move_distance)
+    end_pos = movement_path[-1] if movement_path else _advance_along_path(path, move_distance)
     moved = distance_chebyshev(start_pos, end_pos)
     if moved <= 0:
         return distance_chebyshev(actor.position, primary.position) <= action_range
@@ -1503,6 +1641,7 @@ def _move_actor_for_action_range(
         mover=actor,
         start_pos=start_pos,
         end_pos=end_pos,
+        movement_path=movement_path,
         actors=actors,
         damage_dealt=damage_dealt,
         damage_taken=damage_taken,
@@ -1530,9 +1669,16 @@ def _filter_targets_in_range(
         return []
     if action.aoe_type:
         primary = targets[0]
-        return (
-            targets if distance_chebyshev(actor.position, primary.position) <= action_range else []
-        )
+        if distance_chebyshev(actor.position, primary.position) > action_range:
+            return []
+        if action.aoe_size_ft:
+            radius = float(action.aoe_size_ft)
+            return [
+                target
+                for target in targets
+                if distance_chebyshev(primary.position, target.position) <= radius
+            ]
+        return targets
     return [
         target
         for target in targets
@@ -1654,10 +1800,30 @@ def _resolve_targets_for_action(
     by_id = {target.actor_id: target for target in candidates}
 
     if mode in {"all_enemies", "all_allies", "all_creatures"}:
-        return sorted(
+        ordered = sorted(
             candidates,
             key=lambda value: _target_sort_key(actor, value, mode=mode),
         )
+        if action.aoe_type and action.aoe_size_ft:
+            max_primaries = max(1, int(action.max_targets or 1))
+            primaries = ordered[:max_primaries]
+            radius = float(action.aoe_size_ft)
+            aoe_victims: set[str] = set()
+            for primary in primaries:
+                for cand in actors.values():
+                    if cand.dead:
+                        continue
+                    if cand.hp <= 0 and not include_downed_allies:
+                        continue
+                    if distance_chebyshev(primary.position, cand.position) <= radius:
+                        aoe_victims.add(cand.actor_id)
+            if not action.include_self and actor.actor_id in aoe_victims:
+                aoe_victims.remove(actor.actor_id)
+            return sorted(
+                [actors[aid] for aid in aoe_victims],
+                key=lambda value: _target_sort_key(actor, value, mode=mode),
+            )
+        return ordered
 
     if mode in {"random_enemy", "random_ally"}:
         valid_requested = [ref.actor_id for ref in requested if ref.actor_id in by_id]
@@ -1701,7 +1867,10 @@ def _resolve_targets_for_action(
                         aoe_victims.add(cand.actor_id)
         if not action.include_self and actor.actor_id in aoe_victims:
             aoe_victims.remove(actor.actor_id)
-        return [actors[aid] for aid in aoe_victims]
+        return sorted(
+            [actors[aid] for aid in aoe_victims],
+            key=lambda value: _target_sort_key(actor, value, mode=mode),
+        )
 
     return selected
 
@@ -2185,6 +2354,13 @@ def _select_readied_action(actor: ActorRuntimeState) -> ActionDefinition | None:
     return None
 
 
+def _normalize_event_trigger(trigger: str | None) -> str | None:
+    if trigger is None:
+        return None
+    text = str(trigger).strip().lower()
+    return text or None
+
+
 def _trigger_readied_actions(
     *,
     rng: random.Random,
@@ -2203,48 +2379,96 @@ def _trigger_readied_actions(
             continue
         if actor.dead or actor.hp <= 0:
             continue
-        if "readying" not in actor.conditions:
-            continue
         if not actor.reaction_available:
             continue
-        if actor.readied_trigger not in {None, "enemy_turn_start"}:
+
+        if "readying" in actor.conditions:
+            readied_trigger = _normalize_event_trigger(actor.readied_trigger)
+            if readied_trigger in {None, "enemy_turn_start", "on_enemy_turn_start"}:
+                readied = _resolve_action_selection(actor, actor.readied_action_name)
+                if readied.name != "ready":
+                    reaction_action = replace(readied, action_cost="reaction")
+                    if _action_available(actor, reaction_action):
+                        targets = _resolve_targets_for_action(
+                            rng=rng,
+                            actor=actor,
+                            action=reaction_action,
+                            actors=actors,
+                            requested=[TargetRef(trigger_actor.actor_id)],
+                        )
+                        targets = [
+                            target
+                            for target in targets
+                            if target.actor_id == trigger_actor.actor_id
+                        ]
+                        targets = _filter_targets_in_range(actor, reaction_action, targets)
+                        if targets and _spend_action_resource_cost(
+                            actor, reaction_action, resources_spent
+                        ):
+                            actor.reaction_available = False
+                            _execute_action(
+                                rng=rng,
+                                actor=actor,
+                                action=reaction_action,
+                                targets=targets,
+                                actors=actors,
+                                damage_dealt=damage_dealt,
+                                damage_taken=damage_taken,
+                                threat_scores=threat_scores,
+                                resources_spent=resources_spent,
+                                active_hazards=active_hazards,
+                                obstacles=obstacles,
+                                light_level=light_level,
+                            )
+                            _remove_condition(actor, "readying")
+            if trigger_actor.dead or trigger_actor.hp <= 0:
+                break
+
+        if not actor.reaction_available:
             continue
 
-        readied = _resolve_action_selection(actor, actor.readied_action_name)
-        if readied.name == "ready":
-            continue
-        reaction_action = replace(readied, action_cost="reaction")
-        if not _can_pay_resource_cost(actor, reaction_action):
-            continue
+        for reaction_action in actor.actions:
+            if reaction_action.action_cost != "reaction":
+                continue
+            if reaction_action.name in {"shield", "counterspell"}:
+                continue
+            trigger = _normalize_event_trigger(reaction_action.event_trigger)
+            if trigger not in {"enemy_turn_start", "on_enemy_turn_start"}:
+                continue
+            if not _action_available(actor, reaction_action):
+                continue
 
-        targets = _resolve_targets_for_action(
-            rng=rng,
-            actor=actor,
-            action=reaction_action,
-            actors=actors,
-            requested=[TargetRef(trigger_actor.actor_id)],
-        )
-        targets = [target for target in targets if target.actor_id == trigger_actor.actor_id]
-        targets = _filter_targets_in_range(actor, reaction_action, targets)
-        if not targets:
-            continue
+            targets = _resolve_targets_for_action(
+                rng=rng,
+                actor=actor,
+                action=reaction_action,
+                actors=actors,
+                requested=[TargetRef(trigger_actor.actor_id)],
+            )
+            targets = [target for target in targets if target.actor_id == trigger_actor.actor_id]
+            targets = _filter_targets_in_range(actor, reaction_action, targets)
+            if not targets:
+                continue
+            if not _spend_action_resource_cost(actor, reaction_action, resources_spent):
+                continue
 
-        actor.reaction_available = False
-        _execute_action(
-            rng=rng,
-            actor=actor,
-            action=reaction_action,
-            targets=targets,
-            actors=actors,
-            damage_dealt=damage_dealt,
-            damage_taken=damage_taken,
-            threat_scores=threat_scores,
-            resources_spent=resources_spent,
-            active_hazards=active_hazards,
-            obstacles=obstacles,
-            light_level=light_level,
-        )
-        _remove_condition(actor, "readying")
+            actor.reaction_available = False
+            _execute_action(
+                rng=rng,
+                actor=actor,
+                action=reaction_action,
+                targets=targets,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+            )
+            break
+
         if trigger_actor.dead or trigger_actor.hp <= 0:
             break
 
@@ -2388,8 +2612,6 @@ def _execute_action(
                     None,
                 )
                 if cs_action:
-                    from .spatial import distance_chebyshev
-
                     if distance_chebyshev(enemy.position, actor.position) <= 60:
                         slot_key = None
                         for key in sorted(enemy.resources.keys()):
@@ -2547,6 +2769,11 @@ def _execute_action(
             target_conditions = target.conditions
             if target_conditions.intersection(_ATTACKER_ADVANTAGE_CONDITIONS):
                 advantage = True
+            if "prone" in target_conditions:
+                if distance_chebyshev(actor.position, target.position) <= 5.0:
+                    advantage = True
+                else:
+                    disadvantage = True
             if "dodging" in target_conditions:
                 disadvantage = True
             force_crit = bool(target_conditions.intersection(_AUTO_CRIT_CONDITIONS))
@@ -2587,9 +2814,13 @@ def _execute_action(
 
             if action.to_hit is not None:
                 weapon_name = action.name.lower()
-                is_ranged = any(
-                    w in weapon_name for w in ["bow", "dart", "sling", "javelin", "blowgun", "net"]
-                ) or (action.range_ft is not None and action.range_ft > 5)
+                inferred_range = _action_range_ft(action)
+                is_ranged = bool(inferred_range is not None and inferred_range > 5.0)
+                if not is_ranged:
+                    is_ranged = any(
+                        w in weapon_name
+                        for w in ["bow", "dart", "sling", "javelin", "blowgun", "net"]
+                    ) or (action.range_ft is not None and action.range_ft > 5)
                 is_heavy = any(
                     w in weapon_name
                     for w in [
@@ -2739,8 +2970,6 @@ def _execute_action(
                                     and cand.hp > 0
                                     and not cand.dead
                                 ):
-                                    from .spatial import distance_chebyshev
-
                                     if distance_chebyshev(cand.position, target.position) <= 5:
                                         has_sneak = True
                                         break
@@ -3338,6 +3567,23 @@ def run_simulation(
                     if _party_defeated(actors) or _enemies_defeated(actors):
                         break
 
+                    _trigger_readied_actions(
+                        rng=rng,
+                        trigger_actor=actor,
+                        actors=actors,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                    )
+
+                    if actor.dead or actor.hp <= 0:
+                        continue
+                    if _party_defeated(actors) or _enemies_defeated(actors):
+                        break
                     if not _can_act(actor):
                         continue
 

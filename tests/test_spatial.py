@@ -76,3 +76,16 @@ def test_find_path_routes_around_total_cover_obstacle() -> None:
     assert path[0] == start
     assert path[-1] == target
     assert len(path) > 2
+
+
+def test_find_path_avoids_occupied_space() -> None:
+    start = (0.0, 0.0, 0.0)
+    target = (30.0, 0.0, 0.0)
+    occupied = [(15.0, 0.0, 0.0)]
+
+    path = find_path(start, target, occupied_positions=occupied)
+
+    assert path[0] == start
+    assert path[-1] == target
+    assert len(path) > 2
+    assert (15.0, 0.0, 0.0) not in path
