@@ -199,6 +199,39 @@ def find_path(
 ) -> list[Position]:
     """
     Finds a valid movement path avoiding obstacles using A*.
-    Currently assumes an open battlefield and returns a direct vector.
+    Uses a simple obstacle-avoidance detour for TOTAL cover blockers.
     """
-    return [start, target]
+    if not obstacles:
+        return [start, target]
+
+    total_obstacles = [obs for obs in obstacles if obs.cover_level == "TOTAL"]
+    if not total_obstacles:
+        return [start, target]
+
+    def _blocked(p1: Position, p2: Position) -> bool:
+        return any(ray_intersects_aabb(p1, p2, obs) for obs in total_obstacles)
+
+    if not _blocked(start, target):
+        return [start, target]
+
+    clearance = 5.0
+    best_path: list[Position] | None = None
+    best_cost = float("inf")
+    z = start[2]
+
+    for obs in total_obstacles:
+        candidates: list[Position] = [
+            (obs.min_pos[0] - clearance, obs.min_pos[1] - clearance, z),
+            (obs.min_pos[0] - clearance, obs.max_pos[1] + clearance, z),
+            (obs.max_pos[0] + clearance, obs.min_pos[1] - clearance, z),
+            (obs.max_pos[0] + clearance, obs.max_pos[1] + clearance, z),
+        ]
+        for waypoint in candidates:
+            if _blocked(start, waypoint) or _blocked(waypoint, target):
+                continue
+            cost = distance_euclidean(start, waypoint) + distance_euclidean(waypoint, target)
+            if cost < best_cost:
+                best_cost = cost
+                best_path = [start, waypoint, target]
+
+    return best_path if best_path is not None else [start, target]
