@@ -55,6 +55,10 @@ _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_COMPONENT_TOKEN_RE = re.compile(r"\b([vsm])\b", flags=re.IGNORECASE)
 _SPELL_INDEX_CACHE: tuple[Path, dict[str, Path]] | None = None
+_WARLOCK_INVOCATION_ALIASES: dict[str, str] = {
+    "agonizing blast": "agonizing blast",
+    "repelling blast": "repelling blast",
+}
 _RANGED_ATTACK_KEYWORDS = (
     "bow",
     "crossbow",
@@ -75,10 +79,6 @@ _ARTIFICER_OPTION_TRAITS = {
     "repulsion shield",
     "homunculus servant",
     "steel defender",
-}
-_WARLOCK_INVOCATION_ALIASES: dict[str, str] = {
-    "agonizing blast": "agonizing blast",
-    "repelling blast": "repelling blast",
 }
 _SPELL_SLOT_CREATION_COSTS: dict[int, int] = {1: 2, 2: 3, 3: 5, 4: 6, 5: 7}
 _TRAVEL_PACE_MILES_PER_DAY: dict[str, float] = {"slow": 18.0, "normal": 24.0, "fast": 30.0}
@@ -1890,30 +1890,36 @@ def _build_spell_actions(
     actions: list[ActionDefinition] = []
     known_traits = set(traits or set())
     resources = character.get("resources", {})
+    raw_spell_slots = resources.get("spell_slots")
     available_slots: dict[str, Any] = {}
-    if isinstance(resources.get("spell_slots"), dict):
-        available_slots = resources["spell_slots"]
-    class_level_text = str(character.get("class_level", ""))
-    warlock_level = _parse_class_level(class_level_text, "warlock")
-    has_pact_magic = warlock_level > 0
+    if isinstance(raw_spell_slots, dict):
+        available_slots = raw_spell_slots
+
+    has_pact_magic = _is_pact_magic_character(character)
+    warlock_level = _warlock_level_from_character(character)
+    arcanum_max_level = _warlock_mystic_arcanum_max_level(warlock_level)
+
+    pact_profile = _extract_pact_slot_profile_from_spell_slots(raw_spell_slots)
+    has_any_positive_slot = False
+    if isinstance(raw_spell_slots, dict):
+        for value in raw_spell_slots.values():
+            try:
+                if int(value) > 0:
+                    has_any_positive_slot = True
+                    break
+            except (TypeError, ValueError):
+                continue
+    if pact_profile is None and has_pact_magic and not has_any_positive_slot:
+        pact_profile = _warlock_pact_slot_profile_for_level(warlock_level)
     pact_slot_key: str | None = None
-    arcanum_max_level = 0
-    pact_profile = _warlock_pact_slot_profile_for_level(warlock_level)
     if pact_profile is not None:
         pact_slot_level, _pact_slot_count = pact_profile
-        pact_slot_key = f"pact_slot_{pact_slot_level}"
-    if warlock_level >= 17:
-        arcanum_max_level = 9
-    elif warlock_level >= 15:
-        arcanum_max_level = 8
-    elif warlock_level >= 13:
-        arcanum_max_level = 7
-    elif warlock_level >= 11:
-        arcanum_max_level = 6
+        pact_slot_key = f"warlock_spell_slot_{pact_slot_level}"
 
     for spell in spells:
         name = str(spell.get("name", "unknown_spell"))
         spell_level = int(spell.get("level", 0))
+        smite_setup = _is_smite_spell_name(name)
         action_type = str(spell.get("action_type", "attack"))
         damage = spell.get("damage")
         damage_type = str(spell.get("damage_type", "fire"))
@@ -2037,6 +2043,7 @@ def _build_spell_actions(
                         aoe_size_ft=spell.get("aoe_size_ft"),
                         max_targets=max_targets,
                         concentration=bool(spell.get("concentration", False)),
+                        include_self=smite_setup,
                         effects=list(effects),
                         mechanics=list(mechanics),
                         tags=list(tags) + [f"upcast_level:{slot_level}"],
@@ -2413,7 +2420,13 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
             )
         # --- Spell actions ---
-        actions.extend(_build_spell_actions(character, character_level=character_level, traits=traits))
+        spell_actions = _build_spell_actions(
+            character,
+            character_level=character_level,
+            traits=traits,
+        )
+        _apply_warlock_invocations_to_actions(character, spell_actions)
+        actions.extend(spell_actions)
         actions.extend(_build_font_of_magic_actions(resources))
         actions.extend(
             _build_cleric_channel_divinity_actions(
@@ -2428,6 +2441,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     # Fallback: no attacks defined
     spell_actions = _build_spell_actions(character, character_level=character_level, traits=traits)
     font_of_magic_actions = _build_font_of_magic_actions(resources)
+    _apply_warlock_invocations_to_actions(character, spell_actions)
     cleric_actions = _build_cleric_channel_divinity_actions(
         character=character,
         character_level=character_level,
@@ -2781,6 +2795,11 @@ def _build_actor_from_enemy(
     )
     _apply_passive_traits(actor)
     return actor
+
+
+def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
+    # Placeholder hook in this branch; wizard-specific recovery actions handle slot restoration.
+    return
 
 
 def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
@@ -5901,6 +5920,33 @@ def _apply_domain_attack_roll_hooks(
         )
 
     return roll
+
+
+def _try_stunning_strike(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    target: ActorRuntimeState,
+    is_ranged: bool,
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    return
+
+
+def _try_open_hand_technique(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    target: ActorRuntimeState,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    return
 
 
 def _execute_action(
