@@ -176,6 +176,7 @@ class TrialResult:
     downed_counts: dict[str, int]
     death_counts: dict[str, int]
     remaining_hp: dict[str, int]
+    telemetry: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(slots=True)

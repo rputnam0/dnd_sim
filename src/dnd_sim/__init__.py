@@ -1,6 +1,7 @@
 """Generalized D&D encounter simulator."""
 
 __all__ = [
+    "calibration",
     "engine",
     "io",
     "models",

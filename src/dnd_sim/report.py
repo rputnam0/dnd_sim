@@ -53,6 +53,18 @@ def _parse_resources_spent_field(value: Any) -> dict[str, dict[str, int]]:
     return resources
 
 
+def _parse_telemetry_field(value: Any) -> list[dict[str, Any]]:
+    if value is None or value == "":
+        return []
+    if isinstance(value, list):
+        return [dict(entry) for entry in value if isinstance(entry, dict)]
+    if isinstance(value, str):
+        parsed = json.loads(value)
+        if isinstance(parsed, list):
+            return [dict(entry) for entry in parsed if isinstance(entry, dict)]
+    raise ValueError(f"Invalid telemetry payload: {value!r}")
+
+
 def _trial_result_from_row(row: dict[str, Any]) -> TrialResult:
     return TrialResult(
         trial_index=_parse_int_field(row.get("trial_index"), field_name="trial_index"),
@@ -61,9 +73,12 @@ def _trial_result_from_row(row: dict[str, Any]) -> TrialResult:
         damage_taken=_parse_json_int_dict_field(row.get("damage_taken"), field_name="damage_taken"),
         damage_dealt=_parse_json_int_dict_field(row.get("damage_dealt"), field_name="damage_dealt"),
         resources_spent=_parse_resources_spent_field(row.get("resources_spent")),
-        downed_counts=_parse_json_int_dict_field(row.get("downed_counts"), field_name="downed_counts"),
+        downed_counts=_parse_json_int_dict_field(
+            row.get("downed_counts"), field_name="downed_counts"
+        ),
         death_counts=_parse_json_int_dict_field(row.get("death_counts"), field_name="death_counts"),
         remaining_hp=_parse_json_int_dict_field(row.get("remaining_hp"), field_name="remaining_hp"),
+        telemetry=_parse_telemetry_field(row.get("telemetry")),
     )
 
 

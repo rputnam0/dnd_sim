@@ -1206,6 +1206,7 @@ def _build_actor_views(
                 movement_remaining=actor.movement_remaining,
                 position=actor.position,
                 traits=dict(actor.traits),
+                concentrating=actor.concentrating,
             )
             for actor_id, actor in actors.items()
         },
@@ -1629,6 +1630,12 @@ def _apply_effect(
     resources_spent: dict[str, dict[str, int]],
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
+    telemetry: list[dict[str, Any]] | None = None,
+    action_name: str | None = None,
+    trigger_event: str = "always",
+    source_bucket: str = "effects",
+    round_number: int | None = None,
+    strategy_name: str | None = None,
 ) -> None:
     recipient = _resolve_effect_target(effect, actor=actor, target=target)
     effect_type = str(effect.get("effect_type"))
@@ -1649,20 +1656,69 @@ def _apply_effect(
         damage_dealt[actor.actor_id] += applied
         damage_taken[recipient.actor_id] += applied
         threat_scores[actor.actor_id] += applied
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "damage",
+                    "damage_type": damage_type,
+                    "applied_amount": applied,
+                }
+            )
         return
 
     if effect_type == "heal":
+        before = recipient.hp
         amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
         _apply_healing(recipient, amount)
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "heal",
+                    "applied_amount": max(0, recipient.hp - before),
+                }
+            )
         return
 
     if effect_type == "temp_hp":
         amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
+        before = recipient.temp_hp
         if amount > 0:
             recipient.temp_hp = max(recipient.temp_hp, amount)
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "temp_hp",
+                    "applied_amount": max(0, recipient.temp_hp - before),
+                }
+            )
         return
 
     if effect_type == "apply_condition":
+        before_conditions = set(recipient.conditions)
         save_dc = effect.get("save_dc")
         save_ability = effect.get("save_ability")
         if save_dc is not None and save_ability:
@@ -1697,10 +1753,43 @@ def _apply_effect(
             save_dc=int(save_dc) if save_dc is not None else None,
             save_ability=str(save_ability) if save_ability else None,
         )
+        if telemetry is not None and recipient.conditions != before_conditions:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "apply_condition",
+                    "condition": str(effect.get("condition", "")).lower(),
+                    "applied_amount": 1,
+                }
+            )
         return
 
     if effect_type == "remove_condition":
+        before_conditions = set(recipient.conditions)
         _remove_condition(recipient, str(effect.get("condition", "")))
+        if telemetry is not None and recipient.conditions != before_conditions:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "remove_condition",
+                    "condition": str(effect.get("condition", "")).lower(),
+                    "applied_amount": 1,
+                }
+            )
         return
 
     if effect_type == "hazard":
@@ -1719,6 +1808,22 @@ def _apply_effect(
                 "duration": duration,
             }
         )
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "hazard",
+                    "hazard_type": hazard_type,
+                    "applied_amount": 1,
+                }
+            )
         return
 
     if effect_type == "resource_change":
@@ -1732,6 +1837,22 @@ def _apply_effect(
             resources_spent[recipient.actor_id][resource] = resources_spent[recipient.actor_id].get(
                 resource, 0
             ) + (before - after)
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "resource_change",
+                    "resource": resource,
+                    "applied_amount": after - before,
+                }
+            )
         return
 
     if effect_type == "next_attack_advantage":
@@ -1798,14 +1919,39 @@ def _apply_action_effects(
     resources_spent: dict[str, dict[str, int]],
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
+    telemetry: list[dict[str, Any]] | None = None,
+    round_number: int | None = None,
+    strategy_name: str | None = None,
 ) -> None:
-    for effect in action.effects + action.mechanics:
-        if not isinstance(effect, dict):
-            continue
-        if _effect_matches_event(effect, event):
+    for source_bucket, effect_list in (
+        ("effects", action.effects),
+        ("mechanics", action.mechanics),
+    ):
+        for effect in effect_list:
+            if not isinstance(effect, dict):
+                continue
+            if not _effect_matches_event(effect, event):
+                continue
             recipient = _resolve_effect_target(effect, actor=actor, target=target)
             if action.concentration and effect.get("effect_type") in ("apply_condition", "hazard"):
                 actor.concentrated_targets.add(recipient.actor_id)
+
+            if telemetry is not None:
+                telemetry.append(
+                    {
+                        "telemetry_type": "trigger_provenance",
+                        "round": round_number,
+                        "strategy": strategy_name,
+                        "actor_id": actor.actor_id,
+                        "target_id": recipient.actor_id,
+                        "action_name": action.name,
+                        "source_bucket": source_bucket,
+                        "trigger_event": event,
+                        "apply_on": str(effect.get("apply_on", "always")),
+                        "effect_type": str(effect.get("effect_type", "")),
+                    }
+                )
+
             _apply_effect(
                 action=action,
                 effect=effect,
@@ -1818,6 +1964,12 @@ def _apply_action_effects(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                telemetry=telemetry,
+                action_name=action.name,
+                trigger_event=event,
+                source_bucket=source_bucket,
+                round_number=round_number,
+                strategy_name=strategy_name,
             )
 
 
@@ -2011,6 +2163,9 @@ def _execute_action(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    telemetry: list[dict[str, Any]] | None = None,
+    round_number: int | None = None,
+    strategy_name: str | None = None,
 ) -> None:
     if not targets:
         return
@@ -2086,6 +2241,9 @@ def _execute_action(
                         active_hazards=active_hazards,
                         obstacles=obstacles,
                         light_level=light_level,
+                        telemetry=telemetry,
+                        round_number=round_number,
+                        strategy_name=strategy_name,
                     )
 
     # Phase 11: Contested Grapple/Shove Checks
@@ -2156,6 +2314,9 @@ def _execute_action(
                         active_hazards=active_hazards,
                         obstacles=obstacles,
                         light_level=light_level,
+                        telemetry=telemetry,
+                        round_number=round_number,
+                        strategy_name=strategy_name,
                     )
         if action.action_cost == "action":
             actor.took_attack_action_this_turn = True
@@ -2265,6 +2426,9 @@ def _execute_action(
                         resources_spent=resources_spent,
                         actors=actors,
                         active_hazards=active_hazards,
+                        telemetry=telemetry,
+                        round_number=round_number,
+                        strategy_name=strategy_name,
                     )
                     continue
                 if cover_state == "HALF":
@@ -2454,6 +2618,22 @@ def _execute_action(
                 damage_dealt[actor.actor_id] += applied
                 damage_taken[target.actor_id] += applied
                 threat_scores[actor.actor_id] += applied
+                if telemetry is not None:
+                    telemetry.append(
+                        {
+                            "telemetry_type": "effect_contribution",
+                            "round": round_number,
+                            "strategy": strategy_name,
+                            "actor_id": actor.actor_id,
+                            "target_id": target.actor_id,
+                            "action_name": action.name,
+                            "source_bucket": "base_action",
+                            "trigger_event": event,
+                            "effect_type": "damage",
+                            "damage_type": action.damage_type,
+                            "applied_amount": applied,
+                        }
+                    )
 
                 # GWM Momentum Trigger (Action Economy Buff)
                 if (
@@ -2474,6 +2654,9 @@ def _execute_action(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                telemetry=telemetry,
+                round_number=round_number,
+                strategy_name=strategy_name,
             )
         return
 
@@ -2594,6 +2777,22 @@ def _execute_action(
                 damage_dealt[actor.actor_id] += applied
                 damage_taken[target.actor_id] += applied
                 threat_scores[actor.actor_id] += applied
+                if telemetry is not None:
+                    telemetry.append(
+                        {
+                            "telemetry_type": "effect_contribution",
+                            "round": round_number,
+                            "strategy": strategy_name,
+                            "actor_id": actor.actor_id,
+                            "target_id": target.actor_id,
+                            "action_name": action.name,
+                            "source_bucket": "base_action",
+                            "trigger_event": "save_success" if success else "save_fail",
+                            "effect_type": "damage",
+                            "damage_type": action.damage_type,
+                            "applied_amount": applied,
+                        }
+                    )
 
             _apply_action_effects(
                 action=action,
@@ -2607,6 +2806,9 @@ def _execute_action(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                telemetry=telemetry,
+                round_number=round_number,
+                strategy_name=strategy_name,
             )
         return
 
@@ -2637,6 +2839,9 @@ def _execute_action(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                telemetry=telemetry,
+                round_number=round_number,
+                strategy_name=strategy_name,
             )
 
 
@@ -2647,12 +2852,33 @@ def _build_round_metadata(
     burst_round_threshold: int,
     active_hazards: list[dict[str, Any]] | None = None,
     light_level: str = "bright",
+    strategy_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    overrides = strategy_overrides if isinstance(strategy_overrides, dict) else {}
+    raw_policy = overrides.get("strategy_policy", {})
+    strategy_policy = dict(raw_policy) if isinstance(raw_policy, dict) else {}
+    tactical_branches_raw = overrides.get("tactical_branches", {})
+    tactical_branches = (
+        dict(tactical_branches_raw) if isinstance(tactical_branches_raw, dict) else {}
+    )
+    objective_scores_raw = overrides.get("objective_scores", {})
+    objective_scores = dict(objective_scores_raw) if isinstance(objective_scores_raw, dict) else {}
+    objective_targets_raw = overrides.get("objective_targets", {})
+    objective_targets = (
+        dict(objective_targets_raw) if isinstance(objective_targets_raw, dict) else {}
+    )
+
     return {
         "threat_scores": dict(threat_scores),
         "burst_round_threshold": burst_round_threshold,
         "active_hazards": list(active_hazards or []),
         "light_level": str(light_level),
+        "strategy_policy": strategy_policy,
+        "evaluation_mode": str(overrides.get("evaluation_mode", "greedy")),
+        "lookahead_discount": float(overrides.get("lookahead_discount", 1.0)),
+        "tactical_branches": tactical_branches,
+        "objective_scores": objective_scores,
+        "objective_targets": objective_targets,
         "available_actions": {
             actor_id: [action.name for action in actor.actions if _action_available(actor, action)]
             for actor_id, actor in actors.items()
@@ -2679,6 +2905,7 @@ def _build_round_metadata(
                     "aoe_type": action.aoe_type,
                     "aoe_size_ft": action.aoe_size_ft,
                     "max_targets": action.max_targets,
+                    "concentration": action.concentration,
                     "include_self": action.include_self,
                     "effects": list(action.effects),
                     "mechanics": list(action.mechanics),
@@ -2702,6 +2929,8 @@ def _run_lair_actions(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    telemetry: list[dict[str, Any]] | None = None,
+    round_number: int | None = None,
 ) -> None:
     for actor in actors.values():
         if actor.dead or actor.hp <= 0:
@@ -2751,6 +2980,9 @@ def _run_lair_actions(
             active_hazards=active_hazards,
             obstacles=obstacles,
             light_level=light_level,
+            telemetry=telemetry,
+            round_number=round_number,
+            strategy_name="lair_action",
         )
 
 
@@ -2766,6 +2998,8 @@ def _run_legendary_actions(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    telemetry: list[dict[str, Any]] | None = None,
+    round_number: int | None = None,
 ) -> None:
     for actor in actors.values():
         if actor.actor_id == trigger_actor.actor_id:
@@ -2815,6 +3049,9 @@ def _run_legendary_actions(
             active_hazards=active_hazards,
             obstacles=obstacles,
             light_level=light_level,
+            telemetry=telemetry,
+            round_number=round_number,
+            strategy_name="legendary_action",
         )
 
 
@@ -2829,6 +3066,7 @@ def _flatten_trial(trial: TrialResult) -> dict[str, Any]:
         "downed_counts": json.dumps(trial.downed_counts, sort_keys=True),
         "death_counts": json.dumps(trial.death_counts, sort_keys=True),
         "remaining_hp": json.dumps(trial.remaining_hp, sort_keys=True),
+        "telemetry": json.dumps(trial.telemetry, sort_keys=True),
     }
 
 
@@ -2870,6 +3108,7 @@ def run_simulation(
         death_counts: dict[str, int] = {}
         remaining_hp: dict[str, int] = {}
         active_hazards: list[dict[str, Any]] = []
+        trial_telemetry: list[dict[str, Any]] = []
 
         for character_id in scenario.config.party:
             if character_id not in character_db:
@@ -2945,6 +3184,8 @@ def run_simulation(
                     active_hazards=active_hazards,
                     obstacles=battlefield_obstacles,
                     light_level=light_level,
+                    telemetry=trial_telemetry,
+                    round_number=rounds,
                 )
 
                 metadata = _build_round_metadata(
@@ -2955,6 +3196,7 @@ def run_simulation(
                     ),
                     active_hazards=active_hazards,
                     light_level=light_level,
+                    strategy_overrides=assumption_overrides,
                 )
                 state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
                 for strategy in strategy_registry.values():
@@ -3006,17 +3248,20 @@ def run_simulation(
                         ),
                         active_hazards=active_hazards,
                         light_level=light_level,
+                        strategy_overrides=assumption_overrides,
                     )
                     state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
                     actor_view = state_view.actors[actor.actor_id]
                     intent = strategy.choose_action(actor_view, state_view)
                     action = _resolve_action_selection(actor, intent.action_name)
+                    fallback_reason: str | None = None
 
                     if not _action_available(actor, action):
                         fallback = _fallback_action(actor)
                         if fallback is None:
                             continue
                         action = fallback
+                        fallback_reason = "intent_unavailable"
 
                     extra_spend = strategy.decide_resource_spend(
                         actor_view, intent, state_view
@@ -3028,6 +3273,7 @@ def run_simulation(
                     if cost and not _has_resources(actor, cost):
                         action = _resolve_action_selection(actor, "basic")
                         cost = dict(action.resource_cost)
+                        fallback_reason = "insufficient_resources"
 
                     targets = strategy.choose_targets(actor_view, intent, state_view)
                     resolved_targets = _resolve_targets_for_action(
@@ -3036,6 +3282,27 @@ def run_simulation(
                         action=action,
                         actors=actors,
                         requested=targets,
+                    )
+                    trial_telemetry.append(
+                        {
+                            "telemetry_type": "decision",
+                            "round": rounds,
+                            "strategy": strategy_name,
+                            "actor_id": actor.actor_id,
+                            "team": actor.team,
+                            "intent_action": intent.action_name,
+                            "resolved_action": action.name,
+                            "fallback_reason": fallback_reason,
+                            "requested_targets": [target.actor_id for target in targets],
+                            "resolved_targets": [target.actor_id for target in resolved_targets],
+                            "rationale": (
+                                dict(intent.rationale)
+                                if isinstance(getattr(intent, "rationale", {}), dict)
+                                else {}
+                            ),
+                            "extra_resource_request": dict(extra_spend),
+                            "resource_cost": dict(cost),
+                        }
                     )
                     if not resolved_targets:
                         continue
@@ -3066,6 +3333,9 @@ def run_simulation(
                         active_hazards=active_hazards,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
+                        telemetry=trial_telemetry,
+                        round_number=rounds,
+                        strategy_name=strategy_name,
                     )
 
                     # --- Bonus action step ---
@@ -3104,6 +3374,9 @@ def run_simulation(
                                         active_hazards=active_hazards,
                                         obstacles=battlefield_obstacles,
                                         light_level=light_level,
+                                        telemetry=trial_telemetry,
+                                        round_number=rounds,
+                                        strategy_name="bonus_action",
                                     )
 
                     # --- Action Surge step ---
@@ -3161,6 +3434,9 @@ def run_simulation(
                                             active_hazards=active_hazards,
                                             obstacles=battlefield_obstacles,
                                             light_level=light_level,
+                                            telemetry=trial_telemetry,
+                                            round_number=rounds,
+                                            strategy_name="action_surge",
                                         )
 
                     _run_legendary_actions(
@@ -3174,6 +3450,8 @@ def run_simulation(
                         active_hazards=active_hazards,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
+                        telemetry=trial_telemetry,
+                        round_number=rounds,
                     )
 
                 if _party_defeated(actors) or _enemies_defeated(actors):
@@ -3209,6 +3487,7 @@ def run_simulation(
             downed_counts=downed_counts,
             death_counts=death_counts,
             remaining_hp=remaining_hp,
+            telemetry=trial_telemetry,
         )
         trial_results.append(trial)
 

@@ -9,6 +9,7 @@ class ActionIntent:
     action_name: str | None
     action_type: str = "attack"
     action_cost: str = "action"
+    rationale: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -35,6 +36,7 @@ class ActorView:
     speed_ft: int
     movement_remaining: float
     traits: dict[str, dict[str, Any]]
+    concentrating: bool = False
 
 
 @dataclass(slots=True)

@@ -360,6 +360,8 @@ def test_execute_action_ignores_non_dict_effect_entries() -> None:
     )
 
     assert damage_dealt[attacker.actor_id] >= 0
+
+
 def test_legendary_action_runner_skips_untargetable_action() -> None:
     rng = random.Random(2)
     hero = _base_actor(actor_id="hero", team="party")
@@ -372,7 +374,9 @@ def test_legendary_action_runner_skips_untargetable_action() -> None:
         action_type="utility",
         action_cost="legendary",
         target_mode="single_enemy",
-        effects=[{"effect_type": "forced_movement", "distance_ft": 20, "direction": "toward_source"}],
+        effects=[
+            {"effect_type": "forced_movement", "distance_ft": 20, "direction": "toward_source"}
+        ],
         tags=["requires_condition:grappled"],
     )
     strike = ActionDefinition(
@@ -573,3 +577,69 @@ def test_enemy_builder_prefers_explicit_ability_mods_over_save_mods() -> None:
     assert actor.int_mod == -3
     assert actor.wis_mod == -2
     assert actor.cha_mod == -2
+
+
+def test_execute_action_emits_trigger_provenance_and_effect_contribution_telemetry() -> None:
+    rng = random.Random(3)
+    attacker = _base_actor(actor_id="attacker", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    target.resources = {"ki": 2}
+
+    action = ActionDefinition(
+        name="telemetry_strike",
+        action_type="attack",
+        to_hit=20,
+        damage="2",
+        attack_count=1,
+        target_mode="single_enemy",
+        effects=[
+            {
+                "effect_type": "damage",
+                "apply_on": "hit",
+                "target": "target",
+                "damage": "1",
+                "damage_type": "force",
+            }
+        ],
+        mechanics=[
+            {
+                "effect_type": "resource_change",
+                "apply_on": "hit",
+                "target": "target",
+                "resource": "ki",
+                "amount": -1,
+                "min_value": 0,
+            }
+        ],
+    )
+
+    actors = {attacker.actor_id: attacker, target.actor_id: target}
+    damage_dealt = {attacker.actor_id: 0, target.actor_id: 0}
+    damage_taken = {attacker.actor_id: 0, target.actor_id: 0}
+    threat_scores = {attacker.actor_id: 0, target.actor_id: 0}
+    resources_spent = {attacker.actor_id: {}, target.actor_id: {}}
+    telemetry: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=rng,
+        actor=attacker,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        telemetry=telemetry,
+        round_number=1,
+        strategy_name="optimal_expected_damage",
+    )
+
+    provenance = [row for row in telemetry if row.get("telemetry_type") == "trigger_provenance"]
+    contributions = [row for row in telemetry if row.get("telemetry_type") == "effect_contribution"]
+
+    assert any(row.get("source_bucket") == "effects" for row in provenance)
+    assert any(row.get("source_bucket") == "mechanics" for row in provenance)
+    assert any(row.get("effect_type") == "damage" for row in contributions)
+    assert any(row.get("effect_type") == "resource_change" for row in contributions)
