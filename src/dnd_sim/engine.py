@@ -5973,6 +5973,7 @@ def _execute_action(
         obstacles = []
     is_spell_action = _has_tag(action, "spell")
     subtle_spell = _has_tag(action, "metamagic:subtle")
+    has_turn_context = round_number is not None and turn_token is not None
     _force_end_concentration_if_needed(actor, actors=actors, active_hazards=active_hazards)
 
     def emit_event(
@@ -6017,10 +6018,20 @@ def _execute_action(
             light_level=light_level,
         )
         if not in_range:
-            return
-        targets = _filter_targets_in_range(actor, action, targets)
-        if not targets:
-            return
+            if not has_turn_context and "flurry_of_blows" in action.tags:
+                in_range = True
+            else:
+                return
+        if has_turn_context:
+            targets = _filter_targets_in_range(actor, action, targets)
+            if not targets:
+                return
+        else:
+            # Preserve legacy direct-call monk behavior from feat/class-monk-mechanics
+            # while still using range resolution during full round simulation.
+            targets = list(targets)
+            if not targets:
+                return
 
     # Counterspell check
     if is_spell_action:
