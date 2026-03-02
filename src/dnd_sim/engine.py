@@ -39,6 +39,7 @@ _ATTACKER_ADVANTAGE_CONDITIONS = {
     "unconscious",
     "prone",
     "restrained",
+    "reckless_attacking",
 }
 _AUTO_CRIT_CONDITIONS = {"paralyzed", "stunned", "unconscious"}
 _IMPLIED_CONDITION_MAP: dict[str, set[str]] = {
@@ -259,6 +260,15 @@ def _scale_cantrip_dice(base_dice: str, character_level: int) -> str:
     if match:
         return f"{dice_count}d{match.group(2)}{match.group(3)}"
     return base_dice
+
+
+def _critical_bonus_dice_expr(base_damage: str, extra_dice: int) -> str | None:
+    if extra_dice <= 0:
+        return None
+    num_dice, die_size, _flat = parse_damage_expression(base_damage)
+    if num_dice <= 0:
+        return None
+    return f"{num_dice * extra_dice}d{die_size}"
 
 
 def _slugify_spell_name(name: str) -> str:
@@ -1292,7 +1302,7 @@ def _default_target(
 
 
 def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
-    if action.action_type == "utility":
+    if action.action_type in {"utility", "buff"}:
         return True
     for effect in action.effects:
         if not isinstance(effect, dict):
@@ -2279,6 +2289,10 @@ def _execute_action(
                     if target_ac <= 16 or advantage:
                         power_attack_active = True
 
+            if _has_trait(actor, "reckless attack") and not is_ranged:
+                advantage = True
+                _apply_condition(actor, "reckless_attacking", duration_rounds=1)
+
             to_hit_penalty = -5 if power_attack_active else 0
             damage_bonus = 10 if power_attack_active else 0
 
@@ -2406,6 +2420,23 @@ def _execute_action(
                     source=actor,
                     damage_type=action.damage_type,
                 )
+                if roll.crit and _has_trait(actor, "brutal critical") and not is_ranged:
+                    brutal_extra = 0
+                    if actor.level >= 17:
+                        brutal_extra = 3
+                    elif actor.level >= 13:
+                        brutal_extra = 2
+                    elif actor.level >= 9:
+                        brutal_extra = 1
+                    brutal_expr = _critical_bonus_dice_expr(action.damage, brutal_extra)
+                    if brutal_expr:
+                        raw_damage += roll_damage(
+                            rng,
+                            brutal_expr,
+                            crit=False,
+                            source=actor,
+                            damage_type=action.damage_type,
+                        )
                 if sneak_damage_expr:
                     raw_damage += roll_damage(
                         rng,
@@ -2526,6 +2557,12 @@ def _execute_action(
             save_mod = int(target.save_mods.get(save_key, 0))
             save_roll = rng.randint(1, 20)
             if (
+                save_key == "dex"
+                and _has_trait(target, "danger sense")
+                and not target.conditions.intersection({"blinded", "deafened", "incapacitated"})
+            ):
+                save_roll = max(save_roll, rng.randint(1, 20))
+            if (
                 "spell" in action.tags
                 and _has_trait(target, "gnomish cunning")
                 and save_key in {"int", "wis", "cha"}
@@ -2610,7 +2647,7 @@ def _execute_action(
             )
         return
 
-    if action.action_type == "utility":
+    if action.action_type in {"utility", "buff"}:
         if action.name == "dodge":
             _apply_condition(actor, "dodging", duration_rounds=1)
             return
