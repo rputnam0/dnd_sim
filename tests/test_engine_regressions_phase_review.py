@@ -14,6 +14,7 @@ from dnd_sim.engine import (
     _build_round_metadata,
     _execute_action,
     _run_legendary_actions,
+    _tick_conditions_for_actor,
     run_simulation,
 )
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
@@ -43,7 +44,7 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
     )
 
 
-class SequenceRng:
+class _FixedRng:
     def __init__(self, values: list[int]) -> None:
         self.values = list(values)
 
@@ -51,6 +52,9 @@ class SequenceRng:
         if not self.values:
             raise AssertionError("RNG exhausted")
         return self.values.pop(0)
+
+
+SequenceRng = _FixedRng
 
 
 def test_build_actor_applies_passive_max_hp_trait() -> None:
@@ -264,6 +268,7 @@ def test_divine_smite_attack_does_not_crash_and_spends_slot() -> None:
 
 def test_smite_variant_bonus_damage_is_consumed_on_first_melee_hit() -> None:
     paladin = _base_actor(actor_id="paladin", team="party")
+    paladin.resources = {"spell_slot_1": 1}
     target = _base_actor(actor_id="target", team="enemy")
     target.hp = 30
     target.max_hp = 30
@@ -397,6 +402,7 @@ def test_smite_of_protection_window_grants_and_expires_half_cover_bonus() -> Non
     enemy.position = (10.0, 0.0, 0.0)
 
     paladin.position = (0.0, 0.0, 0.0)
+    paladin.movement_remaining = 30.0
 
     smite_attack = ActionDefinition(
         name="warhammer",

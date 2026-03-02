@@ -417,7 +417,9 @@ def _parse_class_level(class_level_text: str, class_name: str) -> int:
 
 def _parse_class_levels(class_level_text: str) -> dict[str, int]:
     levels: dict[str, int] = {}
-    for class_name, raw_level in re.findall(r"([A-Za-z][A-Za-z' -]+?)\s*(\d+)", class_level_text or ""):
+    for class_name, raw_level in re.findall(
+        r"([A-Za-z][A-Za-z' -]+?)\s*(\d+)", class_level_text or ""
+    ):
         key = class_name.strip().lower()
         levels[key] = levels.get(key, 0) + int(raw_level)
     return levels
@@ -1245,6 +1247,8 @@ def _component_tags_from_components(components: str) -> set[str]:
         elif token.lower() == "m":
             tags.add("component:material")
     return tags
+
+
 def _critical_bonus_dice_expr(base_damage: str, extra_dice: int) -> str | None:
     if extra_dice <= 0:
         return None
@@ -2951,8 +2955,6 @@ def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int
         actor.resources[resource] = cap
     else:
         actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
-
-
 def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
     if not _has_trait(actor, "arcane recovery"):
         return
@@ -5597,6 +5599,8 @@ def _run_event_triggered_actions(
         obstacles=obstacles,
         light_level=light_level,
     )
+
+
 def _spell_level_from_action(action: ActionDefinition) -> int:
     slot_levels = []
     for key in action.resource_cost.keys():
@@ -5793,6 +5797,8 @@ def _trigger_readied_actions(
 
         if trigger_actor.dead or trigger_actor.hp <= 0:
             break
+
+
 def _bardic_inspiration_die_sides(actor: ActorRuntimeState) -> int:
     if _has_trait(actor, "bardic inspiration (d12)"):
         return 12
@@ -6260,6 +6266,8 @@ def _resolve_dispel_magic(
         dc = 10 + source_level
         if (rng.randint(1, 20) + check_mod) >= dc:
             _break_concentration(source, actors, active_hazards)
+
+
 def _apply_domain_attack_roll_hooks(
     *,
     actor: ActorRuntimeState,
@@ -6919,6 +6927,21 @@ def _execute_action(
                             damage_type="radiant",
                         )
                         raw_damage += raw_smite
+                        if _has_trait(actor, "smite of protection"):
+                            _apply_condition(actor, "smite_of_protection_window", duration_rounds=1)
+                if actor.pending_smite and not is_ranged and target.hp > 0:
+                    raw_damage += _apply_pending_smite_on_hit(
+                        rng=rng,
+                        actor=actor,
+                        target=target,
+                        roll_crit=roll.crit,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        actors=actors,
+                        active_hazards=active_hazards,
+                    )
                 was_active_before_damage = target.hp > 0 and not target.dead
                 raw_damage = _try_cutting_words_on_damage_roll(
                     rng=rng,
@@ -7203,6 +7226,31 @@ def _execute_action(
         return
 
     if action.action_type in {"utility", "buff"}:
+        if _is_smite_setup_action(action):
+            _arm_pending_smite(actor, action)
+            return
+        if action.name == "lay_on_hands":
+            pool = int(actor.resources.get("lay_on_hands_pool", 0))
+            if pool <= 0:
+                return
+            for target in targets:
+                if target.dead:
+                    continue
+                missing_hp = max(0, target.max_hp - target.hp)
+                if missing_hp <= 0:
+                    continue
+                spent = min(pool, missing_hp)
+                if spent <= 0:
+                    continue
+                _apply_healing(target, spent)
+                actor.resources["lay_on_hands_pool"] = max(0, pool - spent)
+                resources_spent[actor.actor_id]["lay_on_hands_pool"] = (
+                    resources_spent[actor.actor_id].get("lay_on_hands_pool", 0) + spent
+                )
+                pool = int(actor.resources.get("lay_on_hands_pool", 0))
+                if pool <= 0:
+                    break
+            return
         if _has_tag(action, "conversion:points_to_slot"):
             slot_level = _slot_level_from_action(action)
             if slot_level is not None and slot_level <= 5:
@@ -7271,6 +7319,33 @@ def _execute_action(
                 telemetry=telemetry,
                 strategy_name=strategy_name,
             )
+
+
+def _try_stunning_strike(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    target: ActorRuntimeState,
+    is_ranged: bool,
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    return None
+
+
+def _try_open_hand_technique(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    target: ActorRuntimeState,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    return None
 
 
 def _build_round_metadata(
