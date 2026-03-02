@@ -40,6 +40,7 @@ _ATTACKER_ADVANTAGE_CONDITIONS = {
     "stunned",
     "unconscious",
     "restrained",
+    "reckless_attacking",
 }
 _AUTO_CRIT_CONDITIONS = {"paralyzed", "stunned", "unconscious"}
 _IMPLIED_CONDITION_MAP: dict[str, set[str]] = {
@@ -299,6 +300,13 @@ def _component_tags_from_components(components: str) -> set[str]:
         elif token.lower() == "m":
             tags.add("component:material")
     return tags
+def _critical_bonus_dice_expr(base_damage: str, extra_dice: int) -> str | None:
+    if extra_dice <= 0:
+        return None
+    num_dice, die_size, _flat = parse_damage_expression(base_damage)
+    if num_dice <= 0:
+        return None
+    return f"{num_dice * extra_dice}d{die_size}"
 
 
 def _slugify_spell_name(name: str) -> str:
@@ -1786,7 +1794,7 @@ def _filter_targets_in_range(
 
 
 def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
-    if action.action_type == "utility":
+    if action.action_type in {"utility", "buff"}:
         return True
     for effect in action.effects:
         if not isinstance(effect, dict):
@@ -2185,6 +2193,10 @@ def _tick_conditions_for_actor(rng: random.Random, actor: ActorRuntimeState) -> 
 
     Conditions with a repeating save allow the actor to roll each turn.
     """
+    if "raging" in actor.conditions and not actor.rage_sustained_since_last_turn:
+        _remove_condition(actor, "raging")
+    actor.rage_sustained_since_last_turn = False
+
     for condition, tracker in list(actor.condition_durations.items()):
         # Attempt repeating save if available
         if tracker.save_dc is not None and tracker.save_ability:
@@ -3615,6 +3627,8 @@ def _execute_action(
         from .rules_2014 import run_contested_check
 
         target = targets[0]
+        if "raging" in actor.conditions and target.team != actor.team:
+            actor.rage_sustained_since_last_turn = True
 
         # Determine attacker mod (Athletics -> STR)
         attacker_mod = actor.str_mod
@@ -3681,6 +3695,8 @@ def _execute_action(
                 if current_target is None:
                     break
             target = current_target
+            if "raging" in actor.conditions and target.team != actor.team:
+                actor.rage_sustained_since_last_turn = True
             advantage, disadvantage = _consume_attack_flags(actor)
             # Target condition-based advantage/auto-crit
             target_conditions = target.conditions
@@ -3783,6 +3799,10 @@ def _execute_action(
                 elif _has_trait(actor, "great weapon master") and is_heavy:
                     if target_ac <= 16 or advantage:
                         power_attack_active = True
+
+            if _has_trait(actor, "reckless attack") and not is_ranged:
+                advantage = True
+                _apply_condition(actor, "reckless_attacking", duration_rounds=1)
 
             to_hit_penalty = -5 if power_attack_active else 0
             damage_bonus = 10 if power_attack_active else 0
@@ -3909,6 +3929,23 @@ def _execute_action(
                     source=actor,
                     damage_type=action.damage_type,
                 )
+                if roll.crit and _has_trait(actor, "brutal critical") and not is_ranged:
+                    brutal_extra = 0
+                    if actor.level >= 17:
+                        brutal_extra = 3
+                    elif actor.level >= 13:
+                        brutal_extra = 2
+                    elif actor.level >= 9:
+                        brutal_extra = 1
+                    brutal_expr = _critical_bonus_dice_expr(action.damage, brutal_extra)
+                    if brutal_expr:
+                        raw_damage += roll_damage(
+                            rng,
+                            brutal_expr,
+                            crit=False,
+                            source=actor,
+                            damage_type=action.damage_type,
+                        )
                 if sneak_damage_expr:
                     raw_damage += roll_damage(
                         rng,
@@ -4039,6 +4076,12 @@ def _execute_action(
             save_mod = int(target.save_mods.get(save_key, 0))
             save_roll = rng.randint(1, 20)
             if (
+                save_key == "dex"
+                and _has_trait(target, "danger sense")
+                and not target.conditions.intersection({"blinded", "deafened", "incapacitated"})
+            ):
+                save_roll = max(save_roll, rng.randint(1, 20))
+            if (
                 "spell" in action.tags
                 and _has_trait(target, "gnomish cunning")
                 and save_key in {"int", "wis", "cha"}
@@ -4132,7 +4175,7 @@ def _execute_action(
             emit_event("on_save", trigger_target=target)
         return
 
-    if action.action_type == "utility":
+    if action.action_type in {"utility", "buff"}:
         if "dispel" in action.tags or action.name.startswith("dispel_magic"):
             _resolve_dispel_magic(
                 rng=rng,
