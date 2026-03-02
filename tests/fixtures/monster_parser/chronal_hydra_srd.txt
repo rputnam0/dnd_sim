@@ -1,0 +1,31 @@
+Monsters (C)
+Chronal Hydra
+Huge monstrosity, neutral evil
+Armor Class 18 (natural armor)
+Hit Points 250 (20d12 + 120)
+Speed 30 ft., swim 30 ft.
+STR DEX CON INT WIS CHA
+23 (+6) 12 (+1) 22 (+6) 5 (-3) 12 (+1) 8 (-1)
+Saving Throws Con +11, Wis +6
+Skills Perception +6
+Senses darkvision 120 ft., passive Perception 16
+Languages --
+Challenge 15 (13,000 XP)
+Temporal Heads. The hydra has five heads.
+Reactive Carapace. The hydra can take one extra reaction each round, but only to make opportunity attacks.
+Actions
+Multiattack. The hydra makes as many Temporal Bite attacks as it has heads.
+Temporal Bite. Melee Weapon Attack: +11 to hit, reach 10 ft., one target. Hit: 16 (2d10 + 5) piercing damage plus 7 (2d6) force damage.
+Time Pulse (Recharge 5-6). Each creature within 20 feet of the hydra must make a DC 18 Constitution saving throw, taking 22 (4d10) force damage on a failed save, or half as much damage on a successful one.
+Reactions
+Counter Lash. When a creature within 10 feet of the hydra hits it with an attack, the hydra makes one Temporal Bite attack against that creature.
+Legendary Actions
+The hydra can take 3 legendary actions, choosing from the options below. Only one legendary action option can be used at a time.
+Detect. The hydra makes a Wisdom (Perception) check.
+Snap (Costs 2 Actions). The hydra makes one Temporal Bite attack.
+Rift Burst (Costs 3 Actions). Each creature within 10 feet of the hydra must succeed on a DC 18 Dexterity saving throw or take 10 (3d6) force damage.
+Lair Actions
+On initiative count 20 (losing initiative ties), the hydra can take one lair action:
+Gravitic Surge. Each creature of the hydra's choice within 30 feet must succeed on a DC 18 Strength saving throw or be knocked prone.
+Temporal Fog. Until initiative count 20 on the next round, the area within 60 feet is heavily obscured.
+Appendix PH-A:
