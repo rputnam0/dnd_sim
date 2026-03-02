@@ -427,6 +427,21 @@ def _extract_spellcasting_profile_from_raw_fields(character: dict[str, Any]) -> 
     return out
 
 
+def _character_has_magical_secrets(character: dict[str, Any]) -> bool:
+    for trait in character.get("traits", []) or []:
+        key = _trait_lookup_key(str(trait))
+        if key in {"magical secrets", "additional magical secrets", "magical discoveries"}:
+            return True
+    return False
+
+
+def _is_magical_secrets_spell_entry(entry: dict[str, Any]) -> bool:
+    source = str(entry.get("source", "") or "").lower()
+    notes = str(entry.get("notes", "") or "").lower()
+    blob = f"{source} {notes}"
+    return "magical secret" in blob or "magical discover" in blob
+
+
 def _classify_casting_time_action_cost(casting_time: str) -> str:
     compact = re.sub(r"[^a-z0-9]+", "", casting_time.strip().lower())
     if compact in {"ba", "1ba", "bonusaction", "1bonusaction"}:
@@ -444,6 +459,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
     """
     raw_fields = character.get("raw_fields", []) or []
     profile = _extract_spellcasting_profile_from_raw_fields(character)
+    has_magical_secrets = _character_has_magical_secrets(character)
     global_to_hit = profile.get("to_hit")
     global_save_dc = profile.get("save_dc")
 
@@ -481,7 +497,13 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
 
         spell_level = int(entry.get("level", 0))
         prepared = str(entry.get("prepared", "") or "").strip()
-        if spell_level > 0 and not prepared:
+        magical_secrets_entry = _is_magical_secrets_spell_entry(entry)
+        if (
+            spell_level > 0
+            and not prepared
+            and not magical_secrets_entry
+            and not has_magical_secrets
+        ):
             continue
 
         save_hit = str(entry.get("savehit", "") or "").strip()
@@ -504,6 +526,8 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "save_ability": save_ability,
             "concentration": "concentration" in duration.lower() if duration else False,
         }
+        if magical_secrets_entry:
+            hydrated["tags"] = ["magical_secrets"]
 
         range_ft = None
         range_match = re.search(r"(\d+)\s*ft", range_text.lower())
@@ -753,6 +777,13 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     def has_trait(name: str) -> bool:
         return _normalize_trait_name(name) in traits
 
+    def resource_pool_max(resource_name: str) -> int:
+        value = resources.get(resource_name, 0)
+        if isinstance(value, dict):
+            raw = value.get("max", 0)
+            return int(raw) if isinstance(raw, (int, float)) else 0
+        return int(value) if isinstance(value, int) else 0
+
     if attacks:
 
         def avg_damage(expr: str) -> float:
@@ -886,6 +917,19 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
             )
 
+        if has_trait("bardic inspiration") and resource_pool_max("bardic_inspiration") > 0:
+            actions.append(
+                ActionDefinition(
+                    name="bardic_inspiration",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="single_ally",
+                    range_ft=60,
+                    resource_cost={"bardic_inspiration": 1},
+                    tags=["bonus", "bardic_inspiration"],
+                )
+            )
+
         # --- Reactions ---
         if has_trait("shield"):
             actions.append(
@@ -915,6 +959,18 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             tags=["basic"],
         )
     ]
+    if has_trait("bardic inspiration") and resource_pool_max("bardic_inspiration") > 0:
+        base.append(
+            ActionDefinition(
+                name="bardic_inspiration",
+                action_type="utility",
+                action_cost="bonus",
+                target_mode="single_ally",
+                range_ft=60,
+                resource_cost={"bardic_inspiration": 1},
+                tags=["bonus", "bardic_inspiration"],
+            )
+        )
     return base + spell_actions
 
 
@@ -1917,6 +1973,179 @@ def _fallback_action(
     return None
 
 
+def _bardic_inspiration_die_sides(actor: ActorRuntimeState) -> int:
+    if _has_trait(actor, "bardic inspiration (d12)"):
+        return 12
+    if _has_trait(actor, "bardic inspiration (d10)"):
+        return 10
+    if _has_trait(actor, "bardic inspiration (d8)"):
+        return 8
+    return 6
+
+
+def _consume_bardic_inspiration_die(
+    actor: ActorRuntimeState,
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    key = "bardic_inspiration_die"
+    die_sides = int(actor.resources.get(key, 0))
+    if die_sides <= 0:
+        return 0
+    actor.resources[key] = 0
+    resources_spent[actor.actor_id][key] = resources_spent[actor.actor_id].get(key, 0) + 1
+    return die_sides
+
+
+def _try_spend_bardic_inspiration_on_attack_roll(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    roll: AttackRollResult,
+    target_ac: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    if roll.hit or roll.natural_roll == 20:
+        return roll
+    die_sides = int(actor.resources.get("bardic_inspiration_die", 0))
+    if die_sides <= 0:
+        return roll
+    if roll.total + die_sides < target_ac:
+        return roll
+
+    consumed = _consume_bardic_inspiration_die(actor, resources_spent)
+    if consumed <= 0:
+        return roll
+    bonus = rng.randint(1, consumed)
+    total = roll.total + bonus
+    hit = roll.crit or (roll.natural_roll != 1 and total >= target_ac)
+    return AttackRollResult(hit=hit, crit=roll.crit, natural_roll=roll.natural_roll, total=total)
+
+
+def _try_spend_bardic_inspiration_on_save(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    save_roll: int,
+    save_mod: int,
+    dc: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    if save_roll + save_mod >= dc:
+        return save_roll
+    die_sides = int(actor.resources.get("bardic_inspiration_die", 0))
+    if die_sides <= 0:
+        return save_roll
+    if save_roll + save_mod + die_sides < dc:
+        return save_roll
+
+    consumed = _consume_bardic_inspiration_die(actor, resources_spent)
+    if consumed <= 0:
+        return save_roll
+    return save_roll + rng.randint(1, consumed)
+
+
+def _find_cutting_words_reactor(
+    *,
+    attacker: ActorRuntimeState,
+    target: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+) -> ActorRuntimeState | None:
+    from .spatial import distance_chebyshev
+
+    if "all" in attacker.condition_immunities or "charmed" in attacker.condition_immunities:
+        return None
+
+    candidates: list[tuple[int, ActorRuntimeState]] = []
+    for ally in actors.values():
+        if ally.team != target.team:
+            continue
+        if ally.dead or ally.hp <= 0:
+            continue
+        if not ally.reaction_available:
+            continue
+        if not _has_trait(ally, "cutting words"):
+            continue
+        if ally.resources.get("bardic_inspiration", 0) <= 0:
+            continue
+        if distance_chebyshev(ally.position, attacker.position) > 60:
+            continue
+        candidates.append((_bardic_inspiration_die_sides(ally), ally))
+
+    if not candidates:
+        return None
+    candidates.sort(key=lambda row: row[0], reverse=True)
+    return candidates[0][1]
+
+
+def _spend_cutting_words_reaction(
+    *,
+    rng: random.Random,
+    reactor: ActorRuntimeState,
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    die_sides = _bardic_inspiration_die_sides(reactor)
+    if die_sides <= 0:
+        return 0
+    reactor.resources["bardic_inspiration"] = max(
+        0, reactor.resources.get("bardic_inspiration", 0) - 1
+    )
+    reactor.reaction_available = False
+    resources_spent[reactor.actor_id]["bardic_inspiration"] = (
+        resources_spent[reactor.actor_id].get("bardic_inspiration", 0) + 1
+    )
+    return rng.randint(1, die_sides)
+
+
+def _try_cutting_words_on_attack_roll(
+    *,
+    rng: random.Random,
+    attacker: ActorRuntimeState,
+    target: ActorRuntimeState,
+    roll: AttackRollResult,
+    target_ac: int,
+    actors: dict[str, ActorRuntimeState],
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    if not roll.hit or roll.natural_roll == 20:
+        return roll
+    reactor = _find_cutting_words_reactor(attacker=attacker, target=target, actors=actors)
+    if reactor is None:
+        return roll
+    max_reduction = _bardic_inspiration_die_sides(reactor)
+    if roll.total - max_reduction >= target_ac:
+        return roll
+    reduction = _spend_cutting_words_reaction(
+        rng=rng, reactor=reactor, resources_spent=resources_spent
+    )
+    if reduction <= 0:
+        return roll
+    total = roll.total - reduction
+    hit = roll.crit or (roll.natural_roll != 1 and total >= target_ac)
+    return AttackRollResult(hit=hit, crit=roll.crit, natural_roll=roll.natural_roll, total=total)
+
+
+def _try_cutting_words_on_damage_roll(
+    *,
+    rng: random.Random,
+    attacker: ActorRuntimeState,
+    target: ActorRuntimeState,
+    raw_damage: int,
+    actors: dict[str, ActorRuntimeState],
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    if raw_damage <= 0:
+        return raw_damage
+    reactor = _find_cutting_words_reactor(attacker=attacker, target=target, actors=actors)
+    if reactor is None:
+        return raw_damage
+    reduction = _spend_cutting_words_reaction(
+        rng=rng, reactor=reactor, resources_spent=resources_spent
+    )
+    if reduction <= 0:
+        return raw_damage
+    return max(0, raw_damage - reduction)
+
+
 def _try_shield_reaction(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
@@ -2294,6 +2523,13 @@ def _execute_action(
                 advantage=advantage,
                 disadvantage=disadvantage,
             )
+            roll = _try_spend_bardic_inspiration_on_attack_roll(
+                rng=rng,
+                actor=actor,
+                roll=roll,
+                target_ac=target_ac,
+                resources_spent=resources_spent,
+            )
 
             # Lucky: Attacker rerolls miss
             if (
@@ -2335,6 +2571,15 @@ def _execute_action(
                 roll = AttackRollResult(
                     hit=True, crit=True, natural_roll=roll.natural_roll, total=roll.total
                 )
+            roll = _try_cutting_words_on_attack_roll(
+                rng=rng,
+                attacker=actor,
+                target=target,
+                roll=roll,
+                target_ac=target_ac,
+                actors=actors,
+                resources_spent=resources_spent,
+            )
             event = "hit" if roll.hit else "miss"
             # Shield reaction: always use if available and would negate hit
             if roll.hit and _try_shield_reaction(actor, target, roll):
@@ -2441,6 +2686,14 @@ def _execute_action(
                             damage_type="radiant",
                         )
                         raw_damage += raw_smite
+                raw_damage = _try_cutting_words_on_damage_roll(
+                    rng=rng,
+                    attacker=actor,
+                    target=target,
+                    raw_damage=raw_damage,
+                    actors=actors,
+                    resources_spent=resources_spent,
+                )
                 applied = apply_damage(
                     target,
                     raw_damage,
@@ -2504,6 +2757,24 @@ def _execute_action(
                 source=actor,
                 damage_type=action.damage_type,
             )
+        if raw_damage > 0:
+            primary_enemy_target = next(
+                (
+                    candidate
+                    for candidate in targets
+                    if candidate.team != actor.team and candidate.hp > 0 and not candidate.dead
+                ),
+                None,
+            )
+            if primary_enemy_target is not None:
+                raw_damage = _try_cutting_words_on_damage_roll(
+                    rng=rng,
+                    attacker=actor,
+                    target=primary_enemy_target,
+                    raw_damage=raw_damage,
+                    actors=actors,
+                    resources_spent=resources_spent,
+                )
 
         careful_allies = set()
         if (
@@ -2536,6 +2807,16 @@ def _execute_action(
             if "spell" in action.tags and _has_trait(target, "mage slayer"):
                 save_roll = max(save_roll, rng.randint(1, 20))
             success = (save_roll + save_mod) >= action.save_dc
+            if not success:
+                save_roll = _try_spend_bardic_inspiration_on_save(
+                    rng=rng,
+                    actor=target,
+                    save_roll=save_roll,
+                    save_mod=save_mod,
+                    dc=action.save_dc,
+                    resources_spent=resources_spent,
+                )
+                success = (save_roll + save_mod) >= action.save_dc
 
             # Lucky: Reroll failed save
             if (
@@ -2622,6 +2903,13 @@ def _execute_action(
             return
         if action.name == "ready":
             _apply_condition(actor, "readying", duration_rounds=1)
+            return
+        if action.name == "bardic_inspiration":
+            die_sides = _bardic_inspiration_die_sides(actor)
+            for target in targets:
+                if target.actor_id == actor.actor_id:
+                    continue
+                target.resources["bardic_inspiration_die"] = die_sides
             return
 
         for target in targets:
