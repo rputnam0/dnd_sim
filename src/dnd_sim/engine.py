@@ -1208,7 +1208,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             )
 
         # --- Bonus actions ---
-        if has_trait("martial arts") and "ki" in resources:
+        if has_trait("martial arts"):
             actions.append(
                 ActionDefinition(
                     name="martial_arts_bonus",
@@ -1217,11 +1217,27 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     damage=str(best_attack.get("damage", "1")),
                     damage_type=str(best_attack.get("damage_type", "bludgeoning")),
                     attack_count=1,
-                    resource_cost={"ki": 1},
                     action_cost="bonus",
                     tags=["bonus", "martial_arts"],
                 )
             )
+            if has_trait("flurry of blows") and resources.get("ki", {}).get("max", 0) > 0:
+                tags = ["bonus", "martial_arts", "flurry_of_blows"]
+                if has_trait("open hand technique"):
+                    tags.append("open_hand_technique")
+                actions.append(
+                    ActionDefinition(
+                        name="flurry_of_blows",
+                        action_type="attack",
+                        to_hit=int(best_attack.get("to_hit", 0)),
+                        damage=str(best_attack.get("damage", "1")),
+                        damage_type=str(best_attack.get("damage_type", "bludgeoning")),
+                        attack_count=2,
+                        resource_cost={"ki": 1},
+                        action_cost="bonus",
+                        tags=tags,
+                    )
+                )
 
         if has_trait("polearm master"):
             weapon_name = best_attack.get("name", "").lower()
@@ -3053,6 +3069,18 @@ def _can_pay_resource_cost(actor: ActorRuntimeState, action: ActionDefinition) -
     return _has_resources(actor, action.resource_cost)
 
 
+def _can_take_reaction(actor: ActorRuntimeState) -> bool:
+    if not actor.reaction_available:
+        return False
+    if actor.dead or actor.hp <= 0:
+        return False
+    if actor.conditions.intersection(_CONTROL_BLOCKING_CONDITIONS):
+        return False
+    if "open_hand_no_reactions" in actor.conditions:
+        return False
+    return True
+
+
 def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
     if action.max_uses is not None and actor.per_action_uses.get(action.name, 0) >= action.max_uses:
         return False
@@ -3064,7 +3092,7 @@ def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> boo
         return False
     if action.action_cost == "bonus" and not actor.bonus_available:
         return False
-    if action.action_cost == "reaction" and not actor.reaction_available:
+    if action.action_cost == "reaction" and not _can_take_reaction(actor):
         return False
     if action.action_cost == "legendary" and actor.legendary_actions_remaining < _legendary_cost(
         action
@@ -3939,7 +3967,7 @@ def _try_shield_reaction(
 
     Returns True if the hit was negated.
     """
-    if not target.reaction_available:
+    if not _can_take_reaction(target):
         return False
     shield_action = None
     for action in target.actions:
@@ -4182,7 +4210,7 @@ def _execute_action(
                 enemy.team != actor.team
                 and enemy.hp > 0
                 and not enemy.dead
-                and enemy.reaction_available
+                and _can_take_reaction(enemy)
             ):
                 cs_action = next(
                     (
@@ -4641,6 +4669,26 @@ def _execute_action(
                     and not is_ranged
                 ):
                     actor.conditions.add("gwm_bonus_triggered")
+            if roll.hit:
+                _try_stunning_strike(
+                    rng=rng,
+                    actor=actor,
+                    target=target,
+                    is_ranged=is_ranged,
+                    resources_spent=resources_spent,
+                )
+                _try_open_hand_technique(
+                    rng=rng,
+                    actor=actor,
+                    action=action,
+                    target=target,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    actors=actors,
+                    active_hazards=active_hazards,
+                )
             _apply_action_effects(
                 action=action,
                 event=event,
@@ -4794,7 +4842,7 @@ def _execute_action(
                 elif (
                     _has_trait(target, "shield master")
                     and action.half_on_save
-                    and target.reaction_available
+                    and _can_take_reaction(target)
                 ):
                     final_damage = 0
                     target.reaction_available = False
