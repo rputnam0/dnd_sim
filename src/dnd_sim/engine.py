@@ -105,6 +105,25 @@ _WIZARD_SCHOOL_TRAIT_TO_SCHOOL = {
     "school of necromancy": "necromancy",
     "school of transmutation": "transmutation",
 }
+_KNOWN_MANEUVERS = {
+    "commander's strike",
+    "disarming attack",
+    "distracting strike",
+    "evasive footwork",
+    "feinting attack",
+    "goading attack",
+    "lunging attack",
+    "maneuvering attack",
+    "menacing attack",
+    "parry",
+    "precision attack",
+    "pushing attack",
+    "rally",
+    "riposte",
+    "sweeping attack",
+    "trip attack",
+}
+_DEFAULT_BATTLEMASTER_MANEUVERS = ("trip attack", "menacing attack", "precision attack")
 
 
 @dataclass(slots=True)
@@ -580,6 +599,32 @@ def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
     if recovered_levels <= 0:
         return
     actor.resources["arcane_recovery"] = uses_remaining - 1
+
+
+def _fighter_superiority_dice_count(fighter_level: int) -> int:
+    if fighter_level >= 15:
+        return 6
+    if fighter_level >= 7:
+        return 5
+    if fighter_level >= 3:
+        return 4
+    return 0
+
+
+def _fighter_superiority_die_size(
+    fighter_level: int,
+    *,
+    traits: set[str] | None = None,
+) -> int:
+    trait_keys = traits or set()
+    if fighter_level >= 18 or "ultimate combat superiority" in trait_keys:
+        return 12
+    if fighter_level >= 10 or {
+        "improved combat superiority",
+        "improved combat superiority (d10)",
+    }.intersection(trait_keys):
+        return 10
+    return 8
 
 
 def _warlock_level_from_character(character: dict[str, Any]) -> int:
@@ -2220,11 +2265,121 @@ def _apply_warlock_invocations_to_actions(
                 )
 
 
+def _extract_selected_maneuvers(character: dict[str, Any], traits: set[str]) -> list[str]:
+    known_by_key = {_trait_lookup_key(name): name for name in _KNOWN_MANEUVERS}
+    candidates: set[str] = set(str(value) for value in (character.get("traits", []) or []))
+    candidates.update(_extract_trait_candidates_from_raw_fields(character))
+
+    selected: list[str] = []
+    seen: set[str] = set()
+    for candidate in sorted(candidates):
+        maneuver_name = known_by_key.get(_trait_lookup_key(candidate))
+        if maneuver_name is None or maneuver_name in seen:
+            continue
+        selected.append(maneuver_name)
+        seen.add(maneuver_name)
+
+    if selected:
+        return selected
+    if {"combat superiority", "maneuvers", "battle master"}.intersection(traits):
+        return list(_DEFAULT_BATTLEMASTER_MANEUVERS)
+    return []
+
+
+def _build_maneuver_attack_action(
+    *,
+    maneuver_name: str,
+    best_attack: dict[str, Any],
+    attack_count: int,
+    superiority_die_size: int,
+    save_dc: int,
+) -> ActionDefinition:
+    slug = re.sub(r"[^a-z0-9]+", "_", maneuver_name.lower()).strip("_")
+    base_to_hit = int(best_attack.get("to_hit", 0))
+    to_hit_bonus = 0
+    effects: list[dict[str, Any]] = []
+    weapon_damage_type = str(best_attack.get("damage_type", "bludgeoning"))
+
+    if maneuver_name == "precision attack":
+        to_hit_bonus = max(1, (superiority_die_size + 1) // 2)
+    else:
+        effects.append(
+            {
+                "effect_type": "damage",
+                "target": "target",
+                "apply_on": "hit",
+                "damage": f"1d{superiority_die_size}",
+                "damage_type": weapon_damage_type,
+                "once_per_action": True,
+            }
+        )
+        if maneuver_name == "trip attack":
+            effects.append(
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "apply_on": "hit",
+                    "condition": "prone",
+                    "save_dc": save_dc,
+                    "save_ability": "str",
+                    "once_per_action": True,
+                }
+            )
+        elif maneuver_name == "menacing attack":
+            effects.append(
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "apply_on": "hit",
+                    "condition": "frightened",
+                    "save_dc": save_dc,
+                    "save_ability": "wis",
+                    "once_per_action": True,
+                }
+            )
+        elif maneuver_name == "pushing attack":
+            effects.append(
+                {
+                    "effect_type": "forced_movement",
+                    "target": "target",
+                    "apply_on": "hit",
+                    "direction": "away_from_source",
+                    "distance_ft": 15,
+                    "save_dc": save_dc,
+                    "save_ability": "str",
+                    "once_per_action": True,
+                }
+            )
+        elif maneuver_name == "goading attack":
+            effects.append(
+                {
+                    "effect_type": "next_attack_disadvantage",
+                    "target": "target",
+                    "apply_on": "hit",
+                    "once_per_action": True,
+                }
+            )
+
+    return ActionDefinition(
+        name=f"maneuver_{slug}",
+        action_type="attack",
+        to_hit=base_to_hit + to_hit_bonus,
+        damage=str(best_attack.get("damage", "1")),
+        damage_type=weapon_damage_type,
+        attack_count=attack_count,
+        resource_cost={"superiority_dice": 1},
+        effects=effects,
+        tags=["attack_option", "maneuver", f"maneuver:{slug}"],
+    )
+
+
 def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition]:
     attacks = character.get("attacks", [])
     resources = character.get("resources", {})
     traits = {_normalize_trait_name(trait) for trait in character.get("traits", [])}
-    character_level = _parse_character_level(character.get("class_level", "1"))
+    class_level_text = str(character.get("class_level", "1"))
+    character_level = _parse_character_level(class_level_text)
+    fighter_level = _parse_class_level(class_level_text, "fighter")
 
     def has_trait(name: str) -> bool:
         return _normalize_trait_name(name) in traits
@@ -2306,6 +2461,25 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
             )
 
+        superiority_traits = {"combat superiority", "maneuvers", "battle master", "martial adept"}
+        if superiority_traits.intersection(traits):
+            selected_maneuvers = _extract_selected_maneuvers(character, traits)
+            die_size = _fighter_superiority_die_size(fighter_level, traits=traits)
+            ability_scores = character.get("ability_scores", {})
+            str_mod = (int(ability_scores.get("str", 10)) - 10) // 2
+            dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
+            save_dc = 8 + _calculate_proficiency_bonus(character_level) + max(str_mod, dex_mod)
+            for maneuver_name in selected_maneuvers:
+                actions.append(
+                    _build_maneuver_attack_action(
+                        maneuver_name=maneuver_name,
+                        best_attack=best_attack,
+                        attack_count=attack_count,
+                        superiority_die_size=die_size,
+                        save_dc=save_dc,
+                    )
+                )
+
         # --- Bonus actions ---
         if has_trait("martial arts"):
             actions.append(
@@ -2382,6 +2556,26 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     damage_type=str(best_attack.get("damage_type", "bludgeoning")),
                     action_cost="bonus",
                     tags=["bonus", "gwm_bonus"],
+                )
+            )
+
+        if has_trait("second wind"):
+            second_wind_level = max(1, fighter_level or character_level)
+            actions.append(
+                ActionDefinition(
+                    name="second_wind",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="self",
+                    resource_cost={"second_wind": 1},
+                    effects=[
+                        {
+                            "effect_type": "heal",
+                            "target": "target",
+                            "amount": f"1d10+{second_wind_level}",
+                        }
+                    ],
+                    tags=["bonus", "short_rest", "second_wind"],
                 )
             )
 
@@ -2469,6 +2663,25 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 tags=["bonus", "bardic_inspiration"],
             )
         )
+    if has_trait("second wind"):
+        second_wind_level = max(1, fighter_level or character_level)
+        base.append(
+            ActionDefinition(
+                name="second_wind",
+                action_type="utility",
+                action_cost="bonus",
+                target_mode="self",
+                resource_cost={"second_wind": 1},
+                effects=[
+                    {
+                        "effect_type": "heal",
+                        "target": "target",
+                        "amount": f"1d10+{second_wind_level}",
+                    }
+                ],
+                tags=["bonus", "short_rest", "second_wind"],
+            )
+        )
     return base + spell_actions + font_of_magic_actions + cleric_actions
 
 
@@ -2507,6 +2720,11 @@ def _get_standard_actions() -> list[ActionDefinition]:
 
 def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
     result: dict[str, int] = {}
+    feature_resource_aliases = {
+        "action_surge": "action_surge",
+        "second_wind": "second_wind",
+        "superiority_dice": "superiority_dice",
+    }
     raw = character.get("resources", {})
     has_pact_magic = _is_pact_magic_character(character)
     warlock_level = _warlock_level_from_character(character)
@@ -2539,7 +2757,11 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
             else:
                 for name, amount in value.items():
                     if isinstance(amount, int):
-                        result[f"{key}_{name}"] = amount
+                        mapped = feature_resource_aliases.get(str(name))
+                        if key == "feature_uses" and mapped is not None:
+                            result[mapped] = amount
+                        else:
+                            result[f"{key}_{name}"] = amount
         elif isinstance(value, int):
             result[key] = value
     traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
@@ -2578,6 +2800,118 @@ def _apply_passive_traits(actor: ActorRuntimeState) -> None:
                 )
                 if isinstance(raw_range, (int, float)):
                     actor.traits[sense] = {"range_ft": float(raw_range)}
+
+
+def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
+    if max_value <= 0:
+        return
+    existing_max = int(actor.max_resources.get(resource, 0))
+    if existing_max < max_value:
+        actor.max_resources[resource] = max_value
+    cap = int(actor.max_resources[resource])
+    if resource not in actor.resources:
+        actor.resources[resource] = cap
+    else:
+        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+
+
+def _apply_inferred_fighter_resources(
+    actor: ActorRuntimeState,
+    *,
+    class_level_text: str,
+) -> None:
+    fighter_level = _parse_class_level(class_level_text, "fighter")
+
+    if _has_trait(actor, "action surge"):
+        action_surge_uses = (
+            2 if fighter_level >= 17 or _has_trait(actor, "action surge (two uses)") else 1
+        )
+        _ensure_resource_cap(actor, "action_surge", action_surge_uses)
+
+    if _has_trait(actor, "second wind"):
+        _ensure_resource_cap(actor, "second_wind", 1)
+
+    superiority_sources = ("combat superiority", "maneuvers", "battle master", "martial adept")
+    if any(_has_trait(actor, trait_name) for trait_name in superiority_sources):
+        superiority_dice = _fighter_superiority_dice_count(fighter_level)
+        if superiority_dice <= 0 and _has_trait(actor, "martial adept"):
+            superiority_dice = 1
+        if superiority_dice > 0:
+            _ensure_resource_cap(actor, "superiority_dice", superiority_dice)
+
+
+def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    _ensure_resource_cap(actor, "arcane_recovery", 1)
+
+
+def _iter_spell_slot_levels_desc(actor: ActorRuntimeState) -> list[int]:
+    levels: set[int] = set()
+    for key in actor.max_resources.keys():
+        if not str(key).startswith("spell_slot_"):
+            continue
+        try:
+            level = int(str(key).rsplit("_", 1)[1])
+        except ValueError:
+            continue
+        if level > 0:
+            levels.add(level)
+    return sorted(levels, reverse=True)
+
+
+def _recover_spell_slots_with_budget(
+    actor: ActorRuntimeState,
+    *,
+    budget: int,
+    max_individual_slot_level: int,
+) -> int:
+    if budget <= 0:
+        return 0
+    recovered_levels = 0
+    for slot_level in _iter_spell_slot_levels_desc(actor):
+        if slot_level > max_individual_slot_level or budget < slot_level:
+            continue
+        slot_key = f"spell_slot_{slot_level}"
+        max_slots = int(actor.max_resources.get(slot_key, 0))
+        current_slots = min(int(actor.resources.get(slot_key, 0)), max_slots)
+        missing_slots = max(0, max_slots - current_slots)
+        recoverable_slots = min(missing_slots, budget // slot_level)
+        if recoverable_slots <= 0:
+            continue
+        actor.resources[slot_key] = current_slots + recoverable_slots
+        recovered_levels += recoverable_slots * slot_level
+        budget -= recoverable_slots * slot_level
+        if budget <= 0:
+            break
+    return recovered_levels
+
+
+def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    uses_remaining = int(actor.resources.get("arcane_recovery", 0))
+    if uses_remaining <= 0:
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    recovery_budget = max(1, (wizard_level + 1) // 2)
+    recovered_levels = _recover_spell_slots_with_budget(
+        actor,
+        budget=recovery_budget,
+        max_individual_slot_level=5,
+    )
+    if recovered_levels <= 0:
+        return
+    actor.resources["arcane_recovery"] = uses_remaining - 1
 
 
 def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
@@ -2678,6 +3012,7 @@ def _build_actor_from_character(
     _apply_passive_traits(actor)
     _apply_artificer_infusion_passives(actor)
     _apply_inferred_wizard_resources(actor)
+    _apply_inferred_fighter_resources(actor, class_level_text=class_level_text)
     current_hp = character.get("current_hp")
     if current_hp is not None:
         try:
@@ -2797,16 +3132,17 @@ def _build_actor_from_enemy(
     return actor
 
 
-def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
-    # Placeholder hook in this branch; wizard-specific recovery actions handle slot restoration.
-    return
-
-
 def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
     if actor.hp > 0 and not actor.dead:
         actor.hp = min(actor.max_hp, actor.hp + healing)
 
-    short_rest_resources = {"action_surge", "ki", "channel_divinity"}
+    short_rest_resources = {
+        "action_surge",
+        "second_wind",
+        "superiority_dice",
+        "ki",
+        "channel_divinity",
+    }
     for res_key in list(actor.resources.keys()):
         if (
             res_key in short_rest_resources
@@ -3238,6 +3574,13 @@ def _sync_initiative_order(
         key=lambda actor: (actor.initiative_mod, actor.dex_mod, actor.actor_id), reverse=True
     )
     return existing + [actor.actor_id for actor in missing]
+
+
+def _reorder_initiative_for_construct_companions(
+    initiative_order: list[str], _actors: dict[str, ActorRuntimeState]
+) -> list[str]:
+    """Preserve initiative order when no construct-companion rules are active."""
+    return initiative_order
 
 
 def _has_resources(actor: ActorRuntimeState, cost: dict[str, int]) -> bool:
@@ -4165,6 +4508,7 @@ def _apply_effect(
 ) -> None:
     recipient = _resolve_effect_target(effect, actor=actor, target=target)
     effect_type = str(effect.get("effect_type"))
+    telemetry: list[dict[str, Any]] | None = None
 
     if effect_type == "damage":
         is_magical = False
@@ -4439,11 +4783,12 @@ def _apply_effect(
         for ally in actors.values():
             if ally.team != actor.team:
                 continue
-            if ally.companion_owner_id != actor.actor_id:
+            if getattr(ally, "companion_owner_id", None) != actor.actor_id:
                 continue
             if ally.dead or ally.hp <= 0:
                 continue
-            ally.commanded_this_round = True
+            if hasattr(ally, "commanded_this_round"):
+                ally.commanded_this_round = True
         return
 
     if effect_type == "next_attack_advantage":
@@ -4584,16 +4929,23 @@ def _apply_action_effects(
     rule_trace: list[dict[str, Any]] | None = None,
     telemetry: list[dict[str, Any]] | None = None,
     strategy_name: str | None = None,
+    once_per_action_used: set[tuple[str, int]] | None = None,
 ) -> None:
     for source_bucket, effect_list in (
         ("effects", action.effects),
         ("mechanics", action.mechanics),
     ):
-        for effect in effect_list:
+        for index, effect in enumerate(effect_list):
             if not isinstance(effect, dict):
                 continue
             if not _effect_matches_event(effect, event):
                 continue
+            if effect.get("once_per_action"):
+                marker = (source_bucket, index)
+                if once_per_action_used is not None and marker in once_per_action_used:
+                    continue
+                if once_per_action_used is not None:
+                    once_per_action_used.add(marker)
             recipient = _resolve_effect_target(effect, actor=actor, target=target)
             if action.concentration and effect.get("effect_type") in ("apply_condition", "hazard"):
                 actor.concentrated_targets.add(recipient.actor_id)
@@ -5814,6 +6166,8 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
             continue
         if not _action_available(actor, action):
             continue
+        if action.name == "second_wind" and actor.hp >= actor.max_hp:
+            continue
         if (
             "off_hand" in action.tags
             or "martial_arts" in action.tags
@@ -5827,6 +6181,46 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
         if best is None or action.action_type == "attack":
             best = action
     return best
+
+
+def _try_stunning_strike(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    target: ActorRuntimeState,
+    is_ranged: bool,
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    del rng, actor, target, is_ranged, resources_spent
+    return
+
+
+def _try_open_hand_technique(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    target: ActorRuntimeState,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    del (
+        rng,
+        actor,
+        action,
+        target,
+        damage_dealt,
+        damage_taken,
+        threat_scores,
+        resources_spent,
+        actors,
+        active_hazards,
+    )
+    return
 
 
 def _spellcasting_ability_mod(actor: ActorRuntimeState) -> int:
@@ -6141,6 +6535,7 @@ def _execute_action(
             attack_iterations = max(1, action.attack_count)
 
         current_target: ActorRuntimeState | None = None
+        once_per_action_used: set[tuple[str, int]] = set()
         for i in range(attack_iterations):
             # Find a living target: try current, then preferred list, then any enemy
             if per_target_attack:
@@ -6272,6 +6667,7 @@ def _execute_action(
                         rule_trace=rule_trace,
                         telemetry=telemetry,
                         strategy_name=strategy_name,
+                        once_per_action_used=once_per_action_used,
                     )
                     emit_event("on_miss", trigger_target=target)
                     continue
@@ -6606,6 +7002,7 @@ def _execute_action(
                 rule_trace=rule_trace,
                 telemetry=telemetry,
                 strategy_name=strategy_name,
+                once_per_action_used=once_per_action_used,
             )
             emit_event(f"on_{event}", trigger_target=target)
         return
@@ -7260,7 +7657,8 @@ def run_simulation(
                 rounds += 1
                 for actor in actors.values():
                     actor.lair_action_used_this_round = False
-                    actor.commanded_this_round = False
+                    if hasattr(actor, "commanded_this_round"):
+                        actor.commanded_this_round = False
                     if any(action.action_cost == "legendary" for action in actor.actions):
                         base_legendary = int(actor.resources.get("legendary_actions", 0))
                         actor.legendary_actions_remaining = (
@@ -7385,12 +7783,11 @@ def run_simulation(
                         )
                         continue
 
-                    owner = (
-                        actors.get(actor.companion_owner_id) if actor.companion_owner_id else None
-                    )
+                    companion_owner_id = getattr(actor, "companion_owner_id", None)
+                    owner = actors.get(companion_owner_id) if companion_owner_id else None
                     should_force_dodge = (
-                        actor.requires_command
-                        and not actor.commanded_this_round
+                        bool(getattr(actor, "requires_command", False))
+                        and not bool(getattr(actor, "commanded_this_round", False))
                         and not _owner_is_incapacitated(owner)
                     )
                     if should_force_dodge:
@@ -7424,7 +7821,8 @@ def run_simulation(
                                     telemetry=trial_telemetry,
                                     strategy_name="forced_dodge",
                                 )
-                        actor.commanded_this_round = False
+                        if hasattr(actor, "commanded_this_round"):
+                            actor.commanded_this_round = False
                         _run_legendary_actions(
                             rng=rng,
                             trigger_actor=actor,
