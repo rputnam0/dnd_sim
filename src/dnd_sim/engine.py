@@ -4526,12 +4526,26 @@ def _execute_action(
 
         if action.to_hit is None:
             return
-        # Build preferred target queue for multiattack redirect
+        # Build preferred target queue for multiattack redirect.
         preferred_ids = [t.actor_id for t in targets]
+        per_target_attack = "volley" in action.tags or "whirlwind_attack" in action.tags
+        if per_target_attack:
+            attack_iterations = len(preferred_ids)
+        else:
+            attack_iterations = max(1, action.attack_count)
+
         current_target: ActorRuntimeState | None = None
-        for _ in range(max(1, action.attack_count)):
+        for i in range(attack_iterations):
             # Find a living target: try current, then preferred list, then any enemy
-            if current_target is None or current_target.dead or current_target.hp <= 0:
+            if per_target_attack:
+                current_target = None
+                if i < len(preferred_ids):
+                    candidate = actors.get(preferred_ids[i])
+                    if candidate and not candidate.dead and candidate.hp > 0:
+                        current_target = candidate
+                if current_target is None:
+                    continue
+            elif current_target is None or current_target.dead or current_target.hp <= 0:
                 current_target = None
                 for pid in preferred_ids:
                     candidate = actors.get(pid)
@@ -4914,6 +4928,9 @@ def _execute_action(
                 threat_scores[actor.actor_id] += applied
                 if was_active_before_damage and target.hp <= 0:
                     emit_event("on_down", trigger_target=target)
+
+                if _has_trait(target, "multiattack defense"):
+                    target.conditions.add(_multiattack_defense_marker(actor.actor_id))
 
                 # GWM Momentum Trigger (Action Economy Buff)
                 if (
@@ -5535,6 +5552,8 @@ def run_simulation(
                     actor.bonus_available = True
                     actor.reaction_available = True
                     actor.sneak_attack_used_this_turn = False
+                    actor.colossus_slayer_used_this_turn = False
+                    actor.horde_breaker_used_this_turn = False
 
                     if actor.dead:
                         continue
