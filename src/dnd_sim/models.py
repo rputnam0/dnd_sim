@@ -174,7 +174,6 @@ class ActorRuntimeState:
     companion_owner_id: str | None = None
     requires_command: bool = False
     commanded_this_round: bool = False
-    inventory: InventoryState = field(default_factory=InventoryState)
 
     def is_active(self) -> bool:
         return not self.dead

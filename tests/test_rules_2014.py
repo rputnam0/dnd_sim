@@ -145,3 +145,19 @@ def test_ignore_resistance_any_elemental_bypasses_case_insensitive_damage_type()
 
     assert applied == 10
     assert target.hp == 10
+
+
+def test_turned_cleanup_preserves_incapacitated_when_damage_drops_target_to_zero_hp() -> None:
+    target = _actor()
+    target.hp = 2
+    target.max_hp = 10
+    target.conditions.update({"turned", "frightened"})
+
+    applied = apply_damage(target, 5, "radiant")
+
+    assert applied == 5
+    assert target.hp == 0
+    assert "turned" not in target.conditions
+    assert "frightened" not in target.conditions
+    assert "unconscious" in target.conditions
+    assert "incapacitated" in target.conditions

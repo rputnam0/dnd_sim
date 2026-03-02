@@ -42,7 +42,6 @@ class ActionConfig(BaseModel):
         "n_enemies",
         "n_allies",
         "random_enemy",
-        "random_enemy",
         "random_ally",
     ] = "single_enemy"
     range_ft: int | None = None
@@ -257,6 +256,23 @@ class ScenarioConfig(BaseModel):
         if value != "5e-2014":
             raise ValueError("ruleset must be '5e-2014'")
         return value
+
+    @field_validator("encounters")
+    @classmethod
+    def validate_encounter_branch_targets(
+        cls, encounters: list[EncounterConfig]
+    ) -> list[EncounterConfig]:
+        encounter_count = len(encounters)
+        for encounter_index, encounter in enumerate(encounters):
+            branches = encounter.branches if isinstance(encounter.branches, dict) else {}
+            for branch_key, target_index in branches.items():
+                if target_index >= encounter_count:
+                    raise ValueError(
+                        "Encounter branch target index out of bounds: "
+                        f"encounter {encounter_index} branch '{branch_key}' -> {target_index}, "
+                        f"max allowed {encounter_count - 1}"
+                    )
+        return encounters
 
 
 class LoadedScenario(BaseModel):

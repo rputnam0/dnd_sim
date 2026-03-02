@@ -70,6 +70,33 @@ def test_missing_strategy_module_fails_before_simulation(tmp_path: Path) -> None
     assert "Strategy module file not found" in str(exc.value)
 
 
+def test_encounter_branch_target_index_must_be_within_encounter_bounds(tmp_path: Path) -> None:
+    payload = json.loads(SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["enemies"] = []
+    payload["encounters"] = [
+        {"enemies": ["past_pylon"]},
+        {"enemies": ["present_pylon"], "branches": {"party": 99}},
+    ]
+
+    base = tmp_path / "encounters" / "x"
+    (base / "scenarios").mkdir(parents=True, exist_ok=True)
+    (base / "enemies").mkdir(parents=True, exist_ok=True)
+
+    for enemy_id in ("past_pylon", "present_pylon"):
+        src = ROOT / "river_line" / "encounters" / "ley_heart" / "enemies" / f"{enemy_id}.json"
+        (base / "enemies" / f"{enemy_id}.json").write_text(src.read_text(encoding="utf-8"))
+
+    scenario_path = base / "scenarios" / "invalid_branch_target.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_scenario(scenario_path)
+
+    message = str(exc.value)
+    assert "Invalid scenario schema" in message
+    assert "Encounter branch target index out of bounds" in message
+
+
 def test_default_results_dir_and_descriptive_folder_name(tmp_path: Path) -> None:
     results_root = default_results_dir()
     assert results_root.as_posix().endswith("/river_line/results")

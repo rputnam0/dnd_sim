@@ -233,9 +233,12 @@ def apply_damage(
             target.was_downed = True
 
     if adjusted > 0 and "turned" in target.conditions:
-        for condition in ("turned", "frightened", "incapacitated"):
+        for condition in ("turned", "frightened"):
             target.conditions.discard(condition)
             target.condition_durations.pop(condition, None)
+        if target.hp > 0:
+            target.conditions.discard("incapacitated")
+            target.condition_durations.pop("incapacitated", None)
 
     return adjusted
 
