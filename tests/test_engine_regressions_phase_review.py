@@ -12,6 +12,7 @@ from dnd_sim.engine import (
     _build_round_metadata,
     _execute_action,
     _run_legendary_actions,
+    _tick_conditions_for_actor,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
@@ -35,6 +36,16 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
         save_mods={"str": 2, "dex": 2, "con": 2, "int": 0, "wis": 0, "cha": 0},
         actions=[],
     )
+
+
+class _FixedRng:
+    def __init__(self, values: list[int]) -> None:
+        self.values = list(values)
+
+    def randint(self, _a: int, _b: int) -> int:
+        if not self.values:
+            raise AssertionError("RNG exhausted")
+        return self.values.pop(0)
 
 
 def test_build_actor_applies_passive_max_hp_trait() -> None:
@@ -246,6 +257,265 @@ def test_divine_smite_attack_does_not_crash_and_spends_slot() -> None:
     assert damage_dealt[paladin.actor_id] > 0
 
 
+def test_smite_variant_bonus_damage_is_consumed_on_first_melee_hit() -> None:
+    paladin = _base_actor(actor_id="paladin", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    target.hp = 30
+    target.max_hp = 30
+
+    smite_action = ActionDefinition(
+        name="Thunderous Smite",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        include_self=True,
+        concentration=True,
+        save_dc=14,
+        save_ability="str",
+        mechanics=[
+            {"effect_type": "extra_damage", "damage": "2d6", "damage_type": "thunder"},
+            {"effect_type": "apply_condition", "condition": "prone", "duration": 1},
+        ],
+        tags=["spell"],
+    )
+    weapon_attack = ActionDefinition(
+        name="warhammer",
+        action_type="attack",
+        to_hit=7,
+        damage="1",
+        damage_type="bludgeoning",
+    )
+
+    actors = {paladin.actor_id: paladin, target.actor_id: target}
+    damage_dealt = {paladin.actor_id: 0, target.actor_id: 0}
+    damage_taken = {paladin.actor_id: 0, target.actor_id: 0}
+    threat_scores = {paladin.actor_id: 0, target.actor_id: 0}
+    resources_spent = {paladin.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([15]),
+        actor=paladin,
+        action=smite_action,
+        targets=[paladin],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    _execute_action(
+        rng=_FixedRng([15, 3, 4, 1]),
+        actor=paladin,
+        action=weapon_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    _execute_action(
+        rng=_FixedRng([15, 15]),
+        actor=paladin,
+        action=weapon_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp == 21
+    assert "prone" in target.conditions
+
+
+def test_improved_divine_smite_adds_radiant_damage_without_spending_slots() -> None:
+    paladin = _base_actor(actor_id="paladin", team="party")
+    paladin.traits = {"improved divine smite": {}}
+    paladin.resources = {"spell_slot_1": 0}
+    target = _base_actor(actor_id="target", team="enemy")
+    target.hp = 25
+    target.max_hp = 25
+
+    action = ActionDefinition(
+        name="longsword",
+        action_type="attack",
+        to_hit=7,
+        damage="1",
+        damage_type="slashing",
+    )
+
+    actors = {paladin.actor_id: paladin, target.actor_id: target}
+    damage_dealt = {paladin.actor_id: 0, target.actor_id: 0}
+    damage_taken = {paladin.actor_id: 0, target.actor_id: 0}
+    threat_scores = {paladin.actor_id: 0, target.actor_id: 0}
+    resources_spent = {paladin.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([15, 4]),
+        actor=paladin,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp == 20
+    assert paladin.resources["spell_slot_1"] == 0
+    assert resources_spent[paladin.actor_id].get("spell_slot_1", 0) == 0
+
+
+def test_smite_of_protection_window_grants_and_expires_half_cover_bonus() -> None:
+    paladin = _base_actor(actor_id="paladin", team="party")
+    paladin.level = 8
+    paladin.traits = {
+        "divine smite": {},
+        "smite of protection": {},
+        "aura of protection": {},
+    }
+    paladin.resources = {"spell_slot_1": 1}
+
+    ally = _base_actor(actor_id="ally", team="party")
+    ally.ac = 12
+    ally.position = (5.0, 0.0, 0.0)
+
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    enemy.ac = 1
+    enemy.position = (10.0, 0.0, 0.0)
+
+    paladin.position = (0.0, 0.0, 0.0)
+
+    smite_attack = ActionDefinition(
+        name="warhammer",
+        action_type="attack",
+        to_hit=10,
+        damage="1",
+        damage_type="bludgeoning",
+    )
+    enemy_attack = ActionDefinition(
+        name="claw",
+        action_type="attack",
+        to_hit=3,
+        damage="1",
+        damage_type="slashing",
+    )
+
+    actors = {paladin.actor_id: paladin, ally.actor_id: ally, enemy.actor_id: enemy}
+    damage_dealt = {paladin.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {paladin.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {paladin.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {paladin.actor_id: {}, ally.actor_id: {}, enemy.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([15, 1, 1]),
+        actor=paladin,
+        action=smite_attack,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert "smite_of_protection_window" in paladin.conditions
+
+    _execute_action(
+        rng=_FixedRng([10]),
+        actor=enemy,
+        action=enemy_attack,
+        targets=[ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert ally.hp == ally.max_hp
+
+    _tick_conditions_for_actor(_FixedRng([1]), paladin)
+    assert "smite_of_protection_window" not in paladin.conditions
+
+    _execute_action(
+        rng=_FixedRng([10]),
+        actor=enemy,
+        action=enemy_attack,
+        targets=[ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert ally.hp == ally.max_hp - 1
+
+
+def test_lay_on_hands_pool_heals_by_missing_hp_and_tracks_spend() -> None:
+    character = {
+        "character_id": "paladin",
+        "name": "Paladin",
+        "class_level": "Paladin 5",
+        "max_hp": 40,
+        "ac": 16,
+        "speed_ft": 30,
+        "ability_scores": {
+            "str": 16,
+            "dex": 10,
+            "con": 14,
+            "int": 8,
+            "wis": 10,
+            "cha": 16,
+        },
+        "save_mods": {"str": 3, "dex": 0, "con": 2, "int": -1, "wis": 0, "cha": 3},
+        "skill_mods": {},
+        "attacks": [{"name": "mace", "to_hit": 6, "damage": "1d6+3", "damage_type": "bludgeoning"}],
+        "resources": {"spell_slots": {"1": 4, "2": 2}},
+        "traits": ["Lay on Hands"],
+        "raw_fields": [],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+    paladin = _build_actor_from_character(character, traits_db={})
+    ally = _base_actor(actor_id="ally", team="party")
+    ally.max_hp = 20
+    ally.hp = 3
+
+    action = next(a for a in paladin.actions if a.name == "lay_on_hands")
+
+    actors = {paladin.actor_id: paladin, ally.actor_id: ally}
+    damage_dealt = {paladin.actor_id: 0, ally.actor_id: 0}
+    damage_taken = {paladin.actor_id: 0, ally.actor_id: 0}
+    threat_scores = {paladin.actor_id: 0, ally.actor_id: 0}
+    resources_spent = {paladin.actor_id: {}, ally.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([1]),
+        actor=paladin,
+        action=action,
+        targets=[ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert paladin.max_resources["lay_on_hands_pool"] == 25
+    assert paladin.resources["lay_on_hands_pool"] == 8
+    assert resources_spent[paladin.actor_id]["lay_on_hands_pool"] == 17
+    assert ally.hp == 20
+
+
 def test_hazard_effect_uses_type_key_for_spatial_visibility() -> None:
     caster = _base_actor(actor_id="caster", team="party")
     target = _base_actor(actor_id="target", team="enemy")
@@ -360,6 +630,8 @@ def test_execute_action_ignores_non_dict_effect_entries() -> None:
     )
 
     assert damage_dealt[attacker.actor_id] >= 0
+
+
 def test_legendary_action_runner_skips_untargetable_action() -> None:
     rng = random.Random(2)
     hero = _base_actor(actor_id="hero", team="party")
@@ -372,7 +644,9 @@ def test_legendary_action_runner_skips_untargetable_action() -> None:
         action_type="utility",
         action_cost="legendary",
         target_mode="single_enemy",
-        effects=[{"effect_type": "forced_movement", "distance_ft": 20, "direction": "toward_source"}],
+        effects=[
+            {"effect_type": "forced_movement", "distance_ft": 20, "direction": "toward_source"}
+        ],
         tags=["requires_condition:grappled"],
     )
     strike = ActionDefinition(
