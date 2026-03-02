@@ -11,9 +11,20 @@ from dnd_sim.engine import (
     _build_actor_from_enemy,
     _build_round_metadata,
     _execute_action,
+    _resolve_targets_for_action,
     _run_legendary_actions,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+
+
+class SequenceRng:
+    def __init__(self, values: list[int]) -> None:
+        self.values = list(values)
+
+    def randint(self, _a: int, _b: int) -> int:
+        if not self.values:
+            raise AssertionError("RNG exhausted")
+        return self.values.pop(0)
 
 
 def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
@@ -360,6 +371,8 @@ def test_execute_action_ignores_non_dict_effect_entries() -> None:
     )
 
     assert damage_dealt[attacker.actor_id] >= 0
+
+
 def test_legendary_action_runner_skips_untargetable_action() -> None:
     rng = random.Random(2)
     hero = _base_actor(actor_id="hero", team="party")
@@ -372,7 +385,9 @@ def test_legendary_action_runner_skips_untargetable_action() -> None:
         action_type="utility",
         action_cost="legendary",
         target_mode="single_enemy",
-        effects=[{"effect_type": "forced_movement", "distance_ft": 20, "direction": "toward_source"}],
+        effects=[
+            {"effect_type": "forced_movement", "distance_ft": 20, "direction": "toward_source"}
+        ],
         tags=["requires_condition:grappled"],
     )
     strike = ActionDefinition(
@@ -573,3 +588,199 @@ def test_enemy_builder_prefers_explicit_ability_mods_over_save_mods() -> None:
     assert actor.int_mod == -3
     assert actor.wis_mod == -2
     assert actor.cha_mod == -2
+
+
+def test_build_actor_adds_channel_divinity_variant_actions_for_cleric_traits() -> None:
+    character = {
+        "character_id": "cleric",
+        "name": "Cleric",
+        "class_level": "Cleric 5",
+        "max_hp": 38,
+        "ac": 16,
+        "speed_ft": 30,
+        "ability_scores": {"str": 10, "dex": 12, "con": 14, "int": 10, "wis": 16, "cha": 10},
+        "save_mods": {"str": 0, "dex": 1, "con": 2, "int": 0, "wis": 3, "cha": 0},
+        "skill_mods": {},
+        "attacks": [{"name": "Mace", "to_hit": 5, "damage": "1d6+3", "damage_type": "bludgeoning"}],
+        "resources": {"channel_divinity": {"max": 1}},
+        "traits": [
+            "Channel Divinity",
+            "Turn Undead",
+            "Channel Divinity: Preserve Life",
+            "Channel Divinity: Radiance of the Dawn",
+        ],
+        "raw_fields": [],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+
+    actor = _build_actor_from_character(character, traits_db={})
+    by_name = {action.name: action for action in actor.actions}
+
+    assert "turn_undead" in by_name
+    assert "preserve_life" in by_name
+    assert "radiance_of_the_dawn" in by_name
+    assert by_name["turn_undead"].resource_cost == {"channel_divinity": 1}
+    assert by_name["preserve_life"].resource_cost == {"channel_divinity": 1}
+    assert by_name["radiance_of_the_dawn"].resource_cost == {"channel_divinity": 1}
+
+
+def test_turn_undead_targets_only_undead_and_applies_conditions() -> None:
+    cleric = _base_actor(actor_id="cleric", team="party")
+    cleric.traits = {"turn undead": {}}
+    cleric.resources = {"channel_divinity": 1}
+    cleric.actions = [
+        ActionDefinition(
+            name="turn_undead",
+            action_type="save",
+            save_dc=20,
+            save_ability="wis",
+            target_mode="all_enemies",
+            resource_cost={"channel_divinity": 1},
+            effects=[
+                {
+                    "effect_type": "apply_condition",
+                    "apply_on": "save_fail",
+                    "target": "target",
+                    "condition": "turned",
+                    "duration_rounds": 10,
+                },
+                {
+                    "effect_type": "apply_condition",
+                    "apply_on": "save_fail",
+                    "target": "target",
+                    "condition": "frightened",
+                    "duration_rounds": 10,
+                },
+                {
+                    "effect_type": "apply_condition",
+                    "apply_on": "save_fail",
+                    "target": "target",
+                    "condition": "incapacitated",
+                    "duration_rounds": 10,
+                },
+            ],
+            tags=["requires_target_trait:undead"],
+        )
+    ]
+
+    undead = _base_actor(actor_id="undead", team="enemy")
+    undead.traits = {"undead nature": {}}
+    non_undead = _base_actor(actor_id="ogre", team="enemy")
+    non_undead.traits = {"brute": {}}
+
+    actors = {cleric.actor_id: cleric, undead.actor_id: undead, non_undead.actor_id: non_undead}
+    turn_undead = cleric.actions[0]
+    targets = _resolve_targets_for_action(
+        rng=random.Random(2),
+        actor=cleric,
+        action=turn_undead,
+        actors=actors,
+        requested=[],
+    )
+
+    assert [target.actor_id for target in targets] == ["undead"]
+
+    damage_dealt = {cleric.actor_id: 0, undead.actor_id: 0, non_undead.actor_id: 0}
+    damage_taken = {cleric.actor_id: 0, undead.actor_id: 0, non_undead.actor_id: 0}
+    threat_scores = {cleric.actor_id: 0, undead.actor_id: 0, non_undead.actor_id: 0}
+    resources_spent = {cleric.actor_id: {}, undead.actor_id: {}, non_undead.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([1]),
+        actor=cleric,
+        action=turn_undead,
+        targets=targets,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "turned" in undead.conditions
+    assert "frightened" in undead.conditions
+    assert "incapacitated" in undead.conditions
+    assert "turned" not in non_undead.conditions
+    assert "frightened" not in non_undead.conditions
+
+
+def test_guided_strike_channel_divinity_turns_a_miss_into_a_hit() -> None:
+    cleric = _base_actor(actor_id="cleric", team="party")
+    cleric.traits = {"guided strike": {}}
+    cleric.resources = {"channel_divinity": 1}
+    target = _base_actor(actor_id="target", team="enemy")
+    target.ac = 15
+
+    action = ActionDefinition(
+        name="mace",
+        action_type="attack",
+        to_hit=4,
+        damage="1d4+1",
+        damage_type="bludgeoning",
+    )
+
+    actors = {cleric.actor_id: cleric, target.actor_id: target}
+    damage_dealt = {cleric.actor_id: 0, target.actor_id: 0}
+    damage_taken = {cleric.actor_id: 0, target.actor_id: 0}
+    threat_scores = {cleric.actor_id: 0, target.actor_id: 0}
+    resources_spent = {cleric.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([10, 3]),
+        actor=cleric,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[cleric.actor_id] == 4
+    assert cleric.resources["channel_divinity"] == 0
+    assert resources_spent[cleric.actor_id]["channel_divinity"] == 1
+
+
+def test_destructive_wrath_maximizes_lightning_damage_once_per_use() -> None:
+    cleric = _base_actor(actor_id="cleric", team="party")
+    cleric.traits = {"destructive wrath": {}}
+    cleric.resources = {"channel_divinity": 1}
+    target = _base_actor(actor_id="target", team="enemy")
+    target.save_mods["dex"] = 0
+
+    action = ActionDefinition(
+        name="storm_burst",
+        action_type="save",
+        save_dc=20,
+        save_ability="dex",
+        damage="2d6",
+        damage_type="lightning",
+        half_on_save=False,
+    )
+
+    actors = {cleric.actor_id: cleric, target.actor_id: target}
+    damage_dealt = {cleric.actor_id: 0, target.actor_id: 0}
+    damage_taken = {cleric.actor_id: 0, target.actor_id: 0}
+    threat_scores = {cleric.actor_id: 0, target.actor_id: 0}
+    resources_spent = {cleric.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([1, 1, 1]),
+        actor=cleric,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp == 18
+    assert damage_dealt[cleric.actor_id] == 12
+    assert cleric.resources["channel_divinity"] == 0
+    assert resources_spent[cleric.actor_id]["channel_divinity"] == 1
