@@ -2,6 +2,7 @@
 
 __all__ = [
     "engine",
+    "inventory",
     "io",
     "models",
     "parser",

@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from dnd_sim.inventory import InventoryState
+
 ABILITY_KEYS = ("str", "dex", "con", "int", "wis", "cha")
 
 
@@ -157,6 +159,7 @@ class ActorRuntimeState:
     concentration_conditions: set[str] = field(default_factory=set)
     concentrated_spell: str | None = None
     level: int = 1
+    inventory: InventoryState = field(default_factory=InventoryState)
 
     def is_active(self) -> bool:
         return not self.dead

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from dnd_sim.inventory import InventoryState
 from dnd_sim.io import EnemyConfig, LoadedScenario
 from dnd_sim.models import (
     ABILITY_KEYS,
@@ -1038,6 +1039,7 @@ def _build_actor_from_character(
         max_resources=_extract_flat_resources(character),
         traits=_resolve_character_traits(character, traits_db),
         level=_parse_character_level(character.get("class_level", "1")),
+        inventory=InventoryState.from_character_payload(character),
     )
     _apply_passive_traits(actor)
     current_hp = character.get("current_hp")
