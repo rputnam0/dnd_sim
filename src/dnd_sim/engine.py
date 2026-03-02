@@ -51,6 +51,29 @@ _TRAIT_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_INDEX_CACHE: tuple[Path, dict[str, Path]] | None = None
+_ARTIFICER_OPTION_TRAITS = {
+    "enhanced defense",
+    "enhanced weapon",
+    "mind sharpener",
+    "radiant weapon",
+    "repeating shot",
+    "repulsion shield",
+    "homunculus servant",
+    "steel defender",
+}
+_RANGED_WEAPON_HINTS = {
+    "bow",
+    "crossbow",
+    "sling",
+    "dart",
+    "javelin",
+    "firearm",
+    "gun",
+    "pistol",
+    "musket",
+    "blowgun",
+    "net",
+}
 
 
 @dataclass(slots=True)
@@ -147,15 +170,19 @@ def _extract_trait_candidates_from_raw_fields(character: dict[str, Any]) -> set[
     return candidates
 
 
+def _is_supported_artificer_option(name: str) -> bool:
+    return _normalize_trait_name(name) in _ARTIFICER_OPTION_TRAITS
+
+
 def _resolve_character_traits(
-    character: dict[str, Any], traits_db: dict[str, dict[str, Any]]
+    character: dict[str, Any], traits_db: dict[str, dict[str, Any]] | None
 ) -> dict[str, dict[str, Any]]:
     """Resolve character traits/features to canonical DB traits where possible.
 
     Keeps unresolved traits as empty dict entries so existing name-based hooks still work.
     """
     db_index: dict[str, dict[str, Any]] = {}
-    for key, data in traits_db.items():
+    for key, data in (traits_db or {}).items():
         if not isinstance(data, dict):
             continue
         name = str(data.get("name", key))
@@ -189,6 +216,8 @@ def _resolve_character_traits(
     for candidate in _extract_trait_candidates_from_raw_fields(character):
         match = find_match(candidate)
         if match is None:
+            if _is_supported_artificer_option(candidate):
+                resolved[_normalize_trait_name(candidate)] = {}
             continue
         canonical_name = _normalize_trait_name(str(match.get("name", candidate)))
         resolved[canonical_name] = match
@@ -216,6 +245,253 @@ _CANTRIP_SCALE_TIERS = [(17, 4), (11, 3), (5, 2), (1, 1)]
 def _calculate_proficiency_bonus(level: int) -> int:
     """5e proficiency bonus progression by character level."""
     return 2 + max(0, (max(level, 1) - 1) // 4)
+
+
+def _damage_expr_with_flat_bonus(expr: str, bonus: int) -> str:
+    if bonus == 0:
+        return expr
+    try:
+        n_dice, dice_size, flat = parse_damage_expression(expr)
+    except ValueError:
+        return f"{expr}+{bonus}" if bonus > 0 else f"{expr}{bonus}"
+
+    updated_flat = flat + bonus
+    if n_dice == 0 and dice_size == 0:
+        return str(updated_flat)
+
+    suffix = ""
+    if updated_flat > 0:
+        suffix = f"+{updated_flat}"
+    elif updated_flat < 0:
+        suffix = str(updated_flat)
+    return f"{n_dice}d{dice_size}{suffix}"
+
+
+def _is_weapon_attack_action(action: ActionDefinition) -> bool:
+    return action.action_type == "attack" and "spell" not in set(action.tags or [])
+
+
+def _is_ranged_weapon_action(action: ActionDefinition) -> bool:
+    if not _is_weapon_attack_action(action):
+        return False
+    if action.range_ft is not None and action.range_ft > 5:
+        return True
+    name = action.name.lower()
+    return any(hint in name for hint in _RANGED_WEAPON_HINTS)
+
+
+def _ensure_action(actor: ActorRuntimeState, action: ActionDefinition) -> None:
+    if any(
+        existing.name == action.name and existing.action_cost == action.action_cost
+        for existing in actor.actions
+    ):
+        return
+    actor.actions.append(action)
+
+
+def _construct_command_action() -> ActionDefinition:
+    return ActionDefinition(
+        name="command_construct_companion",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        effects=[
+            {
+                "effect_type": "command_construct_companion",
+                "target": "source",
+            }
+        ],
+        tags=["bonus", "construct_command"],
+    )
+
+
+def _discover_construct_companion_kinds(actor: ActorRuntimeState) -> set[str]:
+    kinds: set[str] = set()
+    if _has_trait(actor, "steel defender"):
+        kinds.add("steel_defender")
+    if _has_trait(actor, "homunculus servant"):
+        kinds.add("homunculus_servant")
+
+    for trait_data in actor.traits.values():
+        for mechanic in trait_data.get("mechanics", []):
+            if not isinstance(mechanic, dict):
+                continue
+            if str(mechanic.get("type", "")).lower() != "summon":
+                continue
+            creature = _normalize_trait_name(str(mechanic.get("creature", "")))
+            if creature == "steel defender":
+                kinds.add("steel_defender")
+            elif creature == "homunculus servant":
+                kinds.add("homunculus_servant")
+    return kinds
+
+
+def _apply_artificer_infusion_passives(actor: ActorRuntimeState) -> None:
+    if _has_trait(actor, "enhanced defense"):
+        actor.ac += 2 if actor.level >= 10 else 1
+
+    if _has_trait(actor, "repulsion shield"):
+        actor.ac += 1
+
+    if _has_trait(actor, "enhanced weapon"):
+        bonus = 2 if actor.level >= 10 else 1
+        for action in actor.actions:
+            if not _is_weapon_attack_action(action):
+                continue
+            if action.to_hit is not None:
+                action.to_hit += bonus
+            if action.damage:
+                action.damage = _damage_expr_with_flat_bonus(action.damage, bonus)
+
+    if _has_trait(actor, "radiant weapon"):
+        for action in actor.actions:
+            if not _is_weapon_attack_action(action):
+                continue
+            if action.to_hit is not None:
+                action.to_hit += 1
+            if action.damage:
+                action.damage = _damage_expr_with_flat_bonus(action.damage, 1)
+
+    if _has_trait(actor, "repeating shot"):
+        for action in actor.actions:
+            if not _is_ranged_weapon_action(action):
+                continue
+            if action.to_hit is not None:
+                action.to_hit += 1
+            if action.damage:
+                action.damage = _damage_expr_with_flat_bonus(action.damage, 1)
+            if "magical" not in action.tags:
+                action.tags.append("magical")
+
+    if _has_trait(actor, "mind sharpener"):
+        actor.resources["mind_sharpener_charges"] = int(
+            actor.resources.get("mind_sharpener_charges", 4)
+        )
+        actor.max_resources["mind_sharpener_charges"] = int(
+            actor.max_resources.get("mind_sharpener_charges", 4)
+        )
+
+    if _discover_construct_companion_kinds(actor):
+        _ensure_action(actor, _construct_command_action())
+
+
+def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRuntimeState:
+    proficiency = _calculate_proficiency_bonus(owner.level)
+    if kind == "steel_defender":
+        max_hp = max(1, 2 + owner.int_mod + (5 * owner.level))
+        attack = ActionDefinition(
+            name="basic",
+            action_type="attack",
+            to_hit=owner.int_mod + proficiency,
+            damage=f"1d8+{proficiency}",
+            damage_type="force",
+            target_mode="single_enemy",
+            range_ft=5,
+            tags=["basic", "construct_companion", "magical"],
+        )
+        actor_id = f"{owner.actor_id}__steel_defender"
+        name = f"{owner.name} Steel Defender"
+        speed = 40
+        str_mod, dex_mod, con_mod, int_mod, wis_mod, cha_mod = 2, 2, 2, -4, 0, -4
+        ac = 15
+    else:
+        max_hp = max(1, 1 + owner.int_mod + owner.level)
+        attack = ActionDefinition(
+            name="basic",
+            action_type="attack",
+            to_hit=owner.int_mod + proficiency,
+            damage=f"1d4+{proficiency}",
+            damage_type="force",
+            target_mode="single_enemy",
+            range_ft=30,
+            tags=["basic", "construct_companion", "magical"],
+        )
+        actor_id = f"{owner.actor_id}__homunculus_servant"
+        name = f"{owner.name} Homunculus"
+        speed = 20
+        str_mod, dex_mod, con_mod, int_mod, wis_mod, cha_mod = -2, 2, 0, -4, 0, -2
+        ac = 13
+
+    save_mods = {
+        "str": str_mod,
+        "dex": dex_mod + proficiency,
+        "con": con_mod + proficiency,
+        "int": int_mod,
+        "wis": wis_mod,
+        "cha": cha_mod,
+    }
+    traits = {
+        "construct companion": {
+            "owner_id": owner.actor_id,
+            "requires_command": True,
+            "kind": kind,
+        }
+    }
+    if kind == "steel_defender":
+        traits["steel defender"] = {}
+    else:
+        traits["homunculus servant"] = {}
+
+    companion = ActorRuntimeState(
+        actor_id=actor_id,
+        team=owner.team,
+        name=name,
+        max_hp=max_hp,
+        hp=max_hp,
+        temp_hp=0,
+        ac=ac,
+        initiative_mod=owner.initiative_mod,
+        str_mod=str_mod,
+        dex_mod=dex_mod,
+        con_mod=con_mod,
+        int_mod=int_mod,
+        wis_mod=wis_mod,
+        cha_mod=cha_mod,
+        save_mods=save_mods,
+        actions=[attack] + _get_standard_actions(),
+        resources={},
+        max_resources={},
+        traits=traits,
+        level=owner.level,
+        speed_ft=speed,
+        companion_owner_id=owner.actor_id,
+        requires_command=True,
+    )
+    companion.position = owner.position
+    return companion
+
+
+def _build_construct_companions(owner: ActorRuntimeState) -> list[ActorRuntimeState]:
+    companions: list[ActorRuntimeState] = []
+    for kind in sorted(_discover_construct_companion_kinds(owner)):
+        companions.append(_build_construct_companion(owner, kind))
+    return companions
+
+
+def _owner_is_incapacitated(owner: ActorRuntimeState | None) -> bool:
+    if owner is None:
+        return True
+    if owner.dead or owner.hp <= 0:
+        return True
+    return bool(owner.conditions.intersection(_CONTROL_BLOCKING_CONDITIONS))
+
+
+def _reorder_initiative_for_construct_companions(
+    order: list[str], actors: dict[str, ActorRuntimeState]
+) -> list[str]:
+    working = [actor_id for actor_id in order if actor_id in actors]
+    companions = [aid for aid in working if actors[aid].companion_owner_id]
+    for companion_id in companions:
+        companion = actors.get(companion_id)
+        if companion is None or not companion.companion_owner_id:
+            continue
+        owner_id = companion.companion_owner_id
+        if owner_id not in working:
+            continue
+        working = [aid for aid in working if aid != companion_id]
+        insert_at = working.index(owner_id) + 1
+        working.insert(insert_at, companion_id)
+    return working
 
 
 def _to_position3(value: Any) -> tuple[float, float, float] | None:
@@ -1002,9 +1278,7 @@ def _apply_passive_traits(actor: ActorRuntimeState) -> None:
 def _build_actor_from_character(
     character: dict[str, Any], traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
-    normalized_traits_db = {
-        _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
-    }
+    resolved_traits_db = traits_db or {}
     ability_scores = character.get("ability_scores", {})
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
     con_mod = (int(ability_scores.get("con", 10)) - 10) // 2
@@ -1036,10 +1310,11 @@ def _build_actor_from_character(
         expertise={str(v).lower() for v in character.get("expertise", [])},
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
-        traits=_resolve_character_traits(character, traits_db),
+        traits=_resolve_character_traits(character, resolved_traits_db),
         level=_parse_character_level(character.get("class_level", "1")),
     )
     _apply_passive_traits(actor)
+    _apply_artificer_infusion_passives(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
         try:
@@ -1732,6 +2007,17 @@ def _apply_effect(
             resources_spent[recipient.actor_id][resource] = resources_spent[recipient.actor_id].get(
                 resource, 0
             ) + (before - after)
+        return
+
+    if effect_type == "command_construct_companion":
+        for ally in actors.values():
+            if ally.team != actor.team:
+                continue
+            if ally.companion_owner_id != actor.actor_id:
+                continue
+            if ally.dead or ally.hp <= 0:
+                continue
+            ally.commanded_this_round = True
         return
 
     if effect_type == "next_attack_advantage":
@@ -2883,6 +3169,17 @@ def run_simulation(
             downed_counts[actor.actor_id] = 0
             death_counts[actor.actor_id] = 0
 
+            for companion in _build_construct_companions(actor):
+                if companion.actor_id in actors:
+                    continue
+                actors[companion.actor_id] = companion
+                damage_taken[companion.actor_id] = 0
+                damage_dealt[companion.actor_id] = 0
+                resources_spent[companion.actor_id] = {}
+                threat_scores[companion.actor_id] = 0
+                downed_counts[companion.actor_id] = 0
+                death_counts[companion.actor_id] = 0
+
         total_rounds = 0
         overall_winner = "draw"
 
@@ -2922,6 +3219,9 @@ def run_simulation(
                 }
 
             initiative_order = _build_initiative_order(rng, actors, scenario.config.initiative_mode)
+            initiative_order = _reorder_initiative_for_construct_companions(
+                initiative_order, actors
+            )
             rounds = 0
             max_rounds = int(scenario.config.termination_rules.get("max_rounds", 20))
 
@@ -2929,6 +3229,7 @@ def run_simulation(
                 rounds += 1
                 for actor in actors.values():
                     actor.lair_action_used_this_round = False
+                    actor.commanded_this_round = False
                     if any(action.action_cost == "legendary" for action in actor.actions):
                         base_legendary = int(actor.resources.get("legendary_actions", 0))
                         actor.legendary_actions_remaining = (
@@ -2983,6 +3284,58 @@ def run_simulation(
                         break
 
                     if not _can_act(actor):
+                        continue
+
+                    owner = (
+                        actors.get(actor.companion_owner_id) if actor.companion_owner_id else None
+                    )
+                    should_force_dodge = (
+                        actor.requires_command
+                        and not actor.commanded_this_round
+                        and not _owner_is_incapacitated(owner)
+                    )
+                    if should_force_dodge:
+                        action = _resolve_action_selection(actor, "dodge")
+                        if _action_available(actor, action):
+                            resolved_targets = _resolve_targets_for_action(
+                                rng=rng,
+                                actor=actor,
+                                action=action,
+                                actors=actors,
+                                requested=[],
+                            )
+                            if resolved_targets:
+                                actor.per_action_uses[action.name] = (
+                                    actor.per_action_uses.get(action.name, 0) + 1
+                                )
+                                _mark_action_cost_used(actor, action)
+                                _execute_action(
+                                    rng=rng,
+                                    actor=actor,
+                                    action=action,
+                                    targets=resolved_targets,
+                                    actors=actors,
+                                    damage_dealt=damage_dealt,
+                                    damage_taken=damage_taken,
+                                    threat_scores=threat_scores,
+                                    resources_spent=resources_spent,
+                                    active_hazards=active_hazards,
+                                    obstacles=battlefield_obstacles,
+                                    light_level=light_level,
+                                )
+                        actor.commanded_this_round = False
+                        _run_legendary_actions(
+                            rng=rng,
+                            trigger_actor=actor,
+                            actors=actors,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                        )
                         continue
 
                     strategy_name = actor_strategy_overrides.get(actor.actor_id)

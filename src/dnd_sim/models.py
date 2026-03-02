@@ -157,6 +157,9 @@ class ActorRuntimeState:
     concentration_conditions: set[str] = field(default_factory=set)
     concentrated_spell: str | None = None
     level: int = 1
+    companion_owner_id: str | None = None
+    requires_command: bool = False
+    commanded_this_round: bool = False
 
     def is_active(self) -> bool:
         return not self.dead

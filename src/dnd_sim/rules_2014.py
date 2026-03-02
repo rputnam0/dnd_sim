@@ -255,6 +255,13 @@ def run_concentration_check(
 
     save_mod = target.save_mods.get("con", target.con_mod)
     success = (roll + save_mod) >= dc
+    if (
+        not success
+        and _has_trait(target, "mind sharpener")
+        and target.resources.get("mind_sharpener_charges", 0) > 0
+    ):
+        target.resources["mind_sharpener_charges"] -= 1
+        success = True
     if not success:
         target.concentrating = False
     return success
