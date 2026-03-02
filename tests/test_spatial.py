@@ -4,6 +4,7 @@ from dnd_sim.spatial import (
     check_cover,
     distance_chebyshev,
     distance_euclidean,
+    find_path,
     move_towards,
 )
 
@@ -63,3 +64,28 @@ def test_check_cover_picks_highest_cover_level() -> None:
         AABB(min_pos=(15.0, -1.0, -1.0), max_pos=(20.0, 1.0, 1.0), cover_level="THREE_QUARTERS"),
     ]
     assert check_cover(pos1, pos2, obstacles) == "THREE_QUARTERS"
+
+
+def test_find_path_routes_around_total_cover_obstacle() -> None:
+    start = (0.0, 0.0, 0.0)
+    target = (30.0, 0.0, 0.0)
+    obstacles = [AABB(min_pos=(10.0, -2.0, -1.0), max_pos=(20.0, 2.0, 1.0), cover_level="TOTAL")]
+
+    path = find_path(start, target, obstacles)
+
+    assert path[0] == start
+    assert path[-1] == target
+    assert len(path) > 2
+
+
+def test_find_path_avoids_occupied_space() -> None:
+    start = (0.0, 0.0, 0.0)
+    target = (30.0, 0.0, 0.0)
+    occupied = [(15.0, 0.0, 0.0)]
+
+    path = find_path(start, target, occupied_positions=occupied)
+
+    assert path[0] == start
+    assert path[-1] == target
+    assert len(path) > 2
+    assert (15.0, 0.0, 0.0) not in path

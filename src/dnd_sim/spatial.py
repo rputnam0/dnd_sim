@@ -1,4 +1,5 @@
 import math
+from heapq import heappop, heappush
 from dataclasses import dataclass
 from typing import Any, Tuple
 
@@ -195,10 +196,124 @@ def check_cover(pos1: Position, pos2: Position, obstacles: list[AABB] | None = N
 
 
 def find_path(
-    start: Position, target: Position, obstacles: list[AABB] | None = None
+    start: Position,
+    target: Position,
+    obstacles: list[AABB] | None = None,
+    occupied_positions: list[Position] | None = None,
 ) -> list[Position]:
     """
-    Finds a valid movement path avoiding obstacles using A*.
-    Currently assumes an open battlefield and returns a direct vector.
+    Finds a valid movement path using a 5 ft grid A* search.
+    TOTAL-cover obstacles and occupied squares are treated as blocked cells.
     """
-    return [start, target]
+    if not obstacles and not occupied_positions:
+        return [start, target]
+
+    obstacle_list = obstacles or []
+    total_obstacles = [obs for obs in obstacle_list if obs.cover_level == "TOTAL"]
+    occupied_cells = {
+        _position_to_cell(pos)
+        for pos in (occupied_positions or [])
+        if distance_chebyshev(pos, start) > 0
+    }
+
+    start_cell = _position_to_cell(start)
+    target_cell = _position_to_cell(target)
+    if start_cell == target_cell:
+        return [start] if start == target else [start, target]
+
+    points = [start_cell, target_cell, *occupied_cells]
+    for obs in total_obstacles:
+        points.append(_position_to_cell(obs.min_pos))
+        points.append(_position_to_cell(obs.max_pos))
+
+    margin = 4
+    min_x = min(cell[0] for cell in points) - margin
+    max_x = max(cell[0] for cell in points) + margin
+    min_y = min(cell[1] for cell in points) - margin
+    max_y = max(cell[1] for cell in points) + margin
+    if start_cell[2] == target_cell[2]:
+        min_z = max_z = start_cell[2]
+    else:
+        min_z = min(cell[2] for cell in points) - margin
+        max_z = max(cell[2] for cell in points) + margin
+
+    def in_bounds(cell: tuple[int, int, int]) -> bool:
+        return min_x <= cell[0] <= max_x and min_y <= cell[1] <= max_y and min_z <= cell[2] <= max_z
+
+    def blocked(cell: tuple[int, int, int]) -> bool:
+        if cell in occupied_cells and cell not in {start_cell, target_cell}:
+            return True
+        pos = _cell_to_position(cell)
+        for obs in total_obstacles:
+            if (
+                obs.min_pos[0] <= pos[0] <= obs.max_pos[0]
+                and obs.min_pos[1] <= pos[1] <= obs.max_pos[1]
+                and obs.min_pos[2] <= pos[2] <= obs.max_pos[2]
+            ):
+                return True
+        return False
+
+    def heuristic(cell: tuple[int, int, int]) -> float:
+        return float(
+            max(
+                abs(cell[0] - target_cell[0]),
+                abs(cell[1] - target_cell[1]),
+                abs(cell[2] - target_cell[2]),
+            )
+        )
+
+    dz_values = (0,) if start_cell[2] == target_cell[2] else (-1, 0, 1)
+    neighbor_deltas = [
+        (dx, dy, dz)
+        for dx in (-1, 0, 1)
+        for dy in (-1, 0, 1)
+        for dz in dz_values
+        if not (dx == 0 and dy == 0 and dz == 0)
+    ]
+
+    open_heap: list[tuple[float, float, tuple[int, int, int]]] = []
+    heappush(open_heap, (heuristic(start_cell), 0.0, start_cell))
+    came_from: dict[tuple[int, int, int], tuple[int, int, int]] = {}
+    g_score: dict[tuple[int, int, int], float] = {start_cell: 0.0}
+
+    while open_heap:
+        _, current_cost, current = heappop(open_heap)
+        if current == target_cell:
+            break
+        if current_cost > g_score.get(current, float("inf")):
+            continue
+
+        for dx, dy, dz in neighbor_deltas:
+            neighbor = (current[0] + dx, current[1] + dy, current[2] + dz)
+            if not in_bounds(neighbor) or blocked(neighbor):
+                continue
+            candidate_cost = current_cost + 1.0
+            if candidate_cost >= g_score.get(neighbor, float("inf")):
+                continue
+            came_from[neighbor] = current
+            g_score[neighbor] = candidate_cost
+            heappush(open_heap, (candidate_cost + heuristic(neighbor), candidate_cost, neighbor))
+
+    if target_cell not in came_from and target_cell != start_cell:
+        return [start, target]
+
+    cell_path = [target_cell]
+    cursor = target_cell
+    while cursor != start_cell:
+        cursor = came_from[cursor]
+        cell_path.append(cursor)
+    cell_path.reverse()
+
+    path: list[Position] = [start]
+    for cell in cell_path[1:-1]:
+        path.append(_cell_to_position(cell))
+    path.append(target)
+    return path
+
+
+def _position_to_cell(pos: Position) -> tuple[int, int, int]:
+    return (int(round(pos[0] / 5.0)), int(round(pos[1] / 5.0)), int(round(pos[2] / 5.0)))
+
+
+def _cell_to_position(cell: tuple[int, int, int]) -> Position:
+    return (cell[0] * 5.0, cell[1] * 5.0, cell[2] * 5.0)

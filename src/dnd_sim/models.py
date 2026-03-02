@@ -159,6 +159,8 @@ class ActorRuntimeState:
     concentrated_targets: set[str] = field(default_factory=set)
     concentration_conditions: set[str] = field(default_factory=set)
     concentrated_spell: str | None = None
+    readied_action_name: str | None = None
+    readied_trigger: str | None = None
     level: int = 1
 
     def is_active(self) -> bool:
