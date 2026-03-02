@@ -343,6 +343,99 @@ def _parse_character_level(class_level: str) -> int:
     return sum(int(n) for n in numbers) if numbers else 1
 
 
+def _parse_class_level(class_level_text: str, class_name: str) -> int:
+    pattern = re.compile(rf"\b{re.escape(class_name)}\b[^0-9]*(\d+)", re.IGNORECASE)
+    return sum(int(match.group(1)) for match in pattern.finditer(class_level_text or ""))
+
+
+def _warlock_level_from_character(character: dict[str, Any]) -> int:
+    class_level_text = str(character.get("class_level", ""))
+    return _parse_class_level(class_level_text, "warlock")
+
+
+def _warlock_pact_slot_profile_for_level(warlock_level: int) -> tuple[int, int] | None:
+    if warlock_level <= 0:
+        return None
+    if warlock_level == 1:
+        slot_count = 1
+    elif warlock_level <= 10:
+        slot_count = 2
+    elif warlock_level <= 16:
+        slot_count = 3
+    else:
+        slot_count = 4
+
+    if warlock_level <= 2:
+        slot_level = 1
+    elif warlock_level <= 4:
+        slot_level = 2
+    elif warlock_level <= 6:
+        slot_level = 3
+    elif warlock_level <= 8:
+        slot_level = 4
+    else:
+        slot_level = 5
+    return slot_level, slot_count
+
+
+def _extract_pact_slot_profile_from_spell_slots(raw_slots: Any) -> tuple[int, int] | None:
+    if not isinstance(raw_slots, dict):
+        return None
+    positive_slots: list[tuple[int, int]] = []
+    for level_raw, count_raw in raw_slots.items():
+        try:
+            level = int(level_raw)
+            count = int(count_raw)
+        except (TypeError, ValueError):
+            continue
+        if level <= 0 or count <= 0:
+            continue
+        if level > 5:
+            continue
+        positive_slots.append((level, count))
+    if len(positive_slots) == 1:
+        return positive_slots[0]
+    return None
+
+
+def _is_pact_magic_character(character: dict[str, Any]) -> bool:
+    if _warlock_level_from_character(character) > 0:
+        return True
+    trait_names = {
+        _normalize_trait_name(str(value)) for value in (character.get("traits", []) or [])
+    }
+    return "pact magic" in trait_names
+
+
+def _warlock_mystic_arcanum_max_level(warlock_level: int) -> int:
+    if warlock_level >= 17:
+        return 9
+    if warlock_level >= 15:
+        return 8
+    if warlock_level >= 13:
+        return 7
+    if warlock_level >= 11:
+        return 6
+    return 0
+
+
+def _extract_warlock_invocations(character: dict[str, Any]) -> set[str]:
+    candidates: set[str] = set()
+    for trait in character.get("traits", []) or []:
+        key = _normalize_trait_name(str(trait))
+        canonical = _WARLOCK_INVOCATION_ALIASES.get(key)
+        if canonical is not None:
+            candidates.add(canonical)
+
+    for candidate in _extract_trait_candidates_from_raw_fields(character):
+        key = _normalize_trait_name(candidate)
+        canonical = _WARLOCK_INVOCATION_ALIASES.get(key)
+        if canonical is not None:
+            candidates.add(canonical)
+
+    return candidates
+
+
 # Cantrip damage scaling: at level 5, 11, 17 add an extra die
 _CANTRIP_SCALE_TIERS = [(17, 4), (11, 3), (5, 2), (1, 1)]
 
@@ -1338,11 +1431,18 @@ def _build_spell_actions(
         tags = list(dict.fromkeys(tags))
 
         resource_cost: dict[str, int] = {}
+        max_uses: int | None = None
 
         if spell_level == 0:
             # Cantrip: no slot cost, scale damage by level
             if damage:
                 damage = _scale_cantrip_dice(str(damage), character_level)
+        elif has_pact_magic and spell_level >= 6 and arcanum_max_level >= spell_level:
+            max_uses = 1
+            tags.append("mystic_arcanum")
+        elif has_pact_magic and pact_slot_key is not None and spell_level <= 5:
+            resource_cost[pact_slot_key] = 1
+            tags.append("pact_magic")
         else:
             # Leveled spell: consume a spell slot
             slot_key = f"spell_slot_{spell_level}"
@@ -1372,6 +1472,7 @@ def _build_spell_actions(
             save_ability=str(save_ability) if save_ability else None,
             half_on_save=half_on_save,
             resource_cost=resource_cost,
+            max_uses=max_uses,
             action_cost=action_cost,
             target_mode=target_mode,
             range_ft=int(spell.get("range_ft")) if spell.get("range_ft") is not None else None,
@@ -1563,6 +1664,38 @@ def _build_cleric_channel_divinity_actions(
         )
 
     return actions
+
+
+def _apply_warlock_invocations_to_actions(
+    character: dict[str, Any], actions: list[ActionDefinition]
+) -> None:
+    invocations = _extract_warlock_invocations(character)
+    if not invocations:
+        return
+
+    for action in actions:
+        if _trait_lookup_key(action.name) != "eldritch blast":
+            continue
+        if "agonizing blast" in invocations and "agonizing_blast" not in action.tags:
+            action.tags.append("agonizing_blast")
+        if "repelling blast" in invocations:
+            has_repelling = any(
+                isinstance(effect, dict)
+                and effect.get("effect_type") == "forced_movement"
+                and effect.get("distance_ft") == 10
+                and effect.get("direction") == "away_from_source"
+                for effect in action.mechanics
+            )
+            if not has_repelling:
+                action.mechanics.append(
+                    {
+                        "effect_type": "forced_movement",
+                        "target": "target",
+                        "distance_ft": 10,
+                        "direction": "away_from_source",
+                        "apply_on": "hit",
+                    }
+                )
 
 
 def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition]:
@@ -1844,14 +1977,34 @@ def _get_standard_actions() -> list[ActionDefinition]:
 def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
     result: dict[str, int] = {}
     raw = character.get("resources", {})
+    has_pact_magic = _is_pact_magic_character(character)
+    warlock_level = _warlock_level_from_character(character)
+    raw_spell_slots = raw.get("spell_slots")
+    pact_slot_profile = _extract_pact_slot_profile_from_spell_slots(raw_spell_slots)
+    has_any_positive_slot = False
+    if isinstance(raw_spell_slots, dict):
+        for value in raw_spell_slots.values():
+            try:
+                if int(value) > 0:
+                    has_any_positive_slot = True
+                    break
+            except (TypeError, ValueError):
+                continue
+    if pact_slot_profile is None and has_pact_magic and not has_any_positive_slot:
+        pact_slot_profile = _warlock_pact_slot_profile_for_level(warlock_level)
+
     for key, value in raw.items():
         if isinstance(value, dict):
             max_value = value.get("max")
             if isinstance(max_value, int):
                 result[key] = max_value
             elif key == "spell_slots":
-                for level, slots in value.items():
-                    result[f"spell_slot_{level}"] = int(slots)
+                if has_pact_magic and pact_slot_profile is not None:
+                    pact_slot_level, pact_slot_count = pact_slot_profile
+                    result[f"warlock_spell_slot_{pact_slot_level}"] = pact_slot_count
+                else:
+                    for level, slots in value.items():
+                        result[f"spell_slot_{level}"] = int(slots)
             else:
                 for name, amount in value.items():
                     if isinstance(amount, int):
@@ -5036,6 +5189,11 @@ def _execute_action(
                     empowered_rerolls = max(1, actor.cha_mod)
                 damage_expr = action.damage
                 sneak_damage_expr: str | None = None
+
+                if damage_expr and "agonizing_blast" in action.tags:
+                    cha_bonus = int(actor.cha_mod)
+                    if cha_bonus != 0:
+                        damage_expr += f"{cha_bonus:+d}"
 
                 # Sneak Attack Logic
                 if (
