@@ -9,3 +9,5 @@
 - [x] Markdown reporting and chart generation
 - [x] Baseline ley_heart phase 1 encounter conversion
 - [x] Full test pass and docs polish
+- [x] Phase 8: XP/level progression subsystem
+- [x] Phase 8: Deterministic downtime activities subsystem
