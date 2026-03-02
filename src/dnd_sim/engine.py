@@ -7,7 +7,7 @@ import re
 import statistics
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from dnd_sim.io import EnemyConfig, LoadedScenario
 from dnd_sim.models import (
@@ -337,8 +337,9 @@ def _roll_damage_with_channel_divinity_hooks(
 
 def _parse_character_level(class_level: str) -> int:
     """Extract the numeric level from a class_level string like 'Fighter 8' or 'Wizard 5 / Cleric 3'."""
-    import re
-
+    class_levels = _parse_class_levels(class_level)
+    if class_levels:
+        return sum(class_levels.values())
     numbers = re.findall(r"\d+", class_level)
     return sum(int(n) for n in numbers) if numbers else 1
 
@@ -1015,6 +1016,9 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
         # Try to infer combat-relevant fields from the spell definition.
         if isinstance(spell_def, dict):
             hydrated.setdefault("level", spell_def.get("level"))
+            school = _extract_spell_school(spell_def)
+            if school is not None:
+                hydrated["school"] = school
             if "save_ability" in spell_def:
                 hydrated["save_ability"] = str(
                     spell_def.get("save_ability") or ""
@@ -2081,6 +2085,8 @@ def _build_actor_from_character(
     normalized_traits_db = {
         _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
     }
+    class_level_text = str(character.get("class_level", "1"))
+    class_levels = _parse_class_levels(class_level_text)
     ability_scores = character.get("ability_scores", {})
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
     con_mod = (int(ability_scores.get("con", 10)) - 10) // 2
@@ -2113,10 +2119,12 @@ def _build_actor_from_character(
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
         traits=_resolve_character_traits(character, traits_db),
-        level=_parse_character_level(character.get("class_level", "1")),
+        level=_parse_character_level(class_level_text),
+        class_levels=class_levels,
     )
     _ensure_channel_divinity_resource(actor)
     _apply_passive_traits(actor)
+    _apply_inferred_wizard_resources(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
         try:
@@ -2248,6 +2256,8 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
             or _is_channel_divinity_resource_name(res_key)
         ):
             actor.resources[res_key] = actor.max_resources.get(res_key, 0)
+
+    _apply_arcane_recovery(actor)
 
     for action in actor.actions:
         if action.name in {"action_surge", "second_wind"} or "short_rest" in action.tags:
