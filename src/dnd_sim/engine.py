@@ -51,6 +51,7 @@ _TRAIT_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_INDEX_CACHE: tuple[Path, dict[str, Path]] | None = None
+_SPELL_SLOT_CREATION_COSTS: dict[int, int] = {1: 2, 2: 3, 3: 5, 4: 6, 5: 7}
 
 
 @dataclass(slots=True)
@@ -640,10 +641,246 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
     return list(by_name.values())
 
 
+def _clone_action(action: ActionDefinition, **overrides: Any) -> ActionDefinition:
+    payload: dict[str, Any] = {
+        "name": action.name,
+        "action_type": action.action_type,
+        "to_hit": action.to_hit,
+        "damage": action.damage,
+        "damage_type": action.damage_type,
+        "attack_count": action.attack_count,
+        "save_dc": action.save_dc,
+        "save_ability": action.save_ability,
+        "half_on_save": action.half_on_save,
+        "resource_cost": dict(action.resource_cost),
+        "recharge": action.recharge,
+        "max_uses": action.max_uses,
+        "action_cost": action.action_cost,
+        "event_trigger": action.event_trigger,
+        "target_mode": action.target_mode,
+        "range_ft": action.range_ft,
+        "aoe_type": action.aoe_type,
+        "aoe_size_ft": action.aoe_size_ft,
+        "max_targets": action.max_targets,
+        "concentration": action.concentration,
+        "include_self": action.include_self,
+        "effects": [
+            dict(effect) if isinstance(effect, dict) else effect for effect in action.effects
+        ],
+        "mechanics": [
+            dict(mechanic) if isinstance(mechanic, dict) else mechanic
+            for mechanic in action.mechanics
+        ],
+        "tags": list(action.tags),
+    }
+    payload.update(overrides)
+    return ActionDefinition(**payload)
+
+
+def _add_resource_cost(base_cost: dict[str, int], key: str, amount: int) -> dict[str, int]:
+    result = dict(base_cost)
+    result[key] = result.get(key, 0) + int(amount)
+    return result
+
+
+def _action_has_duration_payload(action: ActionDefinition) -> bool:
+    for entry in action.effects + action.mechanics:
+        if not isinstance(entry, dict):
+            continue
+        for key in ("duration_rounds", "duration"):
+            raw_value = entry.get(key)
+            if isinstance(raw_value, int) and raw_value > 0:
+                return True
+    return False
+
+
+def _double_duration_payload(entries: list[Any]) -> list[Any]:
+    doubled: list[Any] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            doubled.append(entry)
+            continue
+        updated = dict(entry)
+        for key in ("duration_rounds", "duration"):
+            raw_value = updated.get(key)
+            if isinstance(raw_value, int) and raw_value > 0:
+                updated[key] = raw_value * 2
+        doubled.append(updated)
+    return doubled
+
+
+def _build_metamagic_spell_actions(
+    action: ActionDefinition,
+    *,
+    spell_level: int,
+    traits: set[str],
+) -> list[ActionDefinition]:
+    if "spell" not in action.tags or not traits:
+        return []
+
+    variants: list[ActionDefinition] = []
+    has_damage = bool(action.damage)
+    has_duration = action.concentration or _action_has_duration_payload(action)
+    is_single_target = (
+        action.target_mode in {"single_enemy", "single_ally"}
+        and action.max_targets in (None, 1)
+        and not action.aoe_type
+        and not action.include_self
+    )
+    can_range_extend = (
+        action.range_ft is not None and action.range_ft > 0 and action.target_mode != "self"
+    )
+    is_save_spell = (
+        action.action_type == "save" and action.save_dc is not None and bool(action.save_ability)
+    )
+    is_action_spell = action.action_cost == "action"
+
+    def has_trait(name: str) -> bool:
+        return _normalize_trait_name(name) in traits
+
+    def add_variant(
+        option: str,
+        *,
+        sorcery_cost: int,
+        target_mode: str | None = None,
+        max_targets: int | None = None,
+        action_cost: str | None = None,
+        range_ft: int | None = None,
+        effects: list[dict[str, Any]] | None = None,
+        mechanics: list[dict[str, Any]] | None = None,
+    ) -> None:
+        label = option.capitalize()
+        tags = list(action.tags)
+        tags.extend(["metamagic", f"metamagic:{option}"])
+        variant = _clone_action(
+            action,
+            name=f"{action.name} [{label}]",
+            resource_cost=_add_resource_cost(action.resource_cost, "sorcery_points", sorcery_cost),
+            tags=tags,
+            target_mode=target_mode if target_mode is not None else action.target_mode,
+            max_targets=max_targets if max_targets is not None else action.max_targets,
+            action_cost=action_cost if action_cost is not None else action.action_cost,
+            range_ft=range_ft if range_ft is not None else action.range_ft,
+            effects=effects if effects is not None else action.effects,
+            mechanics=mechanics if mechanics is not None else action.mechanics,
+        )
+        variants.append(variant)
+
+    if has_trait("careful spell") and is_save_spell:
+        add_variant("careful", sorcery_cost=1)
+    if has_trait("distant spell") and can_range_extend and action.range_ft is not None:
+        add_variant("distant", sorcery_cost=1, range_ft=action.range_ft * 2)
+    if has_trait("empowered spell") and has_damage:
+        add_variant("empowered", sorcery_cost=1)
+    if has_trait("extended spell") and has_duration:
+        effects = action.effects
+        mechanics = action.mechanics
+        if _action_has_duration_payload(action):
+            effects = _double_duration_payload(action.effects)
+            mechanics = _double_duration_payload(action.mechanics)
+        add_variant("extended", sorcery_cost=1, effects=effects, mechanics=mechanics)
+    if has_trait("heightened spell") and is_save_spell:
+        add_variant("heightened", sorcery_cost=3)
+    if has_trait("quickened spell") and is_action_spell:
+        add_variant("quickened", sorcery_cost=2, action_cost="bonus")
+    if has_trait("subtle spell"):
+        add_variant("subtle", sorcery_cost=1)
+    if has_trait("twinned spell") and is_single_target:
+        twin_mode = "n_enemies" if action.target_mode == "single_enemy" else "n_allies"
+        add_variant(
+            "twinned",
+            sorcery_cost=max(1, int(spell_level)),
+            target_mode=twin_mode,
+            max_targets=2,
+        )
+
+    return variants
+
+
+def _build_font_of_magic_actions(resources: dict[str, Any]) -> list[ActionDefinition]:
+    sorcery_points_raw = resources.get("sorcery_points")
+    has_sorcery_points = isinstance(sorcery_points_raw, int) or (
+        isinstance(sorcery_points_raw, dict) and int(sorcery_points_raw.get("max", 0)) > 0
+    )
+    if not has_sorcery_points:
+        return []
+
+    actions: list[ActionDefinition] = []
+    for level, cost in _SPELL_SLOT_CREATION_COSTS.items():
+        actions.append(
+            ActionDefinition(
+                name=f"font_of_magic_create_slot_{level}",
+                action_type="utility",
+                action_cost="bonus",
+                target_mode="self",
+                resource_cost={"sorcery_points": cost},
+                tags=[
+                    "class_feature",
+                    "font_of_magic",
+                    "conversion:points_to_slot",
+                    f"slot_level:{level}",
+                ],
+            )
+        )
+
+    raw_slots = resources.get("spell_slots", {})
+    if isinstance(raw_slots, dict):
+        slot_levels: list[int] = []
+        for key in raw_slots:
+            try:
+                level = int(key)
+            except (TypeError, ValueError):
+                continue
+            if level > 0:
+                slot_levels.append(level)
+        for level in sorted(set(slot_levels)):
+            actions.append(
+                ActionDefinition(
+                    name=f"font_of_magic_convert_slot_{level}",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="self",
+                    resource_cost={f"spell_slot_{level}": 1},
+                    tags=[
+                        "class_feature",
+                        "font_of_magic",
+                        "conversion:slot_to_points",
+                        f"slot_level:{level}",
+                    ],
+                )
+            )
+
+    return actions
+
+
+def _extract_tag_value(tags: list[str], prefix: str) -> str | None:
+    for tag in tags:
+        text = str(tag)
+        if text.startswith(prefix):
+            return text.split(":", 1)[1]
+    return None
+
+
+def _slot_level_from_action(action: ActionDefinition) -> int | None:
+    raw_level = _extract_tag_value(list(action.tags), "slot_level:")
+    if raw_level is None:
+        return None
+    try:
+        level = int(raw_level)
+    except ValueError:
+        return None
+    return level if level > 0 else None
+
+
+def _has_tag(action: ActionDefinition, tag: str) -> bool:
+    return any(str(value) == tag for value in action.tags)
+
+
 def _build_spell_actions(
     character: dict[str, Any],
     *,
     character_level: int,
+    traits: set[str] | None = None,
 ) -> list[ActionDefinition]:
     """Build ActionDefinition entries from a character's spell list.
 
@@ -671,10 +908,7 @@ def _build_spell_actions(
         return []
 
     actions: list[ActionDefinition] = []
-    resources = character.get("resources", {})
-    available_slots = {}
-    if isinstance(resources.get("spell_slots"), dict):
-        available_slots = resources["spell_slots"]
+    known_traits = set(traits or set())
 
     for spell in spells:
         name = str(spell.get("name", "unknown_spell"))
@@ -693,6 +927,7 @@ def _build_spell_actions(
         mechanics = spell.get("mechanics", [])
         tags = list(spell.get("tags", []))
         tags.append("spell")
+        tags.append(f"spell_level:{spell_level}")
 
         resource_cost: dict[str, int] = {}
 
@@ -741,6 +976,9 @@ def _build_spell_actions(
             tags=tags,
         )
         actions.append(action)
+        actions.extend(
+            _build_metamagic_spell_actions(action, spell_level=spell_level, traits=known_traits)
+        )
 
     return actions
 
@@ -898,13 +1136,17 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             )
         # --- Spell actions ---
         character_level = _parse_character_level(character.get("class_level", "1"))
-        actions.extend(_build_spell_actions(character, character_level=character_level))
+        actions.extend(
+            _build_spell_actions(character, character_level=character_level, traits=traits)
+        )
+        actions.extend(_build_font_of_magic_actions(resources))
 
         return actions
 
     # Fallback: no attacks defined
     character_level = _parse_character_level(character.get("class_level", "1"))
-    spell_actions = _build_spell_actions(character, character_level=character_level)
+    spell_actions = _build_spell_actions(character, character_level=character_level, traits=traits)
+    font_of_magic_actions = _build_font_of_magic_actions(resources)
     base = [
         ActionDefinition(
             name="basic",
@@ -915,7 +1157,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             tags=["basic"],
         )
     ]
-    return base + spell_actions
+    return base + spell_actions + font_of_magic_actions
 
 
 def _get_standard_actions() -> list[ActionDefinition]:
@@ -1871,6 +2113,19 @@ def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> boo
         return False
     if action.action_cost == "lair" and actor.lair_action_used_this_round:
         return False
+    if _has_tag(action, "conversion:slot_to_points"):
+        slot_level = _slot_level_from_action(action)
+        if slot_level is None:
+            return False
+        current_points = int(actor.resources.get("sorcery_points", 0))
+        max_points = actor.max_resources.get("sorcery_points")
+        if isinstance(max_points, int) and max_points >= 0:
+            if current_points + slot_level > int(max_points):
+                return False
+    if _has_tag(action, "conversion:points_to_slot"):
+        slot_level = _slot_level_from_action(action)
+        if slot_level is None or slot_level > 5:
+            return False
     return True
 
 
@@ -2016,38 +2271,44 @@ def _execute_action(
         return
     if obstacles is None:
         obstacles = []
+    is_spell_action = "spell" in action.tags
+    subtle_spell = _has_tag(action, "metamagic:subtle")
 
     # Counterspell check
-    if "spell" in action.tags:
-        for enemy in actors.values():
-            if (
-                enemy.team != actor.team
-                and enemy.hp > 0
-                and not enemy.dead
-                and enemy.reaction_available
-            ):
-                cs_action = next(
-                    (
-                        a
-                        for a in enemy.actions
-                        if a.name == "counterspell" and a.action_cost == "reaction"
-                    ),
-                    None,
-                )
-                if cs_action:
-                    from .spatial import distance_chebyshev
+    if is_spell_action:
+        if not subtle_spell:
+            for enemy in actors.values():
+                if (
+                    enemy.team != actor.team
+                    and enemy.hp > 0
+                    and not enemy.dead
+                    and enemy.reaction_available
+                ):
+                    cs_action = next(
+                        (
+                            a
+                            for a in enemy.actions
+                            if a.name == "counterspell" and a.action_cost == "reaction"
+                        ),
+                        None,
+                    )
+                    if cs_action:
+                        from .spatial import distance_chebyshev
 
-                    if distance_chebyshev(enemy.position, actor.position) <= 60:
-                        slot_key = None
-                        for key in sorted(enemy.resources.keys()):
-                            if key.startswith("spell_slot_") and enemy.resources.get(key, 0) > 0:
-                                if int(key.split("_")[-1]) >= 3:
-                                    slot_key = key
-                                    break
-                        if slot_key:
-                            enemy.resources[slot_key] -= 1
-                            enemy.reaction_available = False
-                            return  # Spell countered!
+                        if distance_chebyshev(enemy.position, actor.position) <= 60:
+                            slot_key = None
+                            for key in sorted(enemy.resources.keys()):
+                                if (
+                                    key.startswith("spell_slot_")
+                                    and enemy.resources.get(key, 0) > 0
+                                ):
+                                    if int(key.split("_")[-1]) >= 3:
+                                        slot_key = key
+                                        break
+                            if slot_key:
+                                enemy.resources[slot_key] -= 1
+                                enemy.reaction_available = False
+                                return  # Spell countered!
 
         if action.concentration:
             _break_concentration(actor, actors, active_hazards)
@@ -2062,31 +2323,32 @@ def _execute_action(
             }
 
         # Mage Slayer reaction attack
-        for enemy in list(actors.values()):
-            if (
-                enemy.team != actor.team
-                and enemy.hp > 0
-                and not enemy.dead
-                and enemy.reaction_available
-                and _has_trait(enemy, "mage slayer")
-            ):
-                enemy_attack = _fallback_action(enemy)
-                if enemy_attack and enemy_attack.action_type == "attack":
-                    enemy.reaction_available = False
-                    _execute_action(
-                        rng=rng,
-                        actor=enemy,
-                        action=enemy_attack,
-                        targets=[actor],
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=obstacles,
-                        light_level=light_level,
-                    )
+        if not subtle_spell:
+            for enemy in list(actors.values()):
+                if (
+                    enemy.team != actor.team
+                    and enemy.hp > 0
+                    and not enemy.dead
+                    and enemy.reaction_available
+                    and _has_trait(enemy, "mage slayer")
+                ):
+                    enemy_attack = _fallback_action(enemy)
+                    if enemy_attack and enemy_attack.action_type == "attack":
+                        enemy.reaction_available = False
+                        _execute_action(
+                            rng=rng,
+                            actor=enemy,
+                            action=enemy_attack,
+                            targets=[actor],
+                            actors=actors,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            obstacles=obstacles,
+                            light_level=light_level,
+                        )
 
     # Phase 11: Contested Grapple/Shove Checks
     if action.action_type in ("grapple", "shove") and targets:
@@ -2344,8 +2606,10 @@ def _execute_action(
                 )
             if roll.hit and action.damage:
                 empowered_rerolls = 0
-                if (
-                    "spell" in action.tags
+                if is_spell_action and _has_tag(action, "metamagic:empowered"):
+                    empowered_rerolls = max(1, actor.cha_mod)
+                elif (
+                    is_spell_action
                     and _has_trait(actor, "empowered spell")
                     and actor.resources.get("sorcery_points", 0) >= 1
                 ):
@@ -2481,13 +2745,18 @@ def _execute_action(
         if action.save_dc is None or not action.save_ability:
             return
         save_key = action.save_ability.lower()
+        careful_metamagic = _has_tag(action, "metamagic:careful")
+        empowered_metamagic = _has_tag(action, "metamagic:empowered")
+        heightened_metamagic = _has_tag(action, "metamagic:heightened")
 
         # Roll AoE damage once and apply per-target save outcomes.
         raw_damage = 0
         if action.damage:
             empowered_rerolls = 0
-            if (
-                "spell" in action.tags
+            if is_spell_action and empowered_metamagic:
+                empowered_rerolls = max(1, actor.cha_mod)
+            elif (
+                is_spell_action
                 and _has_trait(actor, "empowered spell")
                 and actor.resources.get("sorcery_points", 0) >= 1
             ):
@@ -2506,19 +2775,26 @@ def _execute_action(
             )
 
         careful_allies = set()
-        if (
-            "spell" in action.tags
-            and _has_trait(actor, "careful spell")
-            and actor.resources.get("sorcery_points", 0) >= 1
-        ):
+        can_use_careful = careful_metamagic or (
+            _has_trait(actor, "careful spell") and actor.resources.get("sorcery_points", 0) >= 1
+        )
+        if is_spell_action and can_use_careful:
             allies = [t for t in targets if t.team == actor.team and t.hp > 0 and not t.dead]
             if allies:
-                actor.resources["sorcery_points"] -= 1
-                resources_spent[actor.actor_id]["sorcery_points"] = (
-                    resources_spent[actor.actor_id].get("sorcery_points", 0) + 1
-                )
+                if not careful_metamagic:
+                    actor.resources["sorcery_points"] -= 1
+                    resources_spent[actor.actor_id]["sorcery_points"] = (
+                        resources_spent[actor.actor_id].get("sorcery_points", 0) + 1
+                    )
                 num_careful = max(1, actor.cha_mod)
                 careful_allies = set([a.actor_id for a in allies[:num_careful]])
+
+        heightened_target_id: str | None = None
+        if is_spell_action and heightened_metamagic:
+            for target in targets:
+                if target.team != actor.team and target.hp > 0 and not target.dead:
+                    heightened_target_id = target.actor_id
+                    break
 
         for target in targets:
             if target.dead or target.hp <= 0:
@@ -2533,8 +2809,10 @@ def _execute_action(
                 save_roll = max(save_roll, rng.randint(1, 20))
             if save_key == "dex" and "dodging" in target.conditions:
                 save_roll = max(save_roll, rng.randint(1, 20))
-            if "spell" in action.tags and _has_trait(target, "mage slayer"):
+            if is_spell_action and not subtle_spell and _has_trait(target, "mage slayer"):
                 save_roll = max(save_roll, rng.randint(1, 20))
+            if target.actor_id == heightened_target_id:
+                save_roll = min(save_roll, rng.randint(1, 20))
             success = (save_roll + save_mod) >= action.save_dc
 
             # Lucky: Reroll failed save
@@ -2611,6 +2889,22 @@ def _execute_action(
         return
 
     if action.action_type == "utility":
+        if _has_tag(action, "conversion:points_to_slot"):
+            slot_level = _slot_level_from_action(action)
+            if slot_level is not None and slot_level <= 5:
+                slot_key = f"spell_slot_{slot_level}"
+                actor.resources[slot_key] = actor.resources.get(slot_key, 0) + 1
+            return
+        if _has_tag(action, "conversion:slot_to_points"):
+            slot_level = _slot_level_from_action(action)
+            if slot_level is not None:
+                current_points = int(actor.resources.get("sorcery_points", 0))
+                points_gain = slot_level
+                max_points = actor.max_resources.get("sorcery_points")
+                if isinstance(max_points, int) and max_points >= 0:
+                    points_gain = max(0, min(points_gain, int(max_points) - current_points))
+                actor.resources["sorcery_points"] = current_points + points_gain
+            return
         if action.name == "dodge":
             _apply_condition(actor, "dodging", duration_rounds=1)
             return
