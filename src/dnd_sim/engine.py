@@ -5749,8 +5749,6 @@ def _try_open_hand_technique(
 
 def _multiattack_defense_marker(attacker_id: str) -> str:
     return f"{_MULTIATTACK_DEFENSE_PREFIX}{attacker_id}"
-
-
 def _try_shield_reaction(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
@@ -5973,7 +5971,7 @@ def _execute_action(
         return
     if obstacles is None:
         obstacles = []
-    is_spell_action = "spell" in action.tags
+    is_spell_action = _has_tag(action, "spell")
     subtle_spell = _has_tag(action, "metamagic:subtle")
     _force_end_concentration_if_needed(actor, actors=actors, active_hazards=active_hazards)
 
@@ -6523,6 +6521,13 @@ def _execute_action(
                     actors=actors,
                     resources_spent=resources_spent,
                 )
+                if (
+                    _has_trait(target, "uncanny dodge")
+                    and _can_take_reaction(target)
+                    and target_can_see
+                ):
+                    raw_damage //= 2
+                    target.reaction_available = False
                 was_active_before_damage = target.hp > 0 and not target.dead
                 applied = apply_damage(
                     target,
