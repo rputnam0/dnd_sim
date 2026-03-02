@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from dnd_sim.inventory import InventoryState
+
 ABILITY_KEYS = ("str", "dex", "con", "int", "wis", "cha")
 
 

@@ -3,6 +3,7 @@
 __all__ = [
     "calibration",
     "engine",
+    "inventory",
     "io",
     "models",
     "parser",
