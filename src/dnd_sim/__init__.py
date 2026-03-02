@@ -8,5 +8,6 @@ __all__ = [
     "parser",
     "reporting",
     "rules_2014",
+    "social",
     "strategy_api",
 ]
