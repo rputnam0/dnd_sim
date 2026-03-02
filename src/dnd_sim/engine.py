@@ -6,7 +6,7 @@ import re
 import statistics
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from dnd_sim.io import EnemyConfig, LoadedScenario
 from dnd_sim.models import (
@@ -51,6 +51,27 @@ _TRAIT_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_INDEX_CACHE: tuple[Path, dict[str, Path]] | None = None
+_SPELL_SCHOOL_ORDER = (
+    "abjuration",
+    "conjuration",
+    "divination",
+    "enchantment",
+    "evocation",
+    "illusion",
+    "necromancy",
+    "transmutation",
+)
+_SPELL_SCHOOLS = set(_SPELL_SCHOOL_ORDER)
+_WIZARD_SCHOOL_TRAIT_TO_SCHOOL = {
+    "school of abjuration": "abjuration",
+    "school of conjuration": "conjuration",
+    "school of divination": "divination",
+    "school of enchantment": "enchantment",
+    "school of evocation": "evocation",
+    "school of illusion": "illusion",
+    "school of necromancy": "necromancy",
+    "school of transmutation": "transmutation",
+}
 
 
 @dataclass(slots=True)
@@ -201,12 +222,210 @@ def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
     return any(_normalize_trait_name(key) == needle for key in actor.traits.keys())
 
 
+def _parse_class_levels(class_level: str) -> dict[str, int]:
+    """Extract per-class levels from text like 'Wizard 5 / Cleric 3'."""
+    levels: dict[str, int] = {}
+    for segment in str(class_level).split("/"):
+        match = re.search(r"(.+?)\s+(\d+)$", segment.strip())
+        if not match:
+            continue
+        class_name = _normalize_trait_name(match.group(1))
+        levels[class_name] = levels.get(class_name, 0) + int(match.group(2))
+    return levels
+
+
 def _parse_character_level(class_level: str) -> int:
     """Extract the numeric level from a class_level string like 'Fighter 8' or 'Wizard 5 / Cleric 3'."""
-    import re
-
+    class_levels = _parse_class_levels(class_level)
+    if class_levels:
+        return sum(class_levels.values())
     numbers = re.findall(r"\d+", class_level)
     return sum(int(n) for n in numbers) if numbers else 1
+
+
+def _parse_class_level(class_level: str, class_name: str) -> int:
+    levels = _parse_class_levels(class_level)
+    return int(levels.get(_normalize_trait_name(class_name), 0))
+
+
+def _normalize_spell_school(value: Any) -> str | None:
+    text = re.sub(r"[^a-z]+", " ", str(value).lower()).strip()
+    if not text:
+        return None
+    text = re.sub(r"\s+", " ", text)
+    if text in _SPELL_SCHOOLS:
+        return text
+    return None
+
+
+def _extract_spell_school_from_meta(meta: Any) -> str | None:
+    cleaned = re.sub(r"[^a-z]+", " ", str(meta).lower())
+    for school in _SPELL_SCHOOL_ORDER:
+        if re.search(rf"\b{school}\b", cleaned):
+            return school
+    return None
+
+
+def _extract_spell_school(spell: dict[str, Any]) -> str | None:
+    explicit = _normalize_spell_school(spell.get("school"))
+    if explicit is not None:
+        return explicit
+    return _extract_spell_school_from_meta(spell.get("meta", ""))
+
+
+def _append_tag_once(action: ActionDefinition, tag: str) -> None:
+    if tag and tag not in action.tags:
+        action.tags.append(tag)
+
+
+def _append_mechanic_once(action: ActionDefinition, mechanic: dict[str, Any]) -> None:
+    if mechanic not in action.mechanics:
+        action.mechanics.append(mechanic)
+
+
+def _hook_tag_school_matched_spell(
+    *,
+    action: ActionDefinition,
+    wizard_school: str,
+    spell_school: str,
+) -> None:
+    if wizard_school != spell_school:
+        return
+    _append_tag_once(action, "wizard_school_hook")
+    _append_tag_once(action, f"wizard_school_hook:{wizard_school}")
+    _append_mechanic_once(
+        action,
+        {
+            "type": "wizard_school_hook",
+            "school": wizard_school,
+        },
+    )
+
+
+_WIZARD_SCHOOL_ACTION_HOOKS: dict[str, tuple[Callable[..., None], ...]] = {
+    school: (_hook_tag_school_matched_spell,) for school in _SPELL_SCHOOL_ORDER
+}
+
+
+def _school_from_action_tags(action: ActionDefinition) -> str | None:
+    for tag in action.tags:
+        if not tag.startswith("school:"):
+            continue
+        school = _normalize_spell_school(tag.split(":", 1)[1])
+        if school is not None:
+            return school
+    return None
+
+
+def _apply_wizard_school_action_hooks(
+    actions: list[ActionDefinition],
+    *,
+    traits: set[str],
+) -> None:
+    active_schools = [
+        school
+        for trait_key, school in _WIZARD_SCHOOL_TRAIT_TO_SCHOOL.items()
+        if trait_key in traits
+    ]
+    if not active_schools:
+        return
+
+    for action in actions:
+        if "spell" not in action.tags:
+            continue
+        spell_school = _school_from_action_tags(action)
+        if spell_school is None:
+            continue
+        for wizard_school in active_schools:
+            for hook in _WIZARD_SCHOOL_ACTION_HOOKS.get(wizard_school, ()):
+                hook(action=action, wizard_school=wizard_school, spell_school=spell_school)
+
+
+def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
+    if max_value <= 0:
+        return
+    existing_max = int(actor.max_resources.get(resource, 0))
+    if existing_max < max_value:
+        actor.max_resources[resource] = max_value
+    cap = int(actor.max_resources[resource])
+    if resource not in actor.resources:
+        actor.resources[resource] = cap
+    else:
+        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+
+
+def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    _ensure_resource_cap(actor, "arcane_recovery", 1)
+
+
+def _iter_spell_slot_levels_desc(actor: ActorRuntimeState) -> list[int]:
+    levels: set[int] = set()
+    for key in actor.max_resources.keys():
+        if not str(key).startswith("spell_slot_"):
+            continue
+        try:
+            level = int(str(key).rsplit("_", 1)[1])
+        except ValueError:
+            continue
+        if level > 0:
+            levels.add(level)
+    return sorted(levels, reverse=True)
+
+
+def _recover_spell_slots_with_budget(
+    actor: ActorRuntimeState,
+    *,
+    budget: int,
+    max_individual_slot_level: int,
+) -> int:
+    if budget <= 0:
+        return 0
+    recovered_levels = 0
+    for slot_level in _iter_spell_slot_levels_desc(actor):
+        if slot_level > max_individual_slot_level or budget < slot_level:
+            continue
+        slot_key = f"spell_slot_{slot_level}"
+        max_slots = int(actor.max_resources.get(slot_key, 0))
+        current_slots = min(int(actor.resources.get(slot_key, 0)), max_slots)
+        missing_slots = max(0, max_slots - current_slots)
+        recoverable_slots = min(missing_slots, budget // slot_level)
+        if recoverable_slots <= 0:
+            continue
+        actor.resources[slot_key] = current_slots + recoverable_slots
+        recovered_levels += recoverable_slots * slot_level
+        budget -= recoverable_slots * slot_level
+        if budget <= 0:
+            break
+    return recovered_levels
+
+
+def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    uses_remaining = int(actor.resources.get("arcane_recovery", 0))
+    if uses_remaining <= 0:
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    recovery_budget = max(1, (wizard_level + 1) // 2)
+    recovered_levels = _recover_spell_slots_with_budget(
+        actor,
+        budget=recovery_budget,
+        max_individual_slot_level=5,
+    )
+    if recovered_levels <= 0:
+        return
+    actor.resources["arcane_recovery"] = uses_remaining - 1
 
 
 # Cantrip damage scaling: at level 5, 11, 17 add an extra die
@@ -519,6 +738,9 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
         # Try to infer combat-relevant fields from the spell definition.
         if isinstance(spell_def, dict):
             hydrated.setdefault("level", spell_def.get("level"))
+            school = _extract_spell_school(spell_def)
+            if school is not None:
+                hydrated["school"] = school
             if "save_ability" in spell_def:
                 hydrated["save_ability"] = str(
                     spell_def.get("save_ability") or ""
@@ -693,6 +915,9 @@ def _build_spell_actions(
         mechanics = spell.get("mechanics", [])
         tags = list(spell.get("tags", []))
         tags.append("spell")
+        spell_school = _extract_spell_school(spell)
+        if spell_school is not None:
+            tags.append(f"school:{spell_school}")
 
         resource_cost: dict[str, int] = {}
 
@@ -898,13 +1123,16 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             )
         # --- Spell actions ---
         character_level = _parse_character_level(character.get("class_level", "1"))
-        actions.extend(_build_spell_actions(character, character_level=character_level))
+        spell_actions = _build_spell_actions(character, character_level=character_level)
+        _apply_wizard_school_action_hooks(spell_actions, traits=traits)
+        actions.extend(spell_actions)
 
         return actions
 
     # Fallback: no attacks defined
     character_level = _parse_character_level(character.get("class_level", "1"))
     spell_actions = _build_spell_actions(character, character_level=character_level)
+    _apply_wizard_school_action_hooks(spell_actions, traits=traits)
     base = [
         ActionDefinition(
             name="basic",
@@ -1005,6 +1233,8 @@ def _build_actor_from_character(
     normalized_traits_db = {
         _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
     }
+    class_level_text = str(character.get("class_level", "1"))
+    class_levels = _parse_class_levels(class_level_text)
     ability_scores = character.get("ability_scores", {})
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
     con_mod = (int(ability_scores.get("con", 10)) - 10) // 2
@@ -1037,9 +1267,11 @@ def _build_actor_from_character(
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
         traits=_resolve_character_traits(character, traits_db),
-        level=_parse_character_level(character.get("class_level", "1")),
+        level=_parse_character_level(class_level_text),
+        class_levels=class_levels,
     )
     _apply_passive_traits(actor)
+    _apply_inferred_wizard_resources(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
         try:
@@ -1163,6 +1395,8 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
     for res_key in list(actor.resources.keys()):
         if res_key in short_rest_resources or "warlock_spell_slot" in res_key:
             actor.resources[res_key] = actor.max_resources.get(res_key, 0)
+
+    _apply_arcane_recovery(actor)
 
     for action in actor.actions:
         if action.name in {"action_surge", "second_wind"} or "short_rest" in action.tags:

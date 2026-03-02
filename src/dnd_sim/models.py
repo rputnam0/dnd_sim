@@ -157,6 +157,7 @@ class ActorRuntimeState:
     concentration_conditions: set[str] = field(default_factory=set)
     concentrated_spell: str | None = None
     level: int = 1
+    class_levels: dict[str, int] = field(default_factory=dict)
 
     def is_active(self) -> bool:
         return not self.dead
