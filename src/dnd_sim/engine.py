@@ -9,6 +9,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Callable
 
+from dnd_sim.inventory import InventoryState
 from dnd_sim.io import EncounterConfig, EnemyConfig, LoadedScenario
 from dnd_sim.models import (
     ABILITY_KEYS,
@@ -2591,6 +2592,30 @@ def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
         actor.resources[resource_key] = uses
 
 
+def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
+    if max_value <= 0:
+        return
+    existing_max = int(actor.max_resources.get(resource, 0))
+    if existing_max < max_value:
+        actor.max_resources[resource] = max_value
+    cap = int(actor.max_resources[resource])
+    if resource not in actor.resources:
+        actor.resources[resource] = cap
+    else:
+        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+
+
+def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
+    if not _has_trait(actor, "arcane recovery"):
+        return
+    wizard_level = int(actor.class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not actor.class_levels:
+        wizard_level = int(actor.level)
+    if wizard_level <= 0:
+        return
+    _ensure_resource_cap(actor, "arcane_recovery", 1)
+
+
 def _build_actor_from_character(
     character: dict[str, Any], traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
@@ -2633,6 +2658,7 @@ def _build_actor_from_character(
         traits=_resolve_character_traits(character, traits_db),
         level=_parse_character_level(class_level_text),
         class_levels=class_levels,
+        inventory=InventoryState.from_character_payload(character),
     )
     _ensure_channel_divinity_resource(actor)
     _apply_passive_traits(actor)

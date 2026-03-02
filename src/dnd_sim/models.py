@@ -150,6 +150,7 @@ class ActorRuntimeState:
     legendary_actions_remaining: int = 0
     lair_action_used_this_round: bool = False
     traits: dict[str, dict[str, Any]] = field(default_factory=dict)
+    inventory: InventoryState = field(default_factory=InventoryState)
     condition_durations: dict[str, ConditionTracker] = field(default_factory=dict)
     next_attack_advantage: bool = False
     next_attack_disadvantage: bool = False
