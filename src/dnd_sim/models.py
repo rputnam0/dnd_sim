@@ -170,6 +170,10 @@ class ActorRuntimeState:
     class_levels: dict[str, int] = field(default_factory=dict)
     level: int = 1
     pending_smite: dict[str, Any] | None = None
+    companion_owner_id: str | None = None
+    requires_command: bool = False
+    commanded_this_round: bool = False
+    inventory: InventoryState = field(default_factory=InventoryState)
 
     def is_active(self) -> bool:
         return not self.dead
@@ -189,6 +193,7 @@ class TrialResult:
     downed_counts: dict[str, int]
     death_counts: dict[str, int]
     remaining_hp: dict[str, int]
+    telemetry: list[dict[str, Any]] = field(default_factory=list)
     encounter_outcomes: list[dict[str, Any]] = field(default_factory=list)
     state_snapshots: list[dict[str, Any]] = field(default_factory=list)
 
