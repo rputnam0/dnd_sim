@@ -4,6 +4,7 @@ import random
 
 from dnd_sim.engine import _execute_action, _find_best_bonus_action, _tick_conditions_for_actor
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.rules_2014 import apply_damage
 
 
 class FixedRng:
@@ -37,7 +38,7 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
     )
 
 
-def test_rage_lifecycle_activates_and_expires() -> None:
+def test_rage_lifecycle_expires_without_attack_or_damage() -> None:
     rng = random.Random(1)
     barbarian = _base_actor(actor_id="barb", team="party")
     barbarian.traits = {"rage": {}}
@@ -67,9 +68,98 @@ def test_rage_lifecycle_activates_and_expires() -> None:
     )
     assert "raging" in barbarian.conditions
 
-    for _ in range(10):
-        _tick_conditions_for_actor(rng, barbarian)
+    _tick_conditions_for_actor(rng, barbarian)
     assert "raging" not in barbarian.conditions
+
+
+def test_rage_lifecycle_persists_when_taking_damage() -> None:
+    rng = random.Random(1)
+    barbarian = _base_actor(actor_id="barb", team="party")
+    barbarian.traits = {"rage": {}}
+    barbarian.resources = {"rage": 2}
+    barbarian.max_resources = {"rage": 2}
+
+    rage_action = _find_best_bonus_action(barbarian)
+    assert rage_action is not None
+
+    actors = {barbarian.actor_id: barbarian}
+    damage_dealt = {barbarian.actor_id: 0}
+    damage_taken = {barbarian.actor_id: 0}
+    threat_scores = {barbarian.actor_id: 0}
+    resources_spent = {barbarian.actor_id: {}}
+    _execute_action(
+        rng=rng,
+        actor=barbarian,
+        action=rage_action,
+        targets=[barbarian],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert "raging" in barbarian.conditions
+
+    apply_damage(barbarian, amount=6, damage_type="slashing")
+    _tick_conditions_for_actor(rng, barbarian)
+    assert "raging" in barbarian.conditions
+
+
+def test_rage_lifecycle_persists_when_attacking_hostile() -> None:
+    rng = random.Random(2)
+    barbarian = _base_actor(actor_id="barb", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    barbarian.traits = {"rage": {}}
+    barbarian.resources = {"rage": 2}
+    barbarian.max_resources = {"rage": 2}
+
+    rage_action = _find_best_bonus_action(barbarian)
+    assert rage_action is not None
+
+    actors = {barbarian.actor_id: barbarian, enemy.actor_id: enemy}
+    damage_dealt = {barbarian.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {barbarian.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {barbarian.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {barbarian.actor_id: {}, enemy.actor_id: {}}
+    _execute_action(
+        rng=rng,
+        actor=barbarian,
+        action=rage_action,
+        targets=[barbarian],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert "raging" in barbarian.conditions
+
+    attack = ActionDefinition(
+        name="greataxe",
+        action_type="attack",
+        to_hit=6,
+        damage="1d12",
+        damage_type="slashing",
+        action_cost="action",
+        target_mode="single_enemy",
+    )
+    _execute_action(
+        rng=rng,
+        actor=barbarian,
+        action=attack,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    _tick_conditions_for_actor(rng, barbarian)
+    assert "raging" in barbarian.conditions
 
 
 def test_reckless_attack_applies_self_condition_for_enemy_advantage() -> None:

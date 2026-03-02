@@ -205,6 +205,8 @@ def apply_damage(
         immunities=target.damage_immunities,
         vulnerabilities=target.damage_vulnerabilities,
     )
+    if adjusted > 0 and "raging" in target.conditions:
+        target.rage_sustained_since_last_turn = True
 
     if target.hp <= 0 and not target.dead:
         # Failed death save from taking damage while at 0.

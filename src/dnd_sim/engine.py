@@ -1567,6 +1567,10 @@ def _tick_conditions_for_actor(rng: random.Random, actor: ActorRuntimeState) -> 
 
     Conditions with a repeating save allow the actor to roll each turn.
     """
+    if "raging" in actor.conditions and not actor.rage_sustained_since_last_turn:
+        _remove_condition(actor, "raging")
+    actor.rage_sustained_since_last_turn = False
+
     for condition, tracker in list(actor.condition_durations.items()):
         # Attempt repeating save if available
         if tracker.save_dc is not None and tracker.save_ability:
@@ -2103,6 +2107,8 @@ def _execute_action(
         from .rules_2014 import run_contested_check
 
         target = targets[0]
+        if "raging" in actor.conditions and target.team != actor.team:
+            actor.rage_sustained_since_last_turn = True
 
         # Determine attacker mod (Athletics -> STR)
         attacker_mod = actor.str_mod
@@ -2199,6 +2205,8 @@ def _execute_action(
                 if current_target is None:
                     break
             target = current_target
+            if "raging" in actor.conditions and target.team != actor.team:
+                actor.rage_sustained_since_last_turn = True
             advantage, disadvantage = _consume_attack_flags(actor)
             # Target condition-based advantage/auto-crit
             target_conditions = target.conditions
