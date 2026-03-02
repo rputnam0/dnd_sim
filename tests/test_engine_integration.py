@@ -120,8 +120,12 @@ def test_fixed_seed_is_deterministic(tmp_path: Path) -> None:
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
-    run_a = run_simulation(loaded, db, {}, registry, trials=30, seed=9, run_id="a").summary.to_dict()
-    run_b = run_simulation(loaded, db, {}, registry, trials=30, seed=9, run_id="b").summary.to_dict()
+    run_a = run_simulation(
+        loaded, db, {}, registry, trials=30, seed=9, run_id="a"
+    ).summary.to_dict()
+    run_b = run_simulation(
+        loaded, db, {}, registry, trials=30, seed=9, run_id="b"
+    ).summary.to_dict()
 
     run_a.pop("run_id", None)
     run_b.pop("run_id", None)
@@ -550,3 +554,105 @@ def test_schema_effect_damage_and_resource_change_are_tracked(tmp_path: Path) ->
 
     assert summary["per_actor_damage_taken"]["monk"]["mean"] >= 2.5
     assert summary["per_actor_resources_spent"]["monk"]["ki"]["mean"] >= 0.9
+
+
+def test_exploration_attrition_and_hazard_apply_between_encounters(tmp_path: Path) -> None:
+    party = [build_character("hero", "Hero", 36, 16, 7, "1d8+4")]
+    party[0]["resources"]["rations"] = {"max": 5}
+    enemies = [
+        build_enemy(enemy_id="guard_a", name="Guard A", hp=1, ac=10, to_hit=0, damage="0"),
+        build_enemy(enemy_id="guard_b", name="Guard B", hp=1, ac=10, to_hit=0, damage="0"),
+    ]
+    scenario_path = _setup_env(
+        tmp_path / "exploration_hazard",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+    )
+
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["encounters"] = [{"enemies": ["guard_a"]}, {"enemies": ["guard_b"]}]
+    payload["exploration"] = {
+        "travel_pace": "normal",
+        "distance_miles": 24,
+        "resource_attrition": {"rations": 1},
+        "hazard_checks": [
+            {
+                "name": "acid_rain",
+                "ability": "con",
+                "dc": 99,
+                "damage": "3",
+                "damage_type": "acid",
+                "resource_loss": {"rations": 1},
+            }
+        ],
+    }
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    artifacts = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=1,
+        seed=11,
+        run_id="exploration_hazard",
+    )
+    trial = artifacts.trial_results[0]
+
+    assert trial.damage_taken["hero"] == 3
+    assert trial.resources_spent["hero"]["rations"] == 2
+
+
+def test_exploration_travel_pace_changes_attrition_segments(tmp_path: Path) -> None:
+    def run_with_pace(pace: str) -> int:
+        party = [build_character("hero", "Hero", 36, 16, 7, "1d8+4")]
+        party[0]["resources"]["rations"] = {"max": 5}
+        enemies = [
+            build_enemy(enemy_id="guard_a", name="Guard A", hp=1, ac=10, to_hit=0, damage="0"),
+            build_enemy(enemy_id="guard_b", name="Guard B", hp=1, ac=10, to_hit=0, damage="0"),
+        ]
+        scenario_path = _setup_env(
+            tmp_path / pace,
+            party=party,
+            enemies=enemies,
+            assumption_overrides={
+                "party_strategy": "focus_fire_lowest_hp",
+                "enemy_strategy": "boss_highest_threat_target",
+            },
+        )
+
+        payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+        payload["encounters"] = [{"enemies": ["guard_a"]}, {"enemies": ["guard_b"]}]
+        payload["exploration"] = {
+            "travel_pace": pace,
+            "distance_miles": 24,
+            "resource_attrition": {"rations": 1},
+        }
+        scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+        loaded = load_scenario(scenario_path)
+        db = load_character_db(Path(loaded.config.character_db_dir))
+        registry = load_strategy_registry(loaded)
+        artifacts = run_simulation(
+            loaded,
+            db,
+            {},
+            registry,
+            trials=1,
+            seed=12,
+            run_id=f"exploration_{pace}",
+        )
+        return artifacts.trial_results[0].resources_spent["hero"].get("rations", 0)
+
+    fast_spent = run_with_pace("fast")
+    slow_spent = run_with_pace("slow")
+
+    assert fast_spent == 1
+    assert slow_spent == 2

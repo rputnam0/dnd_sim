@@ -203,9 +203,11 @@ class CustomSimulationConfig(BaseModel):
     module: str
     callable: str = "run_custom_simulation"
 
+
 class EncounterConfig(BaseModel):
     enemies: list[str] = Field(default_factory=list)
     short_rest_after: bool = False
+
 
 class ScenarioConfig(BaseModel):
     scenario_id: str
@@ -217,6 +219,7 @@ class ScenarioConfig(BaseModel):
     encounters: list[EncounterConfig] = Field(default_factory=list)
     initiative_mode: Literal["individual", "grouped"] = "individual"
     battlefield: dict[str, Any] = Field(default_factory=dict)
+    exploration: dict[str, Any] = Field(default_factory=dict)
     termination_rules: dict[str, Any]
     strategy_modules: list[StrategyModuleConfig]
     resource_policy: dict[str, Any] = Field(default_factory=dict)
@@ -264,7 +267,7 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
     for enemy_id in all_enemy_ids:
         # 1. Check local file first (for tests running via tmp_path or local overrides)
         path = enemy_dir / f"{enemy_id}.json"
-        
+
         enemy_payload = None
         if path.exists():
             enemy_payload = _load_json(path)
@@ -275,14 +278,14 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
                 enemy_payload = json.loads(rows[0]["data_json"])
             else:
                 raise ValueError(f"Enemy definition not found on disk or SQLite DB: {enemy_id}")
-            
+
         try:
             enemy = EnemyConfig.model_validate(enemy_payload)
         except ValidationError as exc:
             raise ValueError(f"Invalid enemy schema for {enemy_id}: {exc}") from exc
         except json.JSONDecodeError as exc:
             raise ValueError(f"Invalid JSON blob for {enemy_id}: {exc}") from exc
-            
+
         enemies[enemy_id] = enemy
 
     return LoadedScenario(
@@ -294,9 +297,9 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
 
 def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
     from .db import execute_query
-    
+
     out: dict[str, dict[str, Any]] = {}
-    
+
     # 1. Base load from SQLite
     rows = execute_query("SELECT character_id, data_json FROM characters")
     for row in rows:
@@ -304,7 +307,7 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
             out[row["character_id"]] = json.loads(row["data_json"])
         except json.JSONDecodeError:
             pass
-            
+
     # 2. Local overriding from db_dir (crucial for pytests using tmp_path configurations)
     index_path = db_dir / "index.json"
     if index_path.exists():
@@ -320,9 +323,9 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
 
 def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
     from .db import execute_query
-    
+
     out: dict[str, dict[str, Any]] = {}
-    
+
     # 1. Base SQLite load
     rows = execute_query("SELECT id, data_json FROM traits")
     for row in rows:
@@ -333,7 +336,7 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
                 out[trait_name] = trait_data
         except json.JSONDecodeError:
             pass
-            
+
     # 2. Local Path Load overriding
     if traits_dir.exists():
         for path in traits_dir.glob("*.json"):
@@ -341,7 +344,7 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
             trait_name = trait_data.get("name", "").lower()
             if trait_name:
                 out[trait_name] = trait_data
-            
+
     return out
 
 
