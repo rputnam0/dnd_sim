@@ -167,6 +167,7 @@ class ActorRuntimeState:
     readied_action_name: str | None = None
     readied_trigger: str | None = None
     concentrated_spell_level: int | None = None
+    class_levels: dict[str, int] = field(default_factory=dict)
     level: int = 1
     pending_smite: dict[str, Any] | None = None
 

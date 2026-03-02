@@ -355,6 +355,14 @@ def _parse_class_level(class_level_text: str, class_name: str) -> int:
     return sum(int(match.group(1)) for match in pattern.finditer(class_level_text or ""))
 
 
+def _parse_class_levels(class_level_text: str) -> dict[str, int]:
+    levels: dict[str, int] = {}
+    for class_name, raw_level in re.findall(r"([A-Za-z][A-Za-z' -]+?)\s*(\d+)", class_level_text or ""):
+        key = class_name.strip().lower()
+        levels[key] = levels.get(key, 0) + int(raw_level)
+    return levels
+
+
 def _warlock_level_from_character(character: dict[str, Any]) -> int:
     class_level_text = str(character.get("class_level", ""))
     return _parse_class_level(class_level_text, "warlock")
@@ -1417,6 +1425,23 @@ def _build_spell_actions(
 
     actions: list[ActionDefinition] = []
     known_traits = set(traits or set())
+    class_level_text = str(character.get("class_level", ""))
+    warlock_level = _parse_class_level(class_level_text, "warlock")
+    has_pact_magic = warlock_level > 0
+    pact_slot_key: str | None = None
+    arcanum_max_level = 0
+    pact_profile = _warlock_pact_slot_profile_for_level(warlock_level)
+    if pact_profile is not None:
+        pact_slot_level, _pact_slot_count = pact_profile
+        pact_slot_key = f"pact_slot_{pact_slot_level}"
+    if warlock_level >= 17:
+        arcanum_max_level = 9
+    elif warlock_level >= 15:
+        arcanum_max_level = 8
+    elif warlock_level >= 13:
+        arcanum_max_level = 7
+    elif warlock_level >= 11:
+        arcanum_max_level = 6
 
     for spell in spells:
         name = str(spell.get("name", "unknown_spell"))
@@ -4025,6 +4050,8 @@ def _apply_action_effects(
     round_number: int | None = None,
     turn_token: str | None = None,
     rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
+    strategy_name: str | None = None,
 ) -> None:
     for source_bucket, effect_list in (
         ("effects", action.effects),
