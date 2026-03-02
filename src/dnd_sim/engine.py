@@ -2288,6 +2288,178 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.movement_remaining = float(actor.speed_ft)
 
 
+def _normalize_travel_pace(value: Any) -> str:
+    pace = str(value or "normal").lower().strip()
+    if pace not in _TRAVEL_PACE_MILES_PER_DAY:
+        return "normal"
+    return pace
+
+
+def _parse_resource_loss(raw: Any) -> dict[str, int]:
+    if not isinstance(raw, dict):
+        return {}
+
+    parsed: dict[str, int] = {}
+    for key, value in raw.items():
+        try:
+            amount = int(value)
+        except (TypeError, ValueError):
+            continue
+        if amount > 0:
+            parsed[str(key)] = amount
+    return parsed
+
+
+def _parse_damage_expression(raw: Any) -> str | None:
+    if raw is None:
+        return None
+    if isinstance(raw, (int, float)):
+        return str(int(raw))
+    text = str(raw).strip()
+    if not text:
+        return None
+    return text
+
+
+def _spend_exploration_resources(
+    actor: ActorRuntimeState,
+    resource_loss: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+) -> None:
+    if not resource_loss:
+        return
+
+    for key, amount in resource_loss.items():
+        current = int(actor.resources.get(key, 0))
+        spent = min(current, int(amount))
+        if spent <= 0:
+            continue
+        actor.resources[key] = current - spent
+        resources_spent[actor.actor_id][key] = resources_spent[actor.actor_id].get(key, 0) + spent
+
+
+def _apply_exploration_damage(
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    damage_expr: Any,
+    damage_type: str,
+    damage_taken: dict[str, int],
+) -> None:
+    expr = _parse_damage_expression(damage_expr)
+    if expr is None:
+        return
+    try:
+        rolled = roll_damage(rng, expr)
+    except ValueError:
+        return
+    if rolled <= 0:
+        return
+
+    applied = apply_damage(actor, rolled, damage_type or "environmental")
+    damage_taken[actor.actor_id] = damage_taken.get(actor.actor_id, 0) + applied
+
+
+def _determine_exploration_segments(leg_config: dict[str, Any], travel_pace: str) -> int:
+    segments = leg_config.get("segments")
+    try:
+        explicit_segments = int(segments)
+    except (TypeError, ValueError):
+        explicit_segments = 0
+    if explicit_segments > 0:
+        return explicit_segments
+
+    distance = leg_config.get("distance_miles", 0)
+    try:
+        miles = float(distance)
+    except (TypeError, ValueError):
+        miles = 0.0
+    if miles > 0:
+        miles_per_day = _TRAVEL_PACE_MILES_PER_DAY.get(
+            travel_pace, _TRAVEL_PACE_MILES_PER_DAY["normal"]
+        )
+        return max(1, int(math.ceil(miles / miles_per_day)))
+
+    has_effects = (
+        bool(leg_config.get("hazard_checks"))
+        or bool(leg_config.get("resource_attrition"))
+        or bool(_parse_damage_expression(leg_config.get("hp_attrition")))
+    )
+    return 1 if has_effects else 0
+
+
+def _run_exploration_leg(
+    *,
+    rng: random.Random,
+    actors: dict[str, ActorRuntimeState],
+    damage_taken: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    leg_config: dict[str, Any],
+) -> None:
+    if not isinstance(leg_config, dict):
+        return
+
+    travel_pace = _normalize_travel_pace(leg_config.get("travel_pace", "normal"))
+    segments = _determine_exploration_segments(leg_config, travel_pace)
+    if segments <= 0:
+        return
+
+    hazard_dc_modifier = _TRAVEL_PACE_HAZARD_DC_MODIFIER.get(travel_pace, 0)
+    attrition_resource_loss = _parse_resource_loss(leg_config.get("resource_attrition", {}))
+    hazard_rows = leg_config.get("hazard_checks", [])
+    hazard_checks = hazard_rows if isinstance(hazard_rows, list) else []
+
+    for _ in range(segments):
+        for actor in actors.values():
+            if actor.team != "party" or actor.hp <= 0 or actor.dead:
+                continue
+
+            _apply_exploration_damage(
+                rng=rng,
+                actor=actor,
+                damage_expr=leg_config.get("hp_attrition"),
+                damage_type="environmental",
+                damage_taken=damage_taken,
+            )
+            _spend_exploration_resources(
+                actor=actor,
+                resource_loss=attrition_resource_loss,
+                resources_spent=resources_spent,
+            )
+
+            if actor.hp <= 0 or actor.dead:
+                continue
+
+            for hazard in hazard_checks:
+                if not isinstance(hazard, dict) or actor.hp <= 0 or actor.dead:
+                    continue
+                ability = str(hazard.get("ability", "con")).lower()
+                if ability not in ABILITY_KEYS:
+                    ability = "con"
+                save_mod = int(actor.save_mods.get(ability, 0))
+
+                try:
+                    dc = int(hazard.get("dc", 10))
+                except (TypeError, ValueError):
+                    dc = 10
+                effective_dc = dc + hazard_dc_modifier
+                check_total = rng.randint(1, 20) + save_mod
+                if check_total >= effective_dc:
+                    continue
+
+                _apply_exploration_damage(
+                    rng=rng,
+                    actor=actor,
+                    damage_expr=hazard.get("damage"),
+                    damage_type=str(hazard.get("damage_type", "environmental")),
+                    damage_taken=damage_taken,
+                )
+                _spend_exploration_resources(
+                    actor=actor,
+                    resource_loss=_parse_resource_loss(hazard.get("resource_loss", {})),
+                    resources_spent=resources_spent,
+                )
+
+
 def _build_actor_views(
     actors: dict[str, ActorRuntimeState],
     actor_order: list[str],
@@ -6180,6 +6352,12 @@ def run_simulation(
     tracked_resource_names: dict[str, set[str]] = {}
     battlefield = (
         scenario.config.battlefield if isinstance(scenario.config.battlefield, dict) else {}
+    )
+    exploration = (
+        scenario.config.exploration if isinstance(scenario.config.exploration, dict) else {}
+    )
+    exploration_legs = (
+        exploration.get("legs") if isinstance(exploration.get("legs"), list) else None
     )
     light_level = str(battlefield.get("light_level", "bright")).lower()
     battlefield_obstacles = _build_battlefield_obstacles(battlefield.get("obstacles", []))

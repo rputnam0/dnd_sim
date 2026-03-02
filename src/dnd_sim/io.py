@@ -233,6 +233,7 @@ class EncounterConfig(BaseModel):
 
 
 
+
 class ScenarioConfig(BaseModel):
     scenario_id: str
     encounter_id: str
@@ -243,6 +244,7 @@ class ScenarioConfig(BaseModel):
     encounters: list[EncounterConfig] = Field(default_factory=list)
     initiative_mode: Literal["individual", "grouped"] = "individual"
     battlefield: dict[str, Any] = Field(default_factory=dict)
+    exploration: dict[str, Any] = Field(default_factory=dict)
     termination_rules: dict[str, Any]
     strategy_modules: list[StrategyModuleConfig]
     resource_policy: dict[str, Any] = Field(default_factory=dict)
