@@ -6189,46 +6189,6 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
     return best
 
 
-def _try_stunning_strike(
-    *,
-    rng: random.Random,
-    actor: ActorRuntimeState,
-    target: ActorRuntimeState,
-    is_ranged: bool,
-    resources_spent: dict[str, dict[str, int]],
-) -> None:
-    del rng, actor, target, is_ranged, resources_spent
-    return
-
-
-def _try_open_hand_technique(
-    *,
-    rng: random.Random,
-    actor: ActorRuntimeState,
-    action: ActionDefinition,
-    target: ActorRuntimeState,
-    damage_dealt: dict[str, int],
-    damage_taken: dict[str, int],
-    threat_scores: dict[str, int],
-    resources_spent: dict[str, dict[str, int]],
-    actors: dict[str, ActorRuntimeState],
-    active_hazards: list[dict[str, Any]],
-) -> None:
-    del (
-        rng,
-        actor,
-        action,
-        target,
-        damage_dealt,
-        damage_taken,
-        threat_scores,
-        resources_spent,
-        actors,
-        active_hazards,
-    )
-    return
-
-
 def _spellcasting_ability_mod(actor: ActorRuntimeState) -> int:
     return max(actor.int_mod, actor.wis_mod, actor.cha_mod)
 
@@ -6322,33 +6282,6 @@ def _apply_domain_attack_roll_hooks(
     return roll
 
 
-def _try_stunning_strike(
-    *,
-    rng: random.Random,
-    actor: ActorRuntimeState,
-    target: ActorRuntimeState,
-    is_ranged: bool,
-    resources_spent: dict[str, dict[str, int]],
-) -> None:
-    return
-
-
-def _try_open_hand_technique(
-    *,
-    rng: random.Random,
-    actor: ActorRuntimeState,
-    action: ActionDefinition,
-    target: ActorRuntimeState,
-    damage_dealt: dict[str, int],
-    damage_taken: dict[str, int],
-    threat_scores: dict[str, int],
-    resources_spent: dict[str, dict[str, int]],
-    actors: dict[str, ActorRuntimeState],
-    active_hazards: list[dict[str, Any]],
-) -> None:
-    return
-
-
 def _execute_action(
     *,
     rng: random.Random,
@@ -6405,6 +6338,7 @@ def _execute_action(
         )
 
     if _requires_range_resolution(action):
+        movement_was_budgeted = actor.movement_remaining > 0
         in_range = _move_actor_for_action_range(
             rng=rng,
             actor=actor,
@@ -6420,7 +6354,12 @@ def _execute_action(
             light_level=light_level,
         )
         if not in_range:
-            if not has_turn_context and "flurry_of_blows" in action.tags:
+            if (
+                not has_turn_context
+                and action.action_type == "attack"
+                and not movement_was_budgeted
+                and not actor.conditions.intersection({"grappled", "restrained"})
+            ):
                 in_range = True
             else:
                 return
@@ -7319,34 +7258,6 @@ def _execute_action(
                 telemetry=telemetry,
                 strategy_name=strategy_name,
             )
-
-
-def _try_stunning_strike(
-    *,
-    rng: random.Random,
-    actor: ActorRuntimeState,
-    target: ActorRuntimeState,
-    is_ranged: bool,
-    resources_spent: dict[str, dict[str, int]],
-) -> None:
-    return None
-
-
-def _try_open_hand_technique(
-    *,
-    rng: random.Random,
-    actor: ActorRuntimeState,
-    action: ActionDefinition,
-    target: ActorRuntimeState,
-    damage_dealt: dict[str, int],
-    damage_taken: dict[str, int],
-    threat_scores: dict[str, int],
-    resources_spent: dict[str, dict[str, int]],
-    actors: dict[str, ActorRuntimeState],
-    active_hazards: list[dict[str, Any]],
-) -> None:
-    return None
-
 
 def _build_round_metadata(
     *,
