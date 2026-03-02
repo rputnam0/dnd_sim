@@ -261,6 +261,20 @@ def _scale_cantrip_dice(base_dice: str, character_level: int) -> str:
     return base_dice
 
 
+def _upcast_damage(base_damage: str, per_level_damage: str, extra_levels: int) -> str:
+    if extra_levels <= 0:
+        return base_damage
+    base_num, base_die, base_flat = parse_damage_expression(base_damage)
+    up_num, up_die, up_flat = parse_damage_expression(per_level_damage)
+    if base_num <= 0 or up_num <= 0 or base_die != up_die or up_flat != 0:
+        return base_damage
+    total_num = base_num + (up_num * extra_levels)
+    if base_flat:
+        sign = "+" if base_flat > 0 else "-"
+        return f"{total_num}d{base_die}{sign}{abs(base_flat)}"
+    return f"{total_num}d{base_die}"
+
+
 def _slugify_spell_name(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
 
@@ -741,6 +755,45 @@ def _build_spell_actions(
             tags=tags,
         )
         actions.append(action)
+
+        upcast_step = str(spell.get("upcast_dice_per_level") or "").strip()
+        if spell_level > 0 and damage and upcast_step and isinstance(available_slots, dict):
+            for slot_level in sorted(int(level) for level in available_slots.keys()):
+                if slot_level <= spell_level:
+                    continue
+                if int(available_slots.get(str(slot_level), 0)) <= 0:
+                    continue
+                extra_levels = slot_level - spell_level
+                upcast_damage = _upcast_damage(str(damage), upcast_step, extra_levels)
+                if upcast_damage == str(damage):
+                    continue
+                actions.append(
+                    ActionDefinition(
+                        name=f"{name} ({slot_level}th level)",
+                        action_type=action_type,
+                        to_hit=int(to_hit) if to_hit is not None else None,
+                        damage=upcast_damage,
+                        damage_type=damage_type,
+                        save_dc=int(save_dc) if save_dc is not None else None,
+                        save_ability=str(save_ability) if save_ability else None,
+                        half_on_save=half_on_save,
+                        resource_cost={f"spell_slot_{slot_level}": 1},
+                        action_cost=action_cost,
+                        target_mode=target_mode,
+                        range_ft=(
+                            int(spell.get("range_ft"))
+                            if spell.get("range_ft") is not None
+                            else None
+                        ),
+                        aoe_type=spell.get("aoe_type"),
+                        aoe_size_ft=spell.get("aoe_size_ft"),
+                        max_targets=max_targets,
+                        concentration=bool(spell.get("concentration", False)),
+                        effects=list(effects),
+                        mechanics=list(mechanics),
+                        tags=list(tags) + [f"upcast_level:{slot_level}"],
+                    )
+                )
 
     return actions
 
@@ -1502,6 +1555,9 @@ def _break_concentration(
     actor.concentrating = False
     for target_id in list(actor.concentrated_targets):
         if target_id in actors:
+            if "summoned" in actors[target_id].conditions:
+                del actors[target_id]
+                continue
             for condition in actor.concentration_conditions:
                 _remove_condition(actors[target_id], condition)
             if actor.concentrated_spell:
@@ -1721,6 +1777,61 @@ def _apply_effect(
         )
         return
 
+    if effect_type == "summon":
+        summon_id = str(effect.get("actor_id", "")).strip() or (
+            f"{actor.actor_id}_summon_{len([key for key in actors if key.startswith(actor.actor_id)])}"
+        )
+        if summon_id in actors:
+            return
+        summon_name = str(effect.get("name", summon_id))
+        summon_hp = int(effect.get("max_hp", effect.get("hp", 10)))
+        summon_ac = int(effect.get("ac", 10))
+        summon_to_hit = effect.get("to_hit")
+        summon_damage = effect.get("damage")
+        summon_damage_type = str(effect.get("damage_type", "force"))
+        summon_actions: list[ActionDefinition] = []
+        if summon_to_hit is not None and summon_damage:
+            summon_actions.append(
+                ActionDefinition(
+                    name=f"{summon_name.lower().replace(' ', '_')}_attack",
+                    action_type="attack",
+                    to_hit=int(summon_to_hit),
+                    damage=str(summon_damage),
+                    damage_type=summon_damage_type,
+                    tags=["summon"],
+                )
+            )
+
+        summoned_actor = ActorRuntimeState(
+            actor_id=summon_id,
+            team=actor.team,
+            name=summon_name,
+            max_hp=summon_hp,
+            hp=summon_hp,
+            temp_hp=0,
+            ac=summon_ac,
+            initiative_mod=actor.initiative_mod,
+            str_mod=0,
+            dex_mod=0,
+            con_mod=0,
+            int_mod=0,
+            wis_mod=0,
+            cha_mod=0,
+            save_mods={"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+            actions=summon_actions,
+            speed_ft=int(effect.get("speed_ft", actor.speed_ft)),
+            position=_to_position3(effect.get("position")) or actor.position,
+        )
+        summoned_actor.conditions.add("summoned")
+        actors[summon_id] = summoned_actor
+        damage_dealt.setdefault(summon_id, 0)
+        damage_taken.setdefault(summon_id, 0)
+        threat_scores.setdefault(summon_id, 0)
+        resources_spent.setdefault(summon_id, {})
+        if action and action.concentration:
+            actor.concentrated_targets.add(summon_id)
+        return
+
     if effect_type == "resource_change":
         resource = str(effect.get("resource", ""))
         delta = int(effect.get("amount", 0))
@@ -1900,6 +2011,37 @@ def _mark_action_cost_used(actor: ActorRuntimeState, action: ActionDefinition) -
         actor.lair_action_used_this_round = True
 
 
+def _spell_level_from_action(action: ActionDefinition) -> int:
+    slot_levels = []
+    for key in action.resource_cost.keys():
+        if not key.startswith("spell_slot_"):
+            continue
+        try:
+            slot_levels.append(int(key.split("_")[-1]))
+        except ValueError:
+            continue
+    return max(slot_levels) if slot_levels else 0
+
+
+def _highest_available_spell_slot(
+    actor: ActorRuntimeState, *, minimum: int = 1
+) -> tuple[str, int] | None:
+    available: list[tuple[str, int]] = []
+    for key, value in actor.resources.items():
+        if not key.startswith("spell_slot_") or int(value) <= 0:
+            continue
+        try:
+            level = int(key.split("_")[-1])
+        except ValueError:
+            continue
+        if level >= minimum:
+            available.append((key, level))
+    if not available:
+        return None
+    available.sort(key=lambda item: item[1])
+    return available[0]
+
+
 def _fallback_action(
     actor: ActorRuntimeState, *, allow_special: bool = False
 ) -> ActionDefinition | None:
@@ -2019,6 +2161,7 @@ def _execute_action(
 
     # Counterspell check
     if "spell" in action.tags:
+        spell_level = _spell_level_from_action(action)
         for enemy in actors.values():
             if (
                 enemy.team != actor.team
@@ -2038,16 +2181,17 @@ def _execute_action(
                     from .spatial import distance_chebyshev
 
                     if distance_chebyshev(enemy.position, actor.position) <= 60:
-                        slot_key = None
-                        for key in sorted(enemy.resources.keys()):
-                            if key.startswith("spell_slot_") and enemy.resources.get(key, 0) > 0:
-                                if int(key.split("_")[-1]) >= 3:
-                                    slot_key = key
-                                    break
-                        if slot_key:
+                        counter_slot = _highest_available_spell_slot(enemy, minimum=3)
+                        if counter_slot:
+                            slot_key, counter_level = counter_slot
                             enemy.resources[slot_key] -= 1
                             enemy.reaction_available = False
-                            return  # Spell countered!
+                            if counter_level >= spell_level:
+                                return  # Spell countered automatically.
+                            check_dc = 10 + spell_level
+                            check_total = rng.randint(1, 20) + enemy.cha_mod
+                            if check_total >= check_dc:
+                                return  # Spell countered after ability check.
 
         if action.concentration:
             _break_concentration(actor, actors, active_hazards)
