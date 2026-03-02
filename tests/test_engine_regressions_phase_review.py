@@ -360,6 +360,8 @@ def test_execute_action_ignores_non_dict_effect_entries() -> None:
     )
 
     assert damage_dealt[attacker.actor_id] >= 0
+
+
 def test_legendary_action_runner_skips_untargetable_action() -> None:
     rng = random.Random(2)
     hero = _base_actor(actor_id="hero", team="party")
@@ -372,7 +374,9 @@ def test_legendary_action_runner_skips_untargetable_action() -> None:
         action_type="utility",
         action_cost="legendary",
         target_mode="single_enemy",
-        effects=[{"effect_type": "forced_movement", "distance_ft": 20, "direction": "toward_source"}],
+        effects=[
+            {"effect_type": "forced_movement", "distance_ft": 20, "direction": "toward_source"}
+        ],
         tags=["requires_condition:grappled"],
     )
     strike = ActionDefinition(
@@ -573,3 +577,253 @@ def test_enemy_builder_prefers_explicit_ability_mods_over_save_mods() -> None:
     assert actor.int_mod == -3
     assert actor.wis_mod == -2
     assert actor.cha_mod == -2
+
+
+def test_colossus_slayer_adds_extra_damage_once_per_turn() -> None:
+    class SequenceRng:
+        def __init__(self, values: list[int]) -> None:
+            self.values = list(values)
+
+        def randint(self, _a: int, _b: int) -> int:
+            if not self.values:
+                raise AssertionError("RNG exhausted")
+            return self.values.pop(0)
+
+    ranger = _base_actor(actor_id="ranger", team="party")
+    ranger.traits = {"colossus slayer": {}}
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    enemy.max_hp = 30
+    enemy.hp = 20
+    enemy.ac = 1
+
+    action = ActionDefinition(
+        name="longbow",
+        action_type="attack",
+        to_hit=8,
+        damage="1",
+        damage_type="piercing",
+        attack_count=2,
+    )
+    actors = {ranger.actor_id: ranger, enemy.actor_id: enemy}
+    damage_dealt = {ranger.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {ranger.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {ranger.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {ranger.actor_id: {}, enemy.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([15, 5, 14]),
+        actor=ranger,
+        action=action,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[ranger.actor_id] == 7
+    assert enemy.hp == 13
+
+
+def test_horde_breaker_adds_attack_to_second_nearby_target() -> None:
+    class SequenceRng:
+        def __init__(self, values: list[int]) -> None:
+            self.values = list(values)
+
+        def randint(self, _a: int, _b: int) -> int:
+            if not self.values:
+                raise AssertionError("RNG exhausted")
+            return self.values.pop(0)
+
+    ranger = _base_actor(actor_id="ranger", team="party")
+    ranger.traits = {"horde breaker": {}}
+    enemy_a = _base_actor(actor_id="enemy_a", team="enemy")
+    enemy_b = _base_actor(actor_id="enemy_b", team="enemy")
+    enemy_a.ac = 1
+    enemy_b.ac = 1
+    enemy_a.position = (0.0, 5.0, 0.0)
+    enemy_b.position = (0.0, 10.0, 0.0)
+
+    action = ActionDefinition(
+        name="longsword",
+        action_type="attack",
+        to_hit=8,
+        damage="1",
+        damage_type="slashing",
+        attack_count=1,
+    )
+    actors = {ranger.actor_id: ranger, enemy_a.actor_id: enemy_a, enemy_b.actor_id: enemy_b}
+    damage_dealt = {ranger.actor_id: 0, enemy_a.actor_id: 0, enemy_b.actor_id: 0}
+    damage_taken = {ranger.actor_id: 0, enemy_a.actor_id: 0, enemy_b.actor_id: 0}
+    threat_scores = {ranger.actor_id: 0, enemy_a.actor_id: 0, enemy_b.actor_id: 0}
+    resources_spent = {ranger.actor_id: {}, enemy_a.actor_id: {}, enemy_b.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([18, 17]),
+        actor=ranger,
+        action=action,
+        targets=[enemy_a, enemy_b],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[ranger.actor_id] == 2
+    assert enemy_a.hp == 29
+    assert enemy_b.hp == 29
+
+
+def test_giant_killer_triggers_reaction_attack_against_large_attacker() -> None:
+    class SequenceRng:
+        def __init__(self, values: list[int]) -> None:
+            self.values = list(values)
+
+        def randint(self, _a: int, _b: int) -> int:
+            if not self.values:
+                raise AssertionError("RNG exhausted")
+            return self.values.pop(0)
+
+    giant = _base_actor(actor_id="giant", team="enemy")
+    giant.ac = 1
+    giant.traits = {"large": {}}
+    ranger = _base_actor(actor_id="ranger", team="party")
+    ranger.traits = {"giant killer": {}}
+    ranger.actions = [
+        ActionDefinition(
+            name="basic",
+            action_type="attack",
+            to_hit=12,
+            damage="2",
+            damage_type="slashing",
+        )
+    ]
+
+    action = ActionDefinition(
+        name="club",
+        action_type="attack",
+        to_hit=12,
+        damage="1",
+        damage_type="bludgeoning",
+    )
+    actors = {giant.actor_id: giant, ranger.actor_id: ranger}
+    damage_dealt = {giant.actor_id: 0, ranger.actor_id: 0}
+    damage_taken = {giant.actor_id: 0, ranger.actor_id: 0}
+    threat_scores = {giant.actor_id: 0, ranger.actor_id: 0}
+    resources_spent = {giant.actor_id: {}, ranger.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([15, 14]),
+        actor=giant,
+        action=action,
+        targets=[ranger],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[ranger.actor_id] == 2
+    assert giant.hp == 28
+    assert ranger.reaction_available is False
+
+
+def test_multiattack_defense_applies_ac_bonus_after_first_hit() -> None:
+    class SequenceRng:
+        def __init__(self, values: list[int]) -> None:
+            self.values = list(values)
+
+        def randint(self, _a: int, _b: int) -> int:
+            if not self.values:
+                raise AssertionError("RNG exhausted")
+            return self.values.pop(0)
+
+    attacker = _base_actor(actor_id="attacker", team="enemy")
+    defender = _base_actor(actor_id="defender", team="party")
+    defender.ac = 15
+    defender.traits = {"multiattack defense": {}}
+
+    action = ActionDefinition(
+        name="claw",
+        action_type="attack",
+        to_hit=7,
+        damage="1",
+        damage_type="slashing",
+        attack_count=2,
+    )
+    actors = {attacker.actor_id: attacker, defender.actor_id: defender}
+    damage_dealt = {attacker.actor_id: 0, defender.actor_id: 0}
+    damage_taken = {attacker.actor_id: 0, defender.actor_id: 0}
+    threat_scores = {attacker.actor_id: 0, defender.actor_id: 0}
+    resources_spent = {attacker.actor_id: {}, defender.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([10, 10]),
+        actor=attacker,
+        action=action,
+        targets=[defender],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert damage_dealt[attacker.actor_id] == 1
+    assert defender.hp == 29
+
+
+def test_hunter_traits_add_volley_and_whirlwind_actions() -> None:
+    character = {
+        "character_id": "hunter",
+        "name": "Hunter",
+        "class_level": "Ranger 11",
+        "max_hp": 66,
+        "ac": 16,
+        "speed_ft": 30,
+        "ability_scores": {
+            "str": 12,
+            "dex": 18,
+            "con": 14,
+            "int": 10,
+            "wis": 14,
+            "cha": 10,
+        },
+        "save_mods": {"str": 1, "dex": 4, "con": 2, "int": 0, "wis": 2, "cha": 0},
+        "skill_mods": {},
+        "attacks": [{"name": "Longbow", "to_hit": 9, "damage": "1d8+4", "damage_type": "piercing"}],
+        "resources": {},
+        "traits": ["Volley", "Whirlwind Attack"],
+        "raw_fields": [],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+    actor = _build_actor_from_character(character, traits_db={})
+    names = {action.name for action in actor.actions}
+    assert "volley" in names
+    assert "whirlwind_attack" in names
+
+
+def test_primal_companion_requires_command_to_use_attack_actions() -> None:
+    companion = _base_actor(actor_id="companion", team="party")
+    companion.traits = {"primal companion": {}}
+    attack_action = ActionDefinition(
+        name="basic",
+        action_type="attack",
+        to_hit=5,
+        damage="1d8+2",
+        damage_type="slashing",
+    )
+    dodge_action = ActionDefinition(name="dodge", action_type="utility", action_cost="action")
+
+    assert _action_available(companion, attack_action) is False
+    assert _action_available(companion, dodge_action) is True
+
+    companion.conditions.add("companion_commanded")
+    assert _action_available(companion, attack_action) is True

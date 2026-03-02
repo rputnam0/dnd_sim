@@ -51,6 +51,8 @@ _TRAIT_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_INDEX_CACHE: tuple[Path, dict[str, Path]] | None = None
+_MULTIATTACK_DEFENSE_PREFIX = "multiattack_defense_from:"
+_COMPANION_COMMAND_CONDITION = "companion_commanded"
 
 
 @dataclass(slots=True)
@@ -199,6 +201,50 @@ def _resolve_character_traits(
 def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
     needle = _normalize_trait_name(trait_name)
     return any(_normalize_trait_name(key) == needle for key in actor.traits.keys())
+
+
+def _is_large_or_larger(actor: ActorRuntimeState) -> bool:
+    large_sizes = {"large", "huge", "gargantuan"}
+    for key in actor.traits.keys():
+        normalized = _normalize_trait_name(key)
+        if normalized in large_sizes:
+            return True
+        if normalized.startswith("size "):
+            parts = normalized.split()
+            if parts and parts[-1] in large_sizes:
+                return True
+    return False
+
+
+def _is_companion_actor(actor: ActorRuntimeState) -> bool:
+    if "companion" in actor.conditions or _has_trait(actor, "companion"):
+        return True
+
+    has_companion_trait = any(
+        _has_trait(actor, name)
+        for name in (
+            "primal companion",
+            "ranger's companion",
+            "drake companion",
+            "dragon companion",
+        )
+    )
+    if not has_companion_trait:
+        return False
+
+    # Rangers that command companions can also possess these traits.
+    commander_actions = {"command_companion_bonus", "command_companion_action"}
+    return not any(action.name in commander_actions for action in actor.actions)
+
+
+def _multiattack_defense_marker(attacker_id: str) -> str:
+    return f"{_MULTIATTACK_DEFENSE_PREFIX}{attacker_id}"
+
+
+def _clear_turn_attacker_markers(attacker_id: str, actors: dict[str, ActorRuntimeState]) -> None:
+    marker = _multiattack_defense_marker(attacker_id)
+    for actor in actors.values():
+        actor.conditions.discard(marker)
 
 
 def _parse_character_level(class_level: str) -> int:
@@ -886,6 +932,73 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
             )
 
+        if has_trait("volley"):
+            volley_range = best_attack.get("range_ft")
+            actions.append(
+                ActionDefinition(
+                    name="volley",
+                    action_type="attack",
+                    to_hit=int(best_attack.get("to_hit", 0)),
+                    damage=str(best_attack.get("damage", "1")),
+                    damage_type=str(best_attack.get("damage_type", "bludgeoning")),
+                    target_mode="all_enemies",
+                    range_ft=int(volley_range) if volley_range is not None else 150,
+                    tags=["hunter", "volley"],
+                )
+            )
+
+        if has_trait("whirlwind attack"):
+            actions.append(
+                ActionDefinition(
+                    name="whirlwind_attack",
+                    action_type="attack",
+                    to_hit=int(best_attack.get("to_hit", 0)),
+                    damage=str(best_attack.get("damage", "1")),
+                    damage_type=str(best_attack.get("damage_type", "bludgeoning")),
+                    target_mode="all_enemies",
+                    range_ft=5,
+                    tags=["hunter", "whirlwind_attack"],
+                )
+            )
+
+        if has_trait("primal companion"):
+            actions.append(
+                ActionDefinition(
+                    name="command_companion_bonus",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="single_ally",
+                    effects=[
+                        {
+                            "effect_type": "apply_condition",
+                            "target": "target",
+                            "condition": _COMPANION_COMMAND_CONDITION,
+                            "duration_rounds": 2,
+                        }
+                    ],
+                    tags=["companion_command", "primal_companion_command"],
+                )
+            )
+
+        if has_trait("ranger's companion"):
+            actions.append(
+                ActionDefinition(
+                    name="command_companion_action",
+                    action_type="utility",
+                    action_cost="action",
+                    target_mode="single_ally",
+                    effects=[
+                        {
+                            "effect_type": "apply_condition",
+                            "target": "target",
+                            "condition": _COMPANION_COMMAND_CONDITION,
+                            "duration_rounds": 2,
+                        }
+                    ],
+                    tags=["companion_command", "ranger_companion_command"],
+                )
+            )
+
         # --- Reactions ---
         if has_trait("shield"):
             actions.append(
@@ -1381,12 +1494,15 @@ def _resolve_targets_for_action(
 
     required_conditions: set[str] = set()
     excluded_conditions: set[str] = set()
+    requires_companion_target = False
     for tag in getattr(action, "tags", []) or []:
         text = str(tag)
         if text.startswith("requires_condition:"):
             required_conditions.add(text.split(":", 1)[1].strip().lower())
         elif text.startswith("excludes_condition:"):
             excluded_conditions.add(text.split(":", 1)[1].strip().lower())
+        elif text == "companion_command":
+            requires_companion_target = True
 
     if required_conditions:
         candidates = [
@@ -1400,6 +1516,8 @@ def _resolve_targets_for_action(
             for target in candidates
             if not any(cond in target.conditions for cond in excluded_conditions)
         ]
+    if requires_companion_target:
+        candidates = [target for target in candidates if _is_companion_actor(target)]
     if not candidates:
         return []
     by_id = {target.actor_id: target for target in candidates}
@@ -1861,6 +1979,13 @@ def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> boo
         return False
     if not _can_pay_resource_cost(actor, action):
         return False
+    if (
+        _is_companion_actor(actor)
+        and action.action_type == "attack"
+        and action.action_cost != "reaction"
+        and _COMPANION_COMMAND_CONDITION not in actor.conditions
+    ):
+        return False
     if action.action_cost == "bonus" and not actor.bonus_available:
         return False
     if action.action_cost == "reaction" and not actor.reaction_available:
@@ -2162,12 +2287,26 @@ def _execute_action(
 
         if action.to_hit is None:
             return
-        # Build preferred target queue for multiattack redirect
+        # Build preferred target queue for multiattack redirect.
         preferred_ids = [t.actor_id for t in targets]
+        per_target_attack = "volley" in action.tags or "whirlwind_attack" in action.tags
+        if per_target_attack:
+            attack_iterations = len(preferred_ids)
+        else:
+            attack_iterations = max(1, action.attack_count)
+
         current_target: ActorRuntimeState | None = None
-        for _ in range(max(1, action.attack_count)):
+        for i in range(attack_iterations):
             # Find a living target: try current, then preferred list, then any enemy
-            if current_target is None or current_target.dead or current_target.hp <= 0:
+            if per_target_attack:
+                current_target = None
+                if i < len(preferred_ids):
+                    candidate = actors.get(preferred_ids[i])
+                    if candidate and not candidate.dead and candidate.hp > 0:
+                        current_target = candidate
+                if current_target is None:
+                    continue
+            elif current_target is None or current_target.dead or current_target.hp <= 0:
                 current_target = None
                 for pid in preferred_ids:
                     candidate = actors.get(pid)
@@ -2228,7 +2367,9 @@ def _execute_action(
 
             # Sharpshooter / Great Weapon Master AI Toggle (-5 to hit / +10 damage)
             power_attack_active = False
-            target_ac = target.ac
+            target_ac = target.ac + (
+                4 if _multiattack_defense_marker(actor.actor_id) in target.conditions else 0
+            )
             to_hit_penalty = 0
             damage_bonus = 0
 
@@ -2441,6 +2582,22 @@ def _execute_action(
                             damage_type="radiant",
                         )
                         raw_damage += raw_smite
+
+                if (
+                    _has_trait(actor, "colossus slayer")
+                    and not actor.colossus_slayer_used_this_turn
+                    and target.hp < target.max_hp
+                    and "spell" not in action.tags
+                ):
+                    raw_damage += roll_damage(
+                        rng,
+                        "1d8",
+                        crit=roll.crit,
+                        source=actor,
+                        damage_type=action.damage_type,
+                    )
+                    actor.colossus_slayer_used_this_turn = True
+
                 applied = apply_damage(
                     target,
                     raw_damage,
@@ -2454,6 +2611,9 @@ def _execute_action(
                 damage_dealt[actor.actor_id] += applied
                 damage_taken[target.actor_id] += applied
                 threat_scores[actor.actor_id] += applied
+
+                if _has_trait(target, "multiattack defense"):
+                    target.conditions.add(_multiattack_defense_marker(actor.actor_id))
 
                 # GWM Momentum Trigger (Action Economy Buff)
                 if (
@@ -2475,6 +2635,83 @@ def _execute_action(
                 actors=actors,
                 active_hazards=active_hazards,
             )
+
+            # Giant Killer: reaction weapon attack against Large+ attackers within 5 ft.
+            if (
+                actor.team != target.team
+                and _has_trait(target, "giant killer")
+                and target.reaction_available
+                and _is_large_or_larger(actor)
+            ):
+                from .spatial import distance_chebyshev
+
+                if distance_chebyshev(actor.position, target.position) <= 5:
+                    reaction_attack = _fallback_action(target)
+                    if reaction_attack and reaction_attack.action_type == "attack":
+                        target.reaction_available = False
+                        _execute_action(
+                            rng=rng,
+                            actor=target,
+                            action=reaction_attack,
+                            targets=[actor],
+                            actors=actors,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            obstacles=obstacles,
+                            light_level=light_level,
+                        )
+
+            # Horde Breaker: one extra attack against a different nearby creature.
+            if (
+                _has_trait(actor, "horde breaker")
+                and not actor.horde_breaker_used_this_turn
+                and "spell" not in action.tags
+            ):
+                from .spatial import distance_chebyshev
+
+                horde_target = next(
+                    (
+                        candidate
+                        for candidate in actors.values()
+                        if candidate.team != actor.team
+                        and candidate.actor_id != target.actor_id
+                        and not candidate.dead
+                        and candidate.hp > 0
+                        and distance_chebyshev(candidate.position, target.position) <= 5
+                    ),
+                    None,
+                )
+                if horde_target is not None:
+                    actor.horde_breaker_used_this_turn = True
+                    horde_attack = ActionDefinition(
+                        name=action.name,
+                        action_type="attack",
+                        to_hit=action.to_hit,
+                        damage=action.damage,
+                        damage_type=action.damage_type,
+                        attack_count=1,
+                        action_cost=action.action_cost,
+                        target_mode="single_enemy",
+                        range_ft=action.range_ft,
+                        tags=list(action.tags),
+                    )
+                    _execute_action(
+                        rng=rng,
+                        actor=actor,
+                        action=horde_attack,
+                        targets=[horde_target],
+                        actors=actors,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        obstacles=obstacles,
+                        light_level=light_level,
+                    )
         return
 
     if action.action_type == "save":
@@ -2961,6 +3198,7 @@ def run_simulation(
                     strategy.on_round_start(state_view)
 
                 for actor_id in initiative_order:
+                    _clear_turn_attacker_markers(actor_id, actors)
                     actor = actors[actor_id]
                     actor.movement_remaining = float(actor.speed_ft)
                     actor.took_attack_action_this_turn = False
@@ -2971,6 +3209,8 @@ def run_simulation(
                     actor.bonus_available = True
                     actor.reaction_available = True
                     actor.sneak_attack_used_this_turn = False
+                    actor.colossus_slayer_used_this_turn = False
+                    actor.horde_breaker_used_this_turn = False
 
                     if actor.dead:
                         continue
@@ -3175,6 +3415,7 @@ def run_simulation(
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
                     )
+                    _clear_turn_attacker_markers(actor.actor_id, actors)
 
                 if _party_defeated(actors) or _enemies_defeated(actors):
                     break

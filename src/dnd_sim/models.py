@@ -153,6 +153,8 @@ class ActorRuntimeState:
     position: tuple[float, float, float] = (0.0, 0.0, 0.0)
     took_attack_action_this_turn: bool = False
     sneak_attack_used_this_turn: bool = False
+    colossus_slayer_used_this_turn: bool = False
+    horde_breaker_used_this_turn: bool = False
     concentrated_targets: set[str] = field(default_factory=set)
     concentration_conditions: set[str] = field(default_factory=set)
     concentrated_spell: str | None = None
