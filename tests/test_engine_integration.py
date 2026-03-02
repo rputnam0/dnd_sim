@@ -120,8 +120,12 @@ def test_fixed_seed_is_deterministic(tmp_path: Path) -> None:
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
-    run_a = run_simulation(loaded, db, {}, registry, trials=30, seed=9, run_id="a").summary.to_dict()
-    run_b = run_simulation(loaded, db, {}, registry, trials=30, seed=9, run_id="b").summary.to_dict()
+    run_a = run_simulation(
+        loaded, db, {}, registry, trials=30, seed=9, run_id="a"
+    ).summary.to_dict()
+    run_b = run_simulation(
+        loaded, db, {}, registry, trials=30, seed=9, run_id="b"
+    ).summary.to_dict()
 
     run_a.pop("run_id", None)
     run_b.pop("run_id", None)
@@ -550,3 +554,42 @@ def test_schema_effect_damage_and_resource_change_are_tracked(tmp_path: Path) ->
 
     assert summary["per_actor_damage_taken"]["monk"]["mean"] >= 2.5
     assert summary["per_actor_resources_spent"]["monk"]["ki"]["mean"] >= 0.9
+
+
+def test_trial_rows_include_strategy_decision_rationale_telemetry(tmp_path: Path) -> None:
+    party = [build_character("hero", "Hero", 32, 15, 7, "1d8+4", ki=2)]
+    enemies = [build_enemy(enemy_id="boss", name="Boss", hp=48, ac=13, to_hit=5, damage="1d8+2")]
+
+    scenario_path = _setup_env(
+        tmp_path / "telemetry",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "optimal_expected_damage",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+    )
+    loaded = load_scenario(scenario_path)
+    registry = load_strategy_registry(loaded)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    artifacts = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=2,
+        seed=99,
+        run_id="telemetry",
+    )
+
+    decision_events = [
+        event
+        for event in artifacts.trial_results[0].telemetry
+        if event.get("telemetry_type") == "decision"
+    ]
+    assert decision_events
+    assert "rationale" in decision_events[0]
+
+    row_payload = json.loads(artifacts.trial_rows[0]["telemetry"])
+    assert any(event.get("telemetry_type") == "decision" for event in row_payload)

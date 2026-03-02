@@ -197,6 +197,109 @@ def _can_pay(actor, action: dict) -> bool:
     return True
 
 
+def _can_pay_with_resources(resources: dict[str, int], action: dict[str, Any]) -> bool:
+    for key, amount in (action.get("resource_cost") or {}).items():
+        if int(resources.get(key, 0)) < int(amount):
+            return False
+    return True
+
+
+def _project_resources(resources: dict[str, int], action: dict[str, Any]) -> dict[str, int]:
+    projected = dict(resources)
+    for key, amount in (action.get("resource_cost") or {}).items():
+        projected[key] = max(0, int(projected.get(key, 0)) - int(amount))
+    return projected
+
+
+def _strategy_policy(actor, state) -> dict[str, Any]:
+    raw = state.metadata.get("strategy_policy", {})
+    if not isinstance(raw, dict):
+        return {}
+
+    merged: dict[str, Any] = {k: v for k, v in raw.items() if k not in {"party", "enemy"}}
+    team_policy = raw.get(actor.team)
+    if isinstance(team_policy, dict):
+        merged.update(team_policy)
+    return merged
+
+
+def _policy_section(policy: dict[str, Any], key: str) -> dict[str, Any]:
+    value = policy.get(key, {})
+    return value if isinstance(value, dict) else {}
+
+
+def _action_range_ft(action: dict[str, Any]) -> float:
+    if action.get("action_type") == "attack":
+        return float(action.get("range_ft") or 5.0)
+    if action.get("action_type") == "utility":
+        return float(action.get("range_ft") or 30.0)
+    return float(action.get("range_ft") or 60.0)
+
+
+def _can_reach_target(actor, action: dict[str, Any], target) -> bool:
+    return distance_chebyshev(actor.position, target.position) <= (
+        _action_range_ft(action) + actor.movement_remaining
+    )
+
+
+def _objective_action_bonus(action: dict[str, Any], policy: dict[str, Any], state) -> float:
+    objective_cfg = _policy_section(policy, "objective_play")
+    if not bool(objective_cfg.get("enabled", False)):
+        return 0.0
+
+    tags = [str(tag) for tag in action.get("tags", [])]
+    is_objective_action = any(tag.startswith("objective") for tag in tags)
+    if not is_objective_action:
+        return 0.0
+
+    bonus = float(objective_cfg.get("objective_action_bonus", 0.0))
+    objective_scores = state.metadata.get("objective_scores", {})
+    if isinstance(objective_scores, dict):
+        bonus += float(objective_scores.get(str(action.get("name", "")), 0.0))
+        for tag in tags:
+            if ":" not in tag:
+                continue
+            _, objective_id = tag.split(":", 1)
+            bonus += float(objective_scores.get(objective_id, 0.0))
+    return bonus
+
+
+def _target_policy_bonus(actor, target, policy: dict[str, Any], state) -> float:
+    bonus = 0.0
+
+    threat_cfg = _policy_section(policy, "threat_management")
+    if bool(threat_cfg.get("enabled", False)) and target.team != actor.team:
+        weight = float(threat_cfg.get("target_weight", 0.0))
+        threat_scores = state.metadata.get("threat_scores", {})
+        if isinstance(threat_scores, dict):
+            bonus += weight * float(threat_scores.get(target.actor_id, 0.0))
+
+    objective_cfg = _policy_section(policy, "objective_play")
+    if bool(objective_cfg.get("enabled", False)):
+        objective_targets = state.metadata.get("objective_targets", {})
+        if isinstance(objective_targets, dict):
+            target_weight = float(objective_cfg.get("target_weight", 1.0))
+            bonus += target_weight * float(objective_targets.get(target.actor_id, 0.0))
+
+    return bonus
+
+
+def _action_viable(
+    action: dict[str, Any],
+    *,
+    resources: dict[str, int],
+    used_count: int,
+) -> bool:
+    if action.get("action_cost") in {"legendary", "lair", "reaction"}:
+        return False
+    max_uses = action.get("max_uses")
+    if max_uses is not None and used_count >= int(max_uses):
+        return False
+    if not bool(action.get("recharge_ready", True)):
+        return False
+    return _can_pay_with_resources(resources, action)
+
+
 def _target_count_for_action(actor, state, action: dict) -> int:
     mode = action.get("target_mode", "single_enemy")
     enemies = [view for view in state.actors.values() if view.team != actor.team and view.hp > 0]
@@ -223,49 +326,196 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             view for view in state.actors.values() if view.team != actor.team and view.hp > 0
         ]
         if not catalog or not enemies:
-            return ActionIntent(action_name=None)
-
-        def _can_reach(actor, action: dict, target) -> bool:
-            if action.get("action_type") == "attack":
-                action_range = float(action.get("range_ft") or 5.0)
-            elif action.get("action_type") == "utility":
-                action_range = float(action.get("range_ft") or 30.0)
-            else:
-                action_range = float(action.get("range_ft") or 60.0)
-            return distance_chebyshev(actor.position, target.position) <= (
-                action_range + actor.movement_remaining
+            return ActionIntent(
+                action_name=None,
+                rationale={"reason": "no_actions_or_targets"},
             )
 
-        best_name = None
-        best_score = -1.0
-        best_cost = 10**9
-
-        for action in catalog:
-            if action.get("action_cost") in {"legendary", "lair", "reaction"}:
-                continue
-            max_uses = action.get("max_uses")
-            used = int(action.get("used_count", 0))
-            if max_uses is not None and used >= int(max_uses):
-                continue
-            if not bool(action.get("recharge_ready", True)):
-                continue
-            if not _can_pay(actor, action):
-                continue
-
-            score = 0.0
-            reachable = [t for t in enemies if _can_reach(actor, action, t)]
-            if reachable:
-                score = max(
-                    _evaluate_action_score(action, target, actor, state) for target in reachable
+        policy = _strategy_policy(actor, state)
+        concentration_cfg = _policy_section(policy, "concentration_protection")
+        concentration_enabled = bool(concentration_cfg.get("enabled", False))
+        hp_ratio = actor.hp / max(actor.max_hp, 1)
+        if (
+            concentration_enabled
+            and actor.concentrating
+            and hp_ratio <= float(concentration_cfg.get("hp_ratio_threshold", 0.35))
+            and bool(concentration_cfg.get("prefer_dodge", True))
+        ):
+            dodge = next(
+                (
+                    action
+                    for action in catalog
+                    if str(action.get("name", "")) == "dodge"
+                    and _action_viable(
+                        action,
+                        resources=actor.resources,
+                        used_count=int(action.get("used_count", 0)),
+                    )
+                ),
+                None,
+            )
+            if dodge is not None:
+                return ActionIntent(
+                    action_name="dodge",
+                    rationale={
+                        "mode": "policy_guardrail",
+                        "guardrail": "concentration_protection",
+                        "hp_ratio": hp_ratio,
+                    },
                 )
 
-            cost = sum(int(v) for v in (action.get("resource_cost") or {}).values())
-            if score > best_score or (score == best_score and cost < best_cost):
-                best_score = score
-                best_name = action.get("name")
-                best_cost = cost
+        evaluation_mode = str(state.metadata.get("evaluation_mode", "greedy")).lower()
+        lookahead_enabled = evaluation_mode == "lookahead"
+        lookahead_discount = float(state.metadata.get("lookahead_discount", 1.0))
+        tactical_branches = state.metadata.get("tactical_branches", {})
+        branch_map = tactical_branches if isinstance(tactical_branches, dict) else {}
 
-        return ActionIntent(action_name=best_name)
+        def _best_follow_up_score(
+            resources_after: dict[str, int],
+            used_counts_after: dict[str, int],
+        ) -> float:
+            best = 0.0
+            for next_action in catalog:
+                next_name = str(next_action.get("name", ""))
+                used_count = used_counts_after.get(next_name, int(next_action.get("used_count", 0)))
+                if not _action_viable(
+                    next_action, resources=resources_after, used_count=used_count
+                ):
+                    continue
+
+                reachable = [
+                    target for target in enemies if _can_reach_target(actor, next_action, target)
+                ]
+                if not reachable:
+                    continue
+                best_target_score = max(
+                    _evaluate_action_score(next_action, target, actor, state)
+                    + _target_policy_bonus(actor, target, policy, state)
+                    for target in reachable
+                )
+                best = max(
+                    best,
+                    best_target_score + _objective_action_bonus(next_action, policy, state),
+                )
+            return best
+
+        def _best_branch_score(
+            action_name: str,
+            resources_after: dict[str, int],
+            used_counts_after: dict[str, int],
+        ) -> float:
+            raw_branches = branch_map.get(action_name, [])
+            if not isinstance(raw_branches, list):
+                return 0.0
+
+            best = 0.0
+            for branch in raw_branches:
+                if not isinstance(branch, dict):
+                    continue
+                next_name = str(branch.get("next_action", "")).strip()
+                if not next_name:
+                    continue
+                next_action = next(
+                    (entry for entry in catalog if str(entry.get("name", "")) == next_name),
+                    None,
+                )
+                if next_action is None:
+                    continue
+
+                branch_resource_cost = branch.get("resource_cost")
+                if isinstance(branch_resource_cost, dict) and not _can_pay_with_resources(
+                    resources_after, {"resource_cost": branch_resource_cost}
+                ):
+                    continue
+
+                used_count = used_counts_after.get(next_name, int(next_action.get("used_count", 0)))
+                if not _action_viable(
+                    next_action, resources=resources_after, used_count=used_count
+                ):
+                    continue
+
+                reachable = [
+                    target for target in enemies if _can_reach_target(actor, next_action, target)
+                ]
+                if not reachable:
+                    continue
+                next_score = max(
+                    _evaluate_action_score(next_action, target, actor, state)
+                    + _target_policy_bonus(actor, target, policy, state)
+                    for target in reachable
+                )
+                next_score += _objective_action_bonus(next_action, policy, state)
+                branch_weight = float(branch.get("weight", 1.0))
+                branch_bonus = float(branch.get("score_bonus", 0.0))
+                best = max(best, next_score * branch_weight + branch_bonus)
+            return best
+
+        candidates: list[dict[str, Any]] = []
+        for action in catalog:
+            action_name = str(action.get("name", ""))
+            used = int(action.get("used_count", 0))
+            if not _action_viable(action, resources=actor.resources, used_count=used):
+                continue
+
+            reachable = [target for target in enemies if _can_reach_target(actor, action, target)]
+            base_score = 0.0
+            if reachable:
+                base_score = max(
+                    _evaluate_action_score(action, target, actor, state)
+                    + _target_policy_bonus(actor, target, policy, state)
+                    for target in reachable
+                )
+            objective_bonus = _objective_action_bonus(action, policy, state)
+            lookahead_bonus = 0.0
+            if lookahead_enabled:
+                resources_after = _project_resources(actor.resources, action)
+                used_counts_after = {
+                    str(entry.get("name", "")): int(entry.get("used_count", 0)) for entry in catalog
+                }
+                used_counts_after[action_name] = used_counts_after.get(action_name, 0) + 1
+                lookahead_bonus = max(
+                    _best_follow_up_score(resources_after, used_counts_after),
+                    _best_branch_score(action_name, resources_after, used_counts_after),
+                )
+
+            total = base_score + objective_bonus + (lookahead_discount * lookahead_bonus)
+            if concentration_enabled and actor.concentrating and bool(action.get("concentration")):
+                total -= float(concentration_cfg.get("recast_penalty", 5.0))
+
+            candidates.append(
+                {
+                    "name": action_name,
+                    "base_score": base_score,
+                    "objective_bonus": objective_bonus,
+                    "lookahead_bonus": lookahead_bonus,
+                    "total_score": total,
+                    "cost": sum(int(v) for v in (action.get("resource_cost") or {}).values()),
+                }
+            )
+
+        if not candidates:
+            return ActionIntent(
+                action_name=None,
+                rationale={"reason": "no_viable_actions"},
+            )
+
+        ranked = sorted(candidates, key=lambda row: (-row["total_score"], row["cost"], row["name"]))
+        best = ranked[0]
+        enabled_policies = [
+            name
+            for name in ("threat_management", "concentration_protection", "objective_play")
+            if bool(_policy_section(policy, name).get("enabled", False))
+        ]
+
+        return ActionIntent(
+            action_name=best["name"],
+            rationale={
+                "mode": evaluation_mode,
+                "selected": best,
+                "top_candidates": ranked[:3],
+                "enabled_policies": enabled_policies,
+            },
+        )
 
     def choose_targets(self, actor, intent, state):
         catalog = state.metadata.get("action_catalog", {}).get(actor.actor_id, [])
@@ -274,6 +524,7 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             view for view in state.actors.values() if view.team != actor.team and view.hp > 0
         ]
         allies = [view for view in state.actors.values() if view.team == actor.team and view.hp > 0]
+        policy = _strategy_policy(actor, state)
 
         if action and action.get("target_mode") == "self":
             return [TargetRef(actor_id=actor.actor_id)]
@@ -286,21 +537,20 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             return [TargetRef(actor_id=entry.actor_id) for entry in everyone]
 
         def _can_reach(target) -> bool:
-            if action and action.get("action_type") == "attack":
-                action_range = float(action.get("range_ft") or 5.0)
-            elif action and action.get("action_type") == "utility":
-                action_range = float(action.get("range_ft") or 30.0)
-            else:
-                action_range = float(action.get("range_ft") or 60.0)
-            return distance_chebyshev(actor.position, target.position) <= (
-                action_range + actor.movement_remaining
-            )
+            return _can_reach_target(actor, action or {}, target)
 
         if action and action.get("target_mode") == "n_enemies":
             count = int(action.get("max_targets") or 1)
             reachable = [e for e in enemies if _can_reach(e)]
             pool = reachable if reachable else enemies
-            ranked = sorted(pool, key=lambda entry: (entry.hp, entry.max_hp))
+            ranked = sorted(
+                pool,
+                key=lambda entry: (
+                    _evaluate_action_score(action, entry, actor, state)
+                    + _target_policy_bonus(actor, entry, policy, state)
+                ),
+                reverse=True,
+            )
             return [TargetRef(actor_id=entry.actor_id) for entry in ranked[:count]]
 
         if action and action.get("target_mode") == "n_allies":
@@ -320,14 +570,10 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             target = min(pool, key=lambda entry: (entry.hp, entry.max_hp))
             return [TargetRef(actor_id=target.actor_id)]
 
-        if action.get("action_type") == "save" and not action.get("aoe_type"):
-            save_ability = str(action.get("save_ability") or "").lower()
-            target = min(pool, key=lambda entry: int(entry.save_mods.get(save_ability, 0)))
-            return [TargetRef(actor_id=target.actor_id)]
-
         target = max(
             pool,
-            key=lambda entry: _evaluate_action_score(action, entry, actor, state),
+            key=lambda entry: _evaluate_action_score(action, entry, actor, state)
+            + _target_policy_bonus(actor, entry, policy, state),
         )
         return [TargetRef(actor_id=target.actor_id)]
 
