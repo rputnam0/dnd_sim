@@ -84,6 +84,9 @@ class ActionDefinition:
     max_uses: int | None = None
     action_cost: str = "action"
     event_trigger: str | None = None
+    trigger_duration_rounds: int | None = None
+    trigger_limit_per_turn: int | None = None
+    trigger_once_per_round: bool = False
     target_mode: str = "single_enemy"
     range_ft: int | None = None
     aoe_type: str | None = None

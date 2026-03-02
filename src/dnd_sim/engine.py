@@ -1092,6 +1092,10 @@ def _build_actor_from_enemy(
                     action_cost=resolved_cost,
                     target_mode=action.target_mode,
                     max_targets=action.max_targets,
+                    event_trigger=getattr(action, "event_trigger", None),
+                    trigger_duration_rounds=getattr(action, "trigger_duration_rounds", None),
+                    trigger_limit_per_turn=getattr(action, "trigger_limit_per_turn", None),
+                    trigger_once_per_round=bool(getattr(action, "trigger_once_per_round", False)),
                     concentration=action.concentration,
                     include_self=action.include_self,
                     effects=[effect.model_dump() for effect in action.effects],
@@ -1629,6 +1633,9 @@ def _apply_effect(
     resources_spent: dict[str, dict[str, int]],
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
 ) -> None:
     recipient = _resolve_effect_target(effect, actor=actor, target=target)
     effect_type = str(effect.get("effect_type"))
@@ -1757,8 +1764,31 @@ def _apply_effect(
         src = actor.position
         cur = recipient.position
         if direction == "toward_source":
+            old_position = recipient.position
             recipient.position = move_towards(cur, src, distance_ft)
             recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
+            if (
+                round_number is not None
+                and turn_token is not None
+                and old_position != recipient.position
+                and action is not None
+            ):
+                _dispatch_combat_event(
+                    rng=rng,
+                    event="on_move",
+                    trigger_actor=actor,
+                    trigger_target=recipient,
+                    trigger_action=action,
+                    actors=actors,
+                    round_number=round_number,
+                    turn_token=turn_token,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    active_hazards=active_hazards,
+                    rule_trace=rule_trace,
+                )
             return
 
         if direction == "away_from_source":
@@ -1766,8 +1796,31 @@ def _apply_effect(
             dist = distance_euclidean(src, cur)
             if dist <= 0:
                 # Arbitrary axis push if co-located.
+                old_position = recipient.position
                 recipient.position = (cur[0] + distance_ft, cur[1], cur[2])
                 recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
+                if (
+                    round_number is not None
+                    and turn_token is not None
+                    and old_position != recipient.position
+                    and action is not None
+                ):
+                    _dispatch_combat_event(
+                        rng=rng,
+                        event="on_move",
+                        trigger_actor=actor,
+                        trigger_target=recipient,
+                        trigger_action=action,
+                        actors=actors,
+                        round_number=round_number,
+                        turn_token=turn_token,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=rule_trace,
+                    )
                 return
             unit = ((cur[0] - src[0]) / dist, (cur[1] - src[1]) / dist, (cur[2] - src[2]) / dist)
             dest = (
@@ -1775,8 +1828,31 @@ def _apply_effect(
                 cur[1] + unit[1] * distance_ft,
                 cur[2] + unit[2] * distance_ft,
             )
+            old_position = recipient.position
             recipient.position = dest
             recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
+            if (
+                round_number is not None
+                and turn_token is not None
+                and old_position != recipient.position
+                and action is not None
+            ):
+                _dispatch_combat_event(
+                    rng=rng,
+                    event="on_move",
+                    trigger_actor=actor,
+                    trigger_target=recipient,
+                    trigger_action=action,
+                    actors=actors,
+                    round_number=round_number,
+                    turn_token=turn_token,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    active_hazards=active_hazards,
+                    rule_trace=rule_trace,
+                )
             return
 
         return
@@ -1798,6 +1874,9 @@ def _apply_action_effects(
     resources_spent: dict[str, dict[str, int]],
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
 ) -> None:
     for effect in action.effects + action.mechanics:
         if not isinstance(effect, dict):
@@ -1818,6 +1897,9 @@ def _apply_action_effects(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
             )
 
 
@@ -1913,13 +1995,251 @@ def _event_trigger_priority(action: ActionDefinition) -> int:
     return 0
 
 
-def _run_event_triggered_actions(
+def _event_trigger_int_tag(action: ActionDefinition, prefix: str) -> int | None:
+    for tag in action.tags:
+        value = str(tag)
+        if not value.startswith(prefix):
+            continue
+        _, raw = value.split(":", 1)
+        try:
+            parsed = int(raw)
+        except ValueError:
+            return None
+        return parsed if parsed > 0 else None
+    return None
+
+
+def _event_trigger_duration_rounds(action: ActionDefinition) -> int | None:
+    if action.trigger_duration_rounds is not None and action.trigger_duration_rounds > 0:
+        return action.trigger_duration_rounds
+    return _event_trigger_int_tag(action, "trigger_duration_rounds:")
+
+
+def _event_trigger_limit_per_turn(action: ActionDefinition) -> int | None:
+    if action.trigger_limit_per_turn is not None and action.trigger_limit_per_turn > 0:
+        return action.trigger_limit_per_turn
+    return _event_trigger_int_tag(action, "trigger_limit_per_turn:")
+
+
+def _event_trigger_once_per_round(action: ActionDefinition) -> bool:
+    return action.trigger_once_per_round or action.action_cost == "reaction"
+
+
+def _event_trigger_start_key(action: ActionDefinition) -> str:
+    event_name = action.event_trigger or "always"
+    return f"event_trigger_start:{event_name}:{action.name}"
+
+
+def _event_trigger_turn_key(
+    action: ActionDefinition,
+    *,
+    round_number: int,
+    turn_token: str | None,
+) -> str:
+    token = turn_token or f"{round_number}:global"
+    event_name = action.event_trigger or "always"
+    return f"event_turn:{token}:{event_name}:{action.name}"
+
+
+def _event_trigger_is_expired(
+    actor: ActorRuntimeState, action: ActionDefinition, *, round_number: int
+) -> bool:
+    duration = _event_trigger_duration_rounds(action)
+    if duration is None:
+        return False
+    start_key = _event_trigger_start_key(action)
+    started_round = actor.per_action_uses.get(start_key)
+    if started_round is None:
+        actor.per_action_uses[start_key] = round_number
+        return False
+    return int(started_round) + duration - 1 < round_number
+
+
+def _resolve_event_targets(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    actors: dict[str, ActorRuntimeState],
+    trigger_actor: ActorRuntimeState | None,
+    trigger_target: ActorRuntimeState | None,
+) -> list[ActorRuntimeState]:
+    requested: list[TargetRef] = _default_target(actor, actors)
+    preferred = trigger_target if trigger_target is not None else trigger_actor
+    if (
+        preferred is not None
+        and preferred.actor_id in actors
+        and preferred.team != actor.team
+        and preferred.hp > 0
+        and not preferred.dead
+    ):
+        requested = [TargetRef(preferred.actor_id)]
+    return _resolve_targets_for_action(
+        rng=rng,
+        actor=actor,
+        action=action,
+        actors=actors,
+        requested=requested,
+    )
+
+
+def _run_trait_event_handlers(
     *,
     rng: random.Random,
     event: str,
     trigger_actor: ActorRuntimeState | None,
+    trigger_target: ActorRuntimeState | None,
+    trigger_action: ActionDefinition | None,
     actors: dict[str, ActorRuntimeState],
     round_number: int,
+    turn_token: str,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    rule_trace: list[dict[str, Any]],
+    obstacles: list[AABB],
+    light_level: str,
+) -> None:
+    if trigger_actor is None or trigger_action is None:
+        return
+    lock_key = f"event_reaction_round:{round_number}"
+
+    if (
+        event == "after_action"
+        and trigger_action.action_type == "attack"
+        and trigger_target is not None
+    ):
+        reactors = sorted(actors.values(), key=lambda value: value.actor_id)
+        for reactor in reactors:
+            if (
+                reactor.team != trigger_target.team
+                or reactor.actor_id == trigger_target.actor_id
+                or reactor.dead
+                or reactor.hp <= 0
+                or not reactor.reaction_available
+                or not _has_trait(reactor, "sentinel")
+                or _has_trait(trigger_target, "sentinel")
+            ):
+                continue
+            if reactor.per_action_uses.get(lock_key, 0) > 0:
+                rule_trace.append(
+                    {
+                        "event": event,
+                        "round": round_number,
+                        "turn": turn_token,
+                        "handler": "trait:sentinel_reaction",
+                        "actor_id": reactor.actor_id,
+                        "result": "skipped",
+                        "reason": "reaction_lock",
+                    }
+                )
+                continue
+            attack_action = _fallback_action(reactor)
+            if attack_action is None or attack_action.action_type != "attack":
+                continue
+            reactor.reaction_available = False
+            reactor.per_action_uses[lock_key] = 1
+            trigger_actor.movement_remaining = 0.0
+            _execute_action(
+                rng=rng,
+                actor=reactor,
+                action=attack_action,
+                targets=[trigger_actor],
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
+            )
+            rule_trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "handler": "trait:sentinel_reaction",
+                    "actor_id": reactor.actor_id,
+                    "trigger_actor_id": trigger_actor.actor_id,
+                    "result": "executed",
+                }
+            )
+
+    if event == "after_action" and "spell" in trigger_action.tags:
+        reactors = sorted(actors.values(), key=lambda value: value.actor_id)
+        for reactor in reactors:
+            if (
+                reactor.team == trigger_actor.team
+                or reactor.dead
+                or reactor.hp <= 0
+                or not reactor.reaction_available
+                or not _has_trait(reactor, "mage slayer")
+            ):
+                continue
+            if reactor.per_action_uses.get(lock_key, 0) > 0:
+                rule_trace.append(
+                    {
+                        "event": event,
+                        "round": round_number,
+                        "turn": turn_token,
+                        "handler": "trait:mage_slayer_reaction",
+                        "actor_id": reactor.actor_id,
+                        "result": "skipped",
+                        "reason": "reaction_lock",
+                    }
+                )
+                continue
+            attack_action = _fallback_action(reactor)
+            if attack_action is None or attack_action.action_type != "attack":
+                continue
+            reactor.reaction_available = False
+            reactor.per_action_uses[lock_key] = 1
+            _execute_action(
+                rng=rng,
+                actor=reactor,
+                action=attack_action,
+                targets=[trigger_actor],
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
+            )
+            rule_trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "handler": "trait:mage_slayer_reaction",
+                    "actor_id": reactor.actor_id,
+                    "trigger_actor_id": trigger_actor.actor_id,
+                    "result": "executed",
+                }
+            )
+
+
+def _dispatch_combat_event(
+    *,
+    rng: random.Random,
+    event: str,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_target: ActorRuntimeState | None,
+    trigger_action: ActionDefinition | None,
+    actors: dict[str, ActorRuntimeState],
+    round_number: int,
+    turn_token: str,
     damage_dealt: dict[str, int],
     damage_taken: dict[str, int],
     threat_scores: dict[str, int],
@@ -1947,11 +2267,54 @@ def _run_event_triggered_actions(
 
     candidates.sort(key=lambda item: (-item[0], item[1], item[2]))
     for _priority, actor_id, action_name, actor, action in candidates:
-        lock_key = f"event_reaction_round:{round_number}"
-        if action.action_cost == "reaction" and actor.per_action_uses.get(lock_key, 0) > 0:
+        if _event_trigger_is_expired(actor, action, round_number=round_number):
             trace.append(
                 {
                     "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "actor_id": actor_id,
+                    "action": action_name,
+                    "result": "skipped",
+                    "reason": "expired",
+                }
+            )
+            continue
+
+        per_turn_limit = _event_trigger_limit_per_turn(action)
+        per_turn_key = _event_trigger_turn_key(
+            action,
+            round_number=round_number,
+            turn_token=turn_token,
+        )
+        if (
+            per_turn_limit is not None
+            and actor.per_action_uses.get(per_turn_key, 0) >= per_turn_limit
+        ):
+            trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "actor_id": actor_id,
+                    "action": action_name,
+                    "result": "skipped",
+                    "reason": "per_turn_limit",
+                }
+            )
+            continue
+
+        lock_key = f"event_reaction_round:{round_number}"
+        if (
+            action.action_cost == "reaction"
+            and _event_trigger_once_per_round(action)
+            and actor.per_action_uses.get(lock_key, 0) > 0
+        ):
+            trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
                     "actor_id": actor_id,
                     "action": action_name,
                     "result": "skipped",
@@ -1960,26 +2323,20 @@ def _run_event_triggered_actions(
             )
             continue
 
-        requested: list[TargetRef] = _default_target(actor, actors)
-        if (
-            trigger_actor is not None
-            and trigger_actor.actor_id in actors
-            and trigger_actor.team != actor.team
-            and trigger_actor.hp > 0
-            and not trigger_actor.dead
-        ):
-            requested = [TargetRef(trigger_actor.actor_id)]
-        targets = _resolve_targets_for_action(
+        targets = _resolve_event_targets(
             rng=rng,
             actor=actor,
             action=action,
             actors=actors,
-            requested=requested,
+            trigger_actor=trigger_actor,
+            trigger_target=trigger_target,
         )
         if not targets:
             trace.append(
                 {
                     "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
                     "actor_id": actor_id,
                     "action": action_name,
                     "result": "skipped",
@@ -1994,9 +2351,10 @@ def _run_event_triggered_actions(
                 resources_spent[actor.actor_id].get(key, 0) + amount
             )
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
+        actor.per_action_uses[per_turn_key] = actor.per_action_uses.get(per_turn_key, 0) + 1
         _mark_action_cost_used(actor, action)
-        if action.action_cost == "reaction":
-            actor.per_action_uses[lock_key] = 1
+        if action.action_cost == "reaction" and _event_trigger_once_per_round(action):
+            actor.per_action_uses[lock_key] = actor.per_action_uses.get(lock_key, 0) + 1
 
         _execute_action(
             rng=rng,
@@ -2011,16 +2369,79 @@ def _run_event_triggered_actions(
             active_hazards=active_hazards,
             obstacles=obstacles,
             light_level=light_level,
+            round_number=round_number,
+            turn_token=turn_token,
+            rule_trace=trace,
         )
         trace.append(
             {
                 "event": event,
+                "round": round_number,
+                "turn": turn_token,
                 "actor_id": actor_id,
                 "action": action_name,
                 "result": "executed",
             }
         )
+
+    _run_trait_event_handlers(
+        rng=rng,
+        event=event,
+        trigger_actor=trigger_actor,
+        trigger_target=trigger_target,
+        trigger_action=trigger_action,
+        actors=actors,
+        round_number=round_number,
+        turn_token=turn_token,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        rule_trace=trace,
+        obstacles=obstacles,
+        light_level=light_level,
+    )
     return trace
+
+
+def _run_event_triggered_actions(
+    *,
+    rng: random.Random,
+    event: str,
+    trigger_actor: ActorRuntimeState | None,
+    actors: dict[str, ActorRuntimeState],
+    round_number: int,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    rule_trace: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+) -> list[dict[str, Any]]:
+    turn_token = (
+        f"{round_number}:{trigger_actor.actor_id if trigger_actor is not None else 'global'}"
+    )
+    return _dispatch_combat_event(
+        rng=rng,
+        event=event,
+        trigger_actor=trigger_actor,
+        trigger_target=None,
+        trigger_action=None,
+        actors=actors,
+        round_number=round_number,
+        turn_token=turn_token,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        rule_trace=rule_trace,
+        obstacles=obstacles,
+        light_level=light_level,
+    )
 
 
 def _fallback_action(
@@ -2134,11 +2555,40 @@ def _execute_action(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
 ) -> None:
     if not targets:
         return
     if obstacles is None:
         obstacles = []
+
+    def emit_event(
+        event_name: str,
+        *,
+        trigger_target: ActorRuntimeState | None = None,
+    ) -> None:
+        if round_number is None or turn_token is None:
+            return
+        _dispatch_combat_event(
+            rng=rng,
+            event=event_name,
+            trigger_actor=actor,
+            trigger_target=trigger_target,
+            trigger_action=action,
+            actors=actors,
+            round_number=round_number,
+            turn_token=turn_token,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            rule_trace=rule_trace,
+            obstacles=obstacles,
+            light_level=light_level,
+        )
 
     # Counterspell check
     if "spell" in action.tags:
@@ -2184,33 +2634,6 @@ def _execute_action(
                 and str(effect.get("condition", "")).strip()
             }
 
-        # Mage Slayer reaction attack
-        for enemy in list(actors.values()):
-            if (
-                enemy.team != actor.team
-                and enemy.hp > 0
-                and not enemy.dead
-                and enemy.reaction_available
-                and _has_trait(enemy, "mage slayer")
-            ):
-                enemy_attack = _fallback_action(enemy)
-                if enemy_attack and enemy_attack.action_type == "attack":
-                    enemy.reaction_available = False
-                    _execute_action(
-                        rng=rng,
-                        actor=enemy,
-                        action=enemy_attack,
-                        targets=[actor],
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=obstacles,
-                        light_level=light_level,
-                    )
-
     # Phase 11: Contested Grapple/Shove Checks
     if action.action_type in ("grapple", "shove") and targets:
         from .rules_2014 import run_contested_check
@@ -2250,36 +2673,6 @@ def _execute_action(
         return
 
     if action.action_type == "attack":
-        # Sentinel reaction attack
-        for ally in list(actors.values()):
-            if (
-                targets
-                and ally.team == targets[0].team
-                and ally.actor_id != targets[0].actor_id
-                and ally.hp > 0
-                and not ally.dead
-                and ally.reaction_available
-                and _has_trait(ally, "sentinel")
-                and not _has_trait(targets[0], "sentinel")
-            ):
-                ally_attack = _fallback_action(ally)
-                if ally_attack and ally_attack.action_type == "attack":
-                    ally.reaction_available = False
-                    actor.movement_remaining = 0.0  # Sentinel movement lock abstract equivalent
-                    _execute_action(
-                        rng=rng,
-                        actor=ally,
-                        action=ally_attack,
-                        targets=[actor],
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=obstacles,
-                        light_level=light_level,
-                    )
         if action.action_cost == "action":
             actor.took_attack_action_this_turn = True
 
@@ -2388,7 +2781,11 @@ def _execute_action(
                         resources_spent=resources_spent,
                         actors=actors,
                         active_hazards=active_hazards,
+                        round_number=round_number,
+                        turn_token=turn_token,
+                        rule_trace=rule_trace,
                     )
+                    emit_event("on_miss", trigger_target=target)
                     continue
                 if cover_state == "HALF":
                     target_ac += 2
@@ -2564,6 +2961,7 @@ def _execute_action(
                             damage_type="radiant",
                         )
                         raw_damage += raw_smite
+                was_active_before_damage = target.hp > 0 and not target.dead
                 applied = apply_damage(
                     target,
                     raw_damage,
@@ -2577,6 +2975,8 @@ def _execute_action(
                 damage_dealt[actor.actor_id] += applied
                 damage_taken[target.actor_id] += applied
                 threat_scores[actor.actor_id] += applied
+                if was_active_before_damage and target.hp <= 0:
+                    emit_event("on_down", trigger_target=target)
 
                 # GWM Momentum Trigger (Action Economy Buff)
                 if (
@@ -2597,7 +2997,11 @@ def _execute_action(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
             )
+            emit_event(f"on_{event}", trigger_target=target)
         return
 
     if action.action_type == "save":
@@ -2704,6 +3108,7 @@ def _execute_action(
                     final_damage = 0
                     target.reaction_available = False
 
+            was_active_before_damage = target.hp > 0 and not target.dead
             applied = apply_damage(
                 target,
                 final_damage,
@@ -2717,6 +3122,8 @@ def _execute_action(
                 damage_dealt[actor.actor_id] += applied
                 damage_taken[target.actor_id] += applied
                 threat_scores[actor.actor_id] += applied
+                if was_active_before_damage and target.hp <= 0:
+                    emit_event("on_down", trigger_target=target)
 
             _apply_action_effects(
                 action=action,
@@ -2730,7 +3137,11 @@ def _execute_action(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
             )
+            emit_event("on_save", trigger_target=target)
         return
 
     if action.action_type == "utility":
@@ -2760,6 +3171,9 @@ def _execute_action(
                 resources_spent=resources_spent,
                 actors=actors,
                 active_hazards=active_hazards,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
             )
 
 
@@ -2796,6 +3210,10 @@ def _build_round_metadata(
                     "max_uses": action.max_uses,
                     "used_count": actor.per_action_uses.get(action.name, 0),
                     "action_cost": action.action_cost,
+                    "event_trigger": action.event_trigger,
+                    "trigger_duration_rounds": action.trigger_duration_rounds,
+                    "trigger_limit_per_turn": action.trigger_limit_per_turn,
+                    "trigger_once_per_round": action.trigger_once_per_round,
                     "recharge_ready": actor.recharge_ready.get(action.name, True),
                     "target_mode": action.target_mode,
                     "range_ft": action.range_ft,
@@ -3106,7 +3524,45 @@ def run_simulation(
                     if _party_defeated(actors) or _enemies_defeated(actors):
                         break
 
+                    turn_token = f"{rounds}:{actor.actor_id}"
+                    _dispatch_combat_event(
+                        rng=rng,
+                        event="turn_start",
+                        trigger_actor=actor,
+                        trigger_target=actor,
+                        trigger_action=None,
+                        actors=actors,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=trial_rule_trace,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                    )
+
                     if not _can_act(actor):
+                        _dispatch_combat_event(
+                            rng=rng,
+                            event="turn_end",
+                            trigger_actor=actor,
+                            trigger_target=actor,
+                            trigger_action=None,
+                            actors=actors,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            rule_trace=trial_rule_trace,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                        )
                         continue
 
                     strategy_name = actor_strategy_overrides.get(actor.actor_id)
@@ -3139,6 +3595,24 @@ def run_simulation(
                     if not _action_available(actor, action):
                         fallback = _fallback_action(actor)
                         if fallback is None:
+                            _dispatch_combat_event(
+                                rng=rng,
+                                event="turn_end",
+                                trigger_actor=actor,
+                                trigger_target=actor,
+                                trigger_action=None,
+                                actors=actors,
+                                round_number=rounds,
+                                turn_token=turn_token,
+                                damage_dealt=damage_dealt,
+                                damage_taken=damage_taken,
+                                threat_scores=threat_scores,
+                                resources_spent=resources_spent,
+                                active_hazards=active_hazards,
+                                rule_trace=trial_rule_trace,
+                                obstacles=battlefield_obstacles,
+                                light_level=light_level,
+                            )
                             continue
                         action = fallback
 
@@ -3162,6 +3636,24 @@ def run_simulation(
                         requested=targets,
                     )
                     if not resolved_targets:
+                        _dispatch_combat_event(
+                            rng=rng,
+                            event="turn_end",
+                            trigger_actor=actor,
+                            trigger_target=actor,
+                            trigger_action=None,
+                            actors=actors,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            rule_trace=trial_rule_trace,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                        )
                         continue
 
                     spent = _spend_resources(actor, cost)
@@ -3190,13 +3682,19 @@ def run_simulation(
                         active_hazards=active_hazards,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                        rule_trace=trial_rule_trace,
                     )
-                    _run_event_triggered_actions(
+                    _dispatch_combat_event(
                         rng=rng,
                         event="after_action",
                         trigger_actor=actor,
+                        trigger_target=resolved_targets[0] if resolved_targets else None,
+                        trigger_action=action,
                         actors=actors,
                         round_number=rounds,
+                        turn_token=turn_token,
                         damage_dealt=damage_dealt,
                         damage_taken=damage_taken,
                         threat_scores=threat_scores,
@@ -3243,13 +3741,19 @@ def run_simulation(
                                         active_hazards=active_hazards,
                                         obstacles=battlefield_obstacles,
                                         light_level=light_level,
+                                        round_number=rounds,
+                                        turn_token=turn_token,
+                                        rule_trace=trial_rule_trace,
                                     )
-                                    _run_event_triggered_actions(
+                                    _dispatch_combat_event(
                                         rng=rng,
                                         event="after_action",
                                         trigger_actor=actor,
+                                        trigger_target=bonus_targets[0] if bonus_targets else None,
+                                        trigger_action=bonus_action,
                                         actors=actors,
                                         round_number=rounds,
+                                        turn_token=turn_token,
                                         damage_dealt=damage_dealt,
                                         damage_taken=damage_taken,
                                         threat_scores=threat_scores,
@@ -3315,13 +3819,21 @@ def run_simulation(
                                             active_hazards=active_hazards,
                                             obstacles=battlefield_obstacles,
                                             light_level=light_level,
+                                            round_number=rounds,
+                                            turn_token=turn_token,
+                                            rule_trace=trial_rule_trace,
                                         )
-                                        _run_event_triggered_actions(
+                                        _dispatch_combat_event(
                                             rng=rng,
                                             event="after_action",
                                             trigger_actor=actor,
+                                            trigger_target=(
+                                                surge_targets[0] if surge_targets else None
+                                            ),
+                                            trigger_action=surge_action,
                                             actors=actors,
                                             round_number=rounds,
+                                            turn_token=turn_token,
                                             damage_dealt=damage_dealt,
                                             damage_taken=damage_taken,
                                             threat_scores=threat_scores,
@@ -3341,6 +3853,24 @@ def run_simulation(
                         threat_scores=threat_scores,
                         resources_spent=resources_spent,
                         active_hazards=active_hazards,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                    )
+                    _dispatch_combat_event(
+                        rng=rng,
+                        event="turn_end",
+                        trigger_actor=actor,
+                        trigger_target=actor,
+                        trigger_action=None,
+                        actors=actors,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=trial_rule_trace,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
                     )
