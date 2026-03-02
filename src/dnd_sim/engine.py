@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import random
 import re
 import statistics
@@ -31,6 +32,7 @@ from dnd_sim.rules_2014 import (
 from dnd_sim.strategy_api import ActorView, BattleStateView, TargetRef
 
 _CONTROL_BLOCKING_CONDITIONS = {"incapacitated", "stunned", "unconscious", "paralyzed"}
+_CONCENTRATION_FORCED_END_CONDITIONS = _CONTROL_BLOCKING_CONDITIONS
 _DISADVANTAGE_CONDITIONS = {"poisoned", "frightened", "restrained", "blinded", "prone"}
 _ATTACKER_ADVANTAGE_CONDITIONS = {
     "blinded",
@@ -50,6 +52,7 @@ _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _TRAIT_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
+_SPELL_COMPONENT_TOKEN_RE = re.compile(r"\b([vsm])\b", flags=re.IGNORECASE)
 _SPELL_INDEX_CACHE: tuple[Path, dict[str, Path]] | None = None
 
 
@@ -275,6 +278,20 @@ def _upcast_damage(base_damage: str, per_level_damage: str, extra_levels: int) -
     return f"{total_num}d{base_die}"
 
 
+def _component_tags_from_components(components: str) -> set[str]:
+    tags: set[str] = set()
+    if not components:
+        return tags
+    for token in _SPELL_COMPONENT_TOKEN_RE.findall(components):
+        if token.lower() == "v":
+            tags.add("component:verbal")
+        elif token.lower() == "s":
+            tags.add("component:somatic")
+        elif token.lower() == "m":
+            tags.add("component:material")
+    return tags
+
+
 def _slugify_spell_name(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
 
@@ -465,7 +482,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
     entries: dict[int, dict[str, Any]] = {}
 
     field_re = re.compile(
-        r"^spell(Name|Prepared|SaveHit|CastingTime|Range|Duration|Notes|Source)(\d+)$"
+        r"^spell(Name|Prepared|SaveHit|CastingTime|Range|Duration|Components|Notes|Source)(\d+)$"
     )
 
     for row in raw_fields:
@@ -504,6 +521,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
         casting_time = str(entry.get("castingtime", "") or "").strip()
         range_text = str(entry.get("range", "") or "").strip()
         duration = str(entry.get("duration", "") or "").strip()
+        components = str(entry.get("components", "") or "").strip()
 
         spell_def = _load_spell_definition(name)
         hydrated: dict[str, Any] = {
@@ -529,6 +547,8 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 range_ft = int(feet_match.group(1))
         if range_ft is not None:
             hydrated["range_ft"] = range_ft
+        if components:
+            hydrated["components"] = components
 
         # Try to infer combat-relevant fields from the spell definition.
         if isinstance(spell_def, dict):
@@ -537,6 +557,8 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 hydrated["save_ability"] = str(
                     spell_def.get("save_ability") or ""
                 ).lower() or hydrated.get("save_ability")
+            if "components" in spell_def:
+                hydrated["components"] = str(spell_def.get("components") or "")
             if "damage_type" in spell_def:
                 hydrated["damage_type"] = str(spell_def.get("damage_type") or "fire").lower()
             if "range_ft" in spell_def and isinstance(spell_def.get("range_ft"), (int, float)):
@@ -635,6 +657,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "aoe_type",
             "aoe_size_ft",
             "concentration",
+            "components",
         ):
             existing_value = existing.get(field)
             candidate_value = spell.get(field)
@@ -707,6 +730,10 @@ def _build_spell_actions(
         mechanics = spell.get("mechanics", [])
         tags = list(spell.get("tags", []))
         tags.append("spell")
+        components = str(spell.get("components") or "")
+        if components:
+            tags.extend(sorted(_component_tags_from_components(components)))
+        tags = list(dict.fromkeys(tags))
 
         resource_cost: dict[str, int] = {}
 
@@ -1233,7 +1260,10 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.death_successes = 0
     actor.downed_count = 0
     actor.concentrating = False
+    actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
+    actor.concentrated_spell = None
+    actor.concentrated_spell_level = None
     actor.movement_remaining = float(actor.speed_ft)
 
 
@@ -1308,6 +1338,18 @@ def _build_initiative_order(
         rolls.append((roll, tiebreak, actor.actor_id))
     rolls.sort(reverse=True)
     return [actor_id for _, _, actor_id in rolls]
+
+
+def _sync_initiative_order(
+    initiative_order: list[str], actors: dict[str, ActorRuntimeState]
+) -> list[str]:
+    existing = [actor_id for actor_id in initiative_order if actor_id in actors]
+    known = set(existing)
+    missing = [actor for actor in actors.values() if actor.actor_id not in known]
+    missing.sort(
+        key=lambda actor: (actor.initiative_mod, actor.dex_mod, actor.actor_id), reverse=True
+    )
+    return existing + [actor.actor_id for actor in missing]
 
 
 def _has_resources(actor: ActorRuntimeState, cost: dict[str, int]) -> bool:
@@ -1411,6 +1453,95 @@ def _target_sort_key(
     return (0.0, target.hp, target.max_hp, target.actor_id)
 
 
+def _distance_2d(a: tuple[float, float, float], b: tuple[float, float, float]) -> float:
+    return math.hypot(b[0] - a[0], b[1] - a[1])
+
+
+def _in_area_template(
+    *,
+    actor: ActorRuntimeState,
+    primary: ActorRuntimeState,
+    candidate: ActorRuntimeState,
+    aoe_type: str,
+    aoe_size_ft: float,
+) -> bool:
+    template = aoe_type.strip().lower()
+    if template in {"sphere", "cylinder"}:
+        return _distance_2d(primary.position, candidate.position) <= aoe_size_ft
+
+    if template == "cube":
+        half = aoe_size_ft / 2.0
+        dx = abs(candidate.position[0] - primary.position[0])
+        dy = abs(candidate.position[1] - primary.position[1])
+        dz = abs(candidate.position[2] - primary.position[2])
+        return dx <= half and dy <= half and dz <= half
+
+    axis = (
+        primary.position[0] - actor.position[0],
+        primary.position[1] - actor.position[1],
+    )
+    axis_len = math.hypot(axis[0], axis[1])
+    if axis_len <= 0:
+        return _distance_2d(primary.position, candidate.position) <= aoe_size_ft
+    unit = (axis[0] / axis_len, axis[1] / axis_len)
+    rel = (
+        candidate.position[0] - actor.position[0],
+        candidate.position[1] - actor.position[1],
+    )
+    projection = rel[0] * unit[0] + rel[1] * unit[1]
+
+    if template == "line":
+        if projection < 0 or projection > aoe_size_ft:
+            return False
+        perp_sq = max(0.0, (rel[0] * rel[0] + rel[1] * rel[1]) - (projection * projection))
+        return math.sqrt(perp_sq) <= 5.0
+
+    if template == "cone":
+        distance = math.hypot(rel[0], rel[1])
+        if distance > aoe_size_ft:
+            return False
+        if distance == 0:
+            return True
+        cos_theta = projection / distance
+        return cos_theta >= math.cos(math.radians(30))
+
+    return _distance_2d(primary.position, candidate.position) <= aoe_size_ft
+
+
+def _resolve_template_targets(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    mode: str,
+    primaries: list[ActorRuntimeState],
+    candidates: list[ActorRuntimeState],
+) -> list[ActorRuntimeState]:
+    aoe_type = str(action.aoe_type or "").lower().strip()
+    if not aoe_type or not action.aoe_size_ft or not primaries:
+        return primaries
+    size = float(action.aoe_size_ft)
+    victims: set[str] = set()
+    for primary in primaries:
+        for candidate in candidates:
+            if _in_area_template(
+                actor=actor,
+                primary=primary,
+                candidate=candidate,
+                aoe_type=aoe_type,
+                aoe_size_ft=size,
+            ):
+                victims.add(candidate.actor_id)
+    if not action.include_self:
+        victims.discard(actor.actor_id)
+    return [
+        target
+        for target in sorted(
+            candidates, key=lambda value: _target_sort_key(actor, value, mode=mode)
+        )
+        if target.actor_id in victims
+    ]
+
+
 def _resolve_targets_for_action(
     *,
     rng: random.Random,
@@ -1457,57 +1588,51 @@ def _resolve_targets_for_action(
         return []
     by_id = {target.actor_id: target for target in candidates}
 
-    if mode in {"all_enemies", "all_allies", "all_creatures"}:
-        return sorted(
-            candidates,
-            key=lambda value: _target_sort_key(actor, value, mode=mode),
-        )
+    ordered_candidates = sorted(
+        candidates, key=lambda value: _target_sort_key(actor, value, mode=mode)
+    )
+    selected: list[ActorRuntimeState]
 
-    if mode in {"random_enemy", "random_ally"}:
+    if mode in {"all_enemies", "all_allies", "all_creatures"}:
+        selected = ordered_candidates
+    elif mode in {"random_enemy", "random_ally"}:
         valid_requested = [ref.actor_id for ref in requested if ref.actor_id in by_id]
         if valid_requested:
-            return [by_id[valid_requested[0]]]
-        return [rng.choice(candidates)]
+            selected = [by_id[valid_requested[0]]]
+        else:
+            selected = [rng.choice(candidates)]
+    elif mode == "self":
+        selected = [actor]
+    else:
+        max_targets = 1
+        if mode in {"n_enemies", "n_allies"}:
+            max_targets = action.max_targets or 1
+        selected = []
+        seen: set[str] = set()
+        for ref in requested:
+            target = by_id.get(ref.actor_id)
+            if target is None or target.actor_id in seen:
+                continue
+            selected.append(target)
+            seen.add(target.actor_id)
+            if len(selected) >= max_targets:
+                break
+        if len(selected) < max_targets:
+            for target in ordered_candidates:
+                if target.actor_id in seen:
+                    continue
+                selected.append(target)
+                seen.add(target.actor_id)
+                if len(selected) >= max_targets:
+                    break
 
-    if mode == "self":
-        return [actor]
-
-    max_targets = 1
-    if mode in {"n_enemies", "n_allies"}:
-        max_targets = action.max_targets or 1
-
-    selected: list[ActorRuntimeState] = []
-    seen: set[str] = set()
-    for ref in requested:
-        target = by_id.get(ref.actor_id)
-        if target is None or target.actor_id in seen:
-            continue
-        selected.append(target)
-        seen.add(target.actor_id)
-        if len(selected) >= max_targets:
-            return selected
-
-    for target in sorted(candidates, key=lambda value: _target_sort_key(actor, value, mode=mode)):
-        if target.actor_id in seen:
-            continue
-        selected.append(target)
-        seen.add(target.actor_id)
-        if len(selected) >= max_targets:
-            break
-
-    if action.aoe_type and action.aoe_size_ft:
-        radius = float(action.aoe_size_ft)
-        aoe_victims = set()
-        for primary in selected:
-            for cand in actors.values():
-                if cand.hp > 0 or include_downed_allies:
-                    if distance_chebyshev(primary.position, cand.position) <= radius:
-                        aoe_victims.add(cand.actor_id)
-        if not action.include_self and actor.actor_id in aoe_victims:
-            aoe_victims.remove(actor.actor_id)
-        return [actors[aid] for aid in aoe_victims]
-
-    return selected
+    return _resolve_template_targets(
+        actor=actor,
+        action=action,
+        mode=mode,
+        primaries=selected,
+        candidates=ordered_candidates,
+    )
 
 
 def _resolve_action_selection(
@@ -1550,7 +1675,13 @@ def _break_concentration(
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
 ) -> None:
-    if not actor.concentrating:
+    if (
+        not actor.concentrating
+        and not actor.concentrated_targets
+        and not actor.concentrated_spell
+        and not actor.concentrated_spell_level
+        and not actor.concentration_conditions
+    ):
         return
     actor.concentrating = False
     for target_id in list(actor.concentrated_targets):
@@ -1565,10 +1696,31 @@ def _break_concentration(
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
 
-    if actor.concentrated_spell:
+    if actor.concentrated_spell or actor.concentrated_spell_level:
         active_hazards[:] = [h for h in active_hazards if h.get("source_id") != actor.actor_id]
 
     actor.concentrated_spell = None
+    actor.concentrated_spell_level = None
+
+
+def _concentration_forced_end(actor: ActorRuntimeState) -> bool:
+    if not actor.concentrating:
+        return False
+    if actor.dead or actor.hp <= 0:
+        return True
+    return bool(actor.conditions.intersection(_CONCENTRATION_FORCED_END_CONDITIONS))
+
+
+def _force_end_concentration_if_needed(
+    actor: ActorRuntimeState,
+    *,
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> bool:
+    if not _concentration_forced_end(actor):
+        return False
+    _break_concentration(actor, actors, active_hazards)
+    return True
 
 
 def _apply_condition(
@@ -1700,8 +1852,11 @@ def _apply_effect(
         applied = apply_damage(
             recipient, raw_damage, damage_type, is_magical=is_magical, source=actor
         )
-        if not run_concentration_check(rng, recipient, applied, source=actor):
-            _break_concentration(recipient, actors, active_hazards)
+        if applied > 0:
+            if not _force_end_concentration_if_needed(
+                recipient, actors=actors, active_hazards=active_hazards
+            ) and not run_concentration_check(rng, recipient, applied, source=actor):
+                _break_concentration(recipient, actors, active_hazards)
         damage_dealt[actor.actor_id] += applied
         damage_taken[recipient.actor_id] += applied
         threat_scores[actor.actor_id] += applied
@@ -1753,6 +1908,7 @@ def _apply_effect(
             save_dc=int(save_dc) if save_dc is not None else None,
             save_ability=str(save_ability) if save_ability else None,
         )
+        _force_end_concentration_if_needed(recipient, actors=actors, active_hazards=active_hazards)
         return
 
     if effect_type == "remove_condition":
@@ -1777,7 +1933,7 @@ def _apply_effect(
         )
         return
 
-    if effect_type == "summon":
+    if effect_type in {"summon", "conjure"}:
         summon_id = str(effect.get("actor_id", "")).strip() or (
             f"{actor.actor_id}_summon_{len([key for key in actors if key.startswith(actor.actor_id)])}"
         )
@@ -1823,6 +1979,12 @@ def _apply_effect(
             position=_to_position3(effect.get("position")) or actor.position,
         )
         summoned_actor.conditions.add("summoned")
+        if effect_type == "conjure":
+            summoned_actor.conditions.add("conjured")
+        summoned_actor.traits["summoned"] = {
+            "source_id": actor.actor_id,
+            "concentration_linked": bool(action and action.concentration),
+        }
         actors[summon_id] = summoned_actor
         damage_dealt.setdefault(summon_id, 0)
         damage_taken.setdefault(summon_id, 0)
@@ -1961,6 +2123,46 @@ def _roll_recharge_for_actor(rng: random.Random, actor: ActorRuntimeState) -> No
             actor.recharge_ready[action_name] = True
 
 
+def _action_component_tags(action: ActionDefinition) -> set[str]:
+    return {
+        str(tag).strip().lower()
+        for tag in action.tags
+        if str(tag).strip().lower().startswith("component:")
+    }
+
+
+def _can_cast_spell_with_components(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if "spell" not in action.tags:
+        return True
+    components = _action_component_tags(action)
+    if not components:
+        return True
+
+    if "component:verbal" in components and actor.conditions.intersection(
+        {"silenced", "gagged", "mute"}
+    ):
+        return False
+
+    free_hands = int(actor.resources.get("free_hands", 1))
+    has_free_hand = free_hands > 0
+    has_focus = bool(actor.resources.get("spellcasting_focus", 0)) or _has_trait(
+        actor, "spellcasting focus"
+    )
+
+    needs_material = "component:material" in components
+    needs_somatic = "component:somatic" in components
+
+    if needs_material and not (has_focus or has_free_hand):
+        return False
+
+    if needs_somatic and not has_free_hand and not _has_trait(actor, "war caster"):
+        # A hand holding an M component/focus can satisfy S+M together.
+        if not (needs_material and has_focus):
+            return False
+
+    return True
+
+
 def _can_pay_resource_cost(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
     return _has_resources(actor, action.resource_cost)
 
@@ -1971,6 +2173,8 @@ def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> boo
     if action.recharge and not actor.recharge_ready.get(action.name, True):
         return False
     if not _can_pay_resource_cost(actor, action):
+        return False
+    if not _can_cast_spell_with_components(actor, action):
         return False
     if action.action_cost == "bonus" and not actor.bonus_available:
         return False
@@ -2023,9 +2227,7 @@ def _spell_level_from_action(action: ActionDefinition) -> int:
     return max(slot_levels) if slot_levels else 0
 
 
-def _highest_available_spell_slot(
-    actor: ActorRuntimeState, *, minimum: int = 1
-) -> tuple[str, int] | None:
+def _available_spell_slots(actor: ActorRuntimeState, *, minimum: int = 1) -> list[tuple[str, int]]:
     available: list[tuple[str, int]] = []
     for key, value in actor.resources.items():
         if not key.startswith("spell_slot_") or int(value) <= 0:
@@ -2036,9 +2238,26 @@ def _highest_available_spell_slot(
             continue
         if level >= minimum:
             available.append((key, level))
+    available.sort(key=lambda item: item[1])
+    return available
+
+
+def _lowest_available_spell_slot(
+    actor: ActorRuntimeState, *, minimum: int = 1
+) -> tuple[str, int] | None:
+    slots = _available_spell_slots(actor, minimum=minimum)
+    return slots[0] if slots else None
+
+
+def _select_counterspell_slot(
+    actor: ActorRuntimeState, *, incoming_spell_level: int
+) -> tuple[str, int] | None:
+    available = _available_spell_slots(actor, minimum=3)
     if not available:
         return None
-    available.sort(key=lambda item: item[1])
+    guaranteed = [slot for slot in available if slot[1] >= max(3, incoming_spell_level)]
+    if guaranteed:
+        return guaranteed[0]
     return available[0]
 
 
@@ -2139,6 +2358,45 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
     return best
 
 
+def _spellcasting_ability_mod(actor: ActorRuntimeState) -> int:
+    return max(actor.int_mod, actor.wis_mod, actor.cha_mod)
+
+
+def _resolve_dispel_magic(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    targets: list[ActorRuntimeState],
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    dispel_level = max(3, _spell_level_from_action(action))
+    check_mod = _spellcasting_ability_mod(actor)
+    for target in targets:
+        affecting_sources = [
+            source
+            for source in actors.values()
+            if source.concentrating
+            and target.actor_id in source.concentrated_targets
+            and source.actor_id != actor.actor_id
+        ]
+        if not affecting_sources:
+            continue
+        affecting_sources.sort(
+            key=lambda source: (source.concentrated_spell_level or 0, source.actor_id),
+            reverse=True,
+        )
+        source = affecting_sources[0]
+        source_level = int(source.concentrated_spell_level or 0)
+        if source_level <= dispel_level:
+            _break_concentration(source, actors, active_hazards)
+            continue
+        dc = 10 + source_level
+        if (rng.randint(1, 20) + check_mod) >= dc:
+            _break_concentration(source, actors, active_hazards)
+
+
 def _execute_action(
     *,
     rng: random.Random,
@@ -2158,9 +2416,12 @@ def _execute_action(
         return
     if obstacles is None:
         obstacles = []
+    _force_end_concentration_if_needed(actor, actors=actors, active_hazards=active_hazards)
 
     # Counterspell check
     if "spell" in action.tags:
+        if not _can_cast_spell_with_components(actor, action):
+            return
         spell_level = _spell_level_from_action(action)
         for enemy in actors.values():
             if (
@@ -2181,7 +2442,9 @@ def _execute_action(
                     from .spatial import distance_chebyshev
 
                     if distance_chebyshev(enemy.position, actor.position) <= 60:
-                        counter_slot = _highest_available_spell_slot(enemy, minimum=3)
+                        counter_slot = _select_counterspell_slot(
+                            enemy, incoming_spell_level=spell_level
+                        )
                         if counter_slot:
                             slot_key, counter_level = counter_slot
                             enemy.resources[slot_key] -= 1
@@ -2197,6 +2460,7 @@ def _execute_action(
             _break_concentration(actor, actors, active_hazards)
             actor.concentrating = True
             actor.concentrated_spell = action.name
+            actor.concentrated_spell_level = spell_level
             actor.concentration_conditions = {
                 str(effect.get("condition", "")).lower()
                 for effect in action.effects + action.mechanics
@@ -2593,8 +2857,11 @@ def _execute_action(
                     is_magical="spell" in action.tags or "magical" in action.tags,
                     source=actor,
                 )
-                if not run_concentration_check(rng, target, applied, source=actor):
-                    _break_concentration(target, actors, active_hazards)
+                if applied > 0:
+                    if not _force_end_concentration_if_needed(
+                        target, actors=actors, active_hazards=active_hazards
+                    ) and not run_concentration_check(rng, target, applied, source=actor):
+                        _break_concentration(target, actors, active_hazards)
                 damage_dealt[actor.actor_id] += applied
                 damage_taken[target.actor_id] += applied
                 threat_scores[actor.actor_id] += applied
@@ -2733,7 +3000,9 @@ def _execute_action(
                 source=actor,
             )
             if applied > 0:
-                if not run_concentration_check(rng, target, applied, source=actor):
+                if not _force_end_concentration_if_needed(
+                    target, actors=actors, active_hazards=active_hazards
+                ) and not run_concentration_check(rng, target, applied, source=actor):
                     _break_concentration(target, actors, active_hazards)
                 damage_dealt[actor.actor_id] += applied
                 damage_taken[target.actor_id] += applied
@@ -2755,6 +3024,16 @@ def _execute_action(
         return
 
     if action.action_type == "utility":
+        if "dispel" in action.tags or action.name.startswith("dispel_magic"):
+            _resolve_dispel_magic(
+                rng=rng,
+                actor=actor,
+                action=action,
+                targets=targets,
+                actors=actors,
+                active_hazards=active_hazards,
+            )
+            return
         if action.name == "dodge":
             _apply_condition(actor, "dodging", duration_rounds=1)
             return
@@ -3104,12 +3383,18 @@ def run_simulation(
                 for strategy in strategy_registry.values():
                     strategy.on_round_start(state_view)
 
+                initiative_order = _sync_initiative_order(initiative_order, actors)
                 for actor_id in initiative_order:
+                    if actor_id not in actors:
+                        continue
                     actor = actors[actor_id]
                     actor.movement_remaining = float(actor.speed_ft)
                     actor.took_attack_action_this_turn = False
                     _roll_recharge_for_actor(rng, actor)
                     _tick_conditions_for_actor(rng, actor)
+                    _force_end_concentration_if_needed(
+                        actor, actors=actors, active_hazards=active_hazards
+                    )
                     if "grappled" in actor.conditions:
                         actor.movement_remaining = 0.0
                     actor.bonus_available = True
