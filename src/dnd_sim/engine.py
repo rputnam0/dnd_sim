@@ -1900,6 +1900,129 @@ def _mark_action_cost_used(actor: ActorRuntimeState, action: ActionDefinition) -
         actor.lair_action_used_this_round = True
 
 
+def _event_trigger_priority(action: ActionDefinition) -> int:
+    for tag in action.tags:
+        value = str(tag)
+        if not value.startswith("trigger_priority:"):
+            continue
+        _, raw = value.split(":", 1)
+        try:
+            return int(raw)
+        except ValueError:
+            return 0
+    return 0
+
+
+def _run_event_triggered_actions(
+    *,
+    rng: random.Random,
+    event: str,
+    trigger_actor: ActorRuntimeState | None,
+    actors: dict[str, ActorRuntimeState],
+    round_number: int,
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    rule_trace: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+) -> list[dict[str, Any]]:
+    if obstacles is None:
+        obstacles = []
+    trace = rule_trace if rule_trace is not None else []
+    candidates: list[tuple[int, str, str, ActorRuntimeState, ActionDefinition]] = []
+    for actor in actors.values():
+        if actor.dead or actor.hp <= 0:
+            continue
+        for action in actor.actions:
+            if action.event_trigger != event:
+                continue
+            if not _action_available(actor, action):
+                continue
+            candidates.append(
+                (_event_trigger_priority(action), actor.actor_id, action.name, actor, action)
+            )
+
+    candidates.sort(key=lambda item: (-item[0], item[1], item[2]))
+    for _priority, actor_id, action_name, actor, action in candidates:
+        lock_key = f"event_reaction_round:{round_number}"
+        if action.action_cost == "reaction" and actor.per_action_uses.get(lock_key, 0) > 0:
+            trace.append(
+                {
+                    "event": event,
+                    "actor_id": actor_id,
+                    "action": action_name,
+                    "result": "skipped",
+                    "reason": "reaction_lock",
+                }
+            )
+            continue
+
+        requested: list[TargetRef] = _default_target(actor, actors)
+        if (
+            trigger_actor is not None
+            and trigger_actor.actor_id in actors
+            and trigger_actor.team != actor.team
+            and trigger_actor.hp > 0
+            and not trigger_actor.dead
+        ):
+            requested = [TargetRef(trigger_actor.actor_id)]
+        targets = _resolve_targets_for_action(
+            rng=rng,
+            actor=actor,
+            action=action,
+            actors=actors,
+            requested=requested,
+        )
+        if not targets:
+            trace.append(
+                {
+                    "event": event,
+                    "actor_id": actor_id,
+                    "action": action_name,
+                    "result": "skipped",
+                    "reason": "no_targets",
+                }
+            )
+            continue
+
+        spent = _spend_resources(actor, action.resource_cost)
+        for key, amount in spent.items():
+            resources_spent[actor.actor_id][key] = (
+                resources_spent[actor.actor_id].get(key, 0) + amount
+            )
+        actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
+        _mark_action_cost_used(actor, action)
+        if action.action_cost == "reaction":
+            actor.per_action_uses[lock_key] = 1
+
+        _execute_action(
+            rng=rng,
+            actor=actor,
+            action=action,
+            targets=targets,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
+        )
+        trace.append(
+            {
+                "event": event,
+                "actor_id": actor_id,
+                "action": action_name,
+                "result": "executed",
+            }
+        )
+    return trace
+
+
 def _fallback_action(
     actor: ActorRuntimeState, *, allow_special: bool = False
 ) -> ActionDefinition | None:
@@ -2870,6 +2993,7 @@ def run_simulation(
         death_counts: dict[str, int] = {}
         remaining_hp: dict[str, int] = {}
         active_hazards: list[dict[str, Any]] = []
+        trial_rule_trace: list[dict[str, Any]] = []
 
         for character_id in scenario.config.party:
             if character_id not in character_db:
@@ -3067,6 +3191,21 @@ def run_simulation(
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
                     )
+                    _run_event_triggered_actions(
+                        rng=rng,
+                        event="after_action",
+                        trigger_actor=actor,
+                        actors=actors,
+                        round_number=rounds,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=trial_rule_trace,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                    )
 
                     # --- Bonus action step ---
                     if actor.bonus_available and _can_act(actor):
@@ -3102,6 +3241,21 @@ def run_simulation(
                                         threat_scores=threat_scores,
                                         resources_spent=resources_spent,
                                         active_hazards=active_hazards,
+                                        obstacles=battlefield_obstacles,
+                                        light_level=light_level,
+                                    )
+                                    _run_event_triggered_actions(
+                                        rng=rng,
+                                        event="after_action",
+                                        trigger_actor=actor,
+                                        actors=actors,
+                                        round_number=rounds,
+                                        damage_dealt=damage_dealt,
+                                        damage_taken=damage_taken,
+                                        threat_scores=threat_scores,
+                                        resources_spent=resources_spent,
+                                        active_hazards=active_hazards,
+                                        rule_trace=trial_rule_trace,
                                         obstacles=battlefield_obstacles,
                                         light_level=light_level,
                                     )
@@ -3159,6 +3313,21 @@ def run_simulation(
                                             threat_scores=threat_scores,
                                             resources_spent=resources_spent,
                                             active_hazards=active_hazards,
+                                            obstacles=battlefield_obstacles,
+                                            light_level=light_level,
+                                        )
+                                        _run_event_triggered_actions(
+                                            rng=rng,
+                                            event="after_action",
+                                            trigger_actor=actor,
+                                            actors=actors,
+                                            round_number=rounds,
+                                            damage_dealt=damage_dealt,
+                                            damage_taken=damage_taken,
+                                            threat_scores=threat_scores,
+                                            resources_spent=resources_spent,
+                                            active_hazards=active_hazards,
+                                            rule_trace=trial_rule_trace,
                                             obstacles=battlefield_obstacles,
                                             light_level=light_level,
                                         )
