@@ -2004,6 +2004,10 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             )
             if not description and "meta" in spell_def and "description" in spell_def:
                 description = str(spell_def.get("description", ""))
+            if "no benefit from cover" in description.lower():
+                tags = [str(tag) for tag in hydrated.get("tags", [])]
+                tags.append("ignore_dex_save_cover")
+                hydrated["tags"] = list(dict.fromkeys(tags))
 
             # Damage: "take 8d6 fire damage"
             if "damage" not in hydrated:
@@ -4909,6 +4913,55 @@ def _resolve_template_targets(
     ]
 
 
+def _cover_bonus_from_state(cover_state: str) -> int:
+    if cover_state == "HALF":
+        return 2
+    if cover_state == "THREE_QUARTERS":
+        return 5
+    return 0
+
+
+def _action_ignores_dex_save_cover(action: ActionDefinition) -> bool:
+    return _has_tag(action, "ignore_dex_save_cover")
+
+
+def _action_requires_line_of_effect(action: ActionDefinition) -> bool:
+    if action.target_mode == "self":
+        return False
+    if _has_tag(action, "ignore_line_of_effect") or _has_tag(action, "ignore_total_cover"):
+        return False
+    if action.action_type in {"attack", "save", "grapple", "shove"}:
+        return True
+    for effect in [*action.effects, *action.mechanics]:
+        if not isinstance(effect, dict):
+            continue
+        if str(effect.get("effect_type", "")).lower() in {
+            "damage",
+            "apply_condition",
+            "forced_movement",
+        }:
+            return True
+    return False
+
+
+def _filter_targets_by_line_of_effect(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    targets: list[ActorRuntimeState],
+    obstacles: list[AABB] | None = None,
+) -> list[ActorRuntimeState]:
+    if not targets or not obstacles or not _action_requires_line_of_effect(action):
+        return targets
+    from .spatial import check_cover
+
+    return [
+        target
+        for target in targets
+        if check_cover(actor.position, target.position, obstacles) != "TOTAL"
+    ]
+
+
 def _resolve_targets_for_action(
     *,
     rng: random.Random,
@@ -4916,6 +4969,7 @@ def _resolve_targets_for_action(
     action: ActionDefinition,
     actors: dict[str, ActorRuntimeState],
     requested: list[TargetRef],
+    obstacles: list[AABB] | None = None,
 ) -> list[ActorRuntimeState]:
     mode = action.target_mode
     include_self = action.include_self or mode == "self"
@@ -5025,16 +5079,23 @@ def _resolve_targets_for_action(
                     aoe_victims.add(cand.actor_id)
         if not action.include_self and actor.actor_id in aoe_victims:
             aoe_victims.remove(actor.actor_id)
-        return sorted(
+        resolved_targets = sorted(
             [actors[aid] for aid in aoe_victims],
             key=lambda value: _target_sort_key(actor, value, mode=mode),
         )
-    return _resolve_template_targets(
+    else:
+        resolved_targets = _resolve_template_targets(
+            actor=actor,
+            action=action,
+            mode=mode,
+            primaries=selected,
+            candidates=ordered_candidates,
+        )
+    return _filter_targets_by_line_of_effect(
         actor=actor,
         action=action,
-        mode=mode,
-        primaries=selected,
-        candidates=ordered_candidates,
+        targets=resolved_targets,
+        obstacles=obstacles,
     )
 
 
@@ -5470,6 +5531,7 @@ def _execute_declared_action_step_or_error(
         action=action,
         actors=actors,
         requested=requested_targets,
+        obstacles=obstacles,
     )
     if requested_targets:
         requested_ids = {target.actor_id for target in requested_targets}
@@ -7006,6 +7068,7 @@ def _resolve_event_targets(
     actors: dict[str, ActorRuntimeState],
     trigger_actor: ActorRuntimeState | None,
     trigger_target: ActorRuntimeState | None,
+    obstacles: list[AABB] | None = None,
 ) -> list[ActorRuntimeState]:
     requested: list[TargetRef] = _default_target(actor, actors)
     preferred = trigger_target if trigger_target is not None else trigger_actor
@@ -7023,6 +7086,7 @@ def _resolve_event_targets(
         action=action,
         actors=actors,
         requested=requested,
+        obstacles=obstacles,
     )
 
 
@@ -7273,6 +7337,7 @@ def _dispatch_combat_event(
             actors=actors,
             trigger_actor=trigger_actor,
             trigger_target=trigger_target,
+            obstacles=obstacles,
         )
         if not targets:
             trace.append(
@@ -7577,6 +7642,7 @@ def _trigger_readied_actions(
                             action=reaction_action,
                             actors=actors,
                             requested=[TargetRef(trigger_actor.actor_id)],
+                            obstacles=obstacles,
                         )
                         targets = [
                             target
@@ -7635,6 +7701,7 @@ def _trigger_readied_actions(
                 action=reaction_action,
                 actors=actors,
                 requested=[TargetRef(trigger_actor.actor_id)],
+                obstacles=obstacles,
             )
             targets = [target for target in targets if target.actor_id == trigger_actor.actor_id]
             targets = _filter_targets_in_range(actor, reaction_action, targets)
@@ -7995,6 +8062,7 @@ def _try_shield_reaction(
     target: ActorRuntimeState,
     roll: AttackRollResult,
     *,
+    target_ac: int,
     turn_token: str | None = None,
 ) -> bool:
     """Always-use Shield reaction: +5 AC to negate a hit. Consumes reaction + spell slot.
@@ -8025,8 +8093,8 @@ def _try_shield_reaction(
             break
     if slot_key is None:
         return False
-    # Shield: +5 AC. Only use if it would actually negate the hit.
-    if roll.total < (target.ac + 5) and roll.natural_roll != 20:
+    # Shield: +5 AC against the effective AC for this attack (includes cover/other modifiers).
+    if roll.total < (target_ac + 5) and roll.natural_roll != 20:
         target.resources[slot_key] -= 1
         target.reaction_available = False
         _record_spell_cast_for_turn(target, shield_spell_action)
@@ -8180,6 +8248,7 @@ def _shield_reaction_would_be_legal(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
     roll: AttackRollResult,
+    target_ac: int,
     turn_token: str | None = None,
 ) -> bool:
     if not _can_take_reaction(target):
@@ -8206,7 +8275,7 @@ def _shield_reaction_would_be_legal(
     )
     if not has_slot:
         return False
-    return roll.total < (target.ac + 5) and roll.natural_roll != 20
+    return roll.total < (target_ac + 5) and roll.natural_roll != 20
 
 
 class _AttackRollBardicInspirationRule:
@@ -8287,6 +8356,7 @@ class _AttackResolutionShieldRule:
             attacker=event.attacker,
             target=event.target,
             roll=event.roll,
+            target_ac=event.target_ac,
             turn_token=event.turn_token,
         ):
             return
@@ -8306,6 +8376,7 @@ class _AttackResolutionShieldRule:
             event.attacker,
             event.target,
             event.roll,
+            target_ac=event.target_ac,
             turn_token=event.turn_token,
         ):
             event.roll = AttackRollResult(
@@ -8887,10 +8958,7 @@ def _execute_action(
                     )
                     emit_event("on_miss", trigger_target=target)
                     continue
-                if cover_state == "HALF":
-                    cover_bonus = max(cover_bonus, 2)
-                elif cover_state == "THREE_QUARTERS":
-                    cover_bonus = max(cover_bonus, 5)
+                cover_bonus = max(cover_bonus, _cover_bonus_from_state(cover_state))
                 cover_bonus = max(
                     cover_bonus,
                     _smite_of_protection_half_cover_bonus(target, actors),
@@ -9297,6 +9365,8 @@ def _execute_action(
     if action.action_type == "save":
         if action.save_dc is None or not action.save_ability:
             return
+        from .spatial import check_cover
+
         save_key = action.save_ability.lower()
         careful_metamagic = _has_tag(action, "metamagic:careful")
         empowered_metamagic = _has_tag(action, "metamagic:empowered")
@@ -9371,8 +9441,13 @@ def _execute_action(
         for target in targets:
             if target.dead or target.hp <= 0:
                 continue
+            cover_state = check_cover(actor.position, target.position, obstacles)
+            if cover_state == "TOTAL" and _action_requires_line_of_effect(action):
+                continue
             save_mod = int(target.save_mods.get(save_key, 0))
             if save_key == "dex":
+                if not _action_ignores_dex_save_cover(action):
+                    save_mod += _cover_bonus_from_state(cover_state)
                 save_mod += _smite_of_protection_half_cover_bonus(target, actors)
             save_roll = rng.randint(1, 20)
             if (
@@ -9709,6 +9784,7 @@ def _run_lair_actions(
                 action=candidate,
                 actors=actors,
                 requested=[],
+                obstacles=obstacles,
             )
             if resolved:
                 action = candidate
@@ -9784,6 +9860,7 @@ def _run_legendary_actions(
                 action=candidate,
                 actors=actors,
                 requested=[],
+                obstacles=obstacles,
             )
             if resolved:
                 action = candidate
@@ -10140,6 +10217,7 @@ def run_simulation(
                                 action=action,
                                 actors=actors,
                                 requested=[],
+                                obstacles=battlefield_obstacles,
                             )
                             if resolved_targets:
                                 actor.per_action_uses[action.name] = (
@@ -10335,6 +10413,7 @@ def run_simulation(
                         action=action,
                         actors=actors,
                         requested=targets,
+                        obstacles=battlefield_obstacles,
                     )
                     trial_telemetry.append(
                         {
@@ -10449,6 +10528,7 @@ def run_simulation(
                                 action=bonus_action,
                                 actors=actors,
                                 requested=_default_target(actor, actors),
+                                obstacles=battlefield_obstacles,
                             )
                             if bonus_targets:
                                 bonus_spell_cast_request = (
@@ -10530,6 +10610,7 @@ def run_simulation(
                                     action=surge_action,
                                     actors=actors,
                                     requested=_default_target(actor, actors),
+                                    obstacles=battlefield_obstacles,
                                 )
                                 if surge_targets:
                                     surge_spell_cast_request = (
