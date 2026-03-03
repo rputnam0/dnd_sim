@@ -47,12 +47,14 @@ class CharacterRecord:
     traits: list[str]
     raw_fields: list[RawField]
     source: dict[str, str]
+    class_levels: dict[str, int] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "character_id": self.character_id,
             "name": self.name,
             "class_level": self.class_level,
+            "class_levels": self.class_levels,
             "max_hp": self.max_hp,
             "ac": self.ac,
             "speed_ft": self.speed_ft,

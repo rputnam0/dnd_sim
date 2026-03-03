@@ -9,6 +9,13 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Callable
 
+from dnd_sim.characters import (
+    class_level_for,
+    normalize_class_levels,
+    parse_class_levels as parse_character_class_levels,
+    spell_slots_for_multiclass,
+    total_character_level,
+)
 from dnd_sim.inventory import InventoryState
 from dnd_sim.io import EncounterConfig, EnemyConfig, LoadedScenario
 from dnd_sim.models import (
@@ -681,26 +688,23 @@ def _append_damage_packet(
 
 def _parse_character_level(class_level: str) -> int:
     """Extract the numeric level from a class_level string like 'Fighter 8' or 'Wizard 5 / Cleric 3'."""
-    class_levels = _parse_class_levels(class_level)
+    class_levels = parse_character_class_levels(class_level)
     if class_levels:
-        return sum(class_levels.values())
+        return total_character_level(class_levels)
     numbers = re.findall(r"\d+", class_level)
     return sum(int(n) for n in numbers) if numbers else 1
 
 
 def _parse_class_level(class_level_text: str, class_name: str) -> int:
+    class_levels = parse_character_class_levels(class_level_text)
+    if class_levels:
+        return class_level_for(class_levels, class_name)
     pattern = re.compile(rf"\b{re.escape(class_name)}\b[^0-9]*(\d+)", re.IGNORECASE)
     return sum(int(match.group(1)) for match in pattern.finditer(class_level_text or ""))
 
 
 def _parse_class_levels(class_level_text: str) -> dict[str, int]:
-    levels: dict[str, int] = {}
-    for class_name, raw_level in re.findall(
-        r"([A-Za-z][A-Za-z' -]+?)\s*(\d+)", class_level_text or ""
-    ):
-        key = class_name.strip().lower()
-        levels[key] = levels.get(key, 0) + int(raw_level)
-    return levels
+    return parse_character_class_levels(class_level_text)
 
 
 def _normalize_spell_school(value: Any) -> str | None:
@@ -4188,9 +4192,19 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         "superiority_dice": "superiority_dice",
     }
     raw = character.get("resources", {})
+    explicit_class_levels = character.get("class_levels")
+    class_levels: dict[str, int]
+    if isinstance(explicit_class_levels, dict):
+        try:
+            class_levels = normalize_class_levels(explicit_class_levels)
+        except ValueError:
+            class_levels = _parse_class_levels(str(character.get("class_level", "")))
+    else:
+        class_levels = _parse_class_levels(str(character.get("class_level", "")))
     has_pact_magic = _is_pact_magic_character(character)
     warlock_level = _warlock_level_from_character(character)
     raw_spell_slots = raw.get("spell_slots")
+    inferred_spell_slots = spell_slots_for_multiclass(class_levels)
     pact_slot_profile = _extract_pact_slot_profile_from_spell_slots(raw_spell_slots)
     has_any_positive_slot = False
     if isinstance(raw_spell_slots, dict):
@@ -4226,6 +4240,14 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
                             result[f"{key}_{name}"] = amount
         elif isinstance(value, int):
             result[key] = value
+    if not any(key.startswith("spell_slot_") for key in result.keys()):
+        for level, slots in inferred_spell_slots.items():
+            result[f"spell_slot_{level}"] = int(slots)
+
+    if has_pact_magic and pact_slot_profile is not None:
+        pact_slot_level, pact_slot_count = pact_slot_profile
+        result.setdefault(f"warlock_spell_slot_{pact_slot_level}", pact_slot_count)
+
     traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
     if _normalize_trait_name("lay on hands") in traits and "lay_on_hands_pool" not in result:
         result["lay_on_hands_pool"] = max(
@@ -4430,7 +4452,20 @@ def _build_actor_from_character(
     character: dict[str, Any], traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
     class_level_text = str(character.get("class_level", "1"))
-    class_levels = _parse_class_levels(class_level_text)
+    explicit_class_levels = character.get("class_levels")
+    class_levels: dict[str, int] = {}
+    if isinstance(explicit_class_levels, dict):
+        try:
+            class_levels = normalize_class_levels(explicit_class_levels)
+        except ValueError:
+            class_levels = {}
+    if not class_levels:
+        class_levels = _parse_class_levels(class_level_text)
+    character_level = (
+        total_character_level(class_levels)
+        if class_levels
+        else _parse_character_level(class_level_text)
+    )
     ability_scores = character.get("ability_scores", {})
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
     con_mod = (int(ability_scores.get("con", 10)) - 10) // 2
@@ -4463,7 +4498,7 @@ def _build_actor_from_character(
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
         traits=_resolve_character_traits(character, traits_db),
-        level=_parse_character_level(class_level_text),
+        level=character_level,
         class_levels=class_levels,
         inventory=InventoryState.from_character_payload(character),
     )
