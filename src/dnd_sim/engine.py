@@ -5868,7 +5868,7 @@ def query_attack_condition_modifiers(
     if any(has_condition(target, condition) for condition in _ATTACKER_ADVANTAGE_CONDITIONS):
         modifiers.advantage = True
     if has_condition(target, "prone"):
-        if is_melee_attack and within_5ft:
+        if within_5ft:
             modifiers.advantage = True
         else:
             modifiers.disadvantage = True
@@ -6142,10 +6142,14 @@ def _tick_conditions_for_actor(
     for effect in actor.effect_instances:
         save_boundary = "turn_end" if effect.save_to_end else "turn_start"
         if effect.save_dc is not None and effect.save_ability and save_boundary == tick_boundary:
-            save_key = effect.save_ability
-            save_mod = int(actor.save_mods.get(save_key, 0))
-            save_roll = rng.randint(1, 20) + save_mod
-            if save_roll >= effect.save_dc:
+            save_key = _normalize_condition(effect.save_ability)
+            if _auto_fails_strength_or_dex_save(actor, save_key):
+                save_succeeds = False
+            else:
+                save_mod = int(actor.save_mods.get(save_key, 0))
+                save_roll = rng.randint(1, 20) + save_mod
+                save_succeeds = save_roll >= effect.save_dc
+            if save_succeeds:
                 changed = True
                 continue
 

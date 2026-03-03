@@ -5,6 +5,7 @@ from dnd_sim.engine import (
     _execute_action,
     _remove_condition,
     _saving_throw_succeeds,
+    _tick_conditions_for_actor,
     query_attack_condition_modifiers,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
@@ -87,6 +88,29 @@ def test_unit_paralyzed_forces_critical_only_within_five_feet() -> None:
 
     assert close_modifiers.force_critical is True
     assert reach_modifiers.force_critical is False
+
+
+def test_unit_prone_advantage_is_distance_based_even_for_ranged_attack() -> None:
+    attacker = _actor("attacker", "party")
+    target = _actor("target", "enemy")
+    target.conditions.add("prone")
+
+    close_modifiers = query_attack_condition_modifiers(
+        attacker=attacker,
+        target=target,
+        is_melee_attack=False,
+        distance_ft=5.0,
+    )
+    far_modifiers = query_attack_condition_modifiers(
+        attacker=attacker,
+        target=target,
+        is_melee_attack=True,
+        distance_ft=10.0,
+    )
+
+    assert close_modifiers.advantage is True
+    assert close_modifiers.disadvantage is False
+    assert far_modifiers.disadvantage is True
 
 
 def test_integration_stunned_target_is_not_auto_crit_on_non_nat20_hit() -> None:
@@ -183,3 +207,22 @@ def test_integration_unconscious_applies_prone_and_waking_does_not_clear_prone()
     _remove_condition(target, "unconscious")
     assert "unconscious" not in target.conditions
     assert "prone" in target.conditions
+
+
+def test_integration_repeating_strength_save_auto_fails_while_stunned() -> None:
+    target = _actor("target", "party")
+    target.save_mods["str"] = 20
+
+    _apply_condition(target, "stunned", duration_rounds=2)
+    _apply_condition(
+        target,
+        "restrained",
+        duration_rounds=2,
+        save_dc=5,
+        save_ability="str",
+    )
+
+    _tick_conditions_for_actor(_FixedRng([]), target, boundary="turn_start")
+
+    assert "stunned" in target.conditions
+    assert "restrained" in target.conditions
