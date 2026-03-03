@@ -599,24 +599,38 @@ def apply_damage_bundle(
     if adjusted > 0 and "raging" in target.conditions:
         target.rage_sustained_since_last_turn = True
 
-    if target.hp <= 0 and not target.dead:
-        # Failed death save from taking damage while at 0.
-        target.death_failures += 2 if is_critical else 1
-        if target.death_failures >= 3:
-            target.dead = True
-            target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
-        return resolution
-
     remaining = adjusted
     if target.temp_hp > 0 and remaining > 0:
         consumed = min(target.temp_hp, remaining)
         target.temp_hp -= consumed
         remaining -= consumed
 
+    def _mark_dead() -> None:
+        target.dead = True
+        target.stable = False
+        target.death_failures = max(3, target.death_failures)
+        target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
+
+    if target.hp <= 0 and not target.dead:
+        if remaining >= target.max_hp:
+            _mark_dead()
+            return resolution
+        if remaining > 0:
+            if target.stable:
+                target.stable = False
+                target.death_successes = 0
+            # Failed death save from taking damage while at 0.
+            target.death_failures += 2 if is_critical else 1
+            if target.death_failures >= 3:
+                _mark_dead()
+        return resolution
+
+    hp_before = target.hp
     if remaining > 0:
         target.hp -= remaining
 
     if target.hp <= 0 and not target.dead:
+        overflow = max(0, remaining - max(0, hp_before))
         target.hp = 0
         downed_conditions = {"unconscious", "incapacitated"}
         if "prone" not in target.condition_immunities and "all" not in target.condition_immunities:
@@ -625,6 +639,8 @@ def apply_damage_bundle(
         if not target.was_downed:
             target.downed_count += 1
             target.was_downed = True
+        if overflow >= target.max_hp:
+            _mark_dead()
 
     if adjusted > 0 and "turned" in target.conditions:
         for condition in ("turned", "frightened"):
