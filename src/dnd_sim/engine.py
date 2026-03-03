@@ -136,6 +136,9 @@ _SPELL_SLOT_CREATION_COSTS: dict[int, int] = {1: 2, 2: 3, 3: 5, 4: 6, 5: 7}
 _TRAVEL_PACE_MILES_PER_DAY: dict[str, float] = {"slow": 18.0, "normal": 24.0, "fast": 30.0}
 _TRAVEL_PACE_HAZARD_DC_MODIFIER: dict[str, int] = {"slow": -2, "normal": 0, "fast": 2}
 _MULTIATTACK_DEFENSE_PREFIX = "multiattack_defense_from:"
+_SHIELD_SPELL_WARD_CONDITION = "shield_spell_warded"
+_SHIELD_SPELL_WARD_EFFECT_ID = "shield_spell_ward"
+_SHIELD_SPELL_AC_BONUS = 5
 _SPELL_SCHOOL_ORDER = (
     "abjuration",
     "conjuration",
@@ -6712,6 +6715,9 @@ def _apply_effect(
     telemetry: list[dict[str, Any]] | None = None
 
     if effect_type == "damage":
+        if action is not None and _is_magic_missile_action(action):
+            if _shield_spell_blocks_magic_missile(target=recipient, turn_token=turn_token):
+                return
         is_magical = False
         if action and getattr(action, "tags", None):
             is_magical = _is_magical_action(action)
@@ -8593,6 +8599,87 @@ def _shield_spell_action(shield_action: ActionDefinition) -> ActionDefinition:
     return replace(shield_action, tags=tags)
 
 
+def _shield_reaction_action(target: ActorRuntimeState) -> ActionDefinition | None:
+    for action in target.actions:
+        if action.name == "shield" and action.action_cost == "reaction":
+            return action
+    return None
+
+
+def _shield_reaction_slot_key(target: ActorRuntimeState) -> str | None:
+    for key in sorted(target.resources.keys()):
+        if key.startswith("spell_slot_") and target.resources.get(key, 0) > 0:
+            return key
+    return None
+
+
+def _shield_spell_ac_bonus(target: ActorRuntimeState) -> int:
+    return _SHIELD_SPELL_AC_BONUS if has_condition(target, _SHIELD_SPELL_WARD_CONDITION) else 0
+
+
+def _shield_reaction_cast_context(
+    target: ActorRuntimeState,
+    *,
+    turn_token: str | None = None,
+) -> tuple[ActionDefinition, str] | None:
+    if not _can_take_reaction(target):
+        return None
+    shield_action = _shield_reaction_action(target)
+    if shield_action is None:
+        return None
+    shield_spell_action = _shield_spell_action(shield_action)
+    if not _spell_casting_legal_this_turn(
+        target,
+        shield_spell_action,
+        turn_token=turn_token,
+    ):
+        return None
+    slot_key = _shield_reaction_slot_key(target)
+    if slot_key is None:
+        return None
+    return shield_spell_action, slot_key
+
+
+def _activate_shield_reaction(
+    target: ActorRuntimeState,
+    *,
+    turn_token: str | None = None,
+) -> bool:
+    context = _shield_reaction_cast_context(target, turn_token=turn_token)
+    if context is None:
+        return False
+    shield_spell_action, slot_key = context
+    target.resources[slot_key] -= 1
+    target.reaction_available = False
+    _record_spell_cast_for_turn(target, shield_spell_action)
+    _apply_condition(
+        target,
+        _SHIELD_SPELL_WARD_CONDITION,
+        duration_rounds=1,
+        source_actor_id=target.actor_id,
+        target_actor_id=target.actor_id,
+        effect_id=_SHIELD_SPELL_WARD_EFFECT_ID,
+        duration_timing="turn_start",
+        stack_policy="refresh",
+    )
+    return True
+
+
+def _is_magic_missile_action(action: ActionDefinition) -> bool:
+    slug = _slugify_spell_name(action.name)
+    return slug == "magic_missile" or slug.startswith("magic_missile_")
+
+
+def _shield_spell_blocks_magic_missile(
+    *,
+    target: ActorRuntimeState,
+    turn_token: str | None = None,
+) -> bool:
+    if _shield_spell_ac_bonus(target) > 0:
+        return True
+    return _activate_shield_reaction(target, turn_token=turn_token)
+
+
 def _try_shield_reaction(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
@@ -8605,39 +8692,11 @@ def _try_shield_reaction(
 
     Returns True if the hit was negated.
     """
-    if not _can_take_reaction(target):
+    if roll.natural_roll == 20:
         return False
-    shield_action = None
-    for action in target.actions:
-        if action.action_cost == "reaction" and _action_matches_reaction_spell_id(
-            action, spell_id="shield"
-        ):
-            shield_action = action
-            break
-    if shield_action is None:
+    if roll.total >= (target_ac + _SHIELD_SPELL_AC_BONUS):
         return False
-    shield_spell_action = _shield_spell_action(shield_action)
-    if not _spell_casting_legal_this_turn(
-        target,
-        shield_spell_action,
-        turn_token=turn_token,
-    ):
-        return False
-    # Need a 1st-level spell slot (or any available slot)
-    slot_key = None
-    for key in sorted(target.resources.keys()):
-        if key.startswith("spell_slot_") and target.resources.get(key, 0) > 0:
-            slot_key = key
-            break
-    if slot_key is None:
-        return False
-    # Shield: +5 AC against the effective AC for this attack (includes cover/other modifiers).
-    if roll.total < (target_ac + 5) and roll.natural_roll != 20:
-        target.resources[slot_key] -= 1
-        target.reaction_available = False
-        _record_spell_cast_for_turn(target, shield_spell_action)
-        return True
-    return False
+    return _activate_shield_reaction(target, turn_token=turn_token)
 
 
 def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None:
@@ -8789,34 +8848,11 @@ def _shield_reaction_would_be_legal(
     target_ac: int,
     turn_token: str | None = None,
 ) -> bool:
-    if not _can_take_reaction(target):
+    if roll.natural_roll == 20:
         return False
-    shield_action = next(
-        (
-            action
-            for action in target.actions
-            if (
-                action.action_cost == "reaction"
-                and _action_matches_reaction_spell_id(action, spell_id="shield")
-            )
-        ),
-        None,
-    )
-    if shield_action is None:
+    if roll.total >= (target_ac + _SHIELD_SPELL_AC_BONUS):
         return False
-    if not _spell_casting_legal_this_turn(
-        target,
-        _shield_spell_action(shield_action),
-        turn_token=turn_token,
-    ):
-        return False
-    has_slot = any(
-        key.startswith("spell_slot_") and target.resources.get(key, 0) > 0
-        for key in sorted(target.resources.keys())
-    )
-    if not has_slot:
-        return False
-    return roll.total < (target_ac + 5) and roll.natural_roll != 20
+    return _shield_reaction_cast_context(target, turn_token=turn_token) is not None
 
 
 class _AttackRollBardicInspirationRule:
@@ -9489,7 +9525,7 @@ def _execute_action(
 
             # Sharpshooter / Great Weapon Master AI Toggle (-5 to hit / +10 damage)
             power_attack_active = False
-            target_ac = target.ac
+            target_ac = target.ac + _shield_spell_ac_bonus(target)
             if _has_trait(target, "multiattack defense") and (
                 _multiattack_defense_marker(actor.actor_id) in target.conditions
             ):
@@ -10112,6 +10148,12 @@ def _execute_action(
                 ):
                     final_damage = 0
                     target.reaction_available = False
+
+            if _is_magic_missile_action(action) and _shield_spell_blocks_magic_missile(
+                target=target,
+                turn_token=turn_token,
+            ):
+                final_damage = 0
 
             was_active_before_damage = target.hp > 0 and not target.dead
             applied = apply_damage(
