@@ -5,7 +5,9 @@ import random
 import pytest
 
 from dnd_sim.engine import (
+    _action_available,
     _build_actor_from_character,
+    _build_character_actions,
     _dispatch_combat_event,
     _execute_action,
     _find_best_bonus_action,
@@ -229,3 +231,124 @@ def test_gwm_trigger_is_not_reusable_on_later_turn() -> None:
 
     assert actor.gwm_bonus_trigger_available is False
     assert _find_best_bonus_action(actor) is None
+
+
+def _martial_character(*, traits: list[str], attacks: list[dict]) -> dict:
+    return {
+        "character_id": "martial_tester",
+        "name": "Martial Tester",
+        "class_level": "Fighter 5",
+        "max_hp": 40,
+        "ac": 16,
+        "speed_ft": 30,
+        "ability_scores": {
+            "str": 10,
+            "dex": 18,
+            "con": 14,
+            "int": 10,
+            "wis": 10,
+            "cha": 10,
+        },
+        "save_mods": {"str": 0, "dex": 4, "con": 2, "int": 0, "wis": 0, "cha": 0},
+        "skill_mods": {},
+        "attacks": attacks,
+        "resources": {},
+        "traits": traits,
+        "raw_fields": [],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+
+
+def _dual_light_attacks() -> list[dict]:
+    return [
+        {
+            "attack_profile_id": "mainhand_profile",
+            "weapon_id": "weapon_mainhand",
+            "item_id": "item_mainhand",
+            "name": "Mainhand Shortsword",
+            "to_hit": 8,
+            "damage": "1d6+4",
+            "damage_type": "piercing",
+            "weapon_properties": ["light", "finesse"],
+        },
+        {
+            "attack_profile_id": "offhand_profile",
+            "weapon_id": "weapon_offhand",
+            "item_id": "item_offhand",
+            "name": "Offhand Dagger",
+            "to_hit": 8,
+            "damage": "1d4+4",
+            "damage_type": "piercing",
+            "weapon_properties": ["light", "finesse"],
+        },
+    ]
+
+
+def test_two_weapon_offhand_baseline_preserves_identity_and_no_ability_damage() -> None:
+    character = _martial_character(traits=["Extra Attack"], attacks=_dual_light_attacks())
+
+    actions = _build_character_actions(character)
+    off_hand = next(action for action in actions if action.name == "off_hand_attack")
+
+    assert off_hand.action_cost == "bonus"
+    assert off_hand.attack_profile_id == "offhand_profile"
+    assert off_hand.weapon_id == "weapon_offhand"
+    assert off_hand.item_id == "item_offhand"
+    assert set(off_hand.weapon_properties) == {"light", "finesse"}
+    assert off_hand.damage == "1d4"
+
+
+def test_two_weapon_offhand_requires_attack_action_before_bonus_use() -> None:
+    character = _martial_character(traits=["Extra Attack"], attacks=_dual_light_attacks())
+    actor = _build_actor_from_character(character, traits_db={})
+    off_hand = next(action for action in actor.actions if action.name == "off_hand_attack")
+
+    actor.took_attack_action_this_turn = False
+    assert _action_available(actor, off_hand) is False
+
+    actor.took_attack_action_this_turn = True
+    assert _action_available(actor, off_hand) is True
+
+
+def test_two_weapon_offhand_style_adds_ability_modifier() -> None:
+    character = _martial_character(
+        traits=["Extra Attack", "Two-Weapon Fighting"],
+        attacks=_dual_light_attacks(),
+    )
+
+    actions = _build_character_actions(character)
+    off_hand = next(action for action in actions if action.name == "off_hand_attack")
+
+    assert off_hand.damage == "1d4+4"
+
+
+def test_two_weapon_offhand_illegal_setup_rejected_without_override() -> None:
+    character = _martial_character(
+        traits=["Extra Attack", "Two-Weapon Fighting"],
+        attacks=[
+            {
+                "attack_profile_id": "mainhand_profile",
+                "weapon_id": "weapon_mainhand",
+                "item_id": "item_mainhand",
+                "name": "Mainhand Shortsword",
+                "to_hit": 8,
+                "damage": "1d6+4",
+                "damage_type": "piercing",
+                "weapon_properties": ["light", "finesse"],
+            },
+            {
+                "attack_profile_id": "offhand_profile",
+                "weapon_id": "weapon_offhand",
+                "item_id": "item_offhand",
+                "name": "Offhand Rapier",
+                "to_hit": 8,
+                "damage": "1d8+4",
+                "damage_type": "piercing",
+                "weapon_properties": ["finesse"],
+            },
+        ],
+    )
+
+    actions = _build_character_actions(character)
+
+    assert "off_hand_attack" not in {action.name for action in actions}
