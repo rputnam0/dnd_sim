@@ -8,6 +8,7 @@ from dnd_sim.engine import (
     _break_concentration,
     _build_spell_actions,
     _coerce_positive_distance,
+    _counterspell_slot_if_legal,
     _execute_action,
     _resolve_targets_for_action,
 )
@@ -283,6 +284,61 @@ def test_counterspell_prefers_slot_that_auto_counters_when_available() -> None:
     assert "blessed" not in ally.conditions
     assert enemy.resources["spell_slot_3"] == 1
     assert enemy.resources["spell_slot_6"] == 0
+
+
+def test_counterspell_slot_legality_requires_sight_and_components() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    enemy.position = (0.0, 30.0, 0.0)
+    enemy.resources = {"spell_slot_3": 1}
+
+    counterspell = ActionDefinition(
+        name="counterspell",
+        action_type="utility",
+        action_cost="reaction",
+        target_mode="single_enemy",
+        tags=["spell", "counterspell", "component:verbal"],
+    )
+
+    assert _counterspell_slot_if_legal(
+        reactor=enemy,
+        counterspell_action=counterspell,
+        caster=caster,
+        incoming_spell_level=3,
+        turn_token="1:caster",
+        active_hazards=[],
+        light_level="bright",
+    ) == ("spell_slot_3", 3)
+
+    enemy.conditions.add("silenced")
+    assert (
+        _counterspell_slot_if_legal(
+            reactor=enemy,
+            counterspell_action=counterspell,
+            caster=caster,
+            incoming_spell_level=3,
+            turn_token="1:caster",
+            active_hazards=[],
+            light_level="bright",
+        )
+        is None
+    )
+
+    enemy.conditions.clear()
+    enemy.conditions.add("blinded")
+    assert (
+        _counterspell_slot_if_legal(
+            reactor=enemy,
+            counterspell_action=counterspell,
+            caster=caster,
+            incoming_spell_level=3,
+            turn_token="1:caster",
+            active_hazards=[],
+            light_level="bright",
+        )
+        is None
+    )
 
 
 def test_dropped_to_zero_forces_concentration_end_even_if_check_would_succeed() -> None:

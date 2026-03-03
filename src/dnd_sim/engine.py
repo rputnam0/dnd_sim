@@ -8043,6 +8043,37 @@ def _select_counterspell_slot(
     return available[0]
 
 
+def _counterspell_slot_if_legal(
+    *,
+    reactor: ActorRuntimeState,
+    counterspell_action: ActionDefinition,
+    caster: ActorRuntimeState,
+    incoming_spell_level: int,
+    turn_token: str | None,
+    active_hazards: list[dict[str, Any]],
+    light_level: str,
+) -> tuple[str, int] | None:
+    if not _action_available(reactor, counterspell_action, turn_token=turn_token):
+        return None
+    if distance_chebyshev(reactor.position, caster.position) > 60:
+        return None
+    if has_condition(reactor, "blinded"):
+        return None
+
+    from .spatial import can_see
+
+    if not can_see(
+        observer_pos=reactor.position,
+        target_pos=caster.position,
+        observer_traits=reactor.traits,
+        target_conditions=caster.conditions,
+        active_hazards=active_hazards,
+        light_level=light_level,
+    ):
+        return None
+    return _select_counterspell_slot(reactor, incoming_spell_level=incoming_spell_level)
+
+
 def _fallback_action(
     actor: ActorRuntimeState, *, allow_special: bool = False
 ) -> ActionDefinition | None:
@@ -9246,58 +9277,71 @@ def _execute_action(
         _record_spell_cast_for_turn(actor, action)
 
         if not subtle_spell:
-            for enemy in actors.values():
-                if (
-                    enemy.team != actor.team
-                    and enemy.hp > 0
-                    and not enemy.dead
-                    and _can_take_reaction(enemy)
-                ):
-                    cs_action = next(
-                        (
-                            a
-                            for a in enemy.actions
-                            if (
-                                a.action_cost == "reaction"
-                                and _action_matches_reaction_spell_id(a, spell_id="counterspell")
+            for enemy in sorted(actors.values(), key=lambda candidate: candidate.actor_id):
+                if enemy.team == actor.team or enemy.hp <= 0 or enemy.dead or not _can_take_reaction(enemy):
+                    continue
+                cs_action = next(
+                    (
+                        candidate
+                        for candidate in enemy.actions
+                        if (
+                            candidate.action_cost == "reaction"
+                            and _action_matches_reaction_spell_id(
+                                candidate, spell_id="counterspell"
                             )
-                        ),
-                        None,
+                        )
+                    ),
+                    None,
+                )
+                if cs_action is None:
+                    continue
+                counter_slot = _counterspell_slot_if_legal(
+                    reactor=enemy,
+                    counterspell_action=cs_action,
+                    caster=actor,
+                    incoming_spell_level=spell_level,
+                    turn_token=turn_token,
+                    active_hazards=active_hazards,
+                    light_level=light_level,
+                )
+                if counter_slot is None:
+                    continue
+
+                counter_window = active_timing_engine.emit(
+                    ReactionWindowOpenedEvent(
+                        window="counterspell",
+                        reactor=enemy,
+                        attacker=actor,
+                        target=targets[0],
+                        action=action,
+                        round_number=round_number,
+                        turn_token=turn_token,
                     )
-                    if cs_action:
-                        if not _spell_casting_legal_this_turn(
-                            enemy,
-                            cs_action,
-                            turn_token=turn_token,
-                        ):
-                            continue
-                        if distance_chebyshev(enemy.position, actor.position) <= 60:
-                            counter_slot = _select_counterspell_slot(
-                                enemy, incoming_spell_level=spell_level
-                            )
-                            if counter_slot:
-                                counter_window = active_timing_engine.emit(
-                                    ReactionWindowOpenedEvent(
-                                        window="counterspell",
-                                        reactor=enemy,
-                                        attacker=actor,
-                                        target=targets[0],
-                                        action=action,
-                                        round_number=round_number,
-                                        turn_token=turn_token,
-                                    )
-                                )
-                                if counter_window.cancelled:
-                                    continue
-                                slot_key, counter_level = counter_slot
-                                enemy.resources[slot_key] -= 1
-                                enemy.reaction_available = False
-                                if counter_level >= spell_level:
-                                    return  # Spell countered automatically.
-                                check_dc = 10 + spell_level
-                                check_total = rng.randint(1, 20) + enemy.cha_mod
-                                if check_total >= check_dc:
-                                    return  # Spell countered after ability check.
+                )
+                if counter_window.cancelled:
+                    continue
+
+                slot_key, counter_level = counter_slot
+                enemy.resources[slot_key] -= 1
+                enemy_spent = resources_spent.setdefault(enemy.actor_id, {})
+                enemy_spent[slot_key] = enemy_spent.get(slot_key, 0) + 1
+
+                non_slot_cost, _, _ = _split_spell_slot_cost(cs_action.resource_cost)
+                for key, amount in _spend_resources(enemy, non_slot_cost).items():
+                    enemy_spent[key] = enemy_spent.get(key, 0) + amount
+
+                enemy.per_action_uses[cs_action.name] = (
+                    enemy.per_action_uses.get(cs_action.name, 0) + 1
+                )
+                _mark_action_cost_used(enemy, cs_action)
+                _record_spell_cast_for_turn(enemy, cs_action)
+
+                if counter_level >= spell_level:
+                    return  # Spell countered automatically.
+                check_dc = 10 + spell_level
+                check_total = rng.randint(1, 20) + _spellcasting_ability_mod(enemy)
+                if check_total >= check_dc:
+                    return  # Spell countered after ability check.
 
         if action.concentration:
             _break_concentration(actor, actors, active_hazards)
