@@ -6086,8 +6086,25 @@ def _can_take_reaction(actor: ActorRuntimeState) -> bool:
     return True
 
 
-def _spell_casting_legal_this_turn(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+def _is_same_turn_for_actor(actor: ActorRuntimeState, turn_token: str | None) -> bool:
+    if turn_token is None:
+        return True
+    text = str(turn_token)
+    if ":" in text:
+        token_actor_id = text.split(":", 1)[1]
+        return token_actor_id == actor.actor_id
+    return text == actor.actor_id
+
+
+def _spell_casting_legal_this_turn(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    *,
+    turn_token: str | None = None,
+) -> bool:
     if "spell" not in action.tags:
+        return True
+    if not _is_same_turn_for_actor(actor, turn_token):
         return True
     if actor.bonus_action_spell_restriction_active and not _is_action_cantrip_spell(action):
         return False
@@ -6101,6 +6118,7 @@ def _action_available(
     action: ActionDefinition,
     *,
     spell_cast_request: SpellCastRequest | None = None,
+    turn_token: str | None = None,
 ) -> bool:
     if action.name == "lay_on_hands" and actor.resources.get("lay_on_hands_pool", 0) <= 0:
         return False
@@ -6108,7 +6126,7 @@ def _action_available(
         return False
     if action.recharge and not actor.recharge_ready.get(action.name, True):
         return False
-    if not _spell_casting_legal_this_turn(actor, action):
+    if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
         return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False
@@ -6443,7 +6461,7 @@ def _dispatch_combat_event(
         for action in actor.actions:
             if action.event_trigger != event:
                 continue
-            if not _action_available(actor, action):
+            if not _action_available(actor, action, turn_token=turn_token):
                 continue
             candidates.append(
                 (_event_trigger_priority(action), actor.actor_id, action.name, actor, action)
@@ -6786,6 +6804,8 @@ def _trigger_readied_actions(
     *,
     rng: random.Random,
     trigger_actor: ActorRuntimeState,
+    round_number: int | None = None,
+    turn_token: str | None = None,
     actors: dict[str, ActorRuntimeState],
     damage_dealt: dict[str, int],
     damage_taken: dict[str, int],
@@ -6809,7 +6829,7 @@ def _trigger_readied_actions(
                 readied = _resolve_action_selection(actor, actor.readied_action_name)
                 if readied.name != "ready":
                     reaction_action = replace(readied, action_cost="reaction")
-                    if _action_available(actor, reaction_action):
+                    if _action_available(actor, reaction_action, turn_token=turn_token):
                         targets = _resolve_targets_for_action(
                             rng=rng,
                             actor=actor,
@@ -6846,6 +6866,8 @@ def _trigger_readied_actions(
                                 active_hazards=active_hazards,
                                 obstacles=obstacles,
                                 light_level=light_level,
+                                round_number=round_number,
+                                turn_token=turn_token,
                                 spell_cast_request=spell_cast_request,
                             )
                             _remove_condition(actor, "readying")
@@ -6863,7 +6885,7 @@ def _trigger_readied_actions(
             trigger = _normalize_event_trigger(reaction_action.event_trigger)
             if trigger not in {"enemy_turn_start", "on_enemy_turn_start"}:
                 continue
-            if not _action_available(actor, reaction_action):
+            if not _action_available(actor, reaction_action, turn_token=turn_token):
                 continue
 
             targets = _resolve_targets_for_action(
@@ -6900,6 +6922,8 @@ def _trigger_readied_actions(
                 active_hazards=active_hazards,
                 obstacles=obstacles,
                 light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
                 spell_cast_request=spell_cast_request,
             )
             break
@@ -7229,6 +7253,8 @@ def _try_shield_reaction(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
     roll: AttackRollResult,
+    *,
+    turn_token: str | None = None,
 ) -> bool:
     """Always-use Shield reaction: +5 AC to negate a hit. Consumes reaction + spell slot.
 
@@ -7244,7 +7270,11 @@ def _try_shield_reaction(
     if shield_action is None:
         return False
     shield_spell_action = _shield_spell_action(shield_action)
-    if not _spell_casting_legal_this_turn(target, shield_spell_action):
+    if not _spell_casting_legal_this_turn(
+        target,
+        shield_spell_action,
+        turn_token=turn_token,
+    ):
         return False
     # Need a 1st-level spell slot (or any available slot)
     slot_key = None
@@ -7409,6 +7439,7 @@ def _shield_reaction_would_be_legal(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
     roll: AttackRollResult,
+    turn_token: str | None = None,
 ) -> bool:
     if not _can_take_reaction(target):
         return False
@@ -7422,7 +7453,11 @@ def _shield_reaction_would_be_legal(
     )
     if shield_action is None:
         return False
-    if not _spell_casting_legal_this_turn(target, _shield_spell_action(shield_action)):
+    if not _spell_casting_legal_this_turn(
+        target,
+        _shield_spell_action(shield_action),
+        turn_token=turn_token,
+    ):
         return False
     has_slot = any(
         key.startswith("spell_slot_") and target.resources.get(key, 0) > 0
@@ -7511,6 +7546,7 @@ class _AttackResolutionShieldRule:
             attacker=event.attacker,
             target=event.target,
             roll=event.roll,
+            turn_token=event.turn_token,
         ):
             return
         if event.timing_engine is not None:
@@ -7525,7 +7561,12 @@ class _AttackResolutionShieldRule:
                     turn_token=event.turn_token,
                 )
             )
-        if _try_shield_reaction(event.attacker, event.target, event.roll):
+        if _try_shield_reaction(
+            event.attacker,
+            event.target,
+            event.roll,
+            turn_token=event.turn_token,
+        ):
             event.roll = AttackRollResult(
                 hit=False,
                 crit=False,
@@ -7779,7 +7820,7 @@ def _execute_action(
 
     # Spell declaration and counterspell check
     if is_spell_action:
-        if not _spell_casting_legal_this_turn(actor, action):
+        if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
             return
         if not _can_cast_spell_with_components(actor, action):
             return
@@ -8795,6 +8836,7 @@ def _run_lair_actions(
     telemetry: list[dict[str, Any]] | None = None,
     round_number: int | None = None,
 ) -> None:
+    lair_turn_token = f"{round_number}:global" if round_number is not None else "global"
     for actor in actors.values():
         if actor.dead or actor.hp <= 0:
             continue
@@ -8806,7 +8848,7 @@ def _run_lair_actions(
         action: ActionDefinition | None = None
         targets: list[ActorRuntimeState] = []
         for candidate in lair_actions:
-            if not _action_available(actor, candidate):
+            if not _action_available(actor, candidate, turn_token=lair_turn_token):
                 continue
             resolved = _resolve_targets_for_action(
                 rng=rng,
@@ -8848,6 +8890,7 @@ def _run_lair_actions(
             light_level=light_level,
             telemetry=telemetry,
             round_number=round_number,
+            turn_token=lair_turn_token,
             strategy_name="lair_action",
             spell_cast_request=spell_cast_request,
         )
@@ -8867,6 +8910,7 @@ def _run_legendary_actions(
     light_level: str = "bright",
     telemetry: list[dict[str, Any]] | None = None,
     round_number: int | None = None,
+    turn_token: str | None = None,
 ) -> None:
     for actor in actors.values():
         if actor.actor_id == trigger_actor.actor_id:
@@ -8879,7 +8923,7 @@ def _run_legendary_actions(
         action: ActionDefinition | None = None
         targets: list[ActorRuntimeState] = []
         for candidate in legendary:
-            if not _action_available(actor, candidate):
+            if not _action_available(actor, candidate, turn_token=turn_token):
                 continue
             resolved = _resolve_targets_for_action(
                 rng=rng,
@@ -8921,6 +8965,7 @@ def _run_legendary_actions(
             light_level=light_level,
             telemetry=telemetry,
             round_number=round_number,
+            turn_token=turn_token,
             strategy_name="legendary_action",
             spell_cast_request=spell_cast_request,
         )
@@ -9189,6 +9234,8 @@ def run_simulation(
                     _trigger_readied_actions(
                         rng=rng,
                         trigger_actor=actor,
+                        round_number=rounds,
+                        turn_token=turn_token,
                         actors=actors,
                         damage_dealt=damage_dealt,
                         damage_taken=damage_taken,
@@ -9233,7 +9280,7 @@ def run_simulation(
                     )
                     if should_force_dodge:
                         action = _resolve_action_selection(actor, "dodge")
-                        if _action_available(actor, action):
+                        if _action_available(actor, action, turn_token=turn_token):
                             resolved_targets = _resolve_targets_for_action(
                                 rng=rng,
                                 actor=actor,
@@ -9275,6 +9322,8 @@ def run_simulation(
                             active_hazards=active_hazards,
                             obstacles=battlefield_obstacles,
                             light_level=light_level,
+                            round_number=rounds,
+                            turn_token=turn_token,
                         )
                         continue
 
@@ -9307,7 +9356,7 @@ def run_simulation(
                     action = _resolve_action_selection(actor, intent.action_name)
                     fallback_reason: str | None = None
 
-                    if not _action_available(actor, action):
+                    if not _action_available(actor, action, turn_token=turn_token):
                         fallback = _fallback_action(actor)
                         if fallback is None:
                             _dispatch_combat_event(
@@ -9638,6 +9687,7 @@ def run_simulation(
                         light_level=light_level,
                         telemetry=trial_telemetry,
                         round_number=rounds,
+                        turn_token=turn_token,
                     )
                     _dispatch_combat_event(
                         rng=rng,

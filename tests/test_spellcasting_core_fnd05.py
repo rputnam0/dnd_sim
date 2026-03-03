@@ -345,6 +345,8 @@ def test_bonus_action_spell_blocks_same_turn_shield_reaction_when_illegal() -> N
         threat_scores=threat_scores,
         resources_spent=resources_spent,
         active_hazards=[],
+        round_number=1,
+        turn_token="1:defender",
     )
 
     _execute_action(
@@ -358,11 +360,86 @@ def test_bonus_action_spell_blocks_same_turn_shield_reaction_when_illegal() -> N
         threat_scores=threat_scores,
         resources_spent=resources_spent,
         active_hazards=[],
+        round_number=1,
+        turn_token="1:defender",
     )
 
     assert defender.hp == defender.max_hp - 4
     assert defender.resources["spell_slot_1"] == 1
     assert defender.reaction_available is True
+
+
+def test_off_turn_shield_after_bonus_action_spell_is_legal() -> None:
+    rng = _FixedRng([9, 4])
+    attacker = _base_actor(actor_id="attacker", team="enemy")
+    defender = _base_actor(actor_id="defender", team="party")
+    defender.resources = {"spell_slot_1": 2}
+    defender.actions = [
+        ActionDefinition(
+            name="shield",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="self",
+            tags=["reaction", "shield_spell"],
+        )
+    ]
+
+    bonus_spell = ActionDefinition(
+        name="healing_word",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "bolstered", "target": "source"}],
+    )
+    attack = ActionDefinition(
+        name="longsword",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=7,
+        damage="1d8",
+        damage_type="slashing",
+    )
+
+    actors = {attacker.actor_id: attacker, defender.actor_id: defender}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(attacker, defender)
+
+    assert _spend_action_resource_cost(defender, bonus_spell, resources_spent) is True
+    _execute_action(
+        rng=random.Random(13),
+        actor=defender,
+        action=bonus_spell,
+        targets=[defender],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:defender",
+    )
+
+    _execute_action(
+        rng=rng,
+        actor=attacker,
+        action=attack,
+        targets=[defender],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:attacker",
+    )
+
+    assert defender.hp == defender.max_hp
+    assert defender.resources["spell_slot_1"] == 0
+    assert defender.reaction_available is False
 
 
 def test_counterspell_blocks_before_resolution_with_level_check_logic() -> None:
