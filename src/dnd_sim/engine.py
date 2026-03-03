@@ -552,7 +552,7 @@ def _has_trait_marker(actor: ActorRuntimeState, marker: str) -> bool:
         normalized = _trait_lookup_key(trait_name)
         if normalized == needle:
             return True
-        if needle in normalized.split():
+        if normalized.startswith(f"{needle} "):
             return True
     return False
 
