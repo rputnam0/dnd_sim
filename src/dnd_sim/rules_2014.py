@@ -416,7 +416,7 @@ def apply_damage(
         target.death_failures += 2 if is_critical else 1
         if target.death_failures >= 3:
             target.dead = True
-            target.conditions.update({"dead", "unconscious", "incapacitated"})
+            target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         return adjusted
 
     remaining = adjusted
@@ -430,17 +430,17 @@ def apply_damage(
 
     if target.hp <= 0 and not target.dead:
         target.hp = 0
-        target.conditions.update({"unconscious", "incapacitated"})
+        target.update_manual_conditions({"unconscious", "incapacitated"})
         if not target.was_downed:
             target.downed_count += 1
             target.was_downed = True
 
     if adjusted > 0 and "turned" in target.conditions:
         for condition in ("turned", "frightened"):
-            target.conditions.discard(condition)
+            target.discard_manual_condition(condition)
             target.condition_durations.pop(condition, None)
         if target.hp > 0:
-            target.conditions.discard("incapacitated")
+            target.discard_manual_condition("incapacitated")
             target.condition_durations.pop("incapacitated", None)
 
     return adjusted
@@ -492,8 +492,8 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
         target.death_successes = 0
         target.death_failures = 0
         target.stable = False
-        target.conditions.discard("unconscious")
-        target.conditions.discard("incapacitated")
+        target.discard_manual_condition("unconscious")
+        target.discard_manual_condition("incapacitated")
         return DeathSaveResult(False, False, True)
     elif roll >= 10:
         target.death_successes += 1
@@ -507,7 +507,7 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
         became_stable = True
     if target.death_failures >= 3:
         target.dead = True
-        target.conditions.update({"dead", "unconscious", "incapacitated"})
+        target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         became_dead = True
 
     return DeathSaveResult(became_stable, became_dead, False)
