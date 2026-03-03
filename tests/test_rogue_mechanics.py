@@ -43,8 +43,10 @@ def test_sneak_attack_applies_only_once_when_two_attacks_share_turn_token() -> N
     rogue.level = 3
     rogue.traits = {"sneak attack": {}}
     rogue.position = (0.0, 0.0, 0.0)
-    ally.position = (5.0, 0.0, 0.0)
-    target.position = (5.0, 0.0, 0.0)
+    target.position = (30.0, 0.0, 0.0)
+    # Keep ally adjacent to the target so Sneak Attack remains legal without
+    # forcing ranged-in-melee disadvantage on the rogue.
+    ally.position = (25.0, 0.0, 0.0)
 
     action = ActionDefinition(
         name="shortbow",

@@ -88,6 +88,8 @@ def test_upcast_scaling_uses_actual_spent_slot() -> None:
     caster = _base_actor(actor_id="caster", team="party")
     target = _base_actor(actor_id="target", team="enemy")
     target.ac = 10
+    caster.position = (0.0, 0.0, 0.0)
+    target.position = (10.0, 0.0, 0.0)
     caster.resources = {"spell_slot_3": 1}
 
     spell = ActionDefinition(

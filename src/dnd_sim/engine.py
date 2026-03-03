@@ -2042,12 +2042,13 @@ def _tick_persistent_zones(active_hazards: list[dict[str, Any]], *, boundary: st
         if not isinstance(zone, dict):
             continue
         _zone_instance_id(zone, fallback_index=idx + 1)
-        duration_raw = zone.get("duration")
+        duration_raw = zone.get("duration_remaining", zone.get("duration"))
         duration = _coerce_positive_int(duration_raw) if duration_raw is not None else None
         zone_boundary = _normalize_duration_boundary(zone.get("duration_boundary", "turn_start"))
         if duration is not None and zone_boundary == tick_boundary:
             duration -= 1
             zone["duration"] = duration
+            zone["duration_remaining"] = duration
         if duration is not None and duration <= 0:
             continue
         kept.append(zone)
@@ -2090,6 +2091,7 @@ def _build_persistent_zone(
         "position": position,
         "radius": radius,
         "duration": duration,
+        "duration_remaining": duration,
         "duration_boundary": _normalize_duration_boundary(
             effect.get("duration_timing", effect.get("duration_boundary", "turn_start"))
         ),
@@ -2115,6 +2117,7 @@ def _build_persistent_zone(
         "on_leave": _zone_effects(effect.get("on_leave")),
         "on_start_turn": _zone_effects(effect.get("on_start_turn") or effect.get("on_turn_start")),
         "on_end_turn": _zone_effects(effect.get("on_end_turn") or effect.get("on_turn_end")),
+        "trigger_effects": _extract_hazard_trigger_effects(effect),
     }
     if min_pos is not None and max_pos is not None:
         zone["min_pos"] = min_pos
@@ -5794,8 +5797,9 @@ def _move_actor_for_action_range(
     if len(path) < 2:
         return distance_chebyshev(actor.position, primary.position) <= action_range
 
-    approach_path: list[tuple[float, float, float]] = [path[0]]
-    for waypoint in path[1:]:
+    expanded_path = _expand_path_points(path)
+    approach_path: list[tuple[float, float, float]] = [expanded_path[0]]
+    for waypoint in expanded_path[1:]:
         approach_path.append(waypoint)
         if distance_chebyshev(waypoint, primary.position) <= action_range + 1e-9:
             break
@@ -5806,7 +5810,7 @@ def _move_actor_for_action_range(
 
     start_pos = actor.position
     movement_path, movement_spent = _path_prefix_for_movement_budget(
-        path,
+        approach_path,
         movement_budget_ft=available_distance,
         active_hazards=active_hazards,
         crawling=crawling,
@@ -8086,6 +8090,9 @@ def _apply_effect(
         return
 
     if effect_type in {"hazard", "persistent_zone"}:
+        raw_duration = effect.get("duration", effect.get("duration_rounds"))
+        if raw_duration is not None and _coerce_positive_int(raw_duration) is None:
+            return
         concentration_linked = bool(
             action and action.concentration and effect.get("concentration_linked", True)
         )
