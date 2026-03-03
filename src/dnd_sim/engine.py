@@ -326,6 +326,8 @@ def _trait_name_variants(name: str) -> list[str]:
 
 def _normalize_feature_source_type(raw_type: Any) -> str:
     key = str(raw_type or "").strip().lower()
+    if key in _FEATURE_SOURCE_PRIORITY:
+        return key
     return _FEATURE_SOURCE_TYPE_MAP.get(key, "other")
 
 

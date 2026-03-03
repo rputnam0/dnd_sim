@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import _dispatch_combat_event
+from dnd_sim.engine import _build_feature_hook_registrations, _dispatch_combat_event
 from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
@@ -188,3 +188,69 @@ def test_chr03_dispatch_reports_invalid_hook_trigger_and_skips() -> None:
         and row.get("hook_source") == "feat"
         for row in trace
     )
+
+
+def test_chr03_runtime_normalization_keeps_source_type_and_priority() -> None:
+    reactor = _base_actor(actor_id="reactor", team="party")
+    reactor.traits = {
+        "v_feat": {
+            "name": "Feat Hook",
+            "source_type": "feat",
+            "mechanics": [
+                {
+                    "effect_type": "reaction_attack",
+                    "trigger": "creature_attacks_ally_within_5ft",
+                }
+            ],
+        },
+        "z_species": {
+            "name": "Species Hook",
+            "source_type": "species",
+            "mechanics": [
+                {
+                    "effect_type": "reaction_attack",
+                    "trigger": "creature_attacks_ally_within_5ft",
+                }
+            ],
+        },
+        "y_background": {
+            "name": "Background Hook",
+            "source_type": "background",
+            "mechanics": [
+                {
+                    "effect_type": "reaction_attack",
+                    "trigger": "creature_attacks_ally_within_5ft",
+                }
+            ],
+        },
+        "x_subclass": {
+            "name": "Subclass Hook",
+            "source_type": "subclass",
+            "mechanics": [
+                {
+                    "effect_type": "reaction_attack",
+                    "trigger": "creature_attacks_ally_within_5ft",
+                }
+            ],
+        },
+        "w_class": {
+            "name": "Class Hook",
+            "source_type": "class",
+            "mechanics": [
+                {
+                    "effect_type": "reaction_attack",
+                    "trigger": "creature_attacks_ally_within_5ft",
+                }
+            ],
+        },
+    }
+
+    hooks = _build_feature_hook_registrations(reactor)
+
+    assert [hook.source_type for hook in hooks] == [
+        "feat",
+        "species",
+        "background",
+        "subclass",
+        "class",
+    ]

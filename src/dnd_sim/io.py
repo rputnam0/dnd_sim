@@ -400,6 +400,8 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
 
 def _normalize_trait_source_type(raw_type: Any) -> str:
     key = str(raw_type or "").strip().lower()
+    if key in {"feat", "species", "background", "subclass", "class", "other"}:
+        return key
     return _FEATURE_SOURCE_TYPE_MAP.get(key, "other")
 
 
@@ -435,7 +437,9 @@ def _normalize_trait_mechanics(raw_mechanics: Any) -> list[Any]:
 
 def _normalize_trait_payload(trait_data: dict[str, Any]) -> dict[str, Any]:
     payload = dict(trait_data)
-    payload["source_type"] = _normalize_trait_source_type(payload.get("type"))
+    payload["source_type"] = _normalize_trait_source_type(
+        payload.get("source_type", payload.get("type"))
+    )
     payload["mechanics"] = _normalize_trait_mechanics(payload.get("mechanics"))
     return payload
 
