@@ -27,10 +27,60 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
         actions=[],
     )
 
-
 class _NoRollRng:
     def randint(self, _a: int, _b: int) -> int:
         raise AssertionError("Attack roll should not be made when no legal route exists")
+
+
+def _trackers(
+    *actors: ActorRuntimeState,
+) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, dict[str, int]]]:
+    damage_dealt = {actor.actor_id: 0 for actor in actors}
+    damage_taken = {actor.actor_id: 0 for actor in actors}
+    threat_scores = {actor.actor_id: 0 for actor in actors}
+    resources_spent = {actor.actor_id: {} for actor in actors}
+    return damage_dealt, damage_taken, threat_scores, resources_spent
+
+
+def test_stand_from_prone_consumes_movement() -> None:
+    actor = _base_actor(actor_id="attacker", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    actor.position = (0.0, 0.0, 0.0)
+    target.position = (20.0, 0.0, 0.0)
+    actor.speed_ft = 30
+    actor.movement_remaining = 30.0
+    actor.conditions.add("prone")
+
+    attack = ActionDefinition(
+        name="basic",
+        action_type="attack",
+        action_cost="action",
+        to_hit=20,
+        damage="1",
+        damage_type="piercing",
+        range_ft=5,
+    )
+    actor.actions = [attack]
+
+    actors = {actor.actor_id: actor, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(actor, target)
+
+    _execute_action(
+        rng=random.Random(17),
+        actor=actor,
+        action=attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert actor.position == (15.0, 0.0, 0.0)
+    assert actor.movement_remaining == 0.0
+    assert "prone" not in actor.conditions
 
 
 def test_movement_path_does_not_traverse_total_cover_blocked_cells() -> None:

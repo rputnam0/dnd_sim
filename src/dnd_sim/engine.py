@@ -3377,6 +3377,34 @@ def _get_standard_actions() -> list[ActionDefinition]:
             target_mode="self",
             tags=["standard_action"],
         ),
+        ActionDefinition(
+            name="grapple",
+            action_type="grapple",
+            action_cost="action",
+            target_mode="single_enemy",
+            tags=["standard_action", "special_melee_attack"],
+        ),
+        ActionDefinition(
+            name="shove",
+            action_type="shove",
+            action_cost="action",
+            target_mode="single_enemy",
+            tags=["standard_action", "special_melee_attack", "shove_mode:prone"],
+        ),
+        ActionDefinition(
+            name="shove_push",
+            action_type="shove",
+            action_cost="action",
+            target_mode="single_enemy",
+            tags=["standard_action", "special_melee_attack", "shove_mode:push"],
+        ),
+        ActionDefinition(
+            name="escape_grapple",
+            action_type="utility",
+            action_cost="action",
+            target_mode="self",
+            tags=["standard_action", "requires_condition:grappled"],
+        ),
     ]
 
 
@@ -7778,6 +7806,88 @@ def _clear_gwm_bonus_trigger(actor: ActorRuntimeState) -> None:
     actor.gwm_bonus_trigger_available = False
 
 
+def _special_attack_replacement_key(turn_token: str | None) -> str:
+    return f"special_attack_replacement:{turn_token or 'direct'}"
+
+
+def _is_melee_attack_replacement_candidate(action: ActionDefinition) -> bool:
+    if action.action_type != "attack":
+        return False
+    if action.action_cost not in {"action", "none"}:
+        return False
+    if action.to_hit is None:
+        return False
+    if _is_ranged_weapon_action(action):
+        return False
+    action_range = _action_range_ft(action)
+    if action_range is not None and action_range > 5.0:
+        return False
+    return True
+
+
+def _best_melee_attack_replacement(actor: ActorRuntimeState) -> ActionDefinition | None:
+    candidates = [
+        action for action in actor.actions if _is_melee_attack_replacement_candidate(action)
+    ]
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda candidate: (
+            max(1, int(candidate.attack_count)),
+            int(candidate.to_hit or 0),
+        ),
+    )
+
+
+def _special_attack_replacement_limit(actor: ActorRuntimeState) -> int:
+    return 1 if _best_melee_attack_replacement(actor) is not None else 0
+
+
+def _special_attack_replacements_used(
+    actor: ActorRuntimeState, *, turn_token: str | None
+) -> int:
+    key = _special_attack_replacement_key(turn_token)
+    return int(actor.per_action_uses.get(key, 0))
+
+
+def _consume_special_attack_replacement(
+    actor: ActorRuntimeState, *, turn_token: str | None
+) -> None:
+    key = _special_attack_replacement_key(turn_token)
+    actor.per_action_uses[key] = actor.per_action_uses.get(key, 0) + 1
+
+
+def _athletics_check_mod(actor: ActorRuntimeState) -> int:
+    mod = actor.str_mod
+    if "athletics" in actor.proficiencies:
+        mod += _calculate_proficiency_bonus(actor.level)
+        if "athletics" in actor.expertise:
+            mod += _calculate_proficiency_bonus(actor.level)
+    return mod
+
+
+def _acrobatics_check_mod(actor: ActorRuntimeState) -> int:
+    mod = actor.dex_mod
+    if "acrobatics" in actor.proficiencies:
+        mod += _calculate_proficiency_bonus(actor.level)
+        if "acrobatics" in actor.expertise:
+            mod += _calculate_proficiency_bonus(actor.level)
+    return mod
+
+
+def _resolve_shove_mode(action: ActionDefinition, target: ActorRuntimeState) -> str:
+    for raw_tag in action.tags:
+        tag = str(raw_tag)
+        if tag.startswith("shove_mode:"):
+            mode = tag.split(":", 1)[1].strip().lower()
+            if mode in {"push", "prone"}:
+                return mode
+    if has_condition(target, "prone"):
+        return "push"
+    return "prone"
+
+
 def _spell_casting_legal_this_turn(
     actor: ActorRuntimeState,
     action: ActionDefinition,
@@ -7839,6 +7949,17 @@ def _action_available(
     ):
         return False
     if action.action_cost == "lair" and actor.lair_action_used_this_round:
+        return False
+    if action.action_type in {"grapple", "shove"}:
+        replacement_limit = _special_attack_replacement_limit(actor)
+        if replacement_limit <= 0:
+            return False
+        if (
+            _special_attack_replacements_used(actor, turn_token=turn_token)
+            >= replacement_limit
+        ):
+            return False
+    if action.name == "escape_grapple" and "grappled" not in actor.conditions:
         return False
     if _has_tag(action, "conversion:slot_to_points"):
         slot_level = _slot_level_from_action(action)
@@ -9830,39 +9951,81 @@ def _execute_action(
         from .rules_2014 import run_contested_check
 
         target = targets[0]
+        replacement_attack = _best_melee_attack_replacement(actor)
+        remaining_attacks = 0
+        if replacement_attack is not None:
+            remaining_attacks = max(0, int(replacement_attack.attack_count) - 1)
         if "raging" in actor.conditions and target.team != actor.team:
             actor.rage_sustained_since_last_turn = True
 
-        # Determine attacker mod (Athletics -> STR)
-        attacker_mod = actor.str_mod
-        if "athletics" in actor.proficiencies:
-            attacker_mod += _calculate_proficiency_bonus(actor.level)
-            if "athletics" in actor.expertise:
-                attacker_mod += _calculate_proficiency_bonus(actor.level)
+        attacker_mod = _athletics_check_mod(actor)
+        defender_athletics = _athletics_check_mod(target)
+        defender_acrobatics = _acrobatics_check_mod(target)
 
-        # Determine defender mods (Athletics or Acrobatics)
-        defender_athletics = target.str_mod
-        defender_acrobatics = target.dex_mod
-        if "athletics" in target.proficiencies:
-            defender_athletics += _calculate_proficiency_bonus(target.level)
-            if "athletics" in target.expertise:
-                defender_athletics += _calculate_proficiency_bonus(target.level)
-        if "acrobatics" in target.proficiencies:
-            defender_acrobatics += _calculate_proficiency_bonus(target.level)
-            if "acrobatics" in target.expertise:
-                defender_acrobatics += _calculate_proficiency_bonus(target.level)
-
-        # Run Mathematical Check
         success = run_contested_check(rng, attacker_mod, [defender_athletics, defender_acrobatics])
 
         if success:
             if action.action_type == "grapple":
                 _apply_condition(target, "grappled", duration_rounds=100)
             elif action.action_type == "shove":
-                _apply_condition(target, "prone", duration_rounds=100)
+                shove_mode = _resolve_shove_mode(action, target)
+                if shove_mode == "push":
+                    _apply_effect(
+                        action=action,
+                        effect={
+                            "effect_type": "forced_movement",
+                            "target": "target",
+                            "distance_ft": 5,
+                            "direction": "away_from_source",
+                        },
+                        rng=rng,
+                        actor=actor,
+                        target=target,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        actors=actors,
+                        active_hazards=active_hazards,
+                        round_number=round_number,
+                        turn_token=turn_token,
+                        rule_trace=rule_trace,
+                        telemetry=telemetry,
+                        strategy_name=strategy_name,
+                    )
+                else:
+                    _apply_condition(target, "prone", duration_rounds=100)
 
-        if action.action_cost == "action":
+        if action.action_cost in {"action", "none"}:
             actor.took_attack_action_this_turn = True
+            _consume_special_attack_replacement(actor, turn_token=turn_token)
+
+        if remaining_attacks > 0 and replacement_attack is not None and target.hp > 0 and not target.dead:
+            follow_up_attack = replace(
+                replacement_attack,
+                action_cost="none",
+                attack_count=remaining_attacks,
+            )
+            _execute_action(
+                rng=rng,
+                actor=actor,
+                action=follow_up_attack,
+                targets=[target],
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
+                telemetry=telemetry,
+                strategy_name=strategy_name,
+                allow_auto_movement=allow_auto_movement,
+            )
         return
 
     if action.action_type == "attack":
@@ -10698,6 +10861,28 @@ def _execute_action(
                 pool = int(actor.resources.get("lay_on_hands_pool", 0))
                 if pool <= 0:
                     break
+            return
+        if action.name == "escape_grapple":
+            if "grappled" not in actor.conditions:
+                return
+            from .rules_2014 import run_contested_check
+
+            nearby_enemies = [
+                enemy
+                for enemy in actors.values()
+                if enemy.team != actor.team
+                and enemy.hp > 0
+                and not enemy.dead
+                and distance_chebyshev(enemy.position, actor.position) <= 5.0
+            ]
+            if not nearby_enemies:
+                _remove_condition(actor, "grappled")
+                return
+
+            escape_mod = max(_athletics_check_mod(actor), _acrobatics_check_mod(actor))
+            grappler_mods = [_athletics_check_mod(enemy) for enemy in nearby_enemies]
+            if run_contested_check(rng, escape_mod, grappler_mods):
+                _remove_condition(actor, "grappled")
             return
         if _has_tag(action, "conversion:points_to_slot"):
             slot_level = _slot_level_from_action(action)
