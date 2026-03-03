@@ -3140,6 +3140,17 @@ def _duration_text_from_rounds(*, rounds: int, concentration: bool) -> str:
 
 
 _SINGLE_TARGET_FAMILY_TAG = "spell_family:single_target"
+_MULTI_TARGET_DESCRIPTION_RE = re.compile(
+    r"\b(?:"
+    r"up to\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+"
+    r"(?:creatures?|targets?)"
+    r"|one or more\s+(?:creatures?|targets?)"
+    r"|one or two\s+(?:creatures?|targets?)"
+    r"|two or more\s+(?:creatures?|targets?)"
+    r"|(?:two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(?:creatures?|targets?)"
+    r")\b",
+    flags=re.IGNORECASE,
+)
 _AREA_DESCRIPTION_HINTS = (
     "each creature",
     "creatures within",
@@ -3190,17 +3201,27 @@ def _parse_sheet_spell_range_ft(range_text: str) -> int | None:
 
 
 def _description_is_probably_non_single_target(description: str) -> bool:
-    normalized = str(description or "").lower()
+    normalized = str(description or "")
     if not normalized:
         return False
+    if _MULTI_TARGET_DESCRIPTION_RE.search(normalized):
+        return True
+    normalized = normalized.lower()
     return any(hint in normalized for hint in _AREA_DESCRIPTION_HINTS)
 
 
+def _condition_phrase_is_negated(*, description: str, match_start: int) -> bool:
+    prefix = str(description[:match_start]).lower().replace("’", "'")
+    return bool(re.search(r"(?:can't|cannot|can not|not|never)\s*$", prefix))
+
+
 def _single_target_condition_from_description(description: str) -> str | None:
-    match = _SINGLE_TARGET_CONDITION_RE.search(str(description or ""))
-    if match is None:
-        return None
-    return str(match.group(1)).lower()
+    text = str(description or "")
+    for match in _SINGLE_TARGET_CONDITION_RE.finditer(text):
+        if _condition_phrase_is_negated(description=text, match_start=match.start()):
+            continue
+        return str(match.group(1)).lower()
+    return None
 
 
 def _single_target_condition_apply_on(action_type: str) -> str:

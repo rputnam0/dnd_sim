@@ -89,6 +89,40 @@ def _hold_person_sheet_payload() -> dict[str, Any]:
     }
 
 
+def _sheet_payload_for_spell(
+    *,
+    name: str,
+    level_header: str = "=== 1st LEVEL ===",
+    save_hit: str = "",
+    range_text: str = "60 ft",
+    duration_text: str = "1 minute",
+) -> dict[str, Any]:
+    payload = {
+        "class_level": "Cleric 5",
+        "ability_scores": {
+            "str": 10,
+            "dex": 10,
+            "con": 12,
+            "int": 10,
+            "wis": 18,
+            "cha": 10,
+        },
+        "raw_fields": [
+            {"field": "spellSaveDC0", "value": "15"},
+            {"field": "spellHeader1", "value": level_header},
+            {"field": "spellName1", "value": name},
+            {"field": "spellPrepared1", "value": "O"},
+            {"field": "spellCastingTime1", "value": "1 action"},
+            {"field": "spellRange1", "value": range_text},
+            {"field": "spellDuration1", "value": duration_text},
+            {"field": "spellComponents1", "value": "V, S"},
+        ],
+    }
+    if save_hit:
+        payload["raw_fields"].append({"field": "spellSaveHit1", "value": save_hit})
+    return payload
+
+
 def test_extract_single_target_family_adds_condition_and_sight_metadata(
     monkeypatch,
 ) -> None:
@@ -162,6 +196,65 @@ def test_single_target_hold_person_applies_condition_and_clears_on_concentration
     _break_concentration(caster, actors, active_hazards)
     assert caster.concentrating is False
     assert "paralyzed" not in target.conditions
+
+
+def test_negated_immunity_wording_does_not_infer_apply_condition(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "dnd_sim.engine._load_spell_definition",
+        lambda _name: {
+            "name": "Ward of Calm",
+            "level": 1,
+            "casting_time": "1 action",
+            "range_ft": 30,
+            "duration_rounds": 10,
+            "description": (
+                "A friendly creature you can see within range can't be charmed and "
+                "cannot be frightened while the spell lasts."
+            ),
+            "mechanics": [],
+        },
+    )
+    spells = _extract_spells_from_raw_fields(
+        _sheet_payload_for_spell(name="Ward of Calm", duration_text="1 minute")
+    )
+
+    assert len(spells) == 1
+    mechanics = spells[0].get("mechanics", [])
+    applied_conditions = {
+        str(row.get("condition", "")).lower()
+        for row in mechanics
+        if isinstance(row, dict) and str(row.get("effect_type", "")).lower() == "apply_condition"
+    }
+    assert "charmed" not in applied_conditions
+    assert "frightened" not in applied_conditions
+
+
+def test_multi_target_wording_does_not_get_single_target_family_tag(monkeypatch) -> None:
+    descriptions = (
+        "Up to three creatures of your choice that you can see within range gain 5 temporary hit points.",
+        "Choose one or more creatures that you can see within range.",
+    )
+
+    for index, description in enumerate(descriptions):
+        monkeypatch.setattr(
+            "dnd_sim.engine._load_spell_definition",
+            lambda _name, _description=description, _index=index: {
+                "name": f"Mass Mark {_index}",
+                "level": 1,
+                "casting_time": "1 action",
+                "range_ft": 60,
+                "duration_rounds": 10,
+                "description": _description,
+                "mechanics": [],
+            },
+        )
+        spells = _extract_spells_from_raw_fields(
+            _sheet_payload_for_spell(name=f"Mass Mark {index}", duration_text="1 minute")
+        )
+
+        assert len(spells) == 1
+        tags = set(spells[0].get("tags", []))
+        assert "spell_family:single_target" not in tags
 
 
 def test_single_target_spell_suppressed_by_invalid_state_and_line_of_effect(
