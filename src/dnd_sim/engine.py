@@ -397,7 +397,9 @@ def _build_feature_hook_registrations(actor: ActorRuntimeState) -> list[FeatureH
     registrations: list[FeatureHookRegistration] = []
     registration_order = 0
     for trait_key in sorted(actor.traits.keys()):
-        trait_payload = _normalize_trait_payload_for_runtime(trait_key, actor.traits.get(trait_key, {}))
+        trait_payload = _normalize_trait_payload_for_runtime(
+            trait_key, actor.traits.get(trait_key, {})
+        )
         if not trait_payload:
             continue
         source_type = str(trait_payload.get("source_type", "other"))
@@ -1218,14 +1220,14 @@ def _construct_command_action() -> ActionDefinition:
         name="command_construct_companion",
         action_type="utility",
         action_cost="bonus",
-        target_mode="self",
+        target_mode="all_allies",
         effects=[
             {
-                "effect_type": "command_construct_companion",
-                "target": "source",
+                "effect_type": "command_allied",
+                "target": "target",
             }
         ],
-        tags=["bonus", "construct_command"],
+        tags=["bonus", "construct_command", "allied_command"],
     )
 
 
@@ -1378,6 +1380,7 @@ def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRunt
         level=owner.level,
         speed_ft=speed,
         companion_owner_id=owner.actor_id,
+        allied_controller_id=owner.actor_id,
         requires_command=True,
     )
     companion.position = owner.position
@@ -1395,21 +1398,40 @@ def _owner_is_incapacitated(owner: ActorRuntimeState | None) -> bool:
     return actor_is_incapacitated(owner)
 
 
+def _controller_id_for_actor(actor: ActorRuntimeState | None) -> str | None:
+    if actor is None:
+        return None
+    for raw in (
+        getattr(actor, "allied_controller_id", None),
+        getattr(actor, "mount_controller_id", None),
+        getattr(actor, "companion_owner_id", None),
+    ):
+        key = str(raw or "").strip()
+        if key:
+            return key
+    return None
+
+
 def _reorder_initiative_for_construct_companions(
     order: list[str], actors: dict[str, ActorRuntimeState]
 ) -> list[str]:
     working = [actor_id for actor_id in order if actor_id in actors]
-    companions = [aid for aid in working if actors[aid].companion_owner_id]
-    for companion_id in companions:
-        companion = actors.get(companion_id)
-        if companion is None or not companion.companion_owner_id:
+    controlled_actor_ids = [aid for aid in working if _controller_id_for_actor(actors.get(aid))]
+    for controlled_actor_id in controlled_actor_ids:
+        controlled_actor = actors.get(controlled_actor_id)
+        controller_id = _controller_id_for_actor(controlled_actor)
+        if controlled_actor is None or not controller_id:
             continue
-        owner_id = companion.companion_owner_id
-        if owner_id not in working:
+        if controller_id not in working:
             continue
-        working = [aid for aid in working if aid != companion_id]
-        insert_at = working.index(owner_id) + 1
-        working.insert(insert_at, companion_id)
+        working = [aid for aid in working if aid != controlled_actor_id]
+        insert_at = working.index(controller_id) + 1
+        while insert_at < len(working):
+            follower = actors.get(working[insert_at])
+            if _controller_id_for_actor(follower) != controller_id:
+                break
+            insert_at += 1
+        working.insert(insert_at, controlled_actor_id)
     return working
 
 
@@ -4798,6 +4820,8 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.non_action_cantrip_spell_cast_this_turn = False
     actor.gwm_bonus_trigger_available = False
     actor.movement_remaining = float(actor.speed_ft)
+    actor.mounted_on_id = None
+    actor.mounted_rider_id = None
 
 
 def _normalize_travel_pace(value: Any) -> str:
@@ -5214,13 +5238,6 @@ def _sync_initiative_order(
         key=lambda actor: (actor.initiative_mod, actor.dex_mod, actor.actor_id), reverse=True
     )
     return existing + [actor.actor_id for actor in missing]
-
-
-def _reorder_initiative_for_construct_companions(
-    initiative_order: list[str], _actors: dict[str, ActorRuntimeState]
-) -> list[str]:
-    """Preserve initiative order when no construct-companion rules are active."""
-    return initiative_order
 
 
 def _split_spell_slot_cost(cost: dict[str, int]) -> tuple[dict[str, int], int, list[int]]:
@@ -8187,8 +8204,11 @@ def _apply_effect(
     rule_trace: list[dict[str, Any]] | None = None,
 ) -> None:
     recipient = _resolve_effect_target(effect, actor=actor, target=target)
-    effect_type = str(effect.get("effect_type"))
-    telemetry: list[dict[str, Any]] | None = None
+    raw_effect_type = str(effect.get("effect_type", effect.get("type", ""))).strip().lower()
+    effect_type = {
+        "command_construct_companion": "command_allied",
+        "summon_creature": "summon",
+    }.get(raw_effect_type, raw_effect_type)
 
     if effect_type == "damage":
         if action is not None and _is_magic_missile_action(action):
@@ -8432,27 +8452,57 @@ def _apply_effect(
         )
         if summon_id in actors:
             return
+
         concentration_linked = bool(
             action and action.concentration and effect.get("concentration_linked", True)
         )
-        summon_name = str(effect.get("name", summon_id))
-        summon_hp = int(effect.get("max_hp", effect.get("hp", 10)))
-        summon_ac = int(effect.get("ac", 10))
+        summon_name = str(effect.get("name", "")).strip() or summon_id
+
+        try:
+            summon_hp = int(effect.get("max_hp", effect.get("hp", 10)))
+            summon_ac = int(effect.get("ac", 10))
+        except (TypeError, ValueError):
+            return
+        if summon_hp <= 0:
+            return
+
         summon_to_hit = effect.get("to_hit")
         summon_damage = effect.get("damage")
         summon_damage_type = str(effect.get("damage_type", "force"))
         summon_actions: list[ActionDefinition] = []
         if summon_to_hit is not None and summon_damage:
-            summon_actions.append(
-                ActionDefinition(
-                    name=f"{summon_name.lower().replace(' ', '_')}_attack",
-                    action_type="attack",
-                    to_hit=int(summon_to_hit),
-                    damage=str(summon_damage),
-                    damage_type=summon_damage_type,
-                    tags=["summon"],
+            try:
+                parsed_to_hit = int(summon_to_hit)
+            except (TypeError, ValueError):
+                parsed_to_hit = None
+            if parsed_to_hit is not None:
+                summon_actions.append(
+                    ActionDefinition(
+                        name=f"{summon_name.lower().replace(' ', '_')}_attack",
+                        action_type="attack",
+                        to_hit=parsed_to_hit,
+                        damage=str(summon_damage),
+                        damage_type=summon_damage_type,
+                        tags=["summon"],
+                    )
                 )
-            )
+
+        controller_id = str(effect.get("controller_id", "")).strip()
+        controller_ref = str(effect.get("controller", "")).strip().lower()
+        if not controller_id and controller_ref in {"source", "self"}:
+            controller_id = actor.actor_id
+        elif not controller_id and controller_ref == "target":
+            controller_id = recipient.actor_id
+        if not controller_id and bool(effect.get("requires_command", False)):
+            controller_id = actor.actor_id
+
+        requires_command = bool(effect.get("requires_command", False)) and bool(controller_id)
+        raw_speed = effect.get("speed_ft", actor.speed_ft)
+        try:
+            summon_speed = int(raw_speed)
+        except (TypeError, ValueError):
+            summon_speed = actor.speed_ft
+        is_mount = bool(effect.get("mount", False))
 
         summoned_actor = ActorRuntimeState(
             actor_id=summon_id,
@@ -8470,9 +8520,13 @@ def _apply_effect(
             wis_mod=0,
             cha_mod=0,
             save_mods={"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
-            actions=summon_actions,
-            speed_ft=int(effect.get("speed_ft", actor.speed_ft)),
+            actions=summon_actions + _get_standard_actions(),
+            speed_ft=summon_speed,
             position=_to_position3(effect.get("position")) or actor.position,
+            requires_command=requires_command,
+            companion_owner_id=controller_id or None,
+            allied_controller_id=controller_id or None,
+            mount_controller_id=(controller_id or None) if is_mount else None,
         )
         summoned_actor.add_manual_condition("summoned")
         if effect_type == "conjure":
@@ -8480,7 +8534,13 @@ def _apply_effect(
         summoned_actor.traits["summoned"] = {
             "source_id": actor.actor_id,
             "concentration_linked": concentration_linked,
+            "controller_id": controller_id or None,
+            "requires_command": requires_command,
+            "mount": is_mount,
         }
+        if is_mount:
+            summoned_actor.traits["mount"] = {"controller_id": controller_id or actor.actor_id}
+
         actors[summon_id] = summoned_actor
         damage_dealt.setdefault(summon_id, 0)
         damage_taken.setdefault(summon_id, 0)
@@ -8519,16 +8579,65 @@ def _apply_effect(
             )
         return
 
-    if effect_type == "command_construct_companion":
-        for ally in actors.values():
+    if effect_type == "command_allied":
+        targets: list[ActorRuntimeState]
+        if effect.get("target") == "source" or bool(effect.get("all_controlled", False)):
+            targets = list(actors.values())
+        else:
+            targets = [recipient]
+
+        for ally in targets:
             if ally.team != actor.team:
-                continue
-            if getattr(ally, "companion_owner_id", None) != actor.actor_id:
                 continue
             if ally.dead or ally.hp <= 0:
                 continue
-            if hasattr(ally, "commanded_this_round"):
-                ally.commanded_this_round = True
+            if _controller_id_for_actor(ally) != actor.actor_id:
+                continue
+            ally.commanded_this_round = True
+        return
+
+    if effect_type == "mount":
+        rider_id = str(effect.get("rider_id", "")).strip() or actor.actor_id
+        rider = actors.get(rider_id)
+        if rider is None or rider.dead or rider.hp <= 0:
+            return
+
+        mount_target = recipient
+        explicit_mount_id = str(effect.get("mount_id", "")).strip()
+        if explicit_mount_id:
+            mount_target = actors.get(explicit_mount_id, mount_target)
+        if mount_target is None or mount_target.dead or mount_target.hp <= 0:
+            return
+
+        controller_id = str(effect.get("controller_id", "")).strip() or rider.actor_id
+        mount_target.mount_controller_id = controller_id
+        mount_target.allied_controller_id = controller_id
+        mount_target.mounted_rider_id = rider.actor_id
+        rider.mounted_on_id = mount_target.actor_id
+        if bool(effect.get("requires_command", False)):
+            mount_target.requires_command = True
+
+        mount_trait = mount_target.traits.get("mount")
+        if not isinstance(mount_trait, dict):
+            mount_trait = {}
+        mount_trait["controller_id"] = controller_id
+        mount_trait["rider_id"] = rider.actor_id
+        mount_target.traits["mount"] = mount_trait
+        return
+
+    if effect_type == "dismount":
+        rider = recipient
+        explicit_rider_id = str(effect.get("rider_id", "")).strip()
+        if explicit_rider_id:
+            rider = actors.get(explicit_rider_id, rider)
+        if rider is None:
+            return
+        mount_id = getattr(rider, "mounted_on_id", None)
+        if mount_id:
+            mount_actor = actors.get(mount_id)
+            if mount_actor is not None and mount_actor.mounted_rider_id == rider.actor_id:
+                mount_actor.mounted_rider_id = None
+        rider.mounted_on_id = None
         return
 
     if effect_type == "next_attack_advantage":
@@ -9237,9 +9346,8 @@ def _reaction_attack_hook_matches(
             return False
         if reactor.team != trigger_target.team or reactor.actor_id == trigger_target.actor_id:
             return False
-        if (
-            _trait_lookup_key(hook.feature_name) == "sentinel"
-            and _has_trait(trigger_target, "sentinel")
+        if _trait_lookup_key(hook.feature_name) == "sentinel" and _has_trait(
+            trigger_target, "sentinel"
         ):
             return False
         return True
@@ -12417,6 +12525,16 @@ def _build_round_metadata(
         "tactical_branches": tactical_branches,
         "objective_scores": objective_scores,
         "objective_targets": objective_targets,
+        "controller_links": {
+            actor_id: controller_id
+            for actor_id, actor in actors.items()
+            if (controller_id := _controller_id_for_actor(actor))
+        },
+        "mount_links": {
+            actor_id: str(actor.mounted_on_id)
+            for actor_id, actor in actors.items()
+            if getattr(actor, "mounted_on_id", None)
+        },
         "available_actions": {
             actor_id: [action.name for action in actor.actions if _action_available(actor, action)]
             for actor_id, actor in actors.items()
@@ -12808,6 +12926,9 @@ def run_simulation(
                     strategy.on_round_start(state_view)
 
                 initiative_order = _sync_initiative_order(initiative_order, actors)
+                initiative_order = _reorder_initiative_for_construct_companions(
+                    initiative_order, actors
+                )
                 lair_actions_resolved = False
 
                 def _resolve_turn_end(actor: ActorRuntimeState, turn_token: str) -> None:
@@ -12975,12 +13096,12 @@ def run_simulation(
                         _resolve_turn_end(actor, turn_token)
                         continue
 
-                    companion_owner_id = getattr(actor, "companion_owner_id", None)
-                    owner = actors.get(companion_owner_id) if companion_owner_id else None
+                    controller_id = _controller_id_for_actor(actor)
+                    controller = actors.get(controller_id) if controller_id else None
                     should_force_dodge = (
                         bool(getattr(actor, "requires_command", False))
                         and not bool(getattr(actor, "commanded_this_round", False))
-                        and not _owner_is_incapacitated(owner)
+                        and not _owner_is_incapacitated(controller)
                     )
                     if should_force_dodge:
                         action = _resolve_action_selection(actor, "dodge")
