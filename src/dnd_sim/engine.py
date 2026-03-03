@@ -26,7 +26,13 @@ from dnd_sim.models import (
     SummaryMetric,
     TrialResult,
 )
-from dnd_sim.spatial import AABB, distance_chebyshev, find_path
+from dnd_sim.spatial import (
+    AABB,
+    distance_chebyshev,
+    find_path,
+    path_movement_cost,
+    path_prefix_for_movement,
+)
 from dnd_sim.rules_2014 import (
     ActionDeclaredEvent,
     AttackResolvedEvent,
@@ -4358,6 +4364,59 @@ def _requires_range_resolution(action: ActionDefinition) -> bool:
     return _action_range_ft(action) is not None
 
 
+def _difficult_terrain_positions_from_hazards(
+    active_hazards: list[dict[str, Any]],
+) -> list[tuple[float, float, float]]:
+    difficult_positions: set[tuple[float, float, float]] = set()
+    for hazard in active_hazards:
+        if not isinstance(hazard, dict):
+            continue
+        hazard_type = str(hazard.get("type") or hazard.get("hazard_type") or "").strip().lower()
+        normalized_type = hazard_type.replace("-", "_").replace(" ", "_")
+        if normalized_type != "difficult_terrain":
+            continue
+
+        explicit_positions = (
+            hazard.get("difficult_positions") or hazard.get("positions") or hazard.get("cells")
+        )
+        if isinstance(explicit_positions, list):
+            for row in explicit_positions:
+                pos = _to_position3(row)
+                if pos is not None:
+                    difficult_positions.add(pos)
+
+        center = _to_position3(hazard.get("position"))
+        if center is None:
+            continue
+        raw_radius = hazard.get("radius", hazard.get("radius_ft", 0))
+        try:
+            radius_ft = float(raw_radius)
+        except (TypeError, ValueError):
+            radius_ft = 0.0
+        if radius_ft <= 0:
+            difficult_positions.add(center)
+            continue
+
+        center_cell = (
+            int(round(center[0] / 5.0)),
+            int(round(center[1] / 5.0)),
+            int(round(center[2] / 5.0)),
+        )
+        radius_cells = int(math.ceil(radius_ft / 5.0))
+        for dx in range(-radius_cells, radius_cells + 1):
+            for dy in range(-radius_cells, radius_cells + 1):
+                for dz in range(-radius_cells, radius_cells + 1):
+                    candidate = (
+                        (center_cell[0] + dx) * 5.0,
+                        (center_cell[1] + dy) * 5.0,
+                        (center_cell[2] + dz) * 5.0,
+                    )
+                    if distance_chebyshev(center, candidate) <= radius_ft + 1e-9:
+                        difficult_positions.add(candidate)
+
+    return sorted(difficult_positions)
+
+
 def _path_distance(path: list[tuple[float, float, float]]) -> float:
     if len(path) < 2:
         return 0.0
@@ -4675,31 +4734,56 @@ def _move_actor_for_action_range(
         and not other.dead
         and other.hp > 0
     ]
+    difficult_terrain_positions = _difficult_terrain_positions_from_hazards(active_hazards)
     path = find_path(
         actor.position,
         primary.position,
         obstacles,
         occupied_positions=occupied_positions,
+        difficult_terrain_positions=difficult_terrain_positions,
     )
-    path_distance = _path_distance(path)
-    if path_distance <= action_range:
-        return True
+    if not path or distance_chebyshev(path[-1], primary.position) > 1e-6:
+        return False
 
-    required_move = max(0.0, path_distance - action_range)
-    move_distance = min(available_distance, required_move)
-    if move_distance <= 0:
+    if len(path) < 2:
+        return distance_chebyshev(actor.position, primary.position) <= action_range
+
+    approach_path: list[tuple[float, float, float]] = [path[0]]
+    for waypoint in path[1:]:
+        approach_path.append(waypoint)
+        if distance_chebyshev(waypoint, primary.position) <= action_range + 1e-9:
+            break
+
+    required_move = path_movement_cost(
+        approach_path,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    move_budget = min(available_distance, required_move)
+    if move_budget <= 0:
         return distance_chebyshev(actor.position, primary.position) <= action_range
 
     start_pos = actor.position
-    movement_path = _path_prefix_for_distance(path, move_distance)
-    end_pos = movement_path[-1] if movement_path else _advance_along_path(path, move_distance)
+    movement_path = path_prefix_for_movement(
+        path,
+        move_budget,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    if not movement_path:
+        movement_path = [start_pos]
+    end_pos = movement_path[-1]
     moved = distance_chebyshev(start_pos, end_pos)
-    if moved <= 0:
+    movement_spent = path_movement_cost(
+        movement_path,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    if moved <= 0 or movement_spent <= 0:
         return distance_chebyshev(actor.position, primary.position) <= action_range
 
     actor.position = end_pos
-    movement_spent = moved * (2.0 if crawling else 1.0)
-    actor.movement_remaining = max(0.0, actor.movement_remaining - movement_spent)
+    actor.movement_remaining = max(
+        0.0,
+        actor.movement_remaining - (movement_spent * (2.0 if crawling else 1.0)),
+    )
 
     _run_opportunity_attacks_for_movement(
         rng=rng,
