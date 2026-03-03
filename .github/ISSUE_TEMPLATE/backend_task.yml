@@ -1,0 +1,73 @@
+name: Backend Task
+about: Implementation task for D&D 5e backend backlog
+title: "[TASK] <TASK_ID> <short title>"
+labels:
+  - status:ready
+body:
+  - type: input
+    id: task_id
+    attributes:
+      label: Task ID
+      placeholder: FND-01
+    validations:
+      required: true
+
+  - type: input
+    id: wave
+    attributes:
+      label: Wave
+      placeholder: wave:1
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Exact implementation scope for this task.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List prerequisite task IDs.
+      placeholder: FND-01, FND-02
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Concrete pass criteria.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: tests
+    attributes:
+      label: Required Tests
+      options:
+        - label: Added at least one direct unit test
+          required: true
+        - label: Added at least one integration or golden test
+          required: true
+        - label: Added at least one negative test
+          required: true
+        - label: Verified deterministic behavior for identical seed
+          required: true
+
+  - type: checkboxes
+    id: migration
+    attributes:
+      label: Migration Notes
+      options:
+        - label: No public API or schema change
+        - label: Migration notes added to PR description and docs
+
+  - type: textarea
+    id: files_hint
+    attributes:
+      label: File Hints
+      description: Expected touched modules or directories.
+      placeholder: src/dnd_sim/engine.py, src/dnd_sim/rules_2014.py, tests/

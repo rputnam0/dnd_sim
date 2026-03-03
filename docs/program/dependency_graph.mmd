@@ -1,0 +1,62 @@
+graph TD
+  subgraph W1[Wave 1 Foundations]
+    FND01[FND-01 Event Timing]
+    FND02[FND-02 Effect Instances]
+    FND03[FND-03 Weapon Identity]
+    FND04[FND-04 Damage Packets]
+    FND05[FND-05 Spellcasting Core]
+    FND06[FND-06 Strategy Turn Plan]
+  end
+
+  FND01 --> FND02
+  FND03 --> FND04
+  FND01 --> FND05
+  FND02 --> FND05
+  FND01 --> FND06
+  FND03 --> FND06
+  FND05 --> FND06
+
+  subgraph W2[Wave 2 Bugs and Combat Core]
+    BUGS[BUG-01..BUG-22]
+    COMA[COM-01..COM-07]
+  end
+
+  FND01 --> BUGS
+  FND02 --> BUGS
+  FND03 --> BUGS
+  FND04 --> BUGS
+  FND05 --> BUGS
+  FND06 --> BUGS
+
+  FND01 --> COMA
+  FND02 --> COMA
+  FND03 --> COMA
+  FND05 --> COMA
+
+  subgraph W3[Wave 3 Mid-Core]
+    COMB[COM-08..COM-10]
+    CHRCORE[CHR-01..CHR-03]
+    SPL01[SPL-01]
+  end
+
+  COMA --> COMB
+  FND03 --> CHRCORE
+  FND05 --> CHRCORE
+  FND05 --> SPL01
+
+  subgraph W4[Wave 4 Classes and Spells]
+    CHRPKG[CHR-04..CHR-16]
+    SPLFAM[SPL-02..SPL-05]
+  end
+
+  CHRCORE --> CHRPKG
+  SPL01 --> SPLFAM
+  COMB --> SPLFAM
+
+  subgraph W5[Wave 5 Systems]
+    SYSALL[SYS-01..SYS-08]
+  end
+
+  CHRCORE --> SYSALL
+  COMB --> SYSALL
+  SPLFAM --> SYSALL

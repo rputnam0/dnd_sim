@@ -1,0 +1,45 @@
+name: Wave Gate
+about: Wave readiness and integration merge gate
+title: "[WAVE GATE] Wave <N>"
+labels:
+  - status:review
+body:
+  - type: input
+    id: wave
+    attributes:
+      label: Wave
+      placeholder: 1
+    validations:
+      required: true
+
+  - type: textarea
+    id: included_tasks
+    attributes:
+      label: Included Tasks
+      description: List all task IDs expected in this wave.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Wave Gate Checklist
+      options:
+        - label: All wave task PRs are open and linked
+          required: true
+        - label: All wave task PRs passed required unit, integration, and negative tests
+          required: true
+        - label: Full test suite passed on integration branch
+          required: true
+        - label: Deterministic replay or golden checks passed (or approved intentional delta)
+          required: true
+        - label: Migration notes provided for API or schema changes
+          required: true
+        - label: Status board updated in docs/program/status_board.md
+          required: true
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Outstanding Risks
+      description: Any unresolved risks that block merge.
