@@ -9,6 +9,7 @@ from dnd_sim.engine import (
     TurnDeclarationValidationError,
     _action_available,
     _build_actor_from_character,
+    _execute_declared_turn_or_error,
     _execute_action,
     _spend_action_resource_cost,
     long_rest,
@@ -312,3 +313,59 @@ def test_declared_main_action_rejects_smite_setup_bonus_timing(tmp_path: Path) -
     assert exc_info.value.code == "illegal_action"
     assert exc_info.value.field == "action.action_name"
     assert exc_info.value.actor_id == "paladin_2"
+
+
+def test_declared_basic_then_bonus_searing_smite_remains_legal_with_one_slot() -> None:
+    paladin = _build_actor_from_character(
+        _paladin_character(
+            level=2,
+            resources={"spell_slots": {"1": 1}},
+            spells=[
+                {
+                    "name": "Searing Smite",
+                    "level": 1,
+                    "concentration": True,
+                    "mechanics": [
+                        {"effect_type": "extra_damage", "damage": "1d6", "damage_type": "fire"}
+                    ],
+                }
+            ],
+        ),
+        traits_db={},
+    )
+    target = _actor("ogre", "enemy")
+    actors = {paladin.actor_id: paladin, target.actor_id: target}
+    damage_dealt = {paladin.actor_id: 0, target.actor_id: 0}
+    damage_taken = {paladin.actor_id: 0, target.actor_id: 0}
+    threat_scores = {paladin.actor_id: 0, target.actor_id: 0}
+    resources_spent = {paladin.actor_id: {}, target.actor_id: {}}
+
+    declaration = TurnDeclaration(
+        action=DeclaredAction(
+            action_name="basic",
+            targets=[TargetRef(actor_id=target.actor_id)],
+        ),
+        bonus_action=DeclaredAction(
+            action_name="Searing Smite",
+            targets=[TargetRef(actor_id=paladin.actor_id)],
+        ),
+    )
+
+    _execute_declared_turn_or_error(
+        rng=FixedRng([15, 4, 4, 4]),
+        actor=paladin,
+        declaration=declaration,
+        strategy_name="declared_basic_then_bonus_searing_smite",
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token=f"1:{paladin.actor_id}",
+    )
+
+    assert resources_spent[paladin.actor_id].get("spell_slot_1", 0) == 1
+    assert paladin.pending_smite is not None
+    assert str(paladin.pending_smite.get("name", "")).lower() == "searing smite"
