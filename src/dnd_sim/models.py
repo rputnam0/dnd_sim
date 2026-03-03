@@ -255,6 +255,7 @@ class ActorRuntimeState:
     sneak_attack_turn_token: str | None = None
     colossus_slayer_used_this_turn: bool = False
     horde_breaker_used_this_turn: bool = False
+    gwm_bonus_trigger_available: bool = False
     concentrated_targets: set[str] = field(default_factory=set)
     concentration_conditions: set[str] = field(default_factory=set)
     concentration_effect_instance_ids: set[str] = field(default_factory=set)
