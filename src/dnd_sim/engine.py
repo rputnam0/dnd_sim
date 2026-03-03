@@ -11010,6 +11010,7 @@ def _execute_action(
         from .rules_2014 import run_contested_check
 
         target = targets[0]
+        resolving_attack_instance = attack_once_per_action_used is not None
         replacement_attack = _best_melee_attack_replacement(actor)
         remaining_attacks = 0
         if replacement_attack is not None:
@@ -11055,14 +11056,21 @@ def _execute_action(
                 else:
                     _apply_condition(target, "prone", duration_rounds=100)
 
-        if action.action_cost in {"action", "none"}:
+        if not resolving_attack_instance and action.action_cost in {"action", "none"}:
             actor.took_attack_action_this_turn = True
             _consume_special_attack_replacement(actor, turn_token=turn_token)
 
-        if remaining_attacks > 0 and replacement_attack is not None and target.hp > 0 and not target.dead:
+        if (
+            not resolving_attack_instance
+            and remaining_attacks > 0
+            and replacement_attack is not None
+            and target.hp > 0
+            and not target.dead
+        ):
+            # Follow-up attacks after grapple/shove replacement should resolve as plain
+            # weapon attacks, not recursively re-apply replacement mechanics.
             follow_up_attack = replace(
-                replacement_attack,
-                action_cost="none",
+                _clone_attack_instance_action(replacement_attack),
                 attack_count=remaining_attacks,
             )
             _execute_action(
