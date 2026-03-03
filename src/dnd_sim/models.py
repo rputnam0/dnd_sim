@@ -21,6 +21,14 @@ class AttackProfile:
     to_hit: int
     damage: str
     damage_type: str
+    attack_profile_id: str | None = None
+    weapon_id: str | None = None
+    item_id: str | None = None
+    weapon_properties: list[str] = field(default_factory=list)
+    reach_ft: int | None = None
+    range_ft: int | None = None
+    range_normal_ft: int | None = None
+    range_long_ft: int | None = None
 
 
 @dataclass(slots=True)
@@ -53,10 +61,18 @@ class CharacterRecord:
             "skill_mods": self.skill_mods,
             "attacks": [
                 {
+                    "attack_profile_id": attack.attack_profile_id,
+                    "weapon_id": attack.weapon_id,
+                    "item_id": attack.item_id,
                     "name": attack.name,
                     "to_hit": attack.to_hit,
                     "damage": attack.damage,
                     "damage_type": attack.damage_type,
+                    "weapon_properties": list(attack.weapon_properties),
+                    "reach_ft": attack.reach_ft,
+                    "range_ft": attack.range_ft,
+                    "range_normal_ft": attack.range_normal_ft,
+                    "range_long_ft": attack.range_long_ft,
                 }
                 for attack in self.attacks
             ],
@@ -90,7 +106,14 @@ class ActionDefinition:
     trigger_limit_per_turn: int | None = None
     trigger_once_per_round: bool = False
     target_mode: str = "single_enemy"
+    attack_profile_id: str | None = None
+    weapon_id: str | None = None
+    item_id: str | None = None
+    weapon_properties: list[str] = field(default_factory=list)
+    reach_ft: int | None = None
     range_ft: int | None = None
+    range_normal_ft: int | None = None
+    range_long_ft: int | None = None
     aoe_type: str | None = None
     aoe_size_ft: int | None = None
     max_targets: int | None = None

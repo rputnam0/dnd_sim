@@ -17,6 +17,10 @@ from dnd_sim.strategy_api import BaseStrategy, validate_strategy_instance
 class ActionConfig(BaseModel):
     name: str
     action_type: Literal["attack", "save", "utility"] = "attack"
+    attack_profile_id: str | None = None
+    weapon_id: str | None = None
+    item_id: str | None = None
+    weapon_properties: list[str] = Field(default_factory=list)
     to_hit: int | None = None
     damage: str | None = None
     damage_type: str = "bludgeoning"
@@ -44,7 +48,10 @@ class ActionConfig(BaseModel):
         "random_enemy",
         "random_ally",
     ] = "single_enemy"
+    reach_ft: int | None = None
     range_ft: int | None = None
+    range_normal_ft: int | None = None
+    range_long_ft: int | None = None
     aoe_type: str | None = None
     aoe_size_ft: int | None = None
     max_targets: int | None = None
@@ -71,6 +78,27 @@ class ActionConfig(BaseModel):
     @classmethod
     def normalize_save_ability(cls, value: str | None) -> str | None:
         return value.lower() if isinstance(value, str) else value
+
+    @field_validator("weapon_properties", mode="before")
+    @classmethod
+    def normalize_weapon_properties(cls, value: Any) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, str):
+            candidates = [value]
+        elif isinstance(value, list):
+            candidates = value
+        else:
+            return []
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            text = str(candidate).strip().lower().replace("-", "_").replace(" ", "_")
+            if not text or text in seen:
+                continue
+            seen.add(text)
+            normalized.append(text)
+        return normalized
 
 
 class DamageEffectConfig(BaseModel):
@@ -229,8 +257,6 @@ class EncounterConfig(BaseModel):
                 raise ValueError("Encounter branch target index must be >= 0")
             normalized[str(key)] = idx
         return normalized
-
-
 
 
 class ScenarioConfig(BaseModel):
