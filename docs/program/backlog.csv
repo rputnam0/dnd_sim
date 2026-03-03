@@ -1,0 +1,3 @@
+id,work_item,wave,status,github_pr,merge_commit,last_verified_utc,notes
+FND-05,Spellcasting core follow-through,wave1,merged,https://github.com/rputnam0/dnd_sim/pull/18,a9f13606508639bb9b2058b08d0c8b091053df11,2026-03-03T06:38:32Z,Merged to main via PR 18
+FND-06,Strategy turn plan,wave1,not_started,,,2026-03-03T07:00:36Z,No GitHub PR or issue found for FND-06 and no origin branch
