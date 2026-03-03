@@ -2972,9 +2972,16 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     class_level_text = str(character.get("class_level", "1"))
     character_level = _parse_character_level(class_level_text)
     fighter_level = _parse_class_level(class_level_text, "fighter")
+    ability_scores = character.get("ability_scores", {})
+    str_mod = (int(ability_scores.get("str", 10)) - 10) // 2
+    dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
 
     def has_trait(name: str) -> bool:
         return _normalize_trait_name(name) in traits
+
+    two_weapon_fighting_style = has_trait("two-weapon fighting") or any(
+        "two weapon fighting" in trait for trait in traits
+    )
 
     def resource_pool_max(resource_name: str) -> int:
         value = resources.get(resource_name, 0)
@@ -3007,6 +3014,31 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             if n_dice == 0:
                 return float(flat)
             return n_dice * ((dice_size + 1) / 2.0) + flat
+
+        def attack_identity_key(attack: dict[str, Any]) -> tuple[str, str, str]:
+            return (
+                str(attack.get("attack_profile_id") or ""),
+                str(attack.get("weapon_id") or ""),
+                str(attack.get("item_id") or ""),
+            )
+
+        def is_light_melee_attack(attack: dict[str, Any]) -> bool:
+            properties = set(_normalize_weapon_properties(attack.get("weapon_properties", [])))
+            if "light" not in properties:
+                return False
+            if "ranged" in properties or "ammunition" in properties:
+                return False
+            return True
+
+        def off_hand_damage_expression(attack: dict[str, Any]) -> str:
+            base_damage = str(attack.get("damage", "1"))
+            if two_weapon_fighting_style:
+                return base_damage
+            properties = set(_normalize_weapon_properties(attack.get("weapon_properties", [])))
+            ability_mod = max(str_mod, dex_mod) if "finesse" in properties else str_mod
+            if ability_mod <= 0:
+                return base_damage
+            return _damage_expr_with_flat_bonus(base_damage, -ability_mod)
 
         best_attack = max(
             attacks,
@@ -3082,9 +3114,6 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
         if superiority_traits.intersection(traits):
             selected_maneuvers = _extract_selected_maneuvers(character, traits)
             die_size = _fighter_superiority_die_size(fighter_level, traits=traits)
-            ability_scores = character.get("ability_scores", {})
-            str_mod = (int(ability_scores.get("str", 10)) - 10) // 2
-            dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
             save_dc = 8 + _calculate_proficiency_bonus(character_level) + max(str_mod, dex_mod)
             for maneuver_name in selected_maneuvers:
                 actions.append(
@@ -3151,21 +3180,32 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     )
                 )
 
-        if has_trait("two-weapon fighting") and len(attacks) >= 2:
-            off_hand = attacks[1]
-            actions.append(
-                ActionDefinition(
-                    name="off_hand_attack",
-                    action_type="attack",
-                    **attack_identity_payload(off_hand),
-                    to_hit=int(off_hand.get("to_hit", 0)),
-                    damage=str(off_hand.get("damage", "1")),
-                    damage_type=str(off_hand.get("damage_type", "bludgeoning")),
-                    attack_count=1,
-                    action_cost="bonus",
-                    tags=["bonus", "off_hand"],
+        if len(attacks) >= 2:
+            primary_attack = best_attack if is_light_melee_attack(best_attack) else None
+            off_hand: dict[str, Any] | None = None
+            if primary_attack is not None:
+                primary_identity = attack_identity_key(primary_attack)
+                for candidate in attacks:
+                    if attack_identity_key(candidate) == primary_identity:
+                        continue
+                    if not is_light_melee_attack(candidate):
+                        continue
+                    off_hand = candidate
+                    break
+            if off_hand is not None:
+                actions.append(
+                    ActionDefinition(
+                        name="off_hand_attack",
+                        action_type="attack",
+                        **attack_identity_payload(off_hand),
+                        to_hit=int(off_hand.get("to_hit", 0)),
+                        damage=off_hand_damage_expression(off_hand),
+                        damage_type=str(off_hand.get("damage_type", "bludgeoning")),
+                        attack_count=1,
+                        action_cost="bonus",
+                        tags=["bonus", "off_hand"],
+                    )
                 )
-            )
 
         if has_trait("great weapon master"):
             actions.append(
@@ -7755,6 +7795,20 @@ def _spell_casting_legal_this_turn(
     return True
 
 
+def _off_hand_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if "off_hand" not in action.tags:
+        return True
+    if _has_tag(action, "two_weapon_override"):
+        return True
+    if not actor.took_attack_action_this_turn:
+        return False
+    if not _action_has_weapon_property(action, "light"):
+        return False
+    if _is_ranged_weapon_action(action):
+        return False
+    return True
+
+
 def _action_available(
     actor: ActorRuntimeState,
     action: ActionDefinition,
@@ -7769,6 +7823,8 @@ def _action_available(
     if action.recharge and not actor.recharge_ready.get(action.name, True):
         return False
     if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
+        return False
+    if not _off_hand_action_legal(actor, action):
         return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False

@@ -249,6 +249,91 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
     assert always_ki > conserve_ki
 
 
+def test_two_weapon_baseline_offhand_adds_damage_over_single_weapon(tmp_path: Path) -> None:
+    def build_dual_wielder(character_id: str, *, include_offhand: bool) -> dict:
+        fighter = build_character(
+            character_id=character_id,
+            name=character_id,
+            max_hp=45,
+            ac=16,
+            to_hit=9,
+            damage="1d1+4",
+            damage_type="piercing",
+        )
+        fighter["class_level"] = "Fighter 5"
+        fighter["ability_scores"]["str"] = 10
+        fighter["ability_scores"]["dex"] = 18
+        fighter["save_mods"]["str"] = 0
+        fighter["save_mods"]["dex"] = 4
+        fighter["traits"] = ["Extra Attack"]
+        fighter["attacks"] = [
+            {
+                "attack_profile_id": f"{character_id}_main_profile",
+                "weapon_id": f"{character_id}_main_weapon",
+                "item_id": f"{character_id}_main_item",
+                "name": "Mainhand Shortsword",
+                "to_hit": 9,
+                "damage": "1d1+4",
+                "damage_type": "piercing",
+                "weapon_properties": ["light", "finesse"],
+            }
+        ]
+        if include_offhand:
+            fighter["attacks"].append(
+                {
+                    "attack_profile_id": f"{character_id}_off_profile",
+                    "weapon_id": f"{character_id}_off_weapon",
+                    "item_id": f"{character_id}_off_item",
+                    "name": "Offhand Dagger",
+                    "to_hit": 9,
+                    "damage": "1d1+4",
+                    "damage_type": "piercing",
+                    "weapon_properties": ["light", "finesse"],
+                }
+            )
+        return fighter
+
+    def run_one_round_damage(character: dict, run_label: str) -> float:
+        enemies = [build_enemy(enemy_id="dummy", name="Dummy", hp=400, ac=5, to_hit=0, damage="1")]
+        scenario_path = _setup_env(
+            tmp_path / run_label,
+            party=[character],
+            enemies=enemies,
+            assumption_overrides={
+                "party_strategy": "focus_fire_lowest_hp",
+                "enemy_strategy": "boss_highest_threat_target",
+            },
+        )
+        payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+        payload["termination_rules"]["max_rounds"] = 1
+        scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+        loaded = load_scenario(scenario_path)
+        registry = load_strategy_registry(loaded)
+        db = load_character_db(Path(loaded.config.character_db_dir))
+        summary = run_simulation(
+            loaded,
+            db,
+            {},
+            registry,
+            trials=120,
+            seed=31,
+            run_id=run_label,
+        ).summary.to_dict()
+        return float(summary["per_actor_damage_dealt"][character["character_id"]]["mean"])
+
+    dual_mean = run_one_round_damage(
+        build_dual_wielder("dual_wielder", include_offhand=True),
+        run_label="dual_wielder",
+    )
+    single_mean = run_one_round_damage(
+        build_dual_wielder("single_weapon", include_offhand=False),
+        run_label="single_weapon",
+    )
+
+    assert dual_mean > single_mean + 0.6
+
+
 def test_rage_activation_persists_after_attack_then_bonus_activation(tmp_path: Path) -> None:
     party = [
         {
