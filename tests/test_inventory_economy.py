@@ -160,6 +160,20 @@ def test_equipping_item_requires_known_item_legal_slot_and_attunement() -> None:
     assert inventory.is_item_equipped("longsword") is False
 
 
+def test_has_equipped_shield_does_not_match_substring_names() -> None:
+    inventory = InventoryState()
+    inventory.add_item(
+        InventoryItem(
+            item_id="shieldbreaker_blade",
+            name="Shieldbreaker Blade",
+            equip_slots=("main_hand",),
+        )
+    )
+    inventory.equip_item("shieldbreaker_blade")
+
+    assert inventory.has_equipped_shield() is False
+
+
 def test_build_actor_uses_trait_mechanics_to_increase_attunement_limit() -> None:
     character = _base_character()
     character["traits"] = ["Magic Item Savant"]

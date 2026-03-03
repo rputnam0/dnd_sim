@@ -26,6 +26,13 @@ def _slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
 
 
+def _slugified_words(value: str) -> tuple[str, ...]:
+    slug = _slugify(value)
+    if not slug:
+        return ()
+    return tuple(word for word in slug.split("_") if word)
+
+
 def _normalize_slot_name(value: Any) -> str:
     normalized = _slugify(str(value).strip())
     if not normalized:
@@ -413,7 +420,7 @@ class InventoryState:
                 return True
             if bool(metadata.get("is_shield")):
                 return True
-            if "shield" in _slugify(item.name):
+            if "shield" in _slugified_words(item.name):
                 return True
         return False
 
