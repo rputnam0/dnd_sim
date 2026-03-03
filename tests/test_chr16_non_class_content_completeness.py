@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from dnd_sim.io import _load_non_class_content_catalog, load_character_db
@@ -167,3 +169,45 @@ def test_chr16_load_character_db_rejects_invalid_content_references(
 
     with pytest.raises(ValueError, match=match):
         load_character_db(db_dir)
+
+
+def test_chr16_load_character_db_rejects_invalid_content_refs_from_sqlite_rows(
+    tmp_path, monkeypatch
+) -> None:
+    valid_character = build_character(
+        character_id="valid_from_sqlite",
+        name="Valid From SQLite",
+        max_hp=20,
+        ac=13,
+        to_hit=5,
+        damage="1d8+2",
+    )
+    valid_character["content_refs"] = ["feat:alert|PHB"]
+
+    broken_character = build_character(
+        character_id="broken_from_sqlite",
+        name="Broken From SQLite",
+        max_hp=20,
+        ac=13,
+        to_hit=5,
+        damage="1d8+2",
+    )
+    broken_character["content_refs"] = ["feat:not_a_real_feat|PHB"]
+
+    sqlite_rows = [
+        {
+            "character_id": "valid_from_sqlite",
+            "data_json": json.dumps(valid_character),
+        },
+        {
+            "character_id": "broken_from_sqlite",
+            "data_json": json.dumps(broken_character),
+        },
+    ]
+    monkeypatch.setattr("dnd_sim.db.execute_query", lambda *_args, **_kwargs: sqlite_rows)
+
+    with pytest.raises(
+        ValueError,
+        match="invalid content_refs for broken_from_sqlite: invalid content_refs",
+    ):
+        load_character_db(tmp_path / "characters")

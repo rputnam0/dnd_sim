@@ -825,7 +825,10 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
                 )
         except json.JSONDecodeError:
             pass
-        except ValueError:
+        except ValueError as exc:
+            if str(exc).startswith("invalid content_refs"):
+                character_id = str(row.get("character_id", "<unknown_character_id>"))
+                raise ValueError(f"invalid content_refs for {character_id}: {exc}") from exc
             # Keep loading when a persisted SQLite row has malformed class progression data.
             pass
 
