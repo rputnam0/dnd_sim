@@ -533,6 +533,12 @@ def _resolve_character_traits(
             class_level_text=class_level_text,
         )
     )
+    explicit_candidates.update(
+        _infer_warlock_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
     for candidate in explicit_candidates:
         match = find_match(candidate)
         if match is not None:
@@ -775,6 +781,13 @@ _BARD_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (20, "superior inspiration"),
 )
 
+_WARLOCK_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
+    (1, "pact magic"),
+    (2, "eldritch invocations"),
+    (11, "mystic arcanum"),
+    (20, "eldritch master"),
+)
+
 
 def _class_levels_from_character_payload(character: dict[str, Any]) -> dict[str, int]:
     explicit_class_levels = character.get("class_levels")
@@ -836,6 +849,23 @@ def _infer_ranger_package_trait_names(
         _normalize_trait_name(trait_name)
         for min_level, trait_name in _RANGER_PACKAGE_FEATURE_LEVELS
         if ranger_level >= min_level
+    }
+
+
+def _infer_warlock_package_trait_names(
+    *,
+    class_levels: dict[str, int],
+    class_level_text: str,
+) -> set[str]:
+    warlock_level = int(class_levels.get("warlock", 0))
+    if warlock_level <= 0 and not class_levels:
+        warlock_level = _parse_class_level(class_level_text, "warlock")
+    if warlock_level <= 0:
+        return set()
+    return {
+        _normalize_trait_name(trait_name)
+        for min_level, trait_name in _WARLOCK_PACKAGE_FEATURE_LEVELS
+        if warlock_level >= min_level
     }
 
 
@@ -1046,8 +1076,12 @@ def _fighter_superiority_die_size(
 
 
 def _warlock_level_from_character(character: dict[str, Any]) -> int:
-    class_level_text = str(character.get("class_level", ""))
-    return _parse_class_level(class_level_text, "warlock")
+    class_levels = _class_levels_from_character_payload(character)
+    warlock_level = int(class_levels.get("warlock", 0))
+    if warlock_level <= 0 and not class_levels:
+        class_level_text = str(character.get("class_level", ""))
+        warlock_level = _parse_class_level(class_level_text, "warlock")
+    return warlock_level
 
 
 def _warlock_pact_slot_profile_for_level(warlock_level: int) -> tuple[int, int] | None:
@@ -3977,6 +4011,12 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     )
     traits.update(
         _infer_ranger_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
+    traits.update(
+        _infer_warlock_package_trait_names(
             class_levels=class_levels,
             class_level_text=class_level_text,
         )
