@@ -1145,3 +1145,84 @@ def test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn() 
     # Rogue should land Sneak Attack on own turn (12) and again on enemy turn OA (8).
     assert damage_dealt[rogue.actor_id] == 20
     assert rogue.reaction_available is False
+
+
+def test_line_of_effect_blocked_prevents_many_spells_even_with_line_of_sight(
+    tmp_path: Path,
+) -> None:
+    party = [build_character("hero", "Hero", 40, 16, 7, "1d8+4")]
+    enemies = [
+        {
+            "identity": {"enemy_id": "mage", "name": "Mage", "team": "enemy"},
+            "stat_block": {
+                "max_hp": 30,
+                "ac": 12,
+                "initiative_mod": 100,
+                "dex_mod": 1,
+                "con_mod": 1,
+                "save_mods": {"str": 1, "dex": 1, "con": 1, "wis": 0},
+            },
+            "actions": [
+                {
+                    "name": "force_lance",
+                    "action_type": "save",
+                    "save_dc": 30,
+                    "save_ability": "dex",
+                    "half_on_save": False,
+                    "damage": "8",
+                    "damage_type": "force",
+                    "target_mode": "single_enemy",
+                    "range_ft": 120,
+                    "resource_cost": {},
+                    "tags": ["spell"],
+                }
+            ],
+            "bonus_actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "lair_actions": [],
+            "resources": {},
+            "damage_resistances": [],
+            "damage_immunities": [],
+            "damage_vulnerabilities": [],
+            "condition_immunities": [],
+            "script_hooks": {},
+        }
+    ]
+    scenario_path = _setup_env(
+        tmp_path / "line_of_effect_blocked",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "optimal_expected_damage",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 1
+    payload["battlefield"] = {
+        "light_level": "bright",
+        "obstacles": [
+            {
+                "min_pos": (-1.0, 10.0, -1.0),
+                "max_pos": (1.0, 20.0, 1.0),
+                "cover_level": "TOTAL",
+            }
+        ],
+    }
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=10,
+        seed=73,
+        run_id="line_of_effect_blocked",
+    ).summary.to_dict()
+
+    assert summary["per_actor_damage_taken"]["hero"]["mean"] == 0.0

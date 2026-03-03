@@ -46,6 +46,18 @@ class AABB:
     cover_level: str  # "HALF", "THREE_QUARTERS", "TOTAL"
 
 
+@dataclass(slots=True)
+class VisibilityQueryResult:
+    attacker_can_see_target: bool
+    target_can_see_attacker: bool
+    line_of_sight: bool
+    line_of_effect: bool
+    cover_level: str
+    targeting_legal: bool
+    attack_advantage: bool
+    attack_disadvantage: bool
+
+
 def ray_intersects_aabb(start: Position, end: Position, aabb: AABB) -> bool:
     direction = (end[0] - start[0], end[1] - start[1], end[2] - start[2])
     dist = math.sqrt(direction[0] ** 2 + direction[1] ** 2 + direction[2] ** 2)
@@ -101,10 +113,18 @@ def _coerce_position(value: Any, default: Position = (0.0, 0.0, 0.0)) -> Positio
     return default
 
 
+def _trait_payload(observer_traits: dict[str, Any], trait_name: str) -> tuple[bool, Any]:
+    target = trait_name.lower()
+    for candidate, payload in observer_traits.items():
+        if str(candidate).strip().lower() == target:
+            return True, payload
+    return False, None
+
+
 def _sense_range(observer_traits: dict[str, Any], sense: str, default: float) -> float | None:
-    if sense not in observer_traits:
+    found, value = _trait_payload(observer_traits, sense)
+    if not found:
         return None
-    value = observer_traits.get(sense)
     if isinstance(value, (int, float)):
         return float(value)
     if isinstance(value, dict):
@@ -116,6 +136,81 @@ def _sense_range(observer_traits: dict[str, Any], sense: str, default: float) ->
     return float(default)
 
 
+def _normalize_light_level(light_level: str) -> str:
+    key = str(light_level or "bright").strip().lower()
+    if key in {"dark", "darkness", "unlit"}:
+        return "darkness"
+    if key in {"dim", "dim_light", "low"}:
+        return "dim"
+    return "bright"
+
+
+def _normalize_obscurement(obscurement: str | None) -> str:
+    key = str(obscurement or "").strip().lower().replace(" ", "_")
+    if key in {
+        "heavy",
+        "heavily_obscured",
+        "heavily-obscured",
+        "opaque",
+        "total",
+        "total_obscurement",
+    }:
+        return "heavily_obscured"
+    if key in {"light", "lightly_obscured", "lightly-obscured"}:
+        return "lightly_obscured"
+    return "none"
+
+
+def _obscurement_rank(obscurement: str | None) -> int:
+    normalized = _normalize_obscurement(obscurement)
+    if normalized == "heavily_obscured":
+        return 2
+    if normalized == "lightly_obscured":
+        return 1
+    return 0
+
+
+def _hazard_view_context(
+    observer_pos: Position,
+    target_pos: Position,
+    active_hazards: list[dict[str, Any]],
+) -> tuple[bool, int]:
+    in_magical_darkness = False
+    obscurement_rank = 0
+    for hazard in active_hazards:
+        if not isinstance(hazard, dict):
+            continue
+        hazard_type = str(hazard.get("type") or hazard.get("hazard_type") or "").lower().strip()
+        hazard_pos = _coerce_position(hazard.get("position"), default=(0.0, 0.0, 0.0))
+        try:
+            hazard_radius = float(hazard.get("radius", hazard.get("radius_ft", 15)))
+        except (TypeError, ValueError):
+            hazard_radius = 15.0
+        affects_view = (
+            distance_chebyshev(observer_pos, hazard_pos) <= hazard_radius
+            or distance_chebyshev(target_pos, hazard_pos) <= hazard_radius
+        )
+        if not affects_view:
+            continue
+        if hazard_type == "magical_darkness":
+            in_magical_darkness = True
+            obscurement_rank = max(obscurement_rank, 2)
+            continue
+        if hazard_type in {"heavily_obscured", "heavy_obscurement", "fog_cloud"}:
+            obscurement_rank = max(obscurement_rank, 2)
+            continue
+        if hazard_type in {"lightly_obscured", "light_obscurement"}:
+            obscurement_rank = max(obscurement_rank, 1)
+            continue
+        obscurement_rank = max(
+            obscurement_rank,
+            _obscurement_rank(
+                str(hazard.get("obscurement") or hazard.get("obscurity") or "").strip()
+            ),
+        )
+    return in_magical_darkness, obscurement_rank
+
+
 def can_see(
     observer_pos: Position,
     target_pos: Position,
@@ -123,6 +218,8 @@ def can_see(
     target_conditions: set,
     active_hazards: list,
     light_level: str = "bright",
+    observer_conditions: set[str] | None = None,
+    target_obscurement: str | None = None,
 ) -> bool:
     """
     Evaluates RAW 5e vision rules.
@@ -130,13 +227,22 @@ def can_see(
     observer_traits: Expects keys like 'truesight', 'blindsight', 'tremorsense', 'darkvision'.
     """
     distance = distance_chebyshev(observer_pos, target_pos)
+    normalized_target_conditions = {
+        str(condition).strip().lower() for condition in target_conditions if str(condition).strip()
+    }
+    normalized_observer_conditions = {
+        str(condition).strip().lower()
+        for condition in (observer_conditions or set())
+        if str(condition).strip()
+    }
+    active_hazards_rows = active_hazards if isinstance(active_hazards, list) else []
 
     truesight = _sense_range(observer_traits, "truesight", 120)
     if truesight is not None and distance <= truesight:
         return True
 
     # Fighting Initiate (Blind Fighting): treat as 10ft blindsight.
-    if "blind fighting" in observer_traits:
+    if _trait_payload(observer_traits, "blind fighting")[0]:
         if distance <= 10:
             return True
 
@@ -148,32 +254,88 @@ def can_see(
     if tremorsense is not None and distance <= tremorsense:
         return True
 
-    in_magical_darkness = False
-    for hazard in active_hazards:
-        hazard_type = str(hazard.get("type") or hazard.get("hazard_type") or "").lower()
-        if hazard_type == "magical_darkness":
-            hazard_pos = _coerce_position(hazard.get("position"), default=(0.0, 0.0, 0.0))
-            hazard_radius = float(hazard.get("radius", hazard.get("radius_ft", 15)))
-            if (
-                distance_chebyshev(observer_pos, hazard_pos) <= hazard_radius
-                or distance_chebyshev(target_pos, hazard_pos) <= hazard_radius
-            ):
-                in_magical_darkness = True
-                break
+    if "blinded" in normalized_observer_conditions:
+        return False
+
+    in_magical_darkness, hazard_obscurement_rank = _hazard_view_context(
+        observer_pos, target_pos, active_hazards_rows
+    )
+    effective_obscurement_rank = max(hazard_obscurement_rank, _obscurement_rank(target_obscurement))
 
     if in_magical_darkness:
         return False
 
-    if "invisible" in target_conditions:
+    if effective_obscurement_rank >= 2:
         return False
 
-    if light_level.lower() == "darkness":
+    if "invisible" in normalized_target_conditions:
+        return False
+
+    if _normalize_light_level(light_level) == "darkness":
         darkvision = _sense_range(observer_traits, "darkvision", 60)
         if darkvision is not None and distance <= darkvision:
             return True
         return False
 
     return True
+
+
+def query_visibility(
+    *,
+    attacker_pos: Position,
+    target_pos: Position,
+    attacker_traits: dict[str, Any],
+    target_traits: dict[str, Any],
+    attacker_conditions: set[str],
+    target_conditions: set[str],
+    active_hazards: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+    attacker_obscurement: str | None = None,
+    target_obscurement: str | None = None,
+    requires_sight: bool = False,
+    requires_line_of_effect: bool = False,
+) -> VisibilityQueryResult:
+    hazard_rows = active_hazards or []
+    cover_level = check_cover(attacker_pos, target_pos, obstacles)
+    line_of_effect = cover_level != "TOTAL"
+
+    attacker_can_see_target = can_see(
+        observer_pos=attacker_pos,
+        target_pos=target_pos,
+        observer_traits=attacker_traits,
+        target_conditions=target_conditions,
+        active_hazards=hazard_rows,
+        light_level=light_level,
+        observer_conditions=attacker_conditions,
+        target_obscurement=target_obscurement,
+    )
+    target_can_see_attacker = can_see(
+        observer_pos=target_pos,
+        target_pos=attacker_pos,
+        observer_traits=target_traits,
+        target_conditions=attacker_conditions,
+        active_hazards=hazard_rows,
+        light_level=light_level,
+        observer_conditions=target_conditions,
+        target_obscurement=attacker_obscurement,
+    )
+
+    line_of_sight = attacker_can_see_target
+    targeting_legal = (line_of_sight or not requires_sight) and (
+        line_of_effect or not requires_line_of_effect
+    )
+
+    return VisibilityQueryResult(
+        attacker_can_see_target=attacker_can_see_target,
+        target_can_see_attacker=target_can_see_attacker,
+        line_of_sight=line_of_sight,
+        line_of_effect=line_of_effect,
+        cover_level=cover_level,
+        targeting_legal=targeting_legal,
+        attack_advantage=not target_can_see_attacker,
+        attack_disadvantage=not attacker_can_see_target,
+    )
 
 
 def check_cover(pos1: Position, pos2: Position, obstacles: list[AABB] | None = None) -> str:
