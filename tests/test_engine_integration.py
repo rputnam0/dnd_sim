@@ -17,6 +17,7 @@ def _setup_env(
     enemies: list[dict],
     assumption_overrides: dict,
     burst_threshold: int = 3,
+    max_rounds: int = 30,
 ) -> Path:
     db_dir = tmp_path / "db" / "characters"
     db_dir.mkdir(parents=True, exist_ok=True)
@@ -57,7 +58,7 @@ def _setup_env(
         "termination_rules": {
             "party_defeat": "all_unconscious_or_dead",
             "enemy_defeat": "all_dead",
-            "max_rounds": 30,
+            "max_rounds": max_rounds,
         },
         "strategy_modules": [
             {
@@ -423,6 +424,154 @@ def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
         legendary_summary["per_actor_damage_dealt"]["boss"]["mean"]
         > plain_summary["per_actor_damage_dealt"]["boss"]["mean"]
     )
+
+
+def test_legendary_actions_refresh_on_own_turn_before_later_turn_windows(tmp_path: Path) -> None:
+    alpha = build_character("alpha", "Alpha", 200, 20, 0, "1")
+    alpha["initiative_mod"] = 30
+    beta = build_character("beta", "Beta", 200, 20, 0, "1")
+    beta["initiative_mod"] = -10
+    party = [alpha, beta]
+
+    boss = build_enemy(
+        enemy_id="boss",
+        name="Boss",
+        hp=500,
+        ac=30,
+        to_hit=100,
+        damage="1",
+        legendary_to_hit=100,
+        legendary_damage="1",
+        legendary_pool=1,
+    )
+    boss["stat_block"]["initiative_mod"] = 10
+    boss["actions"] = [
+        {
+            "name": "basic_pulse",
+            "action_type": "save",
+            "save_dc": 100,
+            "save_ability": "dex",
+            "half_on_save": False,
+            "damage": "1",
+            "damage_type": "force",
+            "resource_cost": {},
+        }
+    ]
+    boss["legendary_actions"] = [
+        {
+            "name": "legendary_pulse",
+            "action_type": "save",
+            "save_dc": 100,
+            "save_ability": "dex",
+            "half_on_save": False,
+            "damage": "1",
+            "damage_type": "force",
+            "resource_cost": {},
+        }
+    ]
+    enemies = [boss]
+
+    scenario_path = _setup_env(
+        tmp_path / "legendary_refresh_window",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+        max_rounds=1,
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=1,
+        seed=17,
+        run_id="legendary_refresh_window",
+    ).summary.to_dict()
+
+    # alpha turn-end legendary + boss main turn + beta turn-end legendary
+    assert summary["per_actor_damage_dealt"]["boss"]["mean"] == pytest.approx(3.0)
+
+
+def test_lair_action_does_not_fire_before_initiative_20_if_lair_actor_is_killed(tmp_path: Path) -> None:
+    striker = build_character("striker", "Striker", 120, 14, 100, "400")
+    striker["initiative_mod"] = 30
+    party = [striker]
+
+    lair_boss = {
+        "identity": {"enemy_id": "lair_boss", "name": "Lair Boss", "team": "enemy"},
+        "stat_block": {
+            "max_hp": 120,
+            "ac": 10,
+            "initiative_mod": -5,
+            "dex_mod": 0,
+            "con_mod": 1,
+            "save_mods": {"str": 0, "dex": 0, "con": 1, "int": 0, "wis": 0, "cha": 0},
+        },
+        "actions": [
+            {
+                "name": "basic",
+                "action_type": "attack",
+                "to_hit": 0,
+                "damage": "1",
+                "damage_type": "slashing",
+                "attack_count": 1,
+                "resource_cost": {},
+            }
+        ],
+        "bonus_actions": [],
+        "reactions": [],
+        "legendary_actions": [],
+        "lair_actions": [
+            {
+                "name": "lair_bolt",
+                "action_type": "save",
+                "save_dc": 100,
+                "save_ability": "dex",
+                "half_on_save": False,
+                "damage": "10",
+                "damage_type": "force",
+                "resource_cost": {},
+            }
+        ],
+        "resources": {},
+        "damage_resistances": [],
+        "damage_immunities": [],
+        "damage_vulnerabilities": [],
+        "condition_immunities": [],
+        "script_hooks": {},
+    }
+
+    scenario_path = _setup_env(
+        tmp_path / "lair_init_20_window",
+        party=party,
+        enemies=[lair_boss],
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+        max_rounds=1,
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=1,
+        seed=23,
+        run_id="lair_init_20_window",
+    ).summary.to_dict()
+
+    # The boss dies to the high-initiative striker before initiative count 20.
+    assert summary["per_actor_damage_taken"]["striker"]["mean"] == pytest.approx(0.0)
 
 
 def test_optimal_strategy_uses_resources_for_damage(tmp_path: Path) -> None:

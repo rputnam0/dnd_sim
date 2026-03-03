@@ -14,6 +14,7 @@ from dnd_sim.engine import (
     _create_combat_timing_engine,
     _build_round_metadata,
     _execute_action,
+    _refresh_legendary_actions_for_turn,
     _run_legendary_actions,
     _tick_conditions_for_actor,
     run_simulation,
@@ -1127,6 +1128,30 @@ def test_legendary_action_cost_tag_gates_availability() -> None:
         tags=["legendary_cost:2"],
     )
     assert _action_available(boss, expensive) is False
+
+
+def test_refresh_legendary_actions_for_turn_uses_explicit_pool_or_default() -> None:
+    boss = _base_actor(actor_id="boss", team="enemy")
+    boss.actions = [
+        ActionDefinition(
+            name="tail_tap",
+            action_type="attack",
+            action_cost="legendary",
+            to_hit=8,
+            damage="1",
+        )
+    ]
+    boss.resources["legendary_actions"] = 2
+    boss.legendary_actions_remaining = 0
+
+    _refresh_legendary_actions_for_turn(boss)
+    assert boss.legendary_actions_remaining == 2
+
+    boss.resources["legendary_actions"] = 0
+    boss.legendary_actions_remaining = 0
+
+    _refresh_legendary_actions_for_turn(boss)
+    assert boss.legendary_actions_remaining == 3
 
 
 def test_execute_action_ignores_non_dict_effect_entries() -> None:
