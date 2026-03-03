@@ -322,6 +322,23 @@ def test_two_weapon_offhand_style_adds_ability_modifier() -> None:
     assert off_hand.damage == "1d4+4"
 
 
+def test_two_weapon_offhand_baseline_keeps_negative_ability_modifier() -> None:
+    character = _martial_character(traits=["Extra Attack"], attacks=_dual_light_attacks())
+    character["ability_scores"]["str"] = 8
+    character["save_mods"]["str"] = -1
+    character["ability_scores"]["dex"] = 8
+    character["save_mods"]["dex"] = -1
+    offhand = next(
+        attack for attack in character["attacks"] if attack["attack_profile_id"] == "offhand_profile"
+    )
+    offhand["damage"] = "1d4-1"
+
+    actions = _build_character_actions(character)
+    off_hand = next(action for action in actions if action.name == "off_hand_attack")
+
+    assert off_hand.damage == "1d4-1"
+
+
 def test_two_weapon_offhand_illegal_setup_rejected_without_override() -> None:
     character = _martial_character(
         traits=["Extra Attack", "Two-Weapon Fighting"],

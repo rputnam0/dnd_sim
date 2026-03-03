@@ -3033,7 +3033,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 return base_damage
             properties = set(_normalize_weapon_properties(attack.get("weapon_properties", [])))
             ability_mod = max(str_mod, dex_mod) if "finesse" in properties else str_mod
-            if ability_mod == 0:
+            if ability_mod <= 0:
                 return base_damage
             return _damage_expr_with_flat_bonus(base_damage, -ability_mod)
 
