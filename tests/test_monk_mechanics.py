@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dnd_sim.engine import _build_character_actions, _execute_action
+from dnd_sim.engine import _build_character_actions, _execute_action, _find_best_bonus_action
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 
@@ -68,6 +68,33 @@ def test_build_character_actions_monk_flurry_and_ki_economy() -> None:
     assert action_by_name["flurry_of_blows"].resource_cost == {"ki": 1}
     assert action_by_name["flurry_of_blows"].attack_count == 2
     assert "flurry_of_blows" in action_by_name["flurry_of_blows"].tags
+    assert "signature" not in action_by_name
+
+
+def test_find_best_bonus_action_falls_back_to_martial_arts_when_ki_is_empty() -> None:
+    monk = _actor("monk", "party")
+    monk.took_attack_action_this_turn = True
+    monk.resources = {"ki": 0}
+    monk.actions = [
+        ActionDefinition(
+            name="martial_arts_bonus",
+            action_type="attack",
+            action_cost="bonus",
+            tags=["bonus", "martial_arts"],
+        ),
+        ActionDefinition(
+            name="flurry_of_blows",
+            action_type="attack",
+            action_cost="bonus",
+            resource_cost={"ki": 1},
+            tags=["bonus", "martial_arts", "flurry_of_blows"],
+        ),
+    ]
+
+    selected = _find_best_bonus_action(monk)
+
+    assert selected is not None
+    assert selected.name == "martial_arts_bonus"
 
 
 def test_stunning_strike_spends_ki_on_hit_and_applies_stunned() -> None:

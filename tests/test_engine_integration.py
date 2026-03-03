@@ -349,6 +349,49 @@ def test_rage_activation_persists_after_attack_then_bonus_activation(tmp_path: P
     assert "raging" in trial.state_snapshots[-1]["party"]["barb"]["conditions"]
 
 
+def test_monk_flurry_does_not_stack_with_signature_attack_pattern(tmp_path: Path) -> None:
+    monk = build_character(
+        character_id="monk",
+        name="Monk",
+        max_hp=38,
+        ac=16,
+        to_hit=7,
+        damage="1d8+4",
+        ki=4,
+    )
+    monk["class_level"] = "Monk 5"
+    monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
+
+    enemies = [build_enemy(enemy_id="tank", name="Tank", hp=200, ac=12, to_hit=1, damage="1")]
+    scenario_path = _setup_env(
+        tmp_path / "monk_flurry",
+        party=[monk],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "always_use_signature_ability_if_ready",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 1
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    registry = load_strategy_registry(loaded)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=20,
+        seed=83,
+        run_id="monk_flurry",
+    ).summary.to_dict()
+
+    assert summary["per_actor_resources_spent"]["monk"]["ki"]["mean"] == pytest.approx(1.0)
+
+
 def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
     party = [
         build_character(

@@ -3040,36 +3040,40 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
             )
 
-        if "ki" in resources and resources["ki"].get("max", 0) > 0:
-            actions.append(
-                ActionDefinition(
-                    name="signature",
-                    action_type="attack",
-                    **attack_identity_payload(best_attack),
-                    to_hit=int(best_attack.get("to_hit", 0)),
-                    damage=str(best_attack.get("damage", "1")),
-                    damage_type=str(best_attack.get("damage_type", "bludgeoning")),
-                    attack_count=attack_count + 1,
-                    resource_cost={"ki": 1},
-                    tags=["signature"],
+        monk_martial_bonus_profile = has_trait("martial arts") or has_trait("flurry of blows")
+        if not monk_martial_bonus_profile:
+            if resource_pool_max("ki") > 0:
+                actions.append(
+                    ActionDefinition(
+                        name="signature",
+                        action_type="attack",
+                        **attack_identity_payload(best_attack),
+                        to_hit=int(best_attack.get("to_hit", 0)),
+                        damage=str(best_attack.get("damage", "1")),
+                        damage_type=str(best_attack.get("damage_type", "bludgeoning")),
+                        attack_count=attack_count + 1,
+                        resource_cost={"ki": 1},
+                        tags=["signature"],
+                    )
                 )
-            )
-        elif len(attacks) > 1:
-            secondary = attacks[1]
-            actions.append(
-                ActionDefinition(
-                    name="signature",
-                    action_type="attack",
-                    **attack_identity_payload(secondary),
-                    to_hit=int(secondary.get("to_hit", best_attack.get("to_hit", 0))),
-                    damage=str(secondary.get("damage", best_attack.get("damage", "1"))),
-                    damage_type=str(
-                        secondary.get("damage_type", best_attack.get("damage_type", "bludgeoning"))
-                    ),
-                    attack_count=attack_count,
-                    tags=["signature"],
+            elif len(attacks) > 1:
+                secondary = attacks[1]
+                actions.append(
+                    ActionDefinition(
+                        name="signature",
+                        action_type="attack",
+                        **attack_identity_payload(secondary),
+                        to_hit=int(secondary.get("to_hit", best_attack.get("to_hit", 0))),
+                        damage=str(secondary.get("damage", best_attack.get("damage", "1"))),
+                        damage_type=str(
+                            secondary.get(
+                                "damage_type", best_attack.get("damage_type", "bludgeoning")
+                            )
+                        ),
+                        attack_count=attack_count,
+                        tags=["signature"],
+                    )
                 )
-            )
 
         superiority_traits = {"combat superiority", "maneuvers", "battle master", "martial adept"}
         if superiority_traits.intersection(traits):
