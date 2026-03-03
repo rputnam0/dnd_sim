@@ -520,6 +520,12 @@ def _resolve_character_traits(
             class_level_text=class_level_text,
         )
     )
+    explicit_candidates.update(
+        _infer_bard_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
     for candidate in explicit_candidates:
         match = find_match(candidate)
         if match is not None:
@@ -735,6 +741,20 @@ _ROGUE_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (20, "stroke of luck"),
 )
 
+_BARD_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
+    (1, "bardic inspiration"),
+    (2, "jack of all trades"),
+    (2, "song of rest"),
+    (3, "expertise"),
+    (5, "font of inspiration"),
+    (5, "bardic inspiration (d8)"),
+    (6, "countercharm"),
+    (10, "magical secrets"),
+    (10, "bardic inspiration (d10)"),
+    (15, "bardic inspiration (d12)"),
+    (20, "superior inspiration"),
+)
+
 
 def _class_levels_from_character_payload(character: dict[str, Any]) -> dict[str, int]:
     explicit_class_levels = character.get("class_levels")
@@ -762,6 +782,23 @@ def _infer_rogue_package_trait_names(
         _normalize_trait_name(trait_name)
         for min_level, trait_name in _ROGUE_PACKAGE_FEATURE_LEVELS
         if rogue_level >= min_level
+    }
+
+
+def _infer_bard_package_trait_names(
+    *,
+    class_levels: dict[str, int],
+    class_level_text: str,
+) -> set[str]:
+    bard_level = int(class_levels.get("bard", 0))
+    if bard_level <= 0 and not class_levels:
+        bard_level = _parse_class_level(class_level_text, "bard")
+    if bard_level <= 0:
+        return set()
+    return {
+        _normalize_trait_name(trait_name)
+        for min_level, trait_name in _BARD_PACKAGE_FEATURE_LEVELS
+        if bard_level >= min_level
     }
 
 
@@ -3887,10 +3924,16 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     ]
     class_level_text = str(character.get("class_level", "1"))
     class_levels = _class_levels_from_character_payload(character)
-    resources = character.get("resources", {})
+    resources = dict(character.get("resources", {}))
     traits = {_normalize_trait_name(trait) for trait in character.get("traits", [])}
     traits.update(
         _infer_rogue_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
+    traits.update(
+        _infer_bard_package_trait_names(
             class_levels=class_levels,
             class_level_text=class_level_text,
         )
@@ -3904,6 +3947,21 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     ability_scores = character.get("ability_scores", {})
     str_mod = (int(ability_scores.get("str", 10)) - 10) // 2
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
+    cha_mod = (int(ability_scores.get("cha", 10)) - 10) // 2
+
+    if _normalize_trait_name("bardic inspiration") in traits:
+        has_explicit_inspiration_pool = False
+        inspiration_pool = resources.get("bardic_inspiration")
+        if isinstance(inspiration_pool, dict):
+            has_explicit_inspiration_pool = int(inspiration_pool.get("max", 0)) > 0
+        elif isinstance(inspiration_pool, int):
+            has_explicit_inspiration_pool = inspiration_pool > 0
+        if not has_explicit_inspiration_pool:
+            bard_level = int(class_levels.get("bard", 0))
+            if bard_level <= 0 and not class_levels:
+                bard_level = _parse_class_level(class_level_text, "bard")
+            if bard_level > 0:
+                resources["bardic_inspiration"] = {"max": max(1, cha_mod)}
 
     def has_trait(name: str) -> bool:
         return _normalize_trait_name(name) in traits
@@ -4624,6 +4682,21 @@ def _apply_inferred_barbarian_resources(
     _ensure_resource_cap(actor, "rage", rage_uses)
 
 
+def _apply_inferred_bard_resources(
+    actor: ActorRuntimeState,
+    *,
+    class_level_text: str,
+) -> None:
+    if not _has_trait(actor, "bardic inspiration"):
+        return
+    bard_level = _parse_class_level(class_level_text, "bard")
+    if bard_level <= 0 and not actor.class_levels:
+        bard_level = int(actor.level)
+    if bard_level <= 0:
+        return
+    _ensure_resource_cap(actor, "bardic_inspiration", max(1, int(actor.cha_mod)))
+
+
 def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
     if not _has_trait(actor, "arcane recovery"):
         return
@@ -4809,6 +4882,7 @@ def _build_actor_from_character(
     _apply_inferred_wizard_resources(actor)
     _apply_inferred_fighter_resources(actor, class_level_text=class_level_text)
     _apply_inferred_barbarian_resources(actor, class_level_text=class_level_text)
+    _apply_inferred_bard_resources(actor, class_level_text=class_level_text)
     _register_actor_feature_hooks(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
@@ -5125,11 +5199,13 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
         "ki",
         "channel_divinity",
     }
+    recover_bardic_inspiration = _has_trait(actor, "font of inspiration")
     for res_key in list(actor.resources.keys()):
         if (
             res_key in short_rest_resources
             or "warlock_spell_slot" in res_key
             or _is_channel_divinity_resource_name(res_key)
+            or (recover_bardic_inspiration and res_key == "bardic_inspiration")
         ):
             actor.resources[res_key] = actor.max_resources.get(res_key, 0)
 
