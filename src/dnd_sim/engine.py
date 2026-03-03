@@ -77,6 +77,7 @@ from dnd_sim.strategy_api import (
     TurnDeclaration,
 )
 from dnd_sim.spells import (
+    SpellDatabaseValidationError,
     lookup_spell_definition as _lookup_validated_spell_definition,
     slugify_spell_name as _canonical_spell_slug,
     spell_lookup_key as _canonical_spell_lookup_key,
@@ -2558,11 +2559,14 @@ def _spell_root_dir() -> Path:
 
 
 def _load_spell_definition(name: str) -> dict[str, Any] | None:
-    return _lookup_validated_spell_definition(
-        name,
-        spells_dir=_spell_root_dir(),
-        duplicate_policy="prefer_richest",
-    )
+    try:
+        return _lookup_validated_spell_definition(
+            name,
+            spells_dir=_spell_root_dir(),
+            duplicate_policy="prefer_richest",
+        )
+    except SpellDatabaseValidationError:
+        return None
 
 
 _LEVEL_HEADER_RE = re.compile(r"===\s*(CANTRIPS|\d+\w{2}\s+LEVEL)\s*===", re.IGNORECASE)
@@ -2679,6 +2683,39 @@ def _classify_casting_time_action_cost(casting_time: str) -> str:
     return "action"
 
 
+def _coerce_non_negative_int(value: Any) -> int | None:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return None
+    if number < 0:
+        return None
+    return number
+
+
+def _duration_text_from_rounds(*, rounds: int, concentration: bool) -> str:
+    if rounds <= 0:
+        return "Instantaneous"
+    if rounds % 14400 == 0:
+        amount = rounds // 14400
+        unit = "day" if amount == 1 else "days"
+        base = f"{amount} {unit}"
+    elif rounds % 600 == 0:
+        amount = rounds // 600
+        unit = "hour" if amount == 1 else "hours"
+        base = f"{amount} {unit}"
+    elif rounds % 10 == 0:
+        amount = rounds // 10
+        unit = "minute" if amount == 1 else "minutes"
+        base = f"{amount} {unit}"
+    else:
+        unit = "round" if rounds == 1 else "rounds"
+        base = f"{rounds} {unit}"
+    if concentration:
+        return f"Concentration, up to {base}"
+    return base
+
+
 def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str, Any]]:
     """Extract a minimal spell list from PDF raw_fields.
 
@@ -2785,18 +2822,32 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 hydrated["save_ability"] = str(
                     spell_def.get("save_ability") or ""
                 ).lower() or hydrated.get("save_ability")
+            if "concentration" in spell_def:
+                hydrated["concentration"] = bool(spell_def["concentration"])
             if "components" in spell_def:
-                hydrated["components"] = str(spell_def.get("components") or "")
+                components_text = str(spell_def.get("components") or "").strip()
+                if components_text:
+                    hydrated["components"] = components_text
             if "casting_time" in spell_def:
-                hydrated["casting_time"] = str(spell_def.get("casting_time") or "")
+                casting_time_text = str(spell_def.get("casting_time") or "").strip()
+                if casting_time_text:
+                    hydrated["casting_time"] = casting_time_text
+            duration_rounds = _coerce_non_negative_int(spell_def.get("duration_rounds"))
+            if duration_rounds is not None:
+                hydrated["duration_rounds"] = duration_rounds
             if "duration" in spell_def:
-                hydrated["duration"] = str(spell_def.get("duration") or "")
+                duration_text = str(spell_def.get("duration") or "").strip()
+                if duration_text:
+                    hydrated["duration"] = duration_text
+            if "duration" not in hydrated and duration_rounds is not None:
+                hydrated["duration"] = _duration_text_from_rounds(
+                    rounds=duration_rounds,
+                    concentration=bool(hydrated.get("concentration", False)),
+                )
             if "damage_type" in spell_def:
                 hydrated["damage_type"] = str(spell_def.get("damage_type") or "fire").lower()
             if "range_ft" in spell_def and isinstance(spell_def.get("range_ft"), (int, float)):
                 hydrated["range_ft"] = int(spell_def["range_ft"])
-            if "concentration" in spell_def:
-                hydrated["concentration"] = bool(spell_def["concentration"])
             if "mechanics" in spell_def and isinstance(spell_def.get("mechanics"), list):
                 hydrated["mechanics"] = list(spell_def["mechanics"])
 
@@ -2894,10 +2945,15 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "aoe_size_ft",
             "concentration",
             "components",
+            "duration",
+            "duration_rounds",
         ):
             existing_value = existing.get(field)
             candidate_value = spell.get(field)
             if field == "concentration":
+                existing_missing = existing_value is None
+                candidate_present = candidate_value is not None
+            elif field == "duration_rounds":
                 existing_missing = existing_value is None
                 candidate_present = candidate_value is not None
             else:

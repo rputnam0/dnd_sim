@@ -9,6 +9,7 @@ from dnd_sim.engine import (
     _load_spell_definition,
     _resolve_character_traits,
 )
+from dnd_sim.spells import clear_spell_database_cache
 
 
 def test_load_spell_definition_accepts_sheet_ritual_suffix(tmp_path: Path, monkeypatch) -> None:
@@ -24,6 +25,28 @@ def test_load_spell_definition_accepts_sheet_ritual_suffix(tmp_path: Path, monke
     spell = _load_spell_definition("Detect Magic [R]")
     assert spell is not None
     assert spell["name"] == "Detect Magic"
+
+
+def test_load_spell_definition_returns_none_when_spell_directory_missing(
+    tmp_path: Path, monkeypatch
+) -> None:
+    missing_spells_dir = tmp_path / "missing_spells"
+    clear_spell_database_cache()
+    monkeypatch.setattr("dnd_sim.engine._spell_root_dir", lambda: missing_spells_dir)
+
+    assert _load_spell_definition("Detect Magic [R]") is None
+
+
+def test_load_spell_definition_returns_none_when_spell_database_is_malformed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    spells_dir = tmp_path / "spells"
+    spells_dir.mkdir(parents=True, exist_ok=True)
+    (spells_dir / "detect_magic.json").write_text("{not valid json", encoding="utf-8")
+    clear_spell_database_cache()
+    monkeypatch.setattr("dnd_sim.engine._spell_root_dir", lambda: spells_dir)
+
+    assert _load_spell_definition("Detect Magic [R]") is None
 
 
 def test_resolve_character_traits_maps_sheet_aliases_to_canonical_db() -> None:
@@ -151,3 +174,36 @@ def test_extract_spells_dedupe_preserves_non_concentration_false(monkeypatch) ->
     spells = _extract_spells_from_raw_fields(character)
     assert len(spells) == 1
     assert spells[0]["concentration"] is False
+
+
+def test_extract_spells_hydrates_duration_rounds_from_canonical_spell_db(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "dnd_sim.engine._load_spell_definition",
+        lambda _name: {
+            "name": "Detect Magic",
+            "type": "spell",
+            "level": 1,
+            "casting_time": "1 action",
+            "range_ft": 30,
+            "concentration": True,
+            "duration_rounds": 10,
+            "description": "For the duration, you sense the presence of magic.",
+            "mechanics": [],
+        },
+    )
+    character = {
+        "raw_fields": [
+            {"field": "spellHeader1", "value": "=== 1st LEVEL ==="},
+            {"field": "spellName1", "value": "Detect Magic"},
+            {"field": "spellPrepared1", "value": "O"},
+            {"field": "spellComponents1", "value": "V, S"},
+        ],
+        "ability_scores": {},
+    }
+
+    spells = _extract_spells_from_raw_fields(character)
+    assert len(spells) == 1
+    assert spells[0]["concentration"] is True
+    assert spells[0]["duration_rounds"] == 10
+    assert spells[0]["duration"] == "Concentration, up to 1 minute"
+    assert spells[0]["components"] == "V, S"
