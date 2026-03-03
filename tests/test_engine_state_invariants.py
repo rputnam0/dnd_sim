@@ -112,8 +112,8 @@ def test_sneak_attack_applies_once_per_turn_across_multiattack() -> None:
     rogue.level = 3
     rogue.traits = {"sneak attack": {}}
     rogue.position = (0.0, 0.0, 0.0)
-    ally.position = (5.0, 0.0, 0.0)
-    target.position = (5.0, 0.0, 0.0)
+    ally.position = (10.0, 0.0, 0.0)
+    target.position = (10.0, 0.0, 0.0)
 
     action = ActionDefinition(
         name="shortbow",
@@ -245,8 +245,8 @@ def test_sneak_attack_does_not_apply_to_spell_attack() -> None:
     rogue.level = 3
     rogue.traits = {"sneak attack": {}}
     rogue.position = (0.0, 0.0, 0.0)
-    ally.position = (5.0, 0.0, 0.0)
-    target.position = (5.0, 0.0, 0.0)
+    ally.position = (10.0, 0.0, 0.0)
+    target.position = (10.0, 0.0, 0.0)
 
     action = ActionDefinition(
         name="fire bolt",
