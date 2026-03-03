@@ -64,6 +64,7 @@ from dnd_sim.rules_2014 import (
     attack_roll,
     monk_bonus_action_legal,
     parse_damage_expression,
+    ranger_vanish_bonus_action_legal,
     resolve_death_save,
     roll_damage,
     roll_damage_packet,
@@ -526,6 +527,12 @@ def _resolve_character_traits(
             class_level_text=class_level_text,
         )
     )
+    explicit_candidates.update(
+        _infer_ranger_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
     for candidate in explicit_candidates:
         match = find_match(candidate)
         if match is not None:
@@ -740,6 +747,19 @@ _ROGUE_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (18, "elusive"),
     (20, "stroke of luck"),
 )
+_RANGER_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
+    (1, "favored enemy"),
+    (1, "natural explorer"),
+    (2, "fighting style"),
+    (2, "spellcasting"),
+    (3, "primeval awareness"),
+    (5, "extra attack"),
+    (8, "land's stride"),
+    (10, "hide in plain sight"),
+    (14, "vanish"),
+    (18, "feral senses"),
+    (20, "foe slayer"),
+)
 
 _BARD_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (1, "bardic inspiration"),
@@ -799,6 +819,23 @@ def _infer_bard_package_trait_names(
         _normalize_trait_name(trait_name)
         for min_level, trait_name in _BARD_PACKAGE_FEATURE_LEVELS
         if bard_level >= min_level
+    }
+
+
+def _infer_ranger_package_trait_names(
+    *,
+    class_levels: dict[str, int],
+    class_level_text: str,
+) -> set[str]:
+    ranger_level = int(class_levels.get("ranger", 0))
+    if ranger_level <= 0 and not class_levels:
+        ranger_level = _parse_class_level(class_level_text, "ranger")
+    if ranger_level <= 0:
+        return set()
+    return {
+        _normalize_trait_name(trait_name)
+        for min_level, trait_name in _RANGER_PACKAGE_FEATURE_LEVELS
+        if ranger_level >= min_level
     }
 
 
@@ -3938,6 +3975,12 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             class_level_text=class_level_text,
         )
     )
+    traits.update(
+        _infer_ranger_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
     character_level = (
         total_character_level(class_levels)
         if class_levels
@@ -4190,6 +4233,17 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 ]
             )
 
+        if has_trait("vanish"):
+            actions.append(
+                ActionDefinition(
+                    name="vanish_hide",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="self",
+                    tags=["bonus", "vanish", "utility_hide"],
+                )
+            )
+
         if has_trait("polearm master"):
             weapon_name = str(best_attack.get("weapon_id") or best_attack.get("name", "")).lower()
             if any(
@@ -4399,6 +4453,16 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     tags=["bonus", "cunning_action", "utility_hide"],
                 ),
             ]
+        )
+    if has_trait("vanish"):
+        base.append(
+            ActionDefinition(
+                name="vanish_hide",
+                action_type="utility",
+                action_cost="bonus",
+                target_mode="self",
+                tags=["bonus", "vanish", "utility_hide"],
+            )
         )
     return base + spell_actions + font_of_magic_actions + cleric_actions
 
@@ -8538,6 +8602,8 @@ def _tick_conditions_for_actor(
             elif not persistent_rage_active and not actor.rage_sustained_since_last_turn:
                 _remove_condition(actor, "raging")
         actor.rage_sustained_since_last_turn = False
+        actor.colossus_slayer_used_this_turn = False
+        actor.horde_breaker_used_this_turn = False
 
     if not actor.effect_instances:
         return
@@ -9587,6 +9653,8 @@ def _action_available(
     ):
         return False
     if not monk_bonus_action_legal(actor, action):
+        return False
+    if not ranger_vanish_bonus_action_legal(actor, action):
         return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False
@@ -12248,6 +12316,7 @@ def _execute_action(
                     empowered_rerolls = max(1, actor.cha_mod)
                 damage_expr = action.damage
                 sneak_damage_expr: str | None = None
+                colossus_damage_expr: str | None = None
 
                 if damage_expr and "agonizing_blast" in action.tags:
                     cha_bonus = int(actor.cha_mod)
@@ -12305,6 +12374,15 @@ def _execute_action(
                                 rogue_level = int(actor.level)
                             sa_dice = max(1, (rogue_level + 1) // 2)
                             sneak_damage_expr = f"{sa_dice}d6"
+
+                if (
+                    _has_trait(actor, "colossus slayer")
+                    and not actor.colossus_slayer_used_this_turn
+                    and "spell" not in action.tags
+                    and target.hp < target.max_hp
+                ):
+                    actor.colossus_slayer_used_this_turn = True
+                    colossus_damage_expr = "1d8"
 
                 if power_attack_active and damage_expr:
                     damage_expr += f"{damage_bonus:+d}"
@@ -12368,6 +12446,24 @@ def _execute_action(
                         is_magical=attack_is_magical,
                         crit_expanded=_damage_expr_was_crit_expanded(
                             sneak_damage_expr, crit=roll.crit
+                        ),
+                    )
+                if colossus_damage_expr:
+                    colossus_roll = roll_damage(
+                        rng,
+                        colossus_damage_expr,
+                        crit=roll.crit,
+                        source=actor,
+                        damage_type=action.damage_type,
+                    )
+                    _append_damage_packet(
+                        bundle=damage_bundle,
+                        amount=colossus_roll,
+                        damage_type=action.damage_type,
+                        packet_source="colossus_slayer",
+                        is_magical=attack_is_magical,
+                        crit_expanded=_damage_expr_was_crit_expanded(
+                            colossus_damage_expr, crit=roll.crit
                         ),
                     )
 
