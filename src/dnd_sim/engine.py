@@ -12348,9 +12348,7 @@ def run_simulation(
     exploration = (
         scenario.config.exploration if isinstance(scenario.config.exploration, dict) else {}
     )
-    exploration_legs = (
-        exploration.get("legs") if isinstance(exploration.get("legs"), list) else None
-    )
+    exploration_legs = exploration.get("legs") if isinstance(exploration.get("legs"), list) else []
     light_level = str(battlefield.get("light_level", "bright")).lower()
     battlefield_obstacles = _build_battlefield_obstacles(battlefield.get("obstacles", []))
 
@@ -12962,10 +12960,23 @@ def run_simulation(
                 continue_campaign = False
                 next_encounter_idx = None
 
-            if continue_campaign and encounter.short_rest_after:
+            if continue_campaign:
                 for actor in actors.values():
-                    if actor.team == "party":
+                    if actor.team != "party":
+                        continue
+                    if encounter.long_rest_after:
+                        long_rest(actor)
+                    elif encounter.short_rest_after:
                         short_rest(actor, healing=short_rest_healing)
+
+                if step_index < len(exploration_legs):
+                    _run_exploration_leg(
+                        rng=rng,
+                        actors=actors,
+                        damage_taken=damage_taken,
+                        resources_spent=resources_spent,
+                        leg_config=exploration_legs[step_index],
+                    )
 
             checkpoint_id = encounter.checkpoint or f"encounter_{step_index}_end"
             party_snapshot = {
