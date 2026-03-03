@@ -14,8 +14,10 @@ from dnd_sim.engine import (
     _create_combat_timing_engine,
     _build_round_metadata,
     _execute_action,
+    _parse_recharge_threshold,
     _refresh_legendary_actions_for_turn,
     _run_legendary_actions,
+    _saving_throw_succeeds,
     _tick_conditions_for_actor,
     run_simulation,
 )
@@ -58,6 +60,32 @@ class _FixedRng:
 
 
 SequenceRng = _FixedRng
+
+
+def test_parse_recharge_threshold_supports_common_monster_formats() -> None:
+    assert _parse_recharge_threshold("5-6") == 6
+    assert _parse_recharge_threshold("Recharge 6") == 6
+    assert _parse_recharge_threshold("(Recharge 5-6)") == 6
+    assert _parse_recharge_threshold("Recharge seven") is None
+
+
+def test_saving_throw_consumes_legendary_resistance_on_failed_save() -> None:
+    target = _base_actor(actor_id="boss", team="enemy")
+    target.save_mods["wis"] = 0
+    target.resources["legendary_resistance"] = 1
+    resources_spent = {target.actor_id: {}}
+
+    success = _saving_throw_succeeds(
+        rng=SequenceRng([1]),
+        target=target,
+        ability="wis",
+        dc=20,
+        resources_spent=resources_spent,
+    )
+
+    assert success is True
+    assert target.resources["legendary_resistance"] == 0
+    assert resources_spent[target.actor_id]["legendary_resistance"] == 1
 
 
 def test_build_actor_applies_passive_max_hp_trait() -> None:

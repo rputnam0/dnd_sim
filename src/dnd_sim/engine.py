@@ -397,7 +397,9 @@ def _build_feature_hook_registrations(actor: ActorRuntimeState) -> list[FeatureH
     registrations: list[FeatureHookRegistration] = []
     registration_order = 0
     for trait_key in sorted(actor.traits.keys()):
-        trait_payload = _normalize_trait_payload_for_runtime(trait_key, actor.traits.get(trait_key, {}))
+        trait_payload = _normalize_trait_payload_for_runtime(
+            trait_key, actor.traits.get(trait_key, {})
+        )
         if not trait_payload:
             continue
         source_type = str(trait_payload.get("source_type", "other"))
@@ -4629,6 +4631,166 @@ def _build_actor_from_character(
     return actor
 
 
+def _extract_spell_damage_from_description(description: str) -> tuple[str | None, str | None]:
+    patterns = (
+        r"take[s]?\s+(\d+d\d+(?:\s*[+-]\s*\d+)?)\s+([a-z]+)\s+damage",
+        r"deal[s]?\s+(\d+d\d+(?:\s*[+-]\s*\d+)?)\s+([a-z]+)\s+damage",
+        r"(\d+d\d+(?:\s*[+-]\s*\d+)?)\s+([a-z]+)\s+damage",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, description, flags=re.IGNORECASE)
+        if match is None:
+            continue
+        expr = re.sub(r"\s+", "", match.group(1).replace("−", "-"))
+        return expr, match.group(2).lower()
+    return None, None
+
+
+def _extract_spell_healing_from_description(description: str) -> str | None:
+    match = re.search(
+        r"regains?(?:\s+a\s+number\s+of)?\s+hit\s+points?\s+equal\s+to\s+(\d+d\d+(?:\s*[+-]\s*\d+)?)",
+        description,
+        flags=re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    return re.sub(r"\s+", "", match.group(1).replace("−", "-"))
+
+
+def _infer_legendary_resistance_from_traits(traits: list[str]) -> int | None:
+    best: int | None = None
+    pattern = re.compile(
+        r"legendary resistance(?:\s*\((\d+)\s*/\s*day\))?",
+        flags=re.IGNORECASE,
+    )
+    for trait in traits:
+        match = pattern.search(str(trait))
+        if match is None:
+            continue
+        uses = int(match.group(1)) if match.group(1) is not None else 3
+        best = uses if best is None else max(best, uses)
+    return best
+
+
+def _build_enemy_innate_spell_actions(enemy: EnemyConfig) -> list[ActionDefinition]:
+    innate_entries = list(getattr(enemy, "innate_spellcasting", []))
+    if not innate_entries:
+        return []
+
+    actions: list[ActionDefinition] = []
+    for entry in innate_entries:
+        spell_name = str(getattr(entry, "spell", "")).strip()
+        if not spell_name:
+            continue
+        spell_def = _load_spell_definition(spell_name)
+        if not isinstance(spell_def, dict):
+            continue
+
+        description = str(spell_def.get("description") or spell_def.get("description_raw") or "")
+        save_ability_raw = getattr(entry, "save_ability", None) or spell_def.get("save_ability")
+        save_ability = str(save_ability_raw).lower()[:3] if save_ability_raw else None
+        save_dc_raw = getattr(entry, "save_dc", None)
+        save_dc = int(save_dc_raw) if save_dc_raw is not None else None
+        to_hit_raw = getattr(entry, "to_hit", None)
+        to_hit = int(to_hit_raw) if to_hit_raw is not None else None
+        damage_expr, damage_type = _extract_spell_damage_from_description(description)
+        if damage_type is None:
+            default_damage_type = spell_def.get("damage_type")
+            if isinstance(default_damage_type, str) and default_damage_type.strip():
+                damage_type = default_damage_type.strip().lower()
+        healing_expr = _extract_spell_healing_from_description(description)
+
+        if healing_expr:
+            action_type = "utility"
+            target_mode = "single_ally"
+        elif save_ability and save_dc is not None:
+            action_type = "save"
+            target_mode = (
+                "all_enemies" if "each creature" in description.lower() else "single_enemy"
+            )
+        elif to_hit is not None or "spell attack" in description.lower():
+            action_type = "attack"
+            target_mode = "single_enemy"
+        else:
+            action_type = "utility"
+            target_mode = "single_enemy"
+
+        action_cost = getattr(entry, "action_cost", None)
+        if action_cost is None:
+            action_cost = _classify_casting_time_action_cost(str(spell_def.get("casting_time", "")))
+
+        level = int(spell_def.get("level", 0) or 0)
+        spell_tags = ["spell", "innate_spellcasting", f"spell_level:{max(0, level)}"]
+        if level == 0:
+            spell_tags.append("cantrip")
+        spell_school = _extract_spell_school(spell_def)
+        if spell_school is not None:
+            spell_tags.append(f"school:{spell_school}")
+        spell_tags = list(dict.fromkeys(spell_tags))
+
+        effects: list[dict[str, Any]] = []
+        if healing_expr:
+            effects.append(
+                {
+                    "effect_type": "heal",
+                    "target": "target",
+                    "amount": healing_expr,
+                    "apply_on": "always",
+                }
+            )
+
+        spell_payload = {
+            "name": spell_name,
+            "components": str(spell_def.get("components") or ""),
+            "casting_time": str(spell_def.get("casting_time") or "").strip(),
+            "duration": str(spell_def.get("duration") or "").strip(),
+            "concentration": bool(spell_def.get("concentration", False)),
+        }
+        spell_metadata = _build_spell_metadata(
+            spell=spell_payload,
+            spell_level=level,
+            spell_school=spell_school,
+            action_cost=action_cost,
+            target_mode=target_mode,
+            to_hit=to_hit,
+            save_dc=save_dc,
+            save_ability=save_ability,
+            half_on_save="half as much damage" in description.lower(),
+            upcast_dice_per_level="",
+        )
+
+        mechanics = spell_def.get("mechanics", [])
+        actions.append(
+            ActionDefinition(
+                name=spell_name,
+                action_type=action_type,
+                to_hit=to_hit,
+                damage=damage_expr,
+                damage_type=damage_type or "force",
+                save_dc=save_dc,
+                save_ability=save_ability,
+                half_on_save="half as much damage" in description.lower(),
+                action_cost=action_cost,
+                target_mode=target_mode,
+                max_uses=getattr(entry, "max_uses", None),
+                range_ft=(
+                    int(spell_def["range_ft"])
+                    if isinstance(spell_def.get("range_ft"), (int, float))
+                    else None
+                ),
+                concentration=bool(spell_def.get("concentration", False)),
+                effects=effects,
+                mechanics=[
+                    dict(mechanic) if isinstance(mechanic, dict) else mechanic
+                    for mechanic in mechanics
+                ],
+                spell=spell_metadata,
+                tags=spell_tags,
+            )
+        )
+    return actions
+
+
 def _build_actor_from_enemy(
     enemy: EnemyConfig, traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
@@ -4689,6 +4851,7 @@ def _build_actor_from_enemy(
     append_actions(enemy.reactions, "reaction")
     append_actions(enemy.legendary_actions, "legendary")
     append_actions(enemy.lair_actions, "lair")
+    actions.extend(_build_enemy_innate_spell_actions(enemy))
     if not actions:
         actions.append(ActionDefinition(name="basic", action_type="attack", to_hit=0, damage="1"))
 
@@ -4739,6 +4902,14 @@ def _build_actor_from_enemy(
             for trait in enemy.traits
         },
     )
+    legendary_resistance_uses = _infer_legendary_resistance_from_traits(list(enemy.traits))
+    if (
+        legendary_resistance_uses is not None
+        and "legendary_resistance" not in actor.resources
+        and legendary_resistance_uses > 0
+    ):
+        actor.resources["legendary_resistance"] = legendary_resistance_uses
+        actor.max_resources["legendary_resistance"] = legendary_resistance_uses
     _apply_passive_traits(actor)
     _register_actor_feature_hooks(actor)
     return actor
@@ -8767,13 +8938,17 @@ def _apply_action_effects(
 
 
 def _parse_recharge_threshold(spec: str) -> int | None:
-    value = spec.strip()
-    if "-" in value:
-        _, high = value.split("-", 1)
-        return int(high)
-    if value.isdigit():
-        return int(value)
-    return None
+    value = str(spec).strip().strip("()").replace("–", "-")
+    if not value:
+        return None
+    match = re.fullmatch(r"(?:recharge\s+)?([1-6])(?:\s*-\s*([1-6]))?", value, flags=re.IGNORECASE)
+    if match is None:
+        return None
+    low = int(match.group(1))
+    high = int(match.group(2) or match.group(1))
+    if low > high:
+        return None
+    return high
 
 
 def _roll_recharge_for_actor(rng: random.Random, actor: ActorRuntimeState) -> None:
@@ -9237,9 +9412,8 @@ def _reaction_attack_hook_matches(
             return False
         if reactor.team != trigger_target.team or reactor.actor_id == trigger_target.actor_id:
             return False
-        if (
-            _trait_lookup_key(hook.feature_name) == "sentinel"
-            and _has_trait(trigger_target, "sentinel")
+        if _trait_lookup_key(hook.feature_name) == "sentinel" and _has_trait(
+            trigger_target, "sentinel"
         ):
             return False
         return True

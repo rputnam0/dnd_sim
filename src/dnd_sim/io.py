@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, ValidationError, field_validator, model_v
 from dnd_sim.spells import (
     DuplicatePolicy as SpellDuplicatePolicy,
     load_spell_database as _load_spell_database,
+    lookup_spell_definition as _lookup_spell_definition,
 )
 from dnd_sim.characters import (
     validate_class_level_representation,
@@ -29,6 +30,43 @@ _FEATURE_SOURCE_TYPE_MAP = {
     "subclass_feature": "subclass",
     "class_feature": "class",
 }
+_RECHARGE_PATTERN = re.compile(
+    r"^(?:recharge\s+)?(?P<low>[1-6])(?:\s*-\s*(?P<high>[1-6]))?$",
+    flags=re.IGNORECASE,
+)
+_ATTACK_ACTION_SEQUENCE_EFFECT_TYPES = {"attack_sequence", "multiattack_sequence"}
+_ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES = {
+    "attack_replacement",
+    "replace_attack",
+    "replacement_attack",
+}
+
+
+def _spell_root_dir() -> Path:
+    return Path(__file__).resolve().parents[2] / "db" / "rules" / "2014" / "spells"
+
+
+def _is_known_spell_reference(name: str) -> bool:
+    if not name.strip():
+        return False
+    return (
+        _lookup_spell_definition(
+            name,
+            spells_dir=_spell_root_dir(),
+            duplicate_policy="prefer_richest",
+        )
+        is not None
+    )
+
+
+def _extract_action_reference_name(reference: Any) -> str | None:
+    if isinstance(reference, str):
+        name = reference.strip()
+        return name or None
+    if isinstance(reference, dict):
+        name = str(reference.get("action_name") or reference.get("name") or "").strip()
+        return name or None
+    return None
 
 
 class ActionConfig(BaseModel):
@@ -96,6 +134,47 @@ class ActionConfig(BaseModel):
     @classmethod
     def normalize_save_ability(cls, value: str | None) -> str | None:
         return value.lower() if isinstance(value, str) else value
+
+    @field_validator("recharge", mode="before")
+    @classmethod
+    def normalize_recharge_spec(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        text = text.strip("()").replace("–", "-")
+        text = re.sub(r"\s+", " ", text)
+        match = _RECHARGE_PATTERN.fullmatch(text)
+        if match is None:
+            raise ValueError(
+                "recharge must be one of: 'X-6', 'Recharge X-6', 'X', or 'Recharge X' (X=1..6)"
+            )
+        low = int(match.group("low"))
+        high = int(match.group("high") or match.group("low"))
+        if low > high:
+            raise ValueError("recharge lower bound cannot exceed upper bound")
+        return str(high) if low == high else f"{low}-{high}"
+
+    @field_validator("mechanics", mode="before")
+    @classmethod
+    def validate_mechanics_payload(cls, value: Any) -> list[dict[str, Any]]:
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise ValueError("mechanics must be a list")
+
+        normalized: list[dict[str, Any]] = []
+        for index, row in enumerate(value):
+            if not isinstance(row, dict):
+                raise ValueError(f"mechanics[{index}] must be an object")
+            effect_type = str(row.get("effect_type", "")).strip().lower()
+            if not effect_type:
+                raise ValueError(f"mechanics[{index}] must define effect_type")
+            payload = dict(row)
+            payload["effect_type"] = effect_type
+            normalized.append(payload)
+        return normalized
 
     @field_validator("weapon_properties", mode="before")
     @classmethod
@@ -229,6 +308,35 @@ class EnemyStatBlockConfig(BaseModel):
     save_mods: dict[str, int] = Field(default_factory=dict)
 
 
+class InnateSpellConfig(BaseModel):
+    spell: str
+    max_uses: int | None = None
+    action_cost: Literal["action", "bonus", "reaction"] | None = None
+    save_dc: int | None = None
+    to_hit: int | None = None
+
+    @field_validator("spell")
+    @classmethod
+    def validate_spell_name(cls, value: str) -> str:
+        text = str(value).strip()
+        if not text:
+            raise ValueError("spell must not be empty")
+        return text
+
+    @field_validator("max_uses")
+    @classmethod
+    def validate_max_uses(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            raise ValueError("max_uses must be >= 1")
+        return value
+
+    @model_validator(mode="after")
+    def validate_known_spell_reference(self) -> "InnateSpellConfig":
+        if not _is_known_spell_reference(self.spell):
+            raise ValueError(f"Unknown innate spell reference '{self.spell}'")
+        return self
+
+
 class EnemyConfig(BaseModel):
     identity: EnemyIdentityConfig
     stat_block: EnemyStatBlockConfig
@@ -237,6 +345,7 @@ class EnemyConfig(BaseModel):
     reactions: list[ActionConfig] = Field(default_factory=list)
     legendary_actions: list[ActionConfig] = Field(default_factory=list)
     lair_actions: list[ActionConfig] = Field(default_factory=list)
+    innate_spellcasting: list[InnateSpellConfig] = Field(default_factory=list)
     resources: dict[str, int] = Field(default_factory=dict)
     damage_resistances: list[str] = Field(default_factory=list)
     damage_immunities: list[str] = Field(default_factory=list)
@@ -244,6 +353,68 @@ class EnemyConfig(BaseModel):
     condition_immunities: list[str] = Field(default_factory=list)
     script_hooks: dict[str, Any] = Field(default_factory=dict)
     traits: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_custom_action_references(self) -> "EnemyConfig":
+        all_actions: list[ActionConfig] = (
+            list(self.actions)
+            + list(self.bonus_actions)
+            + list(self.reactions)
+            + list(self.legendary_actions)
+            + list(self.lair_actions)
+        )
+        action_types = {action.name: action.action_type for action in all_actions}
+
+        for action in all_actions:
+            for index, mechanic in enumerate(action.mechanics):
+                effect_type = str(mechanic.get("effect_type", "")).strip().lower()
+                context = f"{action.name}.mechanics[{index}]"
+                if effect_type in _ATTACK_ACTION_SEQUENCE_EFFECT_TYPES:
+                    sequence = mechanic.get("sequence", mechanic.get("attacks"))
+                    if not isinstance(sequence, list) or not sequence:
+                        raise ValueError(
+                            f"{context} must include a non-empty sequence of attack references"
+                        )
+                    for entry_index, entry in enumerate(sequence):
+                        ref_name = _extract_action_reference_name(entry)
+                        if not ref_name:
+                            raise ValueError(
+                                f"{context}.sequence[{entry_index}] must define action_name"
+                            )
+                        if ref_name not in action_types:
+                            raise ValueError(
+                                f"{context}.sequence[{entry_index}] references unknown action "
+                                f"'{ref_name}'"
+                            )
+                        if action_types[ref_name] != "attack":
+                            raise ValueError(
+                                f"{context}.sequence[{entry_index}] references non-attack action "
+                                f"'{ref_name}'"
+                            )
+                if effect_type in _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES:
+                    replacements = mechanic.get("replacements")
+                    replacement_rows = replacements if replacements is not None else [mechanic]
+                    if not isinstance(replacement_rows, list) or not replacement_rows:
+                        raise ValueError(
+                            f"{context} must include at least one replacement attack reference"
+                        )
+                    for entry_index, entry in enumerate(replacement_rows):
+                        ref_name = _extract_action_reference_name(entry)
+                        if not ref_name:
+                            raise ValueError(
+                                f"{context}.replacements[{entry_index}] must define action_name"
+                            )
+                        if ref_name not in action_types:
+                            raise ValueError(
+                                f"{context}.replacements[{entry_index}] references unknown action "
+                                f"'{ref_name}'"
+                            )
+                        if action_types[ref_name] != "attack":
+                            raise ValueError(
+                                f"{context}.replacements[{entry_index}] references non-attack "
+                                f"action '{ref_name}'"
+                            )
+        return self
 
 
 class StrategyModuleConfig(BaseModel):

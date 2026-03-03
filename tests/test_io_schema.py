@@ -4,8 +4,10 @@ import json
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from dnd_sim.io import (
+    EnemyConfig,
     build_run_dir,
     default_results_dir,
     load_custom_simulation_runner,
@@ -156,3 +158,45 @@ def test_load_custom_simulation_runner() -> None:
     loaded = load_scenario(SCENARIO_PATH)
     runner = load_custom_simulation_runner(loaded)
     assert callable(runner)
+
+
+def _minimal_enemy_payload() -> dict[str, object]:
+    return {
+        "identity": {"enemy_id": "validator_enemy", "name": "Validator Enemy", "team": "enemy"},
+        "stat_block": {
+            "max_hp": 30,
+            "ac": 13,
+            "initiative_mod": 1,
+            "save_mods": {"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+        },
+        "actions": [{"name": "basic", "action_type": "attack", "to_hit": 4, "damage": "1d8+2"}],
+        "bonus_actions": [],
+        "reactions": [],
+        "legendary_actions": [],
+        "lair_actions": [],
+        "resources": {},
+        "damage_resistances": [],
+        "damage_immunities": [],
+        "damage_vulnerabilities": [],
+        "condition_immunities": [],
+        "script_hooks": {},
+        "traits": [],
+    }
+
+
+def test_enemy_schema_rejects_invalid_recharge_format() -> None:
+    payload = _minimal_enemy_payload()
+    actions = list(payload["actions"])  # type: ignore[index]
+    actions[0] = dict(actions[0], recharge="Recharge seven")
+    payload["actions"] = actions
+
+    with pytest.raises(ValidationError):
+        EnemyConfig.model_validate(payload)
+
+
+def test_enemy_schema_rejects_unknown_innate_spell_reference() -> None:
+    payload = _minimal_enemy_payload()
+    payload["innate_spellcasting"] = [{"spell": "Not A Real Spell", "max_uses": 1}]
+
+    with pytest.raises(ValidationError):
+        EnemyConfig.model_validate(payload)
