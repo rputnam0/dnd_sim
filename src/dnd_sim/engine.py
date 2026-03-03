@@ -4149,6 +4149,7 @@ def _spend_action_resource_cost(
         required_slot_level = _required_spell_slot_level(action)
         preferred_slot = _preferred_spell_slot_level(action)
         explicit_slot = spell_cast_request.slot_level if spell_cast_request is not None else None
+        spent_slot_levels: set[int] = set()
         if slot_amount > 0 and required_slot_level > 0:
             if explicit_slot is not None:
                 spent_slots = _spend_exact_spell_slot(
@@ -4165,6 +4166,15 @@ def _spend_action_resource_cost(
                 )
             for key, amount in spent_slots.items():
                 spent[key] = spent.get(key, 0) + amount
+                slot_level = _spell_slot_level_from_key(str(key))
+                if slot_level is not None:
+                    spent_slot_levels.add(slot_level)
+            if (
+                spell_cast_request is not None
+                and spell_cast_request.slot_level is None
+                and len(spent_slot_levels) == 1
+            ):
+                spell_cast_request.slot_level = next(iter(spent_slot_levels))
 
     for key, amount in spent.items():
         resources_spent[actor.actor_id][key] = resources_spent[actor.actor_id].get(key, 0) + amount
@@ -4484,7 +4494,13 @@ def _run_opportunity_attacks_for_movement(
         if reaction_result is None:
             continue
         reaction_attack, _ = reaction_result
-        if not _spend_action_resource_cost(enemy, reaction_attack, resources_spent):
+        spell_cast_request = SpellCastRequest() if "spell" in reaction_attack.tags else None
+        if not _spend_action_resource_cost(
+            enemy,
+            reaction_attack,
+            resources_spent,
+            spell_cast_request=spell_cast_request,
+        ):
             continue
         enemy.reaction_available = False
         original_position = mover.position
@@ -4502,6 +4518,7 @@ def _run_opportunity_attacks_for_movement(
             active_hazards=active_hazards,
             obstacles=obstacles,
             light_level=light_level,
+            spell_cast_request=spell_cast_request,
         )
         mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
         if mover.dead or mover.hp <= 0:
@@ -6046,11 +6063,7 @@ def _spell_casting_legal_this_turn(actor: ActorRuntimeState, action: ActionDefin
         return True
     if actor.bonus_action_spell_restriction_active and not _is_action_cantrip_spell(action):
         return False
-    if (
-        action.action_cost == "bonus"
-        and not _is_cantrip_spell_action(action)
-        and actor.non_action_cantrip_spell_cast_this_turn
-    ):
+    if action.action_cost == "bonus" and actor.non_action_cantrip_spell_cast_this_turn:
         return False
     return True
 
@@ -6488,7 +6501,13 @@ def _dispatch_combat_event(
             )
             continue
 
-        if not _spend_action_resource_cost(actor, action, resources_spent):
+        spell_cast_request = SpellCastRequest() if "spell" in action.tags else None
+        if not _spend_action_resource_cost(
+            actor,
+            action,
+            resources_spent,
+            spell_cast_request=spell_cast_request,
+        ):
             continue
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
         actor.per_action_uses[per_turn_key] = actor.per_action_uses.get(per_turn_key, 0) + 1
@@ -6512,6 +6531,7 @@ def _dispatch_combat_event(
             round_number=round_number,
             turn_token=turn_token,
             rule_trace=trace,
+            spell_cast_request=spell_cast_request,
         )
         trace.append(
             {
@@ -6775,8 +6795,14 @@ def _trigger_readied_actions(
                             if target.actor_id == trigger_actor.actor_id
                         ]
                         targets = _filter_targets_in_range(actor, reaction_action, targets)
+                        spell_cast_request = (
+                            SpellCastRequest() if "spell" in reaction_action.tags else None
+                        )
                         if targets and _spend_action_resource_cost(
-                            actor, reaction_action, resources_spent
+                            actor,
+                            reaction_action,
+                            resources_spent,
+                            spell_cast_request=spell_cast_request,
                         ):
                             actor.reaction_available = False
                             _execute_action(
@@ -6792,6 +6818,7 @@ def _trigger_readied_actions(
                                 active_hazards=active_hazards,
                                 obstacles=obstacles,
                                 light_level=light_level,
+                                spell_cast_request=spell_cast_request,
                             )
                             _remove_condition(actor, "readying")
             if trigger_actor.dead or trigger_actor.hp <= 0:
@@ -6822,7 +6849,13 @@ def _trigger_readied_actions(
             targets = _filter_targets_in_range(actor, reaction_action, targets)
             if not targets:
                 continue
-            if not _spend_action_resource_cost(actor, reaction_action, resources_spent):
+            spell_cast_request = SpellCastRequest() if "spell" in reaction_action.tags else None
+            if not _spend_action_resource_cost(
+                actor,
+                reaction_action,
+                resources_spent,
+                spell_cast_request=spell_cast_request,
+            ):
                 continue
 
             actor.reaction_available = False
@@ -6839,6 +6872,7 @@ def _trigger_readied_actions(
                 active_hazards=active_hazards,
                 obstacles=obstacles,
                 light_level=light_level,
+                spell_cast_request=spell_cast_request,
             )
             break
 
@@ -7593,7 +7627,7 @@ def _record_spell_cast_for_turn(actor: ActorRuntimeState, action: ActionDefiniti
         return
     if not _is_action_cantrip_spell(action):
         actor.non_action_cantrip_spell_cast_this_turn = True
-    if action.action_cost == "bonus" and not _is_cantrip_spell_action(action):
+    if action.action_cost == "bonus":
         actor.bonus_action_spell_restriction_active = True
 
 
@@ -7627,6 +7661,7 @@ def _execute_action(
     subtle_spell = _has_tag(action, "metamagic:subtle")
     spell_level = _spell_level_from_action(action) if is_spell_action else 0
     resolved_spell_cast_request: SpellCastRequest | None = None
+    spell_declared_for_resolution = False
     has_turn_context = round_number is not None and turn_token is not None
     active_timing_engine = (
         timing_engine if timing_engine is not None else _get_default_combat_timing_engine()
@@ -7716,18 +7751,18 @@ def _execute_action(
             spell_level = int(resolved_spell_cast_request.slot_level)
             action = _apply_upcast_scaling_for_slot(action, slot_level=spell_level)
 
-        if action.action_type != "attack":
-            declaration_event = active_timing_engine.emit(
-                ActionDeclaredEvent(
-                    attacker=actor,
-                    target=targets[0],
-                    action=action,
-                    round_number=round_number,
-                    turn_token=turn_token,
-                )
+        declaration_event = active_timing_engine.emit(
+            ActionDeclaredEvent(
+                attacker=actor,
+                target=targets[0],
+                action=action,
+                round_number=round_number,
+                turn_token=turn_token,
             )
-            if declaration_event.cancelled:
-                return
+        )
+        if declaration_event.cancelled:
+            return
+        spell_declared_for_resolution = True
 
         _record_spell_cast_for_turn(actor, action)
 
@@ -7876,17 +7911,18 @@ def _execute_action(
                 if current_target is None:
                     break
             target = current_target
-            declaration_event = active_timing_engine.emit(
-                ActionDeclaredEvent(
-                    attacker=actor,
-                    target=target,
-                    action=action,
-                    round_number=round_number,
-                    turn_token=turn_token,
+            if not (is_spell_action and spell_declared_for_resolution):
+                declaration_event = active_timing_engine.emit(
+                    ActionDeclaredEvent(
+                        attacker=actor,
+                        target=target,
+                        action=action,
+                        round_number=round_number,
+                        turn_token=turn_token,
+                    )
                 )
-            )
-            if declaration_event.cancelled:
-                continue
+                if declaration_event.cancelled:
+                    continue
             if "raging" in actor.conditions and target.team != actor.team:
                 actor.rage_sustained_since_last_turn = True
             advantage, disadvantage = _consume_attack_flags(actor)
@@ -8739,7 +8775,13 @@ def _run_lair_actions(
                 break
         if action is None or not targets:
             continue
-        if not _spend_action_resource_cost(actor, action, resources_spent):
+        spell_cast_request = SpellCastRequest() if "spell" in action.tags else None
+        if not _spend_action_resource_cost(
+            actor,
+            action,
+            resources_spent,
+            spell_cast_request=spell_cast_request,
+        ):
             continue
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
         if action.recharge:
@@ -8761,6 +8803,7 @@ def _run_lair_actions(
             telemetry=telemetry,
             round_number=round_number,
             strategy_name="lair_action",
+            spell_cast_request=spell_cast_request,
         )
 
 
@@ -8805,7 +8848,13 @@ def _run_legendary_actions(
                 break
         if action is None or not targets:
             continue
-        if not _spend_action_resource_cost(actor, action, resources_spent):
+        spell_cast_request = SpellCastRequest() if "spell" in action.tags else None
+        if not _spend_action_resource_cost(
+            actor,
+            action,
+            resources_spent,
+            spell_cast_request=spell_cast_request,
+        ):
             continue
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
         if action.recharge:
@@ -8827,6 +8876,7 @@ def _run_legendary_actions(
             telemetry=telemetry,
             round_number=round_number,
             strategy_name="legendary_action",
+            spell_cast_request=spell_cast_request,
         )
 
 
@@ -9315,7 +9365,13 @@ def run_simulation(
                         )
                         continue
 
-                    if not _spend_action_resource_cost(actor, action, resources_spent):
+                    spell_cast_request = SpellCastRequest() if "spell" in action.tags else None
+                    if not _spend_action_resource_cost(
+                        actor,
+                        action,
+                        resources_spent,
+                        spell_cast_request=spell_cast_request,
+                    ):
                         continue
                     if extra_cost:
                         spent_extra = _spend_resources(actor, extra_cost)
@@ -9349,6 +9405,7 @@ def run_simulation(
                         rule_trace=trial_rule_trace,
                         telemetry=trial_telemetry,
                         strategy_name=strategy_name,
+                        spell_cast_request=spell_cast_request,
                     )
                     _dispatch_combat_event(
                         rng=rng,
@@ -9381,10 +9438,16 @@ def run_simulation(
                                 requested=_default_target(actor, actors),
                             )
                             if bonus_targets:
+                                bonus_spell_cast_request = (
+                                    SpellCastRequest() if "spell" in bonus_action.tags else None
+                                )
                                 if _can_pay_resource_cost(
                                     actor, bonus_action
                                 ) and _spend_action_resource_cost(
-                                    actor, bonus_action, resources_spent
+                                    actor,
+                                    bonus_action,
+                                    resources_spent,
+                                    spell_cast_request=bonus_spell_cast_request,
                                 ):
                                     actor.per_action_uses[bonus_action.name] = (
                                         actor.per_action_uses.get(bonus_action.name, 0) + 1
@@ -9408,6 +9471,7 @@ def run_simulation(
                                         rule_trace=trial_rule_trace,
                                         telemetry=trial_telemetry,
                                         strategy_name=strategy_name,
+                                        spell_cast_request=bonus_spell_cast_request,
                                     )
                                     _dispatch_combat_event(
                                         rng=rng,
@@ -9455,10 +9519,16 @@ def run_simulation(
                                     requested=_default_target(actor, actors),
                                 )
                                 if surge_targets:
+                                    surge_spell_cast_request = (
+                                        SpellCastRequest() if "spell" in surge_action.tags else None
+                                    )
                                     if _can_pay_resource_cost(
                                         actor, surge_action
                                     ) and _spend_action_resource_cost(
-                                        actor, surge_action, resources_spent
+                                        actor,
+                                        surge_action,
+                                        resources_spent,
+                                        spell_cast_request=surge_spell_cast_request,
                                     ):
 
                                         actor.per_action_uses[surge_action.name] = (
@@ -9486,6 +9556,7 @@ def run_simulation(
                                             rule_trace=trial_rule_trace,
                                             telemetry=trial_telemetry,
                                             strategy_name=strategy_name,
+                                            spell_cast_request=surge_spell_cast_request,
                                         )
                                         _dispatch_combat_event(
                                             rng=rng,

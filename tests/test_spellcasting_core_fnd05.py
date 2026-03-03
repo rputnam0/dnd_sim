@@ -8,7 +8,13 @@ from dnd_sim.engine import (
     _execute_action,
     _spend_action_resource_cost,
 )
-from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.models import (
+    ActionDefinition,
+    ActorRuntimeState,
+    SpellCastRequest,
+    SpellDefinition,
+    SpellScaling,
+)
 from dnd_sim.rules_2014 import ActionDeclaredEvent, ReactionWindowOpenedEvent
 
 
@@ -74,6 +80,63 @@ def test_higher_level_slot_legal_cast() -> None:
     assert resources_spent[caster.actor_id]["spell_slot_2"] == 1
 
 
+def test_spent_higher_slot_drives_upcast_scaling_during_resolution() -> None:
+    rng = _FixedRng([14, 3, 4])
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    target.ac = 10
+    caster.resources = {"spell_slot_2": 1}
+
+    spell = ActionDefinition(
+        name="chromatic_orb",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=6,
+        damage="1d4",
+        damage_type="acid",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+        spell=SpellDefinition(
+            name="chromatic_orb",
+            level=1,
+            scaling=SpellScaling(upcast_dice_per_level="1d4"),
+        ),
+    )
+
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+    spell_cast_request = SpellCastRequest()
+
+    assert (
+        _spend_action_resource_cost(
+            caster,
+            spell,
+            resources_spent,
+            spell_cast_request=spell_cast_request,
+        )
+        is True
+    )
+    assert resources_spent[caster.actor_id]["spell_slot_2"] == 1
+    assert spell_cast_request.slot_level == 2
+
+    _execute_action(
+        rng=rng,
+        actor=caster,
+        action=spell,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        spell_cast_request=spell_cast_request,
+    )
+
+    assert target.hp == target.max_hp - 7
+
+
 def test_bonus_action_leveled_spell_blocks_non_cantrip_action_spell_same_turn() -> None:
     caster = _base_actor(actor_id="caster", team="party")
     target = _base_actor(actor_id="target", team="enemy")
@@ -130,6 +193,50 @@ def test_bonus_action_leveled_spell_blocks_non_cantrip_action_spell_same_turn() 
 
     assert _action_available(caster, action_spell) is False
     assert _action_available(caster, action_cantrip) is True
+
+
+def test_bonus_action_cantrip_blocks_non_cantrip_action_spell_same_turn() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    caster.resources = {"spell_slot_1": 1}
+
+    bonus_cantrip = ActionDefinition(
+        name="magic_stone",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        tags=["spell", "cantrip"],
+        effects=[{"effect_type": "apply_condition", "condition": "armed", "target": "source"}],
+    )
+    action_spell = ActionDefinition(
+        name="guiding_bolt",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=7,
+        damage="4d6",
+        damage_type="radiant",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+    )
+
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+
+    _execute_action(
+        rng=random.Random(11),
+        actor=caster,
+        action=bonus_cantrip,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert _action_available(caster, action_spell) is False
 
 
 def test_counterspell_blocks_before_resolution_with_level_check_logic() -> None:
@@ -199,6 +306,77 @@ def test_counterspell_blocks_before_resolution_with_level_check_logic() -> None:
 
     assert observed == ["declared", "counterspell_window"]
     assert "blessed" not in ally.conditions
+    assert counterspeller.resources["spell_slot_3"] == 0
+
+
+def test_counterspell_against_attack_spell_emits_declaration_before_window() -> None:
+    timing_engine = _create_combat_timing_engine()
+
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    counterspeller = _base_actor(actor_id="counterspeller", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    counterspeller.position = (0.0, 30.0, 0.0)
+    counterspeller.actions = [
+        ActionDefinition(
+            name="counterspell",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="single_enemy",
+            tags=["spell", "counterspell"],
+        )
+    ]
+    counterspeller.resources = {"spell_slot_3": 1}
+
+    attack_spell = ActionDefinition(
+        name="guiding_bolt",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=7,
+        damage="4d6",
+        damage_type="radiant",
+        resource_cost={"spell_slot_3": 1},
+        tags=["spell"],
+    )
+
+    observed: list[str] = []
+
+    def _capture_declared(_event: ActionDeclaredEvent) -> None:
+        observed.append("declared")
+
+    def _capture_window(event: ReactionWindowOpenedEvent) -> None:
+        if event.window == "counterspell":
+            observed.append("counterspell_window")
+
+    timing_engine.subscribe(ActionDeclaredEvent, _capture_declared, name="capture_declared")
+    timing_engine.subscribe(ReactionWindowOpenedEvent, _capture_window, name="capture_window")
+
+    actors = {
+        caster.actor_id: caster,
+        target.actor_id: target,
+        counterspeller.actor_id: counterspeller,
+    }
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        caster, target, counterspeller
+    )
+
+    _execute_action(
+        rng=random.Random(20),
+        actor=caster,
+        action=attack_spell,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        timing_engine=timing_engine,
+    )
+
+    assert observed == ["declared", "counterspell_window"]
+    assert target.hp == target.max_hp
     assert counterspeller.resources["spell_slot_3"] == 0
 
 
