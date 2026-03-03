@@ -247,6 +247,106 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
     assert always_ki > conserve_ki
 
 
+def test_rage_activation_persists_after_attack_then_bonus_activation(tmp_path: Path) -> None:
+    party = [
+        {
+            "character_id": "barb",
+            "name": "Barbarian",
+            "class_level": "Barbarian 5",
+            "max_hp": 45,
+            "ac": 16,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 18,
+                "dex": 14,
+                "con": 16,
+                "int": 8,
+                "wis": 10,
+                "cha": 10,
+            },
+            "save_mods": {"str": 7, "dex": 2, "con": 6, "int": -1, "wis": 0, "cha": 0},
+            "skill_mods": {},
+            "attacks": [
+                {
+                    "name": "Greataxe",
+                    "to_hit": 7,
+                    "damage": "1d12+4",
+                    "damage_type": "slashing",
+                }
+            ],
+            "resources": {"rage": {"max": 1}},
+            "traits": ["Rage"],
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    ]
+    enemies = [
+        {
+            "identity": {"enemy_id": "dummy", "name": "Dummy", "team": "enemy"},
+            "stat_block": {
+                "max_hp": 500,
+                "ac": 30,
+                "initiative_mod": 0,
+                "dex_mod": 0,
+                "con_mod": 0,
+                "save_mods": {"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+            },
+            "actions": [
+                {
+                    "name": "tap",
+                    "action_type": "attack",
+                    "to_hit": -2,
+                    "damage": "1",
+                    "damage_type": "bludgeoning",
+                    "attack_count": 1,
+                    "resource_cost": {},
+                }
+            ],
+            "bonus_actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "lair_actions": [],
+            "resources": {},
+            "damage_resistances": [],
+            "damage_immunities": [],
+            "damage_vulnerabilities": [],
+            "condition_immunities": [],
+            "script_hooks": {},
+        }
+    ]
+
+    scenario_path = _setup_env(
+        tmp_path / "rage_persist",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 2
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    artifacts = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=1,
+        seed=13,
+        run_id="rage_persist",
+    )
+
+    trial = artifacts.trial_results[0]
+    assert trial.rounds == 2
+    assert trial.resources_spent["barb"].get("rage", 0) == 1
+    assert "raging" in trial.state_snapshots[-1]["party"]["barb"]["conditions"]
+
+
 def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
     party = [
         build_character(

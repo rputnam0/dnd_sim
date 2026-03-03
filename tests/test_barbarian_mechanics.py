@@ -162,6 +162,95 @@ def test_rage_lifecycle_persists_when_attacking_hostile() -> None:
     assert "raging" in barbarian.conditions
 
 
+def test_rage_lifecycle_persists_when_attack_happens_before_activation() -> None:
+    rng = random.Random(2)
+    barbarian = _base_actor(actor_id="barb", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    barbarian.traits = {"rage": {}}
+    barbarian.resources = {"rage": 2}
+    barbarian.max_resources = {"rage": 2}
+
+    actors = {barbarian.actor_id: barbarian, enemy.actor_id: enemy}
+    damage_dealt = {barbarian.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {barbarian.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {barbarian.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {barbarian.actor_id: {}, enemy.actor_id: {}}
+
+    attack = ActionDefinition(
+        name="greataxe",
+        action_type="attack",
+        to_hit=6,
+        damage="1d12",
+        damage_type="slashing",
+        action_cost="action",
+        target_mode="single_enemy",
+    )
+    _execute_action(
+        rng=rng,
+        actor=barbarian,
+        action=attack,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert barbarian.took_attack_action_this_turn is True
+
+    rage_action = _find_best_bonus_action(barbarian)
+    assert rage_action is not None
+    _execute_action(
+        rng=rng,
+        actor=barbarian,
+        action=rage_action,
+        targets=[barbarian],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert "raging" in barbarian.conditions
+
+    _tick_conditions_for_actor(rng, barbarian)
+    assert "raging" in barbarian.conditions
+
+
+def test_rage_activation_without_attack_does_not_set_sustain_marker() -> None:
+    rng = random.Random(1)
+    barbarian = _base_actor(actor_id="barb", team="party")
+    barbarian.traits = {"rage": {}}
+    barbarian.resources = {"rage": 2}
+    barbarian.max_resources = {"rage": 2}
+
+    rage_action = _find_best_bonus_action(barbarian)
+    assert rage_action is not None
+
+    actors = {barbarian.actor_id: barbarian}
+    damage_dealt = {barbarian.actor_id: 0}
+    damage_taken = {barbarian.actor_id: 0}
+    threat_scores = {barbarian.actor_id: 0}
+    resources_spent = {barbarian.actor_id: {}}
+    _execute_action(
+        rng=rng,
+        actor=barbarian,
+        action=rage_action,
+        targets=[barbarian],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "raging" in barbarian.conditions
+    assert barbarian.rage_sustained_since_last_turn is False
+
+
 def test_reckless_attack_applies_self_condition_for_enemy_advantage() -> None:
     rng = random.Random(2)
     barbarian = _base_actor(actor_id="barb", team="party")
