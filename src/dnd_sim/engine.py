@@ -9209,6 +9209,10 @@ def _is_melee_attack_replacement_candidate(action: ActionDefinition) -> bool:
         return False
     if action.action_cost not in {"action", "none"}:
         return False
+    # Grapple/shove replacement volume should come from baseline attack actions,
+    # not optional Action Surge variants that require explicit selection/spend.
+    if _has_tag(action, "fighter_action_surge"):
+        return False
     if action.to_hit is None:
         return False
     if _is_ranged_weapon_action(action):
