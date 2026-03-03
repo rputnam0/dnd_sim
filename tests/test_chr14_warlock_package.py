@@ -9,6 +9,7 @@ from dnd_sim.engine import (
     _build_actor_from_character,
     _execute_action,
     _spend_action_resource_cost,
+    _warlock_pact_slot_profile_for_level,
     run_simulation,
     short_rest,
 )
@@ -158,6 +159,51 @@ def test_pact_slot_short_rest_recovery_uses_warlock_level_from_class_levels_payl
     assert actor.resources["warlock_spell_slot_3"] == 2
 
 
+def test_non_empty_class_levels_without_warlock_entry_blocks_text_fallback() -> None:
+    character = _warlock_character(
+        level=9,
+        class_level="Warlock 3 / Fighter 6",
+        class_levels={"fighter": 6},
+        traits=[],
+        spells=[],
+        resources={"spell_slots": {"2": 2}},
+    )
+
+    actor = _build_actor_from_character(character, traits_db={})
+
+    assert "pact magic" not in actor.traits
+    assert "warlock_spell_slot_2" not in actor.max_resources
+    assert actor.max_resources["spell_slot_2"] == 2
+
+
+def test_explicit_class_levels_override_conflicting_warlock_text() -> None:
+    character = _warlock_character(
+        level=12,
+        class_level="Warlock 13 / Fighter 1",
+        class_levels={"warlock": 2, "fighter": 10},
+        traits=[],
+        spells=[],
+        resources={"spell_slots": {"1": 2}},
+    )
+
+    actor = _build_actor_from_character(character, traits_db={})
+
+    assert "mystic arcanum" not in actor.traits
+    assert actor.max_resources["warlock_spell_slot_1"] == 2
+
+
+def test_warlock_pact_slot_profile_threshold_edges() -> None:
+    assert _warlock_pact_slot_profile_for_level(1) == (1, 1)
+    assert _warlock_pact_slot_profile_for_level(2) == (1, 2)
+    assert _warlock_pact_slot_profile_for_level(4) == (2, 2)
+    assert _warlock_pact_slot_profile_for_level(6) == (3, 2)
+    assert _warlock_pact_slot_profile_for_level(8) == (4, 2)
+    assert _warlock_pact_slot_profile_for_level(10) == (5, 2)
+    assert _warlock_pact_slot_profile_for_level(11) == (5, 3)
+    assert _warlock_pact_slot_profile_for_level(16) == (5, 3)
+    assert _warlock_pact_slot_profile_for_level(17) == (5, 4)
+
+
 def test_warlock_reaction_spell_rejected_for_invalid_timing_or_resource_sequence() -> None:
     character = _warlock_character(
         level=5,
@@ -279,3 +325,58 @@ def test_chr14_integration_multiclass_warlock_slots_survive_scenario_build(
     assert trial.resources_spent["warlock_11"].get("warlock_spell_slot_3", 0) == 0
     assert snapshot["warlock_spell_slot_3"] == 2
     assert "spell_slot_3" not in snapshot
+
+
+def test_chr14_integration_multiclass_warlock_seeded_trials_are_deterministic(
+    tmp_path: Path,
+) -> None:
+    warlock = _warlock_character(
+        level=11,
+        class_level="",
+        class_levels={"warlock": 5, "fighter": 6},
+        traits=[],
+        spells=[
+            {
+                "name": "Eldritch Blast",
+                "level": 0,
+                "action_type": "attack",
+                "to_hit": 8,
+                "damage": "1d10",
+                "damage_type": "force",
+            }
+        ],
+        resources={"spell_slots": {"3": 2}},
+    )
+    enemies = [build_enemy(enemy_id="dummy", name="Dummy", hp=250, ac=8, to_hit=0, damage="1")]
+    scenario_path = _setup_env(
+        tmp_path / "chr14_warlock_deterministic",
+        party=[warlock],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+        max_rounds=1,
+    )
+
+    def run_once(run_id: str):
+        loaded = load_scenario(scenario_path)
+        db = load_character_db(Path(loaded.config.character_db_dir))
+        registry = load_strategy_registry(loaded)
+        artifacts = run_simulation(
+            loaded,
+            db,
+            {},
+            registry,
+            trials=1,
+            seed=88,
+            run_id=run_id,
+        )
+        return artifacts.trial_results[0]
+
+    first = run_once("chr14_warlock_determinism_a")
+    second = run_once("chr14_warlock_determinism_b")
+
+    assert first.rounds == second.rounds
+    assert first.resources_spent == second.resources_spent
+    assert first.state_snapshots == second.state_snapshots

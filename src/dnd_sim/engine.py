@@ -1078,10 +1078,10 @@ def _fighter_superiority_die_size(
 def _warlock_level_from_character(character: dict[str, Any]) -> int:
     class_levels = _class_levels_from_character_payload(character)
     warlock_level = int(class_levels.get("warlock", 0))
-    if warlock_level > 0:
-        return warlock_level
-    class_level_text = str(character.get("class_level", ""))
-    return _parse_class_level(class_level_text, "warlock")
+    if warlock_level <= 0 and not class_levels:
+        class_level_text = str(character.get("class_level", ""))
+        warlock_level = _parse_class_level(class_level_text, "warlock")
+    return warlock_level
 
 
 def _warlock_pact_slot_profile_for_level(warlock_level: int) -> tuple[int, int] | None:
