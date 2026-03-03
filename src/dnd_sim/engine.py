@@ -5948,45 +5948,87 @@ def _break_concentration(
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
 ) -> None:
-    if (
-        not actor.concentrating
-        and not actor.concentrated_targets
-        and not actor.concentrated_spell
-        and not actor.concentrated_spell_level
-        and not actor.concentration_conditions
-        and not actor.concentration_effect_instance_ids
-    ):
+    if not _has_active_concentration_state(actor):
         return
     actor.concentrating = False
 
-    if actor.concentration_effect_instance_ids:
-        linked_ids = set(actor.concentration_effect_instance_ids)
-        for target_actor in actors.values():
-            for effect_instance_id in linked_ids:
+    linked_ids = set(actor.concentration_effect_instance_ids)
+    for target_actor in actors.values():
+        for effect in list(target_actor.effect_instances):
+            if effect.source_actor_id != actor.actor_id:
+                continue
+            if effect.instance_id in linked_ids or effect.concentration_linked:
                 _remove_effect_instance(
                     target_actor,
-                    effect_instance_id,
+                    effect.instance_id,
                     source_actor_id=actor.actor_id,
                 )
 
+    summon_ids_to_remove: set[str] = set()
     for target_id in list(actor.concentrated_targets):
-        if target_id in actors:
-            if "summoned" in actors[target_id].conditions:
-                del actors[target_id]
-                continue
+        target_actor = actors.get(target_id)
+        if target_actor is not None and "summoned" in target_actor.conditions:
+            summon_ids_to_remove.add(target_id)
+    for summon_id, summon_actor in list(actors.items()):
+        if _is_actor_linked_concentration_summon(summon_actor, owner_actor_id=actor.actor_id):
+            summon_ids_to_remove.add(summon_id)
+    for summon_id in summon_ids_to_remove:
+        if summon_id != actor.actor_id:
+            actors.pop(summon_id, None)
+
+    active_hazards[:] = [
+        hazard
+        for hazard in active_hazards
+        if not _is_hazard_linked_to_concentration_owner(hazard, owner_actor_id=actor.actor_id)
+    ]
+
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
     actor.concentration_effect_instance_ids.clear()
-
-    if actor.concentrated_spell or actor.concentrated_spell_level:
-        active_hazards[:] = [h for h in active_hazards if h.get("source_id") != actor.actor_id]
 
     actor.concentrated_spell = None
     actor.concentrated_spell_level = None
 
 
+def _has_active_concentration_state(actor: ActorRuntimeState) -> bool:
+    return bool(
+        actor.concentrating
+        or actor.concentrated_targets
+        or actor.concentrated_spell
+        or actor.concentrated_spell_level
+        or actor.concentration_conditions
+        or actor.concentration_effect_instance_ids
+    )
+
+
+def _is_hazard_linked_to_concentration_owner(
+    hazard: dict[str, Any],
+    *,
+    owner_actor_id: str,
+) -> bool:
+    linked_owner_id = str(hazard.get("concentration_owner_id", "")).strip()
+    if linked_owner_id:
+        return linked_owner_id == owner_actor_id and bool(hazard.get("concentration_linked", False))
+    # Backward-compatible fallback for hazards created before owner linkage metadata.
+    return hazard.get("source_id") == owner_actor_id
+
+
+def _is_actor_linked_concentration_summon(
+    actor: ActorRuntimeState,
+    *,
+    owner_actor_id: str,
+) -> bool:
+    summon_trait = actor.traits.get("summoned")
+    if not isinstance(summon_trait, dict):
+        return False
+    return (
+        str(summon_trait.get("source_id", "")).strip() == owner_actor_id
+        and bool(summon_trait.get("concentration_linked", False))
+    )
+
+
 def _concentration_forced_end(actor: ActorRuntimeState) -> bool:
-    if not actor.concentrating:
+    if not _has_active_concentration_state(actor):
         return False
     if actor.dead or actor.hp <= 0:
         return True
@@ -6314,6 +6356,9 @@ def _apply_effect(
                 condition_saved = True
             if condition_saved:
                 return
+        concentration_linked = bool(
+            action and action.concentration and effect.get("concentration_linked", True)
+        )
         created_effect_ids = _apply_condition(
             recipient,
             str(effect.get("condition", "")),
@@ -6326,9 +6371,7 @@ def _apply_effect(
             duration_timing=str(
                 effect.get("duration_timing", effect.get("duration_boundary", "turn_start"))
             ),
-            concentration_linked=bool(
-                action and action.concentration and effect.get("concentration_linked", True)
-            ),
+            concentration_linked=concentration_linked,
             stack_policy=str(effect.get("stack_policy", "independent")),
             save_to_end=bool(
                 effect.get(
@@ -6338,7 +6381,7 @@ def _apply_effect(
             ),
             internal_tags=_normalize_internal_tags(effect.get("internal_tags")),
         )
-        if action and action.concentration and effect.get("concentration_linked", True):
+        if concentration_linked:
             actor.concentrated_targets.add(recipient.actor_id)
             actor.concentration_conditions.add(str(effect.get("condition", "")).lower())
             actor.concentration_effect_instance_ids.update(created_effect_ids)
@@ -6372,6 +6415,9 @@ def _apply_effect(
         effect_id = str(effect.get("effect_id", "")).strip() or f"hazard:{hazard_type}"
         hazard_position = _to_position3(effect.get("position")) or recipient.position
         hazard_radius = float(effect.get("radius", effect.get("radius_ft", 15)))
+        concentration_linked = bool(
+            action and action.concentration and effect.get("concentration_linked", True)
+        )
         active_hazards.append(
             {
                 "type": hazard_type,
@@ -6387,8 +6433,12 @@ def _apply_effect(
                 ),
                 "stack_policy": _normalize_stack_policy(effect.get("stack_policy", "independent")),
                 "internal_tags": sorted(_normalize_internal_tags(effect.get("internal_tags"))),
+                "concentration_linked": concentration_linked,
+                "concentration_owner_id": actor.actor_id if concentration_linked else None,
             }
         )
+        if concentration_linked:
+            actor.concentrated_targets.add(recipient.actor_id)
         if telemetry is not None:
             telemetry.append(
                 {
@@ -6413,6 +6463,9 @@ def _apply_effect(
         )
         if summon_id in actors:
             return
+        concentration_linked = bool(
+            action and action.concentration and effect.get("concentration_linked", True)
+        )
         summon_name = str(effect.get("name", summon_id))
         summon_hp = int(effect.get("max_hp", effect.get("hp", 10)))
         summon_ac = int(effect.get("ac", 10))
@@ -6457,14 +6510,14 @@ def _apply_effect(
             summoned_actor.add_manual_condition("conjured")
         summoned_actor.traits["summoned"] = {
             "source_id": actor.actor_id,
-            "concentration_linked": bool(action and action.concentration),
+            "concentration_linked": concentration_linked,
         }
         actors[summon_id] = summoned_actor
         damage_dealt.setdefault(summon_id, 0)
         damage_taken.setdefault(summon_id, 0)
         threat_scores.setdefault(summon_id, 0)
         resources_spent.setdefault(summon_id, {})
-        if action and action.concentration:
+        if concentration_linked:
             actor.concentrated_targets.add(summon_id)
         return
 
@@ -6665,12 +6718,6 @@ def _apply_action_effects(
                 if once_per_action_used is not None:
                     once_per_action_used.add(marker)
             recipient = _resolve_effect_target(effect, actor=actor, target=target)
-            if (
-                action.concentration
-                and effect.get("effect_type") in ("apply_condition", "hazard")
-                and effect.get("concentration_linked", True)
-            ):
-                actor.concentrated_targets.add(recipient.actor_id)
 
             if telemetry is not None:
                 telemetry.append(
