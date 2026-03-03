@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import random
+
 from dnd_sim.engine import _action_available, _execute_action, _spend_action_resource_cost
 from dnd_sim.models import (
     ActionDefinition,
@@ -156,3 +158,198 @@ def test_lower_slot_only_cannot_cast_higher_level_spell() -> None:
     assert _spend_action_resource_cost(caster, spell, resources_spent) is False
     assert caster.resources["spell_slot_1"] == 1
     assert resources_spent[caster.actor_id] == {}
+
+
+def test_bonus_action_spell_plus_leveled_action_spell_is_illegal() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    caster.resources = {"spell_slot_1": 2}
+
+    bonus_spell = ActionDefinition(
+        name="healing_word",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "bolstered", "target": "source"}],
+    )
+    leveled_action_spell = ActionDefinition(
+        name="guiding_bolt",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=7,
+        damage="4d6",
+        damage_type="radiant",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+    )
+
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+
+    assert (
+        _spend_action_resource_cost(
+            caster,
+            bonus_spell,
+            resources_spent,
+            turn_token="1:caster",
+        )
+        is True
+    )
+    _execute_action(
+        rng=random.Random(7),
+        actor=caster,
+        action=bonus_spell,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+    )
+
+    assert _action_available(caster, leveled_action_spell, turn_token="1:caster") is False
+    assert (
+        _spend_action_resource_cost(
+            caster,
+            leveled_action_spell,
+            resources_spent,
+            turn_token="1:caster",
+        )
+        is False
+    )
+
+
+def test_bonus_action_spell_plus_action_cantrip_is_legal() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    caster.resources = {"spell_slot_1": 1}
+
+    bonus_spell = ActionDefinition(
+        name="healing_word",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "bolstered", "target": "source"}],
+    )
+    action_cantrip = ActionDefinition(
+        name="fire_bolt",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=7,
+        damage="1d10",
+        damage_type="fire",
+        tags=["spell", "cantrip"],
+    )
+
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+
+    assert (
+        _spend_action_resource_cost(
+            caster,
+            bonus_spell,
+            resources_spent,
+            turn_token="1:caster",
+        )
+        is True
+    )
+    _execute_action(
+        rng=random.Random(17),
+        actor=caster,
+        action=bonus_spell,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+    )
+
+    assert _action_available(caster, action_cantrip, turn_token="1:caster") is True
+    assert (
+        _spend_action_resource_cost(
+            caster,
+            action_cantrip,
+            resources_spent,
+            turn_token="1:caster",
+        )
+        is True
+    )
+
+
+def test_reaction_spell_on_other_turn_after_bonus_action_spell_is_legal() -> None:
+    attacker = _base_actor(actor_id="attacker", team="enemy")
+    defender = _base_actor(actor_id="defender", team="party")
+    defender.resources = {"spell_slot_1": 2}
+
+    bonus_spell = ActionDefinition(
+        name="healing_word",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "bolstered", "target": "source"}],
+    )
+    reaction_spell = ActionDefinition(
+        name="hellish_rebuke",
+        action_type="attack",
+        action_cost="reaction",
+        target_mode="single_enemy",
+        to_hit=7,
+        damage="2d10",
+        damage_type="fire",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+    )
+
+    actors = {attacker.actor_id: attacker, defender.actor_id: defender}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(attacker, defender)
+
+    assert (
+        _spend_action_resource_cost(
+            defender,
+            bonus_spell,
+            resources_spent,
+            turn_token="1:defender",
+        )
+        is True
+    )
+    _execute_action(
+        rng=random.Random(23),
+        actor=defender,
+        action=bonus_spell,
+        targets=[defender],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:defender",
+    )
+
+    assert _action_available(defender, reaction_spell, turn_token="1:defender") is False
+    assert _action_available(defender, reaction_spell, turn_token="1:attacker") is True
+    assert (
+        _spend_action_resource_cost(
+            defender,
+            reaction_spell,
+            resources_spent,
+            turn_token="1:attacker",
+        )
+        is True
+    )
