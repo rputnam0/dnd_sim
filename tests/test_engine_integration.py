@@ -146,8 +146,9 @@ class DeclaredTacticalChoiceStrategy(BaseStrategy):
 
 
 class DeclaredMonkFlurryPlanStrategy(BaseStrategy):
-    def __init__(self, *, include_action: bool):
+    def __init__(self, *, include_action: bool, bonus_action_name: str = "flurry_of_blows"):
         self._include_action = include_action
+        self._bonus_action_name = bonus_action_name
 
     def declare_turn(self, actor, state):
         enemies = [
@@ -174,7 +175,7 @@ class DeclaredMonkFlurryPlanStrategy(BaseStrategy):
             movement_path=[actor.position, move_to],
             action=action,
             bonus_action=DeclaredAction(
-                action_name="flurry_of_blows",
+                action_name=self._bonus_action_name,
                 targets=[TargetRef(actor_id=target.actor_id)],
             ),
         )
@@ -611,6 +612,72 @@ def test_declared_monk_flurry_requires_attack_action_before_bonus_step(tmp_path:
     assert exc_info.value.field == "bonus_action.action_name"
 
 
+def test_declared_monk_martial_arts_bonus_requires_attack_action_before_bonus_step(
+    tmp_path: Path,
+) -> None:
+    monk = build_character(
+        character_id="monk",
+        name="Monk",
+        max_hp=38,
+        ac=16,
+        to_hit=7,
+        damage="1d8+4",
+        ki=1,
+    )
+    monk["class_level"] = "Monk 5"
+    monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
+
+    enemies = [build_enemy(enemy_id="tank", name="Tank", hp=80, ac=12, to_hit=1, damage="1")]
+    scenario_path = _setup_env(
+        tmp_path / "monk_illegal_martial_arts_bonus",
+        party=[monk],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+        max_rounds=1,
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        run_simulation(
+            loaded,
+            db,
+            {},
+            {
+                "party_strategy": DeclaredMonkFlurryPlanStrategy(
+                    include_action=False, bonus_action_name="martial_arts_bonus"
+                ),
+                "enemy_strategy": BaseStrategy(),
+            },
+            trials=1,
+            seed=43,
+            run_id="monk_illegal_martial_arts_bonus",
+        )
+
+    assert exc_info.value.code == "unavailable_action"
+    assert exc_info.value.actor_id == "monk"
+    assert exc_info.value.field == "bonus_action.action_name"
+
+    legal_run = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredMonkFlurryPlanStrategy(
+                include_action=True, bonus_action_name="martial_arts_bonus"
+            ),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=43,
+        run_id="monk_legal_martial_arts_bonus",
+    )
+    assert legal_run.trial_results[0].resources_spent["monk"].get("ki", 0) == 0
+
+
 def test_declared_monk_flurry_spends_ki_deterministically(tmp_path: Path) -> None:
     monk = build_character(
         character_id="monk",
@@ -669,6 +736,62 @@ def test_declared_monk_flurry_spends_ki_deterministically(tmp_path: Path) -> Non
     summary_a.pop("run_id", None)
     summary_b.pop("run_id", None)
     assert summary_a == summary_b
+
+
+def test_declared_monk_flurry_ki_restores_after_long_rest_between_encounters(
+    tmp_path: Path,
+) -> None:
+    monk = build_character(
+        character_id="monk",
+        name="Monk",
+        max_hp=38,
+        ac=16,
+        to_hit=7,
+        damage="1d8+4",
+        ki=1,
+    )
+    monk["class_level"] = "Monk 5"
+    monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
+    enemies = [build_enemy(enemy_id="spark", name="Spark", hp=20, ac=10, to_hit=0, damage="0")]
+
+    scenario_path = _setup_env(
+        tmp_path / "monk_ki_lifecycle",
+        party=[monk],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+        max_rounds=1,
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["enemies"] = []
+    payload["encounters"] = [
+        {"enemies": ["spark"], "long_rest_after": True, "checkpoint": "after_first"},
+        {"enemies": ["spark"], "checkpoint": "after_second"},
+    ]
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    run = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredMonkFlurryPlanStrategy(include_action=True),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=101,
+        run_id="monk_ki_lifecycle",
+    )
+    trial = run.trial_results[0]
+
+    assert trial.rounds == 2
+    assert trial.resources_spent["monk"].get("ki", 0) == 2
+    assert trial.state_snapshots[0]["party"]["monk"]["resources"]["ki"] == 1
+    assert trial.state_snapshots[1]["party"]["monk"]["resources"]["ki"] == 0
 
 
 def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:

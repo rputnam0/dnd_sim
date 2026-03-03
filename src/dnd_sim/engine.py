@@ -6090,7 +6090,7 @@ def _run_opportunity_attacks_for_movement(
     for enemy in actors.values():
         if enemy.team == mover.team or enemy.dead or enemy.hp <= 0:
             continue
-        if not enemy.reaction_available:
+        if not _can_take_reaction(enemy):
             continue
         readied_reach_entry = _readied_reach_entry_point(
             responder=enemy,
@@ -6119,7 +6119,7 @@ def _run_opportunity_attacks_for_movement(
             if mover.dead or mover.hp <= 0:
                 break
 
-        if not enemy.reaction_available:
+        if not _can_take_reaction(enemy):
             continue
         opportunity_candidates = _opportunity_attack_candidates(enemy)
         if not opportunity_candidates:

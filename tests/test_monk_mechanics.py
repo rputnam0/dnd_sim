@@ -8,8 +8,10 @@ from dnd_sim.engine import (
     _build_character_actions,
     _execute_action,
     _find_best_bonus_action,
+    _run_opportunity_attacks_for_movement,
     _spend_resources,
     _tick_conditions_for_actor,
+    long_rest,
     short_rest,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
@@ -121,6 +123,29 @@ def test_monk_bonus_actions_require_attack_action_timing_legality() -> None:
     assert _action_available(monk, flurry) is False
 
 
+def test_monk_bonus_action_legality_does_not_gate_non_monk_custom_actions() -> None:
+    custom_actor = _actor("custom", "party")
+    custom_actor.class_levels = {}
+    custom_actor.traits = {}
+    custom_actor.took_attack_action_this_turn = False
+
+    monk_named_bonus = ActionDefinition(
+        name="martial_arts_bonus",
+        action_type="utility",
+        action_cost="bonus",
+        tags=["bonus"],
+    )
+    monk_tagged_bonus = ActionDefinition(
+        name="custom_strike",
+        action_type="utility",
+        action_cost="bonus",
+        tags=["bonus", "martial_arts"],
+    )
+
+    assert _action_available(custom_actor, monk_named_bonus) is True
+    assert _action_available(custom_actor, monk_tagged_bonus) is True
+
+
 def test_find_best_bonus_action_falls_back_to_martial_arts_when_ki_is_empty() -> None:
     monk = _actor("monk", "party")
     monk.took_attack_action_this_turn = True
@@ -156,6 +181,18 @@ def test_ki_spend_then_short_rest_restores_pool() -> None:
     assert monk.resources["ki"] == 1
 
     short_rest(monk)
+    assert monk.resources["ki"] == 2
+
+
+def test_ki_spend_then_long_rest_restores_pool() -> None:
+    monk = _build_actor_from_character(_monk_character(ki=2), traits_db={})
+    flurry = next(action for action in monk.actions if action.name == "flurry_of_blows")
+
+    spent = _spend_resources(monk, flurry.resource_cost)
+    assert spent == {"ki": 1}
+    assert monk.resources["ki"] == 1
+
+    long_rest(monk)
     assert monk.resources["ki"] == 2
 
 
@@ -367,3 +404,89 @@ def test_open_hand_reaction_lock_persists_until_later_turn_start() -> None:
     _tick_conditions_for_actor(random.Random(2), target, boundary="turn_start")
     assert "open_hand_no_reactions" not in target.conditions
     assert _action_available(target, target.actions[0]) is True
+
+
+def test_open_hand_reaction_lock_blocks_then_restores_opportunity_attacks_across_turns() -> None:
+    monk = _actor("monk_open_hand_window", "party")
+    monk.level = 5
+    monk.traits = {"open hand technique": {}}
+    monk.position = (0.0, 0.0, 0.0)
+
+    target = _actor("target_open_hand_window", "enemy")
+    target.position = (5.0, 0.0, 0.0)
+    target.actions = [
+        ActionDefinition(
+            name="sword",
+            action_type="attack",
+            action_cost="action",
+            to_hit=8,
+            damage="1",
+            damage_type="slashing",
+            range_ft=5,
+        )
+    ]
+
+    lock_action = ActionDefinition(
+        name="flurry_of_blows",
+        action_type="attack",
+        to_hit=8,
+        damage="1",
+        tags=["flurry_of_blows", "open_hand_rider:no_reactions"],
+    )
+
+    damage_dealt, damage_taken, threat_scores, resources_spent = _combat_trackers(monk, target)
+    actors = {monk.actor_id: monk, target.actor_id: target}
+    _execute_action(
+        rng=FixedRng([15]),
+        actor=monk,
+        action=lock_action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    target.reaction_available = True
+    _tick_conditions_for_actor(random.Random(1), target, boundary="turn_start")
+    assert "open_hand_no_reactions" in target.conditions
+    hp_before_locked_window = monk.hp
+    _run_opportunity_attacks_for_movement(
+        rng=FixedRng([15]),
+        mover=monk,
+        start_pos=(0.0, 0.0, 0.0),
+        end_pos=(15.0, 0.0, 0.0),
+        movement_path=[(0.0, 0.0, 0.0), (15.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert monk.hp == hp_before_locked_window
+    assert target.reaction_available is True
+
+    monk.position = (0.0, 0.0, 0.0)
+    target.position = (5.0, 0.0, 0.0)
+    target.reaction_available = True
+    _tick_conditions_for_actor(random.Random(2), target, boundary="turn_start")
+    assert "open_hand_no_reactions" not in target.conditions
+    hp_before_restored_window = monk.hp
+    _run_opportunity_attacks_for_movement(
+        rng=FixedRng([15]),
+        mover=monk,
+        start_pos=(0.0, 0.0, 0.0),
+        end_pos=(15.0, 0.0, 0.0),
+        movement_path=[(0.0, 0.0, 0.0), (15.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert monk.hp < hp_before_restored_window
+    assert target.reaction_available is False
