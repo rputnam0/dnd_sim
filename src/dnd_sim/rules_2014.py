@@ -3,11 +3,214 @@ from __future__ import annotations
 import random
 import re
 from dataclasses import dataclass
+from typing import Callable, TypeVar
 
-from dnd_sim.models import ActorRuntimeState
+from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 _DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
 _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
+_EventT = TypeVar("_EventT", bound="CombatEvent")
+
+
+@dataclass(slots=True, kw_only=True)
+class CombatEvent:
+    sequence: int = 0
+    cancelled: bool = False
+    cancel_reason: str | None = None
+
+    def cancel(self, reason: str | None = None) -> None:
+        self.cancelled = True
+        self.cancel_reason = reason
+
+
+@dataclass(slots=True)
+class ActionDeclaredEvent(CombatEvent):
+    attacker: ActorRuntimeState
+    target: ActorRuntimeState
+    action: ActionDefinition
+    round_number: int | None = None
+    turn_token: str | None = None
+
+
+@dataclass(slots=True)
+class AttackRollEvent(CombatEvent):
+    rng: random.Random
+    attacker: ActorRuntimeState
+    target: ActorRuntimeState
+    action: ActionDefinition
+    roll: "AttackRollResult"
+    target_ac: int
+    to_hit_modifier: int
+    actors: dict[str, ActorRuntimeState]
+    resources_spent: dict[str, dict[str, int]]
+    round_number: int | None = None
+    turn_token: str | None = None
+
+
+@dataclass(slots=True)
+class ReactionWindowOpenedEvent(CombatEvent):
+    window: str
+    reactor: ActorRuntimeState
+    attacker: ActorRuntimeState
+    target: ActorRuntimeState
+    action: ActionDefinition
+    round_number: int | None = None
+    turn_token: str | None = None
+
+
+@dataclass(slots=True)
+class AttackResolvedEvent(CombatEvent):
+    rng: random.Random
+    attacker: ActorRuntimeState
+    target: ActorRuntimeState
+    action: ActionDefinition
+    roll: "AttackRollResult"
+    target_ac: int
+    actors: dict[str, ActorRuntimeState]
+    resources_spent: dict[str, dict[str, int]]
+    timing_engine: "CombatTimingEngine | None" = None
+    round_number: int | None = None
+    turn_token: str | None = None
+
+    @property
+    def outcome(self) -> str:
+        return "hit" if self.roll.hit else "miss"
+
+
+@dataclass(slots=True)
+class DamageRollEvent(CombatEvent):
+    rng: random.Random
+    attacker: ActorRuntimeState
+    target: ActorRuntimeState
+    action: ActionDefinition
+    roll: "AttackRollResult"
+    raw_damage: int
+    actors: dict[str, ActorRuntimeState]
+    resources_spent: dict[str, dict[str, int]]
+    target_can_see_attacker: bool
+    timing_engine: "CombatTimingEngine | None" = None
+    round_number: int | None = None
+    turn_token: str | None = None
+
+
+@dataclass(slots=True)
+class DamageResolvedEvent(CombatEvent):
+    attacker: ActorRuntimeState
+    target: ActorRuntimeState
+    action: ActionDefinition
+    roll: "AttackRollResult"
+    raw_damage: int
+    applied_damage: int
+    round_number: int | None = None
+    turn_token: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ListenerSubscription:
+    subscription_id: int
+    event_type: type[CombatEvent]
+    listener_name: str
+
+
+@dataclass(slots=True)
+class _ListenerRegistration:
+    subscription_id: int
+    event_type: type[CombatEvent]
+    listener: Callable[[CombatEvent], None]
+    priority: int
+    listener_name: str
+
+
+class CombatTimingEngine:
+    def __init__(self) -> None:
+        self._next_subscription_id = 1
+        self._next_event_sequence = 1
+        self._registrations: dict[int, _ListenerRegistration] = {}
+        self._listeners_by_event: dict[type[CombatEvent], list[_ListenerRegistration]] = {}
+
+    @staticmethod
+    def _resolve_listener_name(
+        listener: Callable[[CombatEvent], None],
+        override: str | None,
+    ) -> str:
+        if override:
+            return override
+        explicit_name = getattr(listener, "name", None)
+        if isinstance(explicit_name, str) and explicit_name:
+            return explicit_name
+        candidate = getattr(listener, "__name__", None)
+        if isinstance(candidate, str) and candidate:
+            return candidate
+        return listener.__class__.__name__
+
+    def subscribe(
+        self,
+        event_type: type[_EventT],
+        listener: Callable[[_EventT], None],
+        *,
+        priority: int = 0,
+        name: str | None = None,
+    ) -> ListenerSubscription:
+        listener_name = self._resolve_listener_name(listener=listener, override=name)
+        registration = _ListenerRegistration(
+            subscription_id=self._next_subscription_id,
+            event_type=event_type,
+            listener=listener,
+            priority=int(priority),
+            listener_name=listener_name,
+        )
+        self._next_subscription_id += 1
+        self._registrations[registration.subscription_id] = registration
+        listeners = self._listeners_by_event.setdefault(event_type, [])
+        listeners.append(registration)
+        return ListenerSubscription(
+            subscription_id=registration.subscription_id,
+            event_type=event_type,
+            listener_name=registration.listener_name,
+        )
+
+    def unsubscribe(self, subscription: ListenerSubscription | int) -> bool:
+        subscription_id = (
+            subscription.subscription_id
+            if isinstance(subscription, ListenerSubscription)
+            else int(subscription)
+        )
+        registration = self._registrations.pop(subscription_id, None)
+        if registration is None:
+            return False
+        listeners = self._listeners_by_event.get(registration.event_type, [])
+        self._listeners_by_event[registration.event_type] = [
+            item for item in listeners if item.subscription_id != subscription_id
+        ]
+        return True
+
+    def _iter_ordered_listeners(self, event_type: type[CombatEvent]) -> list[_ListenerRegistration]:
+        registrations: dict[int, _ListenerRegistration] = {}
+        for base in event_type.mro():
+            if not isinstance(base, type):
+                continue
+            if not issubclass(base, CombatEvent):
+                continue
+            for registration in self._listeners_by_event.get(base, []):
+                registrations[registration.subscription_id] = registration
+        ordered = list(registrations.values())
+        ordered.sort(
+            key=lambda item: (
+                -int(item.priority),
+                item.listener_name,
+                item.subscription_id,
+            )
+        )
+        return ordered
+
+    def emit(self, event: _EventT) -> _EventT:
+        event.sequence = self._next_event_sequence
+        self._next_event_sequence += 1
+        for registration in self._iter_ordered_listeners(type(event)):
+            if event.cancelled:
+                break
+            registration.listener(event)
+        return event
 
 
 @dataclass(slots=True)

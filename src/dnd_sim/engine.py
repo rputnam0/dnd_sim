@@ -22,7 +22,15 @@ from dnd_sim.models import (
 )
 from dnd_sim.spatial import AABB, distance_chebyshev, find_path
 from dnd_sim.rules_2014 import (
+    ActionDeclaredEvent,
+    AttackResolvedEvent,
+    AttackRollEvent,
     AttackRollResult,
+    CombatTimingEngine,
+    DamageResolvedEvent,
+    DamageRollEvent,
+    ListenerSubscription,
+    ReactionWindowOpenedEvent,
     apply_damage,
     attack_roll,
     parse_damage_expression,
@@ -500,7 +508,9 @@ def _apply_wizard_school_action_hooks(
     traits: set[str],
 ) -> None:
     active_schools = [
-        school for trait_key, school in _WIZARD_SCHOOL_TRAIT_TO_SCHOOL.items() if trait_key in traits
+        school
+        for trait_key, school in _WIZARD_SCHOOL_TRAIT_TO_SCHOOL.items()
+        if trait_key in traits
     ]
     if not active_schools:
         return
@@ -843,7 +853,9 @@ def _apply_artificer_infusion_passives(actor: ActorRuntimeState) -> None:
                 action.tags.append("magical")
 
     if _has_trait(actor, "mind sharpener"):
-        actor.resources["mind_sharpener_charges"] = int(actor.resources.get("mind_sharpener_charges", 4))
+        actor.resources["mind_sharpener_charges"] = int(
+            actor.resources.get("mind_sharpener_charges", 4)
+        )
         actor.max_resources["mind_sharpener_charges"] = int(
             actor.max_resources.get("mind_sharpener_charges", 4)
         )
@@ -2096,7 +2108,7 @@ def _build_spell_actions(
                         effects=list(effects),
                         mechanics=list(mechanics),
                         tags=list(tags) + [f"upcast_level:{slot_level}"],
-                        )
+                    )
                 )
 
     _apply_wizard_school_action_hooks(actions, traits=known_traits)
@@ -2955,6 +2967,8 @@ def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int
         actor.resources[resource] = cap
     else:
         actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+
+
 def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
     if not _has_trait(actor, "arcane recovery"):
         return
@@ -6107,6 +6121,8 @@ def _try_open_hand_technique(
 
 def _multiattack_defense_marker(attacker_id: str) -> str:
     return f"{_MULTIATTACK_DEFENSE_PREFIX}{attacker_id}"
+
+
 def _try_shield_reaction(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
@@ -6282,6 +6298,206 @@ def _apply_domain_attack_roll_hooks(
     return roll
 
 
+def _shield_reaction_would_be_legal(
+    *,
+    attacker: ActorRuntimeState,
+    target: ActorRuntimeState,
+    roll: AttackRollResult,
+) -> bool:
+    if not _can_take_reaction(target):
+        return False
+    has_shield_action = any(
+        action.name == "shield" and action.action_cost == "reaction" for action in target.actions
+    )
+    if not has_shield_action:
+        return False
+    has_slot = any(
+        key.startswith("spell_slot_") and target.resources.get(key, 0) > 0
+        for key in sorted(target.resources.keys())
+    )
+    if not has_slot:
+        return False
+    return roll.total < (target.ac + 5) and roll.natural_roll != 20
+
+
+class _AttackRollBardicInspirationRule:
+    name = "rule:bardic_inspiration_attack_roll"
+
+    def __call__(self, event: AttackRollEvent) -> None:
+        event.roll = _try_spend_bardic_inspiration_on_attack_roll(
+            rng=event.rng,
+            actor=event.attacker,
+            roll=event.roll,
+            target_ac=event.target_ac,
+            resources_spent=event.resources_spent,
+        )
+
+
+class _AttackRollLuckyAttackerRule:
+    name = "rule:lucky_attacker_reroll"
+
+    def __call__(self, event: AttackRollEvent) -> None:
+        if event.roll.hit or not _has_trait(event.attacker, "lucky"):
+            return
+        if event.attacker.resources.get("luck_points", 0) <= 0:
+            return
+        event.attacker.resources["luck_points"] -= 1
+        event.resources_spent[event.attacker.actor_id]["luck_points"] = (
+            event.resources_spent[event.attacker.actor_id].get("luck_points", 0) + 1
+        )
+        lucky_natural = event.rng.randint(1, 20)
+        new_natural = max(event.roll.natural_roll, lucky_natural)
+        crit = new_natural == 20
+        total = new_natural + event.to_hit_modifier
+        hit = crit or (new_natural != 1 and total >= event.target_ac)
+        event.roll = AttackRollResult(hit=hit, crit=crit, natural_roll=new_natural, total=total)
+
+
+class _AttackRollLuckyDefenderRule:
+    name = "rule:lucky_defender_reroll"
+
+    def __call__(self, event: AttackRollEvent) -> None:
+        if not event.roll.hit or not _has_trait(event.target, "lucky"):
+            return
+        if event.target.resources.get("luck_points", 0) <= 0:
+            return
+        event.target.resources["luck_points"] -= 1
+        event.resources_spent[event.target.actor_id]["luck_points"] = (
+            event.resources_spent[event.target.actor_id].get("luck_points", 0) + 1
+        )
+        lucky_natural = event.rng.randint(1, 20)
+        new_natural = min(event.roll.natural_roll, lucky_natural)
+        crit = new_natural == 20
+        total = new_natural + event.to_hit_modifier
+        hit = crit or (new_natural != 1 and total >= event.target_ac)
+        event.roll = AttackRollResult(hit=hit, crit=crit, natural_roll=new_natural, total=total)
+
+
+class _AttackResolvedCuttingWordsRule:
+    name = "rule:cutting_words_attack_roll"
+
+    def __call__(self, event: AttackResolvedEvent) -> None:
+        event.roll = _try_cutting_words_on_attack_roll(
+            rng=event.rng,
+            attacker=event.attacker,
+            target=event.target,
+            roll=event.roll,
+            target_ac=event.target_ac,
+            actors=event.actors,
+            resources_spent=event.resources_spent,
+        )
+
+
+class _AttackResolutionShieldRule:
+    name = "rule:shield_reaction"
+
+    def __call__(self, event: AttackResolvedEvent) -> None:
+        if not event.roll.hit:
+            return
+        if not _shield_reaction_would_be_legal(
+            attacker=event.attacker,
+            target=event.target,
+            roll=event.roll,
+        ):
+            return
+        if event.timing_engine is not None:
+            event.timing_engine.emit(
+                ReactionWindowOpenedEvent(
+                    window="shield",
+                    reactor=event.target,
+                    attacker=event.attacker,
+                    target=event.target,
+                    action=event.action,
+                    round_number=event.round_number,
+                    turn_token=event.turn_token,
+                )
+            )
+        if _try_shield_reaction(event.attacker, event.target, event.roll):
+            event.roll = AttackRollResult(
+                hit=False,
+                crit=False,
+                natural_roll=event.roll.natural_roll,
+                total=event.roll.total,
+            )
+
+
+class _DamageRollCuttingWordsRule:
+    name = "rule:cutting_words_damage_roll"
+
+    def __call__(self, event: DamageRollEvent) -> None:
+        event.raw_damage = _try_cutting_words_on_damage_roll(
+            rng=event.rng,
+            attacker=event.attacker,
+            target=event.target,
+            raw_damage=event.raw_damage,
+            actors=event.actors,
+            resources_spent=event.resources_spent,
+        )
+
+
+class _DamageRollUncannyDodgeRule:
+    name = "rule:uncanny_dodge"
+
+    def __call__(self, event: DamageRollEvent) -> None:
+        if event.raw_damage <= 0:
+            return
+        if not _has_trait(event.target, "uncanny dodge"):
+            return
+        if not _can_take_reaction(event.target):
+            return
+        if not event.target_can_see_attacker:
+            return
+        if event.timing_engine is not None:
+            event.timing_engine.emit(
+                ReactionWindowOpenedEvent(
+                    window="uncanny_dodge",
+                    reactor=event.target,
+                    attacker=event.attacker,
+                    target=event.target,
+                    action=event.action,
+                    round_number=event.round_number,
+                    turn_token=event.turn_token,
+                )
+            )
+        event.raw_damage //= 2
+        event.target.reaction_available = False
+
+
+def _register_default_timing_rules(timing_engine: CombatTimingEngine) -> list[ListenerSubscription]:
+    return [
+        timing_engine.subscribe(
+            AttackRollEvent,
+            _AttackRollBardicInspirationRule(),
+            priority=90,
+        ),
+        timing_engine.subscribe(AttackRollEvent, _AttackRollLuckyAttackerRule(), priority=80),
+        timing_engine.subscribe(AttackRollEvent, _AttackRollLuckyDefenderRule(), priority=70),
+        timing_engine.subscribe(
+            AttackResolvedEvent, _AttackResolvedCuttingWordsRule(), priority=60
+        ),
+        timing_engine.subscribe(AttackResolvedEvent, _AttackResolutionShieldRule(), priority=50),
+        timing_engine.subscribe(DamageRollEvent, _DamageRollCuttingWordsRule(), priority=40),
+        timing_engine.subscribe(DamageRollEvent, _DamageRollUncannyDodgeRule(), priority=30),
+    ]
+
+
+def _create_combat_timing_engine(*, include_default_rules: bool = True) -> CombatTimingEngine:
+    timing_engine = CombatTimingEngine()
+    if include_default_rules:
+        _register_default_timing_rules(timing_engine)
+    return timing_engine
+
+
+_DEFAULT_COMBAT_TIMING_ENGINE: CombatTimingEngine | None = None
+
+
+def _get_default_combat_timing_engine() -> CombatTimingEngine:
+    global _DEFAULT_COMBAT_TIMING_ENGINE
+    if _DEFAULT_COMBAT_TIMING_ENGINE is None:
+        _DEFAULT_COMBAT_TIMING_ENGINE = _create_combat_timing_engine()
+    return _DEFAULT_COMBAT_TIMING_ENGINE
+
+
 def _execute_action(
     *,
     rng: random.Random,
@@ -6301,6 +6517,7 @@ def _execute_action(
     rule_trace: list[dict[str, Any]] | None = None,
     telemetry: list[dict[str, Any]] | None = None,
     strategy_name: str | None = None,
+    timing_engine: CombatTimingEngine | None = None,
 ) -> None:
     if not targets:
         return
@@ -6309,6 +6526,9 @@ def _execute_action(
     is_spell_action = _has_tag(action, "spell")
     subtle_spell = _has_tag(action, "metamagic:subtle")
     has_turn_context = round_number is not None and turn_token is not None
+    active_timing_engine = (
+        timing_engine if timing_engine is not None else _get_default_combat_timing_engine()
+    )
     _force_end_concentration_if_needed(actor, actors=actors, active_hazards=active_hazards)
 
     def emit_event(
@@ -6515,6 +6735,17 @@ def _execute_action(
                 if current_target is None:
                     break
             target = current_target
+            declaration_event = active_timing_engine.emit(
+                ActionDeclaredEvent(
+                    attacker=actor,
+                    target=target,
+                    action=action,
+                    round_number=round_number,
+                    turn_token=turn_token,
+                )
+            )
+            if declaration_event.cancelled:
+                continue
             if "raging" in actor.conditions and target.team != actor.team:
                 actor.rage_sustained_since_last_turn = True
             advantage, disadvantage = _consume_attack_flags(actor)
@@ -6647,56 +6878,32 @@ def _execute_action(
                 rage_bonus = 2 if actor.level < 9 else 3 if actor.level < 16 else 4
                 damage_bonus += rage_bonus
 
+            to_hit_mod = action.to_hit + to_hit_penalty if action.to_hit is not None else 0
             roll = attack_roll(
                 rng,
-                action.to_hit + to_hit_penalty if action.to_hit is not None else 0,
+                to_hit_mod,
                 target_ac,
                 advantage=advantage,
                 disadvantage=disadvantage,
             )
-            roll = _try_spend_bardic_inspiration_on_attack_roll(
-                rng=rng,
-                actor=actor,
-                roll=roll,
-                target_ac=target_ac,
-                resources_spent=resources_spent,
+            roll_event = active_timing_engine.emit(
+                AttackRollEvent(
+                    rng=rng,
+                    attacker=actor,
+                    target=target,
+                    action=action,
+                    roll=roll,
+                    target_ac=target_ac,
+                    to_hit_modifier=to_hit_mod,
+                    actors=actors,
+                    resources_spent=resources_spent,
+                    round_number=round_number,
+                    turn_token=turn_token,
+                )
             )
-
-            # Lucky: Attacker rerolls miss
-            if (
-                not roll.hit
-                and _has_trait(actor, "lucky")
-                and actor.resources.get("luck_points", 0) > 0
-            ):
-                actor.resources["luck_points"] -= 1
-                resources_spent[actor.actor_id]["luck_points"] = (
-                    resources_spent[actor.actor_id].get("luck_points", 0) + 1
-                )
-                lucky_natural = rng.randint(1, 20)
-                new_natural = max(roll.natural_roll, lucky_natural)
-                crit = new_natural == 20
-                to_hit_mod = action.to_hit + to_hit_penalty if action.to_hit is not None else 0
-                total = new_natural + to_hit_mod
-                hit = crit or (new_natural != 1 and total >= target_ac)
-                roll = AttackRollResult(hit=hit, crit=crit, natural_roll=new_natural, total=total)
-
-            # Lucky: Defender forces reroll on hit
-            if (
-                roll.hit
-                and _has_trait(target, "lucky")
-                and target.resources.get("luck_points", 0) > 0
-            ):
-                target.resources["luck_points"] -= 1
-                resources_spent[target.actor_id]["luck_points"] = (
-                    resources_spent[target.actor_id].get("luck_points", 0) + 1
-                )
-                lucky_natural = rng.randint(1, 20)
-                new_natural = min(roll.natural_roll, lucky_natural)
-                crit = new_natural == 20
-                to_hit_mod = action.to_hit + to_hit_penalty if action.to_hit is not None else 0
-                total = new_natural + to_hit_mod
-                hit = crit or (new_natural != 1 and total >= target_ac)
-                roll = AttackRollResult(hit=hit, crit=crit, natural_roll=new_natural, total=total)
+            if roll_event.cancelled:
+                continue
+            roll = roll_event.roll
 
             roll = _apply_domain_attack_roll_hooks(
                 actor=actor,
@@ -6710,22 +6917,25 @@ def _execute_action(
                 roll = AttackRollResult(
                     hit=True, crit=True, natural_roll=roll.natural_roll, total=roll.total
                 )
-            roll = _try_cutting_words_on_attack_roll(
-                rng=rng,
-                attacker=actor,
-                target=target,
-                roll=roll,
-                target_ac=target_ac,
-                actors=actors,
-                resources_spent=resources_spent,
-            )
-            event = "hit" if roll.hit else "miss"
-            # Shield reaction: always use if available and would negate hit
-            if roll.hit and _try_shield_reaction(actor, target, roll):
-                event = "miss"
-                roll = AttackRollResult(
-                    hit=False, crit=False, natural_roll=roll.natural_roll, total=roll.total
+            resolved_event = active_timing_engine.emit(
+                AttackResolvedEvent(
+                    rng=rng,
+                    attacker=actor,
+                    target=target,
+                    action=action,
+                    roll=roll,
+                    target_ac=target_ac,
+                    actors=actors,
+                    resources_spent=resources_spent,
+                    timing_engine=active_timing_engine,
+                    round_number=round_number,
+                    turn_token=turn_token,
                 )
+            )
+            if resolved_event.cancelled:
+                continue
+            roll = resolved_event.roll
+            event = resolved_event.outcome
             if roll.hit and action.damage:
                 empowered_rerolls = 0
                 if is_spell_action and _has_tag(action, "metamagic:empowered"):
@@ -6882,22 +7092,25 @@ def _execute_action(
                         active_hazards=active_hazards,
                     )
                 was_active_before_damage = target.hp > 0 and not target.dead
-                raw_damage = _try_cutting_words_on_damage_roll(
-                    rng=rng,
-                    attacker=actor,
-                    target=target,
-                    raw_damage=raw_damage,
-                    actors=actors,
-                    resources_spent=resources_spent,
+                damage_roll_event = active_timing_engine.emit(
+                    DamageRollEvent(
+                        rng=rng,
+                        attacker=actor,
+                        target=target,
+                        action=action,
+                        roll=roll,
+                        raw_damage=raw_damage,
+                        actors=actors,
+                        resources_spent=resources_spent,
+                        target_can_see_attacker=target_can_see,
+                        timing_engine=active_timing_engine,
+                        round_number=round_number,
+                        turn_token=turn_token,
+                    )
                 )
-                if (
-                    _has_trait(target, "uncanny dodge")
-                    and _can_take_reaction(target)
-                    and target_can_see
-                ):
-                    raw_damage //= 2
-                    target.reaction_available = False
-                was_active_before_damage = target.hp > 0 and not target.dead
+                if damage_roll_event.cancelled:
+                    continue
+                raw_damage = damage_roll_event.raw_damage
                 applied = apply_damage(
                     target,
                     raw_damage,
@@ -6905,6 +7118,18 @@ def _execute_action(
                     is_critical=roll.crit,
                     is_magical="spell" in action.tags or "magical" in action.tags,
                     source=actor,
+                )
+                active_timing_engine.emit(
+                    DamageResolvedEvent(
+                        attacker=actor,
+                        target=target,
+                        action=action,
+                        roll=roll,
+                        raw_damage=raw_damage,
+                        applied_damage=applied,
+                        round_number=round_number,
+                        turn_token=turn_token,
+                    )
                 )
                 if applied > 0:
                     if not _force_end_concentration_if_needed(
@@ -7258,6 +7483,7 @@ def _execute_action(
                 telemetry=telemetry,
                 strategy_name=strategy_name,
             )
+
 
 def _build_round_metadata(
     *,
