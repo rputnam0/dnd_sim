@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import _build_spell_actions, _execute_action, _resolve_targets_for_action
+from dnd_sim.engine import (
+    _action_available,
+    _build_spell_actions,
+    _execute_action,
+    _resolve_targets_for_action,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import AABB
 from dnd_sim.strategy_api import TargetRef
@@ -73,6 +78,95 @@ def test_build_spell_actions_adds_ritual_cast_variant_without_slot_cost() -> Non
     assert by_name["detect_magic [Ritual]"].resource_cost == {}
     assert "ritual" in by_name["detect_magic [Ritual]"].tags
     assert "ritual_cast" in by_name["detect_magic [Ritual]"].tags
+
+
+def test_ritual_cast_variant_is_unavailable_during_combat_turns() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    caster.resources = {"spell_slot_1": 1}
+
+    ritual_spell = ActionDefinition(
+        name="detect_magic [Ritual]",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+        tags=["spell", "ritual", "ritual_cast"],
+    )
+    normal_spell = ActionDefinition(
+        name="detect_magic",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+    )
+
+    assert _action_available(caster, ritual_spell) is True
+    assert _action_available(caster, ritual_spell, turn_token="1:caster") is False
+    assert _action_available(caster, normal_spell, turn_token="1:caster") is True
+
+
+def test_execute_action_blocks_ritual_cast_in_combat_but_allows_normal_spell() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    caster.resources = {"spell_slot_1": 1}
+    target = _base_actor(actor_id="target", team="enemy")
+
+    ritual_spell = ActionDefinition(
+        name="binding_mark [Ritual]",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        tags=["spell", "ritual", "ritual_cast"],
+        effects=[
+            {"effect_type": "apply_condition", "condition": "ritual_marked", "target": "target"}
+        ],
+    )
+    normal_spell = ActionDefinition(
+        name="binding_mark",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+        effects=[
+            {"effect_type": "apply_condition", "condition": "combat_marked", "target": "target"}
+        ],
+    )
+
+    actors = {a.actor_id: a for a in (caster, target)}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=random.Random(1),
+        actor=caster,
+        action=ritual_spell,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        round_number=1,
+        turn_token="1:caster",
+    )
+    assert "ritual_marked" not in target.conditions
+
+    _execute_action(
+        rng=random.Random(2),
+        actor=caster,
+        action=normal_spell,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        round_number=1,
+        turn_token="1:caster",
+    )
+    assert "combat_marked" in target.conditions
 
 
 def test_dispel_magic_removes_non_concentration_spell_effect_on_success() -> None:

@@ -10480,6 +10480,15 @@ def _spell_casting_legal_this_turn(
     return True
 
 
+def _ritual_casting_legal_for_context(
+    action: ActionDefinition, *, turn_token: str | None = None
+) -> bool:
+    if not _has_tag(action, "ritual_cast"):
+        return True
+    # Ritual variants are modeled as out-of-combat casts only.
+    return turn_token is None
+
+
 def _off_hand_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
     if "off_hand" not in action.tags:
         return True
@@ -10513,6 +10522,8 @@ def _action_available(
     if action.recharge and not actor.recharge_ready.get(action.name, True):
         return False
     if "spell" in action.tags and has_condition(actor, _ANTIMAGIC_SUPPRESSION_CONDITION):
+        return False
+    if not _ritual_casting_legal_for_context(action, turn_token=turn_token):
         return False
     if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
         return False
@@ -12958,6 +12969,8 @@ def _execute_action(
     # Spell declaration and counterspell check
     if is_spell_action:
         if has_condition(actor, _ANTIMAGIC_SUPPRESSION_CONDITION):
+            return
+        if not _ritual_casting_legal_for_context(action, turn_token=turn_token):
             return
         if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
             return
