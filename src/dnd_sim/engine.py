@@ -539,6 +539,12 @@ def _resolve_character_traits(
             class_level_text=class_level_text,
         )
     )
+    explicit_candidates.update(
+        _infer_wizard_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
     for candidate in explicit_candidates:
         match = find_match(candidate)
         if match is not None:
@@ -827,6 +833,13 @@ _WARLOCK_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (11, "mystic arcanum"),
     (20, "eldritch master"),
 )
+_WIZARD_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
+    (1, "spellcasting"),
+    (1, "arcane recovery"),
+    (2, "arcane tradition"),
+    (18, "spell mastery"),
+    (20, "signature spells"),
+)
 
 
 def _class_levels_from_character_payload(character: dict[str, Any]) -> dict[str, int]:
@@ -906,6 +919,23 @@ def _infer_warlock_package_trait_names(
         _normalize_trait_name(trait_name)
         for min_level, trait_name in _WARLOCK_PACKAGE_FEATURE_LEVELS
         if warlock_level >= min_level
+    }
+
+
+def _infer_wizard_package_trait_names(
+    *,
+    class_levels: dict[str, int],
+    class_level_text: str,
+) -> set[str]:
+    wizard_level = int(class_levels.get("wizard", 0))
+    if wizard_level <= 0 and not class_levels:
+        wizard_level = _parse_class_level(class_level_text, "wizard")
+    if wizard_level <= 0:
+        return set()
+    return {
+        _normalize_trait_name(trait_name)
+        for min_level, trait_name in _WIZARD_PACKAGE_FEATURE_LEVELS
+        if wizard_level >= min_level
     }
 
 
@@ -4058,6 +4088,12 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     )
     traits.update(
         _infer_warlock_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
+    traits.update(
+        _infer_wizard_package_trait_names(
             class_levels=class_levels,
             class_level_text=class_level_text,
         )
