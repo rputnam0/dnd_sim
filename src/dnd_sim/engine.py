@@ -17,6 +17,7 @@ from dnd_sim.models import (
     ActorRuntimeState,
     ConditionTracker,
     EffectInstance,
+    FeatureHookRegistration,
     SpellCastRequest,
     SpellComponents,
     SpellDefinition,
@@ -184,6 +185,27 @@ _KNOWN_MANEUVERS = {
     "sweeping attack",
     "trip attack",
 }
+_FEATURE_SOURCE_TYPE_MAP = {
+    "feat": "feat",
+    "racial_trait": "species",
+    "species_trait": "species",
+    "background_feature": "background",
+    "subclass_feature": "subclass",
+    "class_feature": "class",
+}
+_FEATURE_SOURCE_PRIORITY = {
+    "feat": 0,
+    "species": 1,
+    "background": 2,
+    "subclass": 3,
+    "class": 4,
+    "other": 5,
+}
+_REACTION_ATTACK_HOOK_TRIGGERS = {
+    "creature_attacks_ally_within_5ft",
+    "spell_cast_within_5ft",
+    "hit_by_melee_attack_within_5ft",
+}
 _DEFAULT_BATTLEMASTER_MANEUVERS = ("trip attack", "menacing attack", "precision attack")
 _SUPPORTED_REACTION_POLICY_MODES = {"auto", "none"}
 _OBSCURING_ZONE_TYPES = {"cloud", "magical_darkness", "obscuring_zone", "obscuring"}
@@ -302,6 +324,115 @@ def _trait_name_variants(name: str) -> list[str]:
     return [value for value in variants if value]
 
 
+def _normalize_feature_source_type(raw_type: Any) -> str:
+    key = str(raw_type or "").strip().lower()
+    return _FEATURE_SOURCE_TYPE_MAP.get(key, "other")
+
+
+def _normalize_hook_type(raw_type: Any) -> str:
+    return str(raw_type or "").strip().lower()
+
+
+def _normalize_hook_trigger(raw_trigger: Any) -> str:
+    text = re.sub(r"[^a-z0-9]+", "_", str(raw_trigger or "").strip().lower())
+    return text.strip("_")
+
+
+def _normalize_trait_mechanics_for_runtime(raw_mechanics: Any) -> list[Any]:
+    if not isinstance(raw_mechanics, list):
+        return []
+
+    normalized: list[Any] = []
+    for mechanic in raw_mechanics:
+        if not isinstance(mechanic, dict):
+            normalized.append(mechanic)
+            continue
+        payload = dict(mechanic)
+        payload["effect_type"] = _normalize_hook_type(
+            payload.get("effect_type", payload.get("type"))
+        )
+        payload["trigger"] = _normalize_hook_trigger(
+            payload.get("trigger", payload.get("event_trigger"))
+        )
+        normalized.append(payload)
+    return normalized
+
+
+def _default_reaction_attack_trigger(*, feature_name: str, trigger: str) -> str:
+    if trigger:
+        return trigger
+    feature_key = _trait_lookup_key(feature_name)
+    if feature_key == "sentinel":
+        return "creature_attacks_ally_within_5ft"
+    if feature_key == "mage slayer":
+        return "spell_cast_within_5ft"
+    return ""
+
+
+def _normalize_trait_payload_for_runtime(trait_name: str, payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    normalized = dict(payload)
+    normalized["name"] = str(normalized.get("name", trait_name))
+    normalized["source_type"] = _normalize_feature_source_type(
+        normalized.get("source_type", normalized.get("type"))
+    )
+    normalized["mechanics"] = _normalize_trait_mechanics_for_runtime(normalized.get("mechanics"))
+    return normalized
+
+
+def _build_feature_hook_registrations(actor: ActorRuntimeState) -> list[FeatureHookRegistration]:
+    registrations: list[FeatureHookRegistration] = []
+    registration_order = 0
+    for trait_key in sorted(actor.traits.keys()):
+        trait_payload = _normalize_trait_payload_for_runtime(trait_key, actor.traits.get(trait_key, {}))
+        if not trait_payload:
+            continue
+        source_type = str(trait_payload.get("source_type", "other"))
+        feature_name = str(trait_payload.get("name", trait_key))
+        mechanics = trait_payload.get("mechanics", [])
+        if not isinstance(mechanics, list):
+            continue
+        for mechanic_index, mechanic in enumerate(mechanics):
+            if not isinstance(mechanic, dict):
+                continue
+            hook_type = _normalize_hook_type(mechanic.get("effect_type", mechanic.get("type")))
+            if hook_type != "reaction_attack":
+                continue
+            trigger = _default_reaction_attack_trigger(
+                feature_name=feature_name,
+                trigger=_normalize_hook_trigger(
+                    mechanic.get("trigger", mechanic.get("event_trigger"))
+                ),
+            )
+            registrations.append(
+                FeatureHookRegistration(
+                    feature_name=feature_name,
+                    source_type=source_type,
+                    hook_type=hook_type,
+                    trigger=trigger,
+                    trait_key=_normalize_trait_name(trait_key),
+                    mechanic_index=int(mechanic_index),
+                    registration_order=registration_order,
+                )
+            )
+            registration_order += 1
+
+    registrations.sort(
+        key=lambda hook: (
+            _FEATURE_SOURCE_PRIORITY.get(hook.source_type, _FEATURE_SOURCE_PRIORITY["other"]),
+            hook.trait_key,
+            int(hook.mechanic_index),
+            int(hook.registration_order),
+        )
+    )
+    return registrations
+
+
+def _register_actor_feature_hooks(actor: ActorRuntimeState) -> None:
+    actor.feature_hooks = _build_feature_hook_registrations(actor)
+
+
 def _is_non_feature_sheet_section(name: str) -> bool:
     key = _trait_lookup_key(name)
     if key in {"hit points", "proficiencies", "skills"}:
@@ -370,7 +501,7 @@ def _resolve_character_traits(
         match = find_match(candidate)
         if match is not None:
             canonical_name = _normalize_trait_name(str(match.get("name", candidate)))
-            resolved[canonical_name] = match
+            resolved[canonical_name] = _normalize_trait_payload_for_runtime(canonical_name, match)
         else:
             if _is_non_feature_sheet_section(candidate):
                 continue
@@ -385,7 +516,7 @@ def _resolve_character_traits(
                 resolved[_normalize_trait_name(candidate)] = {}
             continue
         canonical_name = _normalize_trait_name(str(match.get("name", candidate)))
-        resolved[canonical_name] = match
+        resolved[canonical_name] = _normalize_trait_payload_for_runtime(canonical_name, match)
 
     return resolved
 
@@ -4296,9 +4427,6 @@ def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
 def _build_actor_from_character(
     character: dict[str, Any], traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
-    normalized_traits_db = {
-        _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
-    }
     class_level_text = str(character.get("class_level", "1"))
     class_levels = _parse_class_levels(class_level_text)
     ability_scores = character.get("ability_scores", {})
@@ -4342,6 +4470,7 @@ def _build_actor_from_character(
     _apply_artificer_infusion_passives(actor)
     _apply_inferred_wizard_resources(actor)
     _apply_inferred_fighter_resources(actor, class_level_text=class_level_text)
+    _register_actor_feature_hooks(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
         try:
@@ -4465,11 +4594,15 @@ def _build_actor_from_enemy(
         proficiencies={str(v).lower() for v in enemy.script_hooks.get("proficiencies", [])},
         expertise={str(v).lower() for v in enemy.script_hooks.get("expertise", [])},
         traits={
-            _normalize_trait_name(trait): normalized_traits_db.get(_normalize_trait_name(trait), {})
+            _normalize_trait_name(trait): _normalize_trait_payload_for_runtime(
+                _normalize_trait_name(trait),
+                normalized_traits_db.get(_normalize_trait_name(trait), {}),
+            )
             for trait in enemy.traits
         },
     )
     _apply_passive_traits(actor)
+    _register_actor_feature_hooks(actor)
     return actor
 
 
@@ -8937,6 +9070,59 @@ def _resolve_event_targets(
     )
 
 
+def _feature_hook_handler_name(hook: FeatureHookRegistration) -> str:
+    feature_key = _trait_lookup_key(hook.feature_name)
+    if feature_key == "sentinel":
+        return "trait:sentinel_reaction"
+    if feature_key == "mage slayer":
+        return "trait:mage_slayer_reaction"
+    return f"feature_hook:{hook.hook_type}"
+
+
+def _reaction_attack_hook_matches(
+    *,
+    hook: FeatureHookRegistration,
+    event: str,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_target: ActorRuntimeState | None,
+    trigger_action: ActionDefinition | None,
+) -> bool:
+    if event != "after_action" or trigger_actor is None or trigger_action is None:
+        return False
+
+    trigger = hook.trigger
+    if trigger == "creature_attacks_ally_within_5ft":
+        if trigger_action.action_type != "attack" or trigger_target is None:
+            return False
+        if trigger_actor.team == reactor.team:
+            return False
+        if reactor.team != trigger_target.team or reactor.actor_id == trigger_target.actor_id:
+            return False
+        if (
+            _trait_lookup_key(hook.feature_name) == "sentinel"
+            and _has_trait(trigger_target, "sentinel")
+        ):
+            return False
+        return True
+
+    if trigger == "spell_cast_within_5ft":
+        if trigger_actor.team == reactor.team:
+            return False
+        return "spell" in trigger_action.tags
+
+    if trigger == "hit_by_melee_attack_within_5ft":
+        if trigger_action.action_type != "attack" or trigger_target is None:
+            return False
+        if trigger_actor.team == reactor.team:
+            return False
+        if trigger_target.actor_id != reactor.actor_id:
+            return False
+        return not _is_ranged_attack_action(trigger_action)
+
+    return False
+
+
 def _run_trait_event_handlers(
     *,
     rng: random.Random,
@@ -8956,26 +9142,50 @@ def _run_trait_event_handlers(
     obstacles: list[AABB],
     light_level: str,
 ) -> None:
-    if trigger_actor is None or trigger_action is None:
+    if event != "after_action" or trigger_actor is None or trigger_action is None:
         return
     lock_key = f"event_reaction_round:{round_number}"
+    reactors = sorted(actors.values(), key=lambda value: value.actor_id)
+    for reactor in reactors:
+        if reactor.dead or reactor.hp <= 0:
+            continue
+        _register_actor_feature_hooks(reactor)
+        if not reactor.feature_hooks:
+            continue
 
-    if (
-        event == "after_action"
-        and trigger_action.action_type == "attack"
-        and trigger_target is not None
-    ):
-        reactors = sorted(actors.values(), key=lambda value: value.actor_id)
-        for reactor in reactors:
-            if (
-                reactor.team != trigger_target.team
-                or reactor.actor_id == trigger_target.actor_id
-                or reactor.dead
-                or reactor.hp <= 0
-                or not reactor.reaction_available
-                or not _has_trait(reactor, "sentinel")
-                or _has_trait(trigger_target, "sentinel")
+        for hook in reactor.feature_hooks:
+            if hook.hook_type != "reaction_attack":
+                continue
+
+            handler_name = _feature_hook_handler_name(hook)
+            if hook.trigger not in _REACTION_ATTACK_HOOK_TRIGGERS:
+                rule_trace.append(
+                    {
+                        "event": event,
+                        "round": round_number,
+                        "turn": turn_token,
+                        "handler": "feature_hook:reaction_attack",
+                        "actor_id": reactor.actor_id,
+                        "hook_feature": hook.feature_name,
+                        "hook_source": hook.source_type,
+                        "hook_trigger": hook.trigger,
+                        "result": "skipped",
+                        "reason": "invalid_hook_trigger",
+                    }
+                )
+                continue
+
+            if not _reaction_attack_hook_matches(
+                hook=hook,
+                event=event,
+                reactor=reactor,
+                trigger_actor=trigger_actor,
+                trigger_target=trigger_target,
+                trigger_action=trigger_action,
             ):
+                continue
+
+            if not reactor.reaction_available:
                 continue
             if reactor.per_action_uses.get(lock_key, 0) > 0:
                 rule_trace.append(
@@ -8983,19 +9193,26 @@ def _run_trait_event_handlers(
                         "event": event,
                         "round": round_number,
                         "turn": turn_token,
-                        "handler": "trait:sentinel_reaction",
+                        "handler": handler_name,
                         "actor_id": reactor.actor_id,
+                        "hook_feature": hook.feature_name,
+                        "hook_source": hook.source_type,
+                        "hook_trigger": hook.trigger,
                         "result": "skipped",
                         "reason": "reaction_lock",
                     }
                 )
                 continue
+
             attack_action = _fallback_action(reactor)
             if attack_action is None or attack_action.action_type != "attack":
                 continue
+
             reactor.reaction_available = False
             reactor.per_action_uses[lock_key] = 1
-            trigger_actor.movement_remaining = 0.0
+            if hook.trigger == "creature_attacks_ally_within_5ft":
+                trigger_actor.movement_remaining = 0.0
+
             _execute_action(
                 rng=rng,
                 actor=reactor,
@@ -9018,70 +9235,17 @@ def _run_trait_event_handlers(
                     "event": event,
                     "round": round_number,
                     "turn": turn_token,
-                    "handler": "trait:sentinel_reaction",
+                    "handler": handler_name,
                     "actor_id": reactor.actor_id,
                     "trigger_actor_id": trigger_actor.actor_id,
+                    "hook_feature": hook.feature_name,
+                    "hook_source": hook.source_type,
+                    "hook_trigger": hook.trigger,
                     "result": "executed",
                 }
             )
-
-    if event == "after_action" and "spell" in trigger_action.tags:
-        reactors = sorted(actors.values(), key=lambda value: value.actor_id)
-        for reactor in reactors:
-            if (
-                reactor.team == trigger_actor.team
-                or reactor.dead
-                or reactor.hp <= 0
-                or not reactor.reaction_available
-                or not _has_trait(reactor, "mage slayer")
-            ):
-                continue
-            if reactor.per_action_uses.get(lock_key, 0) > 0:
-                rule_trace.append(
-                    {
-                        "event": event,
-                        "round": round_number,
-                        "turn": turn_token,
-                        "handler": "trait:mage_slayer_reaction",
-                        "actor_id": reactor.actor_id,
-                        "result": "skipped",
-                        "reason": "reaction_lock",
-                    }
-                )
-                continue
-            attack_action = _fallback_action(reactor)
-            if attack_action is None or attack_action.action_type != "attack":
-                continue
-            reactor.reaction_available = False
-            reactor.per_action_uses[lock_key] = 1
-            _execute_action(
-                rng=rng,
-                actor=reactor,
-                action=attack_action,
-                targets=[trigger_actor],
-                actors=actors,
-                damage_dealt=damage_dealt,
-                damage_taken=damage_taken,
-                threat_scores=threat_scores,
-                resources_spent=resources_spent,
-                active_hazards=active_hazards,
-                obstacles=obstacles,
-                light_level=light_level,
-                round_number=round_number,
-                turn_token=turn_token,
-                rule_trace=rule_trace,
-            )
-            rule_trace.append(
-                {
-                    "event": event,
-                    "round": round_number,
-                    "turn": turn_token,
-                    "handler": "trait:mage_slayer_reaction",
-                    "actor_id": reactor.actor_id,
-                    "trigger_actor_id": trigger_actor.actor_id,
-                    "result": "executed",
-                }
-            )
+            if trigger_actor.dead or trigger_actor.hp <= 0:
+                return
 
 
 def _dispatch_combat_event(

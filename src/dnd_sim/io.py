@@ -13,6 +13,15 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from dnd_sim.strategy_api import BaseStrategy, validate_strategy_instance
 
+_FEATURE_SOURCE_TYPE_MAP = {
+    "feat": "feat",
+    "racial_trait": "species",
+    "species_trait": "species",
+    "background_feature": "background",
+    "subclass_feature": "subclass",
+    "class_feature": "class",
+}
+
 
 class ActionConfig(BaseModel):
     name: str
@@ -389,6 +398,48 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
     return out
 
 
+def _normalize_trait_source_type(raw_type: Any) -> str:
+    key = str(raw_type or "").strip().lower()
+    return _FEATURE_SOURCE_TYPE_MAP.get(key, "other")
+
+
+def _normalize_trait_mechanics(raw_mechanics: Any) -> list[Any]:
+    if not isinstance(raw_mechanics, list):
+        return []
+
+    normalized: list[Any] = []
+    for mechanic in raw_mechanics:
+        if not isinstance(mechanic, dict):
+            normalized.append(mechanic)
+            continue
+
+        payload = dict(mechanic)
+        effect_type = payload.get("effect_type")
+        if not isinstance(effect_type, str) or not effect_type.strip():
+            alias = payload.get("type")
+            if isinstance(alias, str) and alias.strip():
+                payload["effect_type"] = alias.strip().lower()
+        else:
+            payload["effect_type"] = effect_type.strip().lower()
+
+        trigger = payload.get("trigger")
+        if not isinstance(trigger, str) or not trigger.strip():
+            alias = payload.get("event_trigger")
+            if isinstance(alias, str) and alias.strip():
+                payload["trigger"] = alias.strip().lower()
+        else:
+            payload["trigger"] = trigger.strip().lower()
+        normalized.append(payload)
+    return normalized
+
+
+def _normalize_trait_payload(trait_data: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(trait_data)
+    payload["source_type"] = _normalize_trait_source_type(payload.get("type"))
+    payload["mechanics"] = _normalize_trait_mechanics(payload.get("mechanics"))
+    return payload
+
+
 def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
     from .db import execute_query
 
@@ -401,7 +452,7 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
             trait_data = json.loads(row["data_json"])
             trait_name = trait_data.get("name", "").lower()
             if trait_name:
-                out[trait_name] = trait_data
+                out[trait_name] = _normalize_trait_payload(trait_data)
         except json.JSONDecodeError:
             pass
 
@@ -411,7 +462,7 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
             trait_data = _load_json(path)
             trait_name = trait_data.get("name", "").lower()
             if trait_name:
-                out[trait_name] = trait_data
+                out[trait_name] = _normalize_trait_payload(trait_data)
 
     return out
 
