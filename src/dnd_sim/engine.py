@@ -225,6 +225,9 @@ _OBSCURING_ZONE_TYPES = {"cloud", "magical_darkness", "obscuring_zone", "obscuri
 _MOVEMENT_BLOCKING_ZONE_TYPES = {"wall", "movement_blocker"}
 _LINE_BLOCKING_ZONE_TYPES = {"wall"}
 _DIFFICULT_TERRAIN_ZONE_TYPES = {"difficult_terrain"}
+_ANTIMAGIC_ZONE_TYPES = {"antimagic", "antimagic_field"}
+_ANTIMAGIC_SUPPRESSION_CONDITION = "antimagic_suppressed"
+_ANTIMAGIC_SUPPRESSION_EFFECT_ID = "zone_antimagic_suppression"
 _ATTACK_ACTION_SEQUENCE_EFFECT_TYPES = {"attack_sequence", "multiattack_sequence"}
 _ATTACK_ACTION_EXTRA_EFFECT_TYPES = {"extra_attack", "grant_extra_attack"}
 _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES = {
@@ -2212,6 +2215,62 @@ def _zone_is_difficult_terrain(zone: dict[str, Any]) -> bool:
     return _zone_flag(zone, "difficult_terrain", default=zone_type in _DIFFICULT_TERRAIN_ZONE_TYPES)
 
 
+def _zone_suppresses_magic(zone: dict[str, Any]) -> bool:
+    zone_type = _zone_type(zone)
+    return _zone_flag(zone, "suppresses_magic", default=zone_type in _ANTIMAGIC_ZONE_TYPES)
+
+
+def _actor_inside_antimagic_zone(
+    actor: ActorRuntimeState,
+    active_hazards: list[dict[str, Any]],
+) -> bool:
+    for zone in active_hazards:
+        if not isinstance(zone, dict):
+            continue
+        if not _zone_suppresses_magic(zone):
+            continue
+        if _zone_contains_position(zone, actor.position):
+            return True
+    return False
+
+
+def _sync_antimagic_suppression_for_actor(
+    actor: ActorRuntimeState,
+    *,
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    if _actor_inside_antimagic_zone(actor, active_hazards):
+        _apply_condition(
+            actor,
+            _ANTIMAGIC_SUPPRESSION_CONDITION,
+            source_actor_id=None,
+            target_actor_id=actor.actor_id,
+            effect_id=_ANTIMAGIC_SUPPRESSION_EFFECT_ID,
+            stack_policy="refresh",
+        )
+        if _has_active_concentration_state(actor):
+            _break_concentration(actor, actors, active_hazards)
+        return
+    _remove_condition(
+        actor,
+        _ANTIMAGIC_SUPPRESSION_CONDITION,
+        effect_id=_ANTIMAGIC_SUPPRESSION_EFFECT_ID,
+    )
+
+
+def _sync_antimagic_suppression_for_all_actors(
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    for actor in actors.values():
+        _sync_antimagic_suppression_for_actor(
+            actor,
+            actors=actors,
+            active_hazards=active_hazards,
+        )
+
+
 def _zone_obstacles(
     active_hazards: list[dict[str, Any]],
     *,
@@ -2453,6 +2512,11 @@ def _update_actor_zone_interactions_for_movement(
 
     current = _zones_containing_position(active_hazards, expanded[0])
     actor.active_zone_ids = set(current)
+    _sync_antimagic_suppression_for_actor(
+        actor,
+        actors=actors,
+        active_hazards=active_hazards,
+    )
     for point in expanded[1:]:
         next_zones = _zones_containing_position(active_hazards, point)
         entered = [next_zones[zid] for zid in sorted(set(next_zones) - set(current))]
@@ -2492,6 +2556,11 @@ def _update_actor_zone_interactions_for_movement(
                 break
         current = next_zones
         actor.active_zone_ids = set(current)
+        _sync_antimagic_suppression_for_actor(
+            actor,
+            actors=actors,
+            active_hazards=active_hazards,
+        )
         if actor.dead or actor.hp <= 0:
             break
 
@@ -2539,6 +2608,11 @@ def _update_actor_zone_interactions_for_boundary(
 
     if actor.dead or actor.hp <= 0:
         actor.active_zone_ids = current_ids
+        _sync_antimagic_suppression_for_actor(
+            actor,
+            actors=actors,
+            active_hazards=active_hazards,
+        )
         return
 
     timing_key = _normalize_duration_boundary(boundary)
@@ -2561,6 +2635,11 @@ def _update_actor_zone_interactions_for_boundary(
 
     if actor.dead or actor.hp <= 0:
         actor.active_zone_ids = current_ids
+        _sync_antimagic_suppression_for_actor(
+            actor,
+            actors=actors,
+            active_hazards=active_hazards,
+        )
         return
 
     for zone_id in left_ids:
@@ -2583,6 +2662,11 @@ def _update_actor_zone_interactions_for_boundary(
             break
 
     actor.active_zone_ids = current_ids
+    _sync_antimagic_suppression_for_actor(
+        actor,
+        actors=actors,
+        active_hazards=active_hazards,
+    )
 
 
 def _prune_actor_zone_memberships(
@@ -2596,6 +2680,7 @@ def _prune_actor_zone_memberships(
     }
     for actor in actors.values():
         actor.active_zone_ids.intersection_update(valid_ids)
+    _sync_antimagic_suppression_for_all_actors(actors, active_hazards)
 
 
 def _tick_persistent_zones(active_hazards: list[dict[str, Any]], *, boundary: str) -> None:
@@ -2676,11 +2761,17 @@ def _build_persistent_zone(
             effect.get("difficult_terrain"),
             default=zone_type in _DIFFICULT_TERRAIN_ZONE_TYPES,
         ),
+        "suppresses_magic": _coerce_bool(
+            effect.get("suppresses_magic"),
+            default=zone_type in _ANTIMAGIC_ZONE_TYPES,
+        ),
         "on_enter": _zone_effects(effect.get("on_enter")),
         "on_leave": _zone_effects(effect.get("on_leave")),
         "on_start_turn": _zone_effects(effect.get("on_start_turn") or effect.get("on_turn_start")),
         "on_end_turn": _zone_effects(effect.get("on_end_turn") or effect.get("on_turn_end")),
         "trigger_effects": _extract_hazard_trigger_effects(effect),
+        "magical": _coerce_bool(effect.get("magical"), default=False),
+        "spell_level": _coerce_positive_int(effect.get("spell_level")),
     }
     if min_pos is not None and max_pos is not None:
         zone["min_pos"] = min_pos
@@ -3271,6 +3362,26 @@ def _has_apply_condition_effect(
     return False
 
 
+def _spell_is_ritual(spell: dict[str, Any]) -> bool:
+    explicit = spell.get("ritual")
+    if isinstance(explicit, bool):
+        return explicit
+    if str(spell.get("ritual", "")).strip().lower() in {"1", "true", "yes"}:
+        return True
+    raw_tags = spell.get("tags", [])
+    if isinstance(raw_tags, (list, tuple, set)):
+        tags = {str(tag).strip().lower() for tag in raw_tags if str(tag).strip()}
+    else:
+        tags = set()
+    if "ritual" in tags:
+        return True
+    casting_time = str(spell.get("casting_time", "")).lower()
+    if "ritual" in casting_time:
+        return True
+    meta = str(spell.get("meta", "")).lower()
+    return "ritual" in meta
+
+
 def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str, Any]]:
     """Extract a minimal spell list from PDF raw_fields.
 
@@ -3372,6 +3483,8 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 ).lower() or hydrated.get("save_ability")
             if "concentration" in spell_def:
                 hydrated["concentration"] = bool(spell_def["concentration"])
+            if "ritual" in spell_def:
+                hydrated["ritual"] = bool(spell_def["ritual"])
             if "components" in spell_def:
                 components_text = str(spell_def.get("components") or "").strip()
                 if components_text:
@@ -3556,6 +3669,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "aoe_type",
             "aoe_size_ft",
             "concentration",
+            "ritual",
             "components",
             "duration",
             "duration_rounds",
@@ -3981,6 +4095,7 @@ def _build_spell_actions(
     for spell in spells:
         name = str(spell.get("name", "unknown_spell"))
         spell_level = int(spell.get("level", 0))
+        is_ritual = _spell_is_ritual(spell) and spell_level > 0
         smite_setup = _is_smite_spell_name(name)
         action_type = str(spell.get("action_type", "attack"))
         damage = spell.get("damage")
@@ -3999,6 +4114,8 @@ def _build_spell_actions(
         tags.append(f"spell_level:{max(0, spell_level)}")
         if spell_level == 0:
             tags.append("cantrip")
+        if is_ritual:
+            tags.append("ritual")
         spell_school = _extract_spell_school(spell)
         if spell_school is not None:
             tags.append(f"school:{spell_school}")
@@ -4089,6 +4206,16 @@ def _build_spell_actions(
             tags=tags,
         )
         actions.append(action)
+        if is_ritual:
+            ritual_tags = list(dict.fromkeys([*action.tags, "ritual", "ritual_cast"]))
+            actions.append(
+                _clone_action(
+                    action,
+                    name=f"{name} [Ritual]",
+                    resource_cost={},
+                    tags=ritual_tags,
+                )
+            )
         actions.extend(
             _build_metamagic_spell_actions(action, spell_level=spell_level, traits=known_traits)
         )
@@ -9137,6 +9264,8 @@ def _break_concentration(
     if actor.readied_spell_held:
         _remove_condition(actor, "readying")
 
+    _sync_antimagic_suppression_for_all_actors(actors, active_hazards)
+
 
 def _has_active_concentration_state(actor: ActorRuntimeState) -> bool:
     return bool(
@@ -9414,7 +9543,17 @@ def _apply_effect(
     effect_type = {
         "command_construct_companion": "command_allied",
         "summon_creature": "summon",
+        "antimagic": "antimagic_field",
+        "antimagic_zone": "antimagic_field",
     }.get(raw_effect_type, raw_effect_type)
+
+    if effect_type == "antimagic_field":
+        normalized_effect = dict(effect)
+        normalized_effect.setdefault("zone_type", "antimagic_field")
+        normalized_effect.setdefault("hazard_type", "antimagic_field")
+        normalized_effect["suppresses_magic"] = True
+        effect = normalized_effect
+        effect_type = "persistent_zone"
 
     if effect_type == "damage":
         if action is not None and _is_magic_missile_action(action):
@@ -9539,6 +9678,12 @@ def _apply_effect(
         concentration_linked = bool(
             action and action.concentration and effect.get("concentration_linked", True)
         )
+        internal_tags = _normalize_internal_tags(effect.get("internal_tags"))
+        if action is not None and _has_tag(action, "spell"):
+            internal_tags.add("spell_effect")
+            spell_level = _spell_level_from_action(action)
+            if spell_level > 0:
+                internal_tags.add(f"spell_level:{spell_level}")
         created_effect_ids = _apply_condition(
             recipient,
             str(effect.get("condition", "")),
@@ -9559,12 +9704,15 @@ def _apply_effect(
                     effect.get("save_to_end_policy", False),
                 )
             ),
-            internal_tags=_normalize_internal_tags(effect.get("internal_tags")),
+            internal_tags=internal_tags,
         )
         if concentration_linked:
             actor.concentrated_targets.add(recipient.actor_id)
             actor.concentration_conditions.add(str(effect.get("condition", "")).lower())
             actor.concentration_effect_instance_ids.update(created_effect_ids)
+        if _normalize_condition(effect.get("condition")) == _ANTIMAGIC_SUPPRESSION_CONDITION:
+            if _has_active_concentration_state(recipient):
+                _break_concentration(recipient, actors, active_hazards)
         _force_end_concentration_if_needed(recipient, actors=actors, active_hazards=active_hazards)
         return
 
@@ -9602,6 +9750,11 @@ def _apply_effect(
             recipient=recipient,
             active_hazards=active_hazards,
         )
+        if action is not None:
+            zone["magical"] = bool(zone.get("magical", _is_magical_action(action)))
+            zone_spell_level = _spell_level_from_action(action)
+            if zone_spell_level > 0:
+                zone["spell_level"] = zone_spell_level
         zone["concentration_linked"] = concentration_linked
         zone["concentration_owner_id"] = actor.actor_id if concentration_linked else None
         stack_policy = str(zone.get("stack_policy", "independent"))
@@ -9634,6 +9787,7 @@ def _apply_effect(
             active_hazards.append(zone)
         if concentration_linked:
             actor.concentrated_targets.add(recipient.actor_id)
+        _sync_antimagic_suppression_for_all_actors(actors, active_hazards)
         if telemetry is not None:
             telemetry.append(
                 {
@@ -10353,6 +10507,8 @@ def _action_available(
     if action.max_uses is not None and actor.per_action_uses.get(action.name, 0) >= action.max_uses:
         return False
     if action.recharge and not actor.recharge_ready.get(action.name, True):
+        return False
+    if "spell" in action.tags and has_condition(actor, _ANTIMAGIC_SUPPRESSION_CONDITION):
         return False
     if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
         return False
@@ -11091,6 +11247,8 @@ def _counterspell_slot_if_legal(
     light_level: str,
 ) -> tuple[str, int] | None:
     if not _action_available(reactor, counterspell_action, turn_token=turn_token):
+        return None
+    if _actor_inside_antimagic_zone(reactor, active_hazards):
         return None
     if distance_chebyshev(reactor.position, caster.position) > 60:
         return None
@@ -11838,6 +11996,74 @@ def _spellcasting_ability_mod(actor: ActorRuntimeState) -> int:
     return max(actor.int_mod, actor.wis_mod, actor.cha_mod)
 
 
+def _effect_internal_tag_int(effect: EffectInstance, *, prefix: str) -> int | None:
+    for tag in effect.internal_tags:
+        text = str(tag).strip().lower()
+        if not text.startswith(prefix):
+            continue
+        raw = text.split(":", 1)[1]
+        try:
+            value = int(raw)
+        except ValueError:
+            return None
+        if value > 0:
+            return value
+    return None
+
+
+def _effect_spell_level(
+    effect: EffectInstance,
+    *,
+    actors: dict[str, ActorRuntimeState],
+) -> int:
+    level_from_tag = _effect_internal_tag_int(effect, prefix="spell_level:")
+    if level_from_tag is not None:
+        return level_from_tag
+    if effect.concentration_linked and effect.source_actor_id:
+        source = actors.get(effect.source_actor_id)
+        if source is not None and source.concentrated_spell_level:
+            return int(source.concentrated_spell_level)
+    return 0
+
+
+def _effect_is_dispellable_spell_effect(effect: EffectInstance) -> bool:
+    if effect.concentration_linked:
+        return True
+    if "spell_effect" in effect.internal_tags:
+        return True
+    return _effect_internal_tag_int(effect, prefix="spell_level:") is not None
+
+
+def _zone_spell_level(zone: dict[str, Any]) -> int:
+    raw = zone.get("spell_level", zone.get("level"))
+    if raw is None:
+        return 0
+    try:
+        level = int(raw)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, level)
+
+
+def _zone_is_dispellable_magic(zone: dict[str, Any]) -> bool:
+    if _zone_flag(zone, "nonmagical", default=False):
+        return False
+    return _coerce_bool(zone.get("magical"), default=True)
+
+
+def _dispel_check_succeeds(
+    *,
+    rng: random.Random,
+    check_mod: int,
+    dispel_level: int,
+    source_level: int,
+) -> bool:
+    if source_level <= dispel_level:
+        return True
+    dc = 10 + source_level
+    return (rng.randint(1, 20) + check_mod) >= dc
+
+
 def _resolve_dispel_magic(
     *,
     rng: random.Random,
@@ -11857,20 +12083,86 @@ def _resolve_dispel_magic(
             and target.actor_id in source.concentrated_targets
             and source.actor_id != actor.actor_id
         ]
-        if not affecting_sources:
+        if affecting_sources:
+            affecting_sources.sort(
+                key=lambda source: (source.concentrated_spell_level or 0, source.actor_id),
+                reverse=True,
+            )
+            source = affecting_sources[0]
+            source_level = int(source.concentrated_spell_level or 0)
+            if _dispel_check_succeeds(
+                rng=rng,
+                check_mod=check_mod,
+                dispel_level=dispel_level,
+                source_level=source_level,
+            ):
+                _break_concentration(source, actors, active_hazards)
             continue
-        affecting_sources.sort(
-            key=lambda source: (source.concentrated_spell_level or 0, source.actor_id),
+
+        dispellable_effects: list[tuple[int, EffectInstance]] = []
+        for effect in list(target.effect_instances):
+            if effect.source_actor_id == actor.actor_id:
+                continue
+            if not _effect_is_dispellable_spell_effect(effect):
+                continue
+            dispellable_effects.append((_effect_spell_level(effect, actors=actors), effect))
+
+        if dispellable_effects:
+            dispellable_effects.sort(
+                key=lambda row: (row[0], row[1].instance_id),
+                reverse=True,
+            )
+            effect_level, effect = dispellable_effects[0]
+            if _dispel_check_succeeds(
+                rng=rng,
+                check_mod=check_mod,
+                dispel_level=dispel_level,
+                source_level=effect_level,
+            ):
+                source_actor = actors.get(effect.source_actor_id or "")
+                _remove_effect_instance(
+                    target,
+                    effect.instance_id,
+                    source_actor_id=effect.source_actor_id,
+                )
+                if effect.concentration_linked and source_actor is not None:
+                    _break_concentration(source_actor, actors, active_hazards)
+            continue
+
+        dispellable_zones: list[tuple[int, str]] = []
+        for idx, zone in enumerate(active_hazards):
+            if not isinstance(zone, dict):
+                continue
+            if not _zone_contains_position(zone, target.position):
+                continue
+            if not _zone_is_dispellable_magic(zone):
+                continue
+            zone_id = _zone_instance_id(zone, fallback_index=idx + 1)
+            dispellable_zones.append((_zone_spell_level(zone), zone_id))
+
+        if not dispellable_zones:
+            continue
+        dispellable_zones.sort(
+            key=lambda row: (row[0], row[1]),
             reverse=True,
         )
-        source = affecting_sources[0]
-        source_level = int(source.concentrated_spell_level or 0)
-        if source_level <= dispel_level:
-            _break_concentration(source, actors, active_hazards)
+        zone_level, chosen_zone_id = dispellable_zones[0]
+        if not _dispel_check_succeeds(
+            rng=rng,
+            check_mod=check_mod,
+            dispel_level=dispel_level,
+            source_level=zone_level,
+        ):
             continue
-        dc = 10 + source_level
-        if (rng.randint(1, 20) + check_mod) >= dc:
-            _break_concentration(source, actors, active_hazards)
+        active_hazards[:] = [
+            zone
+            for idx, zone in enumerate(active_hazards)
+            if not (
+                isinstance(zone, dict)
+                and _zone_instance_id(zone, fallback_index=idx + 1) == chosen_zone_id
+            )
+        ]
+        _prune_actor_zone_memberships(actors, active_hazards)
 
 
 def _apply_domain_attack_roll_hooks(
@@ -12428,6 +12720,11 @@ def _execute_action(
         timing_engine if timing_engine is not None else _get_default_combat_timing_engine()
     )
     _force_end_concentration_if_needed(actor, actors=actors, active_hazards=active_hazards)
+    _sync_antimagic_suppression_for_actor(
+        actor,
+        actors=actors,
+        active_hazards=active_hazards,
+    )
 
     def emit_event(
         event_name: str,
@@ -12515,6 +12812,8 @@ def _execute_action(
 
     # Spell declaration and counterspell check
     if is_spell_action:
+        if has_condition(actor, _ANTIMAGIC_SUPPRESSION_CONDITION):
+            return
         if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
             return
         if not _can_cast_spell_with_components(actor, action):

@@ -52,6 +52,7 @@ class CanonicalSpellRecord(BaseModel):
     casting_time: str
     range_ft: int | None = Field(default=None, ge=0)
     concentration: bool = False
+    ritual: bool = False
     duration_rounds: int | None = Field(default=None, ge=0)
     description: str
     save_ability: str | None = None
@@ -241,6 +242,16 @@ def canonicalize_spell_payload(
     concentration_raw = payload.get("concentration")
     if concentration_raw is None:
         concentration_raw = "concentration" in str(payload.get("duration", "")).lower()
+    ritual_raw = payload.get("ritual")
+    if ritual_raw is None:
+        ritual_text = " ".join(
+            [
+                str(payload.get("meta", "")),
+                str(payload.get("casting_time", "")),
+                str(payload.get("name", "")),
+            ]
+        ).lower()
+        ritual_raw = "ritual" in ritual_text
 
     save_ability = payload.get("save_ability")
     if save_ability is None and description:
@@ -256,6 +267,7 @@ def canonicalize_spell_payload(
         "casting_time": casting_time,
         "range_ft": _parse_range_ft(payload.get("range_ft", payload.get("range"))),
         "concentration": bool(concentration_raw),
+        "ritual": bool(ritual_raw),
         "duration_rounds": _duration_to_rounds(
             payload.get("duration_rounds", payload.get("duration"))
         ),

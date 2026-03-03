@@ -1,0 +1,293 @@
+from __future__ import annotations
+
+import random
+
+from dnd_sim.engine import _build_spell_actions, _execute_action, _resolve_targets_for_action
+from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.spatial import AABB
+from dnd_sim.strategy_api import TargetRef
+
+
+class FixedRng:
+    def __init__(self, values: list[int]) -> None:
+        self.values = list(values)
+
+    def randint(self, _a: int, _b: int) -> int:
+        if not self.values:
+            raise AssertionError("RNG exhausted")
+        return self.values.pop(0)
+
+
+def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
+    return ActorRuntimeState(
+        actor_id=actor_id,
+        team=team,
+        name=actor_id,
+        max_hp=30,
+        hp=30,
+        temp_hp=0,
+        ac=12,
+        initiative_mod=2,
+        str_mod=0,
+        dex_mod=2,
+        con_mod=1,
+        int_mod=0,
+        wis_mod=0,
+        cha_mod=0,
+        save_mods={"str": 0, "dex": 2, "con": 1, "int": 0, "wis": 0, "cha": 0},
+        actions=[],
+    )
+
+
+def _trackers(
+    *actors: ActorRuntimeState,
+) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, dict[str, int]]]:
+    damage_dealt = {actor.actor_id: 0 for actor in actors}
+    damage_taken = {actor.actor_id: 0 for actor in actors}
+    threat_scores = {actor.actor_id: 0 for actor in actors}
+    resources_spent = {actor.actor_id: {} for actor in actors}
+    return damage_dealt, damage_taken, threat_scores, resources_spent
+
+
+def test_build_spell_actions_adds_ritual_cast_variant_without_slot_cost() -> None:
+    character = {
+        "spells": [
+            {
+                "name": "detect_magic",
+                "level": 1,
+                "action_type": "utility",
+                "target_mode": "self",
+                "ritual": True,
+                "casting_time": "1 action",
+            }
+        ],
+        "resources": {"spell_slots": {"1": 1}},
+    }
+
+    actions = _build_spell_actions(character, character_level=5)
+    by_name = {action.name: action for action in actions}
+
+    assert "detect_magic" in by_name
+    assert "detect_magic [Ritual]" in by_name
+    assert by_name["detect_magic"].resource_cost == {"spell_slot_1": 1}
+    assert by_name["detect_magic [Ritual]"].resource_cost == {}
+    assert "ritual" in by_name["detect_magic [Ritual]"].tags
+    assert "ritual_cast" in by_name["detect_magic [Ritual]"].tags
+
+
+def test_dispel_magic_removes_non_concentration_spell_effect_on_success() -> None:
+    rng = FixedRng([10])  # 10 + INT 4 => DC 14 success for a 4th-level effect.
+
+    source = _base_actor(actor_id="source", team="enemy")
+    source.resources = {"spell_slot_4": 1}
+    dispeller = _base_actor(actor_id="dispeller", team="party")
+    dispeller.int_mod = 4
+    victim = _base_actor(actor_id="victim", team="party")
+
+    binding_hex = ActionDefinition(
+        name="binding_hex",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        tags=["spell", "spell_level:4"],
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "condition": "cursed",
+                "target": "target",
+                "duration_rounds": 10,
+                "effect_id": "binding_hex",
+            }
+        ],
+    )
+    dispel_magic = ActionDefinition(
+        name="dispel_magic",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        tags=["spell", "dispel"],
+    )
+
+    actors = {a.actor_id: a for a in (source, dispeller, victim)}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        source, dispeller, victim
+    )
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=random.Random(2),
+        actor=source,
+        action=binding_hex,
+        targets=[victim],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert "cursed" in victim.conditions
+
+    _execute_action(
+        rng=rng,
+        actor=dispeller,
+        action=dispel_magic,
+        targets=[victim],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+
+    assert "cursed" not in victim.conditions
+
+
+def test_antimagic_field_suppresses_spellcasting_and_breaks_concentration() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    ally = _base_actor(actor_id="ally", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+
+    hold_person = ActionDefinition(
+        name="hold_person",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        concentration=True,
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "paralyzed", "target": "target"}],
+    )
+    antimagic_field = ActionDefinition(
+        name="antimagic_field",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        tags=["spell", "antimagic"],
+        effects=[
+            {
+                "effect_type": "antimagic_field",
+                "target": "target",
+                "radius_ft": 10,
+                "duration_rounds": 10,
+            }
+        ],
+    )
+    followup_spell = ActionDefinition(
+        name="arcane_mark",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "marked", "target": "target"}],
+    )
+
+    caster.position = (0.0, 0.0, 0.0)
+    ally.position = (10.0, 0.0, 0.0)
+    enemy.position = (5.0, 0.0, 0.0)
+
+    actors = {a.actor_id: a for a in (caster, ally, enemy)}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, ally, enemy)
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=random.Random(3),
+        actor=caster,
+        action=hold_person,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert caster.concentrating is True
+    assert "paralyzed" in enemy.conditions
+
+    _execute_action(
+        rng=random.Random(4),
+        actor=ally,
+        action=antimagic_field,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+
+    assert caster.concentrating is False
+    assert "paralyzed" not in enemy.conditions
+    assert "antimagic_suppressed" in caster.conditions
+
+    _execute_action(
+        rng=random.Random(5),
+        actor=caster,
+        action=followup_spell,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert "marked" not in enemy.conditions
+
+
+def test_dispel_magic_respects_line_of_effect_total_cover() -> None:
+    source = _base_actor(actor_id="source", team="enemy")
+    dispeller = _base_actor(actor_id="dispeller", team="party")
+    victim = _base_actor(actor_id="victim", team="party")
+    source.position = (20.0, 0.0, 0.0)
+    dispeller.position = (0.0, 0.0, 0.0)
+    victim.position = (10.0, 0.0, 0.0)
+
+    curse_spell = ActionDefinition(
+        name="curse_mark",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "cursed", "target": "target"}],
+    )
+    dispel_magic = ActionDefinition(
+        name="dispel_magic",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        tags=["spell", "dispel"],
+    )
+
+    wall = AABB(min_pos=(4.0, -5.0, -5.0), max_pos=(6.0, 5.0, 5.0), cover_level="TOTAL")
+    actors = {a.actor_id: a for a in (source, dispeller, victim)}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        source, dispeller, victim
+    )
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=random.Random(6),
+        actor=source,
+        action=curse_spell,
+        targets=[victim],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert "cursed" in victim.conditions
+
+    resolved_targets = _resolve_targets_for_action(
+        rng=random.Random(7),
+        actor=dispeller,
+        action=dispel_magic,
+        actors=actors,
+        requested=[TargetRef("victim")],
+        obstacles=[wall],
+    )
+    assert resolved_targets == []
