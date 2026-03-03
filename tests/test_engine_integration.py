@@ -15,7 +15,7 @@ from dnd_sim.engine import (
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import AABB
-from dnd_sim.strategy_api import TargetRef
+from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_character, build_enemy, write_json
 
 
@@ -101,6 +101,45 @@ def _setup_env(
     scenario_path = scenario_dir / "scenario.json"
     scenario_path.write_text(json.dumps(scenario, indent=2), encoding="utf-8")
     return scenario_path
+
+
+class DeclaredTacticalChoiceStrategy(BaseStrategy):
+    def __init__(self, *, bonus_action_name: str | None):
+        self._bonus_action_name = bonus_action_name
+
+    def declare_turn(self, actor, state):
+        enemies = [
+            view for view in state.actors.values() if view.team != actor.team and view.hp > 0
+        ]
+        if not enemies:
+            return TurnDeclaration()
+
+        target = enemies[0]
+        move_to = (
+            float(target.position[0]),
+            float(target.position[1] - 5.0),
+            float(target.position[2]),
+        )
+
+        bonus_action = None
+        if self._bonus_action_name is not None:
+            bonus_target_id = (
+                actor.actor_id if self._bonus_action_name == "second_wind" else target.actor_id
+            )
+            bonus_action = DeclaredAction(
+                action_name=self._bonus_action_name,
+                targets=[TargetRef(actor_id=bonus_target_id)],
+            )
+
+        return TurnDeclaration(
+            movement_path=[actor.position, move_to],
+            action=DeclaredAction(
+                action_name="basic",
+                targets=[TargetRef(actor_id=target.actor_id)],
+            ),
+            bonus_action=bonus_action,
+            rationale={"tactical_choices": {"bonus_action": self._bonus_action_name}},
+        )
 
 
 def test_fixed_seed_is_deterministic(tmp_path: Path) -> None:
@@ -257,7 +296,7 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
     assert always_ki > conserve_ki
 
 
-def test_two_weapon_baseline_offhand_adds_damage_over_single_weapon(tmp_path: Path) -> None:
+def test_two_weapon_legacy_strategy_does_not_auto_spend_offhand_bonus_action(tmp_path: Path) -> None:
     def build_dual_wielder(character_id: str, *, include_offhand: bool) -> dict:
         fighter = build_character(
             character_id=character_id,
@@ -339,10 +378,10 @@ def test_two_weapon_baseline_offhand_adds_damage_over_single_weapon(tmp_path: Pa
         run_label="single_weapon",
     )
 
-    assert dual_mean > single_mean + 0.6
+    assert dual_mean == pytest.approx(single_mean, abs=1e-9)
 
 
-def test_rage_activation_persists_after_attack_then_bonus_activation(tmp_path: Path) -> None:
+def test_rage_is_not_auto_activated_without_declared_bonus_action(tmp_path: Path) -> None:
     party = [
         {
             "character_id": "barb",
@@ -438,11 +477,11 @@ def test_rage_activation_persists_after_attack_then_bonus_activation(tmp_path: P
 
     trial = artifacts.trial_results[0]
     assert trial.rounds == 2
-    assert trial.resources_spent["barb"].get("rage", 0) == 1
-    assert "raging" in trial.state_snapshots[-1]["party"]["barb"]["conditions"]
+    assert trial.resources_spent["barb"].get("rage", 0) == 0
+    assert "raging" not in trial.state_snapshots[-1]["party"]["barb"]["conditions"]
 
 
-def test_monk_flurry_does_not_stack_with_signature_attack_pattern(tmp_path: Path) -> None:
+def test_monk_flurry_is_not_auto_spent_without_declared_bonus_action(tmp_path: Path) -> None:
     monk = build_character(
         character_id="monk",
         name="Monk",
@@ -482,7 +521,7 @@ def test_monk_flurry_does_not_stack_with_signature_attack_pattern(tmp_path: Path
         run_id="monk_flurry",
     ).summary.to_dict()
 
-    assert summary["per_actor_resources_spent"]["monk"]["ki"]["mean"] == pytest.approx(1.0)
+    assert summary["per_actor_resources_spent"]["monk"]["ki"]["mean"] == pytest.approx(0.0)
 
 
 def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
@@ -1299,3 +1338,165 @@ def test_origin_obstacle_changes_sphere_target_set() -> None:
         obstacles=wall,
     )
     assert {target.actor_id for target in blocked_targets} == {"primary", "side"}
+
+
+def test_same_strategy_different_tactical_offhand_bonus_action_choices_change_damage(
+    tmp_path: Path,
+) -> None:
+    hero = build_character(
+        character_id="hero",
+        name="Hero",
+        max_hp=42,
+        ac=16,
+        to_hit=8,
+        damage="1d8+4",
+    )
+    hero["traits"] = ["Extra Attack", "Two-Weapon Fighting"]
+    hero["attacks"] = [
+        {
+            "attack_profile_id": "hero_main_profile",
+            "weapon_id": "hero_main_weapon",
+            "item_id": "hero_main_item",
+            "name": "Mainhand Shortsword",
+            "to_hit": 8,
+            "damage": "1d8+4",
+            "damage_type": "slashing",
+            "weapon_properties": ["light", "finesse"],
+        },
+        {
+            "attack_profile_id": "hero_off_profile",
+            "weapon_id": "hero_off_weapon",
+            "item_id": "hero_off_item",
+            "name": "Offhand Shortsword",
+            "to_hit": 8,
+            "damage": "1d6+4",
+            "damage_type": "piercing",
+            "weapon_properties": ["light", "finesse"],
+        },
+    ]
+    enemies = [build_enemy(enemy_id="boss", name="Boss", hp=500, ac=13, to_hit=5, damage="1d8+2")]
+
+    scenario_path = _setup_env(
+        tmp_path / "tactical_offhand",
+        party=[hero],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    with_offhand = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredTacticalChoiceStrategy(bonus_action_name="off_hand_attack"),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=12,
+        seed=73,
+        run_id="with_offhand",
+    ).summary.to_dict()
+    without_offhand = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredTacticalChoiceStrategy(bonus_action_name=None),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=12,
+        seed=73,
+        run_id="without_offhand",
+    ).summary.to_dict()
+
+    assert (
+        with_offhand["per_actor_damage_dealt"]["hero"]["mean"]
+        > without_offhand["per_actor_damage_dealt"]["hero"]["mean"]
+    )
+
+
+def test_legacy_omitted_bonus_action_remains_unused(tmp_path: Path) -> None:
+    hero = build_character(
+        character_id="hero",
+        name="Hero",
+        max_hp=34,
+        ac=15,
+        to_hit=7,
+        damage="1d8+4",
+    )
+    hero["traits"] = ["Extra Attack", "Second Wind"]
+
+    enemy = build_enemy(enemy_id="boss", name="Boss", hp=80, ac=13, to_hit=20, damage="2")
+    enemy["stat_block"]["initiative_mod"] = 100
+
+    scenario_path = _setup_env(
+        tmp_path / "omit_bonus",
+        party=[hero],
+        enemies=[enemy],
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    artifacts = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": BaseStrategy(),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=101,
+        run_id="omit_bonus",
+    )
+
+    assert artifacts.trial_results[0].resources_spent["hero"].get("second_wind", 0) == 0
+
+
+def test_legacy_strategy_does_not_auto_spend_action_surge(tmp_path: Path) -> None:
+    hero = build_character(
+        character_id="hero",
+        name="Hero",
+        max_hp=40,
+        ac=16,
+        to_hit=8,
+        damage="1d8+4",
+    )
+    hero["traits"] = ["Extra Attack", "Action Surge"]
+
+    enemies = [build_enemy(enemy_id="boss", name="Boss", hp=180, ac=13, to_hit=5, damage="1d8+2")]
+
+    scenario_path = _setup_env(
+        tmp_path / "action_surge",
+        party=[hero],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    artifacts = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": BaseStrategy(),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=202,
+        run_id="action_surge",
+    )
+
+    assert artifacts.trial_results[0].resources_spent["hero"].get("action_surge", 0) == 0
