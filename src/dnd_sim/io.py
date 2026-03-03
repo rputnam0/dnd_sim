@@ -404,6 +404,9 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
                 )
         except json.JSONDecodeError:
             pass
+        except ValueError:
+            # Keep loading when a persisted SQLite row has malformed class progression data.
+            pass
 
     # 2. Local overriding from db_dir (crucial for pytests using tmp_path configurations)
     index_path = db_dir / "index.json"
