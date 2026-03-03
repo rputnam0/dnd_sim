@@ -535,6 +535,12 @@ def _resolve_character_traits(
         )
     )
     explicit_candidates.update(
+        _infer_paladin_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
+    explicit_candidates.update(
         _infer_warlock_package_trait_names(
             class_levels=class_levels,
             class_level_text=class_level_text,
@@ -849,6 +855,19 @@ _RANGER_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (18, "feral senses"),
     (20, "foe slayer"),
 )
+_PALADIN_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
+    (1, "divine sense"),
+    (1, "lay on hands"),
+    (2, "fighting style"),
+    (2, "spellcasting"),
+    (2, "divine smite"),
+    (3, "divine health"),
+    (5, "extra attack"),
+    (6, "aura of protection"),
+    (10, "aura of courage"),
+    (11, "improved divine smite"),
+    (14, "cleansing touch"),
+)
 
 _BARD_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (1, "bardic inspiration"),
@@ -955,6 +974,23 @@ def _infer_ranger_package_trait_names(
         _normalize_trait_name(trait_name)
         for min_level, trait_name in _RANGER_PACKAGE_FEATURE_LEVELS
         if ranger_level >= min_level
+    }
+
+
+def _infer_paladin_package_trait_names(
+    *,
+    class_levels: dict[str, int],
+    class_level_text: str,
+) -> set[str]:
+    paladin_level = int(class_levels.get("paladin", 0))
+    if paladin_level <= 0 and not class_levels:
+        paladin_level = _parse_class_level(class_level_text, "paladin")
+    if paladin_level <= 0:
+        return set()
+    return {
+        _normalize_trait_name(trait_name)
+        for min_level, trait_name in _PALADIN_PACKAGE_FEATURE_LEVELS
+        if paladin_level >= min_level
     }
 
 
@@ -3731,11 +3767,14 @@ def _build_spell_actions(
         smite_setup = _is_smite_spell_name(name)
         if smite_setup:
             action_type = "utility"
+            action_cost = "bonus"
             target_mode = "self"
             damage = None
             half_on_save = False
             if "smite_variant" not in tags:
                 tags.append("smite_variant")
+            if "bonus" not in tags:
+                tags.append("bonus")
 
         resource_cost: dict[str, int] = {}
         max_uses: int | None = None
@@ -4223,6 +4262,12 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     )
     traits.update(
         _infer_ranger_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
+    traits.update(
+        _infer_paladin_package_trait_names(
             class_levels=class_levels,
             class_level_text=class_level_text,
         )
@@ -4831,6 +4876,7 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         "second_wind": "second_wind",
         "superiority_dice": "superiority_dice",
     }
+    class_level_text = str(character.get("class_level", ""))
     raw = character.get("resources", {})
     explicit_class_levels = character.get("class_levels")
     class_levels: dict[str, int]
@@ -4838,9 +4884,9 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         try:
             class_levels = normalize_class_levels(explicit_class_levels)
         except ValueError:
-            class_levels = _parse_class_levels(str(character.get("class_level", "")))
+            class_levels = _parse_class_levels(class_level_text)
     else:
-        class_levels = _parse_class_levels(str(character.get("class_level", "")))
+        class_levels = _parse_class_levels(class_level_text)
     has_pact_magic = _is_pact_magic_character(character)
     warlock_level = _warlock_level_from_character(character)
     raw_spell_slots = raw.get("spell_slots")
@@ -4889,10 +4935,20 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         result.setdefault(f"warlock_spell_slot_{pact_slot_level}", pact_slot_count)
 
     traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
-    if _normalize_trait_name("lay on hands") in traits and "lay_on_hands_pool" not in result:
-        result["lay_on_hands_pool"] = max(
-            0, _parse_character_level(character.get("class_level", "1")) * 5
+    traits.update(
+        _infer_paladin_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
         )
+    )
+    if _normalize_trait_name("lay on hands") in traits and "lay_on_hands_pool" not in result:
+        paladin_level = int(class_levels.get("paladin", 0))
+        if paladin_level <= 0 and not class_levels:
+            paladin_level = _parse_class_level(class_level_text, "paladin")
+        if paladin_level <= 0 and not class_levels:
+            paladin_level = _parse_character_level(class_level_text or "1")
+        if paladin_level > 0:
+            result["lay_on_hands_pool"] = max(0, paladin_level * 5)
     if _normalize_trait_name("paladin's smite") in traits and "paladins_smite_free" not in result:
         result["paladins_smite_free"] = 1
     return result
