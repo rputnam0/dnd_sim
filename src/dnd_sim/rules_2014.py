@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, TypeVar
 
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
@@ -88,6 +88,7 @@ class DamageRollEvent(CombatEvent):
     actors: dict[str, ActorRuntimeState]
     resources_spent: dict[str, dict[str, int]]
     target_can_see_attacker: bool
+    bundle: "DamageBundle | None" = None
     timing_engine: "CombatTimingEngine | None" = None
     round_number: int | None = None
     turn_token: str | None = None
@@ -101,6 +102,8 @@ class DamageResolvedEvent(CombatEvent):
     roll: "AttackRollResult"
     raw_damage: int
     applied_damage: int
+    bundle: "DamageBundle | None" = None
+    resolution: "DamageBundleResolution | None" = None
     round_number: int | None = None
     turn_token: str | None = None
 
@@ -234,6 +237,64 @@ class DamageRollResult:
     applied: int
 
 
+@dataclass(slots=True)
+class DamagePacket:
+    amount: int
+    damage_type: str
+    source: str
+    is_magical: bool = False
+    crit_expanded: bool = False
+
+
+@dataclass(slots=True)
+class DamageBundle:
+    packets: list[DamagePacket] = field(default_factory=list)
+
+    @property
+    def raw_total(self) -> int:
+        return sum(max(0, int(packet.amount)) for packet in self.packets)
+
+    def add_packet(self, packet: DamagePacket) -> None:
+        if int(packet.amount) <= 0:
+            return
+        self.packets.append(packet)
+
+    def apply_flat_reduction(self, reduction: int) -> None:
+        remaining = max(0, int(reduction))
+        for packet in self.packets:
+            if remaining <= 0:
+                break
+            current = max(0, int(packet.amount))
+            if current <= 0:
+                continue
+            applied = min(current, remaining)
+            packet.amount = current - applied
+            remaining -= applied
+
+    def halve_total(self) -> None:
+        total = self.raw_total
+        if total <= 0:
+            return
+        self.apply_flat_reduction(total - (total // 2))
+
+
+@dataclass(slots=True)
+class ResolvedDamagePacket:
+    amount: int
+    applied_amount: int
+    damage_type: str
+    source: str
+    is_magical: bool
+    crit_expanded: bool
+
+
+@dataclass(slots=True)
+class DamageBundleResolution:
+    packets: list[ResolvedDamagePacket]
+    raw_total: int
+    applied_total: int
+
+
 def _normalize_trait_name(name: str) -> str:
     return _TRAIT_NORMALIZE_RE.sub(" ", str(name).strip().lower())
 
@@ -340,6 +401,42 @@ def roll_damage(
     return max(total, 0)
 
 
+def _damage_expr_has_dice(expr: str) -> bool:
+    try:
+        n_dice, dice_size, _flat = parse_damage_expression(expr)
+    except ValueError:
+        return False
+    return n_dice > 0 and dice_size > 0
+
+
+def roll_damage_packet(
+    rng: random.Random,
+    expr: str,
+    *,
+    damage_type: str,
+    packet_source: str,
+    crit: bool = False,
+    empowered_rerolls: int = 0,
+    source: ActorRuntimeState | None = None,
+    is_magical: bool = False,
+) -> DamagePacket:
+    rolled = roll_damage(
+        rng,
+        expr,
+        crit=crit,
+        empowered_rerolls=empowered_rerolls,
+        source=source,
+        damage_type=damage_type,
+    )
+    return DamagePacket(
+        amount=rolled,
+        damage_type=str(damage_type).lower(),
+        source=str(packet_source),
+        is_magical=bool(is_magical),
+        crit_expanded=bool(crit and _damage_expr_has_dice(expr)),
+    )
+
+
 def half_damage(value: int) -> int:
     return value // 2
 
@@ -356,13 +453,16 @@ def apply_damage_type_modifiers(
     immunities: set[str],
     vulnerabilities: set[str],
 ) -> int:
-    dtype = damage_type.lower()
-    if dtype in immunities or "all" in immunities:
+    dtype = str(damage_type).lower()
+    normalized_resistances = {str(value).lower() for value in resistances}
+    normalized_immunities = {str(value).lower() for value in immunities}
+    normalized_vulnerabilities = {str(value).lower() for value in vulnerabilities}
+    if dtype in normalized_immunities or "all" in normalized_immunities:
         return 0
 
     adjusted = damage
-    is_resistant = dtype in resistances or "all" in resistances
-    is_vulnerable = dtype in vulnerabilities or "all" in vulnerabilities
+    is_resistant = dtype in normalized_resistances or "all" in normalized_resistances
+    is_vulnerable = dtype in normalized_vulnerabilities or "all" in normalized_vulnerabilities
     if is_resistant and is_vulnerable:
         pass  # cancel each other per RAW
     elif is_resistant:
@@ -372,49 +472,88 @@ def apply_damage_type_modifiers(
     return max(adjusted, 0)
 
 
-def apply_damage(
-    target: ActorRuntimeState,
-    amount: int,
-    damage_type: str,
+def _resolve_damage_packet(
+    packet: DamagePacket,
     *,
-    is_critical: bool = False,
-    is_magical: bool = False,
+    target: ActorRuntimeState,
     source: ActorRuntimeState | None = None,
-) -> int:
-    adjusted = amount
+) -> ResolvedDamagePacket:
+    damage_type = str(packet.damage_type).lower()
+    adjusted = max(0, int(packet.amount))
 
     for trait_data in target.traits.values():
         for mechanic in trait_data.get("mechanics", []):
-            if mechanic.get("effect_type") == "reduce_damage_taken":
-                if damage_type in mechanic.get("damage_types", []):
-                    cond = mechanic.get("condition")
-                    if cond == "nonmagical" and is_magical:
-                        continue
-                    amt = mechanic.get("amount", 0)
-                    adjusted = max(0, adjusted - amt)
+            if mechanic.get("effect_type") != "reduce_damage_taken":
+                continue
+            configured = mechanic.get("damage_types", [])
+            if not isinstance(configured, (list, tuple, set)):
+                configured = [configured]
+            normalized_types = {str(value).lower() for value in configured}
+            if damage_type not in normalized_types:
+                continue
+            cond = str(mechanic.get("condition", "")).lower()
+            if cond == "nonmagical" and packet.is_magical:
+                continue
+            amt = int(mechanic.get("amount", 0))
+            adjusted = max(0, adjusted - amt)
 
-    # Check attacker traits for resistance bypass (e.g. Elemental Adept)
-    effective_resistances = set(target.damage_resistances)
-
-    # Phase 10: Barbarian Rage Resistance
+    effective_resistances = {str(value).lower() for value in target.damage_resistances}
     if "raging" in target.conditions:
-        effective_resistances.update(["bludgeoning", "piercing", "slashing"])
+        effective_resistances.update({"bludgeoning", "piercing", "slashing"})
 
     if source:
         for trait_data in source.traits.values():
             for mechanic in trait_data.get("mechanics", []):
-                if mechanic.get("effect_type") == "ignore_resistance":
-                    bypass_type = mechanic.get("damage_type", "").lower()
-                    if bypass_type in {damage_type.lower(), "any_elemental"}:
-                        effective_resistances.discard(damage_type.lower())
+                if mechanic.get("effect_type") != "ignore_resistance":
+                    continue
+                bypass_type = str(mechanic.get("damage_type", "")).lower()
+                if bypass_type in {damage_type, "any_elemental"}:
+                    effective_resistances.discard(damage_type)
 
     adjusted = apply_damage_type_modifiers(
         adjusted,
         damage_type,
         resistances=effective_resistances,
-        immunities=target.damage_immunities,
-        vulnerabilities=target.damage_vulnerabilities,
+        immunities={str(value).lower() for value in target.damage_immunities},
+        vulnerabilities={str(value).lower() for value in target.damage_vulnerabilities},
     )
+    return ResolvedDamagePacket(
+        amount=max(0, int(packet.amount)),
+        applied_amount=adjusted,
+        damage_type=damage_type,
+        source=str(packet.source),
+        is_magical=bool(packet.is_magical),
+        crit_expanded=bool(packet.crit_expanded),
+    )
+
+
+def resolve_damage_bundle(
+    target: ActorRuntimeState,
+    bundle: DamageBundle,
+    *,
+    source: ActorRuntimeState | None = None,
+) -> DamageBundleResolution:
+    resolved_packets = [
+        _resolve_damage_packet(packet, target=target, source=source)
+        for packet in bundle.packets
+        if int(packet.amount) > 0
+    ]
+    return DamageBundleResolution(
+        packets=resolved_packets,
+        raw_total=sum(packet.amount for packet in resolved_packets),
+        applied_total=sum(packet.applied_amount for packet in resolved_packets),
+    )
+
+
+def apply_damage_bundle(
+    target: ActorRuntimeState,
+    bundle: DamageBundle,
+    *,
+    is_critical: bool = False,
+    source: ActorRuntimeState | None = None,
+) -> DamageBundleResolution:
+    resolution = resolve_damage_bundle(target, bundle, source=source)
+    adjusted = resolution.applied_total
     if adjusted > 0 and "raging" in target.conditions:
         target.rage_sustained_since_last_turn = True
 
@@ -424,7 +563,7 @@ def apply_damage(
         if target.death_failures >= 3:
             target.dead = True
             target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
-        return adjusted
+        return resolution
 
     remaining = adjusted
     if target.temp_hp > 0 and remaining > 0:
@@ -447,8 +586,33 @@ def apply_damage(
             _remove_condition_everywhere(target, condition)
         if target.hp > 0:
             _remove_condition_everywhere(target, "incapacitated")
+    return resolution
 
-    return adjusted
+
+def apply_damage(
+    target: ActorRuntimeState,
+    amount: int,
+    damage_type: str,
+    *,
+    is_critical: bool = False,
+    is_magical: bool = False,
+    source: ActorRuntimeState | None = None,
+) -> int:
+    packet = DamagePacket(
+        amount=max(0, int(amount)),
+        damage_type=str(damage_type).lower(),
+        source="direct",
+        is_magical=is_magical,
+        crit_expanded=False,
+    )
+    bundle = DamageBundle(packets=[packet])
+    resolution = apply_damage_bundle(
+        target,
+        bundle,
+        is_critical=is_critical,
+        source=source,
+    )
+    return resolution.applied_total
 
 
 def run_concentration_check(

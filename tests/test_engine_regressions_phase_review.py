@@ -266,6 +266,51 @@ def test_divine_smite_attack_does_not_crash_and_spends_slot() -> None:
     assert damage_dealt[paladin.actor_id] > 0
 
 
+def test_divine_smite_bundle_resolves_weapon_and_radiant_against_slashing_resistance() -> None:
+    paladin = _base_actor(actor_id="paladin", team="party")
+    paladin.traits = {"divine smite": {}}
+    paladin.resources = {"spell_slot_1": 1}
+
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    enemy.ac = 1
+    enemy.hp = 30
+    enemy.max_hp = 30
+    enemy.damage_resistances = {"slashing"}
+
+    action = ActionDefinition(
+        name="longsword",
+        action_type="attack",
+        to_hit=20,
+        damage="1",
+        damage_type="slashing",
+    )
+
+    actors = {paladin.actor_id: paladin, enemy.actor_id: enemy}
+    damage_dealt = {paladin.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {paladin.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {paladin.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {paladin.actor_id: {}, enemy.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([15, 4, 4]),
+        actor=paladin,
+        action=action,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    # Weapon slashing 1 -> 0 after resistance, smite radiant 2d8 -> 8
+    assert damage_dealt[paladin.actor_id] == 8
+    assert damage_taken[enemy.actor_id] == 8
+    assert enemy.hp == 22
+    assert paladin.resources["spell_slot_1"] == 0
+
+
 def test_smite_variant_bonus_damage_is_consumed_on_first_melee_hit() -> None:
     paladin = _base_actor(actor_id="paladin", team="party")
     paladin.resources = {"spell_slot_1": 1}
