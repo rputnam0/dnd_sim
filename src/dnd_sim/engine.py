@@ -535,6 +535,12 @@ def _resolve_character_traits(
         )
     )
     explicit_candidates.update(
+        _infer_paladin_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
+    explicit_candidates.update(
         _infer_warlock_package_trait_names(
             class_levels=class_levels,
             class_level_text=class_level_text,
@@ -849,6 +855,19 @@ _RANGER_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (18, "feral senses"),
     (20, "foe slayer"),
 )
+_PALADIN_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
+    (1, "divine sense"),
+    (1, "lay on hands"),
+    (2, "fighting style"),
+    (2, "spellcasting"),
+    (2, "divine smite"),
+    (3, "divine health"),
+    (5, "extra attack"),
+    (6, "aura of protection"),
+    (10, "aura of courage"),
+    (11, "improved divine smite"),
+    (14, "cleansing touch"),
+)
 
 _BARD_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (1, "bardic inspiration"),
@@ -955,6 +974,23 @@ def _infer_ranger_package_trait_names(
         _normalize_trait_name(trait_name)
         for min_level, trait_name in _RANGER_PACKAGE_FEATURE_LEVELS
         if ranger_level >= min_level
+    }
+
+
+def _infer_paladin_package_trait_names(
+    *,
+    class_levels: dict[str, int],
+    class_level_text: str,
+) -> set[str]:
+    paladin_level = int(class_levels.get("paladin", 0))
+    if paladin_level <= 0 and not class_levels:
+        paladin_level = _parse_class_level(class_level_text, "paladin")
+    if paladin_level <= 0:
+        return set()
+    return {
+        _normalize_trait_name(trait_name)
+        for min_level, trait_name in _PALADIN_PACKAGE_FEATURE_LEVELS
+        if paladin_level >= min_level
     }
 
 
@@ -1760,6 +1796,53 @@ def _is_smite_spell_name(name: str) -> bool:
 
 def _is_smite_setup_action(action: ActionDefinition) -> bool:
     return "spell" in action.tags and _is_smite_spell_name(action.name)
+
+
+def _divine_smite_slot_preserves_declared_bonus_smite(
+    *,
+    actor: ActorRuntimeState,
+    slot_key: str,
+    reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
+) -> bool:
+    if reserved_bonus_smite is None:
+        return True
+    available = int(actor.resources.get(slot_key, 0))
+    if available <= 0:
+        return False
+    actor.resources[slot_key] = available - 1
+    try:
+        reserved_action, reserved_spell_request = reserved_bonus_smite
+        return _can_pay_resource_cost(
+            actor,
+            reserved_action,
+            spell_cast_request=reserved_spell_request,
+        )
+    finally:
+        actor.resources[slot_key] = available
+
+
+def _select_divine_smite_slot(
+    actor: ActorRuntimeState,
+    *,
+    reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
+) -> tuple[str, int] | None:
+    for key in sorted(
+        [candidate for candidate in actor.resources.keys() if candidate.startswith("spell_slot_")],
+        reverse=True,
+    ):
+        if int(actor.resources.get(key, 0)) <= 0:
+            continue
+        slot_level = _spell_slot_level_from_key(key)
+        if slot_level is None:
+            continue
+        if not _divine_smite_slot_preserves_declared_bonus_smite(
+            actor=actor,
+            slot_key=key,
+            reserved_bonus_smite=reserved_bonus_smite,
+        ):
+            continue
+        return key, slot_level
+    return None
 
 
 def _aura_of_protection_radius(actor: ActorRuntimeState) -> float:
@@ -3731,11 +3814,14 @@ def _build_spell_actions(
         smite_setup = _is_smite_spell_name(name)
         if smite_setup:
             action_type = "utility"
+            action_cost = "bonus"
             target_mode = "self"
             damage = None
             half_on_save = False
             if "smite_variant" not in tags:
                 tags.append("smite_variant")
+            if "bonus" not in tags:
+                tags.append("bonus")
 
         resource_cost: dict[str, int] = {}
         max_uses: int | None = None
@@ -4223,6 +4309,12 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     )
     traits.update(
         _infer_ranger_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
+    traits.update(
+        _infer_paladin_package_trait_names(
             class_levels=class_levels,
             class_level_text=class_level_text,
         )
@@ -4831,6 +4923,7 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         "second_wind": "second_wind",
         "superiority_dice": "superiority_dice",
     }
+    class_level_text = str(character.get("class_level", ""))
     raw = character.get("resources", {})
     explicit_class_levels = character.get("class_levels")
     class_levels: dict[str, int]
@@ -4838,9 +4931,9 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         try:
             class_levels = normalize_class_levels(explicit_class_levels)
         except ValueError:
-            class_levels = _parse_class_levels(str(character.get("class_level", "")))
+            class_levels = _parse_class_levels(class_level_text)
     else:
-        class_levels = _parse_class_levels(str(character.get("class_level", "")))
+        class_levels = _parse_class_levels(class_level_text)
     has_pact_magic = _is_pact_magic_character(character)
     warlock_level = _warlock_level_from_character(character)
     raw_spell_slots = raw.get("spell_slots")
@@ -4888,11 +4981,23 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         pact_slot_level, pact_slot_count = pact_slot_profile
         result.setdefault(f"warlock_spell_slot_{pact_slot_level}", pact_slot_count)
 
-    traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
-    if _normalize_trait_name("lay on hands") in traits and "lay_on_hands_pool" not in result:
-        result["lay_on_hands_pool"] = max(
-            0, _parse_character_level(character.get("class_level", "1")) * 5
+    explicit_traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
+    traits = set(explicit_traits)
+    traits.update(
+        _infer_paladin_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
         )
+    )
+    if _normalize_trait_name("lay on hands") in traits and "lay_on_hands_pool" not in result:
+        has_explicit_lay_on_hands = _normalize_trait_name("lay on hands") in explicit_traits
+        paladin_level = int(class_levels.get("paladin", 0))
+        if paladin_level <= 0 and not class_levels:
+            paladin_level = _parse_class_level(class_level_text, "paladin")
+        if paladin_level <= 0 and (not class_levels or has_explicit_lay_on_hands):
+            paladin_level = _parse_character_level(class_level_text or "1")
+        if paladin_level > 0:
+            result["lay_on_hands_pool"] = max(0, paladin_level * 5)
     if _normalize_trait_name("paladin's smite") in traits and "paladins_smite_free" not in result:
         result["paladins_smite_free"] = 1
     return result
@@ -7641,6 +7746,43 @@ def _declared_spell_request_or_error(
     return request
 
 
+def _declared_bonus_smite_reservation(
+    *,
+    actor: ActorRuntimeState,
+    declaration: TurnDeclaration,
+    turn_token: str | None = None,
+) -> tuple[ActionDefinition, SpellCastRequest | None] | None:
+    bonus_declaration = declaration.bonus_action
+    if bonus_declaration is None:
+        return None
+    action_name = str(bonus_declaration.action_name or "").strip()
+    if not action_name:
+        return None
+    action = _resolve_named_action(actor, action_name)
+    if action is None or action.action_cost != "bonus" or not _is_smite_setup_action(action):
+        return None
+
+    spell_request = SpellCastRequest()
+    raw_slot_level = bonus_declaration.spell_slot_level
+    if raw_slot_level is not None:
+        try:
+            slot_level = int(raw_slot_level)
+        except (TypeError, ValueError):
+            return None
+        if slot_level <= 0:
+            return None
+        spell_request.slot_level = slot_level
+
+    if not _action_available(
+        actor,
+        action,
+        spell_cast_request=spell_request,
+        turn_token=turn_token,
+    ):
+        return None
+    return action, spell_request
+
+
 def _declared_movement_path_or_error(
     actor: ActorRuntimeState,
     declaration: TurnDeclaration,
@@ -7899,6 +8041,7 @@ def _execute_declared_action_step_or_error(
     telemetry: list[dict[str, Any]] | None = None,
     strategy_name: str | None = None,
     ready_declaration: ReadyDeclaration | None = None,
+    reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
 ) -> tuple[ActionDefinition, list[ActorRuntimeState]]:
     action = _declared_action_or_error(
         actor,
@@ -8026,6 +8169,7 @@ def _execute_declared_action_step_or_error(
         spell_cast_request=spell_cast_request,
         allow_auto_movement=False,
         ready_declaration=ready_declaration,
+        reserved_bonus_smite=reserved_bonus_smite,
     )
     return action, resolved_targets
 
@@ -8107,6 +8251,12 @@ def _execute_declared_turn_or_error(
             }
         )
 
+    reserved_bonus_smite = _declared_bonus_smite_reservation(
+        actor=actor,
+        declaration=declaration,
+        turn_token=turn_token,
+    )
+
     executed_primary: tuple[ActionDefinition, list[ActorRuntimeState]] | None = None
     if declaration.action is not None:
         executed_primary = _execute_declared_action_step_or_error(
@@ -8129,6 +8279,7 @@ def _execute_declared_turn_or_error(
             telemetry=telemetry,
             strategy_name=strategy_name,
             ready_declaration=ready_declaration,
+            reserved_bonus_smite=reserved_bonus_smite,
         )
         if round_number is not None and turn_token is not None:
             primary_action, primary_targets = executed_primary
@@ -12058,6 +12209,7 @@ def _execute_action(
     allow_auto_movement: bool = True,
     ready_declaration: ReadyDeclaration | None = None,
     attack_once_per_action_used: set[tuple[str, int]] | None = None,
+    reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
 ) -> None:
     if not targets:
         return
@@ -12313,6 +12465,7 @@ def _execute_action(
                 allow_auto_movement=allow_auto_movement,
                 ready_declaration=ready_declaration,
                 attack_once_per_action_used=shared_once_per_action,
+                reserved_bonus_smite=reserved_bonus_smite,
             )
         return
 
@@ -12849,16 +13002,12 @@ def _execute_action(
                 # Divine Smite Logic
                 if _has_trait(actor, "divine smite") and not is_ranged and target.hp > 0:
                     slot_level = 0
-                    sp_key = None
-                    for key in sorted(
-                        [k for k in actor.resources.keys() if k.startswith("spell_slot_")],
-                        reverse=True,
-                    ):
-                        if actor.resources[key] > 0:
-                            sp_key = key
-                            slot_level = int(key.split("_")[-1])
-                            break
-                    if sp_key:
+                    selected_slot = _select_divine_smite_slot(
+                        actor,
+                        reserved_bonus_smite=reserved_bonus_smite,
+                    )
+                    if selected_slot is not None:
+                        sp_key, slot_level = selected_slot
                         actor.resources[sp_key] -= 1
                         resources_spent[actor.actor_id][sp_key] = (
                             resources_spent[actor.actor_id].get(sp_key, 0) + 1
@@ -12869,7 +13018,7 @@ def _execute_action(
                             resources_spent[actor.actor_id].get("paladins_smite_free", 0) + 1
                         )
                         slot_level = 1
-                    if sp_key or slot_level > 0:
+                    if selected_slot is not None or slot_level > 0:
                         smite_dice = min(5, 1 + slot_level)
                         smite_expr = f"{smite_dice}d8"
                         raw_smite = roll_damage(
