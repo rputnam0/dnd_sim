@@ -521,6 +521,207 @@ def test_legacy_raw_listener_and_uncanny_dodge_halving_stack_order_invariant() -
     assert baseline == permuted
 
 
+def test_empty_bundle_legacy_additive_raw_damage_survives_sync_and_applies() -> None:
+    def _run(*, reverse_bundle_packets: bool) -> int:
+        attacker = _base_actor(actor_id="attacker", team="party")
+        target = _base_actor(actor_id="target", team="enemy")
+        target.ac = 1
+        target.hp = 30
+        target.max_hp = 30
+
+        action = ActionDefinition(
+            name="club",
+            action_type="attack",
+            to_hit=20,
+            damage="1",
+            damage_type="slashing",
+        )
+
+        actors = {attacker.actor_id: attacker, target.actor_id: target}
+        damage_dealt = {attacker.actor_id: 0, target.actor_id: 0}
+        damage_taken = {attacker.actor_id: 0, target.actor_id: 0}
+        threat_scores = {attacker.actor_id: 0, target.actor_id: 0}
+        resources_spent = {attacker.actor_id: {}, target.actor_id: {}}
+        timing_engine = _create_combat_timing_engine(include_default_rules=True)
+
+        if reverse_bundle_packets:
+
+            def _reverse_listener(event: DamageRollEvent) -> None:
+                if event.bundle is None:
+                    return
+                event.bundle.packets = list(reversed(event.bundle.packets))
+                event.raw_damage = event.bundle.raw_total
+
+            timing_engine.subscribe(DamageRollEvent, _reverse_listener, priority=80)
+
+        def _legacy_additive_listener(event: DamageRollEvent) -> None:
+            if event.bundle is not None:
+                event.bundle.packets = []
+            event.raw_damage += 5
+
+        timing_engine.subscribe(DamageRollEvent, _legacy_additive_listener, priority=60)
+
+        _execute_action(
+            rng=_FixedRng([15]),
+            actor=attacker,
+            action=action,
+            targets=[target],
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=[],
+            timing_engine=timing_engine,
+        )
+        return damage_dealt[attacker.actor_id]
+
+    baseline = _run(reverse_bundle_packets=False)
+    permuted = _run(reverse_bundle_packets=True)
+
+    assert baseline == 6
+    assert permuted == 6
+    assert baseline == permuted
+
+
+def test_empty_bundle_legacy_additive_then_cutting_words_is_order_invariant() -> None:
+    def _run(*, reverse_bundle_packets: bool) -> int:
+        attacker = _base_actor(actor_id="attacker", team="party")
+        target = _base_actor(actor_id="target", team="enemy")
+        target.ac = 1
+        target.hp = 30
+        target.max_hp = 30
+        target.position = (5.0, 0.0, 0.0)
+        attacker.position = (0.0, 0.0, 0.0)
+
+        enemy_bard = _base_actor(actor_id="enemy_bard", team="enemy")
+        enemy_bard.traits = {"cutting words": {}}
+        enemy_bard.resources = {"bardic_inspiration": 1}
+        enemy_bard.position = (10.0, 0.0, 0.0)
+
+        action = ActionDefinition(
+            name="club",
+            action_type="attack",
+            to_hit=20,
+            damage="1",
+            damage_type="slashing",
+        )
+
+        actors = {
+            attacker.actor_id: attacker,
+            target.actor_id: target,
+            enemy_bard.actor_id: enemy_bard,
+        }
+        damage_dealt = {attacker.actor_id: 0, target.actor_id: 0, enemy_bard.actor_id: 0}
+        damage_taken = {attacker.actor_id: 0, target.actor_id: 0, enemy_bard.actor_id: 0}
+        threat_scores = {attacker.actor_id: 0, target.actor_id: 0, enemy_bard.actor_id: 0}
+        resources_spent = {attacker.actor_id: {}, target.actor_id: {}, enemy_bard.actor_id: {}}
+        timing_engine = _create_combat_timing_engine(include_default_rules=True)
+
+        if reverse_bundle_packets:
+
+            def _reverse_listener(event: DamageRollEvent) -> None:
+                if event.bundle is None:
+                    return
+                event.bundle.packets = list(reversed(event.bundle.packets))
+                event.raw_damage = event.bundle.raw_total
+
+            timing_engine.subscribe(DamageRollEvent, _reverse_listener, priority=80)
+
+        def _legacy_additive_listener(event: DamageRollEvent) -> None:
+            if event.bundle is not None:
+                event.bundle.packets = []
+            event.raw_damage += 5
+
+        timing_engine.subscribe(DamageRollEvent, _legacy_additive_listener, priority=60)
+
+        _execute_action(
+            rng=_FixedRng([15, 2]),
+            actor=attacker,
+            action=action,
+            targets=[target],
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=[],
+            timing_engine=timing_engine,
+        )
+        return damage_dealt[attacker.actor_id]
+
+    baseline = _run(reverse_bundle_packets=False)
+    permuted = _run(reverse_bundle_packets=True)
+
+    assert baseline == 4
+    assert permuted == 4
+    assert baseline == permuted
+
+
+def test_empty_bundle_legacy_additive_then_uncanny_dodge_is_order_invariant() -> None:
+    def _run(*, reverse_bundle_packets: bool) -> int:
+        attacker = _base_actor(actor_id="attacker", team="party")
+        target = _base_actor(actor_id="target", team="enemy")
+        target.ac = 1
+        target.hp = 30
+        target.max_hp = 30
+        target.traits = {"uncanny dodge": {}}
+
+        action = ActionDefinition(
+            name="club",
+            action_type="attack",
+            to_hit=20,
+            damage="1",
+            damage_type="slashing",
+        )
+
+        actors = {attacker.actor_id: attacker, target.actor_id: target}
+        damage_dealt = {attacker.actor_id: 0, target.actor_id: 0}
+        damage_taken = {attacker.actor_id: 0, target.actor_id: 0}
+        threat_scores = {attacker.actor_id: 0, target.actor_id: 0}
+        resources_spent = {attacker.actor_id: {}, target.actor_id: {}}
+        timing_engine = _create_combat_timing_engine(include_default_rules=True)
+
+        if reverse_bundle_packets:
+
+            def _reverse_listener(event: DamageRollEvent) -> None:
+                if event.bundle is None:
+                    return
+                event.bundle.packets = list(reversed(event.bundle.packets))
+                event.raw_damage = event.bundle.raw_total
+
+            timing_engine.subscribe(DamageRollEvent, _reverse_listener, priority=80)
+
+        def _legacy_additive_listener(event: DamageRollEvent) -> None:
+            if event.bundle is not None:
+                event.bundle.packets = []
+            event.raw_damage += 5
+
+        timing_engine.subscribe(DamageRollEvent, _legacy_additive_listener, priority=60)
+
+        _execute_action(
+            rng=_FixedRng([15]),
+            actor=attacker,
+            action=action,
+            targets=[target],
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=[],
+            timing_engine=timing_engine,
+        )
+        return damage_dealt[attacker.actor_id]
+
+    baseline = _run(reverse_bundle_packets=False)
+    permuted = _run(reverse_bundle_packets=True)
+
+    assert baseline == 3
+    assert permuted == 3
+    assert baseline == permuted
+
+
 def test_smite_variant_bonus_damage_is_consumed_on_first_melee_hit() -> None:
     paladin = _base_actor(actor_id="paladin", team="party")
     paladin.resources = {"spell_slot_1": 1}

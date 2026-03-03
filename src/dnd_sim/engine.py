@@ -7088,6 +7088,15 @@ class _DamageRollCuttingWordsRule:
         target_total = max(0, int(event.raw_damage))
         if event.bundle.raw_total != target_total:
             event.bundle.rebalance_total(target_total)
+        if target_total > 0 and event.bundle.raw_total == 0:
+            _append_damage_packet(
+                bundle=event.bundle,
+                amount=target_total,
+                damage_type=event.action.damage_type,
+                packet_source="legacy_raw_sync",
+                is_magical=_is_magical_action(event.action),
+                crit_expanded=False,
+            )
         event.raw_damage = event.bundle.raw_total
 
     def __call__(self, event: DamageRollEvent) -> None:
