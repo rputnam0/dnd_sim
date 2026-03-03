@@ -80,9 +80,9 @@ class IllegalBonusPlanStrategy(BaseStrategy):
         )
 
 
-class TurnOnlyStrategy:
+class TurnOnlyNoLegacyFallbackStrategy:
     def declare_turn(self, actor, state):
-        return TurnDeclaration(reaction_policy=ReactionPolicy(mode="auto"))
+        return None
 
     def on_round_start(self, state):
         return None
@@ -190,8 +190,9 @@ def _setup_env(tmp_path: Path) -> Path:
     return scenario_path
 
 
-def test_validate_strategy_instance_accepts_turn_declaration_only_strategy() -> None:
-    validate_strategy_instance(TurnOnlyStrategy())
+def test_validate_strategy_instance_rejects_declare_turn_without_legacy_fallback() -> None:
+    with pytest.raises(ValueError, match="legacy methods"):
+        validate_strategy_instance(TurnOnlyNoLegacyFallbackStrategy())
 
 
 def test_explicit_turn_plan_disables_hidden_action_surge_and_is_deterministic(
