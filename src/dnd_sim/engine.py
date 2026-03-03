@@ -8997,9 +8997,17 @@ def _execute_action(
                         damage_expr += f"{cha_bonus:+d}"
 
                 # Sneak Attack Logic
+                sneak_attack_available = getattr(actor, "sneak_attack_used_this_turn", False) is False
+                if turn_token is not None:
+                    current_turn_token = str(turn_token)
+                    sneak_attack_available = (
+                        getattr(actor, "sneak_attack_turn_token", None) != current_turn_token
+                    )
+                    if sneak_attack_available:
+                        actor.sneak_attack_used_this_turn = False
                 if (
                     _has_trait(actor, "sneak attack")
-                    and getattr(actor, "sneak_attack_used_this_turn", False) is False
+                    and sneak_attack_available
                     and not getattr(actor, "is_heavy", False)
                     and "spell" not in action.tags
                 ):
@@ -9030,6 +9038,8 @@ def _execute_action(
                                         break
                         if has_sneak:
                             actor.sneak_attack_used_this_turn = True
+                            if turn_token is not None:
+                                actor.sneak_attack_turn_token = str(turn_token)
                             sa_dice = (actor.level + 1) // 2
                             sneak_damage_expr = f"{sa_dice}d6"
 

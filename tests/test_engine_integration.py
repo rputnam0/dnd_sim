@@ -5,8 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from dnd_sim.engine import run_simulation
+from dnd_sim.engine import _execute_action, _run_opportunity_attacks_for_movement, run_simulation
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from tests.helpers import build_character, build_enemy, write_json
 
 
@@ -593,3 +594,96 @@ def test_trial_rows_include_strategy_decision_rationale_telemetry(tmp_path: Path
 
     row_payload = json.loads(artifacts.trial_rows[0]["telemetry"])
     assert any(event.get("telemetry_type") == "decision" for event in row_payload)
+
+
+class _FixedRng:
+    def __init__(self, values: list[int]) -> None:
+        self.values = list(values)
+
+    def randint(self, _a: int, _b: int) -> int:
+        if not self.values:
+            raise AssertionError("RNG exhausted")
+        return self.values.pop(0)
+
+
+def _actor(actor_id: str, team: str) -> ActorRuntimeState:
+    return ActorRuntimeState(
+        actor_id=actor_id,
+        team=team,
+        name=actor_id,
+        max_hp=60,
+        hp=60,
+        temp_hp=0,
+        ac=10,
+        initiative_mod=0,
+        str_mod=2,
+        dex_mod=3,
+        con_mod=2,
+        int_mod=0,
+        wis_mod=0,
+        cha_mod=0,
+        save_mods={"str": 2, "dex": 3, "con": 2, "int": 0, "wis": 0, "cha": 0},
+        actions=[],
+    )
+
+
+def test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn() -> None:
+    rogue = _actor("rogue", "party")
+    ally = _actor("ally", "party")
+    enemy = _actor("enemy", "enemy")
+
+    rogue.level = 3
+    rogue.traits = {"sneak attack": {}}
+    rogue.position = (0.0, 0.0, 0.0)
+    ally.position = (5.0, 0.0, 0.0)
+    enemy.position = (5.0, 0.0, 0.0)
+    rogue.actions = [
+        ActionDefinition(
+            name="rapier",
+            action_type="attack",
+            to_hit=10,
+            damage="1d1",
+            damage_type="piercing",
+        )
+    ]
+
+    actors = {rogue.actor_id: rogue, ally.actor_id: ally, enemy.actor_id: enemy}
+    damage_dealt = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {rogue.actor_id: {}, ally.actor_id: {}, enemy.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([15, 1, 6, 5]),
+        actor=rogue,
+        action=rogue.actions[0],
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:rogue",
+    )
+
+    _run_opportunity_attacks_for_movement(
+        rng=_FixedRng([15, 1, 4, 3]),
+        mover=enemy,
+        start_pos=(5.0, 0.0, 0.0),
+        end_pos=(20.0, 0.0, 0.0),
+        movement_path=[(5.0, 0.0, 0.0), (20.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:enemy",
+    )
+
+    # Rogue should land Sneak Attack on own turn (12) and again on enemy turn OA (8).
+    assert damage_dealt[rogue.actor_id] == 20
+    assert rogue.reaction_available is False
