@@ -1004,11 +1004,12 @@ def test_hazard_effect_uses_type_key_for_spatial_visibility() -> None:
     assert active_hazards and active_hazards[0].get("type") == "magical_darkness"
 
 
-def test_forced_movement_effect_updates_position() -> None:
+def test_forced_movement_effect_updates_position_without_spending_movement() -> None:
     pusher = _base_actor(actor_id="pusher", team="party")
     target = _base_actor(actor_id="target", team="enemy")
     pusher.position = (0.0, 0.0, 0.0)
     target.position = (0.0, 10.0, 0.0)
+    target.movement_remaining = 15.0
 
     _apply_effect(
         effect={
@@ -1028,6 +1029,7 @@ def test_forced_movement_effect_updates_position() -> None:
         active_hazards=[],
     )
     assert target.position == (0.0, 20.0, 0.0)
+    assert target.movement_remaining == 15.0
 
     _apply_effect(
         effect={
@@ -1047,6 +1049,70 @@ def test_forced_movement_effect_updates_position() -> None:
         active_hazards=[],
     )
     assert target.position == (0.0, 15.0, 0.0)
+    assert target.movement_remaining == 15.0
+
+
+def test_forced_movement_does_not_provoke_opportunity_attack() -> None:
+    pusher = _base_actor(actor_id="pusher", team="enemy")
+    mover = _base_actor(actor_id="mover", team="party")
+    guard = _base_actor(actor_id="guard", team="enemy")
+
+    pusher.position = (0.0, 0.0, 0.0)
+    mover.position = (5.0, 0.0, 0.0)
+    guard.position = (7.0, 0.0, 0.0)
+    mover.movement_remaining = 30.0
+
+    push = ActionDefinition(
+        name="force_pulse",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        range_ft=30,
+        effects=[
+            {
+                "effect_type": "forced_movement",
+                "distance_ft": 10,
+                "direction": "away_from_source",
+                "target": "target",
+            }
+        ],
+    )
+    pusher.actions = [push]
+    guard.actions = [
+        ActionDefinition(
+            name="spear",
+            action_type="attack",
+            action_cost="action",
+            to_hit=20,
+            damage="1d4",
+            damage_type="piercing",
+            range_ft=5,
+        )
+    ]
+
+    actors = {pusher.actor_id: pusher, mover.actor_id: mover, guard.actor_id: guard}
+    damage_dealt = {pusher.actor_id: 0, mover.actor_id: 0, guard.actor_id: 0}
+    damage_taken = {pusher.actor_id: 0, mover.actor_id: 0, guard.actor_id: 0}
+    threat_scores = {pusher.actor_id: 0, mover.actor_id: 0, guard.actor_id: 0}
+    resources_spent = {pusher.actor_id: {}, mover.actor_id: {}, guard.actor_id: {}}
+
+    _execute_action(
+        rng=random.Random(19),
+        actor=pusher,
+        action=push,
+        targets=[mover],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert mover.position == (15.0, 0.0, 0.0)
+    assert mover.movement_remaining == 30.0
+    assert guard.reaction_available is True
+    assert mover.hp == mover.max_hp
 
 
 def test_legendary_action_cost_tag_gates_availability() -> None:
@@ -1429,6 +1495,63 @@ def test_disengaging_movement_does_not_trigger_opportunity_attack() -> None:
     assert mover.position[0] > 0.0
     assert guard.reaction_available is True
     assert mover.hp == mover.max_hp
+
+
+def test_voluntary_movement_still_spends_budget_and_provokes_oa() -> None:
+    mover = _base_actor(actor_id="mover", team="party")
+    guard = _base_actor(actor_id="guard", team="enemy")
+    target = _base_actor(actor_id="target", team="enemy")
+
+    mover.position = (0.0, 0.0, 0.0)
+    guard.position = (5.0, 0.0, 0.0)
+    target.position = (30.0, 0.0, 0.0)
+    mover.speed_ft = 30
+    mover.movement_remaining = 30.0
+
+    mover_attack = ActionDefinition(
+        name="slash",
+        action_type="attack",
+        action_cost="action",
+        to_hit=20,
+        damage="1d4",
+        damage_type="slashing",
+        range_ft=5,
+    )
+    mover.actions = [mover_attack]
+    guard.actions = [
+        ActionDefinition(
+            name="spear",
+            action_type="attack",
+            action_cost="action",
+            to_hit=20,
+            damage="1d4",
+            damage_type="piercing",
+            range_ft=5,
+        )
+    ]
+
+    actors = {mover.actor_id: mover, guard.actor_id: guard, target.actor_id: target}
+    damage_dealt = {mover.actor_id: 0, guard.actor_id: 0, target.actor_id: 0}
+    damage_taken = {mover.actor_id: 0, guard.actor_id: 0, target.actor_id: 0}
+    threat_scores = {mover.actor_id: 0, guard.actor_id: 0, target.actor_id: 0}
+    resources_spent = {mover.actor_id: {}, guard.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=random.Random(20),
+        actor=mover,
+        action=mover_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert mover.movement_remaining == 5.0
+    assert guard.reaction_available is False
+    assert mover.hp < mover.max_hp
 
 
 def test_attack_out_of_range_after_movement_is_invalidated() -> None:
