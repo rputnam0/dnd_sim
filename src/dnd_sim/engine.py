@@ -3928,6 +3928,22 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
             )
 
+        if has_trait("action surge"):
+            surge_attack_count = max(1, int(attack_count)) * 2
+            actions.append(
+                ActionDefinition(
+                    name="action_surge",
+                    action_type="attack",
+                    **attack_identity_payload(best_attack),
+                    to_hit=int(best_attack.get("to_hit", 0)),
+                    damage=str(best_attack.get("damage", "1")),
+                    damage_type=str(best_attack.get("damage_type", "bludgeoning")),
+                    attack_count=surge_attack_count,
+                    resource_cost={"action_surge": 1},
+                    tags=["attack_option", "action_surge", "short_rest", "fighter_action_surge"],
+                )
+            )
+
         monk_martial_bonus_profile = has_trait("martial arts") or has_trait("flurry of blows")
         if not monk_martial_bonus_profile:
             if resource_pool_max("ki") > 0:
@@ -9193,6 +9209,10 @@ def _is_melee_attack_replacement_candidate(action: ActionDefinition) -> bool:
         return False
     if action.action_cost not in {"action", "none"}:
         return False
+    # Grapple/shove replacement volume should come from baseline attack actions,
+    # not optional Action Surge variants that require explicit selection/spend.
+    if _has_tag(action, "fighter_action_surge"):
+        return False
     if action.to_hit is None:
         return False
     if _is_ranged_weapon_action(action):
@@ -9311,6 +9331,10 @@ def _action_available(
     if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
         return False
     if not _off_hand_action_legal(actor, action):
+        return False
+    if _has_tag(action, "fighter_action_surge") and (
+        turn_token is None or not _is_same_turn_for_actor(actor, turn_token)
+    ):
         return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False

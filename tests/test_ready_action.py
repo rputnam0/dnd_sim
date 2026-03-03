@@ -204,3 +204,66 @@ def test_readied_response_cannot_fire_without_reaction() -> None:
 
     assert enemy.hp == enemy.max_hp
     assert "readying" in ready_actor.conditions
+
+
+def test_readied_action_surge_is_illegal_off_turn_and_not_spent() -> None:
+    ready_actor = _base_actor(actor_id="ready_actor", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    ready_actor.position = (0.0, 0.0, 0.0)
+    enemy.position = (5.0, 0.0, 0.0)
+
+    ready_action = ActionDefinition(name="ready", action_type="utility", action_cost="action")
+    readied_action_surge = ActionDefinition(
+        name="action_surge",
+        action_type="attack",
+        action_cost="action",
+        to_hit=20,
+        damage="1",
+        damage_type="slashing",
+        attack_count=4,
+        range_ft=5,
+        resource_cost={"action_surge": 1},
+        tags=["action_surge", "fighter_action_surge"],
+    )
+    ready_actor.actions = [ready_action, readied_action_surge]
+    ready_actor.resources["action_surge"] = 1
+
+    actors = {ready_actor.actor_id: ready_actor, enemy.actor_id: enemy}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(ready_actor, enemy)
+
+    _execute_action(
+        rng=random.Random(15),
+        actor=ready_actor,
+        action=ready_action,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name="action_surge",
+        ),
+    )
+    assert "readying" in ready_actor.conditions
+
+    trigger_ready = getattr(engine_module, "_trigger_readied_actions")
+    trigger_ready(
+        rng=random.Random(16),
+        trigger_actor=enemy,
+        turn_token="1:enemy",
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert enemy.hp == enemy.max_hp
+    assert ready_actor.reaction_available is True
+    assert "readying" in ready_actor.conditions
+    assert ready_actor.resources["action_surge"] == 1
+    assert resources_spent[ready_actor.actor_id].get("action_surge", 0) == 0
