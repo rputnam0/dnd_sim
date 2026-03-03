@@ -195,7 +195,7 @@ def test_validate_strategy_instance_rejects_declare_turn_without_legacy_fallback
         validate_strategy_instance(TurnOnlyNoLegacyFallbackStrategy())
 
 
-def test_explicit_turn_plan_disables_hidden_action_surge_and_is_deterministic(
+def test_hidden_action_surge_is_removed_for_legacy_and_explicit_turn_plans(
     tmp_path: Path,
 ) -> None:
     scenario_path = _setup_env(tmp_path)
@@ -207,7 +207,7 @@ def test_explicit_turn_plan_disables_hidden_action_surge_and_is_deterministic(
         "enemy_strategy": LegacyBasicStrategy(),
     }
     legacy = run_simulation(loaded, db, {}, legacy_registry, trials=1, seed=17, run_id="legacy")
-    assert legacy.trial_results[0].resources_spent["hero"].get("action_surge", 0) >= 1
+    assert legacy.trial_results[0].resources_spent["hero"].get("action_surge", 0) == 0
 
     explicit_registry = {
         "party_strategy": ExplicitBasicPlanStrategy(),

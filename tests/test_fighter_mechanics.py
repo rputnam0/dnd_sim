@@ -150,7 +150,7 @@ def test_trip_attack_maneuver_consumes_one_die_and_applies_once_per_action() -> 
     assert "prone" in target.conditions
 
 
-def test_action_surge_refreshes_between_encounters_with_short_rest(tmp_path: Path) -> None:
+def test_action_surge_is_not_auto_spent_between_encounters_with_short_rest(tmp_path: Path) -> None:
     fighter = _fighter_character(
         level=8,
         traits=["Extra Attack", "Action Surge", "Second Wind"],
@@ -190,4 +190,4 @@ def test_action_surge_refreshes_between_encounters_with_short_rest(tmp_path: Pat
         loaded, db, {}, registry, trials=1, seed=23, run_id="fighter_cadence"
     )
     spent = artifacts.trial_results[0].resources_spent["fighter_8"].get("action_surge", 0)
-    assert spent == 2
+    assert spent == 0

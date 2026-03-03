@@ -1,12 +1,21 @@
 from __future__ import annotations
 
 import json
+import random
 from pathlib import Path
 
 import pytest
 
-from dnd_sim.engine import run_simulation
+from dnd_sim.engine import (
+    _execute_action,
+    _resolve_targets_for_action,
+    _run_opportunity_attacks_for_movement,
+    run_simulation,
+)
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.spatial import AABB
+from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_character, build_enemy, write_json
 
 
@@ -17,6 +26,7 @@ def _setup_env(
     enemies: list[dict],
     assumption_overrides: dict,
     burst_threshold: int = 3,
+    max_rounds: int = 30,
 ) -> Path:
     db_dir = tmp_path / "db" / "characters"
     db_dir.mkdir(parents=True, exist_ok=True)
@@ -57,7 +67,7 @@ def _setup_env(
         "termination_rules": {
             "party_defeat": "all_unconscious_or_dead",
             "enemy_defeat": "all_dead",
-            "max_rounds": 30,
+            "max_rounds": max_rounds,
         },
         "strategy_modules": [
             {
@@ -91,6 +101,45 @@ def _setup_env(
     scenario_path = scenario_dir / "scenario.json"
     scenario_path.write_text(json.dumps(scenario, indent=2), encoding="utf-8")
     return scenario_path
+
+
+class DeclaredTacticalChoiceStrategy(BaseStrategy):
+    def __init__(self, *, bonus_action_name: str | None):
+        self._bonus_action_name = bonus_action_name
+
+    def declare_turn(self, actor, state):
+        enemies = [
+            view for view in state.actors.values() if view.team != actor.team and view.hp > 0
+        ]
+        if not enemies:
+            return TurnDeclaration()
+
+        target = enemies[0]
+        move_to = (
+            float(target.position[0]),
+            float(target.position[1] - 5.0),
+            float(target.position[2]),
+        )
+
+        bonus_action = None
+        if self._bonus_action_name is not None:
+            bonus_target_id = (
+                actor.actor_id if self._bonus_action_name == "second_wind" else target.actor_id
+            )
+            bonus_action = DeclaredAction(
+                action_name=self._bonus_action_name,
+                targets=[TargetRef(actor_id=bonus_target_id)],
+            )
+
+        return TurnDeclaration(
+            movement_path=[actor.position, move_to],
+            action=DeclaredAction(
+                action_name="basic",
+                targets=[TargetRef(actor_id=target.actor_id)],
+            ),
+            bonus_action=bonus_action,
+            rationale={"tactical_choices": {"bonus_action": self._bonus_action_name}},
+        )
 
 
 def test_fixed_seed_is_deterministic(tmp_path: Path) -> None:
@@ -247,6 +296,234 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
     assert always_ki > conserve_ki
 
 
+def test_two_weapon_legacy_strategy_does_not_auto_spend_offhand_bonus_action(tmp_path: Path) -> None:
+    def build_dual_wielder(character_id: str, *, include_offhand: bool) -> dict:
+        fighter = build_character(
+            character_id=character_id,
+            name=character_id,
+            max_hp=45,
+            ac=16,
+            to_hit=9,
+            damage="1d1+4",
+            damage_type="piercing",
+        )
+        fighter["class_level"] = "Fighter 5"
+        fighter["ability_scores"]["str"] = 10
+        fighter["ability_scores"]["dex"] = 18
+        fighter["save_mods"]["str"] = 0
+        fighter["save_mods"]["dex"] = 4
+        fighter["traits"] = ["Extra Attack"]
+        fighter["attacks"] = [
+            {
+                "attack_profile_id": f"{character_id}_main_profile",
+                "weapon_id": f"{character_id}_main_weapon",
+                "item_id": f"{character_id}_main_item",
+                "name": "Mainhand Shortsword",
+                "to_hit": 9,
+                "damage": "1d1+4",
+                "damage_type": "piercing",
+                "weapon_properties": ["light", "finesse"],
+            }
+        ]
+        if include_offhand:
+            fighter["attacks"].append(
+                {
+                    "attack_profile_id": f"{character_id}_off_profile",
+                    "weapon_id": f"{character_id}_off_weapon",
+                    "item_id": f"{character_id}_off_item",
+                    "name": "Offhand Dagger",
+                    "to_hit": 9,
+                    "damage": "1d1+4",
+                    "damage_type": "piercing",
+                    "weapon_properties": ["light", "finesse"],
+                }
+            )
+        return fighter
+
+    def run_one_round_damage(character: dict, run_label: str) -> float:
+        enemies = [build_enemy(enemy_id="dummy", name="Dummy", hp=400, ac=5, to_hit=0, damage="1")]
+        scenario_path = _setup_env(
+            tmp_path / run_label,
+            party=[character],
+            enemies=enemies,
+            assumption_overrides={
+                "party_strategy": "focus_fire_lowest_hp",
+                "enemy_strategy": "boss_highest_threat_target",
+            },
+        )
+        payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+        payload["termination_rules"]["max_rounds"] = 1
+        scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+        loaded = load_scenario(scenario_path)
+        registry = load_strategy_registry(loaded)
+        db = load_character_db(Path(loaded.config.character_db_dir))
+        summary = run_simulation(
+            loaded,
+            db,
+            {},
+            registry,
+            trials=120,
+            seed=31,
+            run_id=run_label,
+        ).summary.to_dict()
+        return float(summary["per_actor_damage_dealt"][character["character_id"]]["mean"])
+
+    dual_mean = run_one_round_damage(
+        build_dual_wielder("dual_wielder", include_offhand=True),
+        run_label="dual_wielder",
+    )
+    single_mean = run_one_round_damage(
+        build_dual_wielder("single_weapon", include_offhand=False),
+        run_label="single_weapon",
+    )
+
+    assert dual_mean == pytest.approx(single_mean, abs=1e-9)
+
+
+def test_rage_is_not_auto_activated_without_declared_bonus_action(tmp_path: Path) -> None:
+    party = [
+        {
+            "character_id": "barb",
+            "name": "Barbarian",
+            "class_level": "Barbarian 5",
+            "max_hp": 45,
+            "ac": 16,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 18,
+                "dex": 14,
+                "con": 16,
+                "int": 8,
+                "wis": 10,
+                "cha": 10,
+            },
+            "save_mods": {"str": 7, "dex": 2, "con": 6, "int": -1, "wis": 0, "cha": 0},
+            "skill_mods": {},
+            "attacks": [
+                {
+                    "name": "Greataxe",
+                    "to_hit": 7,
+                    "damage": "1d12+4",
+                    "damage_type": "slashing",
+                }
+            ],
+            "resources": {"rage": {"max": 1}},
+            "traits": ["Rage"],
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    ]
+    enemies = [
+        {
+            "identity": {"enemy_id": "dummy", "name": "Dummy", "team": "enemy"},
+            "stat_block": {
+                "max_hp": 500,
+                "ac": 30,
+                "initiative_mod": 0,
+                "dex_mod": 0,
+                "con_mod": 0,
+                "save_mods": {"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+            },
+            "actions": [
+                {
+                    "name": "tap",
+                    "action_type": "attack",
+                    "to_hit": -2,
+                    "damage": "1",
+                    "damage_type": "bludgeoning",
+                    "attack_count": 1,
+                    "resource_cost": {},
+                }
+            ],
+            "bonus_actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "lair_actions": [],
+            "resources": {},
+            "damage_resistances": [],
+            "damage_immunities": [],
+            "damage_vulnerabilities": [],
+            "condition_immunities": [],
+            "script_hooks": {},
+        }
+    ]
+
+    scenario_path = _setup_env(
+        tmp_path / "rage_persist",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 2
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    artifacts = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=1,
+        seed=13,
+        run_id="rage_persist",
+    )
+
+    trial = artifacts.trial_results[0]
+    assert trial.rounds == 2
+    assert trial.resources_spent["barb"].get("rage", 0) == 0
+    assert "raging" not in trial.state_snapshots[-1]["party"]["barb"]["conditions"]
+
+
+def test_monk_flurry_is_not_auto_spent_without_declared_bonus_action(tmp_path: Path) -> None:
+    monk = build_character(
+        character_id="monk",
+        name="Monk",
+        max_hp=38,
+        ac=16,
+        to_hit=7,
+        damage="1d8+4",
+        ki=4,
+    )
+    monk["class_level"] = "Monk 5"
+    monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
+
+    enemies = [build_enemy(enemy_id="tank", name="Tank", hp=200, ac=12, to_hit=1, damage="1")]
+    scenario_path = _setup_env(
+        tmp_path / "monk_flurry",
+        party=[monk],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "always_use_signature_ability_if_ready",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 1
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    registry = load_strategy_registry(loaded)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=20,
+        seed=83,
+        run_id="monk_flurry",
+    ).summary.to_dict()
+
+    assert summary["per_actor_resources_spent"]["monk"]["ki"]["mean"] == pytest.approx(0.0)
+
+
 def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
     party = [
         build_character(
@@ -323,6 +600,154 @@ def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
         legendary_summary["per_actor_damage_dealt"]["boss"]["mean"]
         > plain_summary["per_actor_damage_dealt"]["boss"]["mean"]
     )
+
+
+def test_legendary_actions_refresh_on_own_turn_before_later_turn_windows(tmp_path: Path) -> None:
+    alpha = build_character("alpha", "Alpha", 200, 20, 0, "1")
+    alpha["initiative_mod"] = 30
+    beta = build_character("beta", "Beta", 200, 20, 0, "1")
+    beta["initiative_mod"] = -10
+    party = [alpha, beta]
+
+    boss = build_enemy(
+        enemy_id="boss",
+        name="Boss",
+        hp=500,
+        ac=30,
+        to_hit=100,
+        damage="1",
+        legendary_to_hit=100,
+        legendary_damage="1",
+        legendary_pool=1,
+    )
+    boss["stat_block"]["initiative_mod"] = 10
+    boss["actions"] = [
+        {
+            "name": "basic_pulse",
+            "action_type": "save",
+            "save_dc": 100,
+            "save_ability": "dex",
+            "half_on_save": False,
+            "damage": "1",
+            "damage_type": "force",
+            "resource_cost": {},
+        }
+    ]
+    boss["legendary_actions"] = [
+        {
+            "name": "legendary_pulse",
+            "action_type": "save",
+            "save_dc": 100,
+            "save_ability": "dex",
+            "half_on_save": False,
+            "damage": "1",
+            "damage_type": "force",
+            "resource_cost": {},
+        }
+    ]
+    enemies = [boss]
+
+    scenario_path = _setup_env(
+        tmp_path / "legendary_refresh_window",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+        max_rounds=1,
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=1,
+        seed=17,
+        run_id="legendary_refresh_window",
+    ).summary.to_dict()
+
+    # alpha turn-end legendary + boss main turn + beta turn-end legendary
+    assert summary["per_actor_damage_dealt"]["boss"]["mean"] == pytest.approx(3.0)
+
+
+def test_lair_action_does_not_fire_before_initiative_20_if_lair_actor_is_killed(tmp_path: Path) -> None:
+    striker = build_character("striker", "Striker", 120, 14, 100, "400")
+    striker["initiative_mod"] = 30
+    party = [striker]
+
+    lair_boss = {
+        "identity": {"enemy_id": "lair_boss", "name": "Lair Boss", "team": "enemy"},
+        "stat_block": {
+            "max_hp": 120,
+            "ac": 10,
+            "initiative_mod": -5,
+            "dex_mod": 0,
+            "con_mod": 1,
+            "save_mods": {"str": 0, "dex": 0, "con": 1, "int": 0, "wis": 0, "cha": 0},
+        },
+        "actions": [
+            {
+                "name": "basic",
+                "action_type": "attack",
+                "to_hit": 0,
+                "damage": "1",
+                "damage_type": "slashing",
+                "attack_count": 1,
+                "resource_cost": {},
+            }
+        ],
+        "bonus_actions": [],
+        "reactions": [],
+        "legendary_actions": [],
+        "lair_actions": [
+            {
+                "name": "lair_bolt",
+                "action_type": "save",
+                "save_dc": 100,
+                "save_ability": "dex",
+                "half_on_save": False,
+                "damage": "10",
+                "damage_type": "force",
+                "resource_cost": {},
+            }
+        ],
+        "resources": {},
+        "damage_resistances": [],
+        "damage_immunities": [],
+        "damage_vulnerabilities": [],
+        "condition_immunities": [],
+        "script_hooks": {},
+    }
+
+    scenario_path = _setup_env(
+        tmp_path / "lair_init_20_window",
+        party=party,
+        enemies=[lair_boss],
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+        max_rounds=1,
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=1,
+        seed=23,
+        run_id="lair_init_20_window",
+    ).summary.to_dict()
+
+    # The boss dies to the high-initiative striker before initiative count 20.
+    assert summary["per_actor_damage_taken"]["striker"]["mean"] == pytest.approx(0.0)
 
 
 def test_optimal_strategy_uses_resources_for_damage(tmp_path: Path) -> None:
@@ -462,6 +887,87 @@ def test_schema_target_mode_all_enemies_hits_each_party_member(tmp_path: Path) -
     assert summary["per_actor_damage_taken"]["bravo"]["mean"] >= 4.5
 
 
+def test_schema_total_cover_blocks_line_of_effect_for_all_enemies_save(tmp_path: Path) -> None:
+    party = [
+        build_character("alpha", "Alpha", 30, 15, 6, "1d8+3"),
+        build_character("bravo", "Bravo", 30, 15, 6, "1d8+3"),
+    ]
+    enemies = [
+        {
+            "identity": {"enemy_id": "storm_node", "name": "Storm Node", "team": "enemy"},
+            "stat_block": {
+                "max_hp": 300,
+                "ac": 12,
+                "initiative_mod": 100,
+                "dex_mod": 0,
+                "con_mod": 2,
+                "save_mods": {"dex": 0, "con": 2, "wis": 0},
+            },
+            "actions": [
+                {
+                    "name": "storm_burst",
+                    "action_type": "save",
+                    "save_dc": 30,
+                    "save_ability": "dex",
+                    "half_on_save": False,
+                    "damage": "5",
+                    "damage_type": "lightning",
+                    "target_mode": "all_enemies",
+                    "resource_cost": {},
+                }
+            ],
+            "bonus_actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "lair_actions": [],
+            "resources": {},
+            "damage_resistances": [],
+            "damage_immunities": [],
+            "damage_vulnerabilities": [],
+            "condition_immunities": [],
+            "script_hooks": {},
+        }
+    ]
+
+    scenario_path = _setup_env(
+        tmp_path / "schema_total_cover",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "optimal_expected_damage",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 1
+    payload["battlefield"] = {
+        "obstacles": [
+            {
+                "min_pos": [-5.0, 10.0, -5.0],
+                "max_pos": [5.0, 20.0, 5.0],
+                "cover_level": "TOTAL",
+            }
+        ]
+    }
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=20,
+        seed=59,
+        run_id="schema_total_cover",
+    ).summary.to_dict()
+
+    assert summary["per_actor_damage_taken"]["alpha"]["mean"] == 0.0
+    assert summary["per_actor_damage_taken"]["bravo"]["mean"] == 0.0
+
+
 def test_schema_effect_damage_and_resource_change_are_tracked(tmp_path: Path) -> None:
     party = [
         build_character(
@@ -593,3 +1099,500 @@ def test_trial_rows_include_strategy_decision_rationale_telemetry(tmp_path: Path
 
     row_payload = json.loads(artifacts.trial_rows[0]["telemetry"])
     assert any(event.get("telemetry_type") == "decision" for event in row_payload)
+
+
+def test_multiattack_sequence_integration_executes_defined_subactions(tmp_path: Path) -> None:
+    party = [
+        build_character(
+            character_id="hero",
+            name="Hero",
+            max_hp=220,
+            ac=15,
+            to_hit=1,
+            damage="1",
+        )
+    ]
+    enemies = [
+        {
+            "identity": {"enemy_id": "hydra", "name": "Hydra", "team": "enemy"},
+            "stat_block": {
+                "max_hp": 200,
+                "ac": 14,
+                "initiative_mod": 100,
+                "dex_mod": 0,
+                "con_mod": 2,
+                "save_mods": {"dex": 0, "con": 2, "wis": 0},
+            },
+            "actions": [
+                {
+                    "name": "multiattack",
+                    "action_type": "utility",
+                    "target_mode": "single_enemy",
+                    "resource_cost": {},
+                    "mechanics": [
+                        {
+                            "effect_type": "attack_sequence",
+                            "sequence": [{"action_name": "bite"}, {"action_name": "tail"}],
+                        }
+                    ],
+                },
+                {
+                    "name": "bite",
+                    "action_type": "attack",
+                    "to_hit": 100,
+                    "damage": "1",
+                    "damage_type": "piercing",
+                    "attack_count": 1,
+                    "resource_cost": {},
+                },
+                {
+                    "name": "tail",
+                    "action_type": "attack",
+                    "to_hit": 100,
+                    "damage": "1",
+                    "damage_type": "bludgeoning",
+                    "attack_count": 1,
+                    "resource_cost": {},
+                },
+            ],
+            "bonus_actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "lair_actions": [],
+            "resources": {},
+            "damage_resistances": [],
+            "damage_immunities": [],
+            "damage_vulnerabilities": [],
+            "condition_immunities": [],
+            "script_hooks": {},
+        }
+    ]
+
+    scenario_path = _setup_env(
+        tmp_path / "multiattack_sequence",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 1
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=40,
+        seed=77,
+        run_id="multiattack_sequence",
+    ).summary.to_dict()
+
+    assert summary["per_actor_damage_dealt"]["hydra"]["mean"] >= 1.75
+
+
+class _FixedRng:
+    def __init__(self, values: list[int]) -> None:
+        self.values = list(values)
+
+    def randint(self, _a: int, _b: int) -> int:
+        if not self.values:
+            raise AssertionError("RNG exhausted")
+        return self.values.pop(0)
+
+
+def _actor(actor_id: str, team: str) -> ActorRuntimeState:
+    return ActorRuntimeState(
+        actor_id=actor_id,
+        team=team,
+        name=actor_id,
+        max_hp=60,
+        hp=60,
+        temp_hp=0,
+        ac=10,
+        initiative_mod=0,
+        str_mod=2,
+        dex_mod=3,
+        con_mod=2,
+        int_mod=0,
+        wis_mod=0,
+        cha_mod=0,
+        save_mods={"str": 2, "dex": 3, "con": 2, "int": 0, "wis": 0, "cha": 0},
+        actions=[],
+    )
+
+
+def _runtime_actor(*, actor_id: str, team: str, hp: int = 30) -> ActorRuntimeState:
+    return ActorRuntimeState(
+        actor_id=actor_id,
+        team=team,
+        name=actor_id,
+        max_hp=hp,
+        hp=hp,
+        temp_hp=0,
+        ac=13,
+        initiative_mod=0,
+        str_mod=0,
+        dex_mod=2,
+        con_mod=1,
+        int_mod=0,
+        wis_mod=0,
+        cha_mod=0,
+        save_mods={"str": 0, "dex": 2, "con": 1, "int": 0, "wis": 0, "cha": 0},
+        actions=[],
+    )
+
+
+def test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn() -> None:
+    rogue = _actor("rogue", "party")
+    ally = _actor("ally", "party")
+    enemy = _actor("enemy", "enemy")
+
+    rogue.level = 3
+    rogue.traits = {"sneak attack": {}}
+    rogue.position = (0.0, 0.0, 0.0)
+    ally.position = (5.0, 0.0, 0.0)
+    enemy.position = (5.0, 0.0, 0.0)
+    rogue.actions = [
+        ActionDefinition(
+            name="rapier",
+            action_type="attack",
+            to_hit=10,
+            damage="1d1",
+            damage_type="piercing",
+        )
+    ]
+
+    actors = {rogue.actor_id: rogue, ally.actor_id: ally, enemy.actor_id: enemy}
+    damage_dealt = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {rogue.actor_id: {}, ally.actor_id: {}, enemy.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([15, 1, 6, 5]),
+        actor=rogue,
+        action=rogue.actions[0],
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:rogue",
+    )
+
+    _run_opportunity_attacks_for_movement(
+        rng=_FixedRng([15, 1, 4, 3]),
+        mover=enemy,
+        start_pos=(5.0, 0.0, 0.0),
+        end_pos=(20.0, 0.0, 0.0),
+        movement_path=[(5.0, 0.0, 0.0), (20.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:enemy",
+    )
+
+    # Rogue should land Sneak Attack on own turn (12) and again on enemy turn OA (8).
+    assert damage_dealt[rogue.actor_id] == 20
+    assert rogue.reaction_available is False
+
+
+def test_line_of_effect_blocked_prevents_many_spells_even_with_line_of_sight(
+    tmp_path: Path,
+) -> None:
+    party = [build_character("hero", "Hero", 40, 16, 7, "1d8+4")]
+    enemies = [
+        {
+            "identity": {"enemy_id": "mage", "name": "Mage", "team": "enemy"},
+            "stat_block": {
+                "max_hp": 30,
+                "ac": 12,
+                "initiative_mod": 100,
+                "dex_mod": 1,
+                "con_mod": 1,
+                "save_mods": {"str": 1, "dex": 1, "con": 1, "wis": 0},
+            },
+            "actions": [
+                {
+                    "name": "force_lance",
+                    "action_type": "save",
+                    "save_dc": 30,
+                    "save_ability": "dex",
+                    "half_on_save": False,
+                    "damage": "8",
+                    "damage_type": "force",
+                    "target_mode": "single_enemy",
+                    "range_ft": 120,
+                    "resource_cost": {},
+                    "tags": ["spell"],
+                }
+            ],
+            "bonus_actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "lair_actions": [],
+            "resources": {},
+            "damage_resistances": [],
+            "damage_immunities": [],
+            "damage_vulnerabilities": [],
+            "condition_immunities": [],
+            "script_hooks": {},
+        }
+    ]
+    scenario_path = _setup_env(
+        tmp_path / "line_of_effect_blocked",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "optimal_expected_damage",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 1
+    payload["battlefield"] = {
+        "light_level": "bright",
+        "obstacles": [
+            {
+                "min_pos": (-1.0, 10.0, -1.0),
+                "max_pos": (1.0, 20.0, 1.0),
+                "cover_level": "TOTAL",
+            }
+        ],
+    }
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=10,
+        seed=73,
+        run_id="line_of_effect_blocked",
+    ).summary.to_dict()
+
+    assert summary["per_actor_damage_taken"]["hero"]["mean"] == 0.0
+
+
+def test_origin_obstacle_changes_sphere_target_set() -> None:
+    caster = _runtime_actor(actor_id="caster", team="party")
+    primary = _runtime_actor(actor_id="primary", team="enemy")
+    blocked = _runtime_actor(actor_id="blocked", team="enemy")
+    side = _runtime_actor(actor_id="side", team="enemy")
+
+    caster.position = (0.0, 0.0, 0.0)
+    primary.position = (20.0, 0.0, 0.0)
+    blocked.position = (30.0, 0.0, 0.0)
+    side.position = (20.0, 10.0, 0.0)
+
+    actors = {a.actor_id: a for a in (caster, primary, blocked, side)}
+    action = ActionDefinition(
+        name="fireball_like",
+        action_type="save",
+        save_dc=15,
+        save_ability="dex",
+        target_mode="single_enemy",
+        aoe_type="sphere",
+        aoe_size_ft=15,
+        tags=["spell"],
+    )
+
+    clear_targets = _resolve_targets_for_action(
+        rng=random.Random(12),
+        actor=caster,
+        action=action,
+        actors=actors,
+        requested=[TargetRef("primary")],
+    )
+    assert {target.actor_id for target in clear_targets} == {"primary", "blocked", "side"}
+
+    wall = [AABB(min_pos=(24.0, -1.0, -2.0), max_pos=(26.0, 1.0, 2.0), cover_level="TOTAL")]
+    blocked_targets = _resolve_targets_for_action(
+        rng=random.Random(12),
+        actor=caster,
+        action=action,
+        actors=actors,
+        requested=[TargetRef("primary")],
+        obstacles=wall,
+    )
+    assert {target.actor_id for target in blocked_targets} == {"primary", "side"}
+
+
+def test_same_strategy_different_tactical_offhand_bonus_action_choices_change_damage(
+    tmp_path: Path,
+) -> None:
+    hero = build_character(
+        character_id="hero",
+        name="Hero",
+        max_hp=42,
+        ac=16,
+        to_hit=8,
+        damage="1d8+4",
+    )
+    hero["traits"] = ["Extra Attack", "Two-Weapon Fighting"]
+    hero["attacks"] = [
+        {
+            "attack_profile_id": "hero_main_profile",
+            "weapon_id": "hero_main_weapon",
+            "item_id": "hero_main_item",
+            "name": "Mainhand Shortsword",
+            "to_hit": 8,
+            "damage": "1d8+4",
+            "damage_type": "slashing",
+            "weapon_properties": ["light", "finesse"],
+        },
+        {
+            "attack_profile_id": "hero_off_profile",
+            "weapon_id": "hero_off_weapon",
+            "item_id": "hero_off_item",
+            "name": "Offhand Shortsword",
+            "to_hit": 8,
+            "damage": "1d6+4",
+            "damage_type": "piercing",
+            "weapon_properties": ["light", "finesse"],
+        },
+    ]
+    enemies = [build_enemy(enemy_id="boss", name="Boss", hp=500, ac=13, to_hit=5, damage="1d8+2")]
+
+    scenario_path = _setup_env(
+        tmp_path / "tactical_offhand",
+        party=[hero],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    with_offhand = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredTacticalChoiceStrategy(bonus_action_name="off_hand_attack"),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=12,
+        seed=73,
+        run_id="with_offhand",
+    ).summary.to_dict()
+    without_offhand = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredTacticalChoiceStrategy(bonus_action_name=None),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=12,
+        seed=73,
+        run_id="without_offhand",
+    ).summary.to_dict()
+
+    assert (
+        with_offhand["per_actor_damage_dealt"]["hero"]["mean"]
+        > without_offhand["per_actor_damage_dealt"]["hero"]["mean"]
+    )
+
+
+def test_legacy_omitted_bonus_action_remains_unused(tmp_path: Path) -> None:
+    hero = build_character(
+        character_id="hero",
+        name="Hero",
+        max_hp=34,
+        ac=15,
+        to_hit=7,
+        damage="1d8+4",
+    )
+    hero["traits"] = ["Extra Attack", "Second Wind"]
+
+    enemy = build_enemy(enemy_id="boss", name="Boss", hp=80, ac=13, to_hit=20, damage="2")
+    enemy["stat_block"]["initiative_mod"] = 100
+
+    scenario_path = _setup_env(
+        tmp_path / "omit_bonus",
+        party=[hero],
+        enemies=[enemy],
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    artifacts = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": BaseStrategy(),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=101,
+        run_id="omit_bonus",
+    )
+
+    assert artifacts.trial_results[0].resources_spent["hero"].get("second_wind", 0) == 0
+
+
+def test_legacy_strategy_does_not_auto_spend_action_surge(tmp_path: Path) -> None:
+    hero = build_character(
+        character_id="hero",
+        name="Hero",
+        max_hp=40,
+        ac=16,
+        to_hit=8,
+        damage="1d8+4",
+    )
+    hero["traits"] = ["Extra Attack", "Action Surge"]
+
+    enemies = [build_enemy(enemy_id="boss", name="Boss", hp=180, ac=13, to_hit=5, damage="1d8+2")]
+
+    scenario_path = _setup_env(
+        tmp_path / "action_surge",
+        party=[hero],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    artifacts = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": BaseStrategy(),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=202,
+        run_id="action_surge",
+    )
+
+    assert artifacts.trial_results[0].resources_spent["hero"].get("action_surge", 0) == 0

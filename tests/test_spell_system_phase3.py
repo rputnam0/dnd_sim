@@ -3,9 +3,12 @@ from __future__ import annotations
 import random
 
 from dnd_sim.engine import (
+    _action_matches_reaction_spell_id,
     _action_available,
     _break_concentration,
     _build_spell_actions,
+    _coerce_positive_distance,
+    _counterspell_slot_if_legal,
     _execute_action,
     _resolve_targets_for_action,
 )
@@ -42,6 +45,31 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
         save_mods={"str": 0, "dex": 2, "con": 1, "int": 0, "wis": 0, "cha": 0},
         actions=[],
     )
+
+
+def test_reaction_spell_id_matcher_canonicalizes_names_and_tags() -> None:
+    canonical_by_name = ActionDefinition(
+        name="Counterspell [R]",
+        action_type="utility",
+        action_cost="reaction",
+        tags=["spell"],
+    )
+    canonical_by_tag = ActionDefinition(
+        name="arcane_barrier",
+        action_type="utility",
+        action_cost="reaction",
+        tags=["reaction", "shield_spell"],
+    )
+    near_match = ActionDefinition(
+        name="counterspell ward",
+        action_type="utility",
+        action_cost="reaction",
+        tags=["spell"],
+    )
+
+    assert _action_matches_reaction_spell_id(canonical_by_name, spell_id="counterspell") is True
+    assert _action_matches_reaction_spell_id(canonical_by_tag, spell_id="shield") is True
+    assert _action_matches_reaction_spell_id(near_match, spell_id="counterspell") is False
 
 
 def test_counterspell_higher_level_spell_requires_ability_check() -> None:
@@ -256,6 +284,61 @@ def test_counterspell_prefers_slot_that_auto_counters_when_available() -> None:
     assert "blessed" not in ally.conditions
     assert enemy.resources["spell_slot_3"] == 1
     assert enemy.resources["spell_slot_6"] == 0
+
+
+def test_counterspell_slot_legality_requires_sight_and_components() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    enemy.position = (0.0, 30.0, 0.0)
+    enemy.resources = {"spell_slot_3": 1}
+
+    counterspell = ActionDefinition(
+        name="counterspell",
+        action_type="utility",
+        action_cost="reaction",
+        target_mode="single_enemy",
+        tags=["spell", "counterspell", "component:verbal"],
+    )
+
+    assert _counterspell_slot_if_legal(
+        reactor=enemy,
+        counterspell_action=counterspell,
+        caster=caster,
+        incoming_spell_level=3,
+        turn_token="1:caster",
+        active_hazards=[],
+        light_level="bright",
+    ) == ("spell_slot_3", 3)
+
+    enemy.conditions.add("silenced")
+    assert (
+        _counterspell_slot_if_legal(
+            reactor=enemy,
+            counterspell_action=counterspell,
+            caster=caster,
+            incoming_spell_level=3,
+            turn_token="1:caster",
+            active_hazards=[],
+            light_level="bright",
+        )
+        is None
+    )
+
+    enemy.conditions.clear()
+    enemy.conditions.add("blinded")
+    assert (
+        _counterspell_slot_if_legal(
+            reactor=enemy,
+            counterspell_action=counterspell,
+            caster=caster,
+            incoming_spell_level=3,
+            turn_token="1:caster",
+            active_hazards=[],
+            light_level="bright",
+        )
+        is None
+    )
 
 
 def test_dropped_to_zero_forces_concentration_end_even_if_check_would_succeed() -> None:
@@ -541,6 +624,108 @@ def test_target_resolution_templates_are_shape_specific_and_team_consistent() ->
     assert "ally" not in cone_ids
     assert "rear_enemy" not in cone_ids
     assert {"primary", "inline_enemy"}.issubset(cone_ids)
+
+
+def test_coerce_positive_distance_rejects_invalid_values() -> None:
+    assert _coerce_positive_distance(15) == 15.0
+    assert _coerce_positive_distance("20") == 20.0
+    assert _coerce_positive_distance("bad") is None
+    assert _coerce_positive_distance(float("nan")) is None
+    assert _coerce_positive_distance(0) is None
+    assert _coerce_positive_distance(-10) is None
+
+
+def test_target_resolution_ignores_malformed_template_aoe_size_without_crashing() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    primary = _base_actor(actor_id="primary", team="enemy")
+    nearby_enemy = _base_actor(actor_id="nearby_enemy", team="enemy")
+
+    caster.position = (0.0, 0.0, 0.0)
+    primary.position = (10.0, 0.0, 0.0)
+    nearby_enemy.position = (12.0, 0.0, 0.0)
+
+    action = ActionDefinition(
+        name="unstable_burst",
+        action_type="save",
+        save_dc=13,
+        save_ability="dex",
+        target_mode="single_enemy",
+        aoe_type="sphere",
+        aoe_size_ft="bad_size",  # type: ignore[arg-type]
+        tags=["spell"],
+    )
+
+    actors = {
+        caster.actor_id: caster,
+        primary.actor_id: primary,
+        nearby_enemy.actor_id: nearby_enemy,
+    }
+    resolved = _resolve_targets_for_action(
+        rng=random.Random(3),
+        actor=caster,
+        action=action,
+        actors=actors,
+        requested=[TargetRef("primary")],
+    )
+
+    assert [target.actor_id for target in resolved] == ["primary"]
+
+
+def test_execute_action_with_malformed_legacy_aoe_size_keeps_primary_only() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    primary = _base_actor(actor_id="primary", team="enemy")
+    nearby_enemy = _base_actor(actor_id="nearby_enemy", team="enemy")
+
+    caster.position = (0.0, 0.0, 0.0)
+    primary.position = (10.0, 0.0, 0.0)
+    nearby_enemy.position = (12.0, 0.0, 0.0)
+
+    action = ActionDefinition(
+        name="unstable_radius_spell",
+        action_type="utility",
+        target_mode="single_enemy",
+        aoe_size_ft="bad_size",  # type: ignore[arg-type]
+        tags=["spell"],
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "condition": "marked",
+                "target": "target",
+            }
+        ],
+    )
+    actors = {
+        caster.actor_id: caster,
+        primary.actor_id: primary,
+        nearby_enemy.actor_id: nearby_enemy,
+    }
+    damage_dealt = {actor_id: 0 for actor_id in actors}
+    damage_taken = {actor_id: 0 for actor_id in actors}
+    threat_scores = {actor_id: 0 for actor_id in actors}
+    resources_spent = {actor_id: {} for actor_id in actors}
+
+    resolved = _resolve_targets_for_action(
+        rng=random.Random(7),
+        actor=caster,
+        action=action,
+        actors=actors,
+        requested=[TargetRef("primary")],
+    )
+    _execute_action(
+        rng=random.Random(7),
+        actor=caster,
+        action=action,
+        targets=resolved,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "marked" in primary.conditions
+    assert "marked" not in nearby_enemy.conditions
 
 
 def test_conjure_effect_uses_summon_lifecycle_and_concentration_cleanup() -> None:

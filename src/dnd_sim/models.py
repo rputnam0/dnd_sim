@@ -252,15 +252,21 @@ class ActorRuntimeState:
     non_action_cantrip_spell_cast_this_turn: bool = False
     rage_sustained_since_last_turn: bool = False
     sneak_attack_used_this_turn: bool = False
+    sneak_attack_turn_token: str | None = None
     colossus_slayer_used_this_turn: bool = False
     horde_breaker_used_this_turn: bool = False
+    gwm_bonus_trigger_available: bool = False
     concentrated_targets: set[str] = field(default_factory=set)
     concentration_conditions: set[str] = field(default_factory=set)
     concentration_effect_instance_ids: set[str] = field(default_factory=set)
     concentrated_spell: str | None = None
     readied_action_name: str | None = None
     readied_trigger: str | None = None
+    readied_reaction_reserved: bool = False
+    readied_spell_slot_level: int | None = None
+    readied_spell_held: bool = False
     concentrated_spell_level: int | None = None
+    active_zone_ids: set[str] = field(default_factory=set)
     class_levels: dict[str, int] = field(default_factory=dict)
     level: int = 1
     pending_smite: dict[str, Any] | None = None

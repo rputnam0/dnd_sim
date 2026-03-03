@@ -97,8 +97,8 @@ def _run_attack_for_profile(profile_id: str) -> tuple[int, bool]:
 
     ally = _actor("ally", "party")
     target = _actor("target", "enemy")
-    ally.position = (5.0, 0.0, 0.0)
-    target.position = (5.0, 0.0, 0.0)
+    ally.position = (10.0, 0.0, 0.0)
+    target.position = (10.0, 0.0, 0.0)
 
     actors = {actor.actor_id: actor, ally.actor_id: ally, target.actor_id: target}
     damage_dealt = {actor.actor_id: 0, ally.actor_id: 0, target.actor_id: 0}
