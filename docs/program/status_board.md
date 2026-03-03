@@ -77,11 +77,11 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | CHR-13 | agent_w4_sorcerer | feat/chr-13-sorcerer-package | https://github.com/rputnam0/dnd_sim/pull/71 | merged | Merged after coverage remediation and hotspot conflict rebase pass |
 | CHR-14 | agent_w4_warlock | feat/chr-14-warlock-package | https://github.com/rputnam0/dnd_sim/pull/66 | merged | Merged to `int/wave-4-integration` after fallback harmonization and rebase pass |
 | CHR-15 | agent_w4_wizard | feat/chr-15-wizard-package | https://github.com/rputnam0/dnd_sim/pull/70 | merged | Merged after coverage remediation and rebase/test pass |
-| CHR-16 | agent_w4_content | feat/chr-16-content-completeness | - | in_progress | Subwave 4D launched (`All 2014 Sources`) on worktree `../dnd_sim_worktrees/w4-chr16` |
-| SPL-02 | unassigned | feat/spl-02-single-target-family | - | not_started | |
+| CHR-16 | agent_w4_content | feat/chr-16-content-completeness | https://github.com/rputnam0/dnd_sim/pull/74 | merged | Merged to `int/wave-4-integration` after content reference validation + SQLite error-handling remediation |
+| SPL-02 | agent_w4_spell_single | feat/spl-02-single-target-family | - | in_progress | Subwave 4E launched; worker worktree `../dnd_sim_worktrees/w4-spl02` |
 | SPL-03 | unassigned | feat/spl-03-area-family | - | not_started | |
 | SPL-04 | unassigned | feat/spl-04-summon-conjure-transform | - | not_started | |
-| SPL-05 | unassigned | feat/spl-05-rituals-dispels-antimagic | - | not_started | |
+| SPL-05 | agent_w4_spell_special | feat/spl-05-rituals-dispels-antimagic | - | in_progress | Subwave 4E launched; worker worktree `../dnd_sim_worktrees/w4-spl05` |
 
 ## Wave 5
 
@@ -118,3 +118,6 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - 2026-03-03: Subwave 4C PRs merged (`#70`, `#71`, `#72`, `#73`) to `int/wave-4-integration` after gh-api review loops, remediation commits, and hotspot rebases.
 - 2026-03-03: Subwave 4C gate passed on integration head `f6b9666` (`uv run --with pytest python -m pytest -q`, exit code 0).
 - 2026-03-03: Subwave 4D launched for `CHR-16` (`All 2014 Sources`) on `feat/chr-16-content-completeness`.
+- 2026-03-03: Subwave 4D PR merged (`#74`) to `int/wave-4-integration` after explorer/bot remediation (`9b1c8ec`) and rebase gate pass.
+- 2026-03-03: Subwave 4D gate passed on integration head `2d46cca` (`uv run --with pytest python -m pytest -q`, exit code 0).
+- 2026-03-03: Subwave 4E launched for `SPL-02` and `SPL-05` on `feat/spl-02-single-target-family` and `feat/spl-05-rituals-dispels-antimagic`.

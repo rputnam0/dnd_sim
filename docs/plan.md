@@ -36,7 +36,7 @@ This file is now the entrypoint for the full multiagent implementation program.
 - [x] Subwave 4A complete (`CHR-04`, `CHR-08`, `CHR-09`, `CHR-12`) - merged via PRs `#62`, `#64`, `#65`, `#63` on 2026-03-03.
 - [x] Subwave 4B complete (`CHR-05`, `CHR-06`, `CHR-11`, `CHR-14`) - merged via PRs `#67`, `#68`, `#66`, `#69` on 2026-03-03.
 - [x] Subwave 4C complete (`CHR-07`, `CHR-10`, `CHR-13`, `CHR-15`) - merged via PRs `#72`, `#73`, `#71`, `#70` on 2026-03-03.
-- [ ] Subwave 4D complete (`CHR-16`, All 2014 Sources scope).
+- [x] Subwave 4D complete (`CHR-16`, All 2014 Sources scope) - merged via PR `#74` on 2026-03-03.
 - [ ] Subwave 4E complete (`SPL-02`, `SPL-05`).
 - [ ] Subwave 4F complete (`SPL-03`, `SPL-04`).
 - [ ] Integration gate complete on `int/wave-4-integration` (full suite + tracker sync).
