@@ -32,6 +32,7 @@ from dnd_sim.spatial import (
     find_path,
     path_movement_cost,
     path_prefix_for_movement,
+    query_visibility,
 )
 from dnd_sim.rules_2014 import (
     ActionDeclaredEvent,
@@ -4657,6 +4658,12 @@ def _difficult_terrain_positions_from_hazards(
     return sorted(difficult_positions)
 
 
+def _action_requires_line_of_sight(action: ActionDefinition) -> bool:
+    return _has_action_tag(action, "requires_sight") or _has_action_tag(
+        action, "requires_line_of_sight"
+    )
+
+
 def _path_distance(path: list[tuple[float, float, float]]) -> float:
     if len(path) < 2:
         return 0.0
@@ -5128,31 +5135,63 @@ def _filter_targets_in_range(
     actor: ActorRuntimeState,
     action: ActionDefinition,
     targets: list[ActorRuntimeState],
+    *,
+    active_hazards: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
 ) -> list[ActorRuntimeState]:
     action_range = _action_max_range_ft(action)
     if action_range is None:
-        return targets
-    if not targets:
-        return []
-    if action.aoe_type:
+        ranged_targets = targets
+    elif not targets:
+        ranged_targets = []
+    elif action.aoe_type:
         primary = targets[0]
         if distance_chebyshev(actor.position, primary.position) > action_range:
-            return []
-        if action.aoe_size_ft:
+            ranged_targets = []
+        elif action.aoe_size_ft:
             radius = _coerce_positive_distance(action.aoe_size_ft)
             if radius is None:
-                return targets
-            return [
-                target
-                for target in targets
-                if distance_chebyshev(primary.position, target.position) <= radius
-            ]
-        return targets
-    return [
-        target
-        for target in targets
-        if distance_chebyshev(actor.position, target.position) <= action_range
-    ]
+                ranged_targets = targets
+            else:
+                ranged_targets = [
+                    target
+                    for target in targets
+                    if distance_chebyshev(primary.position, target.position) <= radius
+                ]
+        else:
+            ranged_targets = targets
+    else:
+        ranged_targets = [
+            target
+            for target in targets
+            if distance_chebyshev(actor.position, target.position) <= action_range
+        ]
+    if not ranged_targets:
+        return []
+    requires_sight = _action_requires_line_of_sight(action)
+    requires_line_of_effect = _action_requires_line_of_effect(action)
+    if not requires_sight and not requires_line_of_effect:
+        return ranged_targets
+
+    legal_targets: list[ActorRuntimeState] = []
+    for target in ranged_targets:
+        visibility = query_visibility(
+            attacker_pos=actor.position,
+            target_pos=target.position,
+            attacker_traits=actor.traits,
+            target_traits=target.traits,
+            attacker_conditions=actor.conditions,
+            target_conditions=target.conditions,
+            active_hazards=active_hazards or [],
+            obstacles=obstacles,
+            light_level=light_level,
+            requires_sight=requires_sight,
+            requires_line_of_effect=requires_line_of_effect,
+        )
+        if visibility.targeting_legal:
+            legal_targets.append(target)
+    return legal_targets
 
 
 def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
@@ -5340,7 +5379,13 @@ def _action_requires_line_of_effect(action: ActionDefinition) -> bool:
         return False
     if _has_tag(action, "ignore_line_of_effect") or _has_tag(action, "ignore_total_cover"):
         return False
+    if _has_action_tag(action, "ignores_line_of_effect"):
+        return False
+    if _has_action_tag(action, "requires_line_of_effect"):
+        return True
     if action.action_type in {"attack", "save", "grapple", "shove"}:
+        return True
+    if _has_action_tag(action, "spell"):
         return True
     for effect in [*action.effects, *action.mechanics]:
         if not isinstance(effect, dict):
@@ -5976,7 +6021,14 @@ def _execute_declared_action_step_or_error(
         resolved_targets = [
             target for target in resolved_targets if target.actor_id in requested_ids
         ]
-    resolved_targets = _filter_targets_in_range(actor, action, resolved_targets)
+    resolved_targets = _filter_targets_in_range(
+        actor,
+        action,
+        resolved_targets,
+        active_hazards=active_hazards,
+        obstacles=obstacles,
+        light_level=light_level,
+    )
     if not resolved_targets:
         _raise_turn_declaration_error(
             actor=actor,
@@ -8636,7 +8688,14 @@ def _trigger_readied_actions(
                             for target in targets
                             if target.actor_id == trigger_actor.actor_id
                         ]
-                        targets = _filter_targets_in_range(actor, reaction_action, targets)
+                        targets = _filter_targets_in_range(
+                            actor,
+                            reaction_action,
+                            targets,
+                            active_hazards=active_hazards,
+                            obstacles=obstacles,
+                            light_level=light_level,
+                        )
                         paid_reaction_cost = held_readied_spell
                         if targets and not paid_reaction_cost:
                             paid_reaction_cost = _spend_action_resource_cost(
@@ -8705,7 +8764,14 @@ def _trigger_readied_actions(
                 obstacles=obstacles,
             )
             targets = [target for target in targets if target.actor_id == trigger_actor.actor_id]
-            targets = _filter_targets_in_range(actor, reaction_action, targets)
+            targets = _filter_targets_in_range(
+                actor,
+                reaction_action,
+                targets,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+            )
             if not targets:
                 continue
             spell_cast_request = SpellCastRequest() if "spell" in reaction_action.tags else None
@@ -9697,7 +9763,14 @@ def _execute_action(
                 else:
                     return
             if has_turn_context:
-                targets = _filter_targets_in_range(actor, action, targets)
+                targets = _filter_targets_in_range(
+                    actor,
+                    action,
+                    targets,
+                    active_hazards=active_hazards,
+                    obstacles=obstacles,
+                    light_level=light_level,
+                )
                 if not targets:
                     return
             else:
@@ -9707,7 +9780,14 @@ def _execute_action(
                 if not targets:
                     return
         else:
-            targets = _filter_targets_in_range(actor, action, list(targets))
+            targets = _filter_targets_in_range(
+                actor,
+                action,
+                list(targets),
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+            )
             if not targets:
                 return
 
@@ -9971,32 +10051,24 @@ def _execute_action(
                 disadvantage = True
             force_crit = attack_condition_modifiers.force_critical
 
-            # Phase 12: Illumination & Vision Mechanics
-            from .spatial import can_see, check_cover
-
-            # Attacker's vision of the target
-            attacker_can_see = can_see(
-                observer_pos=actor.position,
+            visibility = query_visibility(
+                attacker_pos=actor.position,
                 target_pos=target.position,
-                observer_traits=actor.traits,
+                attacker_traits=actor.traits,
+                target_traits=target.traits,
+                attacker_conditions=actor.conditions,
                 target_conditions=target.conditions,
                 active_hazards=active_hazards,
+                obstacles=obstacles,
                 light_level=light_level,
+                requires_line_of_effect=True,
             )
-            # Target's vision of the attacker
-            target_can_see = can_see(
-                observer_pos=target.position,
-                target_pos=actor.position,
-                observer_traits=target.traits,
-                target_conditions=actor.conditions,
-                active_hazards=active_hazards,
-                light_level=light_level,
-            )
+            attacker_can_see = visibility.attacker_can_see_target
+            target_can_see = visibility.target_can_see_attacker
 
-            # Apply RAW Unseen Attacker / Unseen Target rules
-            if not attacker_can_see:
+            if visibility.attack_disadvantage:
                 disadvantage = True
-            if not target_can_see:
+            if visibility.attack_advantage:
                 advantage = True
             effective_advantage = advantage and not disadvantage
             effective_disadvantage = disadvantage and not advantage
@@ -10019,9 +10091,8 @@ def _execute_action(
                 is_finesse = any(w in weapon_name for w in _FINESSE_WEAPON_HINTS)
 
             if action.to_hit is not None:
-                # Phase 9: Dynamic 3D Raycasting Cover
-                cover_state = check_cover(actor.position, target.position, obstacles)
-                if cover_state == "TOTAL":
+                cover_state = visibility.cover_level
+                if not visibility.line_of_effect:
                     _apply_action_effects(
                         action=action,
                         event="miss",
