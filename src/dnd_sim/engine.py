@@ -1423,6 +1423,22 @@ def _upcast_damage(base_damage: str, per_level_damage: str, extra_levels: int) -
     return f"{total_num}d{base_die}"
 
 
+def _downcast_damage(scaled_damage: str, per_level_damage: str, removed_levels: int) -> str:
+    if removed_levels <= 0:
+        return scaled_damage
+    scaled_num, scaled_die, scaled_flat = parse_damage_expression(scaled_damage)
+    up_num, up_die, up_flat = parse_damage_expression(per_level_damage)
+    if scaled_num <= 0 or up_num <= 0 or scaled_die != up_die or up_flat != 0:
+        return scaled_damage
+    total_num = scaled_num - (up_num * removed_levels)
+    if total_num <= 0:
+        return scaled_damage
+    if scaled_flat:
+        sign = "+" if scaled_flat > 0 else "-"
+        return f"{total_num}d{scaled_die}{sign}{abs(scaled_flat)}"
+    return f"{total_num}d{scaled_die}"
+
+
 def _apply_upcast_scaling_for_slot(
     action: ActionDefinition,
     *,
@@ -1430,40 +1446,52 @@ def _apply_upcast_scaling_for_slot(
 ) -> ActionDefinition:
     if "spell" not in action.tags:
         return action
-    if any(str(tag).startswith("upcast_level:") for tag in action.tags):
-        return action
     if action.spell is None:
         return action
     base_level = max(0, int(action.spell.level))
-    if base_level <= 0 or slot_level <= base_level:
+    if base_level <= 0:
         return action
+    if slot_level <= base_level:
+        if not any(str(tag).startswith("upcast_level:") for tag in action.tags):
+            return action
+        tags = [tag for tag in action.tags if not str(tag).startswith("upcast_level:")]
+        tags = list(dict.fromkeys(tags))
+        return _clone_action(action, tags=tags)
+
     upcast_step = str(action.spell.scaling.upcast_dice_per_level or "").strip()
-    if not upcast_step or not action.damage:
+    if not upcast_step and not any(str(tag).startswith("upcast_level:") for tag in action.tags):
         return action
 
-    upcast_damage = _upcast_damage(action.damage, upcast_step, slot_level - base_level)
-    if upcast_damage == action.damage:
-        return action
+    existing_upcast_level = _upcast_slot_level_from_action(action)
+    upcast_damage = action.damage
+    if upcast_step and action.damage:
+        base_damage = action.damage
+        if existing_upcast_level is not None and existing_upcast_level > base_level:
+            base_damage = _downcast_damage(
+                action.damage,
+                upcast_step,
+                existing_upcast_level - base_level,
+            )
+        upcast_damage = _upcast_damage(base_damage, upcast_step, slot_level - base_level)
+        if upcast_damage == base_damage:
+            slot_effect = dict(action.spell.scaling.upcast_effects).get(slot_level, {})
+            slot_effect_damage = slot_effect.get("damage")
+            if isinstance(slot_effect_damage, str) and slot_effect_damage.strip():
+                upcast_damage = slot_effect_damage
 
-    tags = list(action.tags)
+    tags = [tag for tag in action.tags if not str(tag).startswith("upcast_level:")]
     tags.append(f"upcast_level:{slot_level}")
     tags = list(dict.fromkeys(tags))
+    upcast_effects = dict(action.spell.scaling.upcast_effects)
+    if isinstance(upcast_damage, str) and upcast_damage.strip():
+        existing_effect = dict(upcast_effects.get(slot_level, {}))
+        existing_effect["damage"] = upcast_damage
+        upcast_effects[slot_level] = existing_effect
     scaled_spell = replace(
         action.spell,
-        scaling=replace(
-            action.spell.scaling,
-            upcast_effects={
-                **dict(action.spell.scaling.upcast_effects),
-                slot_level: {"damage": upcast_damage},
-            },
-        ),
+        scaling=replace(action.spell.scaling, upcast_effects=upcast_effects),
     )
-    return _clone_action(
-        action,
-        damage=upcast_damage,
-        spell=scaled_spell,
-        tags=tags,
-    )
+    return _clone_action(action, damage=upcast_damage, spell=scaled_spell, tags=tags)
 
 
 def _component_tags_from_components(components: str) -> set[str]:
@@ -7190,6 +7218,13 @@ def _multiattack_defense_marker(attacker_id: str) -> str:
     return f"{_MULTIATTACK_DEFENSE_PREFIX}{attacker_id}"
 
 
+def _shield_spell_action(shield_action: ActionDefinition) -> ActionDefinition:
+    tags = list(shield_action.tags)
+    tags.append("spell")
+    tags = list(dict.fromkeys(tags))
+    return replace(shield_action, tags=tags)
+
+
 def _try_shield_reaction(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
@@ -7208,6 +7243,9 @@ def _try_shield_reaction(
             break
     if shield_action is None:
         return False
+    shield_spell_action = _shield_spell_action(shield_action)
+    if not _spell_casting_legal_this_turn(target, shield_spell_action):
+        return False
     # Need a 1st-level spell slot (or any available slot)
     slot_key = None
     for key in sorted(target.resources.keys()):
@@ -7220,6 +7258,7 @@ def _try_shield_reaction(
     if roll.total < (target.ac + 5) and roll.natural_roll != 20:
         target.resources[slot_key] -= 1
         target.reaction_available = False
+        _record_spell_cast_for_turn(target, shield_spell_action)
         return True
     return False
 
@@ -7373,10 +7412,17 @@ def _shield_reaction_would_be_legal(
 ) -> bool:
     if not _can_take_reaction(target):
         return False
-    has_shield_action = any(
-        action.name == "shield" and action.action_cost == "reaction" for action in target.actions
+    shield_action = next(
+        (
+            action
+            for action in target.actions
+            if action.name == "shield" and action.action_cost == "reaction"
+        ),
+        None,
     )
-    if not has_shield_action:
+    if shield_action is None:
+        return False
+    if not _spell_casting_legal_this_turn(target, _shield_spell_action(shield_action)):
         return False
     has_slot = any(
         key.startswith("spell_slot_") and target.resources.get(key, 0) > 0

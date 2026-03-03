@@ -137,6 +137,63 @@ def test_spent_higher_slot_drives_upcast_scaling_during_resolution() -> None:
     assert target.hp == target.max_hp - 7
 
 
+def test_pretagged_upcast_action_uses_actual_spent_slot_for_resolution() -> None:
+    rng = _FixedRng([14, 1, 1, 1, 1, 1])
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    target.ac = 10
+    caster.resources = {"spell_slot_5": 1}
+
+    spell = ActionDefinition(
+        name="fireball",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=6,
+        damage="4d6",
+        damage_type="fire",
+        resource_cost={"spell_slot_4": 1},
+        tags=["spell", "upcast_level:4"],
+        spell=SpellDefinition(
+            name="fireball",
+            level=3,
+            scaling=SpellScaling(upcast_dice_per_level="1d6"),
+        ),
+    )
+
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+    spell_cast_request = SpellCastRequest()
+
+    assert (
+        _spend_action_resource_cost(
+            caster,
+            spell,
+            resources_spent,
+            spell_cast_request=spell_cast_request,
+        )
+        is True
+    )
+    assert spell_cast_request.slot_level == 5
+    assert resources_spent[caster.actor_id] == {"spell_slot_5": 1}
+
+    _execute_action(
+        rng=rng,
+        actor=caster,
+        action=spell,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        spell_cast_request=spell_cast_request,
+    )
+
+    assert target.hp == target.max_hp - 5
+
+
 def test_bonus_action_leveled_spell_blocks_non_cantrip_action_spell_same_turn() -> None:
     caster = _base_actor(actor_id="caster", team="party")
     target = _base_actor(actor_id="target", team="enemy")
@@ -237,6 +294,75 @@ def test_bonus_action_cantrip_blocks_non_cantrip_action_spell_same_turn() -> Non
     )
 
     assert _action_available(caster, action_spell) is False
+
+
+def test_bonus_action_spell_blocks_same_turn_shield_reaction_when_illegal() -> None:
+    rng = _FixedRng([9, 4])
+    attacker = _base_actor(actor_id="attacker", team="enemy")
+    defender = _base_actor(actor_id="defender", team="party")
+    defender.resources = {"spell_slot_1": 2}
+    defender.actions = [
+        ActionDefinition(
+            name="shield",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="self",
+            tags=["reaction", "shield_spell"],
+        )
+    ]
+
+    bonus_spell = ActionDefinition(
+        name="healing_word",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "bolstered", "target": "source"}],
+    )
+    attack = ActionDefinition(
+        name="longsword",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=7,
+        damage="1d8",
+        damage_type="slashing",
+    )
+
+    actors = {attacker.actor_id: attacker, defender.actor_id: defender}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(attacker, defender)
+
+    assert _spend_action_resource_cost(defender, bonus_spell, resources_spent) is True
+    _execute_action(
+        rng=random.Random(13),
+        actor=defender,
+        action=bonus_spell,
+        targets=[defender],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    _execute_action(
+        rng=rng,
+        actor=attacker,
+        action=attack,
+        targets=[defender],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert defender.hp == defender.max_hp - 4
+    assert defender.resources["spell_slot_1"] == 1
+    assert defender.reaction_available is True
 
 
 def test_counterspell_blocks_before_resolution_with_level_check_logic() -> None:
