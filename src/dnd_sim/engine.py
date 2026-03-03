@@ -17,6 +17,11 @@ from dnd_sim.models import (
     ActorRuntimeState,
     ConditionTracker,
     EffectInstance,
+    SpellCastRequest,
+    SpellComponents,
+    SpellDefinition,
+    SpellRoll,
+    SpellScaling,
     SimulationSummary,
     SummaryMetric,
     TrialResult,
@@ -1418,6 +1423,49 @@ def _upcast_damage(base_damage: str, per_level_damage: str, extra_levels: int) -
     return f"{total_num}d{base_die}"
 
 
+def _apply_upcast_scaling_for_slot(
+    action: ActionDefinition,
+    *,
+    slot_level: int,
+) -> ActionDefinition:
+    if "spell" not in action.tags:
+        return action
+    if any(str(tag).startswith("upcast_level:") for tag in action.tags):
+        return action
+    if action.spell is None:
+        return action
+    base_level = max(0, int(action.spell.level))
+    if base_level <= 0 or slot_level <= base_level:
+        return action
+    upcast_step = str(action.spell.scaling.upcast_dice_per_level or "").strip()
+    if not upcast_step or not action.damage:
+        return action
+
+    upcast_damage = _upcast_damage(action.damage, upcast_step, slot_level - base_level)
+    if upcast_damage == action.damage:
+        return action
+
+    tags = list(action.tags)
+    tags.append(f"upcast_level:{slot_level}")
+    tags = list(dict.fromkeys(tags))
+    scaled_spell = replace(
+        action.spell,
+        scaling=replace(
+            action.spell.scaling,
+            upcast_effects={
+                **dict(action.spell.scaling.upcast_effects),
+                slot_level: {"damage": upcast_damage},
+            },
+        ),
+    )
+    return _clone_action(
+        action,
+        damage=upcast_damage,
+        spell=scaled_spell,
+        tags=tags,
+    )
+
+
 def _component_tags_from_components(components: str) -> set[str]:
     tags: set[str] = set()
     if not components:
@@ -1430,6 +1478,105 @@ def _component_tags_from_components(components: str) -> set[str]:
         elif token.lower() == "m":
             tags.add("component:material")
     return tags
+
+
+def _extract_tag_int(tags: list[str], prefix: str) -> int | None:
+    for tag in tags:
+        value = str(tag)
+        if not value.startswith(prefix):
+            continue
+        raw = value.split(":", 1)[1]
+        try:
+            return int(raw)
+        except ValueError:
+            return None
+    return None
+
+
+def _spell_level_from_tags(action: ActionDefinition) -> int | None:
+    level = _extract_tag_int(list(action.tags), "spell_level:")
+    if level is None:
+        return None
+    return max(0, int(level))
+
+
+def _is_cantrip_spell_action(action: ActionDefinition) -> bool:
+    if "spell" not in action.tags:
+        return False
+    if any(str(tag) == "cantrip" for tag in action.tags):
+        return True
+    if action.spell is not None:
+        return int(action.spell.level) == 0
+    level = _spell_level_from_tags(action)
+    if level is not None:
+        return level == 0
+    return _spell_level_from_action(action) == 0
+
+
+def _is_action_cantrip_spell(action: ActionDefinition) -> bool:
+    return action.action_cost == "action" and _is_cantrip_spell_action(action)
+
+
+def _build_spell_components_metadata(raw_components: str) -> SpellComponents:
+    normalized = str(raw_components or "")
+    tags = _component_tags_from_components(normalized)
+    detail: str | None = None
+    detail_match = re.search(r"\(([^)]*)\)", normalized)
+    if detail_match:
+        detail = detail_match.group(1).strip() or None
+    return SpellComponents(
+        verbal="component:verbal" in tags,
+        somatic="component:somatic" in tags,
+        material="component:material" in tags,
+        material_detail=detail,
+        raw=normalized,
+    )
+
+
+def _default_casting_time_for_action_cost(action_cost: str) -> str:
+    if action_cost == "bonus":
+        return "1 bonus action"
+    if action_cost == "reaction":
+        return "1 reaction"
+    return "1 action"
+
+
+def _build_spell_metadata(
+    *,
+    spell: dict[str, Any],
+    spell_level: int,
+    spell_school: str | None,
+    action_cost: str,
+    target_mode: str,
+    to_hit: int | None,
+    save_dc: int | None,
+    save_ability: str | None,
+    half_on_save: bool,
+    upcast_dice_per_level: str,
+) -> SpellDefinition:
+    raw_components = str(spell.get("components") or "")
+    casting_time = str(spell.get("casting_time") or "").strip()
+    if not casting_time:
+        casting_time = _default_casting_time_for_action_cost(action_cost)
+    duration = str(spell.get("duration") or "").strip() or None
+    scaling = SpellScaling(upcast_dice_per_level=upcast_dice_per_level or None)
+    return SpellDefinition(
+        name=str(spell.get("name", "unknown_spell")),
+        level=max(0, int(spell_level)),
+        school=spell_school,
+        casting_time=casting_time,
+        concentration=bool(spell.get("concentration", False)),
+        duration=duration,
+        target_mode=target_mode,
+        roll=SpellRoll(
+            attack_bonus=int(to_hit) if to_hit is not None else None,
+            save_dc=int(save_dc) if save_dc is not None else None,
+            save_ability=str(save_ability) if save_ability else None,
+            half_on_save=bool(half_on_save),
+        ),
+        scaling=scaling,
+        components=_build_spell_components_metadata(raw_components),
+    )
 
 
 def _critical_bonus_dice_expr(base_damage: str, extra_dice: int) -> str | None:
@@ -1707,6 +1854,10 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "save_ability": save_ability,
             "concentration": "concentration" in duration.lower() if duration else False,
         }
+        if casting_time:
+            hydrated["casting_time"] = casting_time
+        if duration:
+            hydrated["duration"] = duration
         if magical_secrets_entry:
             hydrated["tags"] = ["magical_secrets"]
 
@@ -1735,6 +1886,10 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 ).lower() or hydrated.get("save_ability")
             if "components" in spell_def:
                 hydrated["components"] = str(spell_def.get("components") or "")
+            if "casting_time" in spell_def:
+                hydrated["casting_time"] = str(spell_def.get("casting_time") or "")
+            if "duration" in spell_def:
+                hydrated["duration"] = str(spell_def.get("duration") or "")
             if "damage_type" in spell_def:
                 hydrated["damage_type"] = str(spell_def.get("damage_type") or "fire").lower()
             if "range_ft" in spell_def and isinstance(spell_def.get("range_ft"), (int, float)):
@@ -1890,6 +2045,19 @@ def _clone_action(action: ActionDefinition, **overrides: Any) -> ActionDefinitio
             dict(mechanic) if isinstance(mechanic, dict) else mechanic
             for mechanic in action.mechanics
         ],
+        "spell": (
+            replace(
+                action.spell,
+                roll=replace(action.spell.roll),
+                scaling=replace(
+                    action.spell.scaling,
+                    upcast_effects=dict(action.spell.scaling.upcast_effects),
+                ),
+                components=replace(action.spell.components),
+            )
+            if action.spell is not None
+            else None
+        ),
         "tags": list(action.tags),
     }
     payload.update(overrides)
@@ -2173,6 +2341,9 @@ def _build_spell_actions(
         mechanics = spell.get("mechanics", [])
         tags = list(spell.get("tags", []))
         tags.append("spell")
+        tags.append(f"spell_level:{max(0, spell_level)}")
+        if spell_level == 0:
+            tags.append("cantrip")
         spell_school = _extract_spell_school(spell)
         if spell_school is not None:
             tags.append(f"school:{spell_school}")
@@ -2221,6 +2392,20 @@ def _build_spell_actions(
             if action_type == "utility":
                 target_mode = spell.get("target_mode", "single_ally")
 
+        upcast_step = str(spell.get("upcast_dice_per_level") or "").strip()
+        spell_metadata = _build_spell_metadata(
+            spell=spell,
+            spell_level=spell_level,
+            spell_school=spell_school,
+            action_cost=action_cost,
+            target_mode=target_mode,
+            to_hit=int(to_hit) if to_hit is not None else None,
+            save_dc=int(save_dc) if save_dc is not None else None,
+            save_ability=str(save_ability) if save_ability else None,
+            half_on_save=half_on_save,
+            upcast_dice_per_level=upcast_step,
+        )
+
         action = ActionDefinition(
             name=name,
             action_type=action_type,
@@ -2242,6 +2427,7 @@ def _build_spell_actions(
             include_self=smite_setup,
             effects=effects,
             mechanics=mechanics,
+            spell=spell_metadata,
             tags=tags,
         )
         actions.append(action)
@@ -2249,7 +2435,6 @@ def _build_spell_actions(
             _build_metamagic_spell_actions(action, spell_level=spell_level, traits=known_traits)
         )
 
-        upcast_step = str(spell.get("upcast_dice_per_level") or "").strip()
         if spell_level > 0 and damage and upcast_step and isinstance(available_slots, dict):
             for slot_level in sorted(int(level) for level in available_slots.keys()):
                 if slot_level <= spell_level:
@@ -2260,6 +2445,13 @@ def _build_spell_actions(
                 upcast_damage = _upcast_damage(str(damage), upcast_step, extra_levels)
                 if upcast_damage == str(damage):
                     continue
+                upcast_scaling = replace(
+                    spell_metadata.scaling,
+                    upcast_effects={
+                        **dict(spell_metadata.scaling.upcast_effects),
+                        slot_level: {"damage": upcast_damage},
+                    },
+                )
                 actions.append(
                     ActionDefinition(
                         name=f"{name} ({slot_level}th level)",
@@ -2285,6 +2477,7 @@ def _build_spell_actions(
                         include_self=smite_setup,
                         effects=list(effects),
                         mechanics=list(mechanics),
+                        spell=replace(spell_metadata, scaling=upcast_scaling),
                         tags=list(tags) + [f"upcast_level:{slot_level}"],
                     )
                 )
@@ -3416,6 +3609,8 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.concentration_effect_instance_ids.clear()
     actor.concentrated_spell = None
     actor.concentrated_spell_level = None
+    actor.bonus_action_spell_restriction_active = False
+    actor.non_action_cantrip_spell_cast_this_turn = False
     actor.movement_remaining = float(actor.speed_ft)
 
 
@@ -3826,6 +4021,97 @@ def _reorder_initiative_for_construct_companions(
     return initiative_order
 
 
+def _split_spell_slot_cost(cost: dict[str, int]) -> tuple[dict[str, int], int, list[int]]:
+    non_slot_cost: dict[str, int] = {}
+    slot_cost_amount = 0
+    slot_levels: list[int] = []
+    for key, amount in cost.items():
+        if int(amount) <= 0:
+            continue
+        slot_level = _spell_slot_level_from_key(str(key))
+        if slot_level is None:
+            non_slot_cost[str(key)] = int(amount)
+            continue
+        slot_cost_amount += int(amount)
+        slot_levels.append(slot_level)
+    return non_slot_cost, slot_cost_amount, sorted(slot_levels)
+
+
+def _can_pay_exact_spell_slot(actor: ActorRuntimeState, *, slot_level: int, amount: int) -> bool:
+    if slot_level <= 0:
+        return False
+    if amount <= 0:
+        return True
+    return int(actor.resources.get(f"spell_slot_{slot_level}", 0)) >= amount
+
+
+def _can_pay_flexible_spell_slots(
+    actor: ActorRuntimeState,
+    *,
+    minimum_level: int,
+    amount: int,
+    preferred_level: int | None = None,
+) -> bool:
+    if amount <= 0:
+        return True
+    if minimum_level <= 0:
+        return True
+    effective_floor = minimum_level
+    if preferred_level is not None and preferred_level > effective_floor:
+        effective_floor = preferred_level
+    available = _available_spell_slots(actor, minimum=effective_floor)
+    total_available = sum(max(0, int(actor.resources.get(key, 0))) for key, _ in available)
+    return total_available >= amount
+
+
+def _spend_exact_spell_slot(
+    actor: ActorRuntimeState, *, slot_level: int, amount: int
+) -> dict[str, int]:
+    spent: dict[str, int] = {}
+    if slot_level <= 0 or amount <= 0:
+        return spent
+    key = f"spell_slot_{slot_level}"
+    current = int(actor.resources.get(key, 0))
+    actual = min(amount, max(current, 0))
+    actor.resources[key] = current - actual
+    if actual > 0:
+        spent[key] = actual
+    return spent
+
+
+def _spend_flexible_spell_slots(
+    actor: ActorRuntimeState,
+    *,
+    minimum_level: int,
+    amount: int,
+    preferred_level: int | None = None,
+) -> dict[str, int]:
+    spent: dict[str, int] = {}
+    if minimum_level <= 0 or amount <= 0:
+        return spent
+
+    for _ in range(amount):
+        slot_key: str | None = None
+        if preferred_level is not None and preferred_level >= minimum_level:
+            preferred_key = f"spell_slot_{preferred_level}"
+            if int(actor.resources.get(preferred_key, 0)) > 0:
+                slot_key = preferred_key
+
+        if slot_key is None:
+            floor = minimum_level
+            if preferred_level is not None and preferred_level > floor:
+                floor = preferred_level
+            available = _available_spell_slots(actor, minimum=floor)
+            if not available:
+                break
+            slot_key = available[0][0]
+
+        actor.resources[slot_key] = int(actor.resources.get(slot_key, 0)) - 1
+        spent[slot_key] = spent.get(slot_key, 0) + 1
+
+    return spent
+
+
 def _has_resources(actor: ActorRuntimeState, cost: dict[str, int]) -> bool:
     for key, amount in cost.items():
         if actor.resources.get(key, 0) < amount:
@@ -3849,10 +4135,37 @@ def _spend_action_resource_cost(
     actor: ActorRuntimeState,
     action: ActionDefinition,
     resources_spent: dict[str, dict[str, int]],
+    *,
+    spell_cast_request: SpellCastRequest | None = None,
 ) -> bool:
-    if not _can_pay_resource_cost(actor, action):
+    if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False
-    spent = _spend_resources(actor, action.resource_cost)
+
+    if "spell" not in action.tags:
+        spent = _spend_resources(actor, action.resource_cost)
+    else:
+        non_slot_cost, slot_amount, _slot_levels = _split_spell_slot_cost(action.resource_cost)
+        spent = _spend_resources(actor, non_slot_cost)
+        required_slot_level = _required_spell_slot_level(action)
+        preferred_slot = _preferred_spell_slot_level(action)
+        explicit_slot = spell_cast_request.slot_level if spell_cast_request is not None else None
+        if slot_amount > 0 and required_slot_level > 0:
+            if explicit_slot is not None:
+                spent_slots = _spend_exact_spell_slot(
+                    actor,
+                    slot_level=int(explicit_slot),
+                    amount=slot_amount,
+                )
+            else:
+                spent_slots = _spend_flexible_spell_slots(
+                    actor,
+                    minimum_level=required_slot_level,
+                    amount=slot_amount,
+                    preferred_level=preferred_slot,
+                )
+            for key, amount in spent_slots.items():
+                spent[key] = spent.get(key, 0) + amount
+
     for key, amount in spent.items():
         resources_spent[actor.actor_id][key] = resources_spent[actor.actor_id].get(key, 0) + amount
     return True
@@ -5681,8 +5994,39 @@ def _can_cast_spell_with_components(actor: ActorRuntimeState, action: ActionDefi
     return True
 
 
-def _can_pay_resource_cost(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
-    return _has_resources(actor, action.resource_cost)
+def _can_pay_resource_cost(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    *,
+    spell_cast_request: SpellCastRequest | None = None,
+) -> bool:
+    if "spell" not in action.tags:
+        return _has_resources(actor, action.resource_cost)
+
+    non_slot_cost, slot_amount, _slot_levels = _split_spell_slot_cost(action.resource_cost)
+    if not _has_resources(actor, non_slot_cost):
+        return False
+    if slot_amount <= 0:
+        return True
+
+    required_level = _required_spell_slot_level(action)
+    if required_level <= 0:
+        return True
+
+    explicit_slot = spell_cast_request.slot_level if spell_cast_request is not None else None
+    if explicit_slot is not None:
+        chosen_level = int(explicit_slot)
+        if chosen_level < required_level:
+            return False
+        return _can_pay_exact_spell_slot(actor, slot_level=chosen_level, amount=slot_amount)
+
+    preferred_level = _preferred_spell_slot_level(action)
+    return _can_pay_flexible_spell_slots(
+        actor,
+        minimum_level=required_level,
+        amount=slot_amount,
+        preferred_level=preferred_level,
+    )
 
 
 def _can_take_reaction(actor: ActorRuntimeState) -> bool:
@@ -5697,14 +6041,35 @@ def _can_take_reaction(actor: ActorRuntimeState) -> bool:
     return True
 
 
-def _action_available(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+def _spell_casting_legal_this_turn(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if "spell" not in action.tags:
+        return True
+    if actor.bonus_action_spell_restriction_active and not _is_action_cantrip_spell(action):
+        return False
+    if (
+        action.action_cost == "bonus"
+        and not _is_cantrip_spell_action(action)
+        and actor.non_action_cantrip_spell_cast_this_turn
+    ):
+        return False
+    return True
+
+
+def _action_available(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    *,
+    spell_cast_request: SpellCastRequest | None = None,
+) -> bool:
     if action.name == "lay_on_hands" and actor.resources.get("lay_on_hands_pool", 0) <= 0:
         return False
     if action.max_uses is not None and actor.per_action_uses.get(action.name, 0) >= action.max_uses:
         return False
     if action.recharge and not actor.recharge_ready.get(action.name, True):
         return False
-    if not _can_pay_resource_cost(actor, action):
+    if not _spell_casting_legal_this_turn(actor, action):
+        return False
+    if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False
     if not _can_cast_spell_with_components(actor, action):
         return False
@@ -6123,11 +6488,8 @@ def _dispatch_combat_event(
             )
             continue
 
-        spent = _spend_resources(actor, action.resource_cost)
-        for key, amount in spent.items():
-            resources_spent[actor.actor_id][key] = (
-                resources_spent[actor.actor_id].get(key, 0) + amount
-            )
+        if not _spend_action_resource_cost(actor, action, resources_spent):
+            continue
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
         actor.per_action_uses[per_turn_key] = actor.per_action_uses.get(per_turn_key, 0) + 1
         _mark_action_cost_used(actor, action)
@@ -6226,16 +6588,76 @@ def _run_event_triggered_actions(
     )
 
 
+def _spell_slot_level_from_key(key: str) -> int | None:
+    if not str(key).startswith("spell_slot_"):
+        return None
+    try:
+        level = int(str(key).split("_")[-1])
+    except ValueError:
+        return None
+    return level if level > 0 else None
+
+
+def _spell_slot_levels_from_cost(cost: dict[str, int]) -> list[int]:
+    levels: list[int] = []
+    for key, amount in cost.items():
+        if int(amount) <= 0:
+            continue
+        level = _spell_slot_level_from_key(str(key))
+        if level is not None:
+            levels.append(level)
+    return sorted(levels)
+
+
+def _spell_base_level_from_action(action: ActionDefinition) -> int:
+    if action.spell is not None:
+        return max(0, int(action.spell.level))
+    tagged_level = _spell_level_from_tags(action)
+    if tagged_level is not None:
+        return max(0, tagged_level)
+    slot_levels = _spell_slot_levels_from_cost(action.resource_cost)
+    if slot_levels:
+        return max(0, min(slot_levels))
+    return 0
+
+
+def _upcast_slot_level_from_action(action: ActionDefinition) -> int | None:
+    raw_level = _extract_tag_value(list(action.tags), "upcast_level:")
+    if raw_level is None:
+        return None
+    try:
+        level = int(raw_level)
+    except ValueError:
+        return None
+    return level if level > 0 else None
+
+
+def _required_spell_slot_level(action: ActionDefinition) -> int:
+    base_level = _spell_base_level_from_action(action)
+    if base_level <= 0:
+        return 0
+    required_level = base_level
+    slot_levels = _spell_slot_levels_from_cost(action.resource_cost)
+    if slot_levels:
+        required_level = max(required_level, min(slot_levels))
+    upcast_level = _upcast_slot_level_from_action(action)
+    if upcast_level is not None:
+        required_level = max(required_level, upcast_level)
+    return required_level
+
+
+def _preferred_spell_slot_level(action: ActionDefinition) -> int | None:
+    upcast_level = _upcast_slot_level_from_action(action)
+    if upcast_level is not None:
+        return upcast_level
+    slot_levels = _spell_slot_levels_from_cost(action.resource_cost)
+    return min(slot_levels) if slot_levels else None
+
+
 def _spell_level_from_action(action: ActionDefinition) -> int:
-    slot_levels = []
-    for key in action.resource_cost.keys():
-        if not key.startswith("spell_slot_"):
-            continue
-        try:
-            slot_levels.append(int(key.split("_")[-1]))
-        except ValueError:
-            continue
-    return max(slot_levels) if slot_levels else 0
+    if "spell" not in action.tags:
+        return 0
+    return _required_spell_slot_level(action)
 
 
 def _available_spell_slots(actor: ActorRuntimeState, *, minimum: int = 1) -> list[tuple[str, int]]:
@@ -7109,6 +7531,72 @@ def _get_default_combat_timing_engine() -> CombatTimingEngine:
     return _DEFAULT_COMBAT_TIMING_ENGINE
 
 
+def _mode_requires_explicit_targets(mode: str) -> bool:
+    return mode in {
+        "single_enemy",
+        "single_ally",
+        "n_enemies",
+        "n_allies",
+        "random_enemy",
+        "random_ally",
+    }
+
+
+def _resolve_spell_cast_request(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    targets: list[ActorRuntimeState],
+    provided: SpellCastRequest | None,
+) -> SpellCastRequest:
+    if provided is None:
+        request = SpellCastRequest()
+    else:
+        request = SpellCastRequest(
+            slot_level=provided.slot_level,
+            mode=provided.mode,
+            target_actor_ids=list(provided.target_actor_ids),
+            origin=provided.origin,
+        )
+
+    if request.mode is None:
+        request.mode = action.target_mode
+    if not request.target_actor_ids and targets:
+        request.target_actor_ids = [target.actor_id for target in targets]
+    if request.origin is None:
+        request.origin = actor.position
+
+    required_slot_level = _required_spell_slot_level(action)
+    if required_slot_level > 0 and request.slot_level is None:
+        preferred_slot = _preferred_spell_slot_level(action)
+        request.slot_level = preferred_slot if preferred_slot is not None else required_slot_level
+
+    if request.mode is None:
+        raise ValueError("Spell cast request requires a target mode.")
+    if request.mode != action.target_mode:
+        raise ValueError("Spell cast request mode must match action target mode.")
+    if _mode_requires_explicit_targets(request.mode) and not request.target_actor_ids:
+        raise ValueError("Spell cast request requires at least one target.")
+    if action.aoe_type and request.origin is None:
+        raise ValueError("Spell cast request requires an origin for area spell templates.")
+    if required_slot_level > 0:
+        if request.slot_level is None:
+            raise ValueError("Spell cast request requires a slot for leveled spells.")
+        if int(request.slot_level) < required_slot_level:
+            raise ValueError("Spell cast request slot level is below the spell level.")
+
+    return request
+
+
+def _record_spell_cast_for_turn(actor: ActorRuntimeState, action: ActionDefinition) -> None:
+    if "spell" not in action.tags:
+        return
+    if not _is_action_cantrip_spell(action):
+        actor.non_action_cantrip_spell_cast_this_turn = True
+    if action.action_cost == "bonus" and not _is_cantrip_spell_action(action):
+        actor.bonus_action_spell_restriction_active = True
+
+
 def _execute_action(
     *,
     rng: random.Random,
@@ -7129,6 +7617,7 @@ def _execute_action(
     telemetry: list[dict[str, Any]] | None = None,
     strategy_name: str | None = None,
     timing_engine: CombatTimingEngine | None = None,
+    spell_cast_request: SpellCastRequest | None = None,
 ) -> None:
     if not targets:
         return
@@ -7136,6 +7625,8 @@ def _execute_action(
         obstacles = []
     is_spell_action = _has_tag(action, "spell")
     subtle_spell = _has_tag(action, "metamagic:subtle")
+    spell_level = _spell_level_from_action(action) if is_spell_action else 0
+    resolved_spell_cast_request: SpellCastRequest | None = None
     has_turn_context = round_number is not None and turn_token is not None
     active_timing_engine = (
         timing_engine if timing_engine is not None else _get_default_combat_timing_engine()
@@ -7205,11 +7696,41 @@ def _execute_action(
             if not targets:
                 return
 
-    # Counterspell check
+    # Spell declaration and counterspell check
     if is_spell_action:
+        if not _spell_casting_legal_this_turn(actor, action):
+            return
         if not _can_cast_spell_with_components(actor, action):
             return
-        spell_level = _spell_level_from_action(action)
+
+        try:
+            resolved_spell_cast_request = _resolve_spell_cast_request(
+                actor=actor,
+                action=action,
+                targets=targets,
+                provided=spell_cast_request,
+            )
+        except ValueError:
+            return
+        if resolved_spell_cast_request.slot_level is not None:
+            spell_level = int(resolved_spell_cast_request.slot_level)
+            action = _apply_upcast_scaling_for_slot(action, slot_level=spell_level)
+
+        if action.action_type != "attack":
+            declaration_event = active_timing_engine.emit(
+                ActionDeclaredEvent(
+                    attacker=actor,
+                    target=targets[0],
+                    action=action,
+                    round_number=round_number,
+                    turn_token=turn_token,
+                )
+            )
+            if declaration_event.cancelled:
+                return
+
+        _record_spell_cast_for_turn(actor, action)
+
         if not subtle_spell:
             for enemy in actors.values():
                 if (
@@ -7232,6 +7753,19 @@ def _execute_action(
                                 enemy, incoming_spell_level=spell_level
                             )
                             if counter_slot:
+                                counter_window = active_timing_engine.emit(
+                                    ReactionWindowOpenedEvent(
+                                        window="counterspell",
+                                        reactor=enemy,
+                                        attacker=actor,
+                                        target=targets[0],
+                                        action=action,
+                                        round_number=round_number,
+                                        turn_token=turn_token,
+                                    )
+                                )
+                                if counter_window.cancelled:
+                                    continue
                                 slot_key, counter_level = counter_slot
                                 enemy.resources[slot_key] -= 1
                                 enemy.reaction_available = False
@@ -8205,11 +8739,8 @@ def _run_lair_actions(
                 break
         if action is None or not targets:
             continue
-        spent = _spend_resources(actor, action.resource_cost)
-        for key, amount in spent.items():
-            resources_spent[actor.actor_id][key] = (
-                resources_spent[actor.actor_id].get(key, 0) + amount
-            )
+        if not _spend_action_resource_cost(actor, action, resources_spent):
+            continue
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
         if action.recharge:
             actor.recharge_ready[action.name] = False
@@ -8274,11 +8805,8 @@ def _run_legendary_actions(
                 break
         if action is None or not targets:
             continue
-        spent = _spend_resources(actor, action.resource_cost)
-        for key, amount in spent.items():
-            resources_spent[actor.actor_id][key] = (
-                resources_spent[actor.actor_id].get(key, 0) + amount
-            )
+        if not _spend_action_resource_cost(actor, action, resources_spent):
+            continue
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
         if action.recharge:
             actor.recharge_ready[action.name] = False
@@ -8515,6 +9043,8 @@ def run_simulation(
                     actor = actors[actor_id]
                     actor.movement_remaining = float(actor.speed_ft)
                     actor.took_attack_action_this_turn = False
+                    actor.bonus_action_spell_restriction_active = False
+                    actor.non_action_cantrip_spell_cast_this_turn = False
                     _roll_recharge_for_actor(rng, actor)
                     _tick_conditions_for_actor(rng, actor)
                     _force_end_concentration_if_needed(
@@ -8709,13 +9239,30 @@ def run_simulation(
                     extra_spend = strategy.decide_resource_spend(
                         actor_view, intent, state_view
                     ).amounts
-                    cost = dict(action.resource_cost)
+                    base_cost = dict(action.resource_cost)
+                    extra_cost: dict[str, int] = {}
                     for key, amount in extra_spend.items():
+                        if int(amount) <= 0:
+                            continue
+                        extra_cost[key] = extra_cost.get(key, 0) + int(amount)
+                    cost = dict(base_cost)
+                    for key, amount in extra_cost.items():
                         cost[key] = cost.get(key, 0) + amount
 
-                    if cost and not _has_resources(actor, cost):
+                    non_slot_base_cost, _slot_amount, _slot_levels = _split_spell_slot_cost(
+                        base_cost
+                    )
+                    can_pay_extra = True
+                    for key, amount in extra_cost.items():
+                        required = amount + int(non_slot_base_cost.get(key, 0))
+                        if int(actor.resources.get(key, 0)) < required:
+                            can_pay_extra = False
+                            break
+
+                    if not _can_pay_resource_cost(actor, action) or not can_pay_extra:
                         action = _resolve_action_selection(actor, "basic")
                         cost = dict(action.resource_cost)
+                        extra_cost = {}
                         fallback_reason = "insufficient_resources"
 
                     targets = strategy.choose_targets(actor_view, intent, state_view)
@@ -8768,11 +9315,14 @@ def run_simulation(
                         )
                         continue
 
-                    spent = _spend_resources(actor, cost)
-                    for key, amount in spent.items():
-                        resources_spent[actor.actor_id][key] = (
-                            resources_spent[actor.actor_id].get(key, 0) + amount
-                        )
+                    if not _spend_action_resource_cost(actor, action, resources_spent):
+                        continue
+                    if extra_cost:
+                        spent_extra = _spend_resources(actor, extra_cost)
+                        for key, amount in spent_extra.items():
+                            resources_spent[actor.actor_id][key] = (
+                                resources_spent[actor.actor_id].get(key, 0) + amount
+                            )
 
                     actor.per_action_uses[action.name] = (
                         actor.per_action_uses.get(action.name, 0) + 1
@@ -8831,13 +9381,11 @@ def run_simulation(
                                 requested=_default_target(actor, actors),
                             )
                             if bonus_targets:
-                                bonus_cost = dict(bonus_action.resource_cost)
-                                if not bonus_cost or _has_resources(actor, bonus_cost):
-                                    spent = _spend_resources(actor, bonus_cost)
-                                    for key, amount in spent.items():
-                                        resources_spent[actor.actor_id][key] = (
-                                            resources_spent[actor.actor_id].get(key, 0) + amount
-                                        )
+                                if _can_pay_resource_cost(
+                                    actor, bonus_action
+                                ) and _spend_action_resource_cost(
+                                    actor, bonus_action, resources_spent
+                                ):
                                     actor.per_action_uses[bonus_action.name] = (
                                         actor.per_action_uses.get(bonus_action.name, 0) + 1
                                     )
@@ -8907,13 +9455,11 @@ def run_simulation(
                                     requested=_default_target(actor, actors),
                                 )
                                 if surge_targets:
-                                    surge_cost = dict(surge_action.resource_cost)
-                                    if not surge_cost or _has_resources(actor, surge_cost):
-                                        spent = _spend_resources(actor, surge_cost)
-                                        for key, amount in spent.items():
-                                            resources_spent[actor.actor_id][key] = (
-                                                resources_spent[actor.actor_id].get(key, 0) + amount
-                                            )
+                                    if _can_pay_resource_cost(
+                                        actor, surge_action
+                                    ) and _spend_action_resource_cost(
+                                        actor, surge_action, resources_spent
+                                    ):
 
                                         actor.per_action_uses[surge_action.name] = (
                                             actor.per_action_uses.get(surge_action.name, 0) + 1
