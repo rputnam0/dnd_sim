@@ -61,6 +61,7 @@ def _druid_character(
     level: int,
     traits: list[str] | None = None,
     class_level: str | None = None,
+    class_levels: dict[str, int] | None = None,
     resources: dict | None = None,
     current_resources: dict | None = None,
 ) -> dict:
@@ -94,6 +95,8 @@ def _druid_character(
         "raw_fields": [],
         "source": {"pdf_name": "fixture.pdf"},
     }
+    if class_levels is not None:
+        payload["class_levels"] = dict(class_levels)
     if current_resources is not None:
         payload["current_resources"] = current_resources
     return payload
@@ -133,6 +136,25 @@ def test_build_actor_infers_druid_package_traits_resources_and_wild_shape_action
     assert by_name["wild_shape"].action_cost == "action"
     assert by_name["wild_shape"].resource_cost == {"wild_shape": 1}
     assert by_name["wild_shape_revert"].action_cost == "bonus"
+
+
+def test_wild_shape_actions_not_built_when_explicit_class_levels_exclude_druid() -> None:
+    character = _druid_character(
+        level=18,
+        class_level="Druid 2 / Wizard 16",
+        class_levels={"wizard": 18},
+        traits=["wild shape"],
+    )
+
+    actor = _build_actor_from_character(character, traits_db={})
+    action_names = {action.name for action in actor.actions}
+
+    assert actor.class_levels == {"wizard": 18}
+    assert "wild shape" in actor.traits
+    assert "wild_shape" not in action_names
+    assert "wild_shape_revert" not in action_names
+    assert "wild_shape" not in actor.max_resources
+    assert "wild_shape" not in actor.resources
 
 
 def test_wild_shape_resource_lifecycle_and_revert_legality() -> None:

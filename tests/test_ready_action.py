@@ -2,10 +2,16 @@ from __future__ import annotations
 
 import random
 
+import pytest
+
 import dnd_sim.engine as engine_module
-from dnd_sim.engine import _execute_action
+from dnd_sim.engine import (
+    TurnDeclarationValidationError,
+    _execute_action,
+    _validate_declared_ready_or_error,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
-from dnd_sim.strategy_api import ReadyDeclaration
+from dnd_sim.strategy_api import DeclaredAction, ReadyDeclaration, TurnDeclaration
 
 
 def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
@@ -267,3 +273,97 @@ def test_readied_action_surge_is_illegal_off_turn_and_not_spent() -> None:
     assert "readying" in ready_actor.conditions
     assert ready_actor.resources["action_surge"] == 1
     assert resources_spent[ready_actor.actor_id].get("action_surge", 0) == 0
+
+
+def test_readied_wild_shape_action_executes_successfully() -> None:
+    ready_actor = _base_actor(actor_id="ready_actor", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+
+    ready_action = ActionDefinition(name="ready", action_type="utility", action_cost="action")
+    wild_shape = ActionDefinition(
+        name="wild_shape",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+        resource_cost={"wild_shape": 1},
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "target": "target",
+                "condition": "wild_shaped",
+                "stack_policy": "refresh",
+            }
+        ],
+        tags=["wild_shape", "shapechange"],
+    )
+    ready_actor.actions = [ready_action, wild_shape]
+    ready_actor.traits["wild shape"] = {}
+    ready_actor.resources["wild_shape"] = 1
+    ready_actor.max_resources["wild_shape"] = 1
+
+    actors = {ready_actor.actor_id: ready_actor, enemy.actor_id: enemy}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(ready_actor, enemy)
+
+    _execute_action(
+        rng=random.Random(17),
+        actor=ready_actor,
+        action=ready_action,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name="wild_shape",
+        ),
+    )
+
+    trigger_ready = getattr(engine_module, "_trigger_readied_actions")
+    trigger_ready(
+        rng=random.Random(18),
+        trigger_actor=enemy,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "wild_shaped" in ready_actor.conditions
+    assert ready_actor.resources["wild_shape"] == 0
+    assert resources_spent[ready_actor.actor_id]["wild_shape"] == 1
+    assert ready_actor.reaction_available is False
+    assert "readying" not in ready_actor.conditions
+
+
+def test_ready_declaration_rejects_bonus_action_wild_shape_response() -> None:
+    ready_actor = _base_actor(actor_id="ready_actor", team="party")
+    ready_action = ActionDefinition(name="ready", action_type="utility", action_cost="action")
+    moon_wild_shape = ActionDefinition(
+        name="wild_shape",
+        action_type="utility",
+        action_cost="bonus",
+        tags=["wild_shape", "shapechange"],
+    )
+    ready_actor.actions = [ready_action, moon_wild_shape]
+    ready_actor.traits["wild shape"] = {}
+    ready_actor.traits["combat wild shape"] = {}
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        _validate_declared_ready_or_error(
+            ready_actor,
+            TurnDeclaration(
+                action=DeclaredAction(action_name="ready"),
+                ready=ReadyDeclaration(
+                    trigger="enemy_turn_start",
+                    response_action_name="wild_shape",
+                ),
+            ),
+        )
+
+    assert exc_info.value.code == "illegal_ready_response"
+    assert exc_info.value.field == "ready.response_action_name"

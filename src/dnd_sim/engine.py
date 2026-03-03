@@ -667,9 +667,8 @@ def _druid_level_from_character(character: dict[str, Any], *, fallback_level: in
             class_levels = {}
     if not class_levels:
         class_levels = _parse_class_levels(str(character.get("class_level", "")))
-    druid_level = int(class_levels.get("druid", 0))
-    if druid_level > 0:
-        return druid_level
+    if class_levels:
+        return int(class_levels.get("druid", 0))
     return max(0, int(fallback_level))
 
 
@@ -6678,6 +6677,13 @@ def _movement_reach_transitions(
     return transitions
 
 
+def _as_readied_reaction_action(action: ActionDefinition) -> ActionDefinition:
+    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
+    if "readied_response" in normalized_tags:
+        return replace(action, action_cost="reaction")
+    return replace(action, action_cost="reaction", tags=[*action.tags, "readied_response"])
+
+
 def _readied_reach_entry_point(
     *,
     responder: ActorRuntimeState,
@@ -6693,7 +6699,7 @@ def _readied_reach_entry_point(
     if readied is None or readied.name == "ready":
         return None
 
-    reaction_action = replace(readied, action_cost="reaction")
+    reaction_action = _as_readied_reaction_action(readied)
     if responder.readied_spell_held and "spell" in reaction_action.tags:
         reaction_action = replace(reaction_action, resource_cost={})
     trigger_range = _action_range_ft(reaction_action)
@@ -10857,7 +10863,7 @@ def _trigger_readied_actions(
                 if readied is None:
                     _remove_condition(actor, "readying")
                 elif readied.name != "ready":
-                    reaction_action = replace(readied, action_cost="reaction")
+                    reaction_action = _as_readied_reaction_action(readied)
                     held_readied_spell = (
                         actor.readied_spell_held and "spell" in reaction_action.tags
                     )
@@ -10882,11 +10888,12 @@ def _trigger_readied_actions(
                             requested=[TargetRef(trigger_actor.actor_id)],
                             obstacles=obstacles,
                         )
-                        targets = [
-                            target
-                            for target in targets
-                            if target.actor_id == trigger_actor.actor_id
-                        ]
+                        if reaction_action.target_mode != "self":
+                            targets = [
+                                target
+                                for target in targets
+                                if target.actor_id == trigger_actor.actor_id
+                            ]
                         targets = _filter_targets_in_range(
                             actor,
                             reaction_action,
