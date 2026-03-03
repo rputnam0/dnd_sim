@@ -370,6 +370,19 @@ def monk_bonus_action_legal(actor: ActorRuntimeState, action: ActionDefinition) 
     return bool(actor.took_attack_action_this_turn)
 
 
+def ranger_vanish_bonus_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if action.action_cost != "bonus":
+        return True
+
+    action_key = str(action.name).strip().lower()
+    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
+    is_vanish_action = action_key == "vanish_hide" or "vanish" in normalized_tags
+    if not is_vanish_action:
+        return True
+
+    return _has_trait(actor, "vanish")
+
+
 def _remove_condition_everywhere(target: ActorRuntimeState, condition: str) -> None:
     # Local import avoids module-level circular dependency.
     from dnd_sim.engine import _remove_condition
