@@ -210,6 +210,36 @@ def test_build_actor_infers_bard_package_traits_resources_and_action() -> None:
     assert by_name["bardic_inspiration"].resource_cost == {"bardic_inspiration": 1}
 
 
+def test_build_actor_infers_bard_package_from_class_levels_only_payload() -> None:
+    character = _bard_character(level=5)
+    character.pop("class_level")
+    character["class_levels"] = {"bard": 5}
+
+    actor = _build_actor_from_character(character, traits_db={})
+    by_name = {action.name: action for action in actor.actions}
+
+    assert actor.class_levels == {"bard": 5}
+    assert "bardic inspiration" in actor.traits
+    assert actor.max_resources["bardic_inspiration"] == 4
+    assert actor.resources["bardic_inspiration"] == 4
+    assert by_name["bardic_inspiration"].resource_cost == {"bardic_inspiration": 1}
+
+
+def test_build_actor_prefers_class_levels_when_class_level_text_mismatches_for_bard() -> None:
+    character = _bard_character(level=5)
+    character["class_level"] = "Fighter 5"
+    character["class_levels"] = {"bard": 5}
+
+    actor = _build_actor_from_character(character, traits_db={})
+    by_name = {action.name: action for action in actor.actions}
+
+    assert actor.class_levels == {"bard": 5}
+    assert "bardic inspiration" in actor.traits
+    assert actor.max_resources["bardic_inspiration"] == 4
+    assert actor.resources["bardic_inspiration"] == 4
+    assert by_name["bardic_inspiration"].resource_cost == {"bardic_inspiration": 1}
+
+
 def test_bardic_inspiration_resource_lifecycle_short_and_long_rest_recovery() -> None:
     pre_font_bard = _build_actor_from_character(_bard_character(level=4), traits_db={})
     pre_font_action = next(

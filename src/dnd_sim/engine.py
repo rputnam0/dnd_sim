@@ -4689,7 +4689,9 @@ def _apply_inferred_bard_resources(
 ) -> None:
     if not _has_trait(actor, "bardic inspiration"):
         return
-    bard_level = _parse_class_level(class_level_text, "bard")
+    bard_level = int(actor.class_levels.get("bard", 0))
+    if bard_level <= 0 and not actor.class_levels:
+        bard_level = _parse_class_level(class_level_text, "bard")
     if bard_level <= 0 and not actor.class_levels:
         bard_level = int(actor.level)
     if bard_level <= 0:
