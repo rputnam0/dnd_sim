@@ -608,6 +608,46 @@ def _channel_divinity_uses_for_level(level: int) -> int:
     return 0
 
 
+_CLERIC_CHANNEL_DIVINITY_OPTION_KEYS = frozenset(
+    {
+        "destructive wrath",
+        "guided strike",
+        "oketras blessing",
+        "preserve life",
+        "radiance of the dawn",
+        "turn undead",
+        "twilight sanctuary",
+        "war gods blessing",
+    }
+)
+
+
+def _cleric_level_from_character(character: dict[str, Any], *, fallback_level: int) -> int:
+    explicit_class_levels = character.get("class_levels")
+    class_levels: dict[str, int] = {}
+    if isinstance(explicit_class_levels, dict):
+        try:
+            class_levels = normalize_class_levels(explicit_class_levels)
+        except ValueError:
+            class_levels = {}
+    if not class_levels:
+        class_levels = _parse_class_levels(str(character.get("class_level", "")))
+    cleric_level = int(class_levels.get("cleric", 0))
+    if cleric_level > 0:
+        return cleric_level
+    return max(0, int(fallback_level))
+
+
+def _channel_divinity_uses_for_actor(actor: ActorRuntimeState) -> int:
+    cleric_level = int(actor.class_levels.get("cleric", 0))
+    if cleric_level > 0:
+        return _channel_divinity_uses_for_level(cleric_level)
+    paladin_level = int(actor.class_levels.get("paladin", 0))
+    if paladin_level >= 3:
+        return 1
+    return _channel_divinity_uses_for_level(actor.level)
+
+
 def _infer_spell_save_dc(
     character: dict[str, Any],
     *,
@@ -3725,6 +3765,7 @@ def _build_cleric_channel_divinity_actions(
     cleric_save_dc = _infer_spell_save_dc(
         character, character_level=character_level, default_ability="wis"
     )
+    cleric_level = _cleric_level_from_character(character, fallback_level=character_level)
 
     actions: list[ActionDefinition] = []
 
@@ -3779,7 +3820,7 @@ def _build_cleric_channel_divinity_actions(
                     {
                         "effect_type": "heal",
                         "target": "target",
-                        "amount": str(max(1, 5 * character_level)),
+                        "amount": str(max(1, 5 * cleric_level)),
                         "apply_on": "always",
                     }
                 ],
@@ -3795,7 +3836,7 @@ def _build_cleric_channel_divinity_actions(
                 save_dc=cleric_save_dc,
                 save_ability="con",
                 half_on_save=True,
-                damage=f"2d10+{character_level}",
+                damage=f"2d10+{cleric_level}",
                 damage_type="radiant",
                 resource_cost=dict(channel_cost),
                 target_mode="all_enemies",
@@ -3817,7 +3858,7 @@ def _build_cleric_channel_divinity_actions(
                     {
                         "effect_type": "temp_hp",
                         "target": "target",
-                        "amount": f"1d6+{character_level}",
+                        "amount": f"1d6+{cleric_level}",
                         "apply_on": "always",
                     },
                     {
@@ -4878,9 +4919,16 @@ def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
 
 
 def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
-    has_channel_divinity_feature = _has_trait(actor, "channel divinity") or any(
-        _normalize_trait_name(name).startswith("channel divinity:") for name in actor.traits.keys()
-    )
+    has_channel_divinity_feature = _has_trait(actor, "channel divinity")
+    if not has_channel_divinity_feature:
+        for trait_name in actor.traits.keys():
+            normalized = _normalize_trait_name(trait_name)
+            if normalized.startswith("channel divinity:"):
+                has_channel_divinity_feature = True
+                break
+            if _trait_lookup_key(trait_name) in _CLERIC_CHANNEL_DIVINITY_OPTION_KEYS:
+                has_channel_divinity_feature = True
+                break
     if not has_channel_divinity_feature:
         return
 
@@ -4894,7 +4942,7 @@ def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
     if existing_max > 0:
         return
 
-    uses = _channel_divinity_uses_for_level(actor.level)
+    uses = _channel_divinity_uses_for_actor(actor)
     if uses <= 0:
         return
 
@@ -11235,7 +11283,7 @@ def _apply_domain_attack_roll_hooks(
     for ally in actors.values():
         if ally.team != actor.team or ally.actor_id == actor.actor_id:
             continue
-        if not ally.reaction_available:
+        if not _can_take_reaction(ally):
             continue
         if not _has_any_trait(ally, war_gods_blessing_traits):
             continue
