@@ -4739,7 +4739,9 @@ def _filter_targets_in_range(
         if distance_chebyshev(actor.position, primary.position) > action_range:
             return []
         if action.aoe_size_ft:
-            radius = float(action.aoe_size_ft)
+            radius = _coerce_positive_distance(action.aoe_size_ft)
+            if radius is None:
+                return targets
             return [
                 target
                 for target in targets
@@ -4824,6 +4826,16 @@ def _distance_2d(a: tuple[float, float, float], b: tuple[float, float, float]) -
     return math.hypot(b[0] - a[0], b[1] - a[1])
 
 
+def _coerce_positive_distance(value: Any) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(parsed) or parsed <= 0.0:
+        return None
+    return parsed
+
+
 def _in_area_template(
     *,
     actor: ActorRuntimeState,
@@ -4886,7 +4898,9 @@ def _resolve_template_targets(
     aoe_type = str(action.aoe_type or "").lower().strip()
     if not aoe_type or not action.aoe_size_ft or not primaries:
         return primaries
-    size = float(action.aoe_size_ft)
+    size = _coerce_positive_distance(action.aoe_size_ft)
+    if size is None:
+        return primaries
     victims: set[str] = set()
     for primary in primaries:
         for candidate in candidates:
@@ -5013,7 +5027,9 @@ def _resolve_targets_for_action(
 
     # Preserve legacy radius behavior when size is present without a template.
     if action.aoe_size_ft and not action.aoe_type and selected:
-        radius = float(action.aoe_size_ft)
+        radius = _coerce_positive_distance(action.aoe_size_ft)
+        if radius is None:
+            return selected
         aoe_victims: set[str] = set()
         for primary in selected:
             for cand in actors.values():
