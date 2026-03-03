@@ -8,6 +8,27 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
 backlog="${tmp_dir}/backlog.csv"
+compact_backlog="${tmp_dir}/compact_backlog.csv"
+
+assert_eq() {
+  local expected="${1}"
+  local actual="${2}"
+  local message="${3}"
+  if [ "${actual}" != "${expected}" ]; then
+    echo "${message}: expected '${expected}', got '${actual}'" >&2
+    exit 1
+  fi
+}
+
+assert_has_line() {
+  local text="${1}"
+  local line="${2}"
+  local message="${3}"
+  if ! printf '%s\n' "${text}" | grep -Fqx "${line}"; then
+    echo "${message}: missing line '${line}'" >&2
+    exit 1
+  fi
+}
 
 cat > "${backlog}" <<'CSV'
 task_id,title,wave,c4,c5,c6,deps,branch,c9,files,c11,c12,c13,c14,c15,status_old,status
@@ -18,11 +39,8 @@ TASK-READY,Ready task,1,,,,DEP-1,feat/task-ready,,src/ready.py,,,,,,not_started,
 CSV
 
 expected_ready=$'TASK-READY'
-actual_ready="$("${repo_root}/scripts/backlog_ready_tasks.sh" "${backlog}" 1)"
-if [ "${actual_ready}" != "${expected_ready}" ]; then
-  echo "backlog_ready_tasks.sh failed: expected '${expected_ready}', got '${actual_ready}'" >&2
-  exit 1
-fi
+actual_ready="$("${repo_root}/scripts/backlog_ready_tasks.sh" "${backlog}" wave1)"
+assert_eq "${expected_ready}" "${actual_ready}" "legacy backlog_ready_tasks.sh failed"
 
 summary="$("${repo_root}/scripts/wave_backlog_status.sh" "${backlog}")"
 expected_summary_lines=(
@@ -33,21 +51,47 @@ expected_summary_lines=(
   "  merged: 1"
 )
 for line in "${expected_summary_lines[@]}"; do
-  if ! printf '%s\n' "${summary}" | grep -Fqx "${line}"; then
-    echo "wave_backlog_status.sh missing expected line: ${line}" >&2
-    exit 1
-  fi
+  assert_has_line "${summary}" "${line}" "legacy wave_backlog_status.sh failed"
 done
 
-# Negative check: previous column-16 parsing misclassifies readiness.
-old_ready="$(awk -F',' '
+cat > "${compact_backlog}" <<'CSV'
+id,work_item,wave,status,branch,files,notes
+CMP-MERGED,Compact merged dep,wave1,merged,feat/cmp-merged,src/cmp_merged.py,
+CMP-READY,Compact ready task,wave1,not_started,feat/cmp-ready,src/cmp_ready.py,
+CMP-BLOCKED,Compact blocked task,wave1,blocked,feat/cmp-blocked,src/cmp_blocked.py,
+CMP-WAVE2,Compact wave 2 task,wave2,not_started,feat/cmp-wave2,src/cmp_wave2.py,
+CSV
+
+expected_compact_ready=$'CMP-READY'
+compact_ready_numeric="$("${repo_root}/scripts/backlog_ready_tasks.sh" "${compact_backlog}" 1)"
+assert_eq "${expected_compact_ready}" "${compact_ready_numeric}" "compact numeric-wave backlog_ready_tasks.sh failed"
+compact_ready_prefixed="$("${repo_root}/scripts/backlog_ready_tasks.sh" "${compact_backlog}" wave1)"
+assert_eq "${expected_compact_ready}" "${compact_ready_prefixed}" "compact wave-prefixed backlog_ready_tasks.sh failed"
+
+compact_summary="$("${repo_root}/scripts/wave_backlog_status.sh" "${compact_backlog}")"
+compact_summary_lines=(
+  "wave 1"
+  "  total: 3"
+  "  not_started: 1"
+  "  blocked: 1"
+  "  merged: 1"
+  "wave 2"
+  "  total: 1"
+  "  not_started: 1"
+)
+for line in "${compact_summary_lines[@]}"; do
+  assert_has_line "${compact_summary}" "${line}" "compact wave_backlog_status.sh failed"
+done
+
+# Negative check: previous fixed-position parsing returns incorrect compact readiness.
+old_ready_fixed_columns="$(awk -F',' '
 function trim(s) { gsub(/^ +| +$/, "", s); return s }
 NR==1 { next }
 {
   task=$1
   wave=$3
   deps=$7
-  status=$16
+  status=$17
   task_status[task]=status
   task_wave[task]=wave
   task_deps[task]=deps
@@ -72,9 +116,23 @@ END {
     if (ready) print task
   }
 }
-' "${backlog}" | sort)"
-if [ "${old_ready}" = "${expected_ready}" ]; then
-  echo "negative check failed: old column-16 parsing unexpectedly matched correct readiness" >&2
+' "${compact_backlog}" | sort)"
+if [ "${old_ready_fixed_columns}" = "${expected_compact_ready}" ]; then
+  echo "negative check failed: old fixed-column parsing unexpectedly matched compact readiness" >&2
+  exit 1
+fi
+
+# Negative check: exact-wave matching misses wave1 when target is numeric 1.
+old_ready_no_wave_normalization="$(awk -F',' -v target_wave="1" '
+NR==1 { next }
+{
+  if ($3 == target_wave && $4 == "not_started") {
+    print $1
+  }
+}
+' "${compact_backlog}" | sort)"
+if [ "${old_ready_no_wave_normalization}" = "${expected_compact_ready}" ]; then
+  echo "negative check failed: old exact wave matching unexpectedly handled wave normalization" >&2
   exit 1
 fi
 
@@ -94,20 +152,32 @@ worktree_root="${tmp_dir}/worktrees"
 mkdir -p "${worktree_root}/feat__dep1" \
          "${worktree_root}/feat__dep2" \
          "${worktree_root}/feat__task-blocked" \
-         "${worktree_root}/feat__task-ready"
+         "${worktree_root}/feat__task-ready" \
+         "${worktree_root}/feat__cmp-merged" \
+         "${worktree_root}/feat__cmp-ready" \
+         "${worktree_root}/feat__cmp-blocked" \
+         "${worktree_root}/feat__cmp-wave2"
 
-"${repo_root}/scripts/launch_wave_agents.sh" "${backlog}" 1 "${worktree_root}" "statuscol" 0 >/dev/null
+"${repo_root}/scripts/launch_wave_agents.sh" "${backlog}" wave1 "${worktree_root}" "legacy" 0 >/dev/null
 
-pid_file="${worktree_root}/_agent_logs/statuscol/pids.tsv"
+pid_file="${worktree_root}/_agent_logs/legacy/pids.tsv"
 if [ ! -f "${pid_file}" ]; then
-  echo "launch_wave_agents.sh failed: missing pid file ${pid_file}" >&2
+  echo "legacy launch_wave_agents.sh failed: missing pid file ${pid_file}" >&2
   exit 1
 fi
 
 launched_tasks="$(awk 'NR>1 { print $1 }' "${pid_file}")"
-if [ "${launched_tasks}" != "${expected_ready}" ]; then
-  echo "launch_wave_agents.sh failed: expected launch '${expected_ready}', got '${launched_tasks}'" >&2
+assert_eq "${expected_ready}" "${launched_tasks}" "legacy launch_wave_agents.sh failed"
+
+"${repo_root}/scripts/launch_wave_agents.sh" "${compact_backlog}" 1 "${worktree_root}" "compact" 0 >/dev/null
+
+compact_pid_file="${worktree_root}/_agent_logs/compact/pids.tsv"
+if [ ! -f "${compact_pid_file}" ]; then
+  echo "compact launch_wave_agents.sh failed: missing pid file ${compact_pid_file}" >&2
   exit 1
 fi
+
+compact_launched_tasks="$(awk 'NR>1 { print $1 }' "${compact_pid_file}")"
+assert_eq "${expected_compact_ready}" "${compact_launched_tasks}" "compact launch_wave_agents.sh failed"
 
 echo "wave status column checks passed"
