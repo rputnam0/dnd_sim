@@ -296,7 +296,7 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
     assert always_ki > conserve_ki
 
 
-def test_two_weapon_baseline_offhand_adds_damage_over_single_weapon(tmp_path: Path) -> None:
+def test_two_weapon_legacy_strategy_does_not_auto_spend_offhand_bonus_action(tmp_path: Path) -> None:
     def build_dual_wielder(character_id: str, *, include_offhand: bool) -> dict:
         fighter = build_character(
             character_id=character_id,
@@ -378,10 +378,10 @@ def test_two_weapon_baseline_offhand_adds_damage_over_single_weapon(tmp_path: Pa
         run_label="single_weapon",
     )
 
-    assert dual_mean > single_mean + 0.6
+    assert dual_mean == pytest.approx(single_mean, abs=1e-9)
 
 
-def test_rage_activation_persists_after_attack_then_bonus_activation(tmp_path: Path) -> None:
+def test_rage_is_not_auto_activated_without_declared_bonus_action(tmp_path: Path) -> None:
     party = [
         {
             "character_id": "barb",
@@ -477,11 +477,11 @@ def test_rage_activation_persists_after_attack_then_bonus_activation(tmp_path: P
 
     trial = artifacts.trial_results[0]
     assert trial.rounds == 2
-    assert trial.resources_spent["barb"].get("rage", 0) == 1
-    assert "raging" in trial.state_snapshots[-1]["party"]["barb"]["conditions"]
+    assert trial.resources_spent["barb"].get("rage", 0) == 0
+    assert "raging" not in trial.state_snapshots[-1]["party"]["barb"]["conditions"]
 
 
-def test_monk_flurry_does_not_stack_with_signature_attack_pattern(tmp_path: Path) -> None:
+def test_monk_flurry_is_not_auto_spent_without_declared_bonus_action(tmp_path: Path) -> None:
     monk = build_character(
         character_id="monk",
         name="Monk",
@@ -521,7 +521,7 @@ def test_monk_flurry_does_not_stack_with_signature_attack_pattern(tmp_path: Path
         run_id="monk_flurry",
     ).summary.to_dict()
 
-    assert summary["per_actor_resources_spent"]["monk"]["ki"]["mean"] == pytest.approx(1.0)
+    assert summary["per_actor_resources_spent"]["monk"]["ki"]["mean"] == pytest.approx(0.0)
 
 
 def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
@@ -1353,8 +1353,26 @@ def test_same_strategy_different_tactical_offhand_bonus_action_choices_change_da
     )
     hero["traits"] = ["Extra Attack", "Two-Weapon Fighting"]
     hero["attacks"] = [
-        {"name": "Longsword", "to_hit": 8, "damage": "1d8+4", "damage_type": "slashing"},
-        {"name": "Shortsword", "to_hit": 8, "damage": "1d6+4", "damage_type": "piercing"},
+        {
+            "attack_profile_id": "hero_main_profile",
+            "weapon_id": "hero_main_weapon",
+            "item_id": "hero_main_item",
+            "name": "Mainhand Shortsword",
+            "to_hit": 8,
+            "damage": "1d8+4",
+            "damage_type": "slashing",
+            "weapon_properties": ["light", "finesse"],
+        },
+        {
+            "attack_profile_id": "hero_off_profile",
+            "weapon_id": "hero_off_weapon",
+            "item_id": "hero_off_item",
+            "name": "Offhand Shortsword",
+            "to_hit": 8,
+            "damage": "1d6+4",
+            "damage_type": "piercing",
+            "weapon_properties": ["light", "finesse"],
+        },
     ]
     enemies = [build_enemy(enemy_id="boss", name="Boss", hp=500, ac=13, to_hit=5, damage="1d8+2")]
 
