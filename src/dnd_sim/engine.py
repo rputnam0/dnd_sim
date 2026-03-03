@@ -739,7 +739,9 @@ def _class_levels_from_character_payload(character: dict[str, Any]) -> dict[str,
     explicit_class_levels = character.get("class_levels")
     if isinstance(explicit_class_levels, dict):
         try:
-            return normalize_class_levels(explicit_class_levels)
+            class_levels = normalize_class_levels(explicit_class_levels)
+            if class_levels:
+                return class_levels
         except ValueError:
             pass
     return _parse_class_levels(str(character.get("class_level", "")))
