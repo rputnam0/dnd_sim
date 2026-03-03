@@ -443,6 +443,79 @@ def test_off_turn_shield_after_bonus_action_spell_is_legal() -> None:
     assert defender.reaction_available is False
 
 
+def test_off_turn_shield_reaction_matches_canonicalized_name() -> None:
+    rng = _FixedRng([9, 4])
+    attacker = _base_actor(actor_id="attacker", team="enemy")
+    defender = _base_actor(actor_id="defender", team="party")
+    defender.resources = {"spell_slot_1": 2}
+    defender.actions = [
+        ActionDefinition(
+            name="Shield [R]",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="self",
+            tags=["reaction"],
+        )
+    ]
+
+    bonus_spell = ActionDefinition(
+        name="healing_word",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "bolstered", "target": "source"}],
+    )
+    attack = ActionDefinition(
+        name="longsword",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=7,
+        damage="1d8",
+        damage_type="slashing",
+    )
+
+    actors = {attacker.actor_id: attacker, defender.actor_id: defender}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(attacker, defender)
+
+    assert _spend_action_resource_cost(defender, bonus_spell, resources_spent) is True
+    _execute_action(
+        rng=random.Random(13),
+        actor=defender,
+        action=bonus_spell,
+        targets=[defender],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:defender",
+    )
+
+    _execute_action(
+        rng=rng,
+        actor=attacker,
+        action=attack,
+        targets=[defender],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:attacker",
+    )
+
+    assert defender.hp == defender.max_hp
+    assert defender.resources["spell_slot_1"] == 0
+    assert defender.reaction_available is False
+
+
 def test_off_turn_shield_in_oa_flow_after_bonus_action_spell_is_legal() -> None:
     rng = _FixedRng([9, 4])
     caster = _base_actor(actor_id="caster", team="party")
@@ -854,6 +927,140 @@ def test_off_turn_counterspell_after_bonus_action_spell_is_legal() -> None:
     assert "blessed" not in ally.conditions
     assert counterspeller.resources["spell_slot_3"] == 0
     assert counterspeller.reaction_available is False
+
+
+def test_counterspell_reaction_matches_canonicalized_name_id() -> None:
+    timing_engine = _create_combat_timing_engine()
+
+    caster = _base_actor(actor_id="caster", team="party")
+    ally = _base_actor(actor_id="ally", team="party")
+    counterspeller = _base_actor(actor_id="counterspeller", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    counterspeller.position = (0.0, 30.0, 0.0)
+    counterspeller.actions = [
+        ActionDefinition(
+            name="Counterspell [R]",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="single_enemy",
+            tags=["spell"],
+        )
+    ]
+    counterspeller.resources = {"spell_slot_3": 1}
+
+    cast_spell = ActionDefinition(
+        name="greater_blessing",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        resource_cost={"spell_slot_3": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "blessed", "target": "target"}],
+    )
+
+    actors = {
+        caster.actor_id: caster,
+        ally.actor_id: ally,
+        counterspeller.actor_id: counterspeller,
+    }
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        caster, ally, counterspeller
+    )
+    observed: list[str] = []
+
+    def _capture_window(event: ReactionWindowOpenedEvent) -> None:
+        if event.window == "counterspell":
+            observed.append("counterspell_window")
+
+    timing_engine.subscribe(ReactionWindowOpenedEvent, _capture_window, name="capture_window")
+
+    _execute_action(
+        rng=random.Random(31),
+        actor=caster,
+        action=cast_spell,
+        targets=[ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        timing_engine=timing_engine,
+        round_number=1,
+        turn_token="1:caster",
+    )
+
+    assert observed == ["counterspell_window"]
+    assert "blessed" not in ally.conditions
+    assert counterspeller.resources["spell_slot_3"] == 0
+    assert counterspeller.reaction_available is False
+
+
+def test_counterspell_reaction_does_not_match_partial_identifier() -> None:
+    timing_engine = _create_combat_timing_engine()
+
+    caster = _base_actor(actor_id="caster", team="party")
+    ally = _base_actor(actor_id="ally", team="party")
+    counterspeller = _base_actor(actor_id="counterspeller", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    counterspeller.position = (0.0, 30.0, 0.0)
+    counterspeller.actions = [
+        ActionDefinition(
+            name="Counterspell Ward",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="single_enemy",
+            tags=["spell"],
+        )
+    ]
+    counterspeller.resources = {"spell_slot_3": 1}
+
+    cast_spell = ActionDefinition(
+        name="greater_blessing",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        resource_cost={"spell_slot_3": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "blessed", "target": "target"}],
+    )
+
+    actors = {
+        caster.actor_id: caster,
+        ally.actor_id: ally,
+        counterspeller.actor_id: counterspeller,
+    }
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        caster, ally, counterspeller
+    )
+    observed: list[str] = []
+
+    def _capture_window(event: ReactionWindowOpenedEvent) -> None:
+        if event.window == "counterspell":
+            observed.append("counterspell_window")
+
+    timing_engine.subscribe(ReactionWindowOpenedEvent, _capture_window, name="capture_window")
+
+    _execute_action(
+        rng=random.Random(32),
+        actor=caster,
+        action=cast_spell,
+        targets=[ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        timing_engine=timing_engine,
+        round_number=1,
+        turn_token="1:caster",
+    )
+
+    assert observed == []
+    assert "blessed" in ally.conditions
+    assert counterspeller.resources["spell_slot_3"] == 1
+    assert counterspeller.reaction_available is True
 
 
 def test_casting_new_concentration_spell_ends_previous_immediately() -> None:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from dnd_sim.engine import (
+    _action_matches_reaction_spell_id,
     _action_available,
     _break_concentration,
     _build_spell_actions,
@@ -42,6 +43,31 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
         save_mods={"str": 0, "dex": 2, "con": 1, "int": 0, "wis": 0, "cha": 0},
         actions=[],
     )
+
+
+def test_reaction_spell_id_matcher_canonicalizes_names_and_tags() -> None:
+    canonical_by_name = ActionDefinition(
+        name="Counterspell [R]",
+        action_type="utility",
+        action_cost="reaction",
+        tags=["spell"],
+    )
+    canonical_by_tag = ActionDefinition(
+        name="arcane_barrier",
+        action_type="utility",
+        action_cost="reaction",
+        tags=["reaction", "shield_spell"],
+    )
+    near_match = ActionDefinition(
+        name="counterspell ward",
+        action_type="utility",
+        action_cost="reaction",
+        tags=["spell"],
+    )
+
+    assert _action_matches_reaction_spell_id(canonical_by_name, spell_id="counterspell") is True
+    assert _action_matches_reaction_spell_id(canonical_by_tag, spell_id="shield") is True
+    assert _action_matches_reaction_spell_id(near_match, spell_id="counterspell") is False
 
 
 def test_counterspell_higher_level_spell_requires_ability_check() -> None:
