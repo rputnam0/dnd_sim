@@ -17,6 +17,8 @@ def _setup_campaign_env(
     encounters: list[dict[str, Any]],
     termination_rules: dict[str, Any] | None = None,
     assumption_overrides: dict[str, Any] | None = None,
+    exploration: dict[str, Any] | None = None,
+    resource_policy: dict[str, Any] | None = None,
 ) -> Path:
     db_dir = tmp_path / "db" / "characters"
     db_dir.mkdir(parents=True, exist_ok=True)
@@ -55,6 +57,7 @@ def _setup_campaign_env(
         "encounters": encounters,
         "initiative_mode": "individual",
         "battlefield": {},
+        "exploration": exploration or {},
         "termination_rules": termination_rules
         or {
             "party_defeat": "all_unconscious_or_dead",
@@ -78,7 +81,8 @@ def _setup_campaign_env(
                 "class_name": "AlwaysUseSignatureAbilityStrategy",
             },
         ],
-        "resource_policy": {
+        "resource_policy": resource_policy
+        or {
             "mode": "combat_and_utility",
             "burst_round_threshold": 1,
         },
@@ -224,6 +228,166 @@ def test_conditions_and_hp_persist_between_encounters_with_snapshots(tmp_path: P
     assert "poisoned" in first["party"]["hero"]["conditions"]
     assert second["party"]["hero"]["hp"] == 17
     assert "poisoned" in second["party"]["hero"]["conditions"]
+
+
+def test_long_rest_and_exploration_legs_apply_and_remain_deterministic(tmp_path: Path) -> None:
+    party = [build_character("hero", "Hero", 20, 15, 8, "1d8+3", ki=2)]
+    toxic_scout = {
+        "identity": {"enemy_id": "toxic_scout", "name": "Toxic Scout", "team": "enemy"},
+        "stat_block": {
+            "max_hp": 1,
+            "ac": 12,
+            "initiative_mod": 100,
+            "dex_mod": 0,
+            "con_mod": 0,
+            "save_mods": {"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+        },
+        "actions": [
+            {
+                "name": "toxic_burst",
+                "action_type": "save",
+                "save_dc": 30,
+                "save_ability": "con",
+                "half_on_save": False,
+                "damage": "0",
+                "damage_type": "poison",
+                "target_mode": "all_enemies",
+                "effects": [
+                    {
+                        "effect_type": "apply_condition",
+                        "apply_on": "save_fail",
+                        "target": "target",
+                        "condition": "poisoned",
+                        "duration_rounds": 5,
+                    },
+                    {
+                        "effect_type": "damage",
+                        "apply_on": "always",
+                        "target": "source",
+                        "damage": "20",
+                        "damage_type": "force",
+                    },
+                ],
+                "resource_cost": {},
+            }
+        ],
+        "bonus_actions": [],
+        "reactions": [],
+        "legendary_actions": [],
+        "lair_actions": [],
+        "resources": {},
+        "damage_resistances": [],
+        "damage_immunities": [],
+        "damage_vulnerabilities": [],
+        "condition_immunities": [],
+        "script_hooks": {},
+    }
+    mop_up = build_enemy(enemy_id="mop_up", name="Mop Up", hp=1, ac=12, to_hit=0, damage="0")
+
+    scenario_path = _setup_campaign_env(
+        tmp_path,
+        party=party,
+        enemies=[toxic_scout, mop_up],
+        encounters=[
+            {"enemies": ["toxic_scout"], "long_rest_after": True, "checkpoint": "after_scout"},
+            {"enemies": ["mop_up"], "checkpoint": "after_mop_up"},
+        ],
+        exploration={"legs": [{"hp_attrition": 2, "resource_attrition": {"ki": 1}}]},
+    )
+    loaded, db, registry = _load_for_run(scenario_path)
+    trial_a = run_simulation(
+        loaded, db, {}, registry, trials=1, seed=17, run_id="long_rest_exploration_a"
+    ).trial_results[0]
+    trial_b = run_simulation(
+        loaded, db, {}, registry, trials=1, seed=17, run_id="long_rest_exploration_b"
+    ).trial_results[0]
+
+    first_snapshot = trial_a.state_snapshots[0]
+    assert first_snapshot["checkpoint_id"] == "after_scout"
+    assert first_snapshot["party"]["hero"]["hp"] == 18
+    assert first_snapshot["party"]["hero"]["conditions"] == []
+    assert first_snapshot["party"]["hero"]["resources"]["ki"] == 1
+    assert trial_a.resources_spent["hero"]["ki"] == 1
+
+    assert trial_a.state_snapshots == trial_b.state_snapshots
+    assert trial_a.resources_spent == trial_b.resources_spent
+    assert trial_a.remaining_hp == trial_b.remaining_hp
+
+
+def test_long_rest_after_does_not_restore_dead_party_members(tmp_path: Path) -> None:
+    party = [
+        build_character("fallen", "Fallen", 10, 15, 6, "1d8+3"),
+        build_character("survivor", "Survivor", 30, 15, 6, "1d8+3"),
+    ]
+    executioner = {
+        "identity": {"enemy_id": "executioner", "name": "Executioner", "team": "enemy"},
+        "stat_block": {
+            "max_hp": 10,
+            "ac": 12,
+            "initiative_mod": 100,
+            "dex_mod": 0,
+            "con_mod": 0,
+            "save_mods": {"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+        },
+        "actions": [
+            {
+                "name": "basic",
+                "action_type": "save",
+                "save_dc": 30,
+                "save_ability": "con",
+                "half_on_save": False,
+                "damage": "25",
+                "damage_type": "necrotic",
+                "target_mode": "all_enemies",
+                "effects": [
+                    {
+                        "effect_type": "damage",
+                        "apply_on": "always",
+                        "target": "source",
+                        "damage": "999",
+                        "damage_type": "force",
+                    }
+                ],
+                "resource_cost": {},
+            }
+        ],
+        "bonus_actions": [],
+        "reactions": [],
+        "legendary_actions": [],
+        "lair_actions": [],
+        "resources": {},
+        "damage_resistances": [],
+        "damage_immunities": [],
+        "damage_vulnerabilities": [],
+        "condition_immunities": [],
+        "script_hooks": {},
+    }
+    mop_up = build_enemy(enemy_id="mop_up", name="Mop Up", hp=1, ac=12, to_hit=0, damage="0")
+
+    scenario_path = _setup_campaign_env(
+        tmp_path,
+        party=party,
+        enemies=[executioner, mop_up],
+        encounters=[
+            {
+                "enemies": ["executioner"],
+                "long_rest_after": True,
+                "checkpoint": "after_executioner",
+            },
+            {"enemies": ["mop_up"], "checkpoint": "after_mop_up"},
+        ],
+    )
+    loaded, db, registry = _load_for_run(scenario_path)
+    trial = run_simulation(
+        loaded, db, {}, registry, trials=1, seed=101, run_id="long_rest_dead_guard"
+    ).trial_results[0]
+
+    first_snapshot = trial.state_snapshots[0]
+    assert first_snapshot["checkpoint_id"] == "after_executioner"
+    assert first_snapshot["party"]["fallen"]["dead"] is True
+    assert first_snapshot["party"]["fallen"]["hp"] == 0
+    assert first_snapshot["party"]["survivor"]["dead"] is False
+    assert first_snapshot["party"]["survivor"]["hp"] == 30
 
 
 def test_party_defeat_rule_variant_any_unconscious_changes_outcome(tmp_path: Path) -> None:

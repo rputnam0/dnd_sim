@@ -97,6 +97,51 @@ def test_encounter_branch_target_index_must_be_within_encounter_bounds(tmp_path:
     assert "Encounter branch target index out of bounds" in message
 
 
+def test_long_rest_after_is_loaded_from_encounter_schema(tmp_path: Path) -> None:
+    payload = json.loads(SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["enemies"] = []
+    payload["encounters"] = [{"enemies": ["past_pylon"], "long_rest_after": True}]
+
+    base = tmp_path / "encounters" / "x"
+    (base / "scenarios").mkdir(parents=True, exist_ok=True)
+    (base / "enemies").mkdir(parents=True, exist_ok=True)
+
+    src = ROOT / "river_line" / "encounters" / "ley_heart" / "enemies" / "past_pylon.json"
+    (base / "enemies" / "past_pylon.json").write_text(src.read_text(encoding="utf-8"))
+
+    scenario_path = base / "scenarios" / "long_rest_after.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    assert loaded.config.encounters[0].long_rest_after is True
+    assert loaded.config.encounters[0].short_rest_after is False
+
+
+def test_encounter_cannot_set_both_short_and_long_rest_after(tmp_path: Path) -> None:
+    payload = json.loads(SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["enemies"] = []
+    payload["encounters"] = [
+        {"enemies": ["past_pylon"], "short_rest_after": True, "long_rest_after": True}
+    ]
+
+    base = tmp_path / "encounters" / "x"
+    (base / "scenarios").mkdir(parents=True, exist_ok=True)
+    (base / "enemies").mkdir(parents=True, exist_ok=True)
+
+    src = ROOT / "river_line" / "encounters" / "ley_heart" / "enemies" / "past_pylon.json"
+    (base / "enemies" / "past_pylon.json").write_text(src.read_text(encoding="utf-8"))
+
+    scenario_path = base / "scenarios" / "invalid_rest_flags.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_scenario(scenario_path)
+
+    message = str(exc.value)
+    assert "Invalid scenario schema" in message
+    assert "short_rest_after and long_rest_after" in message
+
+
 def test_default_results_dir_and_descriptive_folder_name(tmp_path: Path) -> None:
     results_root = default_results_dir()
     assert results_root.as_posix().endswith("/river_line/results")

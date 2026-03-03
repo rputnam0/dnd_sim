@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 from dnd_sim.characters import (
     validate_class_level_representation,
@@ -258,6 +258,7 @@ class CustomSimulationConfig(BaseModel):
 class EncounterConfig(BaseModel):
     enemies: list[str] = Field(default_factory=list)
     short_rest_after: bool = False
+    long_rest_after: bool = False
     branches: dict[str, int] = Field(default_factory=dict)
     checkpoint: str | None = None
 
@@ -271,6 +272,12 @@ class EncounterConfig(BaseModel):
                 raise ValueError("Encounter branch target index must be >= 0")
             normalized[str(key)] = idx
         return normalized
+
+    @model_validator(mode="after")
+    def validate_rest_flags(self) -> "EncounterConfig":
+        if self.short_rest_after and self.long_rest_after:
+            raise ValueError("Encounter cannot set both short_rest_after and long_rest_after")
+        return self
 
 
 class ScenarioConfig(BaseModel):
@@ -313,6 +320,34 @@ class ScenarioConfig(BaseModel):
                         f"max allowed {encounter_count - 1}"
                     )
         return encounters
+
+    @field_validator("resource_policy")
+    @classmethod
+    def validate_resource_policy(cls, resource_policy: dict[str, Any]) -> dict[str, Any]:
+        normalized = dict(resource_policy)
+        short_rest_healing = normalized.get("short_rest_healing")
+        if short_rest_healing is not None:
+            try:
+                healing = int(short_rest_healing)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("resource_policy.short_rest_healing must be an integer") from exc
+            if healing < 0:
+                raise ValueError("resource_policy.short_rest_healing must be >= 0")
+            normalized["short_rest_healing"] = healing
+        return normalized
+
+    @field_validator("exploration")
+    @classmethod
+    def validate_exploration(cls, exploration: dict[str, Any]) -> dict[str, Any]:
+        legs = exploration.get("legs")
+        if legs is None:
+            return exploration
+        if not isinstance(legs, list):
+            raise ValueError("exploration.legs must be a list")
+        for index, leg in enumerate(legs):
+            if not isinstance(leg, dict):
+                raise ValueError(f"exploration.legs[{index}] must be an object")
+        return exploration
 
 
 class LoadedScenario(BaseModel):
