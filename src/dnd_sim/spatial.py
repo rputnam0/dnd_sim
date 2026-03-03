@@ -223,6 +223,64 @@ def _hazard_view_context(
     return in_magical_darkness, obscurement_rank
 
 
+def _coerce_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "off"}:
+            return False
+    return default
+
+
+def _coerce_radius(hazard: dict[str, Any], default: float = 15.0) -> float:
+    raw = hazard.get("radius", hazard.get("radius_ft", default))
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return float(default)
+
+
+def _hazard_contains_position(hazard: dict[str, Any], pos: Position) -> bool:
+    min_pos = _coerce_position(hazard.get("min_pos") or hazard.get("min"), default=pos)
+    max_pos = _coerce_position(hazard.get("max_pos") or hazard.get("max"), default=pos)
+    has_box = bool(
+        isinstance(hazard.get("min_pos") or hazard.get("min"), (list, tuple))
+        and isinstance(hazard.get("max_pos") or hazard.get("max"), (list, tuple))
+    )
+    if has_box:
+        lower = (
+            min(min_pos[0], max_pos[0]),
+            min(min_pos[1], max_pos[1]),
+            min(min_pos[2], max_pos[2]),
+        )
+        upper = (
+            max(min_pos[0], max_pos[0]),
+            max(min_pos[1], max_pos[1]),
+            max(min_pos[2], max_pos[2]),
+        )
+        return (
+            lower[0] <= pos[0] <= upper[0]
+            and lower[1] <= pos[1] <= upper[1]
+            and lower[2] <= pos[2] <= upper[2]
+        )
+
+    center = _coerce_position(hazard.get("position"), default=(0.0, 0.0, 0.0))
+    radius = _coerce_radius(hazard)
+    return distance_chebyshev(pos, center) <= radius
+
+
+def _hazard_obscures_vision(hazard: dict[str, Any]) -> bool:
+    hazard_type = str(
+        hazard.get("zone_type") or hazard.get("type") or hazard.get("hazard_type") or ""
+    ).lower()
+    if _coerce_bool(hazard.get("obscures_vision"), default=False):
+        return True
+    return hazard_type in {"magical_darkness", "cloud", "obscuring_zone", "obscuring"}
+
+
 def can_see(
     observer_pos: Position,
     target_pos: Position,
@@ -276,6 +334,16 @@ def can_see(
 
     if in_magical_darkness:
         return False
+
+    for hazard in active_hazards_rows:
+        if not isinstance(hazard, dict):
+            continue
+        if not _hazard_obscures_vision(hazard):
+            continue
+        if _hazard_contains_position(hazard, observer_pos) or _hazard_contains_position(
+            hazard, target_pos
+        ):
+            return False
 
     if effective_obscurement_rank >= 2:
         return False
