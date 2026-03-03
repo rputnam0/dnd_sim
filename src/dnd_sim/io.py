@@ -5,6 +5,7 @@ import importlib
 import importlib.util
 import json
 import re
+from functools import lru_cache
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -40,6 +41,154 @@ _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES = {
     "replace_attack",
     "replacement_attack",
 }
+_NON_CLASS_CONTENT_ID_RE = re.compile(
+    r"^(?P<kind>[a-z_]+)\s*:\s*(?P<name>[^|]+?)\s*\|\s*(?P<source>[a-z0-9_]+)\s*$",
+    flags=re.IGNORECASE,
+)
+_NON_CLASS_CONTENT_SLUG_RE = re.compile(r"[^a-z0-9]+")
+_NON_CLASS_CONTENT_KINDS = frozenset({"feat", "species", "background"})
+# 2024 core source tags should be excluded from the 2014 content catalog.
+_EDITION_ONE_SOURCE_IDS = frozenset({"XPHB", "XDMG", "XMM"})
+
+
+def _non_class_raw_root_dir() -> Path:
+    return Path(__file__).resolve().parents[2] / "db" / "raw" / "5etools"
+
+
+def _slugify_non_class_content_name(name: str) -> str:
+    return _NON_CLASS_CONTENT_SLUG_RE.sub("_", str(name).strip().lower()).strip("_")
+
+
+def _is_2014_non_class_source(*, row: dict[str, Any], source: str) -> bool:
+    edition = str(row.get("edition", "")).strip().lower()
+    if edition == "one":
+        return False
+    if source in _EDITION_ONE_SOURCE_IDS:
+        return False
+    return True
+
+
+def _canonical_non_class_content_id(*, kind: str, name: str, source: str) -> str:
+    slug = _slugify_non_class_content_name(name)
+    source_code = str(source).strip().upper()
+    if not slug or not source_code:
+        raise ValueError("invalid content_refs: content references must include name and source")
+    return f"{kind}:{slug}|{source_code}"
+
+
+def _load_non_class_json_rows(raw_path: Path, key: str) -> list[dict[str, Any]]:
+    if not raw_path.exists():
+        return []
+    try:
+        payload = json.loads(raw_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    rows = payload.get(key, [])
+    if not isinstance(rows, list):
+        return []
+    return [row for row in rows if isinstance(row, dict)]
+
+
+@lru_cache(maxsize=4)
+def _load_non_class_content_catalog(raw_root: str | None = None) -> dict[str, dict[str, str]]:
+    root = Path(raw_root) if raw_root else _non_class_raw_root_dir()
+    catalog: dict[str, dict[str, str]] = {}
+
+    def add_rows(rows: list[dict[str, Any]], *, kind: str) -> None:
+        for row in rows:
+            name = str(row.get("name", "")).strip()
+            source = str(row.get("source", "")).strip().upper()
+            if not name or not source:
+                continue
+            if not _is_2014_non_class_source(row=row, source=source):
+                continue
+            content_id = _canonical_non_class_content_id(
+                kind=kind,
+                name=name,
+                source=source,
+            )
+            catalog.setdefault(
+                content_id,
+                {
+                    "content_id": content_id,
+                    "kind": kind,
+                    "name": name,
+                    "source": source,
+                },
+            )
+
+    add_rows(_load_non_class_json_rows(root / "feats.json", "feat"), kind="feat")
+    add_rows(_load_non_class_json_rows(root / "races" / "races.json", "race"), kind="species")
+    add_rows(
+        _load_non_class_json_rows(root / "backgrounds" / "backgrounds.json", "background"),
+        kind="background",
+    )
+    return catalog
+
+
+def _normalize_content_reference_id(raw_reference: Any) -> str:
+    text = str(raw_reference or "").strip()
+    if not text:
+        raise ValueError("invalid content_refs: content references must not be empty")
+
+    match = _NON_CLASS_CONTENT_ID_RE.fullmatch(text)
+    if match is None:
+        raise ValueError(
+            "invalid content_refs: content_refs entries must match '<kind>:<name>|<source>'"
+        )
+
+    kind = str(match.group("kind")).strip().lower()
+    if kind not in _NON_CLASS_CONTENT_KINDS:
+        raise ValueError(
+            "invalid content_refs: unsupported kind "
+            f"'{kind}' (supported: {', '.join(sorted(_NON_CLASS_CONTENT_KINDS))})"
+        )
+
+    source = str(match.group("source")).strip().upper()
+    if source in _EDITION_ONE_SOURCE_IDS:
+        raise ValueError(f"invalid content_refs: source '{source}' is not part of the 2014 catalog")
+
+    return _canonical_non_class_content_id(
+        kind=kind,
+        name=str(match.group("name")),
+        source=source,
+    )
+
+
+def _normalize_character_content_references(
+    *,
+    payload: dict[str, Any],
+    content_catalog: dict[str, dict[str, str]],
+) -> dict[str, Any]:
+    raw_refs = payload.get("content_refs")
+    if raw_refs is None:
+        return payload
+    if not isinstance(raw_refs, list):
+        raise ValueError(
+            "invalid content_refs: content_refs must be a list of '<kind>:<name>|<source>' values"
+        )
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for idx, raw_reference in enumerate(raw_refs):
+        content_id = _normalize_content_reference_id(raw_reference)
+        if content_id in seen:
+            raise ValueError(
+                f"invalid content_refs: duplicate content reference '{content_id}' at "
+                f"content_refs[{idx}]"
+            )
+        if content_id not in content_catalog:
+            raise ValueError(
+                f"invalid content_refs: unknown content reference '{content_id}' at "
+                f"content_refs[{idx}]"
+            )
+        seen.add(content_id)
+        normalized.append(content_id)
+
+    normalized.sort()
+    payload["content_refs"] = normalized
+    payload["content_reference_details"] = [dict(content_catalog[row]) for row in normalized]
+    return payload
 
 
 def _spell_root_dir() -> Path:
@@ -638,6 +787,7 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
     from .db import execute_query
 
     out: dict[str, dict[str, Any]] = {}
+    non_class_content_catalog = _load_non_class_content_catalog(str(_non_class_raw_root_dir()))
 
     def _normalize_character_progression(
         *,
@@ -658,6 +808,10 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
         )
         if prereq_errors:
             payload["multiclass_prerequisite_errors"] = prereq_errors
+        payload = _normalize_character_content_references(
+            payload=payload,
+            content_catalog=non_class_content_catalog,
+        )
         return payload
 
     # 1. Base load from SQLite
@@ -671,7 +825,10 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
                 )
         except json.JSONDecodeError:
             pass
-        except ValueError:
+        except ValueError as exc:
+            if str(exc).startswith("invalid content_refs"):
+                character_id = str(row.get("character_id", "<unknown_character_id>"))
+                raise ValueError(f"invalid content_refs for {character_id}: {exc}") from exc
             # Keep loading when a persisted SQLite row has malformed class progression data.
             pass
 
@@ -689,6 +846,8 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
                         payload=payload,
                     )
                 except ValueError as exc:
+                    if str(exc).startswith("invalid content_refs"):
+                        raise ValueError(f"invalid content_refs for {character_id}: {exc}") from exc
                     raise ValueError(f"invalid class_level for {character_id}: {exc}") from exc
 
     return out
