@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 import json
+import random
 from pathlib import Path
 
+from dnd_sim.engine import (
+    _action_available,
+    _build_actor_from_enemy,
+    _execute_action,
+    _roll_recharge_for_actor,
+)
 from dnd_sim.mechanics_schema import (
     EXECUTABLE_EFFECT_TYPES,
     build_mechanics_coverage_report,
     validate_rule_mechanics_payload,
 )
+from dnd_sim.io import EnemyConfig
+from dnd_sim.models import ActorRuntimeState
 from dnd_sim.monster_backfill import backfill_monster_payload
 from dnd_sim.parse_monsters import parse_monsters
 
@@ -187,3 +196,102 @@ def test_backfill_monster_payload_preserves_existing_enemy_schema() -> None:
     migrated = backfill_monster_payload(modern)
     assert migrated["identity"]["enemy_id"] == "modern_one"
     assert migrated["actions"][0]["name"] == "slam"
+
+
+def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
+    return ActorRuntimeState(
+        actor_id=actor_id,
+        team=team,
+        name=actor_id,
+        max_hp=40,
+        hp=40,
+        temp_hp=0,
+        ac=12,
+        initiative_mod=0,
+        str_mod=0,
+        dex_mod=0,
+        con_mod=0,
+        int_mod=0,
+        wis_mod=0,
+        cha_mod=0,
+        save_mods={"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+        actions=[],
+    )
+
+
+class _FixedSixRng:
+    def randint(self, _a: int, _b: int) -> int:
+        return 6
+
+
+def test_monster_pipeline_extracts_innate_spells_and_runtime_uses_recharge_and_limits() -> None:
+    raw_text = """
+Monsters (A)
+Spell Tyrant
+Large fiend, lawful evil
+Armor Class 16 (natural armor)
+Hit Points 120 (16d10 + 32)
+Speed 30 ft.
+STR DEX CON INT WIS CHA
+18 (+4) 12 (+1) 15 (+2) 16 (+3) 14 (+2) 18 (+4)
+Challenge 12 (8,400 XP)
+Legendary Resistance (3/Day). If the tyrant fails a saving throw, it can choose to succeed instead.
+Innate Spellcasting. The tyrant's innate spellcasting ability is Charisma (spell save DC 16, +8 to hit with spell attacks). It can innately cast the following spells: At will: magic missile 1/day each: fireball
+Actions
+Arc Bolt (Recharge 6). Ranged Spell Attack: +8 to hit, range 120 ft., one target. Hit: 14 (4d6) force damage.
+Appendix PH-A:
+""".strip()
+
+    monsters = parse_monsters(raw_text)
+    assert len(monsters) == 1
+    monster_payload = monsters[0]
+    assert monster_payload["resources"]["legendary_resistance"] == 3
+    assert monster_payload["innate_spellcasting"][0]["spell"] == "Magic Missile"
+    assert monster_payload["innate_spellcasting"][1]["spell"] == "Fireball"
+    assert monster_payload["innate_spellcasting"][1]["max_uses"] == 1
+
+    enemy = EnemyConfig.model_validate(monster_payload)
+    actor = _build_actor_from_enemy(enemy)
+
+    arc_bolt = next(action for action in actor.actions if action.name == "arc_bolt")
+    fireball = next(action for action in actor.actions if action.name == "Fireball")
+    target = _base_actor(actor_id="hero", team="party")
+
+    actors = {actor.actor_id: actor, target.actor_id: target}
+    damage_dealt = {actor.actor_id: 0, target.actor_id: 0}
+    damage_taken = {actor.actor_id: 0, target.actor_id: 0}
+    threat_scores = {actor.actor_id: 0, target.actor_id: 0}
+    resources_spent = {actor.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=random.Random(11),
+        actor=actor,
+        action=fireball,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    actor.per_action_uses[fireball.name] = actor.per_action_uses.get(fireball.name, 0) + 1
+    assert _action_available(actor, fireball) is False
+
+    _execute_action(
+        rng=random.Random(12),
+        actor=actor,
+        action=arc_bolt,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    actor.recharge_ready[arc_bolt.name] = False
+    assert _action_available(actor, arc_bolt) is False
+
+    _roll_recharge_for_actor(_FixedSixRng(), actor)
+    assert actor.recharge_ready["arc_bolt"] is True
