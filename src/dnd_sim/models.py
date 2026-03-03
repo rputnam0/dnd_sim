@@ -261,6 +261,9 @@ class ActorRuntimeState:
     concentrated_spell: str | None = None
     readied_action_name: str | None = None
     readied_trigger: str | None = None
+    readied_reaction_reserved: bool = False
+    readied_spell_slot_level: int | None = None
+    readied_spell_held: bool = False
     concentrated_spell_level: int | None = None
     class_levels: dict[str, int] = field(default_factory=dict)
     level: int = 1
