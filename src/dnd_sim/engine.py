@@ -186,6 +186,10 @@ _KNOWN_MANEUVERS = {
 }
 _DEFAULT_BATTLEMASTER_MANEUVERS = ("trip attack", "menacing attack", "precision attack")
 _SUPPORTED_REACTION_POLICY_MODES = {"auto", "none"}
+_OBSCURING_ZONE_TYPES = {"cloud", "magical_darkness", "obscuring_zone", "obscuring"}
+_MOVEMENT_BLOCKING_ZONE_TYPES = {"wall", "movement_blocker"}
+_LINE_BLOCKING_ZONE_TYPES = {"wall"}
+_DIFFICULT_TERRAIN_ZONE_TYPES = {"difficult_terrain"}
 
 
 @dataclass(slots=True)
@@ -1502,6 +1506,608 @@ def _build_battlefield_obstacles(raw_obstacles: Any) -> list[AABB]:
             continue
         obstacles.append(AABB(min_pos=min_pos, max_pos=max_pos, cover_level=cover_level))
     return obstacles
+
+
+def _coerce_bool(value: Any, *, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "off"}:
+            return False
+    return default
+
+
+def _normalize_zone_type(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _zone_flag(zone: dict[str, Any], key: str, *, default: bool = False) -> bool:
+    return _coerce_bool(zone.get(key), default=default)
+
+
+def _zone_instance_id(zone: dict[str, Any], *, fallback_index: int) -> str:
+    existing = str(zone.get("zone_instance_id") or "").strip()
+    if existing:
+        return existing
+    base = str(
+        zone.get("effect_id")
+        or zone.get("zone_type")
+        or zone.get("hazard_type")
+        or zone.get("type")
+        or "zone"
+    ).strip()
+    generated = f"{base}:{fallback_index}"
+    zone["zone_instance_id"] = generated
+    return generated
+
+
+def _zone_effects(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, dict):
+        return [dict(value)]
+    if not isinstance(value, list):
+        return []
+    return [dict(effect) for effect in value if isinstance(effect, dict)]
+
+
+def _zone_bounds(
+    zone: dict[str, Any],
+) -> tuple[tuple[float, float, float], tuple[float, float, float]] | None:
+    min_pos = _to_position3(zone.get("min_pos") or zone.get("min"))
+    max_pos = _to_position3(zone.get("max_pos") or zone.get("max"))
+    if min_pos is not None and max_pos is not None:
+        lower = (
+            min(min_pos[0], max_pos[0]),
+            min(min_pos[1], max_pos[1]),
+            min(min_pos[2], max_pos[2]),
+        )
+        upper = (
+            max(min_pos[0], max_pos[0]),
+            max(min_pos[1], max_pos[1]),
+            max(min_pos[2], max_pos[2]),
+        )
+        return lower, upper
+
+    center = _to_position3(zone.get("position"))
+    if center is None:
+        return None
+    try:
+        radius = float(zone.get("radius", zone.get("radius_ft", 0.0)))
+    except (TypeError, ValueError):
+        radius = 0.0
+    if radius <= 0:
+        return None
+    return (
+        (center[0] - radius, center[1] - radius, center[2] - radius),
+        (center[0] + radius, center[1] + radius, center[2] + radius),
+    )
+
+
+def _zone_contains_position(zone: dict[str, Any], position: tuple[float, float, float]) -> bool:
+    bounds = _zone_bounds(zone)
+    if bounds is not None and (
+        _to_position3(zone.get("min_pos") or zone.get("min")) is not None
+        and _to_position3(zone.get("max_pos") or zone.get("max")) is not None
+    ):
+        lower, upper = bounds
+        return (
+            lower[0] <= position[0] <= upper[0]
+            and lower[1] <= position[1] <= upper[1]
+            and lower[2] <= position[2] <= upper[2]
+        )
+
+    center = _to_position3(zone.get("position"))
+    if center is None:
+        return False
+    try:
+        radius = float(zone.get("radius", zone.get("radius_ft", 0.0)))
+    except (TypeError, ValueError):
+        return False
+    return distance_chebyshev(position, center) <= radius
+
+
+def _zone_to_obstacle(zone: dict[str, Any], *, cover_level: str = "TOTAL") -> AABB | None:
+    bounds = _zone_bounds(zone)
+    if bounds is None:
+        return None
+    lower, upper = bounds
+    return AABB(min_pos=lower, max_pos=upper, cover_level=cover_level)
+
+
+def _zone_type(zone: dict[str, Any]) -> str:
+    return _normalize_zone_type(
+        zone.get("zone_type") or zone.get("hazard_type") or zone.get("type")
+    )
+
+
+def _zone_blocks_movement(zone: dict[str, Any]) -> bool:
+    zone_type = _zone_type(zone)
+    return _zone_flag(zone, "blocks_movement", default=zone_type in _MOVEMENT_BLOCKING_ZONE_TYPES)
+
+
+def _zone_blocks_line_of_effect(zone: dict[str, Any]) -> bool:
+    zone_type = _zone_type(zone)
+    return _zone_flag(zone, "blocks_line_of_effect", default=zone_type in _LINE_BLOCKING_ZONE_TYPES)
+
+
+def _zone_is_difficult_terrain(zone: dict[str, Any]) -> bool:
+    zone_type = _zone_type(zone)
+    return _zone_flag(zone, "difficult_terrain", default=zone_type in _DIFFICULT_TERRAIN_ZONE_TYPES)
+
+
+def _zone_obstacles(
+    active_hazards: list[dict[str, Any]],
+    *,
+    include_movement_blockers: bool = False,
+    include_line_blockers: bool = False,
+) -> list[AABB]:
+    obstacles: list[AABB] = []
+    for idx, zone in enumerate(active_hazards):
+        if not isinstance(zone, dict):
+            continue
+        _zone_instance_id(zone, fallback_index=idx + 1)
+        should_include = False
+        if include_movement_blockers and _zone_blocks_movement(zone):
+            should_include = True
+        if include_line_blockers and _zone_blocks_line_of_effect(zone):
+            should_include = True
+        if not should_include:
+            continue
+        obstacle = _zone_to_obstacle(zone)
+        if obstacle is not None:
+            obstacles.append(obstacle)
+    return obstacles
+
+
+def _merge_obstacles_with_zones(
+    base_obstacles: list[AABB] | None,
+    active_hazards: list[dict[str, Any]],
+    *,
+    include_movement_blockers: bool = False,
+    include_line_blockers: bool = False,
+) -> list[AABB]:
+    merged = list(base_obstacles or [])
+    merged.extend(
+        _zone_obstacles(
+            active_hazards,
+            include_movement_blockers=include_movement_blockers,
+            include_line_blockers=include_line_blockers,
+        )
+    )
+    return merged
+
+
+def _point_blocked_by_total_obstacle(
+    point: tuple[float, float, float], obstacles: list[AABB]
+) -> bool:
+    for obstacle in obstacles:
+        if obstacle.cover_level != "TOTAL":
+            continue
+        if (
+            obstacle.min_pos[0] <= point[0] <= obstacle.max_pos[0]
+            and obstacle.min_pos[1] <= point[1] <= obstacle.max_pos[1]
+            and obstacle.min_pos[2] <= point[2] <= obstacle.max_pos[2]
+        ):
+            return True
+    return False
+
+
+def _movement_multiplier_for_position(
+    point: tuple[float, float, float],
+    active_hazards: list[dict[str, Any]],
+) -> float:
+    for zone in active_hazards:
+        if not isinstance(zone, dict):
+            continue
+        if not _zone_is_difficult_terrain(zone):
+            continue
+        if _zone_contains_position(zone, point):
+            return 2.0
+    return 1.0
+
+
+def _path_movement_cost(
+    path: list[tuple[float, float, float]],
+    active_hazards: list[dict[str, Any]],
+    *,
+    crawling: bool,
+) -> float:
+    if len(path) < 2:
+        return 0.0
+    expanded = _expand_path_points(path)
+    total = 0.0
+    for idx in range(1, len(expanded)):
+        segment = distance_chebyshev(expanded[idx - 1], expanded[idx])
+        if segment <= 0:
+            continue
+        multiplier = _movement_multiplier_for_position(expanded[idx], active_hazards)
+        if crawling:
+            multiplier *= 2.0
+        total += segment * multiplier
+    return total
+
+
+def _path_prefix_for_movement_budget(
+    path: list[tuple[float, float, float]],
+    *,
+    movement_budget_ft: float,
+    active_hazards: list[dict[str, Any]],
+    crawling: bool,
+    max_travel_ft: float | None = None,
+) -> tuple[list[tuple[float, float, float]], float]:
+    if not path:
+        return [], 0.0
+    if len(path) == 1 or movement_budget_ft <= 0:
+        return [path[0]], 0.0
+
+    traveled_path: list[tuple[float, float, float]] = [path[0]]
+    spent = 0.0
+    traveled_ft = 0.0
+    current = path[0]
+    for waypoint in path[1:]:
+        segment = distance_chebyshev(current, waypoint)
+        if segment <= 0:
+            current = waypoint
+            continue
+
+        remaining_budget = movement_budget_ft - spent
+        if remaining_budget <= 1e-9:
+            break
+        remaining_travel = float("inf")
+        if max_travel_ft is not None:
+            remaining_travel = max(0.0, max_travel_ft - traveled_ft)
+            if remaining_travel <= 1e-9:
+                break
+
+        multiplier = _movement_multiplier_for_position(waypoint, active_hazards)
+        if crawling:
+            multiplier *= 2.0
+        affordable = remaining_budget / multiplier
+        move_ft = min(segment, affordable, remaining_travel)
+        if move_ft <= 1e-9:
+            break
+
+        if move_ft + 1e-9 >= segment:
+            next_point = waypoint
+        else:
+            ratio = move_ft / segment
+            next_point = (
+                current[0] + (waypoint[0] - current[0]) * ratio,
+                current[1] + (waypoint[1] - current[1]) * ratio,
+                current[2] + (waypoint[2] - current[2]) * ratio,
+            )
+
+        traveled_path.append(next_point)
+        spent += move_ft * multiplier
+        traveled_ft += move_ft
+        if move_ft + 1e-9 < segment:
+            break
+        current = waypoint
+
+    return traveled_path, spent
+
+
+def _zones_containing_position(
+    active_hazards: list[dict[str, Any]],
+    position: tuple[float, float, float],
+) -> dict[str, dict[str, Any]]:
+    containing: dict[str, dict[str, Any]] = {}
+    for idx, zone in enumerate(active_hazards):
+        if not isinstance(zone, dict):
+            continue
+        zone_id = _zone_instance_id(zone, fallback_index=idx + 1)
+        if _zone_contains_position(zone, position):
+            containing[zone_id] = zone
+    return containing
+
+
+def _zone_effects_for_timing(zone: dict[str, Any], *, timing: str) -> list[dict[str, Any]]:
+    key_map = {
+        "enter": "on_enter",
+        "leave": "on_leave",
+        "turn_start": "on_start_turn",
+        "turn_end": "on_end_turn",
+    }
+    key = key_map.get(timing)
+    if key is None:
+        return []
+    return _zone_effects(zone.get(key))
+
+
+def _apply_zone_timing_effects(
+    *,
+    timing: str,
+    zone: dict[str, Any],
+    target_actor: ActorRuntimeState,
+    rng: random.Random,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    effects = _zone_effects_for_timing(zone, timing=timing)
+    if not effects:
+        return
+
+    source_id = str(zone.get("source_id", "")).strip()
+    source_actor = actors.get(source_id, target_actor)
+    for effect in effects:
+        normalized = dict(effect)
+        if "effect_type" not in normalized:
+            if "damage" in normalized:
+                normalized["effect_type"] = "damage"
+            elif "condition" in normalized:
+                normalized["effect_type"] = "apply_condition"
+        _apply_effect(
+            effect=normalized,
+            rng=rng,
+            actor=source_actor,
+            target=target_actor,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            actors=actors,
+            active_hazards=active_hazards,
+        )
+        if target_actor.dead or target_actor.hp <= 0:
+            break
+
+
+def _update_actor_zone_interactions_for_movement(
+    *,
+    actor: ActorRuntimeState,
+    path: list[tuple[float, float, float]],
+    rng: random.Random,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    if len(path) < 2:
+        return
+    expanded = _expand_path_points(path)
+    if not expanded:
+        return
+
+    current = _zones_containing_position(active_hazards, expanded[0])
+    actor.active_zone_ids = set(current)
+    for point in expanded[1:]:
+        next_zones = _zones_containing_position(active_hazards, point)
+        entered = [next_zones[zid] for zid in sorted(set(next_zones) - set(current))]
+        left = [current[zid] for zid in sorted(set(current) - set(next_zones))]
+        actor.position = point
+        for zone in entered:
+            _apply_zone_timing_effects(
+                timing="enter",
+                zone=zone,
+                target_actor=actor,
+                rng=rng,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+            )
+            if actor.dead or actor.hp <= 0:
+                break
+        if actor.dead or actor.hp <= 0:
+            break
+        for zone in left:
+            _apply_zone_timing_effects(
+                timing="leave",
+                zone=zone,
+                target_actor=actor,
+                rng=rng,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+            )
+            if actor.dead or actor.hp <= 0:
+                break
+        current = next_zones
+        actor.active_zone_ids = set(current)
+        if actor.dead or actor.hp <= 0:
+            break
+
+
+def _update_actor_zone_interactions_for_boundary(
+    *,
+    boundary: str,
+    actor: ActorRuntimeState,
+    rng: random.Random,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    all_zones_by_id: dict[str, dict[str, Any]] = {}
+    for idx, zone in enumerate(active_hazards):
+        if not isinstance(zone, dict):
+            continue
+        zone_id = _zone_instance_id(zone, fallback_index=idx + 1)
+        all_zones_by_id[zone_id] = zone
+    active_by_id = _zones_containing_position(active_hazards, actor.position)
+    previous_ids = {zone_id for zone_id in actor.active_zone_ids if zone_id in all_zones_by_id}
+    current_ids = set(active_by_id)
+
+    entered_ids = sorted(current_ids - previous_ids)
+    left_ids = sorted(previous_ids - current_ids)
+
+    for zone_id in entered_ids:
+        _apply_zone_timing_effects(
+            timing="enter",
+            zone=active_by_id[zone_id],
+            target_actor=actor,
+            rng=rng,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+        )
+        if actor.dead or actor.hp <= 0:
+            break
+
+    if actor.dead or actor.hp <= 0:
+        actor.active_zone_ids = current_ids
+        return
+
+    timing_key = _normalize_duration_boundary(boundary)
+    if timing_key in {"turn_start", "turn_end"}:
+        for zone_id in sorted(current_ids):
+            _apply_zone_timing_effects(
+                timing=timing_key,
+                zone=active_by_id[zone_id],
+                target_actor=actor,
+                rng=rng,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+            )
+            if actor.dead or actor.hp <= 0:
+                break
+
+    if actor.dead or actor.hp <= 0:
+        actor.active_zone_ids = current_ids
+        return
+
+    for zone_id in left_ids:
+        zone = all_zones_by_id.get(zone_id)
+        if zone is None:
+            continue
+        _apply_zone_timing_effects(
+            timing="leave",
+            zone=zone,
+            target_actor=actor,
+            rng=rng,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+        )
+        if actor.dead or actor.hp <= 0:
+            break
+
+    actor.active_zone_ids = current_ids
+
+
+def _prune_actor_zone_memberships(
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    valid_ids = {
+        _zone_instance_id(zone, fallback_index=idx + 1)
+        for idx, zone in enumerate(active_hazards)
+        if isinstance(zone, dict)
+    }
+    for actor in actors.values():
+        actor.active_zone_ids.intersection_update(valid_ids)
+
+
+def _tick_persistent_zones(active_hazards: list[dict[str, Any]], *, boundary: str) -> None:
+    tick_boundary = _normalize_duration_boundary(boundary)
+    kept: list[dict[str, Any]] = []
+    for idx, zone in enumerate(active_hazards):
+        if not isinstance(zone, dict):
+            continue
+        _zone_instance_id(zone, fallback_index=idx + 1)
+        duration_raw = zone.get("duration")
+        duration = _coerce_positive_int(duration_raw) if duration_raw is not None else None
+        zone_boundary = _normalize_duration_boundary(zone.get("duration_boundary", "turn_start"))
+        if duration is not None and zone_boundary == tick_boundary:
+            duration -= 1
+            zone["duration"] = duration
+        if duration is not None and duration <= 0:
+            continue
+        kept.append(zone)
+    if len(kept) != len(active_hazards):
+        active_hazards[:] = kept
+
+
+def _build_persistent_zone(
+    *,
+    effect: dict[str, Any],
+    actor: ActorRuntimeState,
+    recipient: ActorRuntimeState,
+    active_hazards: list[dict[str, Any]],
+) -> dict[str, Any]:
+    zone_type = _normalize_zone_type(
+        effect.get("zone_type") or effect.get("hazard_type") or "generic"
+    )
+    effect_id = str(effect.get("effect_id", "")).strip() or f"zone:{zone_type}"
+    existing_for_effect = [
+        zone
+        for zone in active_hazards
+        if isinstance(zone, dict) and str(zone.get("effect_id", "")).strip() == effect_id
+    ]
+    zone_instance_id = f"{effect_id}:{len(existing_for_effect) + 1}"
+
+    position = _to_position3(effect.get("position")) or recipient.position
+    radius = float(effect.get("radius", effect.get("radius_ft", 15)))
+    duration = _coerce_positive_int(effect.get("duration", effect.get("duration_rounds", 10)))
+    min_pos = _to_position3(effect.get("min_pos") or effect.get("min"))
+    max_pos = _to_position3(effect.get("max_pos") or effect.get("max"))
+
+    zone: dict[str, Any] = {
+        "type": zone_type,
+        "zone_type": zone_type,
+        "hazard_type": zone_type,
+        "zone_instance_id": zone_instance_id,
+        "effect_id": effect_id,
+        "source_id": actor.actor_id,
+        "target_id": recipient.actor_id,
+        "position": position,
+        "radius": radius,
+        "duration": duration,
+        "duration_boundary": _normalize_duration_boundary(
+            effect.get("duration_timing", effect.get("duration_boundary", "turn_start"))
+        ),
+        "stack_policy": _normalize_stack_policy(effect.get("stack_policy", "independent")),
+        "internal_tags": sorted(_normalize_internal_tags(effect.get("internal_tags"))),
+        "obscures_vision": _coerce_bool(
+            effect.get("obscures_vision"),
+            default=zone_type in _OBSCURING_ZONE_TYPES,
+        ),
+        "blocks_movement": _coerce_bool(
+            effect.get("blocks_movement"),
+            default=zone_type in _MOVEMENT_BLOCKING_ZONE_TYPES,
+        ),
+        "blocks_line_of_effect": _coerce_bool(
+            effect.get("blocks_line_of_effect"),
+            default=zone_type in _LINE_BLOCKING_ZONE_TYPES,
+        ),
+        "difficult_terrain": _coerce_bool(
+            effect.get("difficult_terrain"),
+            default=zone_type in _DIFFICULT_TERRAIN_ZONE_TYPES,
+        ),
+        "on_enter": _zone_effects(effect.get("on_enter")),
+        "on_leave": _zone_effects(effect.get("on_leave")),
+        "on_start_turn": _zone_effects(effect.get("on_start_turn") or effect.get("on_turn_start")),
+        "on_end_turn": _zone_effects(effect.get("on_end_turn") or effect.get("on_turn_end")),
+    }
+    if min_pos is not None and max_pos is not None:
+        zone["min_pos"] = min_pos
+        zone["max_pos"] = max_pos
+    return zone
 
 
 def _scale_cantrip_dice(base_dice: str, character_level: int) -> str:
@@ -5147,15 +5753,26 @@ def _move_actor_for_action_range(
         and not other.dead
         and other.hp > 0
     ]
+    movement_obstacles = _merge_obstacles_with_zones(
+        obstacles,
+        active_hazards,
+        include_movement_blockers=True,
+    )
     difficult_terrain_positions = _difficult_terrain_positions_from_hazards(active_hazards)
     path = find_path(
         actor.position,
         primary.position,
-        obstacles,
+        movement_obstacles,
         occupied_positions=occupied_positions,
         difficult_terrain_positions=difficult_terrain_positions,
     )
     if not path or distance_chebyshev(path[-1], primary.position) > 1e-6:
+        return False
+
+    if any(
+        _point_blocked_by_total_obstacle(point, movement_obstacles)
+        for point in _expand_path_points(path)[1:]
+    ):
         return False
 
     if len(path) < 2:
@@ -5167,36 +5784,39 @@ def _move_actor_for_action_range(
         if distance_chebyshev(waypoint, primary.position) <= action_range + 1e-9:
             break
 
-    required_move = path_movement_cost(
-        approach_path,
-        difficult_terrain_positions=difficult_terrain_positions,
-    )
-    move_budget = min(available_distance, required_move)
-    if move_budget <= 0:
+    required_move = _path_distance(approach_path)
+    if required_move <= 0:
         return distance_chebyshev(actor.position, primary.position) <= action_range
 
     start_pos = actor.position
-    movement_path = path_prefix_for_movement(
+    movement_path, movement_spent = _path_prefix_for_movement_budget(
         path,
-        move_budget,
-        difficult_terrain_positions=difficult_terrain_positions,
+        movement_budget_ft=available_distance,
+        active_hazards=active_hazards,
+        crawling=crawling,
+        max_travel_ft=required_move,
     )
-    if not movement_path:
-        movement_path = [start_pos]
-    end_pos = movement_path[-1]
+    end_pos = movement_path[-1] if movement_path else start_pos
     moved = distance_chebyshev(start_pos, end_pos)
-    movement_spent = path_movement_cost(
-        movement_path,
-        difficult_terrain_positions=difficult_terrain_positions,
-    )
     if moved <= 0 or movement_spent <= 0:
         return distance_chebyshev(actor.position, primary.position) <= action_range
 
     actor.position = end_pos
-    actor.movement_remaining = max(
-        0.0,
-        actor.movement_remaining - (movement_spent * (2.0 if crawling else 1.0)),
+    actor.movement_remaining = max(0.0, actor.movement_remaining - movement_spent)
+
+    _update_actor_zone_interactions_for_movement(
+        actor=actor,
+        path=movement_path,
+        rng=rng,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
     )
+    if actor.dead or actor.hp <= 0:
+        return False
 
     _run_opportunity_attacks_for_movement(
         rng=rng,
@@ -5210,7 +5830,7 @@ def _move_actor_for_action_range(
         threat_scores=threat_scores,
         resources_spent=resources_spent,
         active_hazards=active_hazards,
-        obstacles=obstacles,
+        obstacles=movement_obstacles,
         light_level=light_level,
         round_number=round_number,
         turn_token=turn_token,
@@ -5932,7 +6552,22 @@ def _apply_declared_movement_or_error(
             field="movement_path",
             message="Actor cannot move due to current movement restrictions.",
         )
-    if declared_distance > (available_distance + 1e-6):
+    movement_obstacles = _merge_obstacles_with_zones(
+        obstacles,
+        active_hazards,
+        include_movement_blockers=True,
+    )
+    for point in _expand_path_points(movement_path):
+        if _point_blocked_by_total_obstacle(point, movement_obstacles):
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="movement_blocked",
+                field="movement_path",
+                message="Declared movement passes through blocked space.",
+            )
+
+    declared_cost = _path_movement_cost(movement_path, active_hazards, crawling=crawling)
+    if declared_cost > (available_distance + 1e-6):
         _raise_turn_declaration_error(
             actor=actor,
             code="movement_exceeds_budget",
@@ -5940,6 +6575,7 @@ def _apply_declared_movement_or_error(
             message="Declared movement exceeds remaining movement budget.",
             details={
                 "declared_distance": declared_distance,
+                "declared_cost": declared_cost,
                 "movement_remaining": available_distance,
             },
         )
@@ -5947,9 +6583,21 @@ def _apply_declared_movement_or_error(
     start_pos = actor.position
     end_pos = movement_path[-1]
     actor.position = end_pos
-    actor.movement_remaining = max(
-        0.0, actor.movement_remaining - (declared_distance * (2.0 if crawling else 1.0))
+    actor.movement_remaining = max(0.0, actor.movement_remaining - declared_cost)
+
+    _update_actor_zone_interactions_for_movement(
+        actor=actor,
+        path=movement_path,
+        rng=rng,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
     )
+    if actor.dead or actor.hp <= 0:
+        return
 
     _run_opportunity_attacks_for_movement(
         rng=rng,
@@ -5963,7 +6611,7 @@ def _apply_declared_movement_or_error(
         threat_scores=threat_scores,
         resources_spent=resources_spent,
         active_hazards=active_hazards,
-        obstacles=obstacles,
+        obstacles=movement_obstacles,
         light_level=light_level,
         round_number=round_number,
         turn_token=turn_token,
@@ -6958,11 +7606,14 @@ def _break_concentration(
         if summon_id != actor.actor_id:
             actors.pop(summon_id, None)
 
+    prior_hazard_count = len(active_hazards)
     active_hazards[:] = [
         hazard
         for hazard in active_hazards
         if not _is_hazard_linked_to_concentration_owner(hazard, owner_actor_id=actor.actor_id)
     ]
+    if len(active_hazards) != prior_hazard_count:
+        _prune_actor_zone_memberships(actors, active_hazards)
 
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
@@ -7418,39 +8069,46 @@ def _apply_effect(
             )
         return
 
-    if effect_type == "hazard":
-        duration = _coerce_positive_int(effect.get("duration", effect.get("duration_rounds", 10)))
-        if duration is None:
-            return
-        hazard_type = str(effect.get("hazard_type", "generic"))
-        effect_id = str(effect.get("effect_id", "")).strip() or f"hazard:{hazard_type}"
-        hazard_position = _to_position3(effect.get("position")) or recipient.position
-        hazard_radius = float(effect.get("radius", effect.get("radius_ft", 15)))
+    if effect_type in {"hazard", "persistent_zone"}:
         concentration_linked = bool(
             action and action.concentration and effect.get("concentration_linked", True)
         )
-        trigger_effects = _extract_hazard_trigger_effects(effect)
-        active_hazards.append(
-            {
-                "type": hazard_type,
-                "effect_id": effect_id,
-                "source_id": actor.actor_id,
-                "target_id": recipient.actor_id,
-                "hazard_type": hazard_type,
-                "position": hazard_position,
-                "radius": hazard_radius,
-                "duration": duration,
-                "duration_remaining": duration,
-                "duration_boundary": _normalize_duration_boundary(
-                    effect.get("duration_timing", effect.get("duration_boundary", "turn_start"))
-                ),
-                "stack_policy": _normalize_stack_policy(effect.get("stack_policy", "independent")),
-                "internal_tags": sorted(_normalize_internal_tags(effect.get("internal_tags"))),
-                "concentration_linked": concentration_linked,
-                "concentration_owner_id": actor.actor_id if concentration_linked else None,
-                "trigger_effects": trigger_effects,
-            }
+        zone = _build_persistent_zone(
+            effect=effect,
+            actor=actor,
+            recipient=recipient,
+            active_hazards=active_hazards,
         )
+        zone["concentration_linked"] = concentration_linked
+        zone["concentration_owner_id"] = actor.actor_id if concentration_linked else None
+        stack_policy = str(zone.get("stack_policy", "independent"))
+        if stack_policy == "replace":
+            active_hazards[:] = [
+                existing
+                for existing in active_hazards
+                if str(existing.get("effect_id", "")).strip()
+                != str(zone.get("effect_id", "")).strip()
+            ]
+        elif stack_policy == "refresh":
+            refreshed = False
+            for existing in active_hazards:
+                if (
+                    str(existing.get("effect_id", "")).strip()
+                    != str(zone.get("effect_id", "")).strip()
+                ):
+                    continue
+                if (
+                    str(existing.get("source_id", "")).strip()
+                    != str(zone.get("source_id", "")).strip()
+                ):
+                    continue
+                existing.update(zone)
+                refreshed = True
+                break
+            if not refreshed:
+                active_hazards.append(zone)
+        else:
+            active_hazards.append(zone)
         if concentration_linked:
             actor.concentrated_targets.add(recipient.actor_id)
         if telemetry is not None:
@@ -7465,7 +8123,7 @@ def _apply_effect(
                     "source_bucket": source_bucket,
                     "trigger_event": trigger_event,
                     "effect_type": "hazard",
-                    "hazard_type": hazard_type,
+                    "hazard_type": str(zone.get("hazard_type", "generic")),
                     "applied_amount": 1,
                 }
             )
@@ -8425,6 +9083,23 @@ def _dispatch_combat_event(
     if obstacles is None:
         obstacles = []
     trace = rule_trace if rule_trace is not None else []
+    if event in {"turn_start", "turn_end"} and trigger_actor is not None:
+        boundary_actor = actors.get(trigger_actor.actor_id)
+        if boundary_actor is not None:
+            _tick_persistent_zones(active_hazards, boundary=event)
+            _prune_actor_zone_memberships(actors, active_hazards)
+            _update_actor_zone_interactions_for_boundary(
+                boundary=event,
+                actor=boundary_actor,
+                rng=rng,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+            )
+
     candidates: list[tuple[int, str, str, ActorRuntimeState, ActionDefinition]] = []
     for actor in actors.values():
         if actor.dead or actor.hp <= 0:
@@ -9908,6 +10583,11 @@ def _execute_action(
         return
     if obstacles is None:
         obstacles = []
+    line_of_effect_obstacles = _merge_obstacles_with_zones(
+        obstacles,
+        active_hazards,
+        include_line_blockers=True,
+    )
     is_spell_action = _has_tag(action, "spell")
     subtle_spell = _has_tag(action, "metamagic:subtle")
     spell_level = _spell_level_from_action(action) if is_spell_action else 0
@@ -9942,7 +10622,7 @@ def _execute_action(
             resources_spent=resources_spent,
             active_hazards=active_hazards,
             rule_trace=rule_trace,
-            obstacles=obstacles,
+            obstacles=line_of_effect_obstacles,
             light_level=light_level,
         )
 
@@ -10314,7 +10994,7 @@ def _execute_action(
                 attacker_conditions=actor.conditions,
                 target_conditions=target.conditions,
                 active_hazards=active_hazards,
-                obstacles=obstacles,
+                obstacles=line_of_effect_obstacles,
                 light_level=light_level,
                 requires_line_of_effect=True,
             )

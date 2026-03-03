@@ -266,6 +266,7 @@ class ActorRuntimeState:
     readied_spell_slot_level: int | None = None
     readied_spell_held: bool = False
     concentrated_spell_level: int | None = None
+    active_zone_ids: set[str] = field(default_factory=set)
     class_levels: dict[str, int] = field(default_factory=dict)
     level: int = 1
     pending_smite: dict[str, Any] | None = None
