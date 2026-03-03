@@ -85,6 +85,8 @@ def test_spent_higher_slot_drives_upcast_scaling_during_resolution() -> None:
     rng = _FixedRng([14, 3, 4])
     caster = _base_actor(actor_id="caster", team="party")
     target = _base_actor(actor_id="target", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    target.position = (10.0, 0.0, 0.0)
     target.ac = 10
     caster.resources = {"spell_slot_2": 1}
 
@@ -142,6 +144,8 @@ def test_pretagged_upcast_action_uses_actual_spent_slot_for_resolution() -> None
     rng = _FixedRng([14, 1, 1, 1, 1, 1])
     caster = _base_actor(actor_id="caster", team="party")
     target = _base_actor(actor_id="target", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    target.position = (10.0, 0.0, 0.0)
     target.ac = 10
     caster.resources = {"spell_slot_5": 1}
 

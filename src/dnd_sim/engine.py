@@ -105,6 +105,16 @@ _HEAVY_WEAPON_HINTS = (
     "heavy crossbow",
 )
 _FINESSE_WEAPON_HINTS = ("dagger", "shortsword", "rapier", "scimitar", "dart", "whip")
+_RANGED_IN_MELEE_DISADVANTAGE_OVERRIDE_TAGS = {
+    "ignore_adjacent_hostile_disadvantage",
+    "ignore_ranged_melee_disadvantage",
+    "no_ranged_melee_disadvantage",
+}
+_RANGED_IN_MELEE_DISADVANTAGE_OVERRIDE_TRAITS = {
+    "crossbow expert",
+    "gunner",
+    "close quarters shooter",
+}
 _ARTIFICER_OPTION_TRAITS = {
     "enhanced defense",
     "enhanced weapon",
@@ -4350,6 +4360,92 @@ def _action_range_ft(action: ActionDefinition) -> float | None:
     return 60.0
 
 
+def _is_ranged_attack_action(action: ActionDefinition) -> bool:
+    if action.action_type != "attack":
+        return False
+    if _is_ranged_weapon_action(action):
+        return True
+    if _has_action_tag(action, "ranged") or _has_action_tag(action, "ranged_attack"):
+        return True
+    has_reach_property = _action_has_weapon_property(action, "reach")
+    if action.reach_ft is not None or has_reach_property:
+        return False
+    inferred_range = _action_range_ft(action)
+    return bool(inferred_range is not None and inferred_range > 5.0)
+
+
+def _action_max_range_ft(action: ActionDefinition) -> float | None:
+    normal_range = _action_range_ft(action)
+    if normal_range is None:
+        return None
+    if not _is_ranged_attack_action(action):
+        return normal_range
+    if action.range_long_ft is None:
+        return normal_range
+    return max(normal_range, float(action.range_long_ft))
+
+
+def _action_has_explicit_range_bounds(action: ActionDefinition) -> bool:
+    return any(
+        value is not None
+        for value in (action.reach_ft, action.range_ft, action.range_normal_ft, action.range_long_ft)
+    )
+
+
+def _attack_range_state(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    target: ActorRuntimeState,
+) -> tuple[bool, bool]:
+    normal_range = _action_range_ft(action)
+    if normal_range is None:
+        return True, False
+    max_range = _action_max_range_ft(action)
+    if max_range is None:
+        return True, False
+
+    distance = distance_chebyshev(actor.position, target.position)
+    if distance > (max_range + 1e-9):
+        return False, False
+
+    long_range_disadvantage = (
+        _is_ranged_attack_action(action)
+        and action.range_long_ft is not None
+        and max_range > (normal_range + 1e-9)
+        and distance > (normal_range + 1e-9)
+    )
+    return True, long_range_disadvantage
+
+
+def _ranged_attack_ignores_adjacent_hostile_disadvantage(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+) -> bool:
+    if _has_any_trait(actor, list(_RANGED_IN_MELEE_DISADVANTAGE_OVERRIDE_TRAITS)):
+        return True
+    return any(
+        _has_action_tag(action, tag) for tag in _RANGED_IN_MELEE_DISADVANTAGE_OVERRIDE_TAGS
+    )
+
+
+def _has_hostile_within_melee_range(
+    actor: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+) -> bool:
+    for candidate in actors.values():
+        if candidate.actor_id == actor.actor_id:
+            continue
+        if candidate.team == actor.team:
+            continue
+        if candidate.dead or candidate.hp <= 0:
+            continue
+        if actor_is_incapacitated(candidate):
+            continue
+        if distance_chebyshev(actor.position, candidate.position) <= (5.0 + 1e-9):
+            return True
+    return False
+
+
 def _requires_range_resolution(action: ActionDefinition) -> bool:
     if action.target_mode == "self":
         return False
@@ -4648,7 +4744,7 @@ def _move_actor_for_action_range(
 ) -> bool:
     if not targets:
         return False
-    action_range = _action_range_ft(action)
+    action_range = _action_max_range_ft(action)
     if action_range is None:
         return True
 
@@ -4729,7 +4825,7 @@ def _filter_targets_in_range(
     action: ActionDefinition,
     targets: list[ActorRuntimeState],
 ) -> list[ActorRuntimeState]:
-    action_range = _action_range_ft(action)
+    action_range = _action_max_range_ft(action)
     if action_range is None:
         return targets
     if not targets:
@@ -8522,6 +8618,7 @@ def _execute_action(
     resolved_spell_cast_request: SpellCastRequest | None = None
     spell_declared_for_resolution = False
     has_turn_context = round_number is not None and turn_token is not None
+    enforce_range_legality = has_turn_context or _action_has_explicit_range_bounds(action)
     active_timing_engine = (
         timing_engine if timing_engine is not None else _get_default_combat_timing_engine()
     )
@@ -8574,7 +8671,7 @@ def _execute_action(
             )
             if not in_range:
                 if (
-                    not has_turn_context
+                    not enforce_range_legality
                     and action.action_type == "attack"
                     and not movement_was_budgeted
                     and not actor.conditions.intersection({"grappled", "restrained"})
@@ -8748,6 +8845,7 @@ def _execute_action(
             attack_iterations = len(preferred_ids)
         else:
             attack_iterations = max(1, action.attack_count)
+        ranged_attack_action = _is_ranged_attack_action(action)
 
         current_target: ActorRuntimeState | None = None
         once_per_action_used: set[tuple[str, int]] = set()
@@ -8779,10 +8877,25 @@ def _execute_action(
                         key=lambda t: (t.hp, t.max_hp),
                     )
                     if fallbacks:
-                        current_target = fallbacks[0]
+                        if enforce_range_legality:
+                            current_target = next(
+                                (
+                                    candidate
+                                    for candidate in fallbacks
+                                    if _attack_range_state(actor, action, candidate)[0]
+                                ),
+                                None,
+                            )
+                        else:
+                            current_target = fallbacks[0]
                 if current_target is None:
                     break
             target = current_target
+            long_range_disadvantage = False
+            if enforce_range_legality:
+                in_attack_range, long_range_disadvantage = _attack_range_state(actor, action, target)
+                if not in_attack_range:
+                    continue
             if not (is_spell_action and spell_declared_for_resolution):
                 declaration_event = active_timing_engine.emit(
                     ActionDeclaredEvent(
@@ -8806,6 +8919,14 @@ def _execute_action(
             if attack_condition_modifiers.advantage:
                 advantage = True
             if attack_condition_modifiers.disadvantage:
+                disadvantage = True
+            if long_range_disadvantage:
+                disadvantage = True
+            if (
+                ranged_attack_action
+                and not _ranged_attack_ignores_adjacent_hostile_disadvantage(actor, action)
+                and _has_hostile_within_melee_range(actor, actors)
+            ):
                 disadvantage = True
             force_crit = attack_condition_modifiers.force_critical
 
