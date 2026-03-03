@@ -545,6 +545,12 @@ def _resolve_character_traits(
             class_level_text=class_level_text,
         )
     )
+    explicit_candidates.update(
+        _infer_sorcerer_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
     for candidate in explicit_candidates:
         match = find_match(candidate)
         if match is not None:
@@ -840,6 +846,13 @@ _WIZARD_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (18, "spell mastery"),
     (20, "signature spells"),
 )
+_SORCERER_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
+    (1, "spellcasting"),
+    (1, "sorcerous origin"),
+    (2, "font of magic"),
+    (3, "metamagic"),
+    (20, "sorcerous restoration"),
+)
 
 
 def _class_levels_from_character_payload(character: dict[str, Any]) -> dict[str, int]:
@@ -936,6 +949,23 @@ def _infer_wizard_package_trait_names(
         _normalize_trait_name(trait_name)
         for min_level, trait_name in _WIZARD_PACKAGE_FEATURE_LEVELS
         if wizard_level >= min_level
+    }
+
+
+def _infer_sorcerer_package_trait_names(
+    *,
+    class_levels: dict[str, int],
+    class_level_text: str,
+) -> set[str]:
+    sorcerer_level = int(class_levels.get("sorcerer", 0))
+    if sorcerer_level <= 0 and not class_levels:
+        sorcerer_level = _parse_class_level(class_level_text, "sorcerer")
+    if sorcerer_level <= 0:
+        return set()
+    return {
+        _normalize_trait_name(trait_name)
+        for min_level, trait_name in _SORCERER_PACKAGE_FEATURE_LEVELS
+        if sorcerer_level >= min_level
     }
 
 
@@ -4098,6 +4128,12 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             class_level_text=class_level_text,
         )
     )
+    traits.update(
+        _infer_sorcerer_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
     character_level = (
         total_character_level(class_levels)
         if class_levels
@@ -4122,6 +4158,20 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 bard_level = _parse_class_level(class_level_text, "bard")
             if bard_level > 0:
                 resources["bardic_inspiration"] = {"max": max(1, cha_mod)}
+
+    if _normalize_trait_name("font of magic") in traits:
+        sorcery_points_pool = resources.get("sorcery_points")
+        has_explicit_sorcery_points = False
+        if isinstance(sorcery_points_pool, dict):
+            has_explicit_sorcery_points = int(sorcery_points_pool.get("max", 0)) > 0
+        elif isinstance(sorcery_points_pool, int):
+            has_explicit_sorcery_points = sorcery_points_pool > 0
+        if not has_explicit_sorcery_points:
+            sorcerer_level = int(class_levels.get("sorcerer", 0))
+            if sorcerer_level <= 0 and not class_levels:
+                sorcerer_level = _parse_class_level(class_level_text, "sorcerer")
+            if sorcerer_level >= 2:
+                resources["sorcery_points"] = {"max": min(20, sorcerer_level)}
 
     def has_trait(name: str) -> bool:
         return _normalize_trait_name(name) in traits
@@ -4880,6 +4930,30 @@ def _apply_inferred_bard_resources(
     _ensure_resource_cap(actor, "bardic_inspiration", max(1, int(actor.cha_mod)))
 
 
+def _sorcery_points_for_level(sorcerer_level: int) -> int:
+    if sorcerer_level < 2:
+        return 0
+    return min(20, sorcerer_level)
+
+
+def _apply_inferred_sorcerer_resources(
+    actor: ActorRuntimeState,
+    *,
+    class_level_text: str,
+) -> None:
+    if not _has_trait(actor, "font of magic"):
+        return
+    sorcerer_level = int(actor.class_levels.get("sorcerer", 0))
+    if sorcerer_level <= 0 and not actor.class_levels:
+        sorcerer_level = _parse_class_level(class_level_text, "sorcerer")
+    if sorcerer_level <= 0 and not actor.class_levels:
+        sorcerer_level = int(actor.level)
+    points = _sorcery_points_for_level(sorcerer_level)
+    if points <= 0:
+        return
+    _ensure_resource_cap(actor, "sorcery_points", points)
+
+
 def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
     if not _has_trait(actor, "arcane recovery"):
         return
@@ -5073,6 +5147,7 @@ def _build_actor_from_character(
     _apply_inferred_fighter_resources(actor, class_level_text=class_level_text)
     _apply_inferred_barbarian_resources(actor, class_level_text=class_level_text)
     _apply_inferred_bard_resources(actor, class_level_text=class_level_text)
+    _apply_inferred_sorcerer_resources(actor, class_level_text=class_level_text)
     _register_actor_feature_hooks(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
@@ -5398,6 +5473,12 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
             or (recover_bardic_inspiration and res_key == "bardic_inspiration")
         ):
             actor.resources[res_key] = actor.max_resources.get(res_key, 0)
+
+    if _has_trait(actor, "sorcerous restoration"):
+        max_points = int(actor.max_resources.get("sorcery_points", 0))
+        if max_points > 0:
+            current_points = int(actor.resources.get("sorcery_points", 0))
+            actor.resources["sorcery_points"] = min(max_points, current_points + 4)
 
     _apply_arcane_recovery(actor)
 
