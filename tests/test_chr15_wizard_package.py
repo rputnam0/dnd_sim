@@ -11,12 +11,13 @@ from dnd_sim.engine import (
     _build_actor_from_character,
     _execute_action,
     _spend_action_resource_cost,
+    _tick_conditions_for_actor,
     long_rest,
     run_simulation,
     short_rest,
 )
 from dnd_sim.io import load_character_db, load_scenario
-from dnd_sim.models import ActorRuntimeState
+from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_enemy
 from tests.test_engine_integration import _setup_env
@@ -213,6 +214,145 @@ def test_wizard_reaction_spell_obeys_timing_and_resource_legality() -> None:
     assert _action_available(wizard, shield, turn_token="1:orc") is False
 
 
+def test_non_empty_class_levels_without_wizard_entry_blocks_text_fallback() -> None:
+    actor = _build_actor_from_character(
+        _wizard_character(
+            level=12,
+            class_level="Wizard 18 / Fighter 2",
+            class_levels={"fighter": 12},
+            traits=[],
+            resources={"spell_slots": {"1": 4, "2": 3, "3": 2}},
+        ),
+        traits_db={},
+    )
+
+    assert "spellcasting" not in actor.traits
+    assert "arcane recovery" not in actor.traits
+    assert "arcane tradition" not in actor.traits
+    assert "spell mastery" not in actor.traits
+    assert "signature spells" not in actor.traits
+    assert "arcane_recovery" not in actor.max_resources
+
+
+def test_explicit_class_levels_override_conflicting_wizard_text() -> None:
+    actor = _build_actor_from_character(
+        _wizard_character(
+            level=12,
+            class_level="Wizard 20 / Fighter 1",
+            class_levels={"wizard": 2, "fighter": 10},
+            traits=[],
+            resources={"spell_slots": {"1": 4, "2": 2}},
+        ),
+        traits_db={},
+    )
+
+    assert "spellcasting" in actor.traits
+    assert "arcane recovery" in actor.traits
+    assert "arcane tradition" in actor.traits
+    assert "spell mastery" not in actor.traits
+    assert "signature spells" not in actor.traits
+
+
+def test_wizard_package_feature_threshold_edges() -> None:
+    level_17_actor = _build_actor_from_character(
+        _wizard_character(
+            level=17,
+            class_level="",
+            class_levels={"wizard": 17},
+            traits=[],
+            resources={"spell_slots": {"1": 4, "2": 3, "3": 3, "4": 3, "5": 1}},
+        ),
+        traits_db={},
+    )
+    level_18_actor = _build_actor_from_character(
+        _wizard_character(
+            level=18,
+            class_level="",
+            class_levels={"wizard": 18},
+            traits=[],
+            resources={"spell_slots": {"1": 4, "2": 3, "3": 3, "4": 3, "5": 1}},
+        ),
+        traits_db={},
+    )
+    level_20_actor = _build_actor_from_character(
+        _wizard_character(
+            level=20,
+            class_level="",
+            class_levels={"wizard": 20},
+            traits=[],
+            resources={"spell_slots": {"1": 4, "2": 3, "3": 3, "4": 3, "5": 2}},
+        ),
+        traits_db={},
+    )
+
+    assert "spell mastery" not in level_17_actor.traits
+    assert "signature spells" not in level_17_actor.traits
+    assert "spell mastery" in level_18_actor.traits
+    assert "signature spells" not in level_18_actor.traits
+    assert "spell mastery" in level_20_actor.traits
+    assert "signature spells" in level_20_actor.traits
+
+
+def test_wizard_shield_reaction_lifecycle_requires_turn_refresh() -> None:
+    wizard = _build_actor_from_character(
+        _wizard_character(
+            level=5,
+            traits=[],
+            spells=[
+                {
+                    "name": "Shield",
+                    "level": 1,
+                    "action_type": "utility",
+                    "action_cost": "reaction",
+                    "target_mode": "self",
+                }
+            ],
+            resources={"spell_slots": {"1": 4, "2": 3, "3": 2}},
+        ),
+        traits_db={},
+    )
+    enemy = _enemy("orc")
+    attack = ActionDefinition(
+        name="longsword",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=2,
+        damage="4",
+        damage_type="slashing",
+    )
+    actors = {wizard.actor_id: wizard, enemy.actor_id: enemy}
+    damage_dealt = {wizard.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {wizard.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {wizard.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {wizard.actor_id: {}, enemy.actor_id: {}}
+    shield = next(action for action in wizard.actions if action.name == "Shield")
+
+    _execute_action(
+        rng=SequenceRng([11]),
+        actor=enemy,
+        action=attack,
+        targets=[wizard],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:orc",
+    )
+
+    assert wizard.resources["spell_slot_1"] == 3
+    assert wizard.reaction_available is False
+    assert _action_available(wizard, shield, turn_token="1:orc") is False
+    assert _action_available(wizard, shield, turn_token="2:orc") is False
+
+    _tick_conditions_for_actor(SequenceRng([1]), wizard, boundary="turn_start")
+    wizard.reaction_available = True
+    assert _action_available(wizard, shield, turn_token="2:orc") is True
+
+
 def test_chr15_integration_wizard_package_is_deterministic(tmp_path: Path) -> None:
     wizard = _wizard_character(
         level=5,
@@ -261,6 +401,16 @@ def test_chr15_integration_wizard_package_is_deterministic(tmp_path: Path) -> No
     assert trial.resources_spent["wizard_5"].get("spell_slot_1", 0) == 1
     assert snapshot["spell_slot_1"] == 3
     assert snapshot["arcane_recovery"] == 1
+
+    first_trial = run_a.trial_results[0]
+    second_trial = run_b.trial_results[0]
+    assert first_trial.rounds == second_trial.rounds
+    assert first_trial.winner == second_trial.winner
+    assert first_trial.damage_taken == second_trial.damage_taken
+    assert first_trial.damage_dealt == second_trial.damage_dealt
+    assert first_trial.resources_spent == second_trial.resources_spent
+    assert first_trial.state_snapshots == second_trial.state_snapshots
+    assert run_a.trial_rows == run_b.trial_rows
 
     summary_a = run_a.summary.to_dict()
     summary_b = run_b.summary.to_dict()
