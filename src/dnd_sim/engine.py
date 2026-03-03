@@ -3709,6 +3709,11 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.concentration_effect_instance_ids.clear()
     actor.concentrated_spell = None
     actor.concentrated_spell_level = None
+    actor.readied_action_name = None
+    actor.readied_trigger = None
+    actor.readied_reaction_reserved = False
+    actor.readied_spell_slot_level = None
+    actor.readied_spell_held = False
     actor.bonus_action_spell_restriction_active = False
     actor.non_action_cantrip_spell_cast_this_turn = False
     actor.movement_remaining = float(actor.speed_ft)
@@ -4537,6 +4542,38 @@ def _find_opportunity_attack_action(
     return replace(best_action, attack_count=1, action_cost="reaction"), best_reach
 
 
+def _readied_reach_entry_point(
+    *,
+    responder: ActorRuntimeState,
+    path_points: list[tuple[float, float, float]],
+) -> tuple[float, float, float] | None:
+    if "readying" not in responder.conditions:
+        return None
+    if not responder.readied_reaction_reserved:
+        return None
+    if not _readied_trigger_matches(responder.readied_trigger, trigger_event="enemy_enters_reach"):
+        return None
+    readied = _resolve_named_action(responder, responder.readied_action_name)
+    if readied is None or readied.name == "ready":
+        return None
+
+    reaction_action = replace(readied, action_cost="reaction")
+    if responder.readied_spell_held and "spell" in reaction_action.tags:
+        reaction_action = replace(reaction_action, resource_cost={})
+    trigger_range = _action_range_ft(reaction_action)
+    if trigger_range is None or trigger_range <= 0:
+        return None
+
+    previous = path_points[0]
+    was_in_range = distance_chebyshev(responder.position, previous) <= trigger_range
+    for point in path_points[1:]:
+        is_in_range = distance_chebyshev(responder.position, point) <= trigger_range
+        if not was_in_range and is_in_range:
+            return point
+        was_in_range = is_in_range
+    return None
+
+
 def _run_opportunity_attacks_for_movement(
     *,
     rng: random.Random,
@@ -4569,6 +4606,35 @@ def _run_opportunity_attacks_for_movement(
     for enemy in actors.values():
         if enemy.team == mover.team or enemy.dead or enemy.hp <= 0:
             continue
+        if not enemy.reaction_available:
+            continue
+        readied_reach_entry = _readied_reach_entry_point(
+            responder=enemy,
+            path_points=path_points,
+        )
+        if readied_reach_entry is not None:
+            original_position = mover.position
+            mover.position = readied_reach_entry
+            _trigger_readied_actions(
+                rng=rng,
+                trigger_actor=mover,
+                trigger_event="enemy_enters_reach",
+                eligible_reactors={enemy.actor_id},
+                round_number=round_number,
+                turn_token=turn_token,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+            )
+            mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
+            if mover.dead or mover.hp <= 0:
+                break
+
         if not enemy.reaction_available:
             continue
         opportunity_candidates = _opportunity_attack_candidates(enemy)
@@ -5050,6 +5116,17 @@ def _resolve_action_selection(
         if action.name == "basic":
             return action
     return actor.actions[0]
+
+
+def _resolve_named_action(
+    actor: ActorRuntimeState, action_name: str | None
+) -> ActionDefinition | None:
+    if action_name is None:
+        return None
+    for action in actor.actions:
+        if action.name == action_name:
+            return action
+    return None
 
 
 def _raise_turn_declaration_error(
@@ -5867,6 +5944,21 @@ def query_attack_condition_modifiers(
     return modifiers
 
 
+def _clear_readied_action_state(actor: ActorRuntimeState, *, clear_held_spell: bool) -> None:
+    if clear_held_spell and actor.readied_spell_held:
+        actor.concentrating = False
+        actor.concentrated_spell = None
+        actor.concentrated_spell_level = None
+        actor.concentrated_targets.clear()
+        actor.concentration_conditions.clear()
+        actor.concentration_effect_instance_ids.clear()
+    actor.readied_action_name = None
+    actor.readied_trigger = None
+    actor.readied_reaction_reserved = False
+    actor.readied_spell_slot_level = None
+    actor.readied_spell_held = False
+
+
 def _remove_effect_instance(
     actor: ActorRuntimeState,
     instance_id: str,
@@ -5889,8 +5981,7 @@ def _remove_effect_instance(
     actor.effect_instances = kept
     _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
     if not has_condition(actor, "readying"):
-        actor.readied_action_name = None
-        actor.readied_trigger = None
+        _clear_readied_action_state(actor, clear_held_spell=True)
     return True
 
 
@@ -5939,8 +6030,7 @@ def _remove_condition(
         _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
 
     if key == "readying" and not has_condition(actor, "readying"):
-        actor.readied_action_name = None
-        actor.readied_trigger = None
+        _clear_readied_action_state(actor, clear_held_spell=True)
 
 
 def _break_concentration(
@@ -5983,6 +6073,9 @@ def _break_concentration(
 
     actor.concentrated_spell = None
     actor.concentrated_spell_level = None
+
+    if actor.readied_spell_held:
+        _remove_condition(actor, "readying")
 
 
 def _concentration_forced_end(actor: ActorRuntimeState) -> bool:
@@ -6135,6 +6228,8 @@ def _tick_conditions_for_actor(
     if changed:
         actor.effect_instances = kept
         _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
+        if not has_condition(actor, "readying"):
+            _clear_readied_action_state(actor, clear_held_spell=True)
 
 
 def _apply_healing(target: ActorRuntimeState, amount: int) -> None:
@@ -7541,10 +7636,27 @@ def _normalize_event_trigger(trigger: str | None) -> str | None:
     return text or None
 
 
+def _readied_trigger_matches(readied_trigger: str | None, *, trigger_event: str) -> bool:
+    normalized_readied = _normalize_event_trigger(readied_trigger)
+    normalized_event = _normalize_event_trigger(trigger_event)
+    if normalized_event in {None, "enemy_turn_start", "on_enemy_turn_start"}:
+        return normalized_readied in {None, "enemy_turn_start", "on_enemy_turn_start"}
+    if normalized_event == "enemy_enters_reach":
+        return normalized_readied in {
+            "enemy_enters_reach",
+            "on_enemy_enters_reach",
+            "enters_reach",
+            "on_enters_reach",
+        }
+    return normalized_readied == normalized_event
+
+
 def _trigger_readied_actions(
     *,
     rng: random.Random,
     trigger_actor: ActorRuntimeState,
+    trigger_event: str = "enemy_turn_start",
+    eligible_reactors: set[str] | None = None,
     round_number: int | None = None,
     turn_token: str | None = None,
     actors: dict[str, ActorRuntimeState],
@@ -7556,7 +7668,16 @@ def _trigger_readied_actions(
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
 ) -> None:
+    normalized_trigger_event = _normalize_event_trigger(trigger_event)
+    supports_standard_reactions = normalized_trigger_event in {
+        None,
+        "enemy_turn_start",
+        "on_enemy_turn_start",
+    }
+
     for actor in actors.values():
+        if eligible_reactors is not None and actor.actor_id not in eligible_reactors:
+            continue
         if actor.team == trigger_actor.team:
             continue
         if actor.dead or actor.hp <= 0:
@@ -7564,13 +7685,29 @@ def _trigger_readied_actions(
         if not actor.reaction_available:
             continue
 
-        if "readying" in actor.conditions:
-            readied_trigger = _normalize_event_trigger(actor.readied_trigger)
-            if readied_trigger in {None, "enemy_turn_start", "on_enemy_turn_start"}:
-                readied = _resolve_action_selection(actor, actor.readied_action_name)
-                if readied.name != "ready":
+        if "readying" in actor.conditions and actor.readied_reaction_reserved:
+            if _readied_trigger_matches(actor.readied_trigger, trigger_event=trigger_event):
+                readied = _resolve_named_action(actor, actor.readied_action_name)
+                if readied is None:
+                    _remove_condition(actor, "readying")
+                elif readied.name != "ready":
                     reaction_action = replace(readied, action_cost="reaction")
-                    if _action_available(actor, reaction_action, turn_token=turn_token):
+                    held_readied_spell = (
+                        actor.readied_spell_held and "spell" in reaction_action.tags
+                    )
+                    spell_cast_request = (
+                        SpellCastRequest(slot_level=actor.readied_spell_slot_level)
+                        if held_readied_spell
+                        else (SpellCastRequest() if "spell" in reaction_action.tags else None)
+                    )
+                    if held_readied_spell:
+                        reaction_action = replace(reaction_action, resource_cost={})
+                    if _action_available(
+                        actor,
+                        reaction_action,
+                        spell_cast_request=spell_cast_request,
+                        turn_token=turn_token,
+                    ):
                         targets = _resolve_targets_for_action(
                             rng=rng,
                             actor=actor,
@@ -7584,16 +7721,19 @@ def _trigger_readied_actions(
                             if target.actor_id == trigger_actor.actor_id
                         ]
                         targets = _filter_targets_in_range(actor, reaction_action, targets)
-                        spell_cast_request = (
-                            SpellCastRequest() if "spell" in reaction_action.tags else None
-                        )
-                        if targets and _spend_action_resource_cost(
-                            actor,
-                            reaction_action,
-                            resources_spent,
-                            spell_cast_request=spell_cast_request,
-                        ):
+                        paid_reaction_cost = held_readied_spell
+                        if targets and not paid_reaction_cost:
+                            paid_reaction_cost = _spend_action_resource_cost(
+                                actor,
+                                reaction_action,
+                                resources_spent,
+                                spell_cast_request=spell_cast_request,
+                            )
+                        if targets and paid_reaction_cost:
                             actor.reaction_available = False
+                            if held_readied_spell:
+                                actor.readied_spell_held = False
+                                _break_concentration(actor, actors, active_hazards)
                             _execute_action(
                                 rng=rng,
                                 actor=actor,
@@ -7614,6 +7754,11 @@ def _trigger_readied_actions(
                             _remove_condition(actor, "readying")
             if trigger_actor.dead or trigger_actor.hp <= 0:
                 break
+
+        if not supports_standard_reactions:
+            if trigger_actor.dead or trigger_actor.hp <= 0:
+                break
+            continue
 
         if not actor.reaction_available:
             continue
@@ -9553,14 +9698,49 @@ def _execute_action(
             actor.movement_remaining += actor.speed_ft
             return
         if action.name == "ready":
-            _apply_condition(actor, "readying", duration_rounds=1)
             if ready_declaration is not None:
-                actor.readied_action_name = ready_declaration.response_action_name
-                actor.readied_trigger = ready_declaration.trigger
+                readied_action_name = ready_declaration.response_action_name
+                readied_trigger = ready_declaration.trigger
             else:
                 readied_action = _select_readied_action(actor)
-                actor.readied_action_name = readied_action.name if readied_action else None
-                actor.readied_trigger = action.event_trigger or "enemy_turn_start"
+                readied_action_name = readied_action.name if readied_action else None
+                readied_trigger = action.event_trigger or "enemy_turn_start"
+            readied_response = _resolve_named_action(actor, readied_action_name)
+            if readied_response is None or readied_response.name == "ready":
+                _clear_readied_action_state(actor, clear_held_spell=True)
+                return
+
+            _apply_condition(actor, "readying", duration_rounds=1)
+            actor.readied_action_name = readied_action_name
+            actor.readied_trigger = readied_trigger
+            actor.readied_reaction_reserved = True
+            actor.readied_spell_slot_level = None
+            actor.readied_spell_held = False
+
+            if "spell" in readied_response.tags:
+                held_spell_request = SpellCastRequest()
+                if not _spend_action_resource_cost(
+                    actor,
+                    readied_response,
+                    resources_spent,
+                    spell_cast_request=held_spell_request,
+                ):
+                    _remove_condition(actor, "readying")
+                    return
+                _break_concentration(actor, actors, active_hazards)
+                actor.readied_spell_held = True
+                actor.readied_spell_slot_level = held_spell_request.slot_level
+                actor.concentrating = True
+                actor.concentrated_spell = readied_response.name
+                held_level = (
+                    int(held_spell_request.slot_level)
+                    if held_spell_request.slot_level is not None
+                    else _spell_level_from_action(readied_response)
+                )
+                actor.concentrated_spell_level = held_level if held_level > 0 else None
+                actor.concentrated_targets.clear()
+                actor.concentration_conditions.clear()
+                actor.concentration_effect_instance_ids.clear()
             return
         if action.name == "bardic_inspiration":
             die_sides = _bardic_inspiration_die_sides(actor)
