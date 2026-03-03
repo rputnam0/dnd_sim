@@ -137,7 +137,7 @@ done < <(
     title_col=get_col("title", "work_item", "task_name", "", "")
     wave_col=get_col("wave", "", "", "", "")
     deps_col=get_col("depends_on", "deps", "dependencies", "dependency_ids", "")
-    branch_col=get_col("branch", "git_branch", "worktree_branch", "", "")
+    branch_col=get_col("branch", "branch_name", "git_branch", "worktree_branch", "")
     files_col=get_col("files", "files_hint", "likely_files", "paths", "")
     status_col=get_col("status", "task_status", "state", "", "")
 
