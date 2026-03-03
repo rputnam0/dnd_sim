@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from dnd_sim.rules_2014 import parse_damage_expression
@@ -158,12 +159,12 @@ def _evaluate_action_score(action: dict, target, actor, state) -> float:
 
     aoe_type = action.get("aoe_type")
     aoe_size = action.get("aoe_size_ft")
+    aoe_radius = _coerce_positive_distance(aoe_size)
 
-    if aoe_type and aoe_size:
-        radius = float(aoe_size)
+    if aoe_type and aoe_radius is not None:
         score = 0.0
         for cand in state.actors.values():
-            if cand.hp > 0 and distance_chebyshev(target.position, cand.position) <= radius:
+            if cand.hp > 0 and distance_chebyshev(target.position, cand.position) <= aoe_radius:
                 if cand.actor_id == actor.actor_id and not action.get("include_self", False):
                     continue
                 save_mod = (
@@ -188,6 +189,16 @@ def _evaluate_action_score(action: dict, target, actor, state) -> float:
         * score_multiplier
         * max(1, _target_count_for_action(actor, state, action))
     )
+
+
+def _coerce_positive_distance(value: Any) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(parsed) or parsed <= 0.0:
+        return None
+    return parsed
 
 
 def _can_pay(actor, action: dict) -> bool:

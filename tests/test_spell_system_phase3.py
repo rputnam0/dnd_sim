@@ -6,6 +6,7 @@ from dnd_sim.engine import (
     _action_available,
     _break_concentration,
     _build_spell_actions,
+    _coerce_positive_distance,
     _execute_action,
     _resolve_targets_for_action,
 )
@@ -541,6 +542,108 @@ def test_target_resolution_templates_are_shape_specific_and_team_consistent() ->
     assert "ally" not in cone_ids
     assert "rear_enemy" not in cone_ids
     assert {"primary", "inline_enemy"}.issubset(cone_ids)
+
+
+def test_coerce_positive_distance_rejects_invalid_values() -> None:
+    assert _coerce_positive_distance(15) == 15.0
+    assert _coerce_positive_distance("20") == 20.0
+    assert _coerce_positive_distance("bad") is None
+    assert _coerce_positive_distance(float("nan")) is None
+    assert _coerce_positive_distance(0) is None
+    assert _coerce_positive_distance(-10) is None
+
+
+def test_target_resolution_ignores_malformed_template_aoe_size_without_crashing() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    primary = _base_actor(actor_id="primary", team="enemy")
+    nearby_enemy = _base_actor(actor_id="nearby_enemy", team="enemy")
+
+    caster.position = (0.0, 0.0, 0.0)
+    primary.position = (10.0, 0.0, 0.0)
+    nearby_enemy.position = (12.0, 0.0, 0.0)
+
+    action = ActionDefinition(
+        name="unstable_burst",
+        action_type="save",
+        save_dc=13,
+        save_ability="dex",
+        target_mode="single_enemy",
+        aoe_type="sphere",
+        aoe_size_ft="bad_size",  # type: ignore[arg-type]
+        tags=["spell"],
+    )
+
+    actors = {
+        caster.actor_id: caster,
+        primary.actor_id: primary,
+        nearby_enemy.actor_id: nearby_enemy,
+    }
+    resolved = _resolve_targets_for_action(
+        rng=random.Random(3),
+        actor=caster,
+        action=action,
+        actors=actors,
+        requested=[TargetRef("primary")],
+    )
+
+    assert [target.actor_id for target in resolved] == ["primary"]
+
+
+def test_execute_action_with_malformed_legacy_aoe_size_keeps_primary_only() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    primary = _base_actor(actor_id="primary", team="enemy")
+    nearby_enemy = _base_actor(actor_id="nearby_enemy", team="enemy")
+
+    caster.position = (0.0, 0.0, 0.0)
+    primary.position = (10.0, 0.0, 0.0)
+    nearby_enemy.position = (12.0, 0.0, 0.0)
+
+    action = ActionDefinition(
+        name="unstable_radius_spell",
+        action_type="utility",
+        target_mode="single_enemy",
+        aoe_size_ft="bad_size",  # type: ignore[arg-type]
+        tags=["spell"],
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "condition": "marked",
+                "target": "target",
+            }
+        ],
+    )
+    actors = {
+        caster.actor_id: caster,
+        primary.actor_id: primary,
+        nearby_enemy.actor_id: nearby_enemy,
+    }
+    damage_dealt = {actor_id: 0 for actor_id in actors}
+    damage_taken = {actor_id: 0 for actor_id in actors}
+    threat_scores = {actor_id: 0 for actor_id in actors}
+    resources_spent = {actor_id: {} for actor_id in actors}
+
+    resolved = _resolve_targets_for_action(
+        rng=random.Random(7),
+        actor=caster,
+        action=action,
+        actors=actors,
+        requested=[TargetRef("primary")],
+    )
+    _execute_action(
+        rng=random.Random(7),
+        actor=caster,
+        action=action,
+        targets=resolved,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "marked" in primary.conditions
+    assert "marked" not in nearby_enemy.conditions
 
 
 def test_conjure_effect_uses_summon_lifecycle_and_concentration_cleanup() -> None:

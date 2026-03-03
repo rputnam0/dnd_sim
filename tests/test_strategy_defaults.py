@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from dnd_sim.strategies.defaults import OptimalExpectedDamageStrategy, _expected_damage_against
+from dnd_sim.strategies.defaults import (
+    OptimalExpectedDamageStrategy,
+    _evaluate_action_score,
+    _expected_damage_against,
+)
 from dnd_sim.strategy_api import ActionIntent, ActorView, BattleStateView
 
 
@@ -277,3 +281,75 @@ def test_optimal_strategy_lookahead_mode_prefers_tactical_branch_setup_action() 
     intent = strategy.choose_action(actor, state)
 
     assert intent.action_name == "set_up"
+
+
+def test_evaluate_action_score_handles_invalid_aoe_sizes_without_exception() -> None:
+    actor = _actor_view(actor_id="wizard", team="party", position=(0.0, 0.0, 0.0))
+    target = _actor_view(actor_id="target", team="enemy", position=(10.0, 0.0, 0.0))
+    nearby_enemy = _actor_view(actor_id="nearby", team="enemy", position=(12.0, 0.0, 0.0))
+    state = BattleStateView(
+        round_number=1,
+        actors={actor.actor_id: actor, target.actor_id: target, nearby_enemy.actor_id: nearby_enemy},
+        actor_order=[actor.actor_id, target.actor_id, nearby_enemy.actor_id],
+        metadata={},
+    )
+    action = {
+        "name": "chaos_burst",
+        "action_type": "save",
+        "save_dc": 14,
+        "save_ability": "dex",
+        "damage": "2d6",
+        "half_on_save": False,
+        "aoe_type": "sphere",
+        "target_mode": "single_enemy",
+        "range_ft": 60,
+        "effects": [],
+        "mechanics": [],
+    }
+    expected_single_target = _expected_damage_against(action, target, save_mod=target.save_mods["dex"])
+
+    for invalid_size in ("not-a-number", "0", -5):
+        score = _evaluate_action_score({**action, "aoe_size_ft": invalid_size}, target, actor, state)
+        assert abs(score - expected_single_target) < 1e-9
+
+
+def test_evaluate_action_score_keeps_valid_aoe_multi_target_behavior() -> None:
+    actor = _actor_view(actor_id="wizard", team="party", position=(0.0, 0.0, 0.0))
+    target = _actor_view(actor_id="target", team="enemy", position=(10.0, 0.0, 0.0))
+    nearby_enemy = _actor_view(actor_id="nearby", team="enemy", position=(12.0, 0.0, 0.0))
+    nearby_ally = _actor_view(actor_id="ally", team="party", position=(9.0, 1.0, 0.0))
+    state = BattleStateView(
+        round_number=1,
+        actors={
+            actor.actor_id: actor,
+            target.actor_id: target,
+            nearby_enemy.actor_id: nearby_enemy,
+            nearby_ally.actor_id: nearby_ally,
+        },
+        actor_order=[actor.actor_id, target.actor_id, nearby_enemy.actor_id, nearby_ally.actor_id],
+        metadata={},
+    )
+    action = {
+        "name": "fireburst",
+        "action_type": "save",
+        "save_dc": 14,
+        "save_ability": "dex",
+        "damage": "2d6",
+        "half_on_save": False,
+        "aoe_type": "sphere",
+        "aoe_size_ft": 5,
+        "target_mode": "single_enemy",
+        "range_ft": 60,
+        "effects": [],
+        "mechanics": [],
+    }
+
+    score = _evaluate_action_score(action, target, actor, state)
+
+    expected_target = _expected_damage_against(action, target, save_mod=target.save_mods["dex"])
+    expected_enemy = _expected_damage_against(
+        action, nearby_enemy, save_mod=nearby_enemy.save_mods["dex"]
+    )
+    expected_ally = _expected_damage_against(action, nearby_ally, save_mod=nearby_ally.save_mods["dex"])
+    expected_score = expected_target + expected_enemy - (expected_ally * 1.5)
+    assert abs(score - expected_score) < 1e-9
