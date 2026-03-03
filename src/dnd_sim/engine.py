@@ -70,6 +70,16 @@ _RANGED_ATTACK_KEYWORDS = (
     "thrown",
 )
 _RANGED_WEAPON_HINTS = _RANGED_ATTACK_KEYWORDS
+_HEAVY_WEAPON_HINTS = (
+    "greatsword",
+    "greataxe",
+    "maul",
+    "glaive",
+    "halberd",
+    "pike",
+    "heavy crossbow",
+)
+_FINESSE_WEAPON_HINTS = ("dagger", "shortsword", "rapier", "scimitar", "dart", "whip")
 _ARTIFICER_OPTION_TRAITS = {
     "enhanced defense",
     "enhanced weapon",
@@ -500,7 +510,9 @@ def _apply_wizard_school_action_hooks(
     traits: set[str],
 ) -> None:
     active_schools = [
-        school for trait_key, school in _WIZARD_SCHOOL_TRAIT_TO_SCHOOL.items() if trait_key in traits
+        school
+        for trait_key, school in _WIZARD_SCHOOL_TRAIT_TO_SCHOOL.items()
+        if trait_key in traits
     ]
     if not active_schools:
         return
@@ -746,12 +758,163 @@ def _damage_expr_with_flat_bonus(expr: str, bonus: int) -> str:
     return f"{n_dice}d{dice_size}{suffix}"
 
 
+def _canonical_id(value: Any, *, default: str) -> str:
+    text = str(value).strip() if value is not None else ""
+    if not text:
+        text = default
+    slug = re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+    return slug or default
+
+
+def _normalize_weapon_property(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", str(value).strip().lower()).strip("_")
+
+
+def _normalize_weapon_properties(raw: Any) -> list[str]:
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        candidates = [raw]
+    elif isinstance(raw, (list, tuple, set)):
+        candidates = list(raw)
+    else:
+        return []
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        value = _normalize_weapon_property(candidate)
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        normalized.append(value)
+    return normalized
+
+
+def _coerce_optional_int(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            return int(float(text))
+        except ValueError:
+            return None
+    return None
+
+
+def _normalize_attack_definition(raw_attack: Any, idx: int) -> dict[str, Any]:
+    attack = dict(raw_attack) if isinstance(raw_attack, dict) else {}
+    default_attack_id = f"attack_profile_{idx}"
+    profile_id = _canonical_id(
+        attack.get("attack_profile_id", attack.get("attack_id", attack.get("id"))),
+        default=default_attack_id,
+    )
+    attack_name = str(attack.get("name", f"attack_{idx}"))
+    default_weapon_id = f"weapon_{_canonical_id(attack_name, default=str(idx))}"
+    weapon_id = _canonical_id(
+        attack.get("weapon_id", attack.get("equipment_id", attack.get("item_id"))),
+        default=default_weapon_id,
+    )
+    item_id = _canonical_id(attack.get("item_id", weapon_id), default=weapon_id)
+
+    weapon_properties = _normalize_weapon_properties(
+        attack.get("weapon_properties", attack.get("properties"))
+    )
+    for source in (attack.get("tags"), attack.get("traits")):
+        for prop in _normalize_weapon_properties(source):
+            if prop not in weapon_properties:
+                weapon_properties.append(prop)
+    if bool(attack.get("magical")) and "magical" not in weapon_properties:
+        weapon_properties.append("magical")
+
+    reach_ft = _coerce_optional_int(attack.get("reach_ft"))
+    range_ft = _coerce_optional_int(attack.get("range_ft"))
+    range_normal_ft = _coerce_optional_int(
+        attack.get("range_normal_ft", attack.get("normal_range_ft"))
+    )
+    range_long_ft = _coerce_optional_int(attack.get("range_long_ft", attack.get("long_range_ft")))
+    if range_ft is None:
+        if range_normal_ft is not None:
+            range_ft = range_normal_ft
+        elif reach_ft is not None:
+            range_ft = reach_ft
+
+    normalized = dict(attack)
+    normalized.update(
+        {
+            "attack_profile_id": profile_id,
+            "weapon_id": weapon_id,
+            "item_id": item_id,
+            "weapon_properties": weapon_properties,
+            "reach_ft": reach_ft,
+            "range_ft": range_ft,
+            "range_normal_ft": range_normal_ft,
+            "range_long_ft": range_long_ft,
+        }
+    )
+    return normalized
+
+
+def _action_weapon_properties(action: ActionDefinition) -> set[str]:
+    return {value for value in _normalize_weapon_properties(action.weapon_properties)}
+
+
+def _action_has_weapon_property(action: ActionDefinition, property_name: str) -> bool:
+    return _normalize_weapon_property(property_name) in _action_weapon_properties(action)
+
+
+def _action_has_canonical_weapon_data(action: ActionDefinition) -> bool:
+    return bool(
+        action.weapon_properties
+        or action.reach_ft is not None
+        or action.range_normal_ft is not None
+        or action.range_long_ft is not None
+    )
+
+
+def _mark_action_magical(action: ActionDefinition) -> None:
+    if not _action_has_weapon_property(action, "magical"):
+        action.weapon_properties.append("magical")
+    if "magical" not in action.tags:
+        action.tags.append("magical")
+
+
+def _is_magical_action(action: ActionDefinition) -> bool:
+    return (
+        "spell" in action.tags
+        or "magical" in action.tags
+        or _action_has_weapon_property(action, "magical")
+    )
+
+
 def _is_weapon_attack_action(action: ActionDefinition) -> bool:
     return action.action_type == "attack" and "spell" not in set(action.tags or [])
 
 
 def _is_ranged_weapon_action(action: ActionDefinition) -> bool:
     if not _is_weapon_attack_action(action):
+        return False
+    has_canonical_weapon_data = _action_has_canonical_weapon_data(action)
+    if _action_has_weapon_property(action, "ammunition") or _action_has_weapon_property(
+        action, "ranged"
+    ):
+        return True
+    if _action_has_weapon_property(action, "thrown"):
+        if action.range_normal_ft is not None:
+            return action.range_normal_ft > 5
+        if action.range_ft is not None:
+            return action.range_ft > 5
+        return True
+    if has_canonical_weapon_data:
+        if action.range_normal_ft is not None and action.range_normal_ft > 5:
+            return not _action_has_weapon_property(action, "reach")
+        if action.range_long_ft is not None and action.range_long_ft > 5:
+            return not _action_has_weapon_property(action, "reach")
         return False
     if action.range_ft is not None and action.range_ft > 5:
         return True
@@ -839,11 +1002,12 @@ def _apply_artificer_infusion_passives(actor: ActorRuntimeState) -> None:
                 action.to_hit += 1
             if action.damage:
                 action.damage = _damage_expr_with_flat_bonus(action.damage, 1)
-            if "magical" not in action.tags:
-                action.tags.append("magical")
+            _mark_action_magical(action)
 
     if _has_trait(actor, "mind sharpener"):
-        actor.resources["mind_sharpener_charges"] = int(actor.resources.get("mind_sharpener_charges", 4))
+        actor.resources["mind_sharpener_charges"] = int(
+            actor.resources.get("mind_sharpener_charges", 4)
+        )
         actor.max_resources["mind_sharpener_charges"] = int(
             actor.max_resources.get("mind_sharpener_charges", 4)
         )
@@ -1674,6 +1838,10 @@ def _clone_action(action: ActionDefinition, **overrides: Any) -> ActionDefinitio
     payload: dict[str, Any] = {
         "name": action.name,
         "action_type": action.action_type,
+        "attack_profile_id": action.attack_profile_id,
+        "weapon_id": action.weapon_id,
+        "item_id": action.item_id,
+        "weapon_properties": list(action.weapon_properties),
         "to_hit": action.to_hit,
         "damage": action.damage,
         "damage_type": action.damage_type,
@@ -1687,7 +1855,10 @@ def _clone_action(action: ActionDefinition, **overrides: Any) -> ActionDefinitio
         "action_cost": action.action_cost,
         "event_trigger": action.event_trigger,
         "target_mode": action.target_mode,
+        "reach_ft": action.reach_ft,
         "range_ft": action.range_ft,
+        "range_normal_ft": action.range_normal_ft,
+        "range_long_ft": action.range_long_ft,
         "aoe_type": action.aoe_type,
         "aoe_size_ft": action.aoe_size_ft,
         "max_targets": action.max_targets,
@@ -2096,7 +2267,7 @@ def _build_spell_actions(
                         effects=list(effects),
                         mechanics=list(mechanics),
                         tags=list(tags) + [f"upcast_level:{slot_level}"],
-                        )
+                    )
                 )
 
     _apply_wizard_school_action_hooks(actions, traits=known_traits)
@@ -2367,10 +2538,18 @@ def _build_maneuver_attack_action(
     return ActionDefinition(
         name=f"maneuver_{slug}",
         action_type="attack",
+        attack_profile_id=str(best_attack.get("attack_profile_id") or ""),
+        weapon_id=str(best_attack.get("weapon_id") or ""),
+        item_id=str(best_attack.get("item_id") or ""),
+        weapon_properties=list(best_attack.get("weapon_properties", [])),
         to_hit=base_to_hit + to_hit_bonus,
         damage=str(best_attack.get("damage", "1")),
         damage_type=weapon_damage_type,
         attack_count=attack_count,
+        reach_ft=_coerce_optional_int(best_attack.get("reach_ft")),
+        range_ft=_coerce_optional_int(best_attack.get("range_ft")),
+        range_normal_ft=_coerce_optional_int(best_attack.get("range_normal_ft")),
+        range_long_ft=_coerce_optional_int(best_attack.get("range_long_ft")),
         resource_cost={"superiority_dice": 1},
         effects=effects,
         tags=["attack_option", "maneuver", f"maneuver:{slug}"],
@@ -2378,7 +2557,10 @@ def _build_maneuver_attack_action(
 
 
 def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition]:
-    attacks = character.get("attacks", [])
+    attacks = [
+        _normalize_attack_definition(attack, idx)
+        for idx, attack in enumerate(character.get("attacks", []), start=1)
+    ]
     resources = character.get("resources", {})
     traits = {_normalize_trait_name(trait) for trait in character.get("traits", [])}
     class_level_text = str(character.get("class_level", "1"))
@@ -2394,6 +2576,23 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             raw = value.get("max", 0)
             return int(raw) if isinstance(raw, (int, float)) else 0
         return int(value) if isinstance(value, int) else 0
+
+    def attack_identity_payload(attack: dict[str, Any]) -> dict[str, Any]:
+        payload = {
+            "attack_profile_id": str(attack.get("attack_profile_id") or ""),
+            "weapon_id": str(attack.get("weapon_id") or ""),
+            "item_id": str(attack.get("item_id") or ""),
+            "weapon_properties": list(attack.get("weapon_properties", [])),
+            "reach_ft": _coerce_optional_int(attack.get("reach_ft")),
+            "range_ft": _coerce_optional_int(attack.get("range_ft")),
+            "range_normal_ft": _coerce_optional_int(attack.get("range_normal_ft")),
+            "range_long_ft": _coerce_optional_int(attack.get("range_long_ft")),
+        }
+        return {
+            key: value
+            for key, value in payload.items()
+            if value not in ("", None, []) or key in {"attack_profile_id", "weapon_id", "item_id"}
+        }
 
     if attacks:
 
@@ -2415,6 +2614,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             ActionDefinition(
                 name="basic",
                 action_type="attack",
+                **attack_identity_payload(best_attack),
                 to_hit=int(best_attack.get("to_hit", 0)),
                 damage=str(best_attack.get("damage", "1")),
                 damage_type=str(best_attack.get("damage_type", "bludgeoning")),
@@ -2428,6 +2628,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 ActionDefinition(
                     name=f"attack_{idx}",
                     action_type="attack",
+                    **attack_identity_payload(attack),
                     to_hit=int(attack.get("to_hit", 0)),
                     damage=str(attack.get("damage", "1")),
                     damage_type=str(attack.get("damage_type", "bludgeoning")),
@@ -2441,6 +2642,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 ActionDefinition(
                     name="signature",
                     action_type="attack",
+                    **attack_identity_payload(best_attack),
                     to_hit=int(best_attack.get("to_hit", 0)),
                     damage=str(best_attack.get("damage", "1")),
                     damage_type=str(best_attack.get("damage_type", "bludgeoning")),
@@ -2455,6 +2657,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 ActionDefinition(
                     name="signature",
                     action_type="attack",
+                    **attack_identity_payload(secondary),
                     to_hit=int(secondary.get("to_hit", best_attack.get("to_hit", 0))),
                     damage=str(secondary.get("damage", best_attack.get("damage", "1"))),
                     damage_type=str(
@@ -2490,6 +2693,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 ActionDefinition(
                     name="martial_arts_bonus",
                     action_type="attack",
+                    **attack_identity_payload(best_attack),
                     to_hit=int(best_attack.get("to_hit", 0)),
                     damage=str(best_attack.get("damage", "1")),
                     damage_type=str(best_attack.get("damage_type", "bludgeoning")),
@@ -2506,6 +2710,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     ActionDefinition(
                         name="flurry_of_blows",
                         action_type="attack",
+                        **attack_identity_payload(best_attack),
                         to_hit=int(best_attack.get("to_hit", 0)),
                         damage=str(best_attack.get("damage", "1")),
                         damage_type=str(best_attack.get("damage_type", "bludgeoning")),
@@ -2517,7 +2722,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 )
 
         if has_trait("polearm master"):
-            weapon_name = best_attack.get("name", "").lower()
+            weapon_name = str(best_attack.get("weapon_id") or best_attack.get("name", "")).lower()
             if any(
                 w in weapon_name for w in ["glaive", "halberd", "quarterstaff", "spear", "pike"]
             ):
@@ -2527,6 +2732,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     ActionDefinition(
                         name="polearm_master_bonus",
                         action_type="attack",
+                        **attack_identity_payload(best_attack),
                         to_hit=int(best_attack.get("to_hit", 0)),
                         damage=f"1d4{flat_mod}",
                         damage_type="bludgeoning",
@@ -2541,6 +2747,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 ActionDefinition(
                     name="off_hand_attack",
                     action_type="attack",
+                    **attack_identity_payload(off_hand),
                     to_hit=int(off_hand.get("to_hit", 0)),
                     damage=str(off_hand.get("damage", "1")),
                     damage_type=str(off_hand.get("damage_type", "bludgeoning")),
@@ -2555,6 +2762,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 ActionDefinition(
                     name="gwm_bonus_attack",
                     action_type="attack",
+                    **attack_identity_payload(best_attack),
                     to_hit=int(best_attack.get("to_hit", 0)),
                     damage=str(best_attack.get("damage", "1")),
                     damage_type=str(best_attack.get("damage_type", "bludgeoning")),
@@ -2955,6 +3163,8 @@ def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int
         actor.resources[resource] = cap
     else:
         actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+
+
 def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
     if not _has_trait(actor, "arcane recovery"):
         return
@@ -3054,6 +3264,10 @@ def _build_actor_from_enemy(
                 ActionDefinition(
                     name=action.name,
                     action_type=action.action_type,
+                    attack_profile_id=getattr(action, "attack_profile_id", None),
+                    weapon_id=getattr(action, "weapon_id", None),
+                    item_id=getattr(action, "item_id", None),
+                    weapon_properties=list(getattr(action, "weapon_properties", [])),
                     to_hit=action.to_hit,
                     damage=action.damage,
                     damage_type=action.damage_type,
@@ -3071,6 +3285,10 @@ def _build_actor_from_enemy(
                     trigger_duration_rounds=getattr(action, "trigger_duration_rounds", None),
                     trigger_limit_per_turn=getattr(action, "trigger_limit_per_turn", None),
                     trigger_once_per_round=bool(getattr(action, "trigger_once_per_round", False)),
+                    reach_ft=getattr(action, "reach_ft", None),
+                    range_ft=getattr(action, "range_ft", None),
+                    range_normal_ft=getattr(action, "range_normal_ft", None),
+                    range_long_ft=getattr(action, "range_long_ft", None),
                     concentration=action.concentration,
                     include_self=action.include_self,
                     effects=[effect.model_dump() for effect in action.effects],
@@ -3638,8 +3856,25 @@ def _has_action_tag(action: ActionDefinition, tag: str) -> bool:
 
 
 def _is_probably_ranged_attack(action: ActionDefinition) -> bool:
+    has_canonical_weapon_data = _action_has_canonical_weapon_data(action)
+    if action.range_normal_ft is not None and action.range_normal_ft > 5:
+        return not _action_has_weapon_property(action, "reach")
+    if action.range_long_ft is not None and action.range_long_ft > 5:
+        return not _action_has_weapon_property(action, "reach")
+    if _action_has_weapon_property(action, "ammunition") or _action_has_weapon_property(
+        action, "ranged"
+    ):
+        return True
+    if _action_has_weapon_property(action, "thrown"):
+        if action.range_normal_ft is not None:
+            return action.range_normal_ft > 5
+        if action.range_ft is not None:
+            return action.range_ft > 5
+        return True
     if _has_action_tag(action, "ranged") or _has_action_tag(action, "ranged_attack"):
         return True
+    if has_canonical_weapon_data:
+        return False
     name = action.name.lower()
     return any(keyword in name for keyword in _RANGED_ATTACK_KEYWORDS)
 
@@ -3649,6 +3884,10 @@ def _action_range_ft(action: ActionDefinition) -> float | None:
         return None
     if action.range_ft is not None:
         return float(action.range_ft)
+    if action.range_normal_ft is not None:
+        return float(action.range_normal_ft)
+    if action.reach_ft is not None:
+        return float(action.reach_ft)
     if action.action_type in {"grapple", "shove"}:
         return 5.0
     if action.action_type == "attack":
@@ -4515,7 +4754,7 @@ def _apply_effect(
     if effect_type == "damage":
         is_magical = False
         if action and getattr(action, "tags", None):
-            is_magical = "spell" in action.tags or "magical" in action.tags
+            is_magical = _is_magical_action(action)
         damage_type = str(effect.get("damage_type", "bludgeoning"))
         raw_damage = _roll_damage_with_channel_divinity_hooks(
             rng=rng,
@@ -6107,6 +6346,8 @@ def _try_open_hand_technique(
 
 def _multiattack_defense_marker(attacker_id: str) -> str:
     return f"{_MULTIATTACK_DEFENSE_PREFIX}{attacker_id}"
+
+
 def _try_shield_reaction(
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
@@ -6571,29 +6812,20 @@ def _execute_action(
             cover_bonus = 0
             to_hit_penalty = 0
             damage_bonus = 0
+            weapon_name = action.name.lower()
+            inferred_range = _action_range_ft(action)
+            has_canonical_weapon_data = _action_has_canonical_weapon_data(action)
+            is_ranged = _is_ranged_weapon_action(action)
+            if not is_ranged and not has_canonical_weapon_data:
+                is_ranged = bool(inferred_range is not None and inferred_range > 5.0)
+            is_heavy = _action_has_weapon_property(action, "heavy")
+            if not is_heavy and not has_canonical_weapon_data:
+                is_heavy = any(w in weapon_name for w in _HEAVY_WEAPON_HINTS)
+            is_finesse = _action_has_weapon_property(action, "finesse")
+            if not is_finesse and not has_canonical_weapon_data:
+                is_finesse = any(w in weapon_name for w in _FINESSE_WEAPON_HINTS)
 
             if action.to_hit is not None:
-                weapon_name = action.name.lower()
-                inferred_range = _action_range_ft(action)
-                is_ranged = bool(inferred_range is not None and inferred_range > 5.0)
-                if not is_ranged:
-                    is_ranged = any(
-                        w in weapon_name
-                        for w in ["bow", "dart", "sling", "javelin", "blowgun", "net"]
-                    ) or (action.range_ft is not None and action.range_ft > 5)
-                is_heavy = any(
-                    w in weapon_name
-                    for w in [
-                        "greatsword",
-                        "greataxe",
-                        "maul",
-                        "glaive",
-                        "halberd",
-                        "pike",
-                        "heavy crossbow",
-                    ]
-                )
-
                 # Phase 9: Dynamic 3D Raycasting Cover
                 cover_state = check_cover(actor.position, target.position, obstacles)
                 if cover_state == "TOTAL":
@@ -6755,17 +6987,15 @@ def _execute_action(
                     and not getattr(actor, "is_heavy", False)
                     and "spell" not in action.tags
                 ):
-                    # Finesse or ranged
-                    if (
+                    is_sneak_weapon = (
                         is_ranged
+                        or is_finesse
                         or getattr(action, "is_finesse", False)
                         or "finesse" in action.tags
-                        or "finesse" in action.name.lower()
-                        or any(
-                            w in weapon_name
-                            for w in ["dagger", "shortsword", "rapier", "scimitar", "dart", "whip"]
-                        )
-                    ):
+                    )
+                    if not is_sneak_weapon and not has_canonical_weapon_data:
+                        is_sneak_weapon = any(w in weapon_name for w in _FINESSE_WEAPON_HINTS)
+                    if is_sneak_weapon:
                         has_sneak = False
                         if effective_advantage:
                             has_sneak = True
@@ -6903,7 +7133,7 @@ def _execute_action(
                     raw_damage,
                     action.damage_type,
                     is_critical=roll.crit,
-                    is_magical="spell" in action.tags or "magical" in action.tags,
+                    is_magical=_is_magical_action(action),
                     source=actor,
                 )
                 if applied > 0:
@@ -7129,7 +7359,7 @@ def _execute_action(
                 target,
                 final_damage,
                 action.damage_type,
-                is_magical="spell" in action.tags or "magical" in action.tags,
+                is_magical=_is_magical_action(action),
                 source=actor,
             )
             if applied > 0:
@@ -7259,6 +7489,7 @@ def _execute_action(
                 strategy_name=strategy_name,
             )
 
+
 def _build_round_metadata(
     *,
     actors: dict[str, ActorRuntimeState],
@@ -7302,6 +7533,10 @@ def _build_round_metadata(
                 {
                     "name": action.name,
                     "action_type": action.action_type,
+                    "attack_profile_id": action.attack_profile_id,
+                    "weapon_id": action.weapon_id,
+                    "item_id": action.item_id,
+                    "weapon_properties": list(action.weapon_properties),
                     "to_hit": action.to_hit,
                     "damage": action.damage,
                     "damage_type": action.damage_type,
@@ -7319,7 +7554,10 @@ def _build_round_metadata(
                     "trigger_once_per_round": action.trigger_once_per_round,
                     "recharge_ready": actor.recharge_ready.get(action.name, True),
                     "target_mode": action.target_mode,
+                    "reach_ft": action.reach_ft,
                     "range_ft": action.range_ft,
+                    "range_normal_ft": action.range_normal_ft,
+                    "range_long_ft": action.range_long_ft,
                     "aoe_type": action.aoe_type,
                     "aoe_size_ft": action.aoe_size_ft,
                     "max_targets": action.max_targets,
