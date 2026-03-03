@@ -1702,6 +1702,64 @@ def _spell_lookup_key(name: str) -> str:
     return _SPELL_NORMALIZE_RE.sub(" ", text).strip()
 
 
+_REACTION_ID_TAG_PREFIXES = (
+    "spell_id:",
+    "spell:",
+    "action_id:",
+    "action:",
+    "reaction_id:",
+    "reaction:",
+)
+
+
+def _canonical_reaction_spell_id(value: str) -> str:
+    key = _spell_lookup_key(value)
+    if not key:
+        return ""
+
+    tokens = [token for token in key.split() if token]
+    while tokens and tokens[-1] == "reaction":
+        tokens.pop()
+
+    if len(tokens) == 2 and tokens[1] == "spell" and tokens[0] == "shield":
+        tokens = [tokens[0]]
+
+    return "".join(tokens)
+
+
+def _action_reaction_spell_ids(action: ActionDefinition) -> set[str]:
+    ids: set[str] = set()
+
+    def _add(value: str) -> None:
+        canonical = _canonical_reaction_spell_id(value)
+        if canonical:
+            ids.add(canonical)
+
+    _add(action.name)
+    if action.spell is not None:
+        _add(action.spell.name)
+
+    for raw_tag in action.tags:
+        tag = str(raw_tag).strip()
+        if not tag:
+            continue
+        _add(tag)
+        lowered = tag.lower()
+        for prefix in _REACTION_ID_TAG_PREFIXES:
+            if lowered.startswith(prefix):
+                _add(tag.split(":", 1)[1])
+                break
+
+    return ids
+
+
+def _action_matches_reaction_spell_id(action: ActionDefinition, *, spell_id: str) -> bool:
+    canonical_spell_id = _canonical_reaction_spell_id(spell_id)
+    if not canonical_spell_id:
+        return False
+    return canonical_spell_id in _action_reaction_spell_ids(action)
+
+
 def _spell_name_variants(name: str) -> list[str]:
     raw = str(name).strip()
     variants = {raw}
@@ -7634,7 +7692,13 @@ def _trigger_readied_actions(
         for reaction_action in actor.actions:
             if reaction_action.action_cost != "reaction":
                 continue
-            if reaction_action.name in {"shield", "counterspell"}:
+            if _action_matches_reaction_spell_id(
+                reaction_action,
+                spell_id="shield",
+            ) or _action_matches_reaction_spell_id(
+                reaction_action,
+                spell_id="counterspell",
+            ):
                 continue
             trigger = _normalize_event_trigger(reaction_action.event_trigger)
             if trigger not in {"enemy_turn_start", "on_enemy_turn_start"}:
@@ -8018,7 +8082,9 @@ def _try_shield_reaction(
         return False
     shield_action = None
     for action in target.actions:
-        if action.name == "shield" and action.action_cost == "reaction":
+        if action.action_cost == "reaction" and _action_matches_reaction_spell_id(
+            action, spell_id="shield"
+        ):
             shield_action = action
             break
     if shield_action is None:
@@ -8201,7 +8267,10 @@ def _shield_reaction_would_be_legal(
         (
             action
             for action in target.actions
-            if action.name == "shield" and action.action_cost == "reaction"
+            if (
+                action.action_cost == "reaction"
+                and _action_matches_reaction_spell_id(action, spell_id="shield")
+            )
         ),
         None,
     )
@@ -8657,7 +8726,10 @@ def _execute_action(
                         (
                             a
                             for a in enemy.actions
-                            if a.name == "counterspell" and a.action_cost == "reaction"
+                            if (
+                                a.action_cost == "reaction"
+                                and _action_matches_reaction_spell_id(a, spell_id="counterspell")
+                            )
                         ),
                         None,
                     )
