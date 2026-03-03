@@ -186,6 +186,117 @@ def test_colossus_slayer_applies_once_per_turn_and_resets_next_turn() -> None:
     assert damage_dealt[ranger.actor_id] == 13
 
 
+def test_colossus_slayer_does_not_proc_off_turn_attack() -> None:
+    ranger = _build_actor_from_character(
+        _ranger_character(level=5, traits=["Extra Attack", "Colossus Slayer"]),
+        traits_db={},
+    )
+    target = _enemy("ogre")
+    target.hp = 40
+    basic = next(action for action in ranger.actions if action.name == "basic")
+    reaction_attack = replace(basic, attack_count=1, action_cost="reaction")
+
+    actors = {ranger.actor_id: ranger, target.actor_id: target}
+    damage_dealt = {ranger.actor_id: 0, target.actor_id: 0}
+    damage_taken = {ranger.actor_id: 0, target.actor_id: 0}
+    threat_scores = {ranger.actor_id: 0, target.actor_id: 0}
+    resources_spent = {ranger.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([15, 1]),
+        actor=ranger,
+        action=reaction_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:enemy",
+    )
+
+    assert damage_dealt[ranger.actor_id] == 1
+    assert ranger.colossus_slayer_used_this_turn is False
+
+
+def test_colossus_slayer_does_not_proc_against_full_hp_target() -> None:
+    ranger = _build_actor_from_character(
+        _ranger_character(level=5, traits=["Extra Attack", "Colossus Slayer"]),
+        traits_db={},
+    )
+    target = _enemy("ogre")
+    basic = next(action for action in ranger.actions if action.name == "basic")
+    single_attack = replace(basic, attack_count=1)
+
+    actors = {ranger.actor_id: ranger, target.actor_id: target}
+    damage_dealt = {ranger.actor_id: 0, target.actor_id: 0}
+    damage_taken = {ranger.actor_id: 0, target.actor_id: 0}
+    threat_scores = {ranger.actor_id: 0, target.actor_id: 0}
+    resources_spent = {ranger.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([15, 1]),
+        actor=ranger,
+        action=single_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token=f"1:{ranger.actor_id}",
+    )
+
+    assert damage_dealt[ranger.actor_id] == 1
+    assert ranger.colossus_slayer_used_this_turn is False
+
+
+def test_colossus_slayer_does_not_proc_for_spell_tagged_attack() -> None:
+    ranger = _build_actor_from_character(
+        _ranger_character(level=5, traits=["Extra Attack", "Colossus Slayer"]),
+        traits_db={},
+    )
+    target = _enemy("ogre")
+    target.hp = 40
+    basic = next(action for action in ranger.actions if action.name == "basic")
+    single_attack = replace(basic, attack_count=1)
+    spell_tagged_attack = replace(
+        single_attack,
+        tags=[*single_attack.tags, "spell"],
+        range_ft=5,
+        range_normal_ft=None,
+        range_long_ft=None,
+    )
+
+    actors = {ranger.actor_id: ranger, target.actor_id: target}
+    damage_dealt = {ranger.actor_id: 0, target.actor_id: 0}
+    damage_taken = {ranger.actor_id: 0, target.actor_id: 0}
+    threat_scores = {ranger.actor_id: 0, target.actor_id: 0}
+    resources_spent = {ranger.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=FixedRng([15, 1]),
+        actor=ranger,
+        action=spell_tagged_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token=f"1:{ranger.actor_id}",
+    )
+
+    assert damage_dealt[ranger.actor_id] == 1
+    assert ranger.colossus_slayer_used_this_turn is False
+
+
 def test_declared_main_action_rejects_vanish_hide_bonus_timing(tmp_path: Path) -> None:
     ranger = _ranger_character(level=14)
     enemies = [

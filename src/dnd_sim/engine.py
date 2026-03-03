@@ -12378,6 +12378,7 @@ def _execute_action(
                 if (
                     _has_trait(actor, "colossus slayer")
                     and not actor.colossus_slayer_used_this_turn
+                    and _is_same_turn_for_actor(actor, turn_token)
                     and "spell" not in action.tags
                     and target.hp < target.max_hp
                 ):
