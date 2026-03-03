@@ -6,6 +6,7 @@ from dnd_sim.engine import (
     _action_available,
     _create_combat_timing_engine,
     _execute_action,
+    _run_opportunity_attacks_for_movement,
     _spend_action_resource_cost,
 )
 from dnd_sim.models import (
@@ -440,6 +441,92 @@ def test_off_turn_shield_after_bonus_action_spell_is_legal() -> None:
     assert defender.hp == defender.max_hp
     assert defender.resources["spell_slot_1"] == 0
     assert defender.reaction_available is False
+
+
+def test_off_turn_shield_in_oa_flow_after_bonus_action_spell_is_legal() -> None:
+    rng = _FixedRng([9, 4])
+    caster = _base_actor(actor_id="caster", team="party")
+    guard = _base_actor(actor_id="guard", team="enemy")
+    bystander = _base_actor(actor_id="bystander", team="enemy")
+
+    caster.position = (0.0, 0.0, 0.0)
+    guard.position = (5.0, 0.0, 0.0)
+    caster.resources = {"spell_slot_1": 2}
+    caster.actions = [
+        ActionDefinition(
+            name="shield",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="self",
+            tags=["reaction", "shield_spell"],
+        )
+    ]
+    guard.actions = [
+        ActionDefinition(
+            name="spear",
+            action_type="attack",
+            action_cost="action",
+            target_mode="single_enemy",
+            to_hit=7,
+            damage="1d8",
+            damage_type="piercing",
+            range_ft=5,
+        )
+    ]
+
+    bonus_spell = ActionDefinition(
+        name="healing_word",
+        action_type="utility",
+        action_cost="bonus",
+        target_mode="self",
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "bolstered", "target": "source"}],
+    )
+
+    actors = {
+        caster.actor_id: caster,
+        guard.actor_id: guard,
+        bystander.actor_id: bystander,
+    }
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, guard, bystander)
+
+    assert _spend_action_resource_cost(caster, bonus_spell, resources_spent) is True
+    _execute_action(
+        rng=random.Random(17),
+        actor=caster,
+        action=bonus_spell,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+    )
+
+    _run_opportunity_attacks_for_movement(
+        rng=rng,
+        mover=caster,
+        start_pos=(0.0, 0.0, 0.0),
+        end_pos=(20.0, 0.0, 0.0),
+        movement_path=[(0.0, 0.0, 0.0), (20.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:bystander",
+    )
+
+    assert caster.hp == caster.max_hp
+    assert caster.resources["spell_slot_1"] == 0
+    assert caster.reaction_available is False
+    assert guard.reaction_available is False
 
 
 def test_counterspell_blocks_before_resolution_with_level_check_logic() -> None:

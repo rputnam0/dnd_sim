@@ -4480,6 +4480,8 @@ def _run_opportunity_attacks_for_movement(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
 ) -> None:
     if mover.dead or mover.hp <= 0:
         return
@@ -4546,6 +4548,8 @@ def _run_opportunity_attacks_for_movement(
             active_hazards=active_hazards,
             obstacles=obstacles,
             light_level=light_level,
+            round_number=round_number,
+            turn_token=turn_token,
             spell_cast_request=spell_cast_request,
         )
         mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
@@ -4567,6 +4571,8 @@ def _move_actor_for_action_range(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
 ) -> bool:
     if not targets:
         return False
@@ -4637,6 +4643,8 @@ def _move_actor_for_action_range(
         active_hazards=active_hazards,
         obstacles=obstacles,
         light_level=light_level,
+        round_number=round_number,
+        turn_token=turn_token,
     )
 
     if actor.dead or actor.hp <= 0:
@@ -7796,6 +7804,8 @@ def _execute_action(
             active_hazards=active_hazards,
             obstacles=obstacles,
             light_level=light_level,
+            round_number=round_number,
+            turn_token=turn_token,
         )
         if not in_range:
             if (
