@@ -28,15 +28,19 @@ from dnd_sim.rules_2014 import (
     AttackRollEvent,
     AttackRollResult,
     CombatTimingEngine,
+    DamageBundle,
+    DamagePacket,
     DamageResolvedEvent,
     DamageRollEvent,
     ListenerSubscription,
     ReactionWindowOpenedEvent,
     apply_damage,
+    apply_damage_bundle,
     attack_roll,
     parse_damage_expression,
     resolve_death_save,
     roll_damage,
+    roll_damage_packet,
     run_concentration_check,
 )
 from dnd_sim.strategy_api import ActorView, BattleStateView, TargetRef
@@ -424,6 +428,36 @@ def _roll_damage_with_channel_divinity_hooks(
         empowered_rerolls=empowered_rerolls,
         source=actor,
         damage_type=damage_type,
+    )
+
+
+def _damage_expr_was_crit_expanded(expr: str, *, crit: bool) -> bool:
+    if not crit:
+        return False
+    try:
+        n_dice, dice_size, _flat = parse_damage_expression(expr)
+    except ValueError:
+        return False
+    return n_dice > 0 and dice_size > 0
+
+
+def _append_damage_packet(
+    *,
+    bundle: DamageBundle,
+    amount: int,
+    damage_type: str,
+    packet_source: str,
+    is_magical: bool,
+    crit_expanded: bool,
+) -> None:
+    bundle.add_packet(
+        DamagePacket(
+            amount=max(0, int(amount)),
+            damage_type=str(damage_type).lower(),
+            source=str(packet_source),
+            is_magical=bool(is_magical),
+            crit_expanded=bool(crit_expanded),
+        )
     )
 
 
@@ -1299,6 +1333,7 @@ def _arm_pending_smite(actor: ActorRuntimeState, action: ActionDefinition) -> No
         "save_ability": action.save_ability.lower() if action.save_ability else None,
         "extra_damage": _smite_extra_damage_components(action),
         "rider_effects": _smite_rider_effects(action),
+        "is_magical": _is_magical_action(action),
     }
 
 
@@ -1314,12 +1349,13 @@ def _apply_pending_smite_on_hit(
     resources_spent: dict[str, dict[str, int]],
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
-) -> int:
+) -> DamageBundle:
     pending = actor.pending_smite
     if not pending:
-        return 0
+        return DamageBundle()
 
-    extra_damage = 0
+    pending_name = str(pending.get("name", "pending_smite")).strip().lower()
+    bundle = DamageBundle()
     for payload in pending.get("extra_damage", []):
         if (
             not isinstance(payload, (list, tuple))
@@ -1329,7 +1365,17 @@ def _apply_pending_smite_on_hit(
             continue
         expr = payload[0]
         dtype = str(payload[1]).lower()
-        extra_damage += roll_damage(rng, expr, crit=roll_crit, source=actor, damage_type=dtype)
+        bundle.add_packet(
+            roll_damage_packet(
+                rng,
+                expr,
+                damage_type=dtype,
+                packet_source=f"pending_smite:{pending_name}",
+                crit=roll_crit,
+                source=actor,
+                is_magical=bool(pending.get("is_magical", False)),
+            )
+        )
 
     rider_effects = [
         effect for effect in pending.get("rider_effects", []) if isinstance(effect, dict)
@@ -1358,7 +1404,7 @@ def _apply_pending_smite_on_hit(
     actor.pending_smite = None
     if actor.concentrating and _is_smite_spell_name(actor.concentrated_spell or ""):
         _break_concentration(actor, actors, active_hazards)
-    return extra_damage
+    return bundle
 
 
 def _to_position3(value: Any) -> tuple[float, float, float] | None:
@@ -7035,8 +7081,27 @@ class _AttackResolutionShieldRule:
 class _DamageRollCuttingWordsRule:
     name = "rule:cutting_words_damage_roll"
 
+    @staticmethod
+    def _sync_bundle_to_raw_damage(event: DamageRollEvent) -> None:
+        if event.bundle is None:
+            return
+        target_total = max(0, int(event.raw_damage))
+        if event.bundle.raw_total != target_total:
+            event.bundle.rebalance_total(target_total)
+        if target_total > 0 and event.bundle.raw_total == 0:
+            _append_damage_packet(
+                bundle=event.bundle,
+                amount=target_total,
+                damage_type=event.action.damage_type,
+                packet_source="legacy_raw_sync",
+                is_magical=_is_magical_action(event.action),
+                crit_expanded=False,
+            )
+        event.raw_damage = event.bundle.raw_total
+
     def __call__(self, event: DamageRollEvent) -> None:
-        event.raw_damage = _try_cutting_words_on_damage_roll(
+        self._sync_bundle_to_raw_damage(event)
+        reduced_total = _try_cutting_words_on_damage_roll(
             rng=event.rng,
             attacker=event.attacker,
             target=event.target,
@@ -7044,12 +7109,18 @@ class _DamageRollCuttingWordsRule:
             actors=event.actors,
             resources_spent=event.resources_spent,
         )
+        if event.bundle is not None:
+            event.bundle.rebalance_total(reduced_total)
+            event.raw_damage = event.bundle.raw_total
+            return
+        event.raw_damage = max(0, int(reduced_total))
 
 
 class _DamageRollUncannyDodgeRule:
     name = "rule:uncanny_dodge"
 
     def __call__(self, event: DamageRollEvent) -> None:
+        _DamageRollCuttingWordsRule._sync_bundle_to_raw_damage(event)
         if event.raw_damage <= 0:
             return
         if not _has_trait(event.target, "uncanny dodge"):
@@ -7070,7 +7141,11 @@ class _DamageRollUncannyDodgeRule:
                     turn_token=event.turn_token,
                 )
             )
-        event.raw_damage //= 2
+        if event.bundle is not None:
+            event.bundle.halve_total()
+            event.raw_damage = event.bundle.raw_total
+        else:
+            event.raw_damage //= 2
         event.target.reaction_available = False
 
 
@@ -7593,7 +7668,9 @@ def _execute_action(
 
                 if power_attack_active and damage_expr:
                     damage_expr += f"{damage_bonus:+d}"
-                raw_damage = _roll_damage_with_channel_divinity_hooks(
+                attack_is_magical = _is_magical_action(action)
+                damage_bundle = DamageBundle()
+                base_damage = _roll_damage_with_channel_divinity_hooks(
                     rng=rng,
                     actor=actor,
                     expr=damage_expr,
@@ -7601,6 +7678,14 @@ def _execute_action(
                     resources_spent=resources_spent,
                     crit=roll.crit,
                     empowered_rerolls=empowered_rerolls,
+                )
+                _append_damage_packet(
+                    bundle=damage_bundle,
+                    amount=base_damage,
+                    damage_type=action.damage_type,
+                    packet_source="attack",
+                    is_magical=attack_is_magical,
+                    crit_expanded=_damage_expr_was_crit_expanded(damage_expr, crit=roll.crit),
                 )
                 if roll.crit and _has_trait(actor, "brutal critical") and not is_ranged:
                     brutal_extra = 0
@@ -7612,29 +7697,51 @@ def _execute_action(
                         brutal_extra = 1
                     brutal_expr = _critical_bonus_dice_expr(action.damage, brutal_extra)
                     if brutal_expr:
-                        raw_damage += roll_damage(
+                        brutal_roll = roll_damage(
                             rng,
                             brutal_expr,
                             crit=False,
                             source=actor,
                             damage_type=action.damage_type,
                         )
+                        _append_damage_packet(
+                            bundle=damage_bundle,
+                            amount=brutal_roll,
+                            damage_type=action.damage_type,
+                            packet_source="brutal_critical",
+                            is_magical=attack_is_magical,
+                            crit_expanded=False,
+                        )
                 if sneak_damage_expr:
-                    raw_damage += roll_damage(
+                    sneak_roll = roll_damage(
                         rng,
                         sneak_damage_expr,
                         crit=roll.crit,
                         source=actor,
                         damage_type=action.damage_type,
                     )
+                    _append_damage_packet(
+                        bundle=damage_bundle,
+                        amount=sneak_roll,
+                        damage_type=action.damage_type,
+                        packet_source="sneak_attack",
+                        is_magical=attack_is_magical,
+                        crit_expanded=_damage_expr_was_crit_expanded(
+                            sneak_damage_expr, crit=roll.crit
+                        ),
+                    )
 
                 if _has_trait(actor, "improved divine smite") and not is_ranged:
-                    raw_damage += roll_damage(
-                        rng,
-                        "1d8",
-                        crit=roll.crit,
-                        source=actor,
-                        damage_type="radiant",
+                    damage_bundle.add_packet(
+                        roll_damage_packet(
+                            rng,
+                            "1d8",
+                            damage_type="radiant",
+                            packet_source="improved_divine_smite",
+                            crit=roll.crit,
+                            source=actor,
+                            is_magical=True,
+                        )
                     )
 
                 # Divine Smite Logic
@@ -7662,18 +7769,28 @@ def _execute_action(
                         slot_level = 1
                     if sp_key or slot_level > 0:
                         smite_dice = min(5, 1 + slot_level)
+                        smite_expr = f"{smite_dice}d8"
                         raw_smite = roll_damage(
                             rng,
-                            f"{smite_dice}d8",
+                            smite_expr,
                             crit=roll.crit,
                             source=actor,
                             damage_type="radiant",
                         )
-                        raw_damage += raw_smite
+                        _append_damage_packet(
+                            bundle=damage_bundle,
+                            amount=raw_smite,
+                            damage_type="radiant",
+                            packet_source="divine_smite",
+                            is_magical=True,
+                            crit_expanded=_damage_expr_was_crit_expanded(
+                                smite_expr, crit=roll.crit
+                            ),
+                        )
                         if _has_trait(actor, "smite of protection"):
                             _apply_condition(actor, "smite_of_protection_window", duration_rounds=1)
                 if actor.pending_smite and not is_ranged and target.hp > 0:
-                    raw_damage += _apply_pending_smite_on_hit(
+                    pending_bundle = _apply_pending_smite_on_hit(
                         rng=rng,
                         actor=actor,
                         target=target,
@@ -7685,6 +7802,9 @@ def _execute_action(
                         actors=actors,
                         active_hazards=active_hazards,
                     )
+                    for packet in pending_bundle.packets:
+                        damage_bundle.add_packet(packet)
+                raw_damage = damage_bundle.raw_total
                 was_active_before_damage = target.hp > 0 and not target.dead
                 damage_roll_event = active_timing_engine.emit(
                     DamageRollEvent(
@@ -7697,6 +7817,7 @@ def _execute_action(
                         actors=actors,
                         resources_spent=resources_spent,
                         target_can_see_attacker=target_can_see,
+                        bundle=damage_bundle,
                         timing_engine=active_timing_engine,
                         round_number=round_number,
                         turn_token=turn_token,
@@ -7704,15 +7825,31 @@ def _execute_action(
                 )
                 if damage_roll_event.cancelled:
                     continue
-                raw_damage = damage_roll_event.raw_damage
-                applied = apply_damage(
+                damage_bundle = damage_roll_event.bundle or damage_bundle
+                raw_damage = max(0, int(damage_roll_event.raw_damage))
+                bundle_total = damage_bundle.raw_total
+                if raw_damage < bundle_total:
+                    damage_bundle.rebalance_total(raw_damage)
+                elif raw_damage > bundle_total:
+                    if bundle_total > 0:
+                        damage_bundle.rebalance_total(raw_damage)
+                    else:
+                        _append_damage_packet(
+                            bundle=damage_bundle,
+                            amount=raw_damage - bundle_total,
+                            damage_type=action.damage_type,
+                            packet_source="event_adjustment",
+                            is_magical=attack_is_magical,
+                            crit_expanded=False,
+                        )
+                raw_damage = damage_bundle.raw_total
+                resolution = apply_damage_bundle(
                     target,
-                    raw_damage,
-                    action.damage_type,
+                    damage_bundle,
                     is_critical=roll.crit,
-                    is_magical=_is_magical_action(action),
                     source=actor,
                 )
+                applied = resolution.applied_total
                 active_timing_engine.emit(
                     DamageResolvedEvent(
                         attacker=actor,
@@ -7721,6 +7858,8 @@ def _execute_action(
                         roll=roll,
                         raw_damage=raw_damage,
                         applied_damage=applied,
+                        bundle=damage_bundle,
+                        resolution=resolution,
                         round_number=round_number,
                         turn_token=turn_token,
                     )

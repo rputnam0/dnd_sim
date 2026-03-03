@@ -4,12 +4,16 @@ import random
 
 from dnd_sim.models import ActorRuntimeState
 from dnd_sim.rules_2014 import (
+    DamageBundle,
+    DamagePacket,
     apply_damage,
+    apply_damage_bundle,
     apply_damage_type_modifiers,
     attack_roll,
     concentration_check_dc,
     resolve_death_save,
     roll_damage,
+    roll_damage_packet,
     run_concentration_check,
     run_contested_check,
 )
@@ -68,6 +72,21 @@ def test_crit_doubles_damage_dice() -> None:
     crit = roll_damage(rng, "1d1+0", crit=True)
     assert normal == 1
     assert crit == 2
+
+
+def test_crit_packet_doubles_damage_dice_but_not_static_modifier() -> None:
+    rng = FixedRng([1, 1])
+    packet = roll_damage_packet(
+        rng=rng,
+        expr="1d1+3",
+        damage_type="slashing",
+        packet_source="weapon",
+        crit=True,
+        is_magical=False,
+    )
+
+    assert packet.amount == 5
+    assert packet.crit_expanded is True
 
 
 def test_damage_modifiers_immunity_overrides_resistance() -> None:
@@ -161,3 +180,148 @@ def test_turned_cleanup_preserves_incapacitated_when_damage_drops_target_to_zero
     assert "frightened" not in target.conditions
     assert "unconscious" in target.conditions
     assert "incapacitated" in target.conditions
+
+
+def test_apply_damage_bundle_resolves_mixed_damage_types_per_packet() -> None:
+    target = _actor()
+    target.hp = 20
+    target.max_hp = 20
+    target.damage_resistances = {"slashing"}
+    bundle = DamageBundle(
+        packets=[
+            DamagePacket(
+                amount=8,
+                damage_type="slashing",
+                source="weapon",
+                is_magical=False,
+                crit_expanded=False,
+            ),
+            DamagePacket(
+                amount=8,
+                damage_type="radiant",
+                source="divine_smite",
+                is_magical=True,
+                crit_expanded=False,
+            ),
+        ]
+    )
+
+    resolution = apply_damage_bundle(target, bundle)
+
+    assert resolution.raw_total == 16
+    assert resolution.applied_total == 12
+    assert [packet.applied_amount for packet in resolution.packets] == [4, 8]
+    assert target.hp == 8
+
+
+def test_apply_damage_bundle_does_not_collapse_packets_before_mitigation() -> None:
+    target = _actor()
+    target.hp = 10
+    target.max_hp = 10
+    target.damage_resistances = {"slashing"}
+    bundle = DamageBundle(
+        packets=[
+            DamagePacket(
+                amount=5,
+                damage_type="slashing",
+                source="weapon",
+                is_magical=False,
+                crit_expanded=False,
+            ),
+            DamagePacket(
+                amount=5,
+                damage_type="radiant",
+                source="divine_smite",
+                is_magical=True,
+                crit_expanded=False,
+            ),
+        ]
+    )
+
+    resolution = apply_damage_bundle(target, bundle)
+    collapsed = apply_damage_type_modifiers(
+        10,
+        "slashing",
+        resistances={"slashing"},
+        immunities=set(),
+        vulnerabilities=set(),
+    )
+
+    assert len(resolution.packets) == 2
+    assert resolution.applied_total == 7
+    assert resolution.applied_total != collapsed
+
+
+def test_bundle_reduction_and_halving_are_order_invariant_before_mitigation() -> None:
+    def _resolve(
+        order: list[str], *, flat_reduction: int | None = None, halve: bool = False
+    ) -> int:
+        target = _actor()
+        target.hp = 50
+        target.max_hp = 50
+        target.damage_resistances = {"slashing"}
+        packet_by_name = {
+            "slashing": {
+                "amount": 5,
+                "damage_type": "slashing",
+                "source": "weapon",
+                "is_magical": False,
+                "crit_expanded": False,
+            },
+            "radiant": {
+                "amount": 5,
+                "damage_type": "radiant",
+                "source": "divine_smite",
+                "is_magical": True,
+                "crit_expanded": False,
+            },
+        }
+        bundle = DamageBundle(packets=[DamagePacket(**packet_by_name[name]) for name in order])
+        if flat_reduction is not None:
+            bundle.apply_flat_reduction(flat_reduction)
+        if halve:
+            bundle.halve_total()
+        return apply_damage_bundle(target, bundle).applied_total
+
+    forward_flat = _resolve(["slashing", "radiant"], flat_reduction=3)
+    reverse_flat = _resolve(["radiant", "slashing"], flat_reduction=3)
+    forward_half = _resolve(["slashing", "radiant"], halve=True)
+    reverse_half = _resolve(["radiant", "slashing"], halve=True)
+
+    assert forward_flat == reverse_flat
+    assert forward_half == reverse_half
+
+
+def test_rebalance_tie_break_is_order_invariant_for_equal_key_equal_remainder() -> None:
+    def _resolve(
+        order: list[int], *, halve: bool = False, flat_reduction: int | None = None
+    ) -> int:
+        target = _actor()
+        target.hp = 50
+        target.max_hp = 50
+        target.damage_resistances = {"slashing"}
+        bundle = DamageBundle(
+            packets=[
+                DamagePacket(
+                    amount=amount,
+                    damage_type="slashing",
+                    source="weapon",
+                    is_magical=False,
+                    crit_expanded=False,
+                )
+                for amount in order
+            ]
+        )
+        if halve:
+            bundle.halve_total()
+        if flat_reduction is not None:
+            bundle.apply_flat_reduction(flat_reduction)
+        return apply_damage_bundle(target, bundle).applied_total
+
+    forward_half = _resolve([1, 3], halve=True)
+    reverse_half = _resolve([3, 1], halve=True)
+    forward_reduced = _resolve([1, 3], flat_reduction=2)
+    reverse_reduced = _resolve([3, 1], flat_reduction=2)
+
+    assert forward_half == reverse_half
+    assert forward_reduced == reverse_reduced
