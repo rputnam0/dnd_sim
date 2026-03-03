@@ -7880,6 +7880,12 @@ def _execute_action(
                         None,
                     )
                     if cs_action:
+                        if not _spell_casting_legal_this_turn(
+                            enemy,
+                            cs_action,
+                            turn_token=turn_token,
+                        ):
+                            continue
                         if distance_chebyshev(enemy.position, actor.position) <= 60:
                             counter_slot = _select_counterspell_slot(
                                 enemy, incoming_spell_level=spell_level
