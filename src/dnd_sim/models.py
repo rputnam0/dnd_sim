@@ -87,6 +87,52 @@ class CharacterRecord:
 
 
 @dataclass(slots=True)
+class SpellComponents:
+    verbal: bool = False
+    somatic: bool = False
+    material: bool = False
+    material_detail: str | None = None
+    raw: str = ""
+
+
+@dataclass(slots=True)
+class SpellRoll:
+    attack_bonus: int | None = None
+    save_dc: int | None = None
+    save_ability: str | None = None
+    half_on_save: bool = False
+
+
+@dataclass(slots=True)
+class SpellScaling:
+    upcast_dice_per_level: str | None = None
+    upcast_healing_per_level: str | None = None
+    upcast_effects: dict[int, dict[str, Any]] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class SpellDefinition:
+    name: str
+    level: int
+    school: str | None = None
+    casting_time: str = "1 action"
+    concentration: bool = False
+    duration: str | None = None
+    target_mode: str = "single_enemy"
+    roll: SpellRoll = field(default_factory=SpellRoll)
+    scaling: SpellScaling = field(default_factory=SpellScaling)
+    components: SpellComponents = field(default_factory=SpellComponents)
+
+
+@dataclass(slots=True)
+class SpellCastRequest:
+    slot_level: int | None = None
+    mode: str | None = None
+    target_actor_ids: list[str] = field(default_factory=list)
+    origin: tuple[float, float, float] | None = None
+
+
+@dataclass(slots=True)
 class ActionDefinition:
     name: str
     action_type: str  # "attack", "spell", "heal", "buff", "dodge", "dash", "disengage", "ready", "grapple", "shove", "none" = None
@@ -121,6 +167,7 @@ class ActionDefinition:
     include_self: bool = False
     effects: list[dict[str, Any]] = field(default_factory=list)
     mechanics: list[dict[str, Any]] = field(default_factory=list)
+    spell: SpellDefinition | None = None
     tags: list[str] = field(default_factory=list)
 
 
@@ -201,6 +248,8 @@ class ActorRuntimeState:
     movement_remaining: float = 0.0
     position: tuple[float, float, float] = (0.0, 0.0, 0.0)
     took_attack_action_this_turn: bool = False
+    bonus_action_spell_restriction_active: bool = False
+    non_action_cantrip_spell_cast_this_turn: bool = False
     rage_sustained_since_last_turn: bool = False
     sneak_attack_used_this_turn: bool = False
     colossus_slayer_used_this_turn: bool = False
