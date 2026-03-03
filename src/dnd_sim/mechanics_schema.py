@@ -22,6 +22,14 @@ KNOWN_EFFECT_TYPES = {
     "ignore_resistance",
     "reduce_damage_taken",
     "damage_roll_floor",
+    "reaction_attack",
+    "summon",
+    "conjure",
+    "summon_creature",
+    "command_allied",
+    "command_construct_companion",
+    "mount",
+    "dismount",
 }
 
 EXECUTABLE_EFFECT_TYPES = {
@@ -41,6 +49,14 @@ EXECUTABLE_EFFECT_TYPES = {
     "ignore_resistance",
     "reduce_damage_taken",
     "damage_roll_floor",
+    "reaction_attack",
+    "summon",
+    "conjure",
+    "summon_creature",
+    "command_allied",
+    "command_construct_companion",
+    "mount",
+    "dismount",
 }
 
 _REQUIRED_FIELDS: dict[str, set[str]] = {
@@ -58,6 +74,13 @@ _REQUIRED_FIELDS: dict[str, set[str]] = {
     "ignore_resistance": {"damage_type"},
     "reduce_damage_taken": {"damage_types", "amount"},
     "damage_roll_floor": {"damage_type", "floor"},
+    "reaction_attack": {"trigger"},
+}
+
+_SUPPORTED_REACTION_ATTACK_TRIGGERS = {
+    "creature_attacks_ally_within_5ft",
+    "spell_cast_within_5ft",
+    "hit_by_melee_attack_within_5ft",
 }
 
 _ACTION_GROUPS = (
@@ -98,12 +121,12 @@ def _validate_mechanics_list(mechanics: Any, *, prefix: str) -> list[str]:
             issues.append(f"{path} must be an object")
             continue
 
-        effect_type = row.get("effect_type")
-        if not isinstance(effect_type, str) or not effect_type.strip():
+        raw_effect_type = row.get("effect_type", row.get("type"))
+        if not isinstance(raw_effect_type, str) or not raw_effect_type.strip():
             issues.append(f"{path}.effect_type is required")
             continue
 
-        normalized_effect = effect_type.strip()
+        normalized_effect = raw_effect_type.strip().lower()
         if normalized_effect not in KNOWN_EFFECT_TYPES:
             issues.append(f"{path}.effect_type '{normalized_effect}' is unsupported")
             continue
@@ -112,6 +135,25 @@ def _validate_mechanics_list(mechanics: Any, *, prefix: str) -> list[str]:
         for required_field in sorted(required_fields):
             if required_field not in row:
                 issues.append(f"{path}.{required_field} is required for {normalized_effect}")
+
+        if normalized_effect in {"summon", "conjure", "summon_creature"}:
+            has_identity = any(
+                isinstance(row.get(key), str) and str(row.get(key)).strip()
+                for key in ("actor_id", "creature", "name")
+            )
+            if not has_identity:
+                issues.append(f"{path} summon effect requires actor_id, creature, or name")
+
+        if normalized_effect == "reaction_attack":
+            trigger = row.get("trigger")
+            if isinstance(trigger, str) and trigger.strip():
+                normalized_trigger = trigger.strip().lower()
+                if normalized_trigger not in _SUPPORTED_REACTION_ATTACK_TRIGGERS:
+                    issues.append(
+                        f"{path}.trigger '{normalized_trigger}' is unsupported for reaction_attack"
+                    )
+            elif "trigger" in row:
+                issues.append(f"{path}.trigger is required for reaction_attack")
 
     return issues
 
@@ -176,9 +218,9 @@ def _collect_monster_mechanics(payload: dict[str, Any]) -> list[Any]:
 
 def _classify_effect_type(value: Any) -> str:
     if isinstance(value, dict):
-        effect_type = value.get("effect_type")
+        effect_type = value.get("effect_type", value.get("type"))
         if isinstance(effect_type, str) and effect_type.strip():
-            return effect_type.strip()
+            return effect_type.strip().lower()
     return "<invalid>"
 
 

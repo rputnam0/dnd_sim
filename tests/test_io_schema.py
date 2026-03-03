@@ -4,8 +4,10 @@ import json
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from dnd_sim.io import (
+    EnemyConfig,
     build_run_dir,
     default_results_dir,
     load_custom_simulation_runner,
@@ -97,6 +99,51 @@ def test_encounter_branch_target_index_must_be_within_encounter_bounds(tmp_path:
     assert "Encounter branch target index out of bounds" in message
 
 
+def test_long_rest_after_is_loaded_from_encounter_schema(tmp_path: Path) -> None:
+    payload = json.loads(SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["enemies"] = []
+    payload["encounters"] = [{"enemies": ["past_pylon"], "long_rest_after": True}]
+
+    base = tmp_path / "encounters" / "x"
+    (base / "scenarios").mkdir(parents=True, exist_ok=True)
+    (base / "enemies").mkdir(parents=True, exist_ok=True)
+
+    src = ROOT / "river_line" / "encounters" / "ley_heart" / "enemies" / "past_pylon.json"
+    (base / "enemies" / "past_pylon.json").write_text(src.read_text(encoding="utf-8"))
+
+    scenario_path = base / "scenarios" / "long_rest_after.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    assert loaded.config.encounters[0].long_rest_after is True
+    assert loaded.config.encounters[0].short_rest_after is False
+
+
+def test_encounter_cannot_set_both_short_and_long_rest_after(tmp_path: Path) -> None:
+    payload = json.loads(SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["enemies"] = []
+    payload["encounters"] = [
+        {"enemies": ["past_pylon"], "short_rest_after": True, "long_rest_after": True}
+    ]
+
+    base = tmp_path / "encounters" / "x"
+    (base / "scenarios").mkdir(parents=True, exist_ok=True)
+    (base / "enemies").mkdir(parents=True, exist_ok=True)
+
+    src = ROOT / "river_line" / "encounters" / "ley_heart" / "enemies" / "past_pylon.json"
+    (base / "enemies" / "past_pylon.json").write_text(src.read_text(encoding="utf-8"))
+
+    scenario_path = base / "scenarios" / "invalid_rest_flags.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_scenario(scenario_path)
+
+    message = str(exc.value)
+    assert "Invalid scenario schema" in message
+    assert "short_rest_after and long_rest_after" in message
+
+
 def test_default_results_dir_and_descriptive_folder_name(tmp_path: Path) -> None:
     results_root = default_results_dir()
     assert results_root.as_posix().endswith("/river_line/results")
@@ -111,3 +158,45 @@ def test_load_custom_simulation_runner() -> None:
     loaded = load_scenario(SCENARIO_PATH)
     runner = load_custom_simulation_runner(loaded)
     assert callable(runner)
+
+
+def _minimal_enemy_payload() -> dict[str, object]:
+    return {
+        "identity": {"enemy_id": "validator_enemy", "name": "Validator Enemy", "team": "enemy"},
+        "stat_block": {
+            "max_hp": 30,
+            "ac": 13,
+            "initiative_mod": 1,
+            "save_mods": {"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+        },
+        "actions": [{"name": "basic", "action_type": "attack", "to_hit": 4, "damage": "1d8+2"}],
+        "bonus_actions": [],
+        "reactions": [],
+        "legendary_actions": [],
+        "lair_actions": [],
+        "resources": {},
+        "damage_resistances": [],
+        "damage_immunities": [],
+        "damage_vulnerabilities": [],
+        "condition_immunities": [],
+        "script_hooks": {},
+        "traits": [],
+    }
+
+
+def test_enemy_schema_rejects_invalid_recharge_format() -> None:
+    payload = _minimal_enemy_payload()
+    actions = list(payload["actions"])  # type: ignore[index]
+    actions[0] = dict(actions[0], recharge="Recharge seven")
+    payload["actions"] = actions
+
+    with pytest.raises(ValidationError):
+        EnemyConfig.model_validate(payload)
+
+
+def test_enemy_schema_rejects_unknown_innate_spell_reference() -> None:
+    payload = _minimal_enemy_payload()
+    payload["innate_spellcasting"] = [{"spell": "Not A Real Spell", "max_uses": 1}]
+
+    with pytest.raises(ValidationError):
+        EnemyConfig.model_validate(payload)

@@ -9,9 +9,64 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
+from dnd_sim.spells import (
+    DuplicatePolicy as SpellDuplicatePolicy,
+    load_spell_database as _load_spell_database,
+    lookup_spell_definition as _lookup_spell_definition,
+)
+from dnd_sim.characters import (
+    validate_class_level_representation,
+    validate_multiclass_prerequisites,
+)
 from dnd_sim.strategy_api import BaseStrategy, validate_strategy_instance
+
+_FEATURE_SOURCE_TYPE_MAP = {
+    "feat": "feat",
+    "racial_trait": "species",
+    "species_trait": "species",
+    "background_feature": "background",
+    "subclass_feature": "subclass",
+    "class_feature": "class",
+}
+_RECHARGE_PATTERN = re.compile(
+    r"^(?:recharge\s+)?(?P<low>[1-6])(?:\s*-\s*(?P<high>[1-6]))?$",
+    flags=re.IGNORECASE,
+)
+_ATTACK_ACTION_SEQUENCE_EFFECT_TYPES = {"attack_sequence", "multiattack_sequence"}
+_ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES = {
+    "attack_replacement",
+    "replace_attack",
+    "replacement_attack",
+}
+
+
+def _spell_root_dir() -> Path:
+    return Path(__file__).resolve().parents[2] / "db" / "rules" / "2014" / "spells"
+
+
+def _is_known_spell_reference(name: str) -> bool:
+    if not name.strip():
+        return False
+    return (
+        _lookup_spell_definition(
+            name,
+            spells_dir=_spell_root_dir(),
+            duplicate_policy="prefer_richest",
+        )
+        is not None
+    )
+
+
+def _extract_action_reference_name(reference: Any) -> str | None:
+    if isinstance(reference, str):
+        name = reference.strip()
+        return name or None
+    if isinstance(reference, dict):
+        name = str(reference.get("action_name") or reference.get("name") or "").strip()
+        return name or None
+    return None
 
 
 class ActionConfig(BaseModel):
@@ -79,6 +134,47 @@ class ActionConfig(BaseModel):
     @classmethod
     def normalize_save_ability(cls, value: str | None) -> str | None:
         return value.lower() if isinstance(value, str) else value
+
+    @field_validator("recharge", mode="before")
+    @classmethod
+    def normalize_recharge_spec(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        text = text.strip("()").replace("–", "-")
+        text = re.sub(r"\s+", " ", text)
+        match = _RECHARGE_PATTERN.fullmatch(text)
+        if match is None:
+            raise ValueError(
+                "recharge must be one of: 'X-6', 'Recharge X-6', 'X', or 'Recharge X' (X=1..6)"
+            )
+        low = int(match.group("low"))
+        high = int(match.group("high") or match.group("low"))
+        if low > high:
+            raise ValueError("recharge lower bound cannot exceed upper bound")
+        return str(high) if low == high else f"{low}-{high}"
+
+    @field_validator("mechanics", mode="before")
+    @classmethod
+    def validate_mechanics_payload(cls, value: Any) -> list[dict[str, Any]]:
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise ValueError("mechanics must be a list")
+
+        normalized: list[dict[str, Any]] = []
+        for index, row in enumerate(value):
+            if not isinstance(row, dict):
+                raise ValueError(f"mechanics[{index}] must be an object")
+            effect_type = str(row.get("effect_type", "")).strip().lower()
+            if not effect_type:
+                raise ValueError(f"mechanics[{index}] must define effect_type")
+            payload = dict(row)
+            payload["effect_type"] = effect_type
+            normalized.append(payload)
+        return normalized
 
     @field_validator("weapon_properties", mode="before")
     @classmethod
@@ -170,6 +266,51 @@ class ForcedMovementEffectConfig(BaseModel):
     direction: Literal["away_from_source", "toward_source", "custom"] = "away_from_source"
 
 
+class SummonEffectConfig(BaseModel):
+    effect_type: Literal["summon", "conjure"]
+    apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
+    target: Literal["target", "source"] = "source"
+    actor_id: str | None = None
+    name: str | None = None
+    max_hp: int | None = None
+    hp: int | None = None
+    ac: int | None = None
+    to_hit: int | None = None
+    damage: str | None = None
+    damage_type: str = "force"
+    speed_ft: int | None = None
+    concentration_linked: bool = True
+    requires_command: bool = False
+    controller: Literal["source", "target"] | None = None
+    controller_id: str | None = None
+    mount: bool = False
+
+    @model_validator(mode="after")
+    def validate_summon_identity(self) -> "SummonEffectConfig":
+        actor_id = str(self.actor_id or "").strip()
+        name = str(self.name or "").strip()
+        if actor_id or name:
+            return self
+        raise ValueError("summon effect requires actor_id or name")
+
+
+class CommandAlliedEffectConfig(BaseModel):
+    effect_type: Literal["command_allied", "command_construct_companion"]
+    apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
+    target: Literal["target", "source"] = "target"
+    all_controlled: bool = False
+
+
+class MountEffectConfig(BaseModel):
+    effect_type: Literal["mount", "dismount"]
+    apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
+    target: Literal["target", "source"] = "target"
+    rider_id: str | None = None
+    mount_id: str | None = None
+    controller_id: str | None = None
+    requires_command: bool = False
+
+
 class NoteEffectConfig(BaseModel):
     effect_type: Literal["note"]
     apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
@@ -187,6 +328,9 @@ EffectConfig = Annotated[
     | NextAttackAdvantageEffectConfig
     | NextAttackDisadvantageEffectConfig
     | ForcedMovementEffectConfig
+    | SummonEffectConfig
+    | CommandAlliedEffectConfig
+    | MountEffectConfig
     | NoteEffectConfig,
     Field(discriminator="effect_type"),
 ]
@@ -212,6 +356,35 @@ class EnemyStatBlockConfig(BaseModel):
     save_mods: dict[str, int] = Field(default_factory=dict)
 
 
+class InnateSpellConfig(BaseModel):
+    spell: str
+    max_uses: int | None = None
+    action_cost: Literal["action", "bonus", "reaction"] | None = None
+    save_dc: int | None = None
+    to_hit: int | None = None
+
+    @field_validator("spell")
+    @classmethod
+    def validate_spell_name(cls, value: str) -> str:
+        text = str(value).strip()
+        if not text:
+            raise ValueError("spell must not be empty")
+        return text
+
+    @field_validator("max_uses")
+    @classmethod
+    def validate_max_uses(cls, value: int | None) -> int | None:
+        if value is not None and value <= 0:
+            raise ValueError("max_uses must be >= 1")
+        return value
+
+    @model_validator(mode="after")
+    def validate_known_spell_reference(self) -> "InnateSpellConfig":
+        if not _is_known_spell_reference(self.spell):
+            raise ValueError(f"Unknown innate spell reference '{self.spell}'")
+        return self
+
+
 class EnemyConfig(BaseModel):
     identity: EnemyIdentityConfig
     stat_block: EnemyStatBlockConfig
@@ -220,6 +393,7 @@ class EnemyConfig(BaseModel):
     reactions: list[ActionConfig] = Field(default_factory=list)
     legendary_actions: list[ActionConfig] = Field(default_factory=list)
     lair_actions: list[ActionConfig] = Field(default_factory=list)
+    innate_spellcasting: list[InnateSpellConfig] = Field(default_factory=list)
     resources: dict[str, int] = Field(default_factory=dict)
     damage_resistances: list[str] = Field(default_factory=list)
     damage_immunities: list[str] = Field(default_factory=list)
@@ -227,6 +401,68 @@ class EnemyConfig(BaseModel):
     condition_immunities: list[str] = Field(default_factory=list)
     script_hooks: dict[str, Any] = Field(default_factory=dict)
     traits: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_custom_action_references(self) -> "EnemyConfig":
+        all_actions: list[ActionConfig] = (
+            list(self.actions)
+            + list(self.bonus_actions)
+            + list(self.reactions)
+            + list(self.legendary_actions)
+            + list(self.lair_actions)
+        )
+        action_types = {action.name: action.action_type for action in all_actions}
+
+        for action in all_actions:
+            for index, mechanic in enumerate(action.mechanics):
+                effect_type = str(mechanic.get("effect_type", "")).strip().lower()
+                context = f"{action.name}.mechanics[{index}]"
+                if effect_type in _ATTACK_ACTION_SEQUENCE_EFFECT_TYPES:
+                    sequence = mechanic.get("sequence", mechanic.get("attacks"))
+                    if not isinstance(sequence, list) or not sequence:
+                        raise ValueError(
+                            f"{context} must include a non-empty sequence of attack references"
+                        )
+                    for entry_index, entry in enumerate(sequence):
+                        ref_name = _extract_action_reference_name(entry)
+                        if not ref_name:
+                            raise ValueError(
+                                f"{context}.sequence[{entry_index}] must define action_name"
+                            )
+                        if ref_name not in action_types:
+                            raise ValueError(
+                                f"{context}.sequence[{entry_index}] references unknown action "
+                                f"'{ref_name}'"
+                            )
+                        if action_types[ref_name] != "attack":
+                            raise ValueError(
+                                f"{context}.sequence[{entry_index}] references non-attack action "
+                                f"'{ref_name}'"
+                            )
+                if effect_type in _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES:
+                    replacements = mechanic.get("replacements")
+                    replacement_rows = replacements if replacements is not None else [mechanic]
+                    if not isinstance(replacement_rows, list) or not replacement_rows:
+                        raise ValueError(
+                            f"{context} must include at least one replacement attack reference"
+                        )
+                    for entry_index, entry in enumerate(replacement_rows):
+                        ref_name = _extract_action_reference_name(entry)
+                        if not ref_name:
+                            raise ValueError(
+                                f"{context}.replacements[{entry_index}] must define action_name"
+                            )
+                        if ref_name not in action_types:
+                            raise ValueError(
+                                f"{context}.replacements[{entry_index}] references unknown action "
+                                f"'{ref_name}'"
+                            )
+                        if action_types[ref_name] != "attack":
+                            raise ValueError(
+                                f"{context}.replacements[{entry_index}] references non-attack "
+                                f"action '{ref_name}'"
+                            )
+        return self
 
 
 class StrategyModuleConfig(BaseModel):
@@ -245,6 +481,7 @@ class CustomSimulationConfig(BaseModel):
 class EncounterConfig(BaseModel):
     enemies: list[str] = Field(default_factory=list)
     short_rest_after: bool = False
+    long_rest_after: bool = False
     branches: dict[str, int] = Field(default_factory=dict)
     checkpoint: str | None = None
 
@@ -258,6 +495,12 @@ class EncounterConfig(BaseModel):
                 raise ValueError("Encounter branch target index must be >= 0")
             normalized[str(key)] = idx
         return normalized
+
+    @model_validator(mode="after")
+    def validate_rest_flags(self) -> "EncounterConfig":
+        if self.short_rest_after and self.long_rest_after:
+            raise ValueError("Encounter cannot set both short_rest_after and long_rest_after")
+        return self
 
 
 class ScenarioConfig(BaseModel):
@@ -300,6 +543,34 @@ class ScenarioConfig(BaseModel):
                         f"max allowed {encounter_count - 1}"
                     )
         return encounters
+
+    @field_validator("resource_policy")
+    @classmethod
+    def validate_resource_policy(cls, resource_policy: dict[str, Any]) -> dict[str, Any]:
+        normalized = dict(resource_policy)
+        short_rest_healing = normalized.get("short_rest_healing")
+        if short_rest_healing is not None:
+            try:
+                healing = int(short_rest_healing)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("resource_policy.short_rest_healing must be an integer") from exc
+            if healing < 0:
+                raise ValueError("resource_policy.short_rest_healing must be >= 0")
+            normalized["short_rest_healing"] = healing
+        return normalized
+
+    @field_validator("exploration")
+    @classmethod
+    def validate_exploration(cls, exploration: dict[str, Any]) -> dict[str, Any]:
+        legs = exploration.get("legs")
+        if legs is None:
+            return exploration
+        if not isinstance(legs, list):
+            raise ValueError("exploration.legs must be a list")
+        for index, leg in enumerate(legs):
+            if not isinstance(leg, dict):
+                raise ValueError(f"exploration.legs[{index}] must be an object")
+        return exploration
 
 
 class LoadedScenario(BaseModel):
@@ -368,12 +639,40 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
 
     out: dict[str, dict[str, Any]] = {}
 
+    def _normalize_character_progression(
+        *,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        class_level_text = str(payload.get("class_level", "") or "")
+        class_levels_payload = payload.get("class_levels")
+        progression = validate_class_level_representation(
+            class_level_text=class_level_text,
+            class_levels=class_levels_payload if isinstance(class_levels_payload, dict) else None,
+        )
+        payload["class_level"] = progression.class_level_text
+        payload["class_levels"] = progression.class_levels
+        payload["character_level"] = progression.total_level
+        prereq_errors = validate_multiclass_prerequisites(
+            class_levels=progression.class_levels,
+            ability_scores=payload.get("ability_scores") if isinstance(payload, dict) else {},
+        )
+        if prereq_errors:
+            payload["multiclass_prerequisite_errors"] = prereq_errors
+        return payload
+
     # 1. Base load from SQLite
     rows = execute_query("SELECT character_id, data_json FROM characters")
     for row in rows:
         try:
-            out[row["character_id"]] = json.loads(row["data_json"])
+            payload = json.loads(row["data_json"])
+            if isinstance(payload, dict):
+                out[row["character_id"]] = _normalize_character_progression(
+                    payload=payload,
+                )
         except json.JSONDecodeError:
+            pass
+        except ValueError:
+            # Keep loading when a persisted SQLite row has malformed class progression data.
             pass
 
     # 2. Local overriding from db_dir (crucial for pytests using tmp_path configurations)
@@ -384,9 +683,61 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
             character_id = row["character_id"]
             character_path = db_dir / f"{character_id}.json"
             if character_path.exists():
-                out[character_id] = _load_json(character_path)
+                payload = _load_json(character_path)
+                try:
+                    out[character_id] = _normalize_character_progression(
+                        payload=payload,
+                    )
+                except ValueError as exc:
+                    raise ValueError(f"invalid class_level for {character_id}: {exc}") from exc
 
     return out
+
+
+def _normalize_trait_source_type(raw_type: Any) -> str:
+    key = str(raw_type or "").strip().lower()
+    if key in {"feat", "species", "background", "subclass", "class", "other"}:
+        return key
+    return _FEATURE_SOURCE_TYPE_MAP.get(key, "other")
+
+
+def _normalize_trait_mechanics(raw_mechanics: Any) -> list[Any]:
+    if not isinstance(raw_mechanics, list):
+        return []
+
+    normalized: list[Any] = []
+    for mechanic in raw_mechanics:
+        if not isinstance(mechanic, dict):
+            normalized.append(mechanic)
+            continue
+
+        payload = dict(mechanic)
+        effect_type = payload.get("effect_type")
+        if not isinstance(effect_type, str) or not effect_type.strip():
+            alias = payload.get("type")
+            if isinstance(alias, str) and alias.strip():
+                payload["effect_type"] = alias.strip().lower()
+        else:
+            payload["effect_type"] = effect_type.strip().lower()
+
+        trigger = payload.get("trigger")
+        if not isinstance(trigger, str) or not trigger.strip():
+            alias = payload.get("event_trigger")
+            if isinstance(alias, str) and alias.strip():
+                payload["trigger"] = alias.strip().lower()
+        else:
+            payload["trigger"] = trigger.strip().lower()
+        normalized.append(payload)
+    return normalized
+
+
+def _normalize_trait_payload(trait_data: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(trait_data)
+    payload["source_type"] = _normalize_trait_source_type(
+        payload.get("source_type", payload.get("type"))
+    )
+    payload["mechanics"] = _normalize_trait_mechanics(payload.get("mechanics"))
+    return payload
 
 
 def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
@@ -401,7 +752,7 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
             trait_data = json.loads(row["data_json"])
             trait_name = trait_data.get("name", "").lower()
             if trait_name:
-                out[trait_name] = trait_data
+                out[trait_name] = _normalize_trait_payload(trait_data)
         except json.JSONDecodeError:
             pass
 
@@ -411,9 +762,17 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
             trait_data = _load_json(path)
             trait_name = trait_data.get("name", "").lower()
             if trait_name:
-                out[trait_name] = trait_data
+                out[trait_name] = _normalize_trait_payload(trait_data)
 
     return out
+
+
+def load_spell_db(
+    spells_dir: Path, *, duplicate_policy: SpellDuplicatePolicy = "fail_fast"
+) -> dict[str, dict[str, Any]]:
+    """Load canonical spell records keyed by normalized spell lookup key."""
+
+    return _load_spell_database(spells_dir, duplicate_policy=duplicate_policy)
 
 
 def _import_encounter_strategy(module_name: str, path: Path) -> Any:

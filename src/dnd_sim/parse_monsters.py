@@ -5,7 +5,12 @@ import re
 from pathlib import Path
 from typing import Any
 
-from dnd_sim.monster_backfill import backfill_monster_payload, slugify_name
+from dnd_sim.monster_backfill import (
+    backfill_monster_payload,
+    extract_innate_spellcasting_entries,
+    extract_legendary_resistance_uses,
+    slugify_name,
+)
 
 _MONSTER_BLOCK_RE = re.compile(
     r"^(?P<name>.*?)\n"
@@ -313,7 +318,14 @@ def parse_monsters(raw_text: str) -> list[dict[str, Any]]:
             traits_end = first_section_idx if first_section_idx is not None else len(block_text)
             traits_text = block_text[traits_start:traits_end]
 
-        traits = [entry_name for entry_name, _entry_desc in _parse_named_entries(traits_text)]
+        parsed_trait_entries = _parse_named_entries(traits_text)
+        traits = [entry_name for entry_name, _entry_desc in parsed_trait_entries]
+        trait_entries = [
+            {"name": entry_name, "description": entry_desc}
+            for entry_name, entry_desc in parsed_trait_entries
+        ]
+        innate_spellcasting = extract_innate_spellcasting_entries(trait_entries=trait_entries)
+        legendary_resistance_uses = extract_legendary_resistance_uses(trait_entries=trait_entries)
 
         parsed_actions = [
             _parse_action_entry(entry_name, entry_desc, section="Actions")
@@ -342,6 +354,12 @@ def parse_monsters(raw_text: str) -> list[dict[str, Any]]:
         elif parsed_legendary:
             legendary_pool = 3
 
+        resources: dict[str, int] = (
+            {"legendary_actions": legendary_pool} if legendary_pool > 0 else {}
+        )
+        if legendary_resistance_uses is not None and legendary_resistance_uses > 0:
+            resources["legendary_resistance"] = legendary_resistance_uses
+
         payload: dict[str, Any] = {
             "name": name,
             "meta": meta,
@@ -353,12 +371,14 @@ def parse_monsters(raw_text: str) -> list[dict[str, Any]]:
             "cr": cr_match.group(1) if cr_match else "0",
             "saving_throws_text": saving_match.group(1).strip() if saving_match else "",
             "traits": traits,
+            "trait_entries": trait_entries,
             "actions": parsed_actions,
             "bonus_actions": [],
             "reactions": parsed_reactions,
             "legendary_actions": parsed_legendary,
             "lair_actions": parsed_lair,
-            "resources": {"legendary_actions": legendary_pool} if legendary_pool > 0 else {},
+            "innate_spellcasting": innate_spellcasting,
+            "resources": resources,
         }
 
         modern_payload = backfill_monster_payload(payload)

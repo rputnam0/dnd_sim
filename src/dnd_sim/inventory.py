@@ -26,6 +26,42 @@ def _slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
 
 
+def _slugified_words(value: str) -> tuple[str, ...]:
+    slug = _slugify(value)
+    if not slug:
+        return ()
+    return tuple(word for word in slug.split("_") if word)
+
+
+def _normalize_slot_name(value: Any) -> str:
+    normalized = _slugify(str(value).strip())
+    if not normalized:
+        raise ValueError("equipment slot must not be blank")
+    return normalized
+
+
+def _coerce_slot_tuple(value: Any) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    candidates: list[Any]
+    if isinstance(value, str):
+        candidates = [value]
+    elif isinstance(value, (list, tuple, set)):
+        candidates = list(value)
+    else:
+        return ()
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        slot = _normalize_slot_name(candidate)
+        if slot in seen:
+            continue
+        seen.add(slot)
+        normalized.append(slot)
+    return tuple(normalized)
+
+
 def _currency_total_cp(value: Mapping[str, int] | CurrencyWallet) -> int:
     if isinstance(value, CurrencyWallet):
         return value.total_cp
@@ -121,6 +157,8 @@ class InventoryItem:
     requires_attunement: bool = False
     attuned: bool = False
     consumable: bool = False
+    equip_slots: tuple[str, ...] = ()
+    equipped_slot: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -138,6 +176,15 @@ class InventoryItem:
             raise ValueError("weight_lb must be >= 0")
         if self.attuned and not self.requires_attunement:
             raise ValueError("Only attunement-required items can be attuned")
+        self.equip_slots = _coerce_slot_tuple(self.equip_slots)
+        if self.equipped_slot is not None:
+            self.equipped_slot = _normalize_slot_name(self.equipped_slot)
+            if not self.equip_slots:
+                self.equip_slots = (self.equipped_slot,)
+            if self.equipped_slot not in self.equip_slots:
+                raise ValueError(
+                    f"equipped_slot={self.equipped_slot} is not legal for item_id={self.item_id}"
+                )
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> InventoryItem:
@@ -153,6 +200,21 @@ class InventoryItem:
         else:
             value_cp = 0
 
+        metadata = dict(raw.get("metadata", {}))
+        raw_slots = (
+            raw.get("equip_slots")
+            or raw.get("equippable_slots")
+            or raw.get("slots")
+            or raw.get("slot")
+            or metadata.get("equip_slots")
+            or metadata.get("equippable_slots")
+            or metadata.get("slot")
+        )
+        raw_equipped_slot = raw.get("equipped_slot") or metadata.get("equipped_slot")
+        if raw_equipped_slot is None and bool(raw.get("equipped") or metadata.get("equipped")):
+            slots = _coerce_slot_tuple(raw_slots)
+            raw_equipped_slot = slots[0] if slots else None
+
         return cls(
             item_id=item_id,
             name=str(name),
@@ -162,7 +224,11 @@ class InventoryItem:
             requires_attunement=bool(raw.get("requires_attunement", False)),
             attuned=bool(raw.get("attuned", False)),
             consumable=bool(raw.get("consumable", False)),
-            metadata=dict(raw.get("metadata", {})),
+            equip_slots=_coerce_slot_tuple(raw_slots),
+            equipped_slot=(
+                _normalize_slot_name(raw_equipped_slot) if raw_equipped_slot is not None else None
+            ),
+            metadata=metadata,
         )
 
 
@@ -180,6 +246,16 @@ class InventoryState:
             raise ValueError("attunement_limit must be >= 1")
         if not isinstance(self.currency, CurrencyWallet):
             self.currency = CurrencyWallet.from_mapping(dict(self.currency))
+        for item in self.items.values():
+            if item.equipped_slot is None:
+                continue
+            if (
+                self._item_equipped_in_slot(item.equipped_slot, exclude_item_id=item.item_id)
+                is not None
+            ):
+                raise ValueError(
+                    f"equipment slot {item.equipped_slot} is occupied by multiple items"
+                )
 
     @classmethod
     def from_character_payload(cls, character: Mapping[str, Any]) -> InventoryState:
@@ -212,19 +288,35 @@ class InventoryState:
     def add_item(self, item: InventoryItem) -> None:
         existing = self.items.get(item.item_id)
         if existing is None:
+            if item.equipped_slot is not None:
+                occupied = self._item_equipped_in_slot(item.equipped_slot)
+                if occupied is not None:
+                    raise ValueError(
+                        f"equipment slot {item.equipped_slot} already occupied by {occupied.item_id}"
+                    )
             self.items[item.item_id] = item
             return
         if existing.requires_attunement != item.requires_attunement:
             raise ValueError(f"Item shape mismatch for item_id={item.item_id}")
         if existing.consumable != item.consumable:
             raise ValueError(f"Item shape mismatch for item_id={item.item_id}")
+        if existing.equip_slots != item.equip_slots:
+            raise ValueError(f"Item shape mismatch for item_id={item.item_id}")
+        if (
+            existing.equipped_slot is not None
+            and item.equipped_slot is not None
+            and existing.equipped_slot != item.equipped_slot
+        ):
+            raise ValueError(f"Item shape mismatch for item_id={item.item_id}")
         existing.quantity += item.quantity
         existing.attuned = existing.attuned or item.attuned
+        existing.equipped_slot = existing.equipped_slot or item.equipped_slot
         existing.value_cp = max(existing.value_cp, item.value_cp)
         existing.weight_lb = max(existing.weight_lb, item.weight_lb)
 
     def remove_item(self, item_id: str, *, quantity: int = 1) -> None:
-        item = self.items.get(item_id)
+        key = _slugify(item_id)
+        item = self.items.get(key)
         if item is None:
             raise KeyError(f"Unknown item_id={item_id}")
         quantity = _coerce_non_negative_int(quantity, field_name="quantity")
@@ -234,10 +326,10 @@ class InventoryState:
             raise ValueError("quantity exceeds amount in inventory")
         item.quantity -= quantity
         if item.quantity == 0:
-            self.items.pop(item_id, None)
+            self.items.pop(key, None)
 
     def consume_item(self, item_id: str, *, quantity: int = 1) -> None:
-        item = self.items.get(item_id)
+        item = self.items.get(_slugify(item_id))
         if item is None:
             raise KeyError(f"Unknown item_id={item_id}")
         if not item.consumable:
@@ -248,7 +340,7 @@ class InventoryState:
         return {item.item_id for item in self.items.values() if item.attuned}
 
     def attune_item(self, item_id: str) -> None:
-        item = self.items.get(item_id)
+        item = self.items.get(_slugify(item_id))
         if item is None:
             raise KeyError(f"Unknown item_id={item_id}")
         if not item.requires_attunement:
@@ -260,10 +352,126 @@ class InventoryState:
         item.attuned = True
 
     def unattune_item(self, item_id: str) -> None:
-        item = self.items.get(item_id)
+        item = self.items.get(_slugify(item_id))
         if item is None:
             raise KeyError(f"Unknown item_id={item_id}")
         item.attuned = False
+
+    def equip_item(self, item_id: str, *, slot: str | None = None) -> str:
+        key = _slugify(item_id)
+        item = self.items.get(key)
+        if item is None:
+            raise KeyError(f"Unknown item_id={item_id}")
+        if not item.equip_slots:
+            raise ValueError(f"Item {item_id} is not equippable")
+        if item.requires_attunement and not item.attuned:
+            raise ValueError(f"Item {item_id} must be attuned before it can be equipped")
+
+        target_slot = _normalize_slot_name(slot) if slot is not None else None
+        if target_slot is None:
+            if item.equipped_slot is not None:
+                return item.equipped_slot
+            for candidate in item.equip_slots:
+                occupant = self._item_equipped_in_slot(candidate, exclude_item_id=item.item_id)
+                if occupant is None:
+                    target_slot = candidate
+                    break
+            if target_slot is None:
+                target_slot = item.equip_slots[0]
+
+        if target_slot not in item.equip_slots:
+            raise ValueError(f"Item {item_id} cannot be equipped in slot {target_slot}")
+        occupant = self._item_equipped_in_slot(target_slot, exclude_item_id=item.item_id)
+        if occupant is not None:
+            raise ValueError(f"equipment slot {target_slot} already occupied by {occupant.item_id}")
+
+        item.equipped_slot = target_slot
+        return target_slot
+
+    def unequip_item(self, item_id: str, *, slot: str | None = None) -> None:
+        key = _slugify(item_id)
+        item = self.items.get(key)
+        if item is None:
+            raise KeyError(f"Unknown item_id={item_id}")
+        if item.equipped_slot is None:
+            return
+        if slot is not None and _normalize_slot_name(slot) != item.equipped_slot:
+            raise ValueError(f"Item {item_id} is not equipped in slot {slot}")
+        item.equipped_slot = None
+
+    def is_item_equipped(self, item_id: str, *, slot: str | None = None) -> bool:
+        key = _slugify(item_id)
+        item = self.items.get(key)
+        if item is None or item.equipped_slot is None:
+            return False
+        if slot is None:
+            return True
+        return item.equipped_slot == _normalize_slot_name(slot)
+
+    def has_equipped_shield(self) -> bool:
+        for item in self.items.values():
+            if item.equipped_slot is None:
+                continue
+            if item.equipped_slot == "shield":
+                return True
+            metadata = item.metadata if isinstance(item.metadata, dict) else {}
+            armor_type = _slugify(str(metadata.get("armor_type", "")))
+            if armor_type == "shield":
+                return True
+            if bool(metadata.get("is_shield")):
+                return True
+            if "shield" in _slugified_words(item.name):
+                return True
+        return False
+
+    def has_item_quantity(self, item_id: str, *, quantity: int = 1) -> bool:
+        required = _coerce_non_negative_int(quantity, field_name="quantity")
+        if required == 0:
+            return True
+        item = self.items.get(_slugify(item_id))
+        return item is not None and item.quantity >= required
+
+    def consume_ammo(self, item_id: str, *, quantity: int = 1) -> None:
+        self.remove_item(item_id, quantity=quantity)
+
+    def find_ammo_item_id(self, ammo_type: str) -> str | None:
+        token = _slugify(ammo_type)
+        if not token:
+            return None
+        for item_id in sorted(self.items.keys()):
+            item = self.items[item_id]
+            metadata = item.metadata if isinstance(item.metadata, dict) else {}
+            current_type = _slugify(str(metadata.get("ammo_type", "")))
+            if current_type == token and item.quantity > 0:
+                return item_id
+        return None
+
+    def resolve_ammo_item_id(
+        self,
+        *,
+        ammo_item_id: str | None = None,
+        ammo_type: str | None = None,
+    ) -> str | None:
+        if ammo_item_id:
+            candidate = _slugify(ammo_item_id)
+            if candidate in self.items:
+                return candidate
+        if ammo_type:
+            return self.find_ammo_item_id(ammo_type)
+        return None
+
+    def _item_equipped_in_slot(
+        self,
+        slot: str,
+        *,
+        exclude_item_id: str | None = None,
+    ) -> InventoryItem | None:
+        for item in self.items.values():
+            if exclude_item_id is not None and item.item_id == exclude_item_id:
+                continue
+            if item.equipped_slot == slot:
+                return item
+        return None
 
     def can_afford(self, cost: Mapping[str, int] | CurrencyWallet) -> bool:
         return self.currency.can_afford(cost)

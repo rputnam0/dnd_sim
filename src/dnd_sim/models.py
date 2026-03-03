@@ -47,12 +47,14 @@ class CharacterRecord:
     traits: list[str]
     raw_fields: list[RawField]
     source: dict[str, str]
+    class_levels: dict[str, int] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "character_id": self.character_id,
             "name": self.name,
             "class_level": self.class_level,
+            "class_levels": self.class_levels,
             "max_hp": self.max_hp,
             "ac": self.ac,
             "speed_ft": self.speed_ft,
@@ -178,6 +180,17 @@ class ConditionTracker:
     save_ability: str | None = None
 
 
+@dataclass(slots=True, frozen=True)
+class FeatureHookRegistration:
+    feature_name: str
+    source_type: str
+    hook_type: str
+    trigger: str
+    trait_key: str
+    mechanic_index: int
+    registration_order: int
+
+
 @dataclass(slots=True)
 class EffectInstance:
     instance_id: str
@@ -238,6 +251,7 @@ class ActorRuntimeState:
     legendary_actions_remaining: int = 0
     lair_action_used_this_round: bool = False
     traits: dict[str, dict[str, Any]] = field(default_factory=dict)
+    feature_hooks: list[FeatureHookRegistration] = field(default_factory=list)
     inventory: InventoryState = field(default_factory=InventoryState)
     condition_durations: dict[str, ConditionTracker] = field(default_factory=dict)
     effect_instances: list[EffectInstance] = field(default_factory=list)
@@ -271,6 +285,10 @@ class ActorRuntimeState:
     level: int = 1
     pending_smite: dict[str, Any] | None = None
     companion_owner_id: str | None = None
+    allied_controller_id: str | None = None
+    mount_controller_id: str | None = None
+    mounted_on_id: str | None = None
+    mounted_rider_id: str | None = None
     requires_command: bool = False
     commanded_this_round: bool = False
 
