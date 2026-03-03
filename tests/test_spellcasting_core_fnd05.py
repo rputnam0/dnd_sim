@@ -1000,6 +1000,64 @@ def test_counterspell_reaction_matches_canonicalized_name_id() -> None:
     assert counterspeller.reaction_available is False
 
 
+def test_counterspell_ability_check_uses_spellcasting_ability_modifier() -> None:
+    rng = _FixedRng([10])  # Passes DC 15 only if INT/WIS/CHA max modifier is used.
+
+    caster = _base_actor(actor_id="caster", team="party")
+    ally = _base_actor(actor_id="ally", team="party")
+    counterspeller = _base_actor(actor_id="counterspeller", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    counterspeller.position = (0.0, 30.0, 0.0)
+    counterspeller.int_mod = 5
+    counterspeller.cha_mod = -2
+    counterspeller.actions = [
+        ActionDefinition(
+            name="counterspell",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="single_enemy",
+            tags=["spell", "counterspell"],
+        )
+    ]
+    counterspeller.resources = {"spell_slot_3": 1}
+
+    cast_spell = ActionDefinition(
+        name="greater_blessing",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        resource_cost={"spell_slot_5": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "blessed", "target": "target"}],
+    )
+
+    actors = {
+        caster.actor_id: caster,
+        ally.actor_id: ally,
+        counterspeller.actor_id: counterspeller,
+    }
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        caster, ally, counterspeller
+    )
+
+    _execute_action(
+        rng=rng,
+        actor=caster,
+        action=cast_spell,
+        targets=[ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "blessed" not in ally.conditions
+    assert counterspeller.resources["spell_slot_3"] == 0
+    assert counterspeller.reaction_available is False
+
+
 def test_counterspell_reaction_does_not_match_partial_identifier() -> None:
     timing_engine = _create_combat_timing_engine()
 
@@ -1059,6 +1117,73 @@ def test_counterspell_reaction_does_not_match_partial_identifier() -> None:
         timing_engine=timing_engine,
         round_number=1,
         turn_token="1:caster",
+    )
+
+    assert observed == []
+    assert "blessed" in ally.conditions
+    assert counterspeller.resources["spell_slot_3"] == 1
+    assert counterspeller.reaction_available is True
+
+
+def test_counterspell_requires_reactor_to_see_caster() -> None:
+    timing_engine = _create_combat_timing_engine()
+
+    caster = _base_actor(actor_id="caster", team="party")
+    ally = _base_actor(actor_id="ally", team="party")
+    counterspeller = _base_actor(actor_id="counterspeller", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    counterspeller.position = (0.0, 30.0, 0.0)
+    counterspeller.conditions.add("blinded")
+    counterspeller.actions = [
+        ActionDefinition(
+            name="counterspell",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="single_enemy",
+            tags=["spell", "counterspell"],
+        )
+    ]
+    counterspeller.resources = {"spell_slot_3": 1}
+
+    cast_spell = ActionDefinition(
+        name="greater_blessing",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        resource_cost={"spell_slot_5": 1},
+        tags=["spell"],
+        effects=[{"effect_type": "apply_condition", "condition": "blessed", "target": "target"}],
+    )
+
+    observed: list[str] = []
+
+    def _capture_window(event: ReactionWindowOpenedEvent) -> None:
+        if event.window == "counterspell":
+            observed.append("counterspell_window")
+
+    timing_engine.subscribe(ReactionWindowOpenedEvent, _capture_window, name="capture_window")
+
+    actors = {
+        caster.actor_id: caster,
+        ally.actor_id: ally,
+        counterspeller.actor_id: counterspeller,
+    }
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        caster, ally, counterspeller
+    )
+
+    _execute_action(
+        rng=random.Random(24),
+        actor=caster,
+        action=cast_spell,
+        targets=[ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        timing_engine=timing_engine,
     )
 
     assert observed == []
