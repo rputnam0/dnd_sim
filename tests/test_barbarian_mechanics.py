@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import _execute_action, _find_best_bonus_action, _tick_conditions_for_actor
+from dnd_sim.engine import (
+    _execute_action,
+    _find_best_bonus_action,
+    _has_trait_marker,
+    _tick_conditions_for_actor,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.rules_2014 import apply_damage
 
@@ -362,3 +367,17 @@ def test_brutal_critical_scales_extra_weapon_dice() -> None:
 
     # Crit doubles weapon dice (2d12) and Brutal Critical at level 13 adds 2d12.
     assert damage_dealt[barbarian.actor_id] == 24
+
+
+def test_has_trait_marker_matches_multiword_numbered_variant() -> None:
+    barbarian = _base_actor(actor_id="barb", team="party")
+    barbarian.traits = {"Brutal Critical (1 die)": {}}
+
+    assert _has_trait_marker(barbarian, "brutal critical")
+
+
+def test_has_trait_marker_does_not_match_partial_word_prefix() -> None:
+    barbarian = _base_actor(actor_id="barb", team="party")
+    barbarian.traits = {"Brutal Criticality": {}}
+
+    assert _has_trait_marker(barbarian, "brutal critical") is False
