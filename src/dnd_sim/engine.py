@@ -5063,6 +5063,21 @@ def _move_actor_for_action_range(
 
     if actor.dead or actor.hp <= 0:
         return False
+    _process_hazard_movement_triggers(
+        rng=rng,
+        mover=actor,
+        start_pos=start_pos,
+        end_pos=actor.position,
+        movement_path=movement_path,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    if actor.dead or actor.hp <= 0:
+        return False
     return distance_chebyshev(actor.position, primary.position) <= action_range
 
 
@@ -5751,6 +5766,21 @@ def _apply_declared_movement_or_error(
         round_number=round_number,
         turn_token=turn_token,
     )
+    if actor.dead or actor.hp <= 0:
+        return
+    _process_hazard_movement_triggers(
+        rng=rng,
+        mover=actor,
+        start_pos=start_pos,
+        end_pos=actor.position,
+        movement_path=movement_path,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
 
 
 def _validate_declared_ready_or_error(
@@ -6186,6 +6216,294 @@ def _coerce_positive_int(value: Any) -> int | None:
     except (TypeError, ValueError):
         return None
     return parsed if parsed > 0 else None
+
+
+def _normalize_hazard_trigger(value: Any) -> str | None:
+    key = str(value or "").strip().lower().replace("-", "_")
+    if key in {"start_turn", "turn_start", "on_start_turn", "start_of_turn"}:
+        return "start_turn"
+    if key in {"enter", "on_enter", "enter_zone", "creature_enters"}:
+        return "enter"
+    if key in {"leave", "on_leave", "leave_zone", "exit", "on_exit"}:
+        return "leave"
+    return None
+
+
+def _coerce_hazard_effects(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, dict):
+        return [dict(value)]
+    if not isinstance(value, list):
+        return []
+    return [dict(entry) for entry in value if isinstance(entry, dict)]
+
+
+def _extract_hazard_trigger_effects(effect: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    trigger_effects: dict[str, list[dict[str, Any]]] = {}
+
+    direct_key_map = {
+        "start_turn": ("start_turn_effects", "start_turn_effect", "on_start_turn"),
+        "enter": ("enter_effects", "enter_effect", "on_enter"),
+        "leave": ("leave_effects", "leave_effect", "on_leave"),
+    }
+    for trigger_name, aliases in direct_key_map.items():
+        rows: list[dict[str, Any]] = []
+        for alias in aliases:
+            rows.extend(_coerce_hazard_effects(effect.get(alias)))
+        if rows:
+            trigger_effects[trigger_name] = rows
+
+    for container_key in ("trigger_effects", "triggers", "hazard_triggers"):
+        payload = effect.get(container_key)
+        if isinstance(payload, dict):
+            for raw_trigger, raw_effects in payload.items():
+                trigger_name = _normalize_hazard_trigger(raw_trigger)
+                if trigger_name is None:
+                    continue
+                trigger_effects.setdefault(trigger_name, []).extend(
+                    _coerce_hazard_effects(raw_effects)
+                )
+            continue
+        if not isinstance(payload, list):
+            continue
+        for row in payload:
+            if not isinstance(row, dict):
+                continue
+            trigger_name = _normalize_hazard_trigger(row.get("trigger") or row.get("event"))
+            if trigger_name is None:
+                continue
+            row_effects = _coerce_hazard_effects(row.get("effects", row.get("effect")))
+            if row_effects:
+                trigger_effects.setdefault(trigger_name, []).extend(row_effects)
+
+    return {trigger_name: rows for trigger_name, rows in trigger_effects.items() if rows}
+
+
+def _hazard_contains_position(
+    hazard: dict[str, Any],
+    position: tuple[float, float, float],
+) -> bool:
+    hazard_position = _to_position3(hazard.get("position")) or (0.0, 0.0, 0.0)
+    try:
+        radius = float(hazard.get("radius", hazard.get("radius_ft", 0.0)))
+    except (TypeError, ValueError):
+        radius = 0.0
+    return distance_chebyshev(position, hazard_position) <= max(0.0, radius)
+
+
+def _hazard_trigger_effects(
+    hazard: dict[str, Any],
+    trigger: str,
+) -> list[dict[str, Any]]:
+    trigger_name = _normalize_hazard_trigger(trigger)
+    if trigger_name is None:
+        return []
+    payload = hazard.get("trigger_effects")
+    if not isinstance(payload, dict):
+        return []
+    return [dict(row) for row in payload.get(trigger_name, []) if isinstance(row, dict)]
+
+
+def _resolve_hazard_source_actor(
+    hazard: dict[str, Any],
+    *,
+    actors: dict[str, ActorRuntimeState],
+    fallback: ActorRuntimeState,
+) -> ActorRuntimeState:
+    source_id = str(hazard.get("source_id", "")).strip()
+    if source_id and source_id in actors:
+        return actors[source_id]
+    return fallback
+
+
+def _apply_hazard_trigger_effects(
+    *,
+    rng: random.Random,
+    hazard: dict[str, Any],
+    trigger: str,
+    subject: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    trigger_name = _normalize_hazard_trigger(trigger)
+    if trigger_name is None:
+        return
+    effects = _hazard_trigger_effects(hazard, trigger_name)
+    if not effects:
+        return
+
+    source_actor = _resolve_hazard_source_actor(hazard, actors=actors, fallback=subject)
+    damage_dealt.setdefault(source_actor.actor_id, 0)
+    damage_taken.setdefault(subject.actor_id, 0)
+    threat_scores.setdefault(source_actor.actor_id, 0)
+    resources_spent.setdefault(source_actor.actor_id, {})
+    resources_spent.setdefault(subject.actor_id, {})
+    for trigger_effect in effects:
+        _apply_effect(
+            effect=trigger_effect,
+            rng=rng,
+            actor=source_actor,
+            target=subject,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            actors=actors,
+            active_hazards=active_hazards,
+            trigger_event=f"hazard_{trigger_name}",
+            source_bucket="hazard_trigger",
+        )
+        if subject.dead or subject.hp <= 0:
+            return
+
+
+def _tick_hazards_for_actor_turn(
+    *,
+    active_hazards: list[dict[str, Any]],
+    actor: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+    boundary: str = "turn_start",
+) -> None:
+    if not active_hazards:
+        return
+    tick_boundary = _normalize_duration_boundary(boundary)
+    kept: list[dict[str, Any]] = []
+    changed = False
+    for hazard in active_hazards:
+        source_id = str(hazard.get("source_id", "")).strip()
+        if source_id and source_id not in actors:
+            changed = True
+            continue
+
+        duration_remaining = _coerce_positive_int(
+            hazard.get("duration_remaining", hazard.get("duration"))
+        )
+        if duration_remaining is None or not source_id:
+            kept.append(hazard)
+            continue
+
+        hazard["duration_remaining"] = duration_remaining
+        if source_id != actor.actor_id:
+            kept.append(hazard)
+            continue
+
+        hazard_boundary = _normalize_duration_boundary(hazard.get("duration_boundary"))
+        if hazard_boundary != tick_boundary:
+            kept.append(hazard)
+            continue
+
+        next_duration = duration_remaining - 1
+        changed = True
+        if next_duration <= 0:
+            continue
+        hazard["duration_remaining"] = next_duration
+        kept.append(hazard)
+
+    if changed:
+        active_hazards[:] = kept
+
+
+def _process_hazard_start_turn_triggers(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    if actor.dead or actor.hp <= 0:
+        return
+    for hazard in list(active_hazards):
+        if hazard not in active_hazards:
+            continue
+        if not _hazard_contains_position(hazard, actor.position):
+            continue
+        _apply_hazard_trigger_effects(
+            rng=rng,
+            hazard=hazard,
+            trigger="start_turn",
+            subject=actor,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+        )
+        if actor.dead or actor.hp <= 0:
+            return
+
+
+def _process_hazard_movement_triggers(
+    *,
+    rng: random.Random,
+    mover: ActorRuntimeState,
+    start_pos: tuple[float, float, float],
+    end_pos: tuple[float, float, float],
+    movement_path: list[tuple[float, float, float]] | None,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    if mover.dead or mover.hp <= 0:
+        return
+    if not movement_path and start_pos == end_pos:
+        return
+    path_points = _expand_path_points(movement_path or [start_pos, end_pos])
+    if len(path_points) < 2:
+        return
+
+    for hazard in list(active_hazards):
+        if hazard not in active_hazards:
+            continue
+        enter_effects = _hazard_trigger_effects(hazard, "enter")
+        leave_effects = _hazard_trigger_effects(hazard, "leave")
+        if not enter_effects and not leave_effects:
+            continue
+
+        previous = path_points[0]
+        was_inside = _hazard_contains_position(hazard, previous)
+        for point in path_points[1:]:
+            is_inside = _hazard_contains_position(hazard, point)
+            if not was_inside and is_inside and enter_effects:
+                _apply_hazard_trigger_effects(
+                    rng=rng,
+                    hazard=hazard,
+                    trigger="enter",
+                    subject=mover,
+                    actors=actors,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    active_hazards=active_hazards,
+                )
+            elif was_inside and not is_inside and leave_effects:
+                _apply_hazard_trigger_effects(
+                    rng=rng,
+                    hazard=hazard,
+                    trigger="leave",
+                    subject=mover,
+                    actors=actors,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    active_hazards=active_hazards,
+                )
+            if mover.dead or mover.hp <= 0:
+                return
+            previous = point
+            was_inside = is_inside
 
 
 def _effect_instance_condition_names(effect: EffectInstance) -> set[str]:
@@ -6886,7 +7204,9 @@ def _apply_effect(
         return
 
     if effect_type == "hazard":
-        duration = int(effect.get("duration", 10))
+        duration = _coerce_positive_int(effect.get("duration", effect.get("duration_rounds", 10)))
+        if duration is None:
+            return
         hazard_type = str(effect.get("hazard_type", "generic"))
         effect_id = str(effect.get("effect_id", "")).strip() or f"hazard:{hazard_type}"
         hazard_position = _to_position3(effect.get("position")) or recipient.position
@@ -6894,6 +7214,7 @@ def _apply_effect(
         concentration_linked = bool(
             action and action.concentration and effect.get("concentration_linked", True)
         )
+        trigger_effects = _extract_hazard_trigger_effects(effect)
         active_hazards.append(
             {
                 "type": hazard_type,
@@ -6904,6 +7225,7 @@ def _apply_effect(
                 "position": hazard_position,
                 "radius": hazard_radius,
                 "duration": duration,
+                "duration_remaining": duration,
                 "duration_boundary": _normalize_duration_boundary(
                     effect.get("duration_timing", effect.get("duration_boundary", "turn_start"))
                 ),
@@ -6911,6 +7233,7 @@ def _apply_effect(
                 "internal_tags": sorted(_normalize_internal_tags(effect.get("internal_tags"))),
                 "concentration_linked": concentration_linked,
                 "concentration_owner_id": actor.actor_id if concentration_linked else None,
+                "trigger_effects": trigger_effects,
             }
         )
         if concentration_linked:
@@ -7063,6 +7386,20 @@ def _apply_effect(
         if direction == "toward_source":
             old_position = recipient.position
             recipient.position = move_towards(cur, src, distance_ft)
+            if old_position != recipient.position:
+                _process_hazard_movement_triggers(
+                    rng=rng,
+                    mover=recipient,
+                    start_pos=old_position,
+                    end_pos=recipient.position,
+                    movement_path=[old_position, recipient.position],
+                    actors=actors,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    active_hazards=active_hazards,
+                )
             if (
                 round_number is not None
                 and turn_token is not None
@@ -7094,6 +7431,20 @@ def _apply_effect(
                 # Arbitrary axis push if co-located.
                 old_position = recipient.position
                 recipient.position = (cur[0] + distance_ft, cur[1], cur[2])
+                if old_position != recipient.position:
+                    _process_hazard_movement_triggers(
+                        rng=rng,
+                        mover=recipient,
+                        start_pos=old_position,
+                        end_pos=recipient.position,
+                        movement_path=[old_position, recipient.position],
+                        actors=actors,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                    )
                 if (
                     round_number is not None
                     and turn_token is not None
@@ -7125,6 +7476,20 @@ def _apply_effect(
             )
             old_position = recipient.position
             recipient.position = dest
+            if old_position != recipient.position:
+                _process_hazard_movement_triggers(
+                    rng=rng,
+                    mover=recipient,
+                    start_pos=old_position,
+                    end_pos=recipient.position,
+                    movement_path=[old_position, recipient.position],
+                    actors=actors,
+                    damage_dealt=damage_dealt,
+                    damage_taken=damage_taken,
+                    threat_scores=threat_scores,
+                    resources_spent=resources_spent,
+                    active_hazards=active_hazards,
+                )
             if (
                 round_number is not None
                 and turn_token is not None
@@ -7898,6 +8263,12 @@ def _dispatch_combat_event(
         end_actor = actors[trigger_actor.actor_id]
         _clear_gwm_bonus_trigger(end_actor)
         _tick_conditions_for_actor(rng, end_actor, boundary="turn_end")
+        _tick_hazards_for_actor_turn(
+            active_hazards=active_hazards,
+            actor=end_actor,
+            actors=actors,
+            boundary="turn_end",
+        )
         _force_end_concentration_if_needed(end_actor, actors=actors, active_hazards=active_hazards)
     return trace
 
@@ -10848,6 +11219,12 @@ def run_simulation(
                     actor.non_action_cantrip_spell_cast_this_turn = False
                     _roll_recharge_for_actor(rng, actor)
                     _tick_conditions_for_actor(rng, actor)
+                    _tick_hazards_for_actor_turn(
+                        active_hazards=active_hazards,
+                        actor=actor,
+                        actors=actors,
+                        boundary="turn_start",
+                    )
                     _force_end_concentration_if_needed(
                         actor, actors=actors, active_hazards=active_hazards
                     )
@@ -10868,6 +11245,23 @@ def run_simulation(
                         _resolve_turn_end(actor, f"{rounds}:{actor.actor_id}")
                         continue
 
+                    _process_hazard_start_turn_triggers(
+                        rng=rng,
+                        actor=actor,
+                        actors=actors,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                    )
+                    if actor.dead or actor.hp <= 0:
+                        continue
+
+                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
+                        actors, enemy_defeat_rule
+                    ):
+                        break
                     turn_token = f"{rounds}:{actor.actor_id}"
                     _dispatch_combat_event(
                         rng=rng,
