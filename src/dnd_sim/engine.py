@@ -2770,9 +2770,11 @@ def _build_persistent_zone(
         "on_start_turn": _zone_effects(effect.get("on_start_turn") or effect.get("on_turn_start")),
         "on_end_turn": _zone_effects(effect.get("on_end_turn") or effect.get("on_turn_end")),
         "trigger_effects": _extract_hazard_trigger_effects(effect),
-        "magical": _coerce_bool(effect.get("magical"), default=False),
-        "spell_level": _coerce_positive_int(effect.get("spell_level")),
     }
+    if "magical" in effect:
+        zone["magical"] = _coerce_bool(effect.get("magical"), default=False)
+    if "spell_level" in effect:
+        zone["spell_level"] = _coerce_positive_int(effect.get("spell_level"))
     if min_pos is not None and max_pos is not None:
         zone["min_pos"] = min_pos
         zone["max_pos"] = max_pos
@@ -9751,10 +9753,12 @@ def _apply_effect(
             active_hazards=active_hazards,
         )
         if action is not None:
-            zone["magical"] = bool(zone.get("magical", _is_magical_action(action)))
-            zone_spell_level = _spell_level_from_action(action)
-            if zone_spell_level > 0:
-                zone["spell_level"] = zone_spell_level
+            if "magical" not in zone:
+                zone["magical"] = _is_magical_action(action)
+            if "spell_level" not in zone:
+                zone_spell_level = _spell_level_from_action(action)
+                if zone_spell_level >= 0:
+                    zone["spell_level"] = zone_spell_level
         zone["concentration_linked"] = concentration_linked
         zone["concentration_owner_id"] = actor.actor_id if concentration_linked else None
         stack_policy = str(zone.get("stack_policy", "independent"))
@@ -12048,7 +12052,13 @@ def _zone_spell_level(zone: dict[str, Any]) -> int:
 def _zone_is_dispellable_magic(zone: dict[str, Any]) -> bool:
     if _zone_flag(zone, "nonmagical", default=False):
         return False
-    return _coerce_bool(zone.get("magical"), default=True)
+    if "magical" in zone:
+        return _coerce_bool(zone.get("magical"), default=False)
+    if _zone_spell_level(zone) >= 0 and "spell_level" in zone:
+        return True
+    if _coerce_bool(zone.get("concentration_linked"), default=False):
+        return True
+    return False
 
 
 def _dispel_check_succeeds(
@@ -12062,6 +12072,120 @@ def _dispel_check_succeeds(
         return True
     dc = 10 + source_level
     return (rng.randint(1, 20) + check_mod) >= dc
+
+
+def _has_concentration_linked_hazard(
+    source: ActorRuntimeState,
+    active_hazards: list[dict[str, Any]],
+) -> bool:
+    return any(
+        _is_hazard_linked_to_concentration_owner(hazard, owner_actor_id=source.actor_id)
+        for hazard in active_hazards
+        if isinstance(hazard, dict)
+    )
+
+
+def _sync_concentration_tracking_for_source(
+    source: ActorRuntimeState,
+    *,
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> None:
+    linked_target_ids: set[str] = set()
+    linked_conditions: set[str] = set()
+    linked_effect_ids: set[str] = set()
+
+    for target_actor in actors.values():
+        for effect in target_actor.effect_instances:
+            if effect.source_actor_id != source.actor_id or not effect.concentration_linked:
+                continue
+            linked_effect_ids.add(effect.instance_id)
+            linked_conditions.add(effect.condition)
+            target_id = str(effect.target_actor_id or target_actor.actor_id).strip()
+            if target_id and target_id != source.actor_id:
+                linked_target_ids.add(target_id)
+
+    for hazard in active_hazards:
+        if not isinstance(hazard, dict):
+            continue
+        if not _is_hazard_linked_to_concentration_owner(hazard, owner_actor_id=source.actor_id):
+            continue
+        target_id = str(hazard.get("target_id", "")).strip()
+        if target_id and target_id != source.actor_id:
+            linked_target_ids.add(target_id)
+
+    for summon in actors.values():
+        if summon.actor_id == source.actor_id:
+            continue
+        if _is_actor_linked_concentration_summon(summon, owner_actor_id=source.actor_id):
+            linked_target_ids.add(summon.actor_id)
+
+    source.concentrated_targets = linked_target_ids
+    source.concentration_conditions = linked_conditions
+    source.concentration_effect_instance_ids = linked_effect_ids
+
+    has_linked_hazards = _has_concentration_linked_hazard(source, active_hazards)
+    has_any_linked_effect = bool(linked_target_ids or linked_effect_ids or has_linked_hazards)
+    has_readied_spell = bool(source.readied_spell_held)
+    if has_any_linked_effect or has_readied_spell:
+        source.concentrating = True
+        return
+
+    source.concentrating = False
+    source.concentrated_spell = None
+    source.concentrated_spell_level = None
+
+
+def _dispel_target_from_concentration_source(
+    *,
+    source: ActorRuntimeState,
+    target: ActorRuntimeState,
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+) -> bool:
+    removed_any = False
+    for effect in list(target.effect_instances):
+        if effect.source_actor_id != source.actor_id:
+            continue
+        if not effect.concentration_linked:
+            continue
+        _remove_effect_instance(
+            target,
+            effect.instance_id,
+            source_actor_id=source.actor_id,
+        )
+        removed_any = True
+
+    if (
+        target.actor_id != source.actor_id
+        and target.actor_id in actors
+        and _is_actor_linked_concentration_summon(target, owner_actor_id=source.actor_id)
+    ):
+        actors.pop(target.actor_id, None)
+        removed_any = True
+
+    kept_hazards: list[dict[str, Any]] = []
+    for hazard in active_hazards:
+        if not isinstance(hazard, dict):
+            continue
+        if not _is_hazard_linked_to_concentration_owner(hazard, owner_actor_id=source.actor_id):
+            kept_hazards.append(hazard)
+            continue
+        if not _zone_contains_position(hazard, target.position):
+            kept_hazards.append(hazard)
+            continue
+        removed_any = True
+    if len(kept_hazards) != len(active_hazards):
+        active_hazards[:] = kept_hazards
+        _prune_actor_zone_memberships(actors, active_hazards)
+
+    if removed_any:
+        _sync_concentration_tracking_for_source(
+            source,
+            actors=actors,
+            active_hazards=active_hazards,
+        )
+    return removed_any
 
 
 def _resolve_dispel_magic(
@@ -12079,9 +12203,7 @@ def _resolve_dispel_magic(
         affecting_sources = [
             source
             for source in actors.values()
-            if source.concentrating
-            and target.actor_id in source.concentrated_targets
-            and source.actor_id != actor.actor_id
+            if source.concentrating and target.actor_id in source.concentrated_targets
         ]
         if affecting_sources:
             affecting_sources.sort(
@@ -12090,19 +12212,24 @@ def _resolve_dispel_magic(
             )
             source = affecting_sources[0]
             source_level = int(source.concentrated_spell_level or 0)
-            if _dispel_check_succeeds(
+            if not _dispel_check_succeeds(
                 rng=rng,
                 check_mod=check_mod,
                 dispel_level=dispel_level,
                 source_level=source_level,
             ):
-                _break_concentration(source, actors, active_hazards)
-            continue
+                continue
+            removed_concentration_target = _dispel_target_from_concentration_source(
+                source=source,
+                target=target,
+                actors=actors,
+                active_hazards=active_hazards,
+            )
+            if removed_concentration_target:
+                continue
 
         dispellable_effects: list[tuple[int, EffectInstance]] = []
         for effect in list(target.effect_instances):
-            if effect.source_actor_id == actor.actor_id:
-                continue
             if not _effect_is_dispellable_spell_effect(effect):
                 continue
             dispellable_effects.append((_effect_spell_level(effect, actors=actors), effect))
@@ -12126,7 +12253,11 @@ def _resolve_dispel_magic(
                     source_actor_id=effect.source_actor_id,
                 )
                 if effect.concentration_linked and source_actor is not None:
-                    _break_concentration(source_actor, actors, active_hazards)
+                    _sync_concentration_tracking_for_source(
+                        source_actor,
+                        actors=actors,
+                        active_hazards=active_hazards,
+                    )
             continue
 
         dispellable_zones: list[tuple[int, str]] = []
@@ -12154,15 +12285,29 @@ def _resolve_dispel_magic(
             source_level=zone_level,
         ):
             continue
-        active_hazards[:] = [
-            zone
-            for idx, zone in enumerate(active_hazards)
-            if not (
-                isinstance(zone, dict)
-                and _zone_instance_id(zone, fallback_index=idx + 1) == chosen_zone_id
-            )
-        ]
+        removed_zone_source_ids: set[str] = set()
+        kept_hazards: list[dict[str, Any]] = []
+        for idx, zone in enumerate(active_hazards):
+            if not isinstance(zone, dict):
+                continue
+            zone_id = _zone_instance_id(zone, fallback_index=idx + 1)
+            if zone_id != chosen_zone_id:
+                kept_hazards.append(zone)
+                continue
+            removed_zone_source_ids.add(str(zone.get("concentration_owner_id", "")).strip())
+        active_hazards[:] = kept_hazards
         _prune_actor_zone_memberships(actors, active_hazards)
+        for source_id in removed_zone_source_ids:
+            if not source_id:
+                continue
+            source_actor = actors.get(source_id)
+            if source_actor is None:
+                continue
+            _sync_concentration_tracking_for_source(
+                source_actor,
+                actors=actors,
+                active_hazards=active_hazards,
+            )
 
 
 def _apply_domain_attack_roll_hooks(

@@ -291,3 +291,208 @@ def test_dispel_magic_respects_line_of_effect_total_cover() -> None:
         obstacles=[wall],
     )
     assert resolved_targets == []
+
+
+def test_dispel_magic_removes_spell_created_zone_at_target_location() -> None:
+    rng = FixedRng([10])  # 10 + INT 4 => DC 14 success for a 4th-level zone.
+    source = _base_actor(actor_id="source", team="enemy")
+    source.int_mod = 3
+    dispeller = _base_actor(actor_id="dispeller", team="party")
+    dispeller.int_mod = 4
+    victim = _base_actor(actor_id="victim", team="party")
+    source.position = (20.0, 0.0, 0.0)
+    dispeller.position = (0.0, 0.0, 0.0)
+    victim.position = (10.0, 0.0, 0.0)
+
+    zone_spell = ActionDefinition(
+        name="freezing_mist",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        concentration=True,
+        tags=["spell", "spell_level:4"],
+        effects=[
+            {
+                "effect_type": "persistent_zone",
+                "target": "target",
+                "zone_type": "cloud",
+                "radius_ft": 10,
+                "duration_rounds": 10,
+                "effect_id": "freezing_mist",
+            }
+        ],
+    )
+    dispel_magic = ActionDefinition(
+        name="dispel_magic",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        tags=["spell", "dispel"],
+    )
+
+    actors = {a.actor_id: a for a in (source, dispeller, victim)}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        source, dispeller, victim
+    )
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=random.Random(11),
+        actor=source,
+        action=zone_spell,
+        targets=[victim],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert len(active_hazards) == 1
+
+    _execute_action(
+        rng=rng,
+        actor=dispeller,
+        action=dispel_magic,
+        targets=[victim],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert active_hazards == []
+
+
+def test_dispel_magic_only_removes_targeted_concentration_effect_not_whole_package() -> None:
+    rng = FixedRng([20])  # Ensure dispel succeeds even for high-level effect.
+    source = _base_actor(actor_id="source", team="enemy")
+    source.int_mod = 3
+    dispeller = _base_actor(actor_id="dispeller", team="party")
+    ally_a = _base_actor(actor_id="ally_a", team="party")
+    ally_b = _base_actor(actor_id="ally_b", team="party")
+
+    twin_bind = ActionDefinition(
+        name="twin_bind",
+        action_type="utility",
+        action_cost="action",
+        target_mode="n_enemies",
+        max_targets=2,
+        concentration=True,
+        tags=["spell", "spell_level:5"],
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "condition": "restrained",
+                "target": "target",
+                "duration_rounds": 10,
+                "effect_id": "twin_bind",
+            }
+        ],
+    )
+    dispel_magic = ActionDefinition(
+        name="dispel_magic",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        tags=["spell", "dispel"],
+    )
+
+    actors = {a.actor_id: a for a in (source, dispeller, ally_a, ally_b)}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        source, dispeller, ally_a, ally_b
+    )
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=random.Random(12),
+        actor=source,
+        action=twin_bind,
+        targets=[ally_a, ally_b],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert source.concentrating is True
+    assert "restrained" in ally_a.conditions
+    assert "restrained" in ally_b.conditions
+
+    _execute_action(
+        rng=rng,
+        actor=dispeller,
+        action=dispel_magic,
+        targets=[ally_a],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+
+    assert "restrained" not in ally_a.conditions
+    assert "restrained" in ally_b.conditions
+    assert source.concentrating is True
+
+
+def test_dispel_magic_can_remove_casters_own_spell_effect() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    ward_spell = ActionDefinition(
+        name="arcane_ward",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+        tags=["spell", "spell_level:3"],
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "condition": "warded",
+                "target": "target",
+                "duration_rounds": 10,
+                "effect_id": "arcane_ward",
+            }
+        ],
+    )
+    dispel_magic = ActionDefinition(
+        name="dispel_magic",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        tags=["spell", "dispel"],
+    )
+
+    actors = {caster.actor_id: caster}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster)
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=random.Random(13),
+        actor=caster,
+        action=ward_spell,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert "warded" in caster.conditions
+
+    _execute_action(
+        rng=random.Random(14),
+        actor=caster,
+        action=dispel_magic,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert "warded" not in caster.conditions
