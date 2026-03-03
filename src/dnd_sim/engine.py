@@ -3139,6 +3139,93 @@ def _duration_text_from_rounds(*, rounds: int, concentration: bool) -> str:
     return base
 
 
+_SINGLE_TARGET_FAMILY_TAG = "spell_family:single_target"
+_AREA_DESCRIPTION_HINTS = (
+    "each creature",
+    "creatures within",
+    "radius",
+    "cone",
+    "cube",
+    "cylinder",
+    "line",
+    "sphere",
+    "point you choose",
+)
+_SINGLE_TARGET_CONDITIONS = (
+    "blinded",
+    "charmed",
+    "deafened",
+    "frightened",
+    "grappled",
+    "incapacitated",
+    "invisible",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "stunned",
+    "unconscious",
+)
+_SINGLE_TARGET_CONDITION_RE = re.compile(
+    r"\b(?:be|is|becomes|become)\s+(" + "|".join(_SINGLE_TARGET_CONDITIONS) + r")\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _parse_sheet_spell_range_ft(range_text: str) -> int | None:
+    normalized = str(range_text).strip().lower()
+    if not normalized:
+        return None
+    if "touch" in normalized:
+        return 5
+
+    range_match = re.search(r"(\d+)\s*ft", normalized)
+    if range_match:
+        return int(range_match.group(1))
+    feet_match = re.search(r"(\d+)\s*feet", normalized)
+    if feet_match:
+        return int(feet_match.group(1))
+    return None
+
+
+def _description_is_probably_non_single_target(description: str) -> bool:
+    normalized = str(description or "").lower()
+    if not normalized:
+        return False
+    return any(hint in normalized for hint in _AREA_DESCRIPTION_HINTS)
+
+
+def _single_target_condition_from_description(description: str) -> str | None:
+    match = _SINGLE_TARGET_CONDITION_RE.search(str(description or ""))
+    if match is None:
+        return None
+    return str(match.group(1)).lower()
+
+
+def _single_target_condition_apply_on(action_type: str) -> str:
+    if action_type == "save":
+        return "save_fail"
+    if action_type == "attack":
+        return "hit"
+    return "always"
+
+
+def _has_apply_condition_effect(
+    mechanics: list[Any],
+    *,
+    condition: str,
+) -> bool:
+    for row in mechanics:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("effect_type", "")).strip().lower() != "apply_condition":
+            continue
+        if str(row.get("condition", "")).strip().lower() == condition:
+            return True
+    return False
+
+
 def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str, Any]]:
     """Extract a minimal spell list from PDF raw_fields.
 
@@ -3222,14 +3309,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
         if magical_secrets_entry:
             hydrated["tags"] = ["magical_secrets"]
 
-        range_ft = None
-        range_match = re.search(r"(\d+)\s*ft", range_text.lower())
-        if range_match:
-            range_ft = int(range_match.group(1))
-        else:
-            feet_match = re.search(r"(\d+)\s*feet", range_text.lower())
-            if feet_match:
-                range_ft = int(feet_match.group(1))
+        range_ft = _parse_sheet_spell_range_ft(range_text)
         if range_ft is not None:
             hydrated["range_ft"] = range_ft
         if components:
@@ -3341,6 +3421,56 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 hydrated["action_type"] = "attack"
             else:
                 hydrated["action_type"] = "utility"
+        if (
+            hydrated.get("action_type") == "save"
+            and "half_on_save" not in hydrated
+            and not hydrated.get("damage")
+        ):
+            hydrated["half_on_save"] = False
+
+        description = str(
+            (spell_def or {}).get("description") if isinstance(spell_def, dict) else ""
+        ).strip()
+        target_mode = str(hydrated.get("target_mode", "")).strip().lower()
+        if not target_mode:
+            if hydrated.get("healing") or "friendly creature" in description.lower():
+                target_mode = "single_ally"
+            else:
+                target_mode = "single_enemy"
+            hydrated["target_mode"] = target_mode
+
+        if (
+            target_mode in {"single_enemy", "single_ally"}
+            and not hydrated.get("aoe_type")
+            and not _description_is_probably_non_single_target(description)
+        ):
+            tags = [str(tag).strip() for tag in hydrated.get("tags", []) if str(tag).strip()]
+            tags.append(_SINGLE_TARGET_FAMILY_TAG)
+            if "you can see" in description.lower():
+                tags.append("requires_sight")
+            hydrated["tags"] = list(dict.fromkeys(tags))
+
+            condition = _single_target_condition_from_description(description)
+            if condition and hydrated.get("action_type") in {"attack", "save", "utility"}:
+                mechanics = (
+                    list(hydrated.get("mechanics", []))
+                    if isinstance(hydrated.get("mechanics"), list)
+                    else []
+                )
+                if not _has_apply_condition_effect(mechanics, condition=condition):
+                    condition_effect: dict[str, Any] = {
+                        "effect_type": "apply_condition",
+                        "condition": condition,
+                        "target": "target",
+                        "apply_on": _single_target_condition_apply_on(
+                            str(hydrated.get("action_type", "utility"))
+                        ),
+                    }
+                    duration_rounds = _coerce_non_negative_int(hydrated.get("duration_rounds"))
+                    if duration_rounds is not None and duration_rounds > 0:
+                        condition_effect["duration_rounds"] = duration_rounds
+                    mechanics.append(condition_effect)
+                    hydrated["mechanics"] = mechanics
 
         spells.append(hydrated)
 
@@ -3370,6 +3500,9 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "components",
             "duration",
             "duration_rounds",
+            "target_mode",
+            "tags",
+            "mechanics",
         ):
             existing_value = existing.get(field)
             candidate_value = spell.get(field)
@@ -3379,6 +3512,9 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             elif field == "duration_rounds":
                 existing_missing = existing_value is None
                 candidate_present = candidate_value is not None
+            elif field in {"tags", "mechanics"}:
+                existing_missing = not bool(existing_value)
+                candidate_present = bool(candidate_value)
             else:
                 existing_missing = existing_value in (None, "", 0)
                 candidate_present = candidate_value not in (None, "", 0)
@@ -4981,7 +5117,9 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         pact_slot_level, pact_slot_count = pact_slot_profile
         result.setdefault(f"warlock_spell_slot_{pact_slot_level}", pact_slot_count)
 
-    explicit_traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
+    explicit_traits = {
+        _normalize_trait_name(trait) for trait in (character.get("traits", []) or [])
+    }
     traits = set(explicit_traits)
     traits.update(
         _infer_paladin_package_trait_names(
