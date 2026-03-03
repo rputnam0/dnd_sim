@@ -7382,7 +7382,6 @@ def _apply_effect(
         if direction == "toward_source":
             old_position = recipient.position
             recipient.position = move_towards(cur, src, distance_ft)
-            recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
             if old_position != recipient.position:
                 _process_hazard_movement_triggers(
                     rng=rng,
@@ -7428,7 +7427,6 @@ def _apply_effect(
                 # Arbitrary axis push if co-located.
                 old_position = recipient.position
                 recipient.position = (cur[0] + distance_ft, cur[1], cur[2])
-                recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
                 if old_position != recipient.position:
                     _process_hazard_movement_triggers(
                         rng=rng,
@@ -7474,7 +7472,6 @@ def _apply_effect(
             )
             old_position = recipient.position
             recipient.position = dest
-            recipient.movement_remaining = max(0.0, recipient.movement_remaining - distance_ft)
             if old_position != recipient.position:
                 _process_hazard_movement_triggers(
                     rng=rng,
