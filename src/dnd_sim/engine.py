@@ -7081,7 +7081,17 @@ class _AttackResolutionShieldRule:
 class _DamageRollCuttingWordsRule:
     name = "rule:cutting_words_damage_roll"
 
+    @staticmethod
+    def _sync_bundle_to_raw_damage(event: DamageRollEvent) -> None:
+        if event.bundle is None:
+            return
+        target_total = max(0, int(event.raw_damage))
+        if event.bundle.raw_total != target_total:
+            event.bundle.rebalance_total(target_total)
+        event.raw_damage = event.bundle.raw_total
+
     def __call__(self, event: DamageRollEvent) -> None:
+        self._sync_bundle_to_raw_damage(event)
         reduced_total = _try_cutting_words_on_damage_roll(
             rng=event.rng,
             attacker=event.attacker,
@@ -7090,20 +7100,18 @@ class _DamageRollCuttingWordsRule:
             actors=event.actors,
             resources_spent=event.resources_spent,
         )
-        reduction = max(0, event.raw_damage - reduced_total)
-        if reduction <= 0:
-            return
         if event.bundle is not None:
-            event.bundle.apply_flat_reduction(reduction)
+            event.bundle.rebalance_total(reduced_total)
             event.raw_damage = event.bundle.raw_total
             return
-        event.raw_damage = reduced_total
+        event.raw_damage = max(0, int(reduced_total))
 
 
 class _DamageRollUncannyDodgeRule:
     name = "rule:uncanny_dodge"
 
     def __call__(self, event: DamageRollEvent) -> None:
+        _DamageRollCuttingWordsRule._sync_bundle_to_raw_damage(event)
         if event.raw_damage <= 0:
             return
         if not _has_trait(event.target, "uncanny dodge"):
