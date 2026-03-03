@@ -178,6 +178,17 @@ class ConditionTracker:
     save_ability: str | None = None
 
 
+@dataclass(slots=True, frozen=True)
+class FeatureHookRegistration:
+    feature_name: str
+    source_type: str
+    hook_type: str
+    trigger: str
+    trait_key: str
+    mechanic_index: int
+    registration_order: int
+
+
 @dataclass(slots=True)
 class EffectInstance:
     instance_id: str
@@ -238,6 +249,7 @@ class ActorRuntimeState:
     legendary_actions_remaining: int = 0
     lair_action_used_this_round: bool = False
     traits: dict[str, dict[str, Any]] = field(default_factory=dict)
+    feature_hooks: list[FeatureHookRegistration] = field(default_factory=list)
     inventory: InventoryState = field(default_factory=InventoryState)
     condition_durations: dict[str, ConditionTracker] = field(default_factory=dict)
     effect_instances: list[EffectInstance] = field(default_factory=list)
