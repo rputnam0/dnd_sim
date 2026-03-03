@@ -48,7 +48,14 @@ from dnd_sim.rules_2014 import (
     roll_damage_packet,
     run_concentration_check,
 )
-from dnd_sim.strategy_api import ActorView, BattleStateView, TargetRef
+from dnd_sim.strategy_api import (
+    ActorView,
+    BattleStateView,
+    DeclaredAction,
+    ReadyDeclaration,
+    TargetRef,
+    TurnDeclaration,
+)
 
 _CONTROL_BLOCKING_CONDITIONS = {"incapacitated", "stunned", "unconscious", "paralyzed"}
 _CONCENTRATION_FORCED_END_CONDITIONS = _CONTROL_BLOCKING_CONDITIONS
@@ -152,6 +159,7 @@ _KNOWN_MANEUVERS = {
     "trip attack",
 }
 _DEFAULT_BATTLEMASTER_MANEUVERS = ("trip attack", "menacing attack", "precision attack")
+_SUPPORTED_REACTION_POLICY_MODES = {"auto", "none"}
 
 
 @dataclass(slots=True)
@@ -166,6 +174,24 @@ class AttackConditionModifiers:
     advantage: bool = False
     disadvantage: bool = False
     force_critical: bool = False
+
+
+class TurnDeclarationValidationError(ValueError):
+    def __init__(
+        self,
+        *,
+        actor_id: str,
+        code: str,
+        field: str,
+        message: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        self.actor_id = actor_id
+        self.code = code
+        self.field = field
+        self.message = message
+        self.details = dict(details or {})
+        super().__init__(f"{code} [{actor_id}:{field}] {message}")
 
 
 def _metric(values: list[float]) -> SummaryMetric:
@@ -5026,6 +5052,667 @@ def _resolve_action_selection(
     return actor.actions[0]
 
 
+def _raise_turn_declaration_error(
+    *,
+    actor: ActorRuntimeState,
+    code: str,
+    field: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+) -> None:
+    raise TurnDeclarationValidationError(
+        actor_id=actor.actor_id,
+        code=code,
+        field=field,
+        message=message,
+        details=details,
+    )
+
+
+def _declared_action_or_error(
+    actor: ActorRuntimeState,
+    declaration: DeclaredAction,
+    *,
+    field_prefix: str,
+    expected_cost: str,
+) -> ActionDefinition:
+    action_name = str(declaration.action_name or "").strip()
+    if not action_name:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="missing_action_name",
+            field=f"{field_prefix}.action_name",
+            message="Declared action is missing action_name.",
+        )
+
+    selected = next((entry for entry in actor.actions if entry.name == action_name), None)
+    if selected is None:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="unknown_action",
+            field=f"{field_prefix}.action_name",
+            message=f"Declared action '{action_name}' does not exist for actor.",
+        )
+
+    if expected_cost == "bonus" and selected.action_cost != "bonus":
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="illegal_bonus_action",
+            field=f"{field_prefix}.action_name",
+            message=f"Action '{selected.name}' is not a bonus action.",
+            details={"action_cost": selected.action_cost},
+        )
+    if expected_cost == "action" and selected.action_cost not in {"action", "none"}:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="illegal_action",
+            field=f"{field_prefix}.action_name",
+            message=f"Action '{selected.name}' cannot be used in the main action step.",
+            details={"action_cost": selected.action_cost},
+        )
+    return selected
+
+
+def _declared_targets_or_error(
+    actor: ActorRuntimeState,
+    declaration: DeclaredAction,
+    *,
+    field_prefix: str,
+) -> list[TargetRef]:
+    raw_targets = declaration.targets
+    if not isinstance(raw_targets, list):
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="invalid_targets",
+            field=f"{field_prefix}.targets",
+            message="Declared targets must be a list.",
+        )
+
+    out: list[TargetRef] = []
+    for idx, target in enumerate(raw_targets):
+        if not isinstance(target, TargetRef):
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="invalid_target_ref",
+                field=f"{field_prefix}.targets[{idx}]",
+                message="Declared targets must contain TargetRef entries.",
+            )
+        out.append(target)
+    return out
+
+
+def _declared_extra_resource_cost_or_error(
+    actor: ActorRuntimeState,
+    declaration: DeclaredAction,
+    *,
+    field_prefix: str,
+) -> dict[str, int]:
+    raw = getattr(declaration.resource_spend, "amounts", {})
+    if not isinstance(raw, dict):
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="invalid_resource_spend",
+            field=f"{field_prefix}.resource_spend",
+            message="Declared resource_spend must be a mapping of resource -> amount.",
+        )
+    out: dict[str, int] = {}
+    for key, amount in raw.items():
+        try:
+            parsed = int(amount)
+        except (TypeError, ValueError):
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="invalid_resource_amount",
+                field=f"{field_prefix}.resource_spend.{key}",
+                message="Declared resource spend amount must be an integer.",
+            )
+        if parsed <= 0:
+            continue
+        out[str(key)] = parsed
+    return out
+
+
+def _declared_spell_request_or_error(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    declaration: DeclaredAction,
+    *,
+    field_prefix: str,
+) -> SpellCastRequest | None:
+    raw_slot_level = declaration.spell_slot_level
+    if "spell" not in action.tags:
+        if raw_slot_level is not None:
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="illegal_spell_slot_override",
+                field=f"{field_prefix}.spell_slot_level",
+                message="spell_slot_level can only be declared for spell actions.",
+            )
+        return None
+
+    request = SpellCastRequest()
+    if raw_slot_level is None:
+        return request
+
+    try:
+        slot_level = int(raw_slot_level)
+    except (TypeError, ValueError):
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="invalid_spell_slot_level",
+            field=f"{field_prefix}.spell_slot_level",
+            message="Declared spell_slot_level must be an integer.",
+        )
+    if slot_level <= 0:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="invalid_spell_slot_level",
+            field=f"{field_prefix}.spell_slot_level",
+            message="Declared spell_slot_level must be >= 1.",
+        )
+    request.slot_level = slot_level
+    return request
+
+
+def _declared_movement_path_or_error(
+    actor: ActorRuntimeState,
+    declaration: TurnDeclaration,
+) -> list[tuple[float, float, float]]:
+    if not isinstance(declaration.movement_path, list):
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="invalid_movement_path",
+            field="movement_path",
+            message="movement_path must be a list of 3D waypoints.",
+        )
+    if not declaration.movement_path:
+        return []
+
+    normalized: list[tuple[float, float, float]] = []
+    for idx, waypoint in enumerate(declaration.movement_path):
+        if not isinstance(waypoint, (tuple, list)) or len(waypoint) != 3:
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="invalid_waypoint",
+                field=f"movement_path[{idx}]",
+                message="Each movement waypoint must be a 3-value coordinate.",
+            )
+        try:
+            normalized.append((float(waypoint[0]), float(waypoint[1]), float(waypoint[2])))
+        except (TypeError, ValueError):
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="invalid_waypoint",
+                field=f"movement_path[{idx}]",
+                message="Each movement waypoint value must be numeric.",
+            )
+
+    if distance_chebyshev(actor.position, normalized[0]) > 1e-6:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="movement_path_start_mismatch",
+            field="movement_path[0]",
+            message="movement_path must start at the actor's current position.",
+            details={"current_position": actor.position},
+        )
+    return normalized
+
+
+def _apply_declared_movement_or_error(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    movement_path: list[tuple[float, float, float]],
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
+) -> None:
+    if not movement_path:
+        return
+
+    declared_distance = _path_distance(movement_path)
+    if declared_distance <= 0:
+        return
+
+    available_distance, crawling = _prepare_voluntary_movement(actor)
+    if available_distance <= 0:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="movement_blocked",
+            field="movement_path",
+            message="Actor cannot move due to current movement restrictions.",
+        )
+    if declared_distance > (available_distance + 1e-6):
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="movement_exceeds_budget",
+            field="movement_path",
+            message="Declared movement exceeds remaining movement budget.",
+            details={
+                "declared_distance": declared_distance,
+                "movement_remaining": available_distance,
+            },
+        )
+
+    start_pos = actor.position
+    end_pos = movement_path[-1]
+    actor.position = end_pos
+    actor.movement_remaining = max(
+        0.0, actor.movement_remaining - (declared_distance * (2.0 if crawling else 1.0))
+    )
+
+    _run_opportunity_attacks_for_movement(
+        rng=rng,
+        mover=actor,
+        start_pos=start_pos,
+        end_pos=end_pos,
+        movement_path=movement_path,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        obstacles=obstacles,
+        light_level=light_level,
+        round_number=round_number,
+        turn_token=turn_token,
+    )
+
+
+def _validate_declared_ready_or_error(
+    actor: ActorRuntimeState, declaration: TurnDeclaration
+) -> ReadyDeclaration | None:
+    ready = declaration.ready
+    if ready is None:
+        return None
+    if not isinstance(ready, ReadyDeclaration):
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="invalid_ready_declaration",
+            field="ready",
+            message="ready must be a ReadyDeclaration object.",
+        )
+
+    action_name = declaration.action.action_name if declaration.action is not None else None
+    if str(action_name or "").strip().lower() != "ready":
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="ready_metadata_without_ready_action",
+            field="ready",
+            message="ready metadata is only legal when action.action_name is 'ready'.",
+        )
+
+    trigger = str(ready.trigger or "").strip()
+    if not trigger:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="missing_ready_trigger",
+            field="ready.trigger",
+            message="Ready declaration trigger is required.",
+        )
+    response_name = str(ready.response_action_name or "").strip()
+    if not response_name:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="missing_ready_response",
+            field="ready.response_action_name",
+            message="Ready declaration response_action_name is required.",
+        )
+
+    response_action = next((a for a in actor.actions if a.name == response_name), None)
+    if response_action is None:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="unknown_ready_response",
+            field="ready.response_action_name",
+            message=f"Ready response action '{response_name}' does not exist for actor.",
+        )
+    if response_action.name == "ready" or response_action.action_cost not in {"action", "none"}:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="illegal_ready_response",
+            field="ready.response_action_name",
+            message="Ready response must be a non-ready action that uses action or no cost.",
+            details={"action_cost": response_action.action_cost},
+        )
+    return ready
+
+
+def _apply_declared_reaction_policy_or_error(
+    actor: ActorRuntimeState,
+    declaration: TurnDeclaration,
+) -> str:
+    policy = declaration.reaction_policy
+    mode = "auto"
+    if policy is not None:
+        mode = str(policy.mode or "auto").strip().lower()
+    if mode not in _SUPPORTED_REACTION_POLICY_MODES:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="invalid_reaction_policy",
+            field="reaction_policy.mode",
+            message=f"Unsupported reaction policy mode: {mode}",
+            details={"supported_modes": sorted(_SUPPORTED_REACTION_POLICY_MODES)},
+        )
+    if mode == "none":
+        actor.reaction_available = False
+    return mode
+
+
+def _execute_declared_action_step_or_error(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    declaration: DeclaredAction,
+    field_prefix: str,
+    expected_cost: str,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
+    strategy_name: str | None = None,
+    ready_declaration: ReadyDeclaration | None = None,
+) -> tuple[ActionDefinition, list[ActorRuntimeState]]:
+    action = _declared_action_or_error(
+        actor,
+        declaration,
+        field_prefix=field_prefix,
+        expected_cost=expected_cost,
+    )
+    requested_targets = _declared_targets_or_error(actor, declaration, field_prefix=field_prefix)
+    spell_cast_request = _declared_spell_request_or_error(
+        actor,
+        action,
+        declaration,
+        field_prefix=field_prefix,
+    )
+
+    if _mode_requires_explicit_targets(action.target_mode) and not requested_targets:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="missing_targets",
+            field=f"{field_prefix}.targets",
+            message=f"Declared action '{action.name}' requires explicit targets.",
+        )
+
+    if not _action_available(
+        actor,
+        action,
+        spell_cast_request=spell_cast_request,
+        turn_token=turn_token,
+    ):
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="unavailable_action",
+            field=f"{field_prefix}.action_name",
+            message=f"Declared action '{action.name}' is not currently legal.",
+        )
+
+    resolved_targets = _resolve_targets_for_action(
+        rng=rng,
+        actor=actor,
+        action=action,
+        actors=actors,
+        requested=requested_targets,
+    )
+    if requested_targets:
+        requested_ids = {target.actor_id for target in requested_targets}
+        resolved_targets = [
+            target for target in resolved_targets if target.actor_id in requested_ids
+        ]
+    resolved_targets = _filter_targets_in_range(actor, action, resolved_targets)
+    if not resolved_targets:
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="no_legal_targets",
+            field=f"{field_prefix}.targets",
+            message=f"Declared action '{action.name}' has no legal in-range targets.",
+        )
+
+    extra_cost = _declared_extra_resource_cost_or_error(
+        actor, declaration, field_prefix=field_prefix
+    )
+    non_slot_base_cost, _slot_amount, _slot_levels = _split_spell_slot_cost(action.resource_cost)
+    for key, amount in extra_cost.items():
+        required = amount + int(non_slot_base_cost.get(key, 0))
+        if int(actor.resources.get(key, 0)) < required:
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="insufficient_resources",
+                field=f"{field_prefix}.resource_spend.{key}",
+                message=f"Declared resource spend exceeds available '{key}'.",
+                details={"required": required, "available": int(actor.resources.get(key, 0))},
+            )
+
+    if not _spend_action_resource_cost(
+        actor,
+        action,
+        resources_spent,
+        spell_cast_request=spell_cast_request,
+    ):
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="insufficient_resources",
+            field=f"{field_prefix}.action_name",
+            message=f"Unable to pay resource cost for declared action '{action.name}'.",
+        )
+    if extra_cost:
+        spent_extra = _spend_resources(actor, extra_cost)
+        for key, amount in spent_extra.items():
+            resources_spent[actor.actor_id][key] = (
+                resources_spent[actor.actor_id].get(key, 0) + amount
+            )
+
+    actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
+    if action.recharge:
+        actor.recharge_ready[action.name] = False
+    _mark_action_cost_used(actor, action)
+
+    _execute_action(
+        rng=rng,
+        actor=actor,
+        action=action,
+        targets=resolved_targets,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        obstacles=obstacles,
+        light_level=light_level,
+        round_number=round_number,
+        turn_token=turn_token,
+        rule_trace=rule_trace,
+        telemetry=telemetry,
+        strategy_name=strategy_name,
+        spell_cast_request=spell_cast_request,
+        allow_auto_movement=False,
+        ready_declaration=ready_declaration,
+    )
+    return action, resolved_targets
+
+
+def _execute_declared_turn_or_error(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    declaration: TurnDeclaration,
+    strategy_name: str,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    telemetry: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+) -> None:
+    movement_path = _declared_movement_path_or_error(actor, declaration)
+    _apply_declared_movement_or_error(
+        rng=rng,
+        actor=actor,
+        movement_path=movement_path,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        obstacles=obstacles,
+        light_level=light_level,
+        round_number=round_number,
+        turn_token=turn_token,
+    )
+    if actor.dead or actor.hp <= 0:
+        return
+
+    reaction_mode = _apply_declared_reaction_policy_or_error(actor, declaration)
+    ready_declaration = _validate_declared_ready_or_error(actor, declaration)
+    if ready_declaration is not None and reaction_mode == "none":
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="conflicting_reaction_policy",
+            field="reaction_policy.mode",
+            message="reaction_policy.mode='none' conflicts with declaring a ready response.",
+        )
+
+    if telemetry is not None:
+        telemetry.append(
+            {
+                "telemetry_type": "decision",
+                "decision_mode": "turn_declaration",
+                "round": round_number,
+                "strategy": strategy_name,
+                "actor_id": actor.actor_id,
+                "team": actor.team,
+                "movement_path": [list(waypoint) for waypoint in movement_path],
+                "action_plan": (
+                    declaration.action.action_name if declaration.action is not None else None
+                ),
+                "bonus_action_plan": (
+                    declaration.bonus_action.action_name
+                    if declaration.bonus_action is not None
+                    else None
+                ),
+                "reaction_policy": reaction_mode,
+                "ready_trigger": ready_declaration.trigger if ready_declaration else None,
+                "ready_response": (
+                    ready_declaration.response_action_name if ready_declaration else None
+                ),
+                "rationale": (
+                    dict(declaration.rationale) if isinstance(declaration.rationale, dict) else {}
+                ),
+            }
+        )
+
+    executed_primary: tuple[ActionDefinition, list[ActorRuntimeState]] | None = None
+    if declaration.action is not None:
+        executed_primary = _execute_declared_action_step_or_error(
+            rng=rng,
+            actor=actor,
+            declaration=declaration.action,
+            field_prefix="action",
+            expected_cost="action",
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
+            round_number=round_number,
+            turn_token=turn_token,
+            rule_trace=rule_trace,
+            telemetry=telemetry,
+            strategy_name=strategy_name,
+            ready_declaration=ready_declaration,
+        )
+        if round_number is not None and turn_token is not None:
+            primary_action, primary_targets = executed_primary
+            _dispatch_combat_event(
+                rng=rng,
+                event="after_action",
+                trigger_actor=actor,
+                trigger_target=primary_targets[0] if primary_targets else None,
+                trigger_action=primary_action,
+                actors=actors,
+                round_number=round_number,
+                turn_token=turn_token,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                rule_trace=rule_trace,
+                obstacles=obstacles,
+                light_level=light_level,
+            )
+    if declaration.bonus_action is not None and actor.hp > 0 and not actor.dead and _can_act(actor):
+        bonus_action, bonus_targets = _execute_declared_action_step_or_error(
+            rng=rng,
+            actor=actor,
+            declaration=declaration.bonus_action,
+            field_prefix="bonus_action",
+            expected_cost="bonus",
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
+            round_number=round_number,
+            turn_token=turn_token,
+            rule_trace=rule_trace,
+            telemetry=telemetry,
+            strategy_name=strategy_name,
+        )
+        if round_number is not None and turn_token is not None:
+            _dispatch_combat_event(
+                rng=rng,
+                event="after_action",
+                trigger_actor=actor,
+                trigger_target=bonus_targets[0] if bonus_targets else None,
+                trigger_action=bonus_action,
+                actors=actors,
+                round_number=round_number,
+                turn_token=turn_token,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                rule_trace=rule_trace,
+                obstacles=obstacles,
+                light_level=light_level,
+            )
+
+    _ = executed_primary
+
+
 def _disadvantaged(actor: ActorRuntimeState) -> bool:
     return any(has_condition(actor, condition) for condition in _DISADVANTAGE_CONDITIONS)
 
@@ -7822,6 +8509,8 @@ def _execute_action(
     strategy_name: str | None = None,
     timing_engine: CombatTimingEngine | None = None,
     spell_cast_request: SpellCastRequest | None = None,
+    allow_auto_movement: bool = True,
+    ready_declaration: ReadyDeclaration | None = None,
 ) -> None:
     if not targets:
         return
@@ -7865,41 +8554,46 @@ def _execute_action(
         )
 
     if _requires_range_resolution(action):
-        movement_was_budgeted = actor.movement_remaining > 0
-        in_range = _move_actor_for_action_range(
-            rng=rng,
-            actor=actor,
-            action=action,
-            targets=targets,
-            actors=actors,
-            damage_dealt=damage_dealt,
-            damage_taken=damage_taken,
-            threat_scores=threat_scores,
-            resources_spent=resources_spent,
-            active_hazards=active_hazards,
-            obstacles=obstacles,
-            light_level=light_level,
-            round_number=round_number,
-            turn_token=turn_token,
-        )
-        if not in_range:
-            if (
-                not has_turn_context
-                and action.action_type == "attack"
-                and not movement_was_budgeted
-                and not actor.conditions.intersection({"grappled", "restrained"})
-            ):
-                in_range = True
+        if allow_auto_movement:
+            movement_was_budgeted = actor.movement_remaining > 0
+            in_range = _move_actor_for_action_range(
+                rng=rng,
+                actor=actor,
+                action=action,
+                targets=targets,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
+            )
+            if not in_range:
+                if (
+                    not has_turn_context
+                    and action.action_type == "attack"
+                    and not movement_was_budgeted
+                    and not actor.conditions.intersection({"grappled", "restrained"})
+                ):
+                    in_range = True
+                else:
+                    return
+            if has_turn_context:
+                targets = _filter_targets_in_range(actor, action, targets)
+                if not targets:
+                    return
             else:
-                return
-        if has_turn_context:
-            targets = _filter_targets_in_range(actor, action, targets)
-            if not targets:
-                return
+                # Preserve legacy direct-call monk behavior from feat/class-monk-mechanics
+                # while still using range resolution during full round simulation.
+                targets = list(targets)
+                if not targets:
+                    return
         else:
-            # Preserve legacy direct-call monk behavior from feat/class-monk-mechanics
-            # while still using range resolution during full round simulation.
-            targets = list(targets)
+            targets = _filter_targets_in_range(actor, action, list(targets))
             if not targets:
                 return
 
@@ -8860,9 +9554,13 @@ def _execute_action(
             return
         if action.name == "ready":
             _apply_condition(actor, "readying", duration_rounds=1)
-            readied_action = _select_readied_action(actor)
-            actor.readied_action_name = readied_action.name if readied_action else None
-            actor.readied_trigger = action.event_trigger or "enemy_turn_start"
+            if ready_declaration is not None:
+                actor.readied_action_name = ready_declaration.response_action_name
+                actor.readied_trigger = ready_declaration.trigger
+            else:
+                readied_action = _select_readied_action(actor)
+                actor.readied_action_name = readied_action.name if readied_action else None
+                actor.readied_trigger = action.event_trigger or "enemy_turn_start"
             return
         if action.name == "bardic_inspiration":
             die_sides = _bardic_inspiration_die_sides(actor)
@@ -9507,6 +10205,71 @@ def run_simulation(
                     )
                     state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
                     actor_view = state_view.actors[actor.actor_id]
+                    declare_turn = getattr(strategy, "declare_turn", None)
+                    turn_declaration = (
+                        declare_turn(actor_view, state_view) if callable(declare_turn) else None
+                    )
+                    if turn_declaration is not None:
+                        if not isinstance(turn_declaration, TurnDeclaration):
+                            _raise_turn_declaration_error(
+                                actor=actor,
+                                code="invalid_turn_declaration_type",
+                                field="turn_declaration",
+                                message="declare_turn(...) must return TurnDeclaration or None.",
+                                details={"actual_type": type(turn_declaration).__name__},
+                            )
+                        _execute_declared_turn_or_error(
+                            rng=rng,
+                            actor=actor,
+                            declaration=turn_declaration,
+                            strategy_name=strategy_name,
+                            actors=actors,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            telemetry=trial_telemetry,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            rule_trace=trial_rule_trace,
+                        )
+                        _run_legendary_actions(
+                            rng=rng,
+                            trigger_actor=actor,
+                            actors=actors,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                            telemetry=trial_telemetry,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                        )
+                        _dispatch_combat_event(
+                            rng=rng,
+                            event="turn_end",
+                            trigger_actor=actor,
+                            trigger_target=actor,
+                            trigger_action=None,
+                            actors=actors,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            rule_trace=trial_rule_trace,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                        )
+                        continue
                     intent = strategy.choose_action(actor_view, state_view)
                     action = _resolve_action_selection(actor, intent.action_name)
                     fallback_reason: str | None = None
