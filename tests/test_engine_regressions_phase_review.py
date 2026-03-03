@@ -63,9 +63,9 @@ SequenceRng = _FixedRng
 
 
 def test_parse_recharge_threshold_supports_common_monster_formats() -> None:
-    assert _parse_recharge_threshold("5-6") == 6
+    assert _parse_recharge_threshold("5-6") == 5
     assert _parse_recharge_threshold("Recharge 6") == 6
-    assert _parse_recharge_threshold("(Recharge 5-6)") == 6
+    assert _parse_recharge_threshold("(Recharge 5-6)") == 5
     assert _parse_recharge_threshold("Recharge seven") is None
 
 

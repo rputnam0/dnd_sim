@@ -9055,7 +9055,7 @@ def _parse_recharge_threshold(spec: str) -> int | None:
     high = int(match.group(2) or match.group(1))
     if low > high:
         return None
-    return high
+    return low
 
 
 def _roll_recharge_for_actor(rng: random.Random, actor: ActorRuntimeState) -> None:
