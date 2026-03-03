@@ -23,6 +23,38 @@ class ResourceSpend:
 
 
 @dataclass(slots=True)
+class DeclaredAction:
+    action_name: str | None
+    targets: list[TargetRef] = field(default_factory=list)
+    resource_spend: ResourceSpend = field(default_factory=ResourceSpend)
+    spell_slot_level: int | None = None
+    rationale: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class ReactionPolicy:
+    mode: str = "auto"
+    rationale: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class ReadyDeclaration:
+    trigger: str
+    response_action_name: str
+    rationale: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class TurnDeclaration:
+    movement_path: list[tuple[float, float, float]] = field(default_factory=list)
+    action: DeclaredAction | None = None
+    bonus_action: DeclaredAction | None = None
+    reaction_policy: ReactionPolicy = field(default_factory=ReactionPolicy)
+    ready: ReadyDeclaration | None = None
+    rationale: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
 class ActorView:
     actor_id: str
     team: str
@@ -48,6 +80,8 @@ class BattleStateView:
 
 
 class StrategyModule(Protocol):
+    def declare_turn(self, actor: ActorView, state: BattleStateView) -> TurnDeclaration | None: ...
+
     def choose_action(self, actor: ActorView, state: BattleStateView) -> ActionIntent: ...
 
     def choose_targets(
@@ -69,6 +103,9 @@ class StrategyModule(Protocol):
 
 class BaseStrategy:
     """Default baseline behavior: first available action + focus lowest HP enemy."""
+
+    def declare_turn(self, actor: ActorView, state: BattleStateView) -> TurnDeclaration | None:
+        return None
 
     def choose_action(self, actor: ActorView, state: BattleStateView) -> ActionIntent:
         return ActionIntent(action_name=None)
@@ -100,8 +137,11 @@ class BaseStrategy:
 
 
 def validate_strategy_instance(strategy: Any) -> None:
-    required = ["choose_action", "choose_targets", "decide_resource_spend", "on_round_start"]
-    missing = [name for name in required if not callable(getattr(strategy, name, None))]
+    if not callable(getattr(strategy, "on_round_start", None)):
+        raise ValueError("Strategy instance missing required methods: on_round_start")
+
+    legacy_required = ["choose_action", "choose_targets", "decide_resource_spend"]
+    missing = [name for name in legacy_required if not callable(getattr(strategy, name, None))]
     if missing:
         joined = ", ".join(missing)
-        raise ValueError(f"Strategy instance missing required methods: {joined}")
+        raise ValueError(f"Strategy instance missing required legacy methods: {joined}")
