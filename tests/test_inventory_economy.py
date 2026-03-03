@@ -122,3 +122,56 @@ def test_build_actor_hydrates_inventory_subsystem_from_character_payload() -> No
     assert actor.inventory.currency.total_cp == 1240
     assert actor.inventory.items["amulet_of_health"].attuned is True
     assert actor.inventory.items["potion_of_healing"].quantity == 2
+
+
+def test_equipping_item_requires_known_item_legal_slot_and_attunement() -> None:
+    inventory = InventoryState()
+    inventory.add_item(
+        InventoryItem(
+            item_id="ring_of_protection",
+            name="Ring of Protection",
+            requires_attunement=True,
+            equip_slots=("ring_left", "ring_right"),
+        )
+    )
+    inventory.add_item(
+        InventoryItem(
+            item_id="longsword",
+            name="Longsword",
+            equip_slots=("main_hand",),
+        )
+    )
+
+    with pytest.raises(KeyError, match="Unknown item_id=unknown_item"):
+        inventory.equip_item("unknown_item")
+
+    with pytest.raises(ValueError, match="must be attuned"):
+        inventory.equip_item("ring_of_protection")
+
+    inventory.attune_item("ring_of_protection")
+
+    with pytest.raises(ValueError, match="cannot be equipped in slot"):
+        inventory.equip_item("longsword", slot="off_hand")
+
+    inventory.equip_item("longsword")
+    assert inventory.is_item_equipped("longsword", slot="main_hand") is True
+
+    inventory.unequip_item("longsword")
+    assert inventory.is_item_equipped("longsword") is False
+
+
+def test_build_actor_uses_trait_mechanics_to_increase_attunement_limit() -> None:
+    character = _base_character()
+    character["traits"] = ["Magic Item Savant"]
+
+    actor = _build_actor_from_character(
+        character,
+        traits_db={
+            "magic item savant": {
+                "name": "Magic Item Savant",
+                "mechanics": [{"type": "increase_attunement_limit", "value": 5}],
+            }
+        },
+    )
+
+    assert actor.inventory.attunement_limit == 5

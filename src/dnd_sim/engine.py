@@ -3081,6 +3081,70 @@ def _extract_tag_value(tags: list[str], prefix: str) -> str | None:
     return None
 
 
+def _canonical_inventory_item_id(value: Any) -> str:
+    return _canonical_id(value, default="")
+
+
+def _resolve_action_ammo_item_id(actor: ActorRuntimeState, action: ActionDefinition) -> str | None:
+    if action.action_type != "attack":
+        return None
+    if not _action_has_weapon_property(action, "ammunition"):
+        return None
+
+    explicit_ammo_item = _extract_tag_value(list(action.tags), "ammo_item_id:")
+    if explicit_ammo_item:
+        explicit_key = _canonical_inventory_item_id(explicit_ammo_item)
+        return explicit_key or None
+
+    explicit_ammo_type = _extract_tag_value(list(action.tags), "ammo_type:")
+    if explicit_ammo_type:
+        return actor.inventory.resolve_ammo_item_id(ammo_type=explicit_ammo_type)
+
+    for candidate_id in (action.item_id, action.weapon_id):
+        key = _canonical_inventory_item_id(candidate_id)
+        if not key:
+            continue
+        weapon_item = actor.inventory.items.get(key)
+        if weapon_item is None:
+            continue
+        metadata = weapon_item.metadata if isinstance(weapon_item.metadata, dict) else {}
+        metadata_ammo_item = _canonical_inventory_item_id(
+            metadata.get("ammo_item_id") or metadata.get("ammo_id")
+        )
+        if metadata_ammo_item:
+            return metadata_ammo_item
+        resolved = actor.inventory.resolve_ammo_item_id(
+            ammo_type=str(metadata.get("ammo_type") or ""),
+        )
+        if resolved is not None:
+            return resolved
+    return None
+
+
+def _action_has_required_ammo(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    ammo_item_id = _resolve_action_ammo_item_id(actor, action)
+    if ammo_item_id is None:
+        return True
+    return actor.inventory.has_item_quantity(ammo_item_id, quantity=1)
+
+
+def _consume_action_ammo(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    resources_spent: dict[str, dict[str, int]],
+) -> bool:
+    ammo_item_id = _resolve_action_ammo_item_id(actor, action)
+    if ammo_item_id is None:
+        return True
+    if not actor.inventory.has_item_quantity(ammo_item_id, quantity=1):
+        return False
+    actor.inventory.consume_ammo(ammo_item_id, quantity=1)
+    spent = resources_spent.setdefault(actor.actor_id, {})
+    resource_key = f"ammo:{ammo_item_id}"
+    spent[resource_key] = spent.get(resource_key, 0) + 1
+    return True
+
+
 def _slot_level_from_action(action: ActionDefinition) -> int | None:
     raw_level = _extract_tag_value(list(action.tags), "slot_level:")
     if raw_level is None:
@@ -4131,6 +4195,51 @@ def _apply_passive_traits(actor: ActorRuntimeState) -> None:
                     actor.traits[sense] = {"range_ft": float(raw_range)}
 
 
+def _trait_attunement_limit(actor: ActorRuntimeState) -> int | None:
+    limit: int | None = None
+    for trait_data in actor.traits.values():
+        mechanics = trait_data.get("mechanics", []) if isinstance(trait_data, dict) else []
+        if not isinstance(mechanics, list):
+            continue
+        for mechanic in mechanics:
+            if not isinstance(mechanic, dict):
+                continue
+            effect_type = (
+                str(
+                    mechanic.get("effect_type")
+                    or mechanic.get("effect")
+                    or mechanic.get("type")
+                    or ""
+                )
+                .strip()
+                .lower()
+            )
+            if effect_type != "increase_attunement_limit":
+                continue
+            for key in ("new_limit", "value", "amount", "limit"):
+                raw_value = mechanic.get(key)
+                try:
+                    parsed = int(raw_value)
+                except (TypeError, ValueError):
+                    continue
+                if parsed <= 0:
+                    continue
+                limit = parsed if limit is None else max(limit, parsed)
+                break
+    return limit
+
+
+def _apply_trait_attunement_limit(actor: ActorRuntimeState) -> None:
+    limit = _trait_attunement_limit(actor)
+    if limit is None:
+        return
+    actor.inventory.attunement_limit = max(int(actor.inventory.attunement_limit), int(limit))
+
+
+def _actor_has_equipped_shield(actor: ActorRuntimeState) -> bool:
+    return actor.inventory.has_equipped_shield()
+
+
 def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
     if max_value <= 0:
         return
@@ -4339,6 +4448,7 @@ def _build_actor_from_character(
     )
     _ensure_channel_divinity_resource(actor)
     _apply_passive_traits(actor)
+    _apply_trait_attunement_limit(actor)
     _apply_artificer_infusion_passives(actor)
     _apply_inferred_wizard_resources(actor)
     _apply_inferred_fighter_resources(actor, class_level_text=class_level_text)
@@ -5212,7 +5322,12 @@ def _action_max_range_ft(action: ActionDefinition) -> float | None:
 def _action_has_explicit_range_bounds(action: ActionDefinition) -> bool:
     return any(
         value is not None
-        for value in (action.reach_ft, action.range_ft, action.range_normal_ft, action.range_long_ft)
+        for value in (
+            action.reach_ft,
+            action.range_ft,
+            action.range_normal_ft,
+            action.range_long_ft,
+        )
     )
 
 
@@ -5247,9 +5362,7 @@ def _ranged_attack_ignores_adjacent_hostile_disadvantage(
 ) -> bool:
     if _has_any_trait(actor, list(_RANGED_IN_MELEE_DISADVANTAGE_OVERRIDE_TRAITS)):
         return True
-    return any(
-        _has_action_tag(action, tag) for tag in _RANGED_IN_MELEE_DISADVANTAGE_OVERRIDE_TAGS
-    )
+    return any(_has_action_tag(action, tag) for tag in _RANGED_IN_MELEE_DISADVANTAGE_OVERRIDE_TAGS)
 
 
 def _has_hostile_within_melee_range(
@@ -6005,6 +6118,7 @@ def _coerce_positive_distance(value: Any) -> float | None:
     if not math.isfinite(parsed) or parsed <= 0.0:
         return None
     return parsed
+
 
 def _template_origin_for_primary(
     *,
@@ -7677,9 +7791,8 @@ def _is_actor_linked_concentration_summon(
     summon_trait = actor.traits.get("summoned")
     if not isinstance(summon_trait, dict):
         return False
-    return (
-        str(summon_trait.get("source_id", "")).strip() == owner_actor_id
-        and bool(summon_trait.get("concentration_linked", False))
+    return str(summon_trait.get("source_id", "")).strip() == owner_actor_id and bool(
+        summon_trait.get("concentration_linked", False)
     )
 
 
@@ -8666,9 +8779,7 @@ def _special_attack_replacement_limit(actor: ActorRuntimeState) -> int:
     return 1 if _best_melee_attack_replacement(actor) is not None else 0
 
 
-def _special_attack_replacements_used(
-    actor: ActorRuntimeState, *, turn_token: str | None
-) -> int:
+def _special_attack_replacements_used(actor: ActorRuntimeState, *, turn_token: str | None) -> int:
     key = _special_attack_replacement_key(turn_token)
     return int(actor.per_action_uses.get(key, 0))
 
@@ -8760,6 +8871,8 @@ def _action_available(
         return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False
+    if not _action_has_required_ammo(actor, action):
+        return False
     if not _can_cast_spell_with_components(actor, action):
         return False
     if action.action_cost == "bonus" and not actor.bonus_available:
@@ -8776,10 +8889,7 @@ def _action_available(
         replacement_limit = _special_attack_replacement_limit(actor)
         if replacement_limit <= 0:
             return False
-        if (
-            _special_attack_replacements_used(actor, turn_token=turn_token)
-            >= replacement_limit
-        ):
+        if _special_attack_replacements_used(actor, turn_token=turn_token) >= replacement_limit:
             return False
     if action.name == "escape_grapple" and "grappled" not in actor.conditions:
         return False
@@ -10633,7 +10743,9 @@ def _resolve_attack_instance_reference(
     if not action_name:
         raise ValueError(f"{context} must define action_name.")
 
-    selected = next((candidate for candidate in actor.actions if candidate.name == action_name), None)
+    selected = next(
+        (candidate for candidate in actor.actions if candidate.name == action_name), None
+    )
     if selected is None:
         raise ValueError(f"{context} references unknown action '{action_name}'.")
     if not _is_attack_instance_action(selected):
@@ -10902,7 +11014,12 @@ def _execute_action(
 
         if not subtle_spell:
             for enemy in sorted(actors.values(), key=lambda candidate: candidate.actor_id):
-                if enemy.team == actor.team or enemy.hp <= 0 or enemy.dead or not _can_take_reaction(enemy):
+                if (
+                    enemy.team == actor.team
+                    or enemy.hp <= 0
+                    or enemy.dead
+                    or not _can_take_reaction(enemy)
+                ):
                     continue
                 cs_action = next(
                     (
@@ -11165,9 +11282,13 @@ def _execute_action(
             target = current_target
             long_range_disadvantage = False
             if enforce_range_legality:
-                in_attack_range, long_range_disadvantage = _attack_range_state(actor, action, target)
+                in_attack_range, long_range_disadvantage = _attack_range_state(
+                    actor, action, target
+                )
                 if not in_attack_range:
                     continue
+            if not _consume_action_ammo(actor, action, resources_spent):
+                break
             if not (is_spell_action and spell_declared_for_resolution):
                 declaration_event = active_timing_engine.emit(
                     ActionDeclaredEvent(
@@ -11380,7 +11501,9 @@ def _execute_action(
                         damage_expr += f"{cha_bonus:+d}"
 
                 # Sneak Attack Logic
-                sneak_attack_available = getattr(actor, "sneak_attack_used_this_turn", False) is False
+                sneak_attack_available = (
+                    getattr(actor, "sneak_attack_used_this_turn", False) is False
+                )
                 if turn_token is not None:
                     current_turn_token = str(turn_token)
                     sneak_attack_available = (
@@ -11851,6 +11974,7 @@ def _execute_action(
                     final_damage = 0
                 elif (
                     _has_trait(target, "shield master")
+                    and _actor_has_equipped_shield(target)
                     and action.half_on_save
                     and _can_take_reaction(target)
                 ):
