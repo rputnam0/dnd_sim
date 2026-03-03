@@ -115,6 +115,20 @@ def test_build_actor_infers_paladin_package_traits_resources_and_action_from_mul
     assert any(action.name == "lay_on_hands" for action in actor.actions)
 
 
+def test_explicit_lay_on_hands_trait_keeps_legacy_pool_with_non_paladin_class_levels() -> None:
+    character = _paladin_character(
+        level=5,
+        class_level="Fighter 5",
+        class_levels={"fighter": 5},
+        traits=["Lay on Hands"],
+    )
+
+    actor = _build_actor_from_character(character, traits_db={})
+
+    assert actor.max_resources["lay_on_hands_pool"] == 25
+    assert actor.resources["lay_on_hands_pool"] == 25
+
+
 def test_lay_on_hands_pool_spend_short_rest_and_long_rest_recovery() -> None:
     paladin = _build_actor_from_character(_paladin_character(level=5), traits_db={})
     ally = _actor("ally", "party")

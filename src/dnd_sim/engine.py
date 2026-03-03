@@ -4981,7 +4981,8 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         pact_slot_level, pact_slot_count = pact_slot_profile
         result.setdefault(f"warlock_spell_slot_{pact_slot_level}", pact_slot_count)
 
-    traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
+    explicit_traits = {_normalize_trait_name(trait) for trait in (character.get("traits", []) or [])}
+    traits = set(explicit_traits)
     traits.update(
         _infer_paladin_package_trait_names(
             class_levels=class_levels,
@@ -4989,10 +4990,11 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         )
     )
     if _normalize_trait_name("lay on hands") in traits and "lay_on_hands_pool" not in result:
+        has_explicit_lay_on_hands = _normalize_trait_name("lay on hands") in explicit_traits
         paladin_level = int(class_levels.get("paladin", 0))
         if paladin_level <= 0 and not class_levels:
             paladin_level = _parse_class_level(class_level_text, "paladin")
-        if paladin_level <= 0 and not class_levels:
+        if paladin_level <= 0 and (not class_levels or has_explicit_lay_on_hands):
             paladin_level = _parse_character_level(class_level_text or "1")
         if paladin_level > 0:
             result["lay_on_hands_pool"] = max(0, paladin_level * 5)
