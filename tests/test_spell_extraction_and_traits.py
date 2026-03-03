@@ -65,6 +65,35 @@ def test_spell_extraction_builds_combat_actions_for_squanch() -> None:
     assert any(a.resource_cost for a in spell_actions)
 
 
+def test_build_actor_imports_unprepared_known_caster_spells(monkeypatch) -> None:
+    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
+    character = {
+        "character_id": "bard_1",
+        "name": "Bard One",
+        "class_level": "Bard 5",
+        "max_hp": 24,
+        "ac": 14,
+        "ability_scores": {"str": 8, "dex": 14, "con": 12, "int": 10, "wis": 10, "cha": 18},
+        "save_mods": {"str": -1, "dex": 2, "con": 1, "int": 0, "wis": 0, "cha": 4},
+        "skill_mods": {},
+        "attacks": [],
+        "resources": {"spell_slots": {"spell_slot_1": 4}},
+        "traits": [],
+        "raw_fields": [
+            {"field": "spellHeader1", "value": "=== 1st LEVEL ==="},
+            {"field": "spellName1", "value": "Dissonant Whispers"},
+            {"field": "spellPrepared1", "value": ""},
+            {"field": "spellName2", "value": "Healing Word"},
+            {"field": "spellPrepared2", "value": ""},
+        ],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+
+    actor = _build_actor_from_character(character, traits_db={})
+    spell_actions = [action for action in actor.actions if "spell" in action.tags]
+    assert {action.name for action in spell_actions} == {"Dissonant Whispers", "Healing Word"}
+
+
 def test_gnomish_cunning_grants_advantage_on_spell_saves() -> None:
     rng = _CountingRng([2, 19])
     caster = _base_actor(actor_id="caster", team="enemy")

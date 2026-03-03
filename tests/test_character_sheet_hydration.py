@@ -92,6 +92,48 @@ def test_extract_spells_casting_time_hour_not_misclassified_as_reaction(monkeypa
     assert by_name["Quick Cast"]["action_cost"] == "reaction"
 
 
+def test_extract_spells_includes_unprepared_leveled_spells_for_known_casters(monkeypatch) -> None:
+    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
+    character = {
+        "class_level": "Bard 5",
+        "raw_fields": [
+            {"field": "spellHeader1", "value": "=== 1st LEVEL ==="},
+            {"field": "spellName1", "value": "Dissonant Whispers"},
+            {"field": "spellPrepared1", "value": ""},
+            {"field": "spellName2", "value": "Healing Word"},
+            {"field": "spellPrepared2", "value": ""},
+        ],
+        "ability_scores": {},
+    }
+
+    spells = _extract_spells_from_raw_fields(character)
+    assert {row["name"] for row in spells} == {"Dissonant Whispers", "Healing Word"}
+
+
+def test_extract_spells_rejects_unprepared_leveled_for_prepared_casters(monkeypatch) -> None:
+    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
+    character = {
+        "class_level": "Cleric 5",
+        "raw_fields": [
+            {"field": "spellHeader0", "value": "=== CANTRIPS ==="},
+            {"field": "spellName0", "value": "Guidance"},
+            {"field": "spellPrepared0", "value": ""},
+            {"field": "spellHeader1", "value": "=== 1st LEVEL ==="},
+            {"field": "spellName1", "value": "Bless"},
+            {"field": "spellPrepared1", "value": ""},
+            {"field": "spellName2", "value": "Shield of Faith"},
+            {"field": "spellPrepared2", "value": "O"},
+        ],
+        "ability_scores": {},
+    }
+
+    spells = _extract_spells_from_raw_fields(character)
+    names = {row["name"] for row in spells}
+    assert "Guidance" in names
+    assert "Shield of Faith" in names
+    assert "Bless" not in names
+
+
 def test_extract_spells_dedupe_preserves_non_concentration_false(monkeypatch) -> None:
     monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
     character = {

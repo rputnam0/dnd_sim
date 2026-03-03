@@ -1913,12 +1913,24 @@ def _extract_spellcasting_profile_from_raw_fields(character: dict[str, Any]) -> 
     return out
 
 
-def _character_has_magical_secrets(character: dict[str, Any]) -> bool:
-    for trait in character.get("traits", []) or []:
-        key = _trait_lookup_key(str(trait))
-        if key in {"magical secrets", "additional magical secrets", "magical discoveries"}:
-            return True
-    return False
+_KNOWN_SPELL_LIST_CLASSES = ("bard", "ranger", "sorcerer", "warlock")
+_PREPARED_SPELL_LIST_CLASSES = ("artificer", "cleric", "druid", "paladin", "wizard")
+
+
+def _character_uses_known_spell_list(character: dict[str, Any]) -> bool:
+    class_level_text = str(character.get("class_level", "") or "")
+    if not class_level_text:
+        return False
+
+    has_known = any(
+        _parse_class_level(class_level_text, class_name) > 0
+        for class_name in _KNOWN_SPELL_LIST_CLASSES
+    )
+    has_prepared = any(
+        _parse_class_level(class_level_text, class_name) > 0
+        for class_name in _PREPARED_SPELL_LIST_CLASSES
+    )
+    return has_known and not has_prepared
 
 
 def _is_magical_secrets_spell_entry(entry: dict[str, Any]) -> bool:
@@ -1945,7 +1957,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
     """
     raw_fields = character.get("raw_fields", []) or []
     profile = _extract_spellcasting_profile_from_raw_fields(character)
-    has_magical_secrets = _character_has_magical_secrets(character)
+    uses_known_spell_list = _character_uses_known_spell_list(character)
     global_to_hit = profile.get("to_hit")
     global_save_dc = profile.get("save_dc")
 
@@ -1988,7 +2000,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             spell_level > 0
             and not prepared
             and not magical_secrets_entry
-            and not has_magical_secrets
+            and not uses_known_spell_list
         ):
             continue
 
