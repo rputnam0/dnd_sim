@@ -233,6 +233,8 @@ def test_multi_target_wording_does_not_get_single_target_family_tag(monkeypatch)
     descriptions = (
         "Up to three creatures of your choice that you can see within range gain 5 temporary hit points.",
         "Choose one or more creatures that you can see within range.",
+        "Up to ten willing creatures of your choice within range gain resistance to fire damage.",
+        "Up to four hostile targets that you can see within range must make a Wisdom saving throw.",
     )
 
     for index, description in enumerate(descriptions):

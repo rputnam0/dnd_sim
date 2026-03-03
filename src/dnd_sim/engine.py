@@ -3140,15 +3140,17 @@ def _duration_text_from_rounds(*, rounds: int, concentration: bool) -> str:
 
 
 _SINGLE_TARGET_FAMILY_TAG = "spell_family:single_target"
+_MULTI_TARGET_COUNT_TOKEN_RE = r"(?:[2-9]\d*|two|three|four|five|six|seven|eight|nine|ten)"
+_MULTI_TARGET_QUALIFIER_GAP_RE = r"(?:\s+(?:[a-z][a-z'-]*[,;:]?)){0,4}"
+_MULTI_TARGET_NOUN_RE = r"(?:creatures|targets)"
 _MULTI_TARGET_DESCRIPTION_RE = re.compile(
     r"\b(?:"
-    r"up to\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+"
-    r"(?:creatures?|targets?)"
-    r"|one or more\s+(?:creatures?|targets?)"
-    r"|one or two\s+(?:creatures?|targets?)"
-    r"|two or more\s+(?:creatures?|targets?)"
-    r"|(?:two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(?:creatures?|targets?)"
-    r")\b",
+    + rf"up to\s+{_MULTI_TARGET_COUNT_TOKEN_RE}{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
+    + rf"|one\s+or\s+more{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
+    + rf"|one\s+or\s+two{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
+    + rf"|two\s+or\s+more{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
+    + rf"|{_MULTI_TARGET_COUNT_TOKEN_RE}{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
+    + r")\b",
     flags=re.IGNORECASE,
 )
 _AREA_DESCRIPTION_HINTS = (
