@@ -68,7 +68,8 @@ _ATTACKER_ADVANTAGE_CONDITIONS = {
     "restrained",
     "reckless_attacking",
 }
-_AUTO_CRIT_CONDITIONS = {"paralyzed", "stunned", "unconscious"}
+_AUTO_CRIT_CONDITIONS = {"paralyzed", "unconscious"}
+_AUTO_FAIL_STR_DEX_SAVE_CONDITIONS = {"stunned", "paralyzed", "unconscious"}
 _IMPLIED_CONDITION_MAP: dict[str, set[str]] = {
     "stunned": {"incapacitated"},
     "unconscious": {"incapacitated"},
@@ -5847,23 +5848,35 @@ def actor_is_incapacitated(actor: ActorRuntimeState | None) -> bool:
     return any(has_condition(actor, condition) for condition in _CONTROL_BLOCKING_CONDITIONS)
 
 
+def _auto_fails_strength_or_dex_save(actor: ActorRuntimeState, ability: str) -> bool:
+    save_key = _normalize_condition(ability)
+    if save_key not in {"str", "dex"}:
+        return False
+    return any(has_condition(actor, condition) for condition in _AUTO_FAIL_STR_DEX_SAVE_CONDITIONS)
+
+
 def query_attack_condition_modifiers(
     *,
     attacker: ActorRuntimeState,
     target: ActorRuntimeState,
-    is_melee: bool,
+    is_melee_attack: bool,
+    distance_ft: float,
 ) -> AttackConditionModifiers:
+    _ = attacker
+    within_5ft = distance_ft <= 5.0
     modifiers = AttackConditionModifiers()
     if any(has_condition(target, condition) for condition in _ATTACKER_ADVANTAGE_CONDITIONS):
         modifiers.advantage = True
     if has_condition(target, "prone"):
-        if is_melee:
+        if is_melee_attack and within_5ft:
             modifiers.advantage = True
         else:
             modifiers.disadvantage = True
     if has_condition(target, "dodging"):
         modifiers.disadvantage = True
-    modifiers.force_critical = any(has_condition(target, cond) for cond in _AUTO_CRIT_CONDITIONS)
+    modifiers.force_critical = within_5ft and any(
+        has_condition(target, cond) for cond in _AUTO_CRIT_CONDITIONS
+    )
     return modifiers
 
 
@@ -6068,6 +6081,12 @@ def _apply_condition(
             effect.internal_tags.update(_normalize_internal_tags(normalized_tags))
             effect.target_actor_id = normalized_target
             _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
+            if (
+                key == "unconscious"
+                and "prone" not in actor.condition_immunities
+                and "all" not in actor.condition_immunities
+            ):
+                actor.add_manual_condition("prone")
             return [effect.instance_id]
 
     instance = EffectInstance(
@@ -6088,6 +6107,12 @@ def _apply_condition(
     actor.effect_instances.append(instance)
     created_ids.append(instance.instance_id)
     _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
+    if (
+        key == "unconscious"
+        and "prone" not in actor.condition_immunities
+        and "all" not in actor.condition_immunities
+    ):
+        actor.add_manual_condition("prone")
     return created_ids
 
 
@@ -6291,21 +6316,24 @@ def _apply_effect(
         save_ability = effect.get("save_ability")
         if save_dc is not None and save_ability:
             save_key = str(save_ability).lower()
-            save_mod = int(recipient.save_mods.get(save_key, 0))
-            save_total = rng.randint(1, 20) + save_mod
-            if (
-                action
-                and getattr(action, "tags", None)
-                and "spell" in action.tags
-                and _has_trait(recipient, "gnomish cunning")
-                and save_key in {"int", "wis", "cha"}
-            ):
-                save_total = max(save_total, rng.randint(1, 20) + save_mod)
-            if str(effect.get("condition", "")).lower() == "charmed" and _has_trait(
-                recipient, "fey ancestry"
-            ):
-                save_total = max(save_total, rng.randint(1, 20) + save_mod)
-            condition_saved = save_total >= int(save_dc)
+            if _auto_fails_strength_or_dex_save(recipient, save_key):
+                condition_saved = False
+            else:
+                save_mod = int(recipient.save_mods.get(save_key, 0))
+                save_total = rng.randint(1, 20) + save_mod
+                if (
+                    action
+                    and getattr(action, "tags", None)
+                    and "spell" in action.tags
+                    and _has_trait(recipient, "gnomish cunning")
+                    and save_key in {"int", "wis", "cha"}
+                ):
+                    save_total = max(save_total, rng.randint(1, 20) + save_mod)
+                if str(effect.get("condition", "")).lower() == "charmed" and _has_trait(
+                    recipient, "fey ancestry"
+                ):
+                    save_total = max(save_total, rng.randint(1, 20) + save_mod)
+                condition_saved = save_total >= int(save_dc)
             if not condition_saved and recipient.resources.get("legendary_resistance", 0) > 0:
                 recipient.resources["legendary_resistance"] -= 1
                 resources_spent[recipient.actor_id]["legendary_resistance"] = (
@@ -7859,9 +7887,12 @@ def _saving_throw_succeeds(
     resources_spent: dict[str, dict[str, int]],
 ) -> bool:
     save_key = ability.lower()
-    save_mod = int(target.save_mods.get(save_key, 0))
-    save_total = rng.randint(1, 20) + save_mod
-    success = save_total >= dc
+    if _auto_fails_strength_or_dex_save(target, save_key):
+        success = False
+    else:
+        save_mod = int(target.save_mods.get(save_key, 0))
+        save_total = rng.randint(1, 20) + save_mod
+        success = save_total >= dc
     if not success and target.resources.get("legendary_resistance", 0) > 0:
         target.resources["legendary_resistance"] -= 1
         resources_spent[target.actor_id]["legendary_resistance"] = (
@@ -8798,10 +8829,18 @@ def _execute_action(
             if "raging" in actor.conditions and target.team != actor.team:
                 actor.rage_sustained_since_last_turn = True
             advantage, disadvantage = _consume_attack_flags(actor)
+            target_distance_ft = distance_chebyshev(actor.position, target.position)
+            weapon_name = action.name.lower()
+            inferred_range = _action_range_ft(action)
+            has_canonical_weapon_data = _action_has_canonical_weapon_data(action)
+            is_ranged = _is_ranged_weapon_action(action)
+            if not is_ranged and not has_canonical_weapon_data:
+                is_ranged = bool(inferred_range is not None and inferred_range > 5.0)
             attack_condition_modifiers = query_attack_condition_modifiers(
                 attacker=actor,
                 target=target,
-                is_melee=distance_chebyshev(actor.position, target.position) <= 5.0,
+                is_melee_attack=not is_ranged,
+                distance_ft=target_distance_ft,
             )
             if attack_condition_modifiers.advantage:
                 advantage = True
@@ -8849,12 +8888,6 @@ def _execute_action(
             cover_bonus = 0
             to_hit_penalty = 0
             damage_bonus = 0
-            weapon_name = action.name.lower()
-            inferred_range = _action_range_ft(action)
-            has_canonical_weapon_data = _action_has_canonical_weapon_data(action)
-            is_ranged = _is_ranged_weapon_action(action)
-            if not is_ranged and not has_canonical_weapon_data:
-                is_ranged = bool(inferred_range is not None and inferred_range > 5.0)
             is_heavy = _action_has_weapon_property(action, "heavy")
             if not is_heavy and not has_canonical_weapon_data:
                 is_heavy = any(w in weapon_name for w in _HEAVY_WEAPON_HINTS)
@@ -9374,29 +9407,34 @@ def _execute_action(
             save_mod = int(target.save_mods.get(save_key, 0))
             if save_key == "dex":
                 save_mod += _smite_of_protection_half_cover_bonus(target, actors)
-            save_roll = rng.randint(1, 20)
-            if (
-                save_key == "dex"
-                and _has_trait(target, "danger sense")
-                and not has_condition(target, "blinded")
-                and not has_condition(target, "deafened")
-                and not has_condition(target, "incapacitated")
-            ):
-                save_roll = max(save_roll, rng.randint(1, 20))
-            if (
-                "spell" in action.tags
-                and _has_trait(target, "gnomish cunning")
-                and save_key in {"int", "wis", "cha"}
-            ):
-                save_roll = max(save_roll, rng.randint(1, 20))
-            if save_key == "dex" and has_condition(target, "dodging"):
-                save_roll = max(save_roll, rng.randint(1, 20))
-            if is_spell_action and not subtle_spell and _has_trait(target, "mage slayer"):
-                save_roll = max(save_roll, rng.randint(1, 20))
-            if target.actor_id == heightened_target_id:
-                save_roll = min(save_roll, rng.randint(1, 20))
-            success = (save_roll + save_mod) >= action.save_dc
-            if not success:
+            auto_fail_save = _auto_fails_strength_or_dex_save(target, save_key)
+            if auto_fail_save:
+                save_roll = 0
+                success = False
+            else:
+                save_roll = rng.randint(1, 20)
+                if (
+                    save_key == "dex"
+                    and _has_trait(target, "danger sense")
+                    and not has_condition(target, "blinded")
+                    and not has_condition(target, "deafened")
+                    and not has_condition(target, "incapacitated")
+                ):
+                    save_roll = max(save_roll, rng.randint(1, 20))
+                if (
+                    "spell" in action.tags
+                    and _has_trait(target, "gnomish cunning")
+                    and save_key in {"int", "wis", "cha"}
+                ):
+                    save_roll = max(save_roll, rng.randint(1, 20))
+                if save_key == "dex" and has_condition(target, "dodging"):
+                    save_roll = max(save_roll, rng.randint(1, 20))
+                if is_spell_action and not subtle_spell and _has_trait(target, "mage slayer"):
+                    save_roll = max(save_roll, rng.randint(1, 20))
+                if target.actor_id == heightened_target_id:
+                    save_roll = min(save_roll, rng.randint(1, 20))
+                success = (save_roll + save_mod) >= action.save_dc
+            if not auto_fail_save and not success:
                 save_roll = _try_spend_bardic_inspiration_on_save(
                     rng=rng,
                     actor=target,
@@ -9409,7 +9447,8 @@ def _execute_action(
 
             # Lucky: Reroll failed save
             if (
-                not success
+                not auto_fail_save
+                and not success
                 and _has_trait(target, "lucky")
                 and target.resources.get("luck_points", 0) > 0
             ):
