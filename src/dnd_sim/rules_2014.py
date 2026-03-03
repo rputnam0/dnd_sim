@@ -618,7 +618,10 @@ def apply_damage_bundle(
 
     if target.hp <= 0 and not target.dead:
         target.hp = 0
-        target.update_manual_conditions({"unconscious", "incapacitated"})
+        downed_conditions = {"unconscious", "incapacitated"}
+        if "prone" not in target.condition_immunities and "all" not in target.condition_immunities:
+            downed_conditions.add("prone")
+        target.update_manual_conditions(downed_conditions)
         if not target.was_downed:
             target.downed_count += 1
             target.was_downed = True
