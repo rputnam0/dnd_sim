@@ -8,6 +8,7 @@ import pytest
 
 from dnd_sim.engine import (
     _action_available,
+    _build_actor_from_character,
     _execute_action,
     _resolve_targets_for_action,
     _run_opportunity_attacks_for_movement,
@@ -1255,6 +1256,33 @@ def _runtime_actor(*, actor_id: str, team: str, hp: int = 30) -> ActorRuntimeSta
     )
 
 
+def _rogue_character_payload(*, level: int, traits: list[str] | None = None) -> dict[str, object]:
+    return {
+        "character_id": f"rogue_{level}",
+        "name": f"Rogue {level}",
+        "class_level": f"Rogue {level}",
+        "max_hp": 34,
+        "ac": 15,
+        "speed_ft": 30,
+        "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 12, "wis": 10, "cha": 12},
+        "save_mods": {"str": 0, "dex": 6, "con": 2, "int": 1, "wis": 0, "cha": 1},
+        "skill_mods": {},
+        "attacks": [
+            {
+                "name": "Rapier",
+                "to_hit": 10,
+                "damage": "1d1",
+                "damage_type": "piercing",
+                "weapon_properties": ["finesse"],
+            }
+        ],
+        "resources": {},
+        "traits": list(traits or []),
+        "raw_fields": [],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+
+
 def test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn() -> None:
     rogue = _actor("rogue", "party")
     ally = _actor("ally", "party")
@@ -1313,6 +1341,58 @@ def test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn() 
     )
 
     # Rogue should land Sneak Attack on own turn (12) and again on enemy turn OA (8).
+    assert damage_dealt[rogue.actor_id] == 20
+    assert rogue.reaction_available is False
+
+
+def test_rogue_package_applies_sneak_attack_on_turn_and_enemy_turn_reaction() -> None:
+    rogue = _build_actor_from_character(_rogue_character_payload(level=3), traits_db={})
+    ally = _actor("ally", "party")
+    enemy = _actor("enemy", "enemy")
+
+    rogue.position = (0.0, 0.0, 0.0)
+    ally.position = (5.0, 0.0, 0.0)
+    enemy.position = (5.0, 0.0, 0.0)
+    basic_attack = next(action for action in rogue.actions if action.name == "basic")
+
+    actors = {rogue.actor_id: rogue, ally.actor_id: ally, enemy.actor_id: enemy}
+    damage_dealt = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {rogue.actor_id: {}, ally.actor_id: {}, enemy.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([15, 1, 6, 5]),
+        actor=rogue,
+        action=basic_attack,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:rogue",
+    )
+
+    _run_opportunity_attacks_for_movement(
+        rng=_FixedRng([15, 1, 4, 3]),
+        mover=enemy,
+        start_pos=(5.0, 0.0, 0.0),
+        end_pos=(20.0, 0.0, 0.0),
+        movement_path=[(5.0, 0.0, 0.0), (20.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:enemy",
+    )
+
+    assert "sneak attack" in rogue.traits
     assert damage_dealt[rogue.actor_id] == 20
     assert rogue.reaction_available is False
 

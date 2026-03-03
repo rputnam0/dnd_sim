@@ -510,7 +510,15 @@ def _resolve_character_traits(
                 break
         return match
 
+    class_level_text = str(character.get("class_level", "") or "")
+    class_levels = _class_levels_from_character_payload(character)
     explicit_candidates: set[str] = set(str(value) for value in (character.get("traits", []) or []))
+    explicit_candidates.update(
+        _infer_rogue_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
     for candidate in explicit_candidates:
         match = find_match(candidate)
         if match is not None:
@@ -710,6 +718,48 @@ def _parse_class_level(class_level_text: str, class_name: str) -> int:
 
 def _parse_class_levels(class_level_text: str) -> dict[str, int]:
     return parse_character_class_levels(class_level_text)
+
+
+_ROGUE_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
+    (1, "sneak attack"),
+    (1, "expertise"),
+    (1, "thieves' cant"),
+    (2, "cunning action"),
+    (5, "uncanny dodge"),
+    (7, "evasion"),
+    (11, "reliable talent"),
+    (14, "blindsense"),
+    (15, "slippery mind"),
+    (18, "elusive"),
+    (20, "stroke of luck"),
+)
+
+
+def _class_levels_from_character_payload(character: dict[str, Any]) -> dict[str, int]:
+    explicit_class_levels = character.get("class_levels")
+    if isinstance(explicit_class_levels, dict):
+        try:
+            return normalize_class_levels(explicit_class_levels)
+        except ValueError:
+            pass
+    return _parse_class_levels(str(character.get("class_level", "")))
+
+
+def _infer_rogue_package_trait_names(
+    *,
+    class_levels: dict[str, int],
+    class_level_text: str,
+) -> set[str]:
+    rogue_level = int(class_levels.get("rogue", 0))
+    if rogue_level <= 0 and not class_levels:
+        rogue_level = _parse_class_level(class_level_text, "rogue")
+    if rogue_level <= 0:
+        return set()
+    return {
+        _normalize_trait_name(trait_name)
+        for min_level, trait_name in _ROGUE_PACKAGE_FEATURE_LEVELS
+        if rogue_level >= min_level
+    }
 
 
 def _normalize_spell_school(value: Any) -> str | None:
@@ -3310,6 +3360,18 @@ def _has_tag(action: ActionDefinition, tag: str) -> bool:
     return any(str(value) == tag for value in action.tags)
 
 
+def _is_dash_utility_action(action: ActionDefinition) -> bool:
+    return action.name == "dash" or _has_tag(action, "utility_dash")
+
+
+def _is_disengage_utility_action(action: ActionDefinition) -> bool:
+    return action.name == "disengage" or _has_tag(action, "utility_disengage")
+
+
+def _is_hide_utility_action(action: ActionDefinition) -> bool:
+    return action.name == "hide" or _has_tag(action, "utility_hide")
+
+
 def _build_spell_actions(
     character: dict[str, Any],
     *,
@@ -3820,10 +3882,21 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
         _normalize_attack_definition(attack, idx)
         for idx, attack in enumerate(character.get("attacks", []), start=1)
     ]
+    class_level_text = str(character.get("class_level", "1"))
+    class_levels = _class_levels_from_character_payload(character)
     resources = character.get("resources", {})
     traits = {_normalize_trait_name(trait) for trait in character.get("traits", [])}
-    class_level_text = str(character.get("class_level", "1"))
-    character_level = _parse_character_level(class_level_text)
+    traits.update(
+        _infer_rogue_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
+    character_level = (
+        total_character_level(class_levels)
+        if class_levels
+        else _parse_character_level(class_level_text)
+    )
     fighter_level = _parse_class_level(class_level_text, "fighter")
     ability_scores = character.get("ability_scores", {})
     str_mod = (int(ability_scores.get("str", 10)) - 10) // 2
@@ -4029,6 +4102,33 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                     )
                 )
 
+        if has_trait("cunning action"):
+            actions.extend(
+                [
+                    ActionDefinition(
+                        name="cunning_dash",
+                        action_type="utility",
+                        action_cost="bonus",
+                        target_mode="self",
+                        tags=["bonus", "cunning_action", "utility_dash"],
+                    ),
+                    ActionDefinition(
+                        name="cunning_disengage",
+                        action_type="utility",
+                        action_cost="bonus",
+                        target_mode="self",
+                        tags=["bonus", "cunning_action", "utility_disengage"],
+                    ),
+                    ActionDefinition(
+                        name="cunning_hide",
+                        action_type="utility",
+                        action_cost="bonus",
+                        target_mode="self",
+                        tags=["bonus", "cunning_action", "utility_hide"],
+                    ),
+                ]
+            )
+
         if has_trait("polearm master"):
             weapon_name = str(best_attack.get("weapon_id") or best_attack.get("name", "")).lower()
             if any(
@@ -4212,6 +4312,32 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 ],
                 tags=["bonus", "short_rest", "second_wind"],
             )
+        )
+    if has_trait("cunning action"):
+        base.extend(
+            [
+                ActionDefinition(
+                    name="cunning_dash",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="self",
+                    tags=["bonus", "cunning_action", "utility_dash"],
+                ),
+                ActionDefinition(
+                    name="cunning_disengage",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="self",
+                    tags=["bonus", "cunning_action", "utility_disengage"],
+                ),
+                ActionDefinition(
+                    name="cunning_hide",
+                    action_type="utility",
+                    action_cost="bonus",
+                    target_mode="self",
+                    tags=["bonus", "cunning_action", "utility_hide"],
+                ),
+            ]
         )
     return base + spell_actions + font_of_magic_actions + cleric_actions
 
@@ -10103,7 +10229,12 @@ def _select_readied_action(actor: ActorRuntimeState) -> ActionDefinition | None:
             if action.action_cost in {"action", "none"} and _action_available(actor, action):
                 return action
     for action in actor.actions:
-        if action.name in {"ready", "dodge", "dash", "disengage"}:
+        if (
+            action.name in {"ready", "dodge"}
+            or _is_dash_utility_action(action)
+            or _is_disengage_utility_action(action)
+            or _is_hide_utility_action(action)
+        ):
             continue
         if action.action_cost in {"legendary", "lair", "reaction"}:
             continue
@@ -12043,7 +12174,10 @@ def _execute_action(
                             actor.sneak_attack_used_this_turn = True
                             if turn_token is not None:
                                 actor.sneak_attack_turn_token = str(turn_token)
-                            sa_dice = (actor.level + 1) // 2
+                            rogue_level = int(actor.class_levels.get("rogue", 0))
+                            if rogue_level <= 0:
+                                rogue_level = int(actor.level)
+                            sa_dice = max(1, (rogue_level + 1) // 2)
                             sneak_damage_expr = f"{sa_dice}d6"
 
                 if power_attack_active and damage_expr:
@@ -12601,11 +12735,13 @@ def _execute_action(
         if action.name == "dodge":
             _apply_condition(actor, "dodging", duration_rounds=1)
             return
-        if action.name == "disengage":
+        if _is_disengage_utility_action(action):
             _apply_condition(actor, "disengaging", duration_rounds=1)
             return
-        if action.name == "dash":
+        if _is_dash_utility_action(action):
             actor.movement_remaining += actor.speed_ft
+            return
+        if _is_hide_utility_action(action):
             return
         if action.name == "ready":
             if ready_declaration is not None:
