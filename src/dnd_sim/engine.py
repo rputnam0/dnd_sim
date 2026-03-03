@@ -62,6 +62,7 @@ from dnd_sim.rules_2014 import (
     apply_damage,
     apply_damage_bundle,
     attack_roll,
+    druid_wild_shape_action_legal,
     monk_bonus_action_legal,
     parse_damage_expression,
     ranger_vanish_bonus_action_legal,
@@ -551,6 +552,12 @@ def _resolve_character_traits(
             class_level_text=class_level_text,
         )
     )
+    explicit_candidates.update(
+        _infer_druid_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
     for candidate in explicit_candidates:
         match = find_match(candidate)
         if match is not None:
@@ -648,6 +655,31 @@ def _cleric_level_from_character(character: dict[str, Any], *, fallback_level: i
     if cleric_level > 0:
         return cleric_level
     return max(0, int(fallback_level))
+
+
+def _druid_level_from_character(character: dict[str, Any], *, fallback_level: int) -> int:
+    explicit_class_levels = character.get("class_levels")
+    class_levels: dict[str, int] = {}
+    if isinstance(explicit_class_levels, dict):
+        try:
+            class_levels = normalize_class_levels(explicit_class_levels)
+        except ValueError:
+            class_levels = {}
+    if not class_levels:
+        class_levels = _parse_class_levels(str(character.get("class_level", "")))
+    druid_level = int(class_levels.get("druid", 0))
+    if druid_level > 0:
+        return druid_level
+    return max(0, int(fallback_level))
+
+
+def _druid_wild_shape_uses_for_level(level: int) -> int:
+    if level <= 0:
+        return 0
+    if level >= 20:
+        # Unlimited in tabletop rules; use a stable high cap for simulation bookkeeping.
+        return 99
+    return 2
 
 
 def _channel_divinity_uses_for_actor(actor: ActorRuntimeState) -> int:
@@ -854,6 +886,15 @@ _SORCERER_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (20, "sorcerous restoration"),
 )
 
+_DRUID_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
+    (1, "druidic"),
+    (1, "spellcasting"),
+    (2, "wild shape"),
+    (18, "beast spells"),
+    (18, "timeless body"),
+    (20, "archdruid"),
+)
+
 
 def _class_levels_from_character_payload(character: dict[str, Any]) -> dict[str, int]:
     explicit_class_levels = character.get("class_levels")
@@ -966,6 +1007,23 @@ def _infer_sorcerer_package_trait_names(
         _normalize_trait_name(trait_name)
         for min_level, trait_name in _SORCERER_PACKAGE_FEATURE_LEVELS
         if sorcerer_level >= min_level
+    }
+
+
+def _infer_druid_package_trait_names(
+    *,
+    class_levels: dict[str, int],
+    class_level_text: str,
+) -> set[str]:
+    druid_level = int(class_levels.get("druid", 0))
+    if druid_level <= 0 and not class_levels:
+        druid_level = _parse_class_level(class_level_text, "druid")
+    if druid_level <= 0:
+        return set()
+    return {
+        _normalize_trait_name(trait_name)
+        for min_level, trait_name in _DRUID_PACKAGE_FEATURE_LEVELS
+        if druid_level >= min_level
     }
 
 
@@ -3941,6 +3999,60 @@ def _build_cleric_channel_divinity_actions(
     return actions
 
 
+def _build_druid_wild_shape_actions(
+    *,
+    character: dict[str, Any],
+    character_level: int,
+    traits: set[str],
+) -> list[ActionDefinition]:
+    def has_trait(name: str) -> bool:
+        return _normalize_trait_name(name) in traits
+
+    if not has_trait("wild shape"):
+        return []
+
+    druid_level = _druid_level_from_character(character, fallback_level=character_level)
+    if druid_level <= 0:
+        return []
+    action_cost = "bonus" if has_trait("combat wild shape") else "action"
+    resource_cost: dict[str, int] = {}
+    if druid_level < 20 and not has_trait("archdruid"):
+        resource_cost = {"wild_shape": 1}
+
+    return [
+        ActionDefinition(
+            name="wild_shape",
+            action_type="utility",
+            action_cost=action_cost,
+            target_mode="self",
+            resource_cost=resource_cost,
+            effects=[
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "condition": "wild_shaped",
+                    "stack_policy": "refresh",
+                }
+            ],
+            tags=["wild_shape", "shapechange"],
+        ),
+        ActionDefinition(
+            name="wild_shape_revert",
+            action_type="utility",
+            action_cost="bonus",
+            target_mode="self",
+            effects=[
+                {
+                    "effect_type": "remove_condition",
+                    "target": "target",
+                    "condition": "wild_shaped",
+                }
+            ],
+            tags=["bonus", "wild_shape", "wild_shape_revert", "requires_condition:wild_shaped"],
+        ),
+    ]
+
+
 def _apply_warlock_invocations_to_actions(
     character: dict[str, Any], actions: list[ActionDefinition]
 ) -> None:
@@ -4130,6 +4242,12 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     )
     traits.update(
         _infer_sorcerer_package_trait_names(
+            class_levels=class_levels,
+            class_level_text=class_level_text,
+        )
+    )
+    traits.update(
+        _infer_druid_package_trait_names(
             class_levels=class_levels,
             class_level_text=class_level_text,
         )
@@ -4542,6 +4660,13 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 traits=traits,
             )
         )
+        actions.extend(
+            _build_druid_wild_shape_actions(
+                character=character,
+                character_level=character_level,
+                traits=traits,
+            )
+        )
 
         return actions
 
@@ -4550,6 +4675,11 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
     font_of_magic_actions = _build_font_of_magic_actions(resources)
     _apply_warlock_invocations_to_actions(character, spell_actions)
     cleric_actions = _build_cleric_channel_divinity_actions(
+        character=character,
+        character_level=character_level,
+        traits=traits,
+    )
+    druid_actions = _build_druid_wild_shape_actions(
         character=character,
         character_level=character_level,
         traits=traits,
@@ -4631,7 +4761,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
                 tags=["bonus", "vanish", "utility_hide"],
             )
         )
-    return base + spell_actions + font_of_magic_actions + cleric_actions
+    return base + spell_actions + font_of_magic_actions + cleric_actions + druid_actions
 
 
 def _get_standard_actions() -> list[ActionDefinition]:
@@ -4954,6 +5084,25 @@ def _apply_inferred_sorcerer_resources(
     _ensure_resource_cap(actor, "sorcery_points", points)
 
 
+def _apply_inferred_druid_resources(
+    actor: ActorRuntimeState,
+    *,
+    class_level_text: str,
+) -> None:
+    if not _has_trait(actor, "wild shape"):
+        return
+    if _has_trait(actor, "archdruid"):
+        return
+    druid_level = int(actor.class_levels.get("druid", 0))
+    if druid_level <= 0 and not actor.class_levels:
+        druid_level = _parse_class_level(class_level_text, "druid")
+    if druid_level <= 0 and not actor.class_levels:
+        druid_level = int(actor.level)
+    if druid_level <= 0:
+        return
+    _ensure_resource_cap(actor, "wild_shape", _druid_wild_shape_uses_for_level(druid_level))
+
+
 def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
     if not _has_trait(actor, "arcane recovery"):
         return
@@ -5148,6 +5297,7 @@ def _build_actor_from_character(
     _apply_inferred_barbarian_resources(actor, class_level_text=class_level_text)
     _apply_inferred_bard_resources(actor, class_level_text=class_level_text)
     _apply_inferred_sorcerer_resources(actor, class_level_text=class_level_text)
+    _apply_inferred_druid_resources(actor, class_level_text=class_level_text)
     _register_actor_feature_hooks(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
@@ -5463,6 +5613,7 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
         "superiority_dice",
         "ki",
         "channel_divinity",
+        "wild_shape",
     }
     recover_bardic_inspiration = _has_trait(actor, "font of inspiration")
     for res_key in list(actor.resources.keys()):
@@ -9860,6 +10011,8 @@ def _action_available(
     if not monk_bonus_action_legal(actor, action):
         return False
     if not ranger_vanish_bonus_action_legal(actor, action):
+        return False
+    if not druid_wild_shape_action_legal(actor, action):
         return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False

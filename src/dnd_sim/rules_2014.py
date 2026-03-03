@@ -383,6 +383,29 @@ def ranger_vanish_bonus_action_legal(actor: ActorRuntimeState, action: ActionDef
     return _has_trait(actor, "vanish")
 
 
+def druid_wild_shape_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    action_key = str(action.name).strip().lower()
+    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
+    is_wild_shape = action_key == "wild_shape" or "wild_shape" in normalized_tags
+    is_wild_shape_revert = (
+        action_key == "wild_shape_revert" or "wild_shape_revert" in normalized_tags
+    )
+
+    if not is_wild_shape and not is_wild_shape_revert:
+        return True
+
+    if is_wild_shape_revert:
+        return "wild_shaped" in actor.conditions
+
+    if not _has_trait(actor, "wild shape"):
+        return False
+
+    if action.action_cost == "bonus":
+        return _has_trait(actor, "combat wild shape")
+
+    return action.action_cost in {"action", "none"}
+
+
 def _remove_condition_everywhere(target: ActorRuntimeState, condition: str) -> None:
     # Local import avoids module-level circular dependency.
     from dnd_sim.engine import _remove_condition
