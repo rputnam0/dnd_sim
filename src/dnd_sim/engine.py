@@ -9655,6 +9655,7 @@ def _execute_action(
                 target.resources["bardic_inspiration_die"] = die_sides
             return
 
+        gained_rage_from_action = "raging" not in actor.conditions
         for target in targets:
             _apply_action_effects(
                 action=action,
@@ -9674,6 +9675,12 @@ def _execute_action(
                 telemetry=telemetry,
                 strategy_name=strategy_name,
             )
+        if (
+            gained_rage_from_action
+            and "raging" in actor.conditions
+            and actor.took_attack_action_this_turn
+        ):
+            actor.rage_sustained_since_last_turn = True
 
 
 def _build_round_metadata(
