@@ -1242,6 +1242,69 @@ def test_moving_through_reach_then_leaving_triggers_opportunity_attack() -> None
     assert mover.hp < mover.max_hp
 
 
+def test_reach_weapon_triggers_opportunity_attack_at_reach_boundary() -> None:
+    mover = _base_actor(actor_id="mover", team="party")
+    guard = _base_actor(actor_id="guard", team="enemy")
+    target = _base_actor(actor_id="target", team="enemy")
+
+    mover.position = (9.0, 0.0, 0.0)
+    guard.position = (0.0, 0.0, 0.0)
+    target.position = (25.0, 0.0, 0.0)
+
+    mover.speed_ft = 30
+    mover.movement_remaining = 30.0
+    mover_attack = ActionDefinition(
+        name="slash",
+        action_type="attack",
+        action_cost="action",
+        to_hit=20,
+        damage="1d4",
+        damage_type="slashing",
+        range_ft=5,
+    )
+    mover.actions = [mover_attack]
+    guard.actions = [
+        ActionDefinition(
+            name="pike_thrust",
+            action_type="attack",
+            action_cost="action",
+            to_hit=20,
+            damage="1d4",
+            damage_type="piercing",
+            attack_profile_id="attack_guard_pike",
+            weapon_id="weapon_pike",
+            item_id="item_pike",
+            weapon_properties=["reach"],
+            reach_ft=10,
+            range_ft=10,
+            range_normal_ft=10,
+            range_long_ft=10,
+        )
+    ]
+
+    actors = {mover.actor_id: mover, guard.actor_id: guard, target.actor_id: target}
+    damage_dealt = {mover.actor_id: 0, guard.actor_id: 0, target.actor_id: 0}
+    damage_taken = {mover.actor_id: 0, guard.actor_id: 0, target.actor_id: 0}
+    threat_scores = {mover.actor_id: 0, guard.actor_id: 0, target.actor_id: 0}
+    resources_spent = {mover.actor_id: {}, guard.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([15, 3, 15, 3]),
+        actor=mover,
+        action=mover_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert guard.reaction_available is False
+    assert mover.hp < mover.max_hp
+
+
 def test_ranged_attack_against_prone_target_has_disadvantage() -> None:
     attacker = _base_actor(actor_id="attacker", team="party")
     target = _base_actor(actor_id="target", team="enemy")

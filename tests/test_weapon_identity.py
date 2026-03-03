@@ -190,3 +190,45 @@ def test_display_name_changes_do_not_change_rules_for_canonical_weapon() -> None
     renamed_damage = _run_named_heavy_attack("festival blade")
 
     assert baseline_damage == renamed_damage == 11
+
+
+def test_ranged_attack_with_partial_canonical_properties_stays_ranged() -> None:
+    attacker = _actor("attacker", "party")
+    target = _actor("target", "enemy")
+    attacker.traits = {"sharpshooter": {}}
+    attacker.position = (0.0, 0.0, 0.0)
+    target.position = (30.0, 0.0, 0.0)
+    action = ActionDefinition(
+        name="arcane_bolt",
+        action_type="attack",
+        to_hit=10,
+        damage="1d1",
+        damage_type="force",
+        attack_profile_id="attack_arcane_bolt",
+        weapon_id="weapon_arcane_focus",
+        item_id="item_arcane_focus",
+        weapon_properties=["magical"],
+        range_ft=60,
+    )
+
+    actors = {attacker.actor_id: attacker, target.actor_id: target}
+    damage_dealt = {attacker.actor_id: 0, target.actor_id: 0}
+    damage_taken = {attacker.actor_id: 0, target.actor_id: 0}
+    threat_scores = {attacker.actor_id: 0, target.actor_id: 0}
+    resources_spent = {attacker.actor_id: {}, target.actor_id: {}}
+
+    _execute_action(
+        rng=SequenceRng([15, 1]),
+        actor=attacker,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    # Sharpshooter power attack (+10) should still apply for ranged action.
+    assert damage_dealt[attacker.actor_id] == 11

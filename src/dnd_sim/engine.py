@@ -899,10 +899,11 @@ def _is_weapon_attack_action(action: ActionDefinition) -> bool:
 def _is_ranged_weapon_action(action: ActionDefinition) -> bool:
     if not _is_weapon_attack_action(action):
         return False
-    has_canonical_weapon_data = _action_has_canonical_weapon_data(action)
-    if _action_has_weapon_property(action, "ammunition") or _action_has_weapon_property(
-        action, "ranged"
-    ):
+    has_ranged_property = _action_has_weapon_property(
+        action, "ammunition"
+    ) or _action_has_weapon_property(action, "ranged")
+    has_reach_property = _action_has_weapon_property(action, "reach")
+    if has_ranged_property:
         return True
     if _action_has_weapon_property(action, "thrown"):
         if action.range_normal_ft is not None:
@@ -910,11 +911,17 @@ def _is_ranged_weapon_action(action: ActionDefinition) -> bool:
         if action.range_ft is not None:
             return action.range_ft > 5
         return True
-    if has_canonical_weapon_data:
-        if action.range_normal_ft is not None and action.range_normal_ft > 5:
-            return not _action_has_weapon_property(action, "reach")
-        if action.range_long_ft is not None and action.range_long_ft > 5:
-            return not _action_has_weapon_property(action, "reach")
+    if action.range_normal_ft is not None:
+        if has_reach_property and not has_ranged_property:
+            return False
+        return action.range_normal_ft > 5
+    if action.range_long_ft is not None:
+        if has_reach_property and not has_ranged_property:
+            return False
+        return action.range_long_ft > 5
+    if action.reach_ft is not None:
+        return False
+    if has_reach_property:
         return False
     if action.range_ft is not None and action.range_ft > 5:
         return True
@@ -3856,14 +3863,15 @@ def _has_action_tag(action: ActionDefinition, tag: str) -> bool:
 
 
 def _is_probably_ranged_attack(action: ActionDefinition) -> bool:
-    has_canonical_weapon_data = _action_has_canonical_weapon_data(action)
+    has_ranged_property = _action_has_weapon_property(
+        action, "ammunition"
+    ) or _action_has_weapon_property(action, "ranged")
+    has_reach_property = _action_has_weapon_property(action, "reach")
     if action.range_normal_ft is not None and action.range_normal_ft > 5:
-        return not _action_has_weapon_property(action, "reach")
+        return not has_reach_property
     if action.range_long_ft is not None and action.range_long_ft > 5:
-        return not _action_has_weapon_property(action, "reach")
-    if _action_has_weapon_property(action, "ammunition") or _action_has_weapon_property(
-        action, "ranged"
-    ):
+        return not has_reach_property
+    if has_ranged_property:
         return True
     if _action_has_weapon_property(action, "thrown"):
         if action.range_normal_ft is not None:
@@ -3871,10 +3879,10 @@ def _is_probably_ranged_attack(action: ActionDefinition) -> bool:
         if action.range_ft is not None:
             return action.range_ft > 5
         return True
+    if action.reach_ft is not None or has_reach_property:
+        return False
     if _has_action_tag(action, "ranged") or _has_action_tag(action, "ranged_attack"):
         return True
-    if has_canonical_weapon_data:
-        return False
     name = action.name.lower()
     return any(keyword in name for keyword in _RANGED_ATTACK_KEYWORDS)
 
@@ -4030,8 +4038,29 @@ def _prepare_voluntary_movement(actor: ActorRuntimeState) -> tuple[float, bool]:
     return actor.movement_remaining / 2.0, True
 
 
-def _find_opportunity_attack_action(actor: ActorRuntimeState) -> ActionDefinition | None:
-    best: ActionDefinition | None = None
+def _opportunity_attack_reach_ft(action: ActionDefinition) -> float | None:
+    if action.action_type != "attack":
+        return None
+    if _is_ranged_weapon_action(action):
+        return None
+    if action.reach_ft is not None:
+        return max(0.0, float(action.reach_ft))
+    if _action_has_weapon_property(action, "reach"):
+        if action.range_ft is not None and action.range_ft > 0:
+            return float(action.range_ft)
+        if action.range_normal_ft is not None and action.range_normal_ft > 0:
+            return float(action.range_normal_ft)
+        return 10.0
+    inferred_range = _action_range_ft(action)
+    if inferred_range is None:
+        return 5.0
+    return min(5.0, max(0.0, float(inferred_range)))
+
+
+def _opportunity_attack_candidates(
+    actor: ActorRuntimeState,
+) -> list[tuple[ActionDefinition, float]]:
+    candidates: list[tuple[ActionDefinition, float]] = []
     for action in actor.actions:
         if action.action_type != "attack":
             continue
@@ -4039,18 +4068,34 @@ def _find_opportunity_attack_action(actor: ActorRuntimeState) -> ActionDefinitio
             continue
         if not _can_pay_resource_cost(actor, action):
             continue
-        if _action_range_ft(action) is None or _action_range_ft(action) > 5.0:
+        reach_ft = _opportunity_attack_reach_ft(action)
+        if reach_ft is None or reach_ft <= 0:
+            continue
+        candidates.append((action, reach_ft))
+    return candidates
+
+
+def _find_opportunity_attack_action(
+    actor: ActorRuntimeState,
+    *,
+    required_reach_ft: float = 0.0,
+) -> tuple[ActionDefinition, float] | None:
+    best: tuple[ActionDefinition, float] | None = None
+    for action, reach_ft in _opportunity_attack_candidates(actor):
+        if reach_ft + 1e-9 < required_reach_ft:
             continue
         if best is None:
-            best = action
+            best = (action, reach_ft)
             continue
+        best_action, best_reach = best
         current_to_hit = action.to_hit if action.to_hit is not None else -999
-        best_to_hit = best.to_hit if best.to_hit is not None else -999
-        if current_to_hit > best_to_hit:
-            best = action
+        best_to_hit = best_action.to_hit if best_action.to_hit is not None else -999
+        if (current_to_hit, reach_ft) > (best_to_hit, best_reach):
+            best = (action, reach_ft)
     if best is None:
         return None
-    return replace(best, attack_count=1, action_cost="reaction")
+    best_action, best_reach = best
+    return replace(best_action, attack_count=1, action_cost="reaction"), best_reach
 
 
 def _run_opportunity_attacks_for_movement(
@@ -4085,21 +4130,31 @@ def _run_opportunity_attacks_for_movement(
             continue
         if not enemy.reaction_available:
             continue
+        opportunity_candidates = _opportunity_attack_candidates(enemy)
+        if not opportunity_candidates:
+            continue
+        max_reach = max(reach_ft for _, reach_ft in opportunity_candidates)
         trigger_point: tuple[float, float, float] | None = None
+        trigger_distance: float | None = None
         previous = path_points[0]
-        was_in_reach = distance_chebyshev(enemy.position, previous) <= 5.0
+        was_in_reach = distance_chebyshev(enemy.position, previous) <= max_reach
         for point in path_points[1:]:
-            is_in_reach = distance_chebyshev(enemy.position, point) <= 5.0
+            is_in_reach = distance_chebyshev(enemy.position, point) <= max_reach
             if was_in_reach and not is_in_reach:
                 trigger_point = previous
+                trigger_distance = distance_chebyshev(enemy.position, previous)
                 break
             was_in_reach = is_in_reach
             previous = point
         if trigger_point is None:
             continue
-        reaction_attack = _find_opportunity_attack_action(enemy)
-        if reaction_attack is None:
+        reaction_result = _find_opportunity_attack_action(
+            enemy,
+            required_reach_ft=float(trigger_distance or 0.0),
+        )
+        if reaction_result is None:
             continue
+        reaction_attack, _ = reaction_result
         if not _spend_action_resource_cost(enemy, reaction_attack, resources_spent):
             continue
         enemy.reaction_available = False
