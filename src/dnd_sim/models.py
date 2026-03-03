@@ -285,6 +285,10 @@ class ActorRuntimeState:
     level: int = 1
     pending_smite: dict[str, Any] | None = None
     companion_owner_id: str | None = None
+    allied_controller_id: str | None = None
+    mount_controller_id: str | None = None
+    mounted_on_id: str | None = None
+    mounted_rider_id: str | None = None
     requires_command: bool = False
     commanded_this_round: bool = False
 

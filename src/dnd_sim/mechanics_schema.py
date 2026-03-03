@@ -23,6 +23,13 @@ KNOWN_EFFECT_TYPES = {
     "reduce_damage_taken",
     "damage_roll_floor",
     "reaction_attack",
+    "summon",
+    "conjure",
+    "summon_creature",
+    "command_allied",
+    "command_construct_companion",
+    "mount",
+    "dismount",
 }
 
 EXECUTABLE_EFFECT_TYPES = {
@@ -43,6 +50,13 @@ EXECUTABLE_EFFECT_TYPES = {
     "reduce_damage_taken",
     "damage_roll_floor",
     "reaction_attack",
+    "summon",
+    "conjure",
+    "summon_creature",
+    "command_allied",
+    "command_construct_companion",
+    "mount",
+    "dismount",
 }
 
 _REQUIRED_FIELDS: dict[str, set[str]] = {
@@ -121,6 +135,14 @@ def _validate_mechanics_list(mechanics: Any, *, prefix: str) -> list[str]:
         for required_field in sorted(required_fields):
             if required_field not in row:
                 issues.append(f"{path}.{required_field} is required for {normalized_effect}")
+
+        if normalized_effect in {"summon", "conjure", "summon_creature"}:
+            has_identity = any(
+                isinstance(row.get(key), str) and str(row.get(key)).strip()
+                for key in ("actor_id", "creature", "name")
+            )
+            if not has_identity:
+                issues.append(f"{path} summon effect requires actor_id, creature, or name")
 
         if normalized_effect == "reaction_attack":
             trigger = row.get("trigger")

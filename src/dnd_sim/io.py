@@ -187,6 +187,51 @@ class ForcedMovementEffectConfig(BaseModel):
     direction: Literal["away_from_source", "toward_source", "custom"] = "away_from_source"
 
 
+class SummonEffectConfig(BaseModel):
+    effect_type: Literal["summon", "conjure"]
+    apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
+    target: Literal["target", "source"] = "source"
+    actor_id: str | None = None
+    name: str | None = None
+    max_hp: int | None = None
+    hp: int | None = None
+    ac: int | None = None
+    to_hit: int | None = None
+    damage: str | None = None
+    damage_type: str = "force"
+    speed_ft: int | None = None
+    concentration_linked: bool = True
+    requires_command: bool = False
+    controller: Literal["source", "target"] | None = None
+    controller_id: str | None = None
+    mount: bool = False
+
+    @model_validator(mode="after")
+    def validate_summon_identity(self) -> "SummonEffectConfig":
+        actor_id = str(self.actor_id or "").strip()
+        name = str(self.name or "").strip()
+        if actor_id or name:
+            return self
+        raise ValueError("summon effect requires actor_id or name")
+
+
+class CommandAlliedEffectConfig(BaseModel):
+    effect_type: Literal["command_allied", "command_construct_companion"]
+    apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
+    target: Literal["target", "source"] = "target"
+    all_controlled: bool = False
+
+
+class MountEffectConfig(BaseModel):
+    effect_type: Literal["mount", "dismount"]
+    apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
+    target: Literal["target", "source"] = "target"
+    rider_id: str | None = None
+    mount_id: str | None = None
+    controller_id: str | None = None
+    requires_command: bool = False
+
+
 class NoteEffectConfig(BaseModel):
     effect_type: Literal["note"]
     apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
@@ -204,6 +249,9 @@ EffectConfig = Annotated[
     | NextAttackAdvantageEffectConfig
     | NextAttackDisadvantageEffectConfig
     | ForcedMovementEffectConfig
+    | SummonEffectConfig
+    | CommandAlliedEffectConfig
+    | MountEffectConfig
     | NoteEffectConfig,
     Field(discriminator="effect_type"),
 ]
