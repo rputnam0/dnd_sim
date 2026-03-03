@@ -4073,9 +4073,9 @@ def _actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
     }
 
 
-def _build_initiative_order(
+def _build_initiative_order_with_scores(
     rng: random.Random, actors: dict[str, ActorRuntimeState], mode: str
-) -> list[str]:
+) -> tuple[list[str], dict[str, int]]:
     if mode == "grouped":
         party = [actor for actor in actors.values() if actor.team == "party"]
         enemies = [actor for actor in actors.values() if actor.team != "party"]
@@ -4083,23 +4083,39 @@ def _build_initiative_order(
         enemy_score = statistics.mean(
             rng.randint(1, 20) + actor.initiative_mod for actor in enemies
         )
+        party_score_int = int(party_score)
+        enemy_score_int = int(enemy_score)
         party_order = [
             actor.actor_id for actor in sorted(party, key=lambda item: item.dex_mod, reverse=True)
         ]
         enemy_order = [
             actor.actor_id for actor in sorted(enemies, key=lambda item: item.dex_mod, reverse=True)
         ]
-        return (
+        order = (
             party_order + enemy_order if party_score >= enemy_score else enemy_order + party_order
         )
+        scores = {
+            **{actor.actor_id: party_score_int for actor in party},
+            **{actor.actor_id: enemy_score_int for actor in enemies},
+        }
+        return order, scores
 
     rolls = []
+    scores: dict[str, int] = {}
     for actor in actors.values():
         roll = rng.randint(1, 20) + actor.initiative_mod
+        scores[actor.actor_id] = roll
         tiebreak = rng.randint(1, 20) + actor.dex_mod
         rolls.append((roll, tiebreak, actor.actor_id))
     rolls.sort(reverse=True)
-    return [actor_id for _, _, actor_id in rolls]
+    return [actor_id for _, _, actor_id in rolls], scores
+
+
+def _build_initiative_order(
+    rng: random.Random, actors: dict[str, ActorRuntimeState], mode: str
+) -> list[str]:
+    order, _scores = _build_initiative_order_with_scores(rng, actors, mode)
+    return order
 
 
 def _sync_initiative_order(
@@ -6910,6 +6926,13 @@ def _legendary_cost(action: ActionDefinition) -> int:
             except ValueError:
                 continue
     return cost
+
+
+def _refresh_legendary_actions_for_turn(actor: ActorRuntimeState) -> None:
+    if not any(action.action_cost == "legendary" for action in actor.actions):
+        return
+    base_legendary = int(actor.resources.get("legendary_actions", 0))
+    actor.legendary_actions_remaining = base_legendary if base_legendary > 0 else 3
 
 
 def _mark_action_cost_used(actor: ActorRuntimeState, action: ActionDefinition) -> None:
@@ -9984,7 +10007,9 @@ def run_simulation(
                     actor_id: set(actor.resources.keys()) for actor_id, actor in actors.items()
                 }
 
-            initiative_order = _build_initiative_order(rng, actors, scenario.config.initiative_mode)
+            initiative_order, initiative_scores = _build_initiative_order_with_scores(
+                rng, actors, scenario.config.initiative_mode
+            )
             initiative_order = _reorder_initiative_for_construct_companions(
                 initiative_order, actors
             )
@@ -9996,25 +10021,6 @@ def run_simulation(
                     actor.lair_action_used_this_round = False
                     if hasattr(actor, "commanded_this_round"):
                         actor.commanded_this_round = False
-                    if any(action.action_cost == "legendary" for action in actor.actions):
-                        base_legendary = int(actor.resources.get("legendary_actions", 0))
-                        actor.legendary_actions_remaining = (
-                            base_legendary if base_legendary > 0 else 3
-                        )
-
-                _run_lair_actions(
-                    rng=rng,
-                    actors=actors,
-                    damage_dealt=damage_dealt,
-                    damage_taken=damage_taken,
-                    threat_scores=threat_scores,
-                    resources_spent=resources_spent,
-                    active_hazards=active_hazards,
-                    obstacles=battlefield_obstacles,
-                    light_level=light_level,
-                    telemetry=trial_telemetry,
-                    round_number=rounds,
-                )
 
                 metadata = _build_round_metadata(
                     actors=actors,
@@ -10031,10 +10037,80 @@ def run_simulation(
                     strategy.on_round_start(state_view)
 
                 initiative_order = _sync_initiative_order(initiative_order, actors)
+                lair_actions_resolved = False
+
+                def _resolve_turn_end(actor: ActorRuntimeState, turn_token: str) -> None:
+                    _dispatch_combat_event(
+                        rng=rng,
+                        event="turn_end",
+                        trigger_actor=actor,
+                        trigger_target=actor,
+                        trigger_action=None,
+                        actors=actors,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=trial_rule_trace,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                    )
+                    _run_legendary_actions(
+                        rng=rng,
+                        trigger_actor=actor,
+                        actors=actors,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                        telemetry=trial_telemetry,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                    )
+
                 for actor_id in initiative_order:
+                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
+                        actors, enemy_defeat_rule
+                    ):
+                        break
+
+                    if not lair_actions_resolved:
+                        actor_initiative = initiative_scores.get(actor_id)
+                        if actor_initiative is None:
+                            actor_state = actors.get(actor_id)
+                            actor_initiative = (
+                                actor_state.initiative_mod if actor_state is not None else -999
+                            )
+                        if actor_initiative < 20:
+                            _run_lair_actions(
+                                rng=rng,
+                                actors=actors,
+                                damage_dealt=damage_dealt,
+                                damage_taken=damage_taken,
+                                threat_scores=threat_scores,
+                                resources_spent=resources_spent,
+                                active_hazards=active_hazards,
+                                obstacles=battlefield_obstacles,
+                                light_level=light_level,
+                                telemetry=trial_telemetry,
+                                round_number=rounds,
+                            )
+                            lair_actions_resolved = True
+                            if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
+                                actors, enemy_defeat_rule
+                            ):
+                                break
+
                     if actor_id not in actors:
                         continue
                     actor = actors[actor_id]
+                    _refresh_legendary_actions_for_turn(actor)
                     actor.movement_remaining = float(actor.speed_ft)
                     actor.took_attack_action_this_turn = False
                     actor.bonus_action_spell_restriction_active = False
@@ -10057,12 +10133,8 @@ def run_simulation(
 
                     if actor.hp <= 0:
                         resolve_death_save(rng, actor)
+                        _resolve_turn_end(actor, f"{rounds}:{actor.actor_id}")
                         continue
-
-                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
-                        actors, enemy_defeat_rule
-                    ):
-                        break
 
                     turn_token = f"{rounds}:{actor.actor_id}"
                     _dispatch_combat_event(
@@ -10100,28 +10172,12 @@ def run_simulation(
                     )
 
                     if actor.dead or actor.hp <= 0:
+                        _resolve_turn_end(actor, turn_token)
                         continue
                     if _party_defeated(actors) or _enemies_defeated(actors):
                         break
                     if not _can_act(actor):
-                        _dispatch_combat_event(
-                            rng=rng,
-                            event="turn_end",
-                            trigger_actor=actor,
-                            trigger_target=actor,
-                            trigger_action=None,
-                            actors=actors,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            damage_dealt=damage_dealt,
-                            damage_taken=damage_taken,
-                            threat_scores=threat_scores,
-                            resources_spent=resources_spent,
-                            active_hazards=active_hazards,
-                            rule_trace=trial_rule_trace,
-                            obstacles=battlefield_obstacles,
-                            light_level=light_level,
-                        )
+                        _resolve_turn_end(actor, turn_token)
                         continue
 
                     companion_owner_id = getattr(actor, "companion_owner_id", None)
@@ -10164,20 +10220,7 @@ def run_simulation(
                                 )
                         if hasattr(actor, "commanded_this_round"):
                             actor.commanded_this_round = False
-                        _run_legendary_actions(
-                            rng=rng,
-                            trigger_actor=actor,
-                            actors=actors,
-                            damage_dealt=damage_dealt,
-                            damage_taken=damage_taken,
-                            threat_scores=threat_scores,
-                            resources_spent=resources_spent,
-                            active_hazards=active_hazards,
-                            obstacles=battlefield_obstacles,
-                            light_level=light_level,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                        )
+                        _resolve_turn_end(actor, turn_token)
                         continue
 
                     strategy_name = actor_strategy_overrides.get(actor.actor_id)
@@ -10236,39 +10279,7 @@ def run_simulation(
                             turn_token=turn_token,
                             rule_trace=trial_rule_trace,
                         )
-                        _run_legendary_actions(
-                            rng=rng,
-                            trigger_actor=actor,
-                            actors=actors,
-                            damage_dealt=damage_dealt,
-                            damage_taken=damage_taken,
-                            threat_scores=threat_scores,
-                            resources_spent=resources_spent,
-                            active_hazards=active_hazards,
-                            obstacles=battlefield_obstacles,
-                            light_level=light_level,
-                            telemetry=trial_telemetry,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                        )
-                        _dispatch_combat_event(
-                            rng=rng,
-                            event="turn_end",
-                            trigger_actor=actor,
-                            trigger_target=actor,
-                            trigger_action=None,
-                            actors=actors,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            damage_dealt=damage_dealt,
-                            damage_taken=damage_taken,
-                            threat_scores=threat_scores,
-                            resources_spent=resources_spent,
-                            active_hazards=active_hazards,
-                            rule_trace=trial_rule_trace,
-                            obstacles=battlefield_obstacles,
-                            light_level=light_level,
-                        )
+                        _resolve_turn_end(actor, turn_token)
                         continue
                     intent = strategy.choose_action(actor_view, state_view)
                     action = _resolve_action_selection(actor, intent.action_name)
@@ -10277,24 +10288,7 @@ def run_simulation(
                     if not _action_available(actor, action, turn_token=turn_token):
                         fallback = _fallback_action(actor)
                         if fallback is None:
-                            _dispatch_combat_event(
-                                rng=rng,
-                                event="turn_end",
-                                trigger_actor=actor,
-                                trigger_target=actor,
-                                trigger_action=None,
-                                actors=actors,
-                                round_number=rounds,
-                                turn_token=turn_token,
-                                damage_dealt=damage_dealt,
-                                damage_taken=damage_taken,
-                                threat_scores=threat_scores,
-                                resources_spent=resources_spent,
-                                active_hazards=active_hazards,
-                                rule_trace=trial_rule_trace,
-                                obstacles=battlefield_obstacles,
-                                light_level=light_level,
-                            )
+                            _resolve_turn_end(actor, turn_token)
                             continue
                         action = fallback
                         fallback_reason = "intent_unavailable"
@@ -10358,24 +10352,7 @@ def run_simulation(
                         }
                     )
                     if not resolved_targets:
-                        _dispatch_combat_event(
-                            rng=rng,
-                            event="turn_end",
-                            trigger_actor=actor,
-                            trigger_target=actor,
-                            trigger_action=None,
-                            actors=actors,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            damage_dealt=damage_dealt,
-                            damage_taken=damage_taken,
-                            threat_scores=threat_scores,
-                            resources_spent=resources_spent,
-                            active_hazards=active_hazards,
-                            rule_trace=trial_rule_trace,
-                            obstacles=battlefield_obstacles,
-                            light_level=light_level,
-                        )
+                        _resolve_turn_end(actor, turn_token)
                         continue
 
                     spell_cast_request = SpellCastRequest() if "spell" in action.tags else None
@@ -10385,6 +10362,7 @@ def run_simulation(
                         resources_spent,
                         spell_cast_request=spell_cast_request,
                     ):
+                        _resolve_turn_end(actor, turn_token)
                         continue
                     if extra_cost:
                         spent_extra = _spend_resources(actor, extra_cost)
@@ -10592,9 +10570,15 @@ def run_simulation(
                                             light_level=light_level,
                                         )
 
-                    _run_legendary_actions(
+                    _resolve_turn_end(actor, turn_token)
+
+                if (
+                    not lair_actions_resolved
+                    and not _party_defeated(actors, party_defeat_rule)
+                    and not _enemies_defeated(actors, enemy_defeat_rule)
+                ):
+                    _run_lair_actions(
                         rng=rng,
-                        trigger_actor=actor,
                         actors=actors,
                         damage_dealt=damage_dealt,
                         damage_taken=damage_taken,
@@ -10605,25 +10589,6 @@ def run_simulation(
                         light_level=light_level,
                         telemetry=trial_telemetry,
                         round_number=rounds,
-                        turn_token=turn_token,
-                    )
-                    _dispatch_combat_event(
-                        rng=rng,
-                        event="turn_end",
-                        trigger_actor=actor,
-                        trigger_target=actor,
-                        trigger_action=None,
-                        actors=actors,
-                        round_number=rounds,
-                        turn_token=turn_token,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        rule_trace=trial_rule_trace,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
                     )
 
                 if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
