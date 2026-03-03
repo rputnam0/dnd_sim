@@ -243,6 +243,13 @@ def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
     return any(_normalize_trait_name(key) == needle for key in actor.traits.keys())
 
 
+def _remove_condition_everywhere(target: ActorRuntimeState, condition: str) -> None:
+    # Local import avoids module-level circular dependency.
+    from dnd_sim.engine import _remove_condition
+
+    _remove_condition(target, condition)
+
+
 def roll_dice(rng: random.Random, sides: int, count: int = 1) -> int:
     return sum(rng.randint(1, sides) for _ in range(count))
 
@@ -416,7 +423,7 @@ def apply_damage(
         target.death_failures += 2 if is_critical else 1
         if target.death_failures >= 3:
             target.dead = True
-            target.conditions.update({"dead", "unconscious", "incapacitated"})
+            target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         return adjusted
 
     remaining = adjusted
@@ -430,18 +437,16 @@ def apply_damage(
 
     if target.hp <= 0 and not target.dead:
         target.hp = 0
-        target.conditions.update({"unconscious", "incapacitated"})
+        target.update_manual_conditions({"unconscious", "incapacitated"})
         if not target.was_downed:
             target.downed_count += 1
             target.was_downed = True
 
     if adjusted > 0 and "turned" in target.conditions:
         for condition in ("turned", "frightened"):
-            target.conditions.discard(condition)
-            target.condition_durations.pop(condition, None)
+            _remove_condition_everywhere(target, condition)
         if target.hp > 0:
-            target.conditions.discard("incapacitated")
-            target.condition_durations.pop("incapacitated", None)
+            _remove_condition_everywhere(target, "incapacitated")
 
     return adjusted
 
@@ -492,8 +497,8 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
         target.death_successes = 0
         target.death_failures = 0
         target.stable = False
-        target.conditions.discard("unconscious")
-        target.conditions.discard("incapacitated")
+        _remove_condition_everywhere(target, "unconscious")
+        _remove_condition_everywhere(target, "incapacitated")
         return DeathSaveResult(False, False, True)
     elif roll >= 10:
         target.death_successes += 1
@@ -507,7 +512,7 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
         became_stable = True
     if target.death_failures >= 3:
         target.dead = True
-        target.conditions.update({"dead", "unconscious", "incapacitated"})
+        target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         became_dead = True
 
     return DeathSaveResult(became_stable, became_dead, False)

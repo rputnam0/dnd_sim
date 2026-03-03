@@ -132,6 +132,23 @@ class ConditionTracker:
 
 
 @dataclass(slots=True)
+class EffectInstance:
+    instance_id: str
+    effect_id: str
+    condition: str
+    source_actor_id: str | None = None
+    target_actor_id: str | None = None
+    duration_remaining: int | None = None
+    duration_boundary: str = "turn_start"
+    save_dc: int | None = None
+    save_ability: str | None = None
+    save_to_end: bool = False
+    concentration_linked: bool = False
+    stack_policy: str = "independent"
+    internal_tags: set[str] = field(default_factory=set)
+
+
+@dataclass(slots=True)
 class ActorRuntimeState:
     actor_id: str
     team: str
@@ -156,6 +173,7 @@ class ActorRuntimeState:
     damage_vulnerabilities: set[str] = field(default_factory=set)
     condition_immunities: set[str] = field(default_factory=set)
     conditions: set[str] = field(default_factory=set)
+    intrinsic_conditions: set[str] = field(default_factory=set)
     resources: dict[str, int] = field(default_factory=dict)
     max_resources: dict[str, int] = field(default_factory=dict)
     concentrating: bool = False
@@ -175,6 +193,8 @@ class ActorRuntimeState:
     traits: dict[str, dict[str, Any]] = field(default_factory=dict)
     inventory: InventoryState = field(default_factory=InventoryState)
     condition_durations: dict[str, ConditionTracker] = field(default_factory=dict)
+    effect_instances: list[EffectInstance] = field(default_factory=list)
+    effect_instance_seq: int = 0
     next_attack_advantage: bool = False
     next_attack_disadvantage: bool = False
     speed_ft: int = 30
@@ -187,6 +207,7 @@ class ActorRuntimeState:
     horde_breaker_used_this_turn: bool = False
     concentrated_targets: set[str] = field(default_factory=set)
     concentration_conditions: set[str] = field(default_factory=set)
+    concentration_effect_instance_ids: set[str] = field(default_factory=set)
     concentrated_spell: str | None = None
     readied_action_name: str | None = None
     readied_trigger: str | None = None
@@ -203,6 +224,25 @@ class ActorRuntimeState:
 
     def is_conscious(self) -> bool:
         return self.hp > 0 and not self.dead
+
+    def add_manual_condition(self, condition: str) -> None:
+        key = str(condition).strip().lower()
+        if not key:
+            return
+        self.intrinsic_conditions.add(key)
+        self.conditions.add(key)
+
+    def discard_manual_condition(self, condition: str) -> None:
+        key = str(condition).strip().lower()
+        if not key:
+            return
+        self.intrinsic_conditions.discard(key)
+        self.conditions.discard(key)
+
+    def update_manual_conditions(self, conditions: set[str]) -> None:
+        normalized = {str(value).strip().lower() for value in conditions if str(value).strip()}
+        self.intrinsic_conditions.update(normalized)
+        self.conditions.update(normalized)
 
 
 @dataclass(slots=True)

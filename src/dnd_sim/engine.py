@@ -16,6 +16,7 @@ from dnd_sim.models import (
     ActionDefinition,
     ActorRuntimeState,
     ConditionTracker,
+    EffectInstance,
     SimulationSummary,
     SummaryMetric,
     TrialResult,
@@ -149,6 +150,13 @@ class SimulationArtifacts:
     trial_results: list[TrialResult]
     trial_rows: list[dict[str, Any]]
     summary: SimulationSummary
+
+
+@dataclass(slots=True)
+class AttackConditionModifiers:
+    advantage: bool = False
+    disadvantage: bool = False
+    force_critical: bool = False
 
 
 def _metric(values: list[float]) -> SummaryMetric:
@@ -1125,11 +1133,7 @@ def _build_construct_companions(owner: ActorRuntimeState) -> list[ActorRuntimeSt
 
 
 def _owner_is_incapacitated(owner: ActorRuntimeState | None) -> bool:
-    if owner is None:
-        return True
-    if owner.dead or owner.hp <= 0:
-        return True
-    return bool(owner.conditions.intersection(_CONTROL_BLOCKING_CONDITIONS))
+    return actor_is_incapacitated(owner)
 
 
 def _reorder_initiative_for_construct_companions(
@@ -3399,13 +3403,17 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.resources = dict(actor.max_resources)
     actor.per_action_uses.clear()
     actor.conditions.clear()
+    actor.intrinsic_conditions.clear()
     actor.condition_durations.clear()
+    actor.effect_instances.clear()
+    actor.effect_instance_seq = 0
     actor.death_failures = 0
     actor.death_successes = 0
     actor.downed_count = 0
     actor.concentrating = False
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
+    actor.concentration_effect_instance_ids.clear()
     actor.concentrated_spell = None
     actor.concentrated_spell_level = None
     actor.movement_remaining = float(actor.speed_ft)
@@ -4607,27 +4615,233 @@ def _resolve_action_selection(
 
 
 def _disadvantaged(actor: ActorRuntimeState) -> bool:
-    return bool(actor.conditions.intersection(_DISADVANTAGE_CONDITIONS))
+    return any(has_condition(actor, condition) for condition in _DISADVANTAGE_CONDITIONS)
 
 
 def _can_act(actor: ActorRuntimeState) -> bool:
-    return (
-        actor.hp > 0
-        and not actor.dead
-        and not actor.conditions.intersection(_CONTROL_BLOCKING_CONDITIONS)
-    )
+    return actor.hp > 0 and not actor.dead and not actor_is_incapacitated(actor)
 
 
-def _remove_condition(actor: ActorRuntimeState, condition: str) -> None:
-    key = condition.lower()
-    actor.conditions.discard(key)
-    actor.condition_durations.pop(key, None)
-    if key == "readying":
+def _normalize_condition(condition: str) -> str:
+    return str(condition).strip().lower()
+
+
+def _normalize_duration_boundary(value: Any) -> str:
+    key = str(value or "turn_start").strip().lower()
+    if key in {"end", "turn_end", "end_of_turn", "at_end"}:
+        return "turn_end"
+    return "turn_start"
+
+
+def _normalize_stack_policy(value: Any) -> str:
+    key = str(value or "independent").strip().lower()
+    if key in {"replace", "overwrite", "exclusive"}:
+        return "replace"
+    if key in {"refresh", "refresh_by_source", "by_source"}:
+        return "refresh"
+    return "independent"
+
+
+def _normalize_internal_tags(value: Any) -> set[str]:
+    if value is None:
+        return set()
+    if isinstance(value, str):
+        candidates = [value]
+    elif isinstance(value, (list, tuple, set)):
+        candidates = [str(item) for item in value]
+    else:
+        return set()
+    return {str(item).strip().lower() for item in candidates if str(item).strip()}
+
+
+def _coerce_positive_int(value: Any) -> int | None:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed > 0 else None
+
+
+def _effect_instance_condition_names(effect: EffectInstance) -> set[str]:
+    names = {effect.condition}
+    names.update(_IMPLIED_CONDITION_MAP.get(effect.condition, set()))
+    return names
+
+
+def _effect_condition_names(actor: ActorRuntimeState) -> set[str]:
+    names: set[str] = set()
+    for effect in actor.effect_instances:
+        names.update(_effect_instance_condition_names(effect))
+    return names
+
+
+def _rebuild_condition_durations(actor: ActorRuntimeState) -> None:
+    trackers: dict[str, ConditionTracker] = {}
+    for effect in actor.effect_instances:
+        if effect.duration_remaining is None and effect.save_dc is None:
+            continue
+        for condition in _effect_instance_condition_names(effect):
+            previous = trackers.get(condition)
+            if previous is None:
+                trackers[condition] = ConditionTracker(
+                    remaining_rounds=effect.duration_remaining,
+                    save_dc=effect.save_dc,
+                    save_ability=effect.save_ability,
+                )
+                continue
+
+            previous_rounds = previous.remaining_rounds
+            current_rounds = effect.duration_remaining
+            if previous_rounds is None:
+                merged_rounds = None
+            elif current_rounds is None:
+                merged_rounds = None
+            else:
+                merged_rounds = max(previous_rounds, current_rounds)
+
+            trackers[condition] = ConditionTracker(
+                remaining_rounds=merged_rounds,
+                save_dc=previous.save_dc if previous.save_dc is not None else effect.save_dc,
+                save_ability=(
+                    previous.save_ability
+                    if previous.save_ability is not None
+                    else effect.save_ability
+                ),
+            )
+    actor.condition_durations = trackers
+
+
+def _sync_condition_state(
+    actor: ActorRuntimeState,
+    *,
+    previous_effect_conditions: set[str] | None = None,
+) -> None:
+    previous = previous_effect_conditions if previous_effect_conditions is not None else set()
+    actor.intrinsic_conditions.update(set(actor.conditions) - previous)
+    effect_conditions = _effect_condition_names(actor)
+    actor.conditions = set(actor.intrinsic_conditions).union(effect_conditions)
+    _rebuild_condition_durations(actor)
+
+
+def _next_effect_instance_id(actor: ActorRuntimeState) -> str:
+    actor.effect_instance_seq += 1
+    return f"{actor.actor_id}:effect:{actor.effect_instance_seq}"
+
+
+def has_condition(actor: ActorRuntimeState, condition: str) -> bool:
+    key = _normalize_condition(condition)
+    if not key:
+        return False
+    if key in actor.conditions:
+        return True
+    for effect in actor.effect_instances:
+        if key in _effect_instance_condition_names(effect):
+            return True
+    return False
+
+
+def actor_is_incapacitated(actor: ActorRuntimeState | None) -> bool:
+    if actor is None:
+        return True
+    if actor.dead or actor.hp <= 0:
+        return True
+    return any(has_condition(actor, condition) for condition in _CONTROL_BLOCKING_CONDITIONS)
+
+
+def query_attack_condition_modifiers(
+    *,
+    attacker: ActorRuntimeState,
+    target: ActorRuntimeState,
+    is_melee: bool,
+) -> AttackConditionModifiers:
+    modifiers = AttackConditionModifiers()
+    if any(has_condition(target, condition) for condition in _ATTACKER_ADVANTAGE_CONDITIONS):
+        modifiers.advantage = True
+    if has_condition(target, "prone"):
+        if is_melee:
+            modifiers.advantage = True
+        else:
+            modifiers.disadvantage = True
+    if has_condition(target, "dodging"):
+        modifiers.disadvantage = True
+    modifiers.force_critical = any(has_condition(target, cond) for cond in _AUTO_CRIT_CONDITIONS)
+    return modifiers
+
+
+def _remove_effect_instance(
+    actor: ActorRuntimeState,
+    instance_id: str,
+    *,
+    source_actor_id: str | None = None,
+) -> bool:
+    previous_effect_conditions = _effect_condition_names(actor)
+    removed = False
+    kept: list[EffectInstance] = []
+    for effect in actor.effect_instances:
+        if effect.instance_id != instance_id:
+            kept.append(effect)
+            continue
+        if source_actor_id is not None and effect.source_actor_id != source_actor_id:
+            kept.append(effect)
+            continue
+        removed = True
+    if not removed:
+        return False
+    actor.effect_instances = kept
+    _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
+    if not has_condition(actor, "readying"):
         actor.readied_action_name = None
         actor.readied_trigger = None
-    for implied in _IMPLIED_CONDITION_MAP.get(key, set()):
-        actor.conditions.discard(implied)
-        actor.condition_durations.pop(implied, None)
+    return True
+
+
+def _remove_condition(
+    actor: ActorRuntimeState,
+    condition: str,
+    *,
+    source_actor_id: str | None = None,
+    effect_id: str | None = None,
+    instance_id: str | None = None,
+) -> None:
+    key = _normalize_condition(condition)
+    if not key:
+        return
+    previous_effect_conditions = _effect_condition_names(actor)
+
+    removed_effect = False
+    normalized_effect_id = _normalize_condition(effect_id) if effect_id is not None else None
+    kept: list[EffectInstance] = []
+    for effect in actor.effect_instances:
+        if effect.condition != key:
+            kept.append(effect)
+            continue
+        if source_actor_id is not None and effect.source_actor_id != source_actor_id:
+            kept.append(effect)
+            continue
+        if normalized_effect_id is not None and effect.effect_id != normalized_effect_id:
+            kept.append(effect)
+            continue
+        if instance_id is not None and effect.instance_id != instance_id:
+            kept.append(effect)
+            continue
+        removed_effect = True
+    if removed_effect:
+        actor.effect_instances = kept
+
+    should_remove_manual = (
+        source_actor_id is None and normalized_effect_id is None and instance_id is None
+    )
+    if should_remove_manual:
+        actor.discard_manual_condition(key)
+        for implied in _IMPLIED_CONDITION_MAP.get(key, set()):
+            actor.discard_manual_condition(implied)
+
+    if removed_effect or should_remove_manual:
+        _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
+
+    if key == "readying" and not has_condition(actor, "readying"):
+        actor.readied_action_name = None
+        actor.readied_trigger = None
 
 
 def _break_concentration(
@@ -4641,20 +4855,29 @@ def _break_concentration(
         and not actor.concentrated_spell
         and not actor.concentrated_spell_level
         and not actor.concentration_conditions
+        and not actor.concentration_effect_instance_ids
     ):
         return
     actor.concentrating = False
+
+    if actor.concentration_effect_instance_ids:
+        linked_ids = set(actor.concentration_effect_instance_ids)
+        for target_actor in actors.values():
+            for effect_instance_id in linked_ids:
+                _remove_effect_instance(
+                    target_actor,
+                    effect_instance_id,
+                    source_actor_id=actor.actor_id,
+                )
+
     for target_id in list(actor.concentrated_targets):
         if target_id in actors:
             if "summoned" in actors[target_id].conditions:
                 del actors[target_id]
                 continue
-            for condition in actor.concentration_conditions:
-                _remove_condition(actors[target_id], condition)
-            if actor.concentrated_spell:
-                _remove_condition(actors[target_id], actor.concentrated_spell)
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
+    actor.concentration_effect_instance_ids.clear()
 
     if actor.concentrated_spell or actor.concentrated_spell_level:
         active_hazards[:] = [h for h in active_hazards if h.get("source_id") != actor.actor_id]
@@ -4668,7 +4891,9 @@ def _concentration_forced_end(actor: ActorRuntimeState) -> bool:
         return False
     if actor.dead or actor.hp <= 0:
         return True
-    return bool(actor.conditions.intersection(_CONCENTRATION_FORCED_END_CONDITIONS))
+    return any(
+        has_condition(actor, condition) for condition in _CONCENTRATION_FORCED_END_CONDITIONS
+    )
 
 
 def _force_end_concentration_if_needed(
@@ -4690,65 +4915,127 @@ def _apply_condition(
     duration_rounds: int | None = None,
     save_dc: int | None = None,
     save_ability: str | None = None,
-) -> None:
-    key = condition.lower()
+    source_actor_id: str | None = None,
+    target_actor_id: str | None = None,
+    effect_id: str | None = None,
+    duration_timing: str = "turn_start",
+    concentration_linked: bool = False,
+    stack_policy: str = "independent",
+    save_to_end: bool = False,
+    internal_tags: set[str] | None = None,
+) -> list[str]:
+    key = _normalize_condition(condition)
+    if not key:
+        return []
     if key in actor.condition_immunities or "all" in actor.condition_immunities:
-        return
-    actor.conditions.add(key)
-    if duration_rounds is not None and duration_rounds > 0:
-        existing = actor.condition_durations.get(key)
-        existing_rounds = existing.remaining_rounds if existing else 0
-        actor.condition_durations[key] = ConditionTracker(
-            remaining_rounds=max(existing_rounds or 0, duration_rounds),
-            save_dc=save_dc,
-            save_ability=save_ability.lower() if save_ability else None,
-        )
-    elif save_dc is not None and save_ability:
-        # Condition with repeating save but no fixed duration
-        actor.condition_durations[key] = ConditionTracker(
-            remaining_rounds=None,
-            save_dc=save_dc,
-            save_ability=save_ability.lower(),
-        )
-    for implied in _IMPLIED_CONDITION_MAP.get(key, set()):
-        actor.conditions.add(implied)
-        if duration_rounds is not None and duration_rounds > 0:
-            existing = actor.condition_durations.get(implied)
-            existing_rounds = existing.remaining_rounds if existing else 0
-            actor.condition_durations[implied] = ConditionTracker(
-                remaining_rounds=max(existing_rounds or 0, duration_rounds),
-            )
+        return []
+    previous_effect_conditions = _effect_condition_names(actor)
+
+    normalized_source = str(source_actor_id).strip() if source_actor_id else None
+    normalized_target = str(target_actor_id).strip() if target_actor_id else actor.actor_id
+    normalized_effect_id = _normalize_condition(effect_id) if effect_id else key
+    normalized_boundary = _normalize_duration_boundary(duration_timing)
+    normalized_policy = _normalize_stack_policy(stack_policy)
+    normalized_tags = set(internal_tags or set())
+    normalized_duration = _coerce_positive_int(duration_rounds)
+    normalized_save_dc = int(save_dc) if save_dc is not None else None
+    normalized_save_ability = _normalize_condition(save_ability) if save_ability else None
+    if normalized_save_ability not in ABILITY_KEYS:
+        normalized_save_ability = None
+
+    created_ids: list[str] = []
+
+    if normalized_policy == "replace":
+        actor.effect_instances = [
+            effect for effect in actor.effect_instances if effect.condition != key
+        ]
+    elif normalized_policy == "refresh":
+        for effect in actor.effect_instances:
+            if effect.condition != key:
+                continue
+            if effect.effect_id != normalized_effect_id:
+                continue
+            if normalized_source and effect.source_actor_id != normalized_source:
+                continue
+            if normalized_duration is not None:
+                current_duration = effect.duration_remaining or 0
+                effect.duration_remaining = max(current_duration, normalized_duration)
+            effect.duration_boundary = normalized_boundary
+            effect.save_dc = normalized_save_dc
+            effect.save_ability = normalized_save_ability
+            effect.save_to_end = bool(save_to_end)
+            effect.concentration_linked = bool(concentration_linked)
+            effect.stack_policy = normalized_policy
+            effect.internal_tags.update(_normalize_internal_tags(normalized_tags))
+            effect.target_actor_id = normalized_target
+            _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
+            return [effect.instance_id]
+
+    instance = EffectInstance(
+        instance_id=_next_effect_instance_id(actor),
+        effect_id=normalized_effect_id,
+        condition=key,
+        source_actor_id=normalized_source,
+        target_actor_id=normalized_target,
+        duration_remaining=normalized_duration,
+        duration_boundary=normalized_boundary,
+        save_dc=normalized_save_dc,
+        save_ability=normalized_save_ability,
+        save_to_end=bool(save_to_end),
+        concentration_linked=bool(concentration_linked),
+        stack_policy=normalized_policy,
+        internal_tags=_normalize_internal_tags(normalized_tags),
+    )
+    actor.effect_instances.append(instance)
+    created_ids.append(instance.instance_id)
+    _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
+    return created_ids
 
 
-def _tick_conditions_for_actor(rng: random.Random, actor: ActorRuntimeState) -> None:
+def _tick_conditions_for_actor(
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    *,
+    boundary: str = "turn_start",
+) -> None:
     """Tick condition durations at the start of an actor's turn.
 
     Conditions with a repeating save allow the actor to roll each turn.
     """
-    if "raging" in actor.conditions and not actor.rage_sustained_since_last_turn:
-        _remove_condition(actor, "raging")
-    actor.rage_sustained_since_last_turn = False
+    tick_boundary = _normalize_duration_boundary(boundary)
 
-    for condition, tracker in list(actor.condition_durations.items()):
-        # Attempt repeating save if available
-        if tracker.save_dc is not None and tracker.save_ability:
-            save_key = tracker.save_ability
+    if tick_boundary == "turn_start":
+        if has_condition(actor, "raging") and not actor.rage_sustained_since_last_turn:
+            _remove_condition(actor, "raging")
+        actor.rage_sustained_since_last_turn = False
+
+    if not actor.effect_instances:
+        return
+
+    previous_effect_conditions = _effect_condition_names(actor)
+    changed = False
+    kept: list[EffectInstance] = []
+    for effect in actor.effect_instances:
+        save_boundary = "turn_end" if effect.save_to_end else "turn_start"
+        if effect.save_dc is not None and effect.save_ability and save_boundary == tick_boundary:
+            save_key = effect.save_ability
             save_mod = int(actor.save_mods.get(save_key, 0))
             save_roll = rng.randint(1, 20) + save_mod
-            if save_roll >= tracker.save_dc:
-                _remove_condition(actor, condition)
+            if save_roll >= effect.save_dc:
+                changed = True
                 continue
-        # Decrement duration
-        if tracker.remaining_rounds is not None:
-            remaining = tracker.remaining_rounds - 1
-            if remaining <= 0:
-                _remove_condition(actor, condition)
-            else:
-                actor.condition_durations[condition] = ConditionTracker(
-                    remaining_rounds=remaining,
-                    save_dc=tracker.save_dc,
-                    save_ability=tracker.save_ability,
-                )
+
+        if effect.duration_remaining is not None and effect.duration_boundary == tick_boundary:
+            effect.duration_remaining -= 1
+            changed = True
+            if effect.duration_remaining <= 0:
+                continue
+
+        kept.append(effect)
+
+    if changed:
+        actor.effect_instances = kept
+        _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
 
 
 def _apply_healing(target: ActorRuntimeState, amount: int) -> None:
@@ -4928,13 +5215,34 @@ def _apply_effect(
                 condition_saved = True
             if condition_saved:
                 return
-        _apply_condition(
+        created_effect_ids = _apply_condition(
             recipient,
             str(effect.get("condition", "")),
             duration_rounds=effect.get("duration_rounds"),
             save_dc=int(save_dc) if save_dc is not None else None,
             save_ability=str(save_ability) if save_ability else None,
+            source_actor_id=actor.actor_id,
+            target_actor_id=recipient.actor_id,
+            effect_id=str(effect.get("effect_id", "")).strip() or None,
+            duration_timing=str(
+                effect.get("duration_timing", effect.get("duration_boundary", "turn_start"))
+            ),
+            concentration_linked=bool(
+                action and action.concentration and effect.get("concentration_linked", True)
+            ),
+            stack_policy=str(effect.get("stack_policy", "independent")),
+            save_to_end=bool(
+                effect.get(
+                    "save_to_end",
+                    effect.get("save_to_end_policy", False),
+                )
+            ),
+            internal_tags=_normalize_internal_tags(effect.get("internal_tags")),
         )
+        if action and action.concentration and effect.get("concentration_linked", True):
+            actor.concentrated_targets.add(recipient.actor_id)
+            actor.concentration_conditions.add(str(effect.get("condition", "")).lower())
+            actor.concentration_effect_instance_ids.update(created_effect_ids)
         _force_end_concentration_if_needed(recipient, actors=actors, active_hazards=active_hazards)
         return
 
@@ -4962,17 +5270,24 @@ def _apply_effect(
     if effect_type == "hazard":
         duration = int(effect.get("duration", 10))
         hazard_type = str(effect.get("hazard_type", "generic"))
+        effect_id = str(effect.get("effect_id", "")).strip() or f"hazard:{hazard_type}"
         hazard_position = _to_position3(effect.get("position")) or recipient.position
         hazard_radius = float(effect.get("radius", effect.get("radius_ft", 15)))
         active_hazards.append(
             {
                 "type": hazard_type,
+                "effect_id": effect_id,
                 "source_id": actor.actor_id,
                 "target_id": recipient.actor_id,
                 "hazard_type": hazard_type,
                 "position": hazard_position,
                 "radius": hazard_radius,
                 "duration": duration,
+                "duration_boundary": _normalize_duration_boundary(
+                    effect.get("duration_timing", effect.get("duration_boundary", "turn_start"))
+                ),
+                "stack_policy": _normalize_stack_policy(effect.get("stack_policy", "independent")),
+                "internal_tags": sorted(_normalize_internal_tags(effect.get("internal_tags"))),
             }
         )
         if telemetry is not None:
@@ -5038,9 +5353,9 @@ def _apply_effect(
             speed_ft=int(effect.get("speed_ft", actor.speed_ft)),
             position=_to_position3(effect.get("position")) or actor.position,
         )
-        summoned_actor.conditions.add("summoned")
+        summoned_actor.add_manual_condition("summoned")
         if effect_type == "conjure":
-            summoned_actor.conditions.add("conjured")
+            summoned_actor.add_manual_condition("conjured")
         summoned_actor.traits["summoned"] = {
             "source_id": actor.actor_id,
             "concentration_linked": bool(action and action.concentration),
@@ -5251,7 +5566,11 @@ def _apply_action_effects(
                 if once_per_action_used is not None:
                     once_per_action_used.add(marker)
             recipient = _resolve_effect_target(effect, actor=actor, target=target)
-            if action.concentration and effect.get("effect_type") in ("apply_condition", "hazard"):
+            if (
+                action.concentration
+                and effect.get("effect_type") in ("apply_condition", "hazard")
+                and effect.get("concentration_linked", True)
+            ):
                 actor.concentrated_targets.add(recipient.actor_id)
 
             if telemetry is not None:
@@ -5371,9 +5690,9 @@ def _can_take_reaction(actor: ActorRuntimeState) -> bool:
         return False
     if actor.dead or actor.hp <= 0:
         return False
-    if actor.conditions.intersection(_CONTROL_BLOCKING_CONDITIONS):
+    if actor_is_incapacitated(actor):
         return False
-    if "open_hand_no_reactions" in actor.conditions:
+    if has_condition(actor, "open_hand_no_reactions"):
         return False
     return True
 
@@ -5861,6 +6180,10 @@ def _dispatch_combat_event(
         obstacles=obstacles,
         light_level=light_level,
     )
+    if event == "turn_end" and trigger_actor is not None and trigger_actor.actor_id in actors:
+        end_actor = actors[trigger_actor.actor_id]
+        _tick_conditions_for_actor(rng, end_actor, boundary="turn_end")
+        _force_end_concentration_if_needed(end_actor, actors=actors, active_hazards=active_hazards)
     return trace
 
 
@@ -6307,9 +6630,9 @@ def _choose_open_hand_rider(action: ActionDefinition, target: ActorRuntimeState)
             if choice in {"prone", "push", "no_reactions"}:
                 return choice
 
-    if target.reaction_available and "open_hand_no_reactions" not in target.conditions:
+    if target.reaction_available and not has_condition(target, "open_hand_no_reactions"):
         return "no_reactions"
-    if "prone" not in target.conditions:
+    if not has_condition(target, "prone"):
         return "prone"
     return "push"
 
@@ -6326,7 +6649,7 @@ def _try_stunning_strike(
         return
     if actor.resources.get("ki", 0) <= 0:
         return
-    if target.conditions.intersection({"stunned", "paralyzed", "unconscious", "incapacitated"}):
+    if actor_is_incapacitated(target):
         return
 
     actor.resources["ki"] -= 1
@@ -6924,16 +7247,12 @@ def _execute_action(
             actor.concentrating = True
             actor.concentrated_spell = action.name
             actor.concentrated_spell_level = spell_level
-            actor.concentration_conditions = {
-                str(effect.get("condition", "")).lower()
-                for effect in action.effects + action.mechanics
-                if isinstance(effect, dict)
-                if effect.get("effect_type") == "apply_condition"
-                and str(effect.get("condition", "")).strip()
-            }
+            actor.concentration_conditions.clear()
+            actor.concentration_effect_instance_ids.clear()
             if _is_smite_setup_action(action):
                 actor.concentration_conditions.clear()
                 actor.concentrated_targets.clear()
+                actor.concentration_effect_instance_ids.clear()
 
     # Phase 11: Contested Grapple/Shove Checks
     if action.action_type in ("grapple", "shove") and targets:
@@ -7037,18 +7356,16 @@ def _execute_action(
             if "raging" in actor.conditions and target.team != actor.team:
                 actor.rage_sustained_since_last_turn = True
             advantage, disadvantage = _consume_attack_flags(actor)
-            # Target condition-based advantage/auto-crit
-            target_conditions = target.conditions
-            if target_conditions.intersection(_ATTACKER_ADVANTAGE_CONDITIONS):
+            attack_condition_modifiers = query_attack_condition_modifiers(
+                attacker=actor,
+                target=target,
+                is_melee=distance_chebyshev(actor.position, target.position) <= 5.0,
+            )
+            if attack_condition_modifiers.advantage:
                 advantage = True
-            if "prone" in target_conditions:
-                if distance_chebyshev(actor.position, target.position) <= 5.0:
-                    advantage = True
-                else:
-                    disadvantage = True
-            if "dodging" in target_conditions:
+            if attack_condition_modifiers.disadvantage:
                 disadvantage = True
-            force_crit = bool(target_conditions.intersection(_AUTO_CRIT_CONDITIONS))
+            force_crit = attack_condition_modifiers.force_critical
 
             # Phase 12: Illumination & Vision Mechanics
             from .spatial import can_see, check_cover
@@ -7264,7 +7581,7 @@ def _execute_action(
                                     and cand.actor_id != actor.actor_id
                                     and cand.hp > 0
                                     and not cand.dead
-                                    and "incapacitated" not in cand.conditions
+                                    and not actor_is_incapacitated(cand)
                                 ):
                                     if distance_chebyshev(cand.position, target.position) <= 5:
                                         has_sneak = True
@@ -7420,7 +7737,7 @@ def _execute_action(
                     emit_event("on_down", trigger_target=target)
 
                 if _has_trait(target, "multiattack defense"):
-                    target.conditions.add(_multiattack_defense_marker(actor.actor_id))
+                    target.add_manual_condition(_multiattack_defense_marker(actor.actor_id))
 
                 # GWM Momentum Trigger (Action Economy Buff)
                 if (
@@ -7428,7 +7745,7 @@ def _execute_action(
                     and (roll.crit or target.hp <= 0)
                     and not is_ranged
                 ):
-                    actor.conditions.add("gwm_bonus_triggered")
+                    actor.add_manual_condition("gwm_bonus_triggered")
             if roll.hit:
                 _try_stunning_strike(
                     rng=rng,
@@ -7555,7 +7872,9 @@ def _execute_action(
             if (
                 save_key == "dex"
                 and _has_trait(target, "danger sense")
-                and not target.conditions.intersection({"blinded", "deafened", "incapacitated"})
+                and not has_condition(target, "blinded")
+                and not has_condition(target, "deafened")
+                and not has_condition(target, "incapacitated")
             ):
                 save_roll = max(save_roll, rng.randint(1, 20))
             if (
@@ -7564,7 +7883,7 @@ def _execute_action(
                 and save_key in {"int", "wis", "cha"}
             ):
                 save_roll = max(save_roll, rng.randint(1, 20))
-            if save_key == "dex" and "dodging" in target.conditions:
+            if save_key == "dex" and has_condition(target, "dodging"):
                 save_roll = max(save_roll, rng.randint(1, 20))
             if is_spell_action and not subtle_spell and _has_trait(target, "mage slayer"):
                 save_roll = max(save_roll, rng.randint(1, 20))
