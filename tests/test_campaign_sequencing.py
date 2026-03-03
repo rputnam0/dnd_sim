@@ -314,6 +314,82 @@ def test_long_rest_and_exploration_legs_apply_and_remain_deterministic(tmp_path:
     assert trial_a.remaining_hp == trial_b.remaining_hp
 
 
+def test_long_rest_after_does_not_restore_dead_party_members(tmp_path: Path) -> None:
+    party = [
+        build_character("fallen", "Fallen", 10, 15, 6, "1d8+3"),
+        build_character("survivor", "Survivor", 30, 15, 6, "1d8+3"),
+    ]
+    executioner = {
+        "identity": {"enemy_id": "executioner", "name": "Executioner", "team": "enemy"},
+        "stat_block": {
+            "max_hp": 10,
+            "ac": 12,
+            "initiative_mod": 100,
+            "dex_mod": 0,
+            "con_mod": 0,
+            "save_mods": {"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+        },
+        "actions": [
+            {
+                "name": "basic",
+                "action_type": "save",
+                "save_dc": 30,
+                "save_ability": "con",
+                "half_on_save": False,
+                "damage": "25",
+                "damage_type": "necrotic",
+                "target_mode": "all_enemies",
+                "effects": [
+                    {
+                        "effect_type": "damage",
+                        "apply_on": "always",
+                        "target": "source",
+                        "damage": "999",
+                        "damage_type": "force",
+                    }
+                ],
+                "resource_cost": {},
+            }
+        ],
+        "bonus_actions": [],
+        "reactions": [],
+        "legendary_actions": [],
+        "lair_actions": [],
+        "resources": {},
+        "damage_resistances": [],
+        "damage_immunities": [],
+        "damage_vulnerabilities": [],
+        "condition_immunities": [],
+        "script_hooks": {},
+    }
+    mop_up = build_enemy(enemy_id="mop_up", name="Mop Up", hp=1, ac=12, to_hit=0, damage="0")
+
+    scenario_path = _setup_campaign_env(
+        tmp_path,
+        party=party,
+        enemies=[executioner, mop_up],
+        encounters=[
+            {
+                "enemies": ["executioner"],
+                "long_rest_after": True,
+                "checkpoint": "after_executioner",
+            },
+            {"enemies": ["mop_up"], "checkpoint": "after_mop_up"},
+        ],
+    )
+    loaded, db, registry = _load_for_run(scenario_path)
+    trial = run_simulation(
+        loaded, db, {}, registry, trials=1, seed=101, run_id="long_rest_dead_guard"
+    ).trial_results[0]
+
+    first_snapshot = trial.state_snapshots[0]
+    assert first_snapshot["checkpoint_id"] == "after_executioner"
+    assert first_snapshot["party"]["fallen"]["dead"] is True
+    assert first_snapshot["party"]["fallen"]["hp"] == 0
+    assert first_snapshot["party"]["survivor"]["dead"] is False
+    assert first_snapshot["party"]["survivor"]["hp"] == 30
+
+
 def test_party_defeat_rule_variant_any_unconscious_changes_outcome(tmp_path: Path) -> None:
     party = [
         build_character("low", "Low", 5, 15, 6, "1d8+3"),

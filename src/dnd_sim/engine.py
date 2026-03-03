@@ -12962,7 +12962,7 @@ def run_simulation(
 
             if continue_campaign:
                 for actor in actors.values():
-                    if actor.team != "party":
+                    if actor.team != "party" or actor.dead:
                         continue
                     if encounter.long_rest_after:
                         long_rest(actor)
