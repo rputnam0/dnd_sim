@@ -11,6 +11,10 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
+from dnd_sim.spells import (
+    DuplicatePolicy as SpellDuplicatePolicy,
+    load_spell_database as _load_spell_database,
+)
 from dnd_sim.characters import (
     validate_class_level_representation,
     validate_multiclass_prerequisites,
@@ -542,6 +546,14 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
                 out[trait_name] = _normalize_trait_payload(trait_data)
 
     return out
+
+
+def load_spell_db(
+    spells_dir: Path, *, duplicate_policy: SpellDuplicatePolicy = "fail_fast"
+) -> dict[str, dict[str, Any]]:
+    """Load canonical spell records keyed by normalized spell lookup key."""
+
+    return _load_spell_database(spells_dir, duplicate_policy=duplicate_policy)
 
 
 def _import_encounter_strategy(module_name: str, path: Path) -> Any:
