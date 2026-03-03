@@ -3711,6 +3711,7 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.concentrated_spell_level = None
     actor.bonus_action_spell_restriction_active = False
     actor.non_action_cantrip_spell_cast_this_turn = False
+    actor.gwm_bonus_trigger_available = False
     actor.movement_remaining = float(actor.speed_ft)
 
 
@@ -6837,6 +6838,16 @@ def _is_same_turn_for_actor(actor: ActorRuntimeState, turn_token: str | None) ->
     return text == actor.actor_id
 
 
+def _set_gwm_bonus_trigger(actor: ActorRuntimeState, *, turn_token: str | None = None) -> None:
+    if turn_token is not None and not _is_same_turn_for_actor(actor, turn_token):
+        return
+    actor.gwm_bonus_trigger_available = True
+
+
+def _clear_gwm_bonus_trigger(actor: ActorRuntimeState) -> None:
+    actor.gwm_bonus_trigger_available = False
+
+
 def _spell_casting_legal_this_turn(
     actor: ActorRuntimeState,
     action: ActionDefinition,
@@ -6915,6 +6926,8 @@ def _legendary_cost(action: ActionDefinition) -> int:
 def _mark_action_cost_used(actor: ActorRuntimeState, action: ActionDefinition) -> None:
     if action.action_cost == "bonus":
         actor.bonus_available = False
+        if "gwm_bonus" in action.tags:
+            _clear_gwm_bonus_trigger(actor)
     elif action.action_cost == "reaction":
         actor.reaction_available = False
     elif action.action_cost == "legendary":
@@ -7349,8 +7362,12 @@ def _dispatch_combat_event(
         obstacles=obstacles,
         light_level=light_level,
     )
+    if event == "turn_start" and trigger_actor is not None and trigger_actor.actor_id in actors:
+        start_actor = actors[trigger_actor.actor_id]
+        _clear_gwm_bonus_trigger(start_actor)
     if event == "turn_end" and trigger_actor is not None and trigger_actor.actor_id in actors:
         end_actor = actors[trigger_actor.actor_id]
+        _clear_gwm_bonus_trigger(end_actor)
         _tick_conditions_for_actor(rng, end_actor, boundary="turn_end")
         _force_end_concentration_if_needed(end_actor, actors=actors, active_hazards=active_hazards)
     return trace
@@ -8075,7 +8092,7 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
         ):
             if not actor.took_attack_action_this_turn:
                 continue
-            if "gwm_bonus" in action.tags and "gwm_bonus_triggered" not in actor.conditions:
+            if "gwm_bonus" in action.tags and not actor.gwm_bonus_trigger_available:
                 continue
         if best is None or action.action_type == "attack":
             best = action
@@ -9251,7 +9268,7 @@ def _execute_action(
                     and (roll.crit or target.hp <= 0)
                     and not is_ranged
                 ):
-                    actor.add_manual_condition("gwm_bonus_triggered")
+                    _set_gwm_bonus_trigger(actor, turn_token=turn_token)
             if roll.hit:
                 _try_stunning_strike(
                     rng=rng,
@@ -10051,6 +10068,7 @@ def run_simulation(
                     actor.sneak_attack_used_this_turn = False
                     actor.colossus_slayer_used_this_turn = False
                     actor.horde_breaker_used_this_turn = False
+                    actor.gwm_bonus_trigger_available = False
 
                     if actor.dead:
                         continue
