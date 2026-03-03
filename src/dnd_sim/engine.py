@@ -4875,18 +4875,6 @@ def _break_concentration(
             if "summoned" in actors[target_id].conditions:
                 del actors[target_id]
                 continue
-            for condition in actor.concentration_conditions:
-                _remove_condition(
-                    actors[target_id],
-                    condition,
-                    source_actor_id=actor.actor_id,
-                )
-            if actor.concentrated_spell:
-                _remove_condition(
-                    actors[target_id],
-                    actor.concentrated_spell,
-                    source_actor_id=actor.actor_id,
-                )
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
     actor.concentration_effect_instance_ids.clear()

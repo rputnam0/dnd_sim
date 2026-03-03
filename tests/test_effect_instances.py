@@ -8,9 +8,11 @@ from dnd_sim.engine import (
     _execute_action,
     _remove_effect_instance,
     _tick_conditions_for_actor,
+    actor_is_incapacitated,
     has_condition,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.rules_2014 import apply_damage, resolve_death_save
 
 
 def _actor(actor_id: str, team: str) -> ActorRuntimeState:
@@ -279,3 +281,175 @@ def test_removing_one_effect_instance_does_not_remove_unrelated_effects() -> Non
     frightened = [effect for effect in target.effect_instances if effect.condition == "frightened"]
     assert len(frightened) == 1
     assert has_condition(target, "frightened")
+
+
+def test_turned_damage_cleanup_removes_effect_instances_and_clears_incapacitated() -> None:
+    cleric = _actor("cleric", "party")
+    target = _actor("target", "enemy")
+    actors = {cleric.actor_id: cleric, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(cleric, target)
+
+    _apply_effect(
+        effect={"effect_type": "apply_condition", "condition": "turned", "duration_rounds": 3},
+        rng=random.Random(1),
+        actor=cleric,
+        target=target,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        actors=actors,
+        active_hazards=[],
+    )
+    _apply_effect(
+        effect={"effect_type": "apply_condition", "condition": "frightened", "duration_rounds": 3},
+        rng=random.Random(1),
+        actor=cleric,
+        target=target,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        actors=actors,
+        active_hazards=[],
+    )
+    _apply_effect(
+        effect={
+            "effect_type": "apply_condition",
+            "condition": "incapacitated",
+            "duration_rounds": 3,
+        },
+        rng=random.Random(1),
+        actor=cleric,
+        target=target,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        actors=actors,
+        active_hazards=[],
+    )
+    assert has_condition(target, "turned")
+    assert actor_is_incapacitated(target)
+
+    apply_damage(target, 1, "radiant", source=cleric)
+
+    assert not has_condition(target, "turned")
+    assert not has_condition(target, "frightened")
+    assert not has_condition(target, "incapacitated")
+    assert not actor_is_incapacitated(target)
+    lingering = {
+        effect.condition
+        for effect in target.effect_instances
+        if effect.condition in {"turned", "frightened", "incapacitated"}
+    }
+    assert not lingering
+
+
+def test_nat20_recovery_clears_lingering_unconscious_effect_instance() -> None:
+    source = _actor("source", "enemy")
+    target = _actor("target", "party")
+    actors = {source.actor_id: source, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(source, target)
+
+    _apply_effect(
+        effect={"effect_type": "apply_condition", "condition": "unconscious", "duration_rounds": 5},
+        rng=random.Random(2),
+        actor=source,
+        target=target,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        actors=actors,
+        active_hazards=[],
+    )
+    target.hp = 0
+    target.dead = False
+    target.stable = False
+    assert has_condition(target, "unconscious")
+    assert actor_is_incapacitated(target)
+
+    class _Nat20:
+        def randint(self, _a: int, _b: int) -> int:
+            return 20
+
+    result = resolve_death_save(_Nat20(), target)
+
+    assert result.regained_consciousness is True
+    assert target.hp == 1
+    assert not has_condition(target, "unconscious")
+    assert not has_condition(target, "incapacitated")
+    assert not actor_is_incapacitated(target)
+    assert all(effect.condition != "unconscious" for effect in target.effect_instances)
+
+
+def test_break_concentration_preserves_unlinked_same_condition_from_same_source() -> None:
+    caster = _actor("caster", "party")
+    target = _actor("target", "enemy")
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+    active_hazards: list[dict[str, object]] = []
+
+    concentration_hold = ActionDefinition(
+        name="hold_person",
+        action_type="utility",
+        concentration=True,
+        tags=["spell"],
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "target": "target",
+                "condition": "paralyzed",
+                "duration_rounds": 10,
+                "effect_id": "hold_person_concentration",
+            }
+        ],
+    )
+    non_concentration_debuff = ActionDefinition(
+        name="stasis_echo",
+        action_type="utility",
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "target": "target",
+                "condition": "paralyzed",
+                "duration_rounds": 4,
+                "effect_id": "stasis_echo_non_concentration",
+            }
+        ],
+    )
+
+    _execute_action(
+        rng=random.Random(3),
+        actor=caster,
+        action=concentration_hold,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    _execute_action(
+        rng=random.Random(3),
+        actor=caster,
+        action=non_concentration_debuff,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+
+    paralyzed = [effect for effect in target.effect_instances if effect.condition == "paralyzed"]
+    assert len(paralyzed) == 2
+    _break_concentration(caster, actors, active_hazards)
+
+    assert has_condition(target, "paralyzed")
+    paralyzed = [effect for effect in target.effect_instances if effect.condition == "paralyzed"]
+    assert len(paralyzed) == 1
+    assert paralyzed[0].effect_id == "stasis_echo_non_concentration"

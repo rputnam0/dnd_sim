@@ -243,6 +243,13 @@ def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
     return any(_normalize_trait_name(key) == needle for key in actor.traits.keys())
 
 
+def _remove_condition_everywhere(target: ActorRuntimeState, condition: str) -> None:
+    # Local import avoids module-level circular dependency.
+    from dnd_sim.engine import _remove_condition
+
+    _remove_condition(target, condition)
+
+
 def roll_dice(rng: random.Random, sides: int, count: int = 1) -> int:
     return sum(rng.randint(1, sides) for _ in range(count))
 
@@ -437,11 +444,9 @@ def apply_damage(
 
     if adjusted > 0 and "turned" in target.conditions:
         for condition in ("turned", "frightened"):
-            target.discard_manual_condition(condition)
-            target.condition_durations.pop(condition, None)
+            _remove_condition_everywhere(target, condition)
         if target.hp > 0:
-            target.discard_manual_condition("incapacitated")
-            target.condition_durations.pop("incapacitated", None)
+            _remove_condition_everywhere(target, "incapacitated")
 
     return adjusted
 
@@ -492,8 +497,8 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
         target.death_successes = 0
         target.death_failures = 0
         target.stable = False
-        target.discard_manual_condition("unconscious")
-        target.discard_manual_condition("incapacitated")
+        _remove_condition_everywhere(target, "unconscious")
+        _remove_condition_everywhere(target, "incapacitated")
         return DeathSaveResult(False, False, True)
     elif roll >= 10:
         target.death_successes += 1
