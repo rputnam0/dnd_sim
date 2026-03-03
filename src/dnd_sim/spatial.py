@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Any, Tuple
 
 Position = Tuple[float, float, float]
+GridCell = tuple[int, int, int]
+_CELL_SIZE_FT = 5.0
 
 
 def distance_euclidean(pos1: Position, pos2: Position) -> float:
@@ -56,6 +58,16 @@ class VisibilityQueryResult:
     targeting_legal: bool
     attack_advantage: bool
     attack_disadvantage: bool
+
+
+def grid_cell_for_position(pos: Position) -> GridCell:
+    """Maps a world-space position to the nearest 5-foot grid cell."""
+    return _position_to_cell(pos)
+
+
+def grid_cell_center(cell: GridCell) -> Position:
+    """Returns the world-space center point for a 5-foot grid cell."""
+    return _cell_to_position(cell)
 
 
 def ray_intersects_aabb(start: Position, end: Position, aabb: AABB) -> bool:
@@ -356,8 +368,120 @@ def check_cover(pos1: Position, pos2: Position, obstacles: list[AABB] | None = N
 
     return highest_cover
 
-
 Cell = tuple[int, int, int]
+
+
+def has_clear_path(pos1: Position, pos2: Position, obstacles: list[AABB] | None = None) -> bool:
+    """Returns True when a segment between two points is not blocked by TOTAL cover."""
+    return check_cover(pos1, pos2, obstacles) != "TOTAL"
+
+
+def point_in_total_cover(point: Position, obstacles: list[AABB] | None = None) -> bool:
+    if not obstacles:
+        return False
+    for obstacle in obstacles:
+        if obstacle.cover_level != "TOTAL":
+            continue
+        if (
+            obstacle.min_pos[0] <= point[0] <= obstacle.max_pos[0]
+            and obstacle.min_pos[1] <= point[1] <= obstacle.max_pos[1]
+            and obstacle.min_pos[2] <= point[2] <= obstacle.max_pos[2]
+        ):
+            return True
+    return False
+
+
+def is_valid_template_origin(
+    *,
+    caster_position: Position,
+    origin: Position,
+    obstacles: list[AABB] | None = None,
+) -> bool:
+    """A point of origin is legal when it is not inside TOTAL cover and has a clear path."""
+    if point_in_total_cover(origin, obstacles):
+        return False
+    return has_clear_path(caster_position, origin, obstacles)
+
+
+def template_cells(
+    *,
+    template: str,
+    origin: Position,
+    size_ft: float,
+    facing: Position | None = None,
+) -> set[GridCell]:
+    """
+    Deterministically resolves grid cells intersected by an AoE template.
+
+    `facing` is required for directional templates (`line`, `cone`).
+    """
+    try:
+        size = float(size_ft)
+    except (TypeError, ValueError):
+        return set()
+    if not math.isfinite(size) or size <= 0:
+        return set()
+
+    shape = str(template).strip().lower()
+    if not shape:
+        return set()
+
+    fx, fy = 0.0, 0.0
+    if facing is not None:
+        fx, fy = float(facing[0]), float(facing[1])
+    facing_len = math.hypot(fx, fy)
+    if shape in {"line", "cone"} and facing_len <= 1e-9:
+        return set()
+    if facing_len > 0:
+        fx, fy = fx / facing_len, fy / facing_len
+
+    radius_cells = int(math.ceil(size / _CELL_SIZE_FT)) + 2
+    origin_cell = _position_to_cell(origin)
+    ox, oy, oz = origin
+
+    out: set[GridCell] = set()
+    for cx in range(origin_cell[0] - radius_cells, origin_cell[0] + radius_cells + 1):
+        for cy in range(origin_cell[1] - radius_cells, origin_cell[1] + radius_cells + 1):
+            for cz in range(origin_cell[2] - radius_cells, origin_cell[2] + radius_cells + 1):
+                center = _cell_to_position((cx, cy, cz))
+                half = _CELL_SIZE_FT / 2.0
+                cell_min = (center[0] - half, center[1] - half, center[2] - half)
+                cell_max = (center[0] + half, center[1] + half, center[2] + half)
+
+                include = False
+                if shape == "sphere":
+                    include = _distance_point_to_box(origin, cell_min, cell_max) <= size + 1e-9
+                elif shape == "cylinder":
+                    radial = _distance_point_to_rect_2d((ox, oy), cell_min, cell_max)
+                    z_gap = _distance_point_to_interval(oz, cell_min[2], cell_max[2])
+                    include = radial <= size + 1e-9 and z_gap <= size + 1e-9
+                elif shape == "cube":
+                    half_side = size / 2.0
+                    cube_min = (ox - half_side, oy - half_side, oz - half_side)
+                    cube_max = (ox + half_side, oy + half_side, oz + half_side)
+                    include = _boxes_overlap(cube_min, cube_max, cell_min, cell_max)
+                elif shape == "line":
+                    rel_x = center[0] - ox
+                    rel_y = center[1] - oy
+                    projection = rel_x * fx + rel_y * fy
+                    if 0.0 <= projection <= size + 1e-9:
+                        perp_sq = max(
+                            0.0, (rel_x * rel_x + rel_y * rel_y) - (projection * projection)
+                        )
+                        include = math.sqrt(perp_sq) <= (_CELL_SIZE_FT / 2.0) + 1e-9
+                elif shape == "cone":
+                    rel_x = center[0] - ox
+                    rel_y = center[1] - oy
+                    distance = math.hypot(rel_x, rel_y)
+                    if distance <= size + 1e-9:
+                        projection = rel_x * fx + rel_y * fy
+                        # 5e cone: width at endpoint equals length.
+                        cone_cos = math.cos(math.atan(0.5))
+                        include = projection >= (distance * cone_cos) - 1e-9
+
+                if include:
+                    out.add((cx, cy, cz))
+    return out
 
 
 def find_path(
@@ -500,7 +624,6 @@ def find_path(
     path.append(target)
     return path
 
-
 def path_movement_cost(
     path: list[Position],
     difficult_terrain_positions: list[Position] | None = None,
@@ -599,8 +722,57 @@ def _step_toward_axis(delta: int) -> int:
 
 
 def _position_to_cell(pos: Position) -> Cell:
-    return (int(round(pos[0] / 5.0)), int(round(pos[1] / 5.0)), int(round(pos[2] / 5.0)))
+    return (
+        int(round(pos[0] / _CELL_SIZE_FT)),
+        int(round(pos[1] / _CELL_SIZE_FT)),
+        int(round(pos[2] / _CELL_SIZE_FT)),
+    )
 
 
 def _cell_to_position(cell: Cell) -> Position:
-    return (cell[0] * 5.0, cell[1] * 5.0, cell[2] * 5.0)
+    return (
+        cell[0] * _CELL_SIZE_FT,
+        cell[1] * _CELL_SIZE_FT,
+        cell[2] * _CELL_SIZE_FT,
+    )
+
+
+def _distance_point_to_interval(value: float, low: float, high: float) -> float:
+    if value < low:
+        return low - value
+    if value > high:
+        return value - high
+    return 0.0
+
+
+def _distance_point_to_rect_2d(
+    point: tuple[float, float],
+    rect_min: Position,
+    rect_max: Position,
+) -> float:
+    dx = _distance_point_to_interval(point[0], rect_min[0], rect_max[0])
+    dy = _distance_point_to_interval(point[1], rect_min[1], rect_max[1])
+    return math.hypot(dx, dy)
+
+
+def _distance_point_to_box(point: Position, box_min: Position, box_max: Position) -> float:
+    dx = _distance_point_to_interval(point[0], box_min[0], box_max[0])
+    dy = _distance_point_to_interval(point[1], box_min[1], box_max[1])
+    dz = _distance_point_to_interval(point[2], box_min[2], box_max[2])
+    return math.sqrt((dx * dx) + (dy * dy) + (dz * dz))
+
+
+def _boxes_overlap(
+    min_a: Position,
+    max_a: Position,
+    min_b: Position,
+    max_b: Position,
+) -> bool:
+    return not (
+        max_a[0] < min_b[0]
+        or min_a[0] > max_b[0]
+        or max_a[1] < min_b[1]
+        or min_a[1] > max_b[1]
+        or max_a[2] < min_b[2]
+        or min_a[2] > max_b[2]
+    )
