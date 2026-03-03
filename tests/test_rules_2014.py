@@ -290,3 +290,38 @@ def test_bundle_reduction_and_halving_are_order_invariant_before_mitigation() ->
 
     assert forward_flat == reverse_flat
     assert forward_half == reverse_half
+
+
+def test_rebalance_tie_break_is_order_invariant_for_equal_key_equal_remainder() -> None:
+    def _resolve(
+        order: list[int], *, halve: bool = False, flat_reduction: int | None = None
+    ) -> int:
+        target = _actor()
+        target.hp = 50
+        target.max_hp = 50
+        target.damage_resistances = {"slashing"}
+        bundle = DamageBundle(
+            packets=[
+                DamagePacket(
+                    amount=amount,
+                    damage_type="slashing",
+                    source="weapon",
+                    is_magical=False,
+                    crit_expanded=False,
+                )
+                for amount in order
+            ]
+        )
+        if halve:
+            bundle.halve_total()
+        if flat_reduction is not None:
+            bundle.apply_flat_reduction(flat_reduction)
+        return apply_damage_bundle(target, bundle).applied_total
+
+    forward_half = _resolve([1, 3], halve=True)
+    reverse_half = _resolve([3, 1], halve=True)
+    forward_reduced = _resolve([1, 3], flat_reduction=2)
+    reverse_reduced = _resolve([3, 1], flat_reduction=2)
+
+    assert forward_half == reverse_half
+    assert forward_reduced == reverse_reduced

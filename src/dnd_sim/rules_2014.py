@@ -291,7 +291,7 @@ class DamageBundle:
             return
 
         scaled: dict[int, int] = {}
-        remainder_ranking: list[tuple[int, tuple[str, str, int, int], int]] = []
+        remainder_ranking: list[tuple[int, tuple[str, str, int, int], int, int]] = []
         base_sum = 0
         for idx, packet, amount in active:
             numerator = amount * clamped_target
@@ -299,12 +299,14 @@ class DamageBundle:
             remainder = numerator % current_total
             scaled[idx] = base
             base_sum += base
-            remainder_ranking.append((remainder, self._packet_distribution_key(packet), idx))
+            remainder_ranking.append(
+                (remainder, self._packet_distribution_key(packet), amount, idx)
+            )
 
         remaining_points = clamped_target - base_sum
         if remaining_points > 0:
-            remainder_ranking.sort(key=lambda item: (-item[0], item[1]))
-            for _remainder, _key, idx in remainder_ranking[:remaining_points]:
+            remainder_ranking.sort(key=lambda item: (-item[0], item[1], -item[2]))
+            for _remainder, _key, _amount, idx in remainder_ranking[:remaining_points]:
                 scaled[idx] = scaled.get(idx, 0) + 1
 
         for idx, packet in enumerate(self.packets):
