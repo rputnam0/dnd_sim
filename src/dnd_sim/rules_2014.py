@@ -346,6 +346,30 @@ def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
     return any(_normalize_trait_name(key) == needle for key in actor.traits.keys())
 
 
+def _has_monk_martial_arts_context(actor: ActorRuntimeState) -> bool:
+    monk_level = int(actor.class_levels.get("monk", 0))
+    if monk_level > 0:
+        return True
+    return _has_trait(actor, "martial arts") or _has_trait(actor, "flurry of blows")
+
+
+def monk_bonus_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if action.action_cost != "bonus":
+        return True
+    if not _has_monk_martial_arts_context(actor):
+        return True
+
+    action_key = str(action.name).strip().lower()
+    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
+    is_monk_bonus_action = action_key in {"martial_arts_bonus", "flurry_of_blows"} or bool(
+        {"martial_arts", "flurry_of_blows"}.intersection(normalized_tags)
+    )
+    if not is_monk_bonus_action:
+        return True
+
+    return bool(actor.took_attack_action_this_turn)
+
+
 def _remove_condition_everywhere(target: ActorRuntimeState, condition: str) -> None:
     # Local import avoids module-level circular dependency.
     from dnd_sim.engine import _remove_condition

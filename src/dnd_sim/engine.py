@@ -62,6 +62,7 @@ from dnd_sim.rules_2014 import (
     apply_damage,
     apply_damage_bundle,
     attack_roll,
+    monk_bonus_action_legal,
     parse_damage_expression,
     resolve_death_save,
     roll_damage,
@@ -6123,7 +6124,7 @@ def _run_opportunity_attacks_for_movement(
     for enemy in actors.values():
         if enemy.team == mover.team or enemy.dead or enemy.hp <= 0:
             continue
-        if not enemy.reaction_available:
+        if not _can_take_reaction(enemy):
             continue
         readied_reach_entry = _readied_reach_entry_point(
             responder=enemy,
@@ -6152,7 +6153,7 @@ def _run_opportunity_attacks_for_movement(
             if mover.dead or mover.hp <= 0:
                 break
 
-        if not enemy.reaction_available:
+        if not _can_take_reaction(enemy):
             continue
         opportunity_candidates = _opportunity_attack_candidates(enemy)
         if not opportunity_candidates:
@@ -9378,6 +9379,8 @@ def _action_available(
     if _has_tag(action, "fighter_action_surge") and (
         turn_token is None or not _is_same_turn_for_actor(actor, turn_token)
     ):
+        return False
+    if not monk_bonus_action_legal(actor, action):
         return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False
