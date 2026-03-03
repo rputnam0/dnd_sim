@@ -11,6 +11,10 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from dnd_sim.characters import (
+    validate_class_level_representation,
+    validate_multiclass_prerequisites,
+)
 from dnd_sim.strategy_api import BaseStrategy, validate_strategy_instance
 
 
@@ -368,11 +372,36 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
 
     out: dict[str, dict[str, Any]] = {}
 
+    def _normalize_character_progression(
+        *,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        class_level_text = str(payload.get("class_level", "") or "")
+        class_levels_payload = payload.get("class_levels")
+        progression = validate_class_level_representation(
+            class_level_text=class_level_text,
+            class_levels=class_levels_payload if isinstance(class_levels_payload, dict) else None,
+        )
+        payload["class_level"] = progression.class_level_text
+        payload["class_levels"] = progression.class_levels
+        payload["character_level"] = progression.total_level
+        prereq_errors = validate_multiclass_prerequisites(
+            class_levels=progression.class_levels,
+            ability_scores=payload.get("ability_scores") if isinstance(payload, dict) else {},
+        )
+        if prereq_errors:
+            payload["multiclass_prerequisite_errors"] = prereq_errors
+        return payload
+
     # 1. Base load from SQLite
     rows = execute_query("SELECT character_id, data_json FROM characters")
     for row in rows:
         try:
-            out[row["character_id"]] = json.loads(row["data_json"])
+            payload = json.loads(row["data_json"])
+            if isinstance(payload, dict):
+                out[row["character_id"]] = _normalize_character_progression(
+                    payload=payload,
+                )
         except json.JSONDecodeError:
             pass
 
@@ -384,7 +413,13 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
             character_id = row["character_id"]
             character_path = db_dir / f"{character_id}.json"
             if character_path.exists():
-                out[character_id] = _load_json(character_path)
+                payload = _load_json(character_path)
+                try:
+                    out[character_id] = _normalize_character_progression(
+                        payload=payload,
+                    )
+                except ValueError as exc:
+                    raise ValueError(f"invalid class_level for {character_id}: {exc}") from exc
 
     return out
 
