@@ -1,13 +1,21 @@
 from __future__ import annotations
 
 import json
+import random
 from pathlib import Path
 
 import pytest
 
-from dnd_sim.engine import _execute_action, _run_opportunity_attacks_for_movement, run_simulation
+from dnd_sim.engine import (
+    _execute_action,
+    _resolve_targets_for_action,
+    _run_opportunity_attacks_for_movement,
+    run_simulation,
+)
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.spatial import AABB
+from dnd_sim.strategy_api import TargetRef
 from tests.helpers import build_character, build_enemy, write_json
 
 
@@ -1085,6 +1093,27 @@ def _actor(actor_id: str, team: str) -> ActorRuntimeState:
     )
 
 
+def _runtime_actor(*, actor_id: str, team: str, hp: int = 30) -> ActorRuntimeState:
+    return ActorRuntimeState(
+        actor_id=actor_id,
+        team=team,
+        name=actor_id,
+        max_hp=hp,
+        hp=hp,
+        temp_hp=0,
+        ac=13,
+        initiative_mod=0,
+        str_mod=0,
+        dex_mod=2,
+        con_mod=1,
+        int_mod=0,
+        wis_mod=0,
+        cha_mod=0,
+        save_mods={"str": 0, "dex": 2, "con": 1, "int": 0, "wis": 0, "cha": 0},
+        actions=[],
+    )
+
+
 def test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn() -> None:
     rogue = _actor("rogue", "party")
     ally = _actor("ally", "party")
@@ -1226,3 +1255,47 @@ def test_line_of_effect_blocked_prevents_many_spells_even_with_line_of_sight(
     ).summary.to_dict()
 
     assert summary["per_actor_damage_taken"]["hero"]["mean"] == 0.0
+
+
+def test_origin_obstacle_changes_sphere_target_set() -> None:
+    caster = _runtime_actor(actor_id="caster", team="party")
+    primary = _runtime_actor(actor_id="primary", team="enemy")
+    blocked = _runtime_actor(actor_id="blocked", team="enemy")
+    side = _runtime_actor(actor_id="side", team="enemy")
+
+    caster.position = (0.0, 0.0, 0.0)
+    primary.position = (20.0, 0.0, 0.0)
+    blocked.position = (30.0, 0.0, 0.0)
+    side.position = (20.0, 10.0, 0.0)
+
+    actors = {a.actor_id: a for a in (caster, primary, blocked, side)}
+    action = ActionDefinition(
+        name="fireball_like",
+        action_type="save",
+        save_dc=15,
+        save_ability="dex",
+        target_mode="single_enemy",
+        aoe_type="sphere",
+        aoe_size_ft=15,
+        tags=["spell"],
+    )
+
+    clear_targets = _resolve_targets_for_action(
+        rng=random.Random(12),
+        actor=caster,
+        action=action,
+        actors=actors,
+        requested=[TargetRef("primary")],
+    )
+    assert {target.actor_id for target in clear_targets} == {"primary", "blocked", "side"}
+
+    wall = [AABB(min_pos=(24.0, -1.0, -2.0), max_pos=(26.0, 1.0, 2.0), cover_level="TOTAL")]
+    blocked_targets = _resolve_targets_for_action(
+        rng=random.Random(12),
+        actor=caster,
+        action=action,
+        actors=actors,
+        requested=[TargetRef("primary")],
+        obstacles=wall,
+    )
+    assert {target.actor_id for target in blocked_targets} == {"primary", "side"}

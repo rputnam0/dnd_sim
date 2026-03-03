@@ -30,9 +30,14 @@ from dnd_sim.spatial import (
     AABB,
     distance_chebyshev,
     find_path,
+    grid_cell_center,
+    grid_cell_for_position,
+    has_clear_path,
+    is_valid_template_origin,
     path_movement_cost,
     path_prefix_for_movement,
     query_visibility,
+    template_cells,
 )
 from dnd_sim.rules_2014 import (
     ActionDeclaredEvent,
@@ -5181,16 +5186,6 @@ def _filter_targets_in_range(
         primary = targets[0]
         if distance_chebyshev(actor.position, primary.position) > action_range:
             ranged_targets = []
-        elif action.aoe_size_ft:
-            radius = _coerce_positive_distance(action.aoe_size_ft)
-            if radius is None:
-                ranged_targets = targets
-            else:
-                ranged_targets = [
-                    target
-                    for target in targets
-                    if distance_chebyshev(primary.position, target.position) <= radius
-                ]
         else:
             ranged_targets = targets
     else:
@@ -5293,10 +5288,6 @@ def _target_sort_key(
     return (0.0, target.hp, target.max_hp, target.actor_id)
 
 
-def _distance_2d(a: tuple[float, float, float], b: tuple[float, float, float]) -> float:
-    return math.hypot(b[0] - a[0], b[1] - a[1])
-
-
 def _coerce_positive_distance(value: Any) -> float | None:
     try:
         parsed = float(value)
@@ -5306,56 +5297,44 @@ def _coerce_positive_distance(value: Any) -> float | None:
         return None
     return parsed
 
-
-def _in_area_template(
+def _template_origin_for_primary(
     *,
     actor: ActorRuntimeState,
     primary: ActorRuntimeState,
-    candidate: ActorRuntimeState,
     aoe_type: str,
-    aoe_size_ft: float,
-) -> bool:
-    template = aoe_type.strip().lower()
-    if template in {"sphere", "cylinder"}:
-        return _distance_2d(primary.position, candidate.position) <= aoe_size_ft
+    spell_cast_request: SpellCastRequest | None,
+) -> tuple[float, float, float]:
+    if spell_cast_request is not None and spell_cast_request.origin is not None:
+        raw = spell_cast_request.origin
+        return (float(raw[0]), float(raw[1]), float(raw[2]))
+    if aoe_type in {"sphere", "cylinder", "cube"}:
+        return primary.position
+    return actor.position
 
-    if template == "cube":
-        half = aoe_size_ft / 2.0
-        dx = abs(candidate.position[0] - primary.position[0])
-        dy = abs(candidate.position[1] - primary.position[1])
-        dz = abs(candidate.position[2] - primary.position[2])
-        return dx <= half and dy <= half and dz <= half
 
-    axis = (
-        primary.position[0] - actor.position[0],
-        primary.position[1] - actor.position[1],
+def _template_facing_vector(
+    *,
+    actor: ActorRuntimeState,
+    primary: ActorRuntimeState,
+    origin: tuple[float, float, float],
+    aoe_type: str,
+) -> tuple[float, float, float] | None:
+    if aoe_type not in {"line", "cone"}:
+        return None
+    facing = (
+        primary.position[0] - origin[0],
+        primary.position[1] - origin[1],
+        primary.position[2] - origin[2],
     )
-    axis_len = math.hypot(axis[0], axis[1])
-    if axis_len <= 0:
-        return _distance_2d(primary.position, candidate.position) <= aoe_size_ft
-    unit = (axis[0] / axis_len, axis[1] / axis_len)
-    rel = (
-        candidate.position[0] - actor.position[0],
-        candidate.position[1] - actor.position[1],
-    )
-    projection = rel[0] * unit[0] + rel[1] * unit[1]
-
-    if template == "line":
-        if projection < 0 or projection > aoe_size_ft:
-            return False
-        perp_sq = max(0.0, (rel[0] * rel[0] + rel[1] * rel[1]) - (projection * projection))
-        return math.sqrt(perp_sq) <= 5.0
-
-    if template == "cone":
-        distance = math.hypot(rel[0], rel[1])
-        if distance > aoe_size_ft:
-            return False
-        if distance == 0:
-            return True
-        cos_theta = projection / distance
-        return cos_theta >= math.cos(math.radians(30))
-
-    return _distance_2d(primary.position, candidate.position) <= aoe_size_ft
+    if math.hypot(facing[0], facing[1]) <= 1e-9:
+        facing = (
+            primary.position[0] - actor.position[0],
+            primary.position[1] - actor.position[1],
+            primary.position[2] - actor.position[2],
+        )
+    if math.hypot(facing[0], facing[1]) <= 1e-9:
+        return None
+    return facing
 
 
 def _resolve_template_targets(
@@ -5365,6 +5344,8 @@ def _resolve_template_targets(
     mode: str,
     primaries: list[ActorRuntimeState],
     candidates: list[ActorRuntimeState],
+    obstacles: list[AABB] | None = None,
+    spell_cast_request: SpellCastRequest | None = None,
 ) -> list[ActorRuntimeState]:
     aoe_type = str(action.aoe_type or "").lower().strip()
     if not aoe_type or not action.aoe_size_ft or not primaries:
@@ -5372,26 +5353,55 @@ def _resolve_template_targets(
     size = _coerce_positive_distance(action.aoe_size_ft)
     if size is None:
         return primaries
+
+    obstacle_list = obstacles or []
+    ordered_candidates = sorted(
+        candidates, key=lambda value: _target_sort_key(actor, value, mode=mode)
+    )
     victims: set[str] = set()
     for primary in primaries:
-        for candidate in candidates:
-            if _in_area_template(
+        origin = _template_origin_for_primary(
+            actor=actor,
+            primary=primary,
+            aoe_type=aoe_type,
+            spell_cast_request=spell_cast_request,
+        )
+        if obstacle_list and not is_valid_template_origin(
+            caster_position=actor.position,
+            origin=origin,
+            obstacles=obstacle_list,
+        ):
+            continue
+
+        covered_cells = template_cells(
+            template=aoe_type,
+            origin=origin,
+            size_ft=size,
+            facing=_template_facing_vector(
                 actor=actor,
                 primary=primary,
-                candidate=candidate,
+                origin=origin,
                 aoe_type=aoe_type,
-                aoe_size_ft=size,
+            ),
+        )
+        if not covered_cells:
+            continue
+
+        for candidate in ordered_candidates:
+            candidate_cell = grid_cell_for_position(candidate.position)
+            if candidate_cell not in covered_cells:
+                continue
+            if obstacle_list and not has_clear_path(
+                origin,
+                grid_cell_center(candidate_cell),
+                obstacle_list,
             ):
-                victims.add(candidate.actor_id)
+                continue
+            victims.add(candidate.actor_id)
+
     if not action.include_self:
         victims.discard(actor.actor_id)
-    return [
-        target
-        for target in sorted(
-            candidates, key=lambda value: _target_sort_key(actor, value, mode=mode)
-        )
-        if target.actor_id in victims
-    ]
+    return [target for target in ordered_candidates if target.actor_id in victims]
 
 
 def _cover_bonus_from_state(cover_state: str) -> int:
@@ -5457,6 +5467,7 @@ def _resolve_targets_for_action(
     actors: dict[str, ActorRuntimeState],
     requested: list[TargetRef],
     obstacles: list[AABB] | None = None,
+    spell_cast_request: SpellCastRequest | None = None,
 ) -> list[ActorRuntimeState]:
     mode = action.target_mode
     include_self = action.include_self or mode == "self"
@@ -5579,6 +5590,8 @@ def _resolve_targets_for_action(
             mode=mode,
             primaries=selected,
             candidates=ordered_candidates,
+            obstacles=obstacles,
+            spell_cast_request=spell_cast_request,
         )
     return _filter_targets_by_line_of_effect(
         actor=actor,
@@ -6047,6 +6060,7 @@ def _execute_declared_action_step_or_error(
         actors=actors,
         requested=requested_targets,
         obstacles=obstacles,
+        spell_cast_request=spell_cast_request,
     )
     if requested_targets:
         requested_ids = {target.actor_id for target in requested_targets}
@@ -11817,6 +11831,7 @@ def run_simulation(
                         fallback_reason = "insufficient_resources"
 
                     targets = strategy.choose_targets(actor_view, intent, state_view)
+                    spell_cast_request = SpellCastRequest() if "spell" in action.tags else None
                     resolved_targets = _resolve_targets_for_action(
                         rng=rng,
                         actor=actor,
@@ -11824,6 +11839,7 @@ def run_simulation(
                         actors=actors,
                         requested=targets,
                         obstacles=battlefield_obstacles,
+                        spell_cast_request=spell_cast_request,
                     )
                     trial_telemetry.append(
                         {
@@ -11850,7 +11866,6 @@ def run_simulation(
                         _resolve_turn_end(actor, turn_token)
                         continue
 
-                    spell_cast_request = SpellCastRequest() if "spell" in action.tags else None
                     if not _spend_action_resource_cost(
                         actor,
                         action,
@@ -11917,6 +11932,9 @@ def run_simulation(
                     if actor.bonus_available and _can_act(actor):
                         bonus_action = _find_best_bonus_action(actor)
                         if bonus_action is not None:
+                            bonus_spell_cast_request = (
+                                SpellCastRequest() if "spell" in bonus_action.tags else None
+                            )
                             bonus_targets = _resolve_targets_for_action(
                                 rng=rng,
                                 actor=actor,
@@ -11924,11 +11942,9 @@ def run_simulation(
                                 actors=actors,
                                 requested=_default_target(actor, actors),
                                 obstacles=battlefield_obstacles,
+                                spell_cast_request=bonus_spell_cast_request,
                             )
                             if bonus_targets:
-                                bonus_spell_cast_request = (
-                                    SpellCastRequest() if "spell" in bonus_action.tags else None
-                                )
                                 if _can_pay_resource_cost(
                                     actor, bonus_action
                                 ) and _spend_action_resource_cost(
@@ -12000,6 +12016,9 @@ def run_simulation(
                                     resources_spent[actor.actor_id].get("action_surge", 0) + 1
                                 )
 
+                                surge_spell_cast_request = (
+                                    SpellCastRequest() if "spell" in surge_action.tags else None
+                                )
                                 surge_targets = _resolve_targets_for_action(
                                     rng=rng,
                                     actor=actor,
@@ -12007,11 +12026,9 @@ def run_simulation(
                                     actors=actors,
                                     requested=_default_target(actor, actors),
                                     obstacles=battlefield_obstacles,
+                                    spell_cast_request=surge_spell_cast_request,
                                 )
                                 if surge_targets:
-                                    surge_spell_cast_request = (
-                                        SpellCastRequest() if "spell" in surge_action.tags else None
-                                    )
                                     if _can_pay_resource_cost(
                                         actor, surge_action
                                     ) and _spend_action_resource_cost(
