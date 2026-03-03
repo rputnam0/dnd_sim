@@ -8601,7 +8601,10 @@ def _shield_spell_action(shield_action: ActionDefinition) -> ActionDefinition:
 
 def _shield_reaction_action(target: ActorRuntimeState) -> ActionDefinition | None:
     for action in target.actions:
-        if action.name == "shield" and action.action_cost == "reaction":
+        if action.action_cost == "reaction" and _action_matches_reaction_spell_id(
+            action,
+            spell_id="shield",
+        ):
             return action
     return None
 
