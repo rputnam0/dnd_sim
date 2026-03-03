@@ -202,6 +202,18 @@ class AttackConditionModifiers:
     force_critical: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class MovementReactionTrigger:
+    trigger: str
+    mover_id: str
+    reactor_id: str
+    point: tuple[float, float, float]
+    distance_ft: float
+    reach_ft: float
+    visible: bool
+    movement_source: str
+
+
 class TurnDeclarationValidationError(ValueError):
     def __init__(
         self,
@@ -4879,6 +4891,31 @@ def _find_opportunity_attack_action(
     return replace(best_action, attack_count=1, action_cost="reaction"), best_reach
 
 
+def _movement_reach_transitions(
+    *,
+    reactor_position: tuple[float, float, float],
+    path_points: list[tuple[float, float, float]],
+    reach_ft: float,
+) -> list[tuple[str, tuple[float, float, float], float]]:
+    if len(path_points) < 2 or reach_ft <= 0:
+        return []
+
+    transitions: list[tuple[str, tuple[float, float, float], float]] = []
+    previous = path_points[0]
+    was_in_reach = distance_chebyshev(reactor_position, previous) <= reach_ft
+    for point in path_points[1:]:
+        is_in_reach = distance_chebyshev(reactor_position, point) <= reach_ft
+        if not was_in_reach and is_in_reach:
+            distance_ft = distance_chebyshev(reactor_position, point)
+            transitions.append(("enter_reach", point, distance_ft))
+        elif was_in_reach and not is_in_reach:
+            distance_ft = distance_chebyshev(reactor_position, previous)
+            transitions.append(("exit_reach", previous, distance_ft))
+        was_in_reach = is_in_reach
+        previous = point
+    return transitions
+
+
 def _readied_reach_entry_point(
     *,
     responder: ActorRuntimeState,
@@ -4928,8 +4965,15 @@ def _run_opportunity_attacks_for_movement(
     light_level: str = "bright",
     round_number: int | None = None,
     turn_token: str | None = None,
+    movement_kind: str = "voluntary",
+    movement_source: str = "movement",
+    movement_trigger_hooks: list[Callable[[MovementReactionTrigger], None]] | None = None,
 ) -> None:
+    from .spatial import can_see
+
     if mover.dead or mover.hp <= 0:
+        return
+    if movement_kind != "voluntary":
         return
     if "disengaging" in mover.conditions:
         return
@@ -4940,6 +4984,7 @@ def _run_opportunity_attacks_for_movement(
     if len(path_points) < 2:
         return
 
+    hooks = movement_trigger_hooks or []
     for enemy in actors.values():
         if enemy.team == mover.team or enemy.dead or enemy.hp <= 0:
             continue
@@ -4978,57 +5023,80 @@ def _run_opportunity_attacks_for_movement(
         if not opportunity_candidates:
             continue
         max_reach = max(reach_ft for _, reach_ft in opportunity_candidates)
-        trigger_point: tuple[float, float, float] | None = None
-        trigger_distance: float | None = None
-        previous = path_points[0]
-        was_in_reach = distance_chebyshev(enemy.position, previous) <= max_reach
-        for point in path_points[1:]:
-            is_in_reach = distance_chebyshev(enemy.position, point) <= max_reach
-            if was_in_reach and not is_in_reach:
-                trigger_point = previous
-                trigger_distance = distance_chebyshev(enemy.position, previous)
-                break
-            was_in_reach = is_in_reach
-            previous = point
-        if trigger_point is None:
-            continue
-        reaction_result = _find_opportunity_attack_action(
-            enemy,
-            required_reach_ft=float(trigger_distance or 0.0),
+        transitions = _movement_reach_transitions(
+            reactor_position=enemy.position,
+            path_points=path_points,
+            reach_ft=max_reach,
         )
-        if reaction_result is None:
+        if not transitions:
             continue
-        reaction_attack, _ = reaction_result
-        spell_cast_request = SpellCastRequest() if "spell" in reaction_attack.tags else None
-        if not _spend_action_resource_cost(
-            enemy,
-            reaction_attack,
-            resources_spent,
-            spell_cast_request=spell_cast_request,
-            turn_token=turn_token,
-        ):
-            continue
-        enemy.reaction_available = False
-        original_position = mover.position
-        mover.position = trigger_point
-        _execute_action(
-            rng=rng,
-            actor=enemy,
-            action=reaction_attack,
-            targets=[mover],
-            actors=actors,
-            damage_dealt=damage_dealt,
-            damage_taken=damage_taken,
-            threat_scores=threat_scores,
-            resources_spent=resources_spent,
-            active_hazards=active_hazards,
-            obstacles=obstacles,
-            light_level=light_level,
-            round_number=round_number,
-            turn_token=turn_token,
-            spell_cast_request=spell_cast_request,
-        )
-        mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
+        for trigger, trigger_point, trigger_distance in transitions:
+            visible = can_see(
+                observer_pos=enemy.position,
+                target_pos=trigger_point,
+                observer_traits=enemy.traits,
+                target_conditions=mover.conditions,
+                active_hazards=active_hazards,
+                light_level=light_level,
+            )
+            if hooks:
+                movement_trigger = MovementReactionTrigger(
+                    trigger=trigger,
+                    mover_id=mover.actor_id,
+                    reactor_id=enemy.actor_id,
+                    point=trigger_point,
+                    distance_ft=float(trigger_distance),
+                    reach_ft=float(max_reach),
+                    visible=visible,
+                    movement_source=movement_source,
+                )
+                for hook in hooks:
+                    hook(movement_trigger)
+
+            if trigger != "exit_reach":
+                continue
+            if not visible:
+                continue
+
+            reaction_result = _find_opportunity_attack_action(
+                enemy,
+                required_reach_ft=float(trigger_distance),
+            )
+            if reaction_result is None:
+                continue
+            reaction_attack, _ = reaction_result
+            spell_cast_request = SpellCastRequest() if "spell" in reaction_attack.tags else None
+            if not _spend_action_resource_cost(
+                enemy,
+                reaction_attack,
+                resources_spent,
+                spell_cast_request=spell_cast_request,
+                turn_token=turn_token,
+            ):
+                continue
+
+            enemy.reaction_available = False
+            original_position = mover.position
+            mover.position = trigger_point
+            _execute_action(
+                rng=rng,
+                actor=enemy,
+                action=reaction_attack,
+                targets=[mover],
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
+                spell_cast_request=spell_cast_request,
+            )
+            mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
+            break
         if mover.dead or mover.hp <= 0:
             break
 
@@ -5146,6 +5214,7 @@ def _move_actor_for_action_range(
         light_level=light_level,
         round_number=round_number,
         turn_token=turn_token,
+        movement_source="action",
     )
 
     if actor.dead or actor.hp <= 0:
@@ -5898,6 +5967,7 @@ def _apply_declared_movement_or_error(
         light_level=light_level,
         round_number=round_number,
         turn_token=turn_token,
+        movement_source="movement",
     )
     if actor.dead or actor.hp <= 0:
         return
