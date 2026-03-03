@@ -190,6 +190,18 @@ _OBSCURING_ZONE_TYPES = {"cloud", "magical_darkness", "obscuring_zone", "obscuri
 _MOVEMENT_BLOCKING_ZONE_TYPES = {"wall", "movement_blocker"}
 _LINE_BLOCKING_ZONE_TYPES = {"wall"}
 _DIFFICULT_TERRAIN_ZONE_TYPES = {"difficult_terrain"}
+_ATTACK_ACTION_SEQUENCE_EFFECT_TYPES = {"attack_sequence", "multiattack_sequence"}
+_ATTACK_ACTION_EXTRA_EFFECT_TYPES = {"extra_attack", "grant_extra_attack"}
+_ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES = {
+    "attack_replacement",
+    "replace_attack",
+    "replacement_attack",
+}
+_ATTACK_ACTION_FRAMEWORK_EFFECT_TYPES = (
+    _ATTACK_ACTION_SEQUENCE_EFFECT_TYPES
+    | _ATTACK_ACTION_EXTRA_EFFECT_TYPES
+    | _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES
+)
 
 
 @dataclass(slots=True)
@@ -4394,6 +4406,10 @@ def _build_actor_from_enemy(
                     concentration=action.concentration,
                     include_self=action.include_self,
                     effects=[effect.model_dump() for effect in action.effects],
+                    mechanics=[
+                        dict(mechanic) if isinstance(mechanic, dict) else mechanic
+                        for mechanic in getattr(action, "mechanics", [])
+                    ],
                     tags=list(action.tags),
                 )
             )
@@ -10555,6 +10571,163 @@ def _record_spell_cast_for_turn(actor: ActorRuntimeState, action: ActionDefiniti
         actor.bonus_action_spell_restriction_active = True
 
 
+def _attack_action_effect_type(mechanic: Any) -> str:
+    if not isinstance(mechanic, dict):
+        return ""
+    return str(mechanic.get("effect_type", "")).strip().lower()
+
+
+def _is_attack_instance_action(action: ActionDefinition) -> bool:
+    return action.action_type in {"attack", "grapple", "shove"}
+
+
+def _strip_attack_action_framework_mechanics(
+    mechanics: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    stripped: list[dict[str, Any]] = []
+    for mechanic in mechanics:
+        if not isinstance(mechanic, dict):
+            continue
+        if _attack_action_effect_type(mechanic) in _ATTACK_ACTION_FRAMEWORK_EFFECT_TYPES:
+            continue
+        stripped.append(dict(mechanic))
+    return stripped
+
+
+def _clone_attack_instance_action(action: ActionDefinition) -> ActionDefinition:
+    return _clone_action(
+        action,
+        attack_count=1,
+        action_cost="none",
+        mechanics=_strip_attack_action_framework_mechanics(action.mechanics),
+    )
+
+
+def _resolve_attack_instance_reference(
+    actor: ActorRuntimeState,
+    reference: Any,
+    *,
+    context: str,
+) -> tuple[ActionDefinition, int]:
+    action_name = ""
+    instance_count = 1
+    if isinstance(reference, str):
+        action_name = reference.strip()
+    elif isinstance(reference, dict):
+        action_name = str(reference.get("action_name") or reference.get("name") or "").strip()
+        parsed_count = _coerce_positive_int(reference.get("count"))
+        if parsed_count is None:
+            parsed_count = _coerce_positive_int(reference.get("attack_count"))
+        if parsed_count is not None:
+            instance_count = parsed_count
+    else:
+        raise ValueError(f"{context} must be a string or mapping.")
+
+    if not action_name:
+        raise ValueError(f"{context} must define action_name.")
+
+    selected = next((candidate for candidate in actor.actions if candidate.name == action_name), None)
+    if selected is None:
+        raise ValueError(f"{context} references unknown action '{action_name}'.")
+    if not _is_attack_instance_action(selected):
+        raise ValueError(
+            f"{context} references non-attack action '{action_name}' ({selected.action_type})."
+        )
+    return _clone_attack_instance_action(selected), int(instance_count)
+
+
+def _action_granted_extra_attack_count(action: ActionDefinition) -> int:
+    total = 0
+    for mechanic in action.mechanics:
+        if _attack_action_effect_type(mechanic) not in _ATTACK_ACTION_EXTRA_EFFECT_TYPES:
+            continue
+        parsed = _coerce_positive_int(mechanic.get("count")) if isinstance(mechanic, dict) else None
+        if parsed is None and isinstance(mechanic, dict):
+            parsed = _coerce_positive_int(mechanic.get("attack_count"))
+        total += parsed if parsed is not None else 1
+    return total
+
+
+def _action_uses_attack_instance_framework(action: ActionDefinition) -> bool:
+    if action.action_type == "attack" and int(action.attack_count) > 1:
+        return True
+    return any(
+        _attack_action_effect_type(mechanic) in _ATTACK_ACTION_FRAMEWORK_EFFECT_TYPES
+        for mechanic in action.mechanics
+    )
+
+
+def _build_attack_action_instances(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+) -> list[ActionDefinition]:
+    framework_mechanics = [
+        mechanic
+        for mechanic in action.mechanics
+        if _attack_action_effect_type(mechanic) in _ATTACK_ACTION_FRAMEWORK_EFFECT_TYPES
+    ]
+
+    instances: list[ActionDefinition] = []
+    for mechanic in framework_mechanics:
+        if _attack_action_effect_type(mechanic) not in _ATTACK_ACTION_SEQUENCE_EFFECT_TYPES:
+            continue
+        raw_sequence = mechanic.get("sequence")
+        if raw_sequence is None:
+            raw_sequence = mechanic.get("attacks")
+        if not isinstance(raw_sequence, list) or not raw_sequence:
+            raise ValueError("Attack sequence mechanics must include a non-empty 'sequence' list.")
+        for idx, entry in enumerate(raw_sequence):
+            referenced, count = _resolve_attack_instance_reference(
+                actor,
+                entry,
+                context=f"{action.name}.sequence[{idx}]",
+            )
+            for _ in range(count):
+                instances.append(_clone_attack_instance_action(referenced))
+
+    if not instances:
+        if not _is_attack_instance_action(action):
+            raise ValueError(
+                f"Action '{action.name}' must define an attack sequence to execute attack instances."
+            )
+        attack_count = max(1, int(action.attack_count)) + _action_granted_extra_attack_count(action)
+        base_instance = _clone_attack_instance_action(action)
+        instances = [_clone_attack_instance_action(base_instance) for _ in range(attack_count)]
+
+    replacements: list[ActionDefinition] = []
+    for mechanic in framework_mechanics:
+        if _attack_action_effect_type(mechanic) not in _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES:
+            continue
+        replacement_rows = mechanic.get("replacements")
+        if isinstance(replacement_rows, list):
+            for idx, row in enumerate(replacement_rows):
+                replacement, count = _resolve_attack_instance_reference(
+                    actor,
+                    row,
+                    context=f"{action.name}.replacements[{idx}]",
+                )
+                for _ in range(count):
+                    replacements.append(_clone_attack_instance_action(replacement))
+            continue
+        replacement, count = _resolve_attack_instance_reference(
+            actor,
+            mechanic,
+            context=f"{action.name}.replacement",
+        )
+        for _ in range(count):
+            replacements.append(_clone_attack_instance_action(replacement))
+
+    if len(replacements) > len(instances):
+        raise ValueError(
+            f"Action '{action.name}' defines {len(replacements)} replacements "
+            f"but only {len(instances)} attacks are available."
+        )
+
+    for idx, replacement in enumerate(replacements):
+        instances[idx] = replacement
+    return instances
+
+
 def _execute_action(
     *,
     rng: random.Random,
@@ -10578,6 +10751,7 @@ def _execute_action(
     spell_cast_request: SpellCastRequest | None = None,
     allow_auto_movement: bool = True,
     ready_declaration: ReadyDeclaration | None = None,
+    attack_once_per_action_used: set[tuple[str, int]] | None = None,
 ) -> None:
     if not targets:
         return
@@ -10798,6 +10972,39 @@ def _execute_action(
                 actor.concentrated_targets.clear()
                 actor.concentration_effect_instance_ids.clear()
 
+    if _action_uses_attack_instance_framework(action):
+        if action.action_cost == "action":
+            actor.took_attack_action_this_turn = True
+        shared_once_per_action = (
+            attack_once_per_action_used if attack_once_per_action_used is not None else set()
+        )
+        attack_instances = _build_attack_action_instances(actor, action)
+        for attack_instance in attack_instances:
+            _execute_action(
+                rng=rng,
+                actor=actor,
+                action=attack_instance,
+                targets=targets,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=rule_trace,
+                telemetry=telemetry,
+                strategy_name=strategy_name,
+                timing_engine=active_timing_engine,
+                allow_auto_movement=allow_auto_movement,
+                ready_declaration=ready_declaration,
+                attack_once_per_action_used=shared_once_per_action,
+            )
+        return
+
     # Phase 11: Contested Grapple/Shove Checks
     if action.action_type in ("grapple", "shove") and targets:
         from .rules_2014 import run_contested_check
@@ -10896,7 +11103,9 @@ def _execute_action(
         ranged_attack_action = _is_ranged_attack_action(action)
 
         current_target: ActorRuntimeState | None = None
-        once_per_action_used: set[tuple[str, int]] = set()
+        once_per_action_used = (
+            attack_once_per_action_used if attack_once_per_action_used is not None else set()
+        )
         for i in range(attack_iterations):
             # Find a living target: try current, then preferred list, then any enemy
             if per_target_attack:

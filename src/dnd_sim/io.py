@@ -58,6 +58,7 @@ class ActionConfig(BaseModel):
     concentration: bool = False
     include_self: bool = False
     effects: list["EffectConfig"] = Field(default_factory=list)
+    mechanics: list[dict[str, Any]] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
 
     @field_validator("max_targets")

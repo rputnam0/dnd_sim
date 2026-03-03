@@ -1101,6 +1101,102 @@ def test_trial_rows_include_strategy_decision_rationale_telemetry(tmp_path: Path
     assert any(event.get("telemetry_type") == "decision" for event in row_payload)
 
 
+def test_multiattack_sequence_integration_executes_defined_subactions(tmp_path: Path) -> None:
+    party = [
+        build_character(
+            character_id="hero",
+            name="Hero",
+            max_hp=220,
+            ac=15,
+            to_hit=1,
+            damage="1",
+        )
+    ]
+    enemies = [
+        {
+            "identity": {"enemy_id": "hydra", "name": "Hydra", "team": "enemy"},
+            "stat_block": {
+                "max_hp": 200,
+                "ac": 14,
+                "initiative_mod": 100,
+                "dex_mod": 0,
+                "con_mod": 2,
+                "save_mods": {"dex": 0, "con": 2, "wis": 0},
+            },
+            "actions": [
+                {
+                    "name": "multiattack",
+                    "action_type": "utility",
+                    "target_mode": "single_enemy",
+                    "resource_cost": {},
+                    "mechanics": [
+                        {
+                            "effect_type": "attack_sequence",
+                            "sequence": [{"action_name": "bite"}, {"action_name": "tail"}],
+                        }
+                    ],
+                },
+                {
+                    "name": "bite",
+                    "action_type": "attack",
+                    "to_hit": 100,
+                    "damage": "1",
+                    "damage_type": "piercing",
+                    "attack_count": 1,
+                    "resource_cost": {},
+                },
+                {
+                    "name": "tail",
+                    "action_type": "attack",
+                    "to_hit": 100,
+                    "damage": "1",
+                    "damage_type": "bludgeoning",
+                    "attack_count": 1,
+                    "resource_cost": {},
+                },
+            ],
+            "bonus_actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "lair_actions": [],
+            "resources": {},
+            "damage_resistances": [],
+            "damage_immunities": [],
+            "damage_vulnerabilities": [],
+            "condition_immunities": [],
+            "script_hooks": {},
+        }
+    ]
+
+    scenario_path = _setup_env(
+        tmp_path / "multiattack_sequence",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 1
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=40,
+        seed=77,
+        run_id="multiattack_sequence",
+    ).summary.to_dict()
+
+    assert summary["per_actor_damage_dealt"]["hydra"]["mean"] >= 1.75
+
+
 class _FixedRng:
     def __init__(self, values: list[int]) -> None:
         self.values = list(values)
