@@ -250,3 +250,43 @@ def test_apply_damage_bundle_does_not_collapse_packets_before_mitigation() -> No
     assert len(resolution.packets) == 2
     assert resolution.applied_total == 7
     assert resolution.applied_total != collapsed
+
+
+def test_bundle_reduction_and_halving_are_order_invariant_before_mitigation() -> None:
+    def _resolve(
+        order: list[str], *, flat_reduction: int | None = None, halve: bool = False
+    ) -> int:
+        target = _actor()
+        target.hp = 50
+        target.max_hp = 50
+        target.damage_resistances = {"slashing"}
+        packet_by_name = {
+            "slashing": {
+                "amount": 5,
+                "damage_type": "slashing",
+                "source": "weapon",
+                "is_magical": False,
+                "crit_expanded": False,
+            },
+            "radiant": {
+                "amount": 5,
+                "damage_type": "radiant",
+                "source": "divine_smite",
+                "is_magical": True,
+                "crit_expanded": False,
+            },
+        }
+        bundle = DamageBundle(packets=[DamagePacket(**packet_by_name[name]) for name in order])
+        if flat_reduction is not None:
+            bundle.apply_flat_reduction(flat_reduction)
+        if halve:
+            bundle.halve_total()
+        return apply_damage_bundle(target, bundle).applied_total
+
+    forward_flat = _resolve(["slashing", "radiant"], flat_reduction=3)
+    reverse_flat = _resolve(["radiant", "slashing"], flat_reduction=3)
+    forward_half = _resolve(["slashing", "radiant"], halve=True)
+    reverse_half = _resolve(["radiant", "slashing"], halve=True)
+
+    assert forward_flat == reverse_flat
+    assert forward_half == reverse_half

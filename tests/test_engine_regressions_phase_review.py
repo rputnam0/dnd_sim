@@ -11,6 +11,7 @@ from dnd_sim.engine import (
     _build_actor_from_character,
     _build_actor_views,
     _build_actor_from_enemy,
+    _create_combat_timing_engine,
     _build_round_metadata,
     _execute_action,
     _run_legendary_actions,
@@ -19,6 +20,7 @@ from dnd_sim.engine import (
 )
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.rules_2014 import DamageRollEvent
 from tests.helpers import build_character, build_enemy
 from tests.test_engine_integration import _setup_env
 
@@ -309,6 +311,72 @@ def test_divine_smite_bundle_resolves_weapon_and_radiant_against_slashing_resist
     assert damage_taken[enemy.actor_id] == 8
     assert enemy.hp == 22
     assert paladin.resources["spell_slot_1"] == 0
+
+
+def test_legacy_raw_damage_listener_adjustment_is_order_invariant_across_packet_permutations() -> (
+    None
+):
+    def _run(*, reverse_bundle_packets: bool) -> int:
+        paladin = _base_actor(actor_id="paladin", team="party")
+        paladin.traits = {"divine smite": {}}
+        paladin.resources = {"spell_slot_1": 1}
+
+        enemy = _base_actor(actor_id="enemy", team="enemy")
+        enemy.ac = 1
+        enemy.hp = 30
+        enemy.max_hp = 30
+        enemy.damage_resistances = {"slashing"}
+
+        action = ActionDefinition(
+            name="longsword",
+            action_type="attack",
+            to_hit=20,
+            damage="1",
+            damage_type="slashing",
+        )
+
+        actors = {paladin.actor_id: paladin, enemy.actor_id: enemy}
+        damage_dealt = {paladin.actor_id: 0, enemy.actor_id: 0}
+        damage_taken = {paladin.actor_id: 0, enemy.actor_id: 0}
+        threat_scores = {paladin.actor_id: 0, enemy.actor_id: 0}
+        resources_spent = {paladin.actor_id: {}, enemy.actor_id: {}}
+        timing_engine = _create_combat_timing_engine(include_default_rules=False)
+
+        if reverse_bundle_packets:
+
+            def _reverse_listener(event: DamageRollEvent) -> None:
+                if event.bundle is None:
+                    return
+                event.bundle.packets = list(reversed(event.bundle.packets))
+                event.raw_damage = event.bundle.raw_total
+
+            timing_engine.subscribe(DamageRollEvent, _reverse_listener, priority=60)
+
+        def _legacy_raw_damage_listener(event: DamageRollEvent) -> None:
+            event.raw_damage = max(0, event.raw_damage - 1)
+
+        timing_engine.subscribe(DamageRollEvent, _legacy_raw_damage_listener, priority=50)
+
+        _execute_action(
+            rng=_FixedRng([15, 4, 4]),
+            actor=paladin,
+            action=action,
+            targets=[enemy],
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=[],
+            timing_engine=timing_engine,
+        )
+
+        return damage_dealt[paladin.actor_id]
+
+    baseline = _run(reverse_bundle_packets=False)
+    permuted = _run(reverse_bundle_packets=True)
+
+    assert baseline == permuted
 
 
 def test_smite_variant_bonus_damage_is_consumed_on_first_melee_hit() -> None:

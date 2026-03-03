@@ -7812,16 +7812,19 @@ def _execute_action(
                 raw_damage = max(0, int(damage_roll_event.raw_damage))
                 bundle_total = damage_bundle.raw_total
                 if raw_damage < bundle_total:
-                    damage_bundle.apply_flat_reduction(bundle_total - raw_damage)
+                    damage_bundle.rebalance_total(raw_damage)
                 elif raw_damage > bundle_total:
-                    _append_damage_packet(
-                        bundle=damage_bundle,
-                        amount=raw_damage - bundle_total,
-                        damage_type=action.damage_type,
-                        packet_source="event_adjustment",
-                        is_magical=attack_is_magical,
-                        crit_expanded=False,
-                    )
+                    if bundle_total > 0:
+                        damage_bundle.rebalance_total(raw_damage)
+                    else:
+                        _append_damage_packet(
+                            bundle=damage_bundle,
+                            amount=raw_damage - bundle_total,
+                            damage_type=action.damage_type,
+                            packet_source="event_adjustment",
+                            is_magical=attack_is_magical,
+                            crit_expanded=False,
+                        )
                 raw_damage = damage_bundle.raw_total
                 resolution = apply_damage_bundle(
                     target,

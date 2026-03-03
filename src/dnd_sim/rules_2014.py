@@ -259,23 +259,63 @@ class DamageBundle:
             return
         self.packets.append(packet)
 
-    def apply_flat_reduction(self, reduction: int) -> None:
-        remaining = max(0, int(reduction))
-        for packet in self.packets:
-            if remaining <= 0:
-                break
-            current = max(0, int(packet.amount))
-            if current <= 0:
+    @staticmethod
+    def _packet_distribution_key(packet: DamagePacket) -> tuple[str, str, int, int]:
+        return (
+            str(packet.damage_type).lower(),
+            str(packet.source).lower(),
+            int(bool(packet.is_magical)),
+            int(bool(packet.crit_expanded)),
+        )
+
+    def rebalance_total(self, target_total: int) -> None:
+        clamped_target = max(0, int(target_total))
+        if clamped_target == 0:
+            for packet in self.packets:
+                packet.amount = 0
+            return
+
+        active: list[tuple[int, DamagePacket, int]] = []
+        for idx, packet in enumerate(self.packets):
+            amount = max(0, int(packet.amount))
+            if amount <= 0:
                 continue
-            applied = min(current, remaining)
-            packet.amount = current - applied
-            remaining -= applied
+            active.append((idx, packet, amount))
+        if not active:
+            return
+
+        current_total = sum(amount for _idx, _packet, amount in active)
+        if current_total <= 0:
+            return
+        if current_total == clamped_target:
+            return
+
+        scaled: dict[int, int] = {}
+        remainder_ranking: list[tuple[int, tuple[str, str, int, int], int]] = []
+        base_sum = 0
+        for idx, packet, amount in active:
+            numerator = amount * clamped_target
+            base = numerator // current_total
+            remainder = numerator % current_total
+            scaled[idx] = base
+            base_sum += base
+            remainder_ranking.append((remainder, self._packet_distribution_key(packet), idx))
+
+        remaining_points = clamped_target - base_sum
+        if remaining_points > 0:
+            remainder_ranking.sort(key=lambda item: (-item[0], item[1]))
+            for _remainder, _key, idx in remainder_ranking[:remaining_points]:
+                scaled[idx] = scaled.get(idx, 0) + 1
+
+        for idx, packet in enumerate(self.packets):
+            packet.amount = max(0, scaled.get(idx, 0))
+
+    def apply_flat_reduction(self, reduction: int) -> None:
+        target_total = max(0, self.raw_total - max(0, int(reduction)))
+        self.rebalance_total(target_total)
 
     def halve_total(self) -> None:
-        total = self.raw_total
-        if total <= 0:
-            return
-        self.apply_flat_reduction(total - (total // 2))
+        self.rebalance_total(self.raw_total // 2)
 
 
 @dataclass(slots=True)
