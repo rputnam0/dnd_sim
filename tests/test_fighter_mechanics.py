@@ -155,6 +155,7 @@ def test_action_surge_is_illegal_outside_fighters_turn_token() -> None:
     surge = next(action for action in actor.actions if action.name == "action_surge")
 
     assert _action_available(actor, surge, turn_token=f"1:{actor.actor_id}") is True
+    assert _action_available(actor, surge) is False
     assert _action_available(actor, surge, turn_token="1:enemy") is False
 
 

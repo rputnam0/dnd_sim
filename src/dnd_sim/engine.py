@@ -9332,10 +9332,8 @@ def _action_available(
         return False
     if not _off_hand_action_legal(actor, action):
         return False
-    if (
-        _has_tag(action, "fighter_action_surge")
-        and turn_token is not None
-        and not _is_same_turn_for_actor(actor, turn_token)
+    if _has_tag(action, "fighter_action_surge") and (
+        turn_token is None or not _is_same_turn_for_actor(actor, turn_token)
     ):
         return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
