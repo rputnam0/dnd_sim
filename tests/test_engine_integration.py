@@ -7,11 +7,13 @@ from pathlib import Path
 import pytest
 
 from dnd_sim.engine import (
+    _action_available,
     _execute_action,
     _resolve_targets_for_action,
     _run_opportunity_attacks_for_movement,
     run_simulation,
 )
+from dnd_sim.inventory import InventoryItem
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import AABB
@@ -296,7 +298,9 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
     assert always_ki > conserve_ki
 
 
-def test_two_weapon_legacy_strategy_does_not_auto_spend_offhand_bonus_action(tmp_path: Path) -> None:
+def test_two_weapon_legacy_strategy_does_not_auto_spend_offhand_bonus_action(
+    tmp_path: Path,
+) -> None:
     def build_dual_wielder(character_id: str, *, include_offhand: bool) -> dict:
         fighter = build_character(
             character_id=character_id,
@@ -674,7 +678,9 @@ def test_legendary_actions_refresh_on_own_turn_before_later_turn_windows(tmp_pat
     assert summary["per_actor_damage_dealt"]["boss"]["mean"] == pytest.approx(3.0)
 
 
-def test_lair_action_does_not_fire_before_initiative_20_if_lair_actor_is_killed(tmp_path: Path) -> None:
+def test_lair_action_does_not_fire_before_initiative_20_if_lair_actor_is_killed(
+    tmp_path: Path,
+) -> None:
     striker = build_character("striker", "Striker", 120, 14, 100, "400")
     striker["initiative_mod"] = 30
     party = [striker]
@@ -1596,3 +1602,134 @@ def test_legacy_strategy_does_not_auto_spend_action_surge(tmp_path: Path) -> Non
     )
 
     assert artifacts.trial_results[0].resources_spent["hero"].get("action_surge", 0) == 0
+
+
+def test_ammunition_attack_consumes_ammo_and_becomes_illegal_when_empty() -> None:
+    rng = _FixedRng([15, 15, 1, 1])
+    archer = _actor("archer", "party")
+    target = _actor("target", "enemy")
+    target.hp = 99
+    target.max_hp = 99
+
+    arrow_attack = ActionDefinition(
+        name="longbow_shot",
+        action_type="attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=5,
+        damage="1",
+        damage_type="piercing",
+        attack_count=2,
+        item_id="longbow",
+        weapon_properties=["ammunition", "ranged", "two_handed"],
+    )
+    archer.actions = [arrow_attack]
+    archer.inventory.add_item(
+        InventoryItem(
+            item_id="longbow",
+            name="Longbow",
+            equip_slots=("main_hand",),
+            metadata={"ammo_item_id": "arrows"},
+        )
+    )
+    archer.inventory.add_item(
+        InventoryItem(
+            item_id="arrows",
+            name="Arrows",
+            quantity=2,
+            metadata={"ammo_type": "arrow"},
+        )
+    )
+    archer.inventory.equip_item("longbow")
+
+    actors = {archer.actor_id: archer, target.actor_id: target}
+    damage_dealt = {archer.actor_id: 0, target.actor_id: 0}
+    damage_taken = {archer.actor_id: 0, target.actor_id: 0}
+    threat_scores = {archer.actor_id: 0, target.actor_id: 0}
+    resources_spent = {archer.actor_id: {}, target.actor_id: {}}
+
+    assert _action_available(archer, arrow_attack) is True
+
+    _execute_action(
+        rng=rng,
+        actor=archer,
+        action=arrow_attack,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "arrows" not in archer.inventory.items
+    assert resources_spent["archer"]["ammo:arrows"] == 2
+    assert _action_available(archer, arrow_attack) is False
+
+
+def test_shield_master_requires_equipped_shield() -> None:
+    caster = _actor("caster", "enemy")
+    unshielded = _actor("unshielded", "party")
+    shielded = _actor("shielded", "party")
+    unshielded.traits = {"shield master": {}}
+    shielded.traits = {"shield master": {}}
+    shielded.inventory.add_item(
+        InventoryItem(
+            item_id="shield",
+            name="Shield",
+            equip_slots=("shield",),
+            metadata={"armor_type": "shield"},
+        )
+    )
+    shielded.inventory.equip_item("shield")
+
+    action = ActionDefinition(
+        name="burning_hands",
+        action_type="save",
+        save_dc=10,
+        save_ability="dex",
+        half_on_save=True,
+        damage="10",
+        damage_type="fire",
+    )
+
+    actors = {
+        caster.actor_id: caster,
+        unshielded.actor_id: unshielded,
+        shielded.actor_id: shielded,
+    }
+    damage_dealt = {caster.actor_id: 0, unshielded.actor_id: 0, shielded.actor_id: 0}
+    damage_taken = {caster.actor_id: 0, unshielded.actor_id: 0, shielded.actor_id: 0}
+    threat_scores = {caster.actor_id: 0, unshielded.actor_id: 0, shielded.actor_id: 0}
+    resources_spent = {caster.actor_id: {}, unshielded.actor_id: {}, shielded.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([7]),
+        actor=caster,
+        action=action,
+        targets=[unshielded],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    _execute_action(
+        rng=_FixedRng([7]),
+        actor=caster,
+        action=action,
+        targets=[shielded],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert unshielded.hp == unshielded.max_hp - 5
+    assert unshielded.reaction_available is True
+    assert shielded.hp == shielded.max_hp
+    assert shielded.reaction_available is False
