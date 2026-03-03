@@ -4462,6 +4462,39 @@ def _apply_inferred_fighter_resources(
             _ensure_resource_cap(actor, "superiority_dice", superiority_dice)
 
 
+def _barbarian_rage_uses_for_level(barbarian_level: int) -> int:
+    if barbarian_level <= 0:
+        return 0
+    if barbarian_level >= 20:
+        # Unlimited in tabletop rules; use a stable high cap for simulation bookkeeping.
+        return 99
+    if barbarian_level >= 17:
+        return 6
+    if barbarian_level >= 12:
+        return 5
+    if barbarian_level >= 6:
+        return 4
+    if barbarian_level >= 3:
+        return 3
+    return 2
+
+
+def _apply_inferred_barbarian_resources(
+    actor: ActorRuntimeState,
+    *,
+    class_level_text: str,
+) -> None:
+    if not _has_trait(actor, "rage"):
+        return
+    barbarian_level = _parse_class_level(class_level_text, "barbarian")
+    if barbarian_level <= 0 and not actor.class_levels:
+        barbarian_level = int(actor.level)
+    rage_uses = _barbarian_rage_uses_for_level(barbarian_level)
+    if rage_uses <= 0:
+        return
+    _ensure_resource_cap(actor, "rage", rage_uses)
+
+
 def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
     if not _has_trait(actor, "arcane recovery"):
         return
@@ -4646,6 +4679,7 @@ def _build_actor_from_character(
     _apply_artificer_infusion_passives(actor)
     _apply_inferred_wizard_resources(actor)
     _apply_inferred_fighter_resources(actor, class_level_text=class_level_text)
+    _apply_inferred_barbarian_resources(actor, class_level_text=class_level_text)
     _register_actor_feature_hooks(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
@@ -8290,8 +8324,12 @@ def _tick_conditions_for_actor(
     tick_boundary = _normalize_duration_boundary(boundary)
 
     if tick_boundary == "turn_start":
-        if has_condition(actor, "raging") and not actor.rage_sustained_since_last_turn:
-            _remove_condition(actor, "raging")
+        if has_condition(actor, "raging"):
+            persistent_rage_active = _has_trait(actor, "persistent rage")
+            if has_condition(actor, "unconscious") or actor.dead or actor.hp <= 0:
+                _remove_condition(actor, "raging")
+            elif not persistent_rage_active and not actor.rage_sustained_since_last_turn:
+                _remove_condition(actor, "raging")
         actor.rage_sustained_since_last_turn = False
 
     if not actor.effect_instances:
@@ -9324,6 +9362,11 @@ def _action_available(
 ) -> bool:
     if action.name == "lay_on_hands" and actor.resources.get("lay_on_hands_pool", 0) <= 0:
         return False
+    if action.name == "rage_activation":
+        if not _has_trait(actor, "rage"):
+            return False
+        if has_condition(actor, "raging"):
+            return False
     if action.max_uses is not None and actor.per_action_uses.get(action.name, 0) >= action.max_uses:
         return False
     if action.recharge and not actor.recharge_ready.get(action.name, True):
@@ -12067,7 +12110,7 @@ def _execute_action(
                     is_magical=attack_is_magical,
                     crit_expanded=_damage_expr_was_crit_expanded(damage_expr, crit=roll.crit),
                 )
-                if roll.crit and _has_trait(actor, "brutal critical") and not is_ranged:
+                if roll.crit and _has_trait_marker(actor, "brutal critical") and not is_ranged:
                     brutal_extra = 0
                     if actor.level >= 17:
                         brutal_extra = 3

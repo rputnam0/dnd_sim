@@ -599,6 +599,12 @@ def apply_damage_bundle(
     if adjusted > 0 and "raging" in target.conditions:
         target.rage_sustained_since_last_turn = True
 
+    def _end_rage_if_active() -> None:
+        if "raging" not in target.conditions:
+            return
+        _remove_condition_everywhere(target, "raging")
+        target.rage_sustained_since_last_turn = False
+
     remaining = adjusted
     if target.temp_hp > 0 and remaining > 0:
         consumed = min(target.temp_hp, remaining)
@@ -610,6 +616,7 @@ def apply_damage_bundle(
         target.stable = False
         target.death_failures = max(3, target.death_failures)
         target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
+        _end_rage_if_active()
 
     if target.hp <= 0 and not target.dead:
         if remaining >= target.max_hp:
@@ -636,6 +643,7 @@ def apply_damage_bundle(
         if "prone" not in target.condition_immunities and "all" not in target.condition_immunities:
             downed_conditions.add("prone")
         target.update_manual_conditions(downed_conditions)
+        _end_rage_if_active()
         if not target.was_downed:
             target.downed_count += 1
             target.was_downed = True
