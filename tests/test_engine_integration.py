@@ -712,6 +712,87 @@ def test_schema_target_mode_all_enemies_hits_each_party_member(tmp_path: Path) -
     assert summary["per_actor_damage_taken"]["bravo"]["mean"] >= 4.5
 
 
+def test_schema_total_cover_blocks_line_of_effect_for_all_enemies_save(tmp_path: Path) -> None:
+    party = [
+        build_character("alpha", "Alpha", 30, 15, 6, "1d8+3"),
+        build_character("bravo", "Bravo", 30, 15, 6, "1d8+3"),
+    ]
+    enemies = [
+        {
+            "identity": {"enemy_id": "storm_node", "name": "Storm Node", "team": "enemy"},
+            "stat_block": {
+                "max_hp": 300,
+                "ac": 12,
+                "initiative_mod": 100,
+                "dex_mod": 0,
+                "con_mod": 2,
+                "save_mods": {"dex": 0, "con": 2, "wis": 0},
+            },
+            "actions": [
+                {
+                    "name": "storm_burst",
+                    "action_type": "save",
+                    "save_dc": 30,
+                    "save_ability": "dex",
+                    "half_on_save": False,
+                    "damage": "5",
+                    "damage_type": "lightning",
+                    "target_mode": "all_enemies",
+                    "resource_cost": {},
+                }
+            ],
+            "bonus_actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "lair_actions": [],
+            "resources": {},
+            "damage_resistances": [],
+            "damage_immunities": [],
+            "damage_vulnerabilities": [],
+            "condition_immunities": [],
+            "script_hooks": {},
+        }
+    ]
+
+    scenario_path = _setup_env(
+        tmp_path / "schema_total_cover",
+        party=party,
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "optimal_expected_damage",
+        },
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["termination_rules"]["max_rounds"] = 1
+    payload["battlefield"] = {
+        "obstacles": [
+            {
+                "min_pos": [-5.0, 10.0, -5.0],
+                "max_pos": [5.0, 20.0, 5.0],
+                "cover_level": "TOTAL",
+            }
+        ]
+    }
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = load_strategy_registry(loaded)
+    summary = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=20,
+        seed=59,
+        run_id="schema_total_cover",
+    ).summary.to_dict()
+
+    assert summary["per_actor_damage_taken"]["alpha"]["mean"] == 0.0
+    assert summary["per_actor_damage_taken"]["bravo"]["mean"] == 0.0
+
+
 def test_schema_effect_damage_and_resource_change_are_tracked(tmp_path: Path) -> None:
     party = [
         build_character(
