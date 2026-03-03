@@ -1,6 +1,17 @@
 from __future__ import annotations
 
-from dnd_sim.engine import _build_character_actions, _execute_action, _find_best_bonus_action
+import random
+
+from dnd_sim.engine import (
+    _action_available,
+    _build_actor_from_character,
+    _build_character_actions,
+    _execute_action,
+    _find_best_bonus_action,
+    _spend_resources,
+    _tick_conditions_for_actor,
+    short_rest,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 
@@ -45,6 +56,27 @@ def _combat_trackers(
     return damage_dealt, damage_taken, threat_scores, resources_spent
 
 
+def _monk_character(*, ki: int) -> dict:
+    return {
+        "character_id": "monk_legality",
+        "name": "Monk",
+        "class_level": "Monk 5",
+        "max_hp": 38,
+        "ac": 16,
+        "speed_ft": 30,
+        "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 10, "wis": 16, "cha": 8},
+        "save_mods": {"str": 0, "dex": 7, "con": 2, "int": 0, "wis": 6, "cha": -1},
+        "skill_mods": {},
+        "attacks": [
+            {"name": "Unarmed Strike", "to_hit": 7, "damage": "1d6+4", "damage_type": "bludgeoning"}
+        ],
+        "resources": {"ki": {"max": ki}},
+        "traits": ["Extra Attack", "Martial Arts", "Flurry of Blows"],
+        "raw_fields": [],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+
+
 def test_build_character_actions_monk_flurry_and_ki_economy() -> None:
     character = {
         "character_id": "monk",
@@ -71,6 +103,24 @@ def test_build_character_actions_monk_flurry_and_ki_economy() -> None:
     assert "signature" not in action_by_name
 
 
+def test_monk_bonus_actions_require_attack_action_timing_legality() -> None:
+    monk = _build_actor_from_character(_monk_character(ki=2), traits_db={})
+    martial_arts = next(action for action in monk.actions if action.name == "martial_arts_bonus")
+    flurry = next(action for action in monk.actions if action.name == "flurry_of_blows")
+
+    monk.took_attack_action_this_turn = False
+    assert _action_available(monk, martial_arts) is False
+    assert _action_available(monk, flurry) is False
+
+    monk.took_attack_action_this_turn = True
+    assert _action_available(monk, martial_arts) is True
+    assert _action_available(monk, flurry) is True
+
+    monk.resources["ki"] = 0
+    assert _action_available(monk, martial_arts) is True
+    assert _action_available(monk, flurry) is False
+
+
 def test_find_best_bonus_action_falls_back_to_martial_arts_when_ki_is_empty() -> None:
     monk = _actor("monk", "party")
     monk.took_attack_action_this_turn = True
@@ -95,6 +145,18 @@ def test_find_best_bonus_action_falls_back_to_martial_arts_when_ki_is_empty() ->
 
     assert selected is not None
     assert selected.name == "martial_arts_bonus"
+
+
+def test_ki_spend_then_short_rest_restores_pool() -> None:
+    monk = _build_actor_from_character(_monk_character(ki=2), traits_db={})
+    flurry = next(action for action in monk.actions if action.name == "flurry_of_blows")
+
+    spent = _spend_resources(monk, flurry.resource_cost)
+    assert spent == {"ki": 1}
+    assert monk.resources["ki"] == 1
+
+    short_rest(monk)
+    assert monk.resources["ki"] == 2
 
 
 def test_stunning_strike_spends_ki_on_hit_and_applies_stunned() -> None:
@@ -258,3 +320,50 @@ def test_open_hand_riders_apply_prone_push_and_reaction_lock() -> None:
     )
     assert lock_target.reaction_available is False
     assert "open_hand_no_reactions" in lock_target.conditions
+
+
+def test_open_hand_reaction_lock_persists_until_later_turn_start() -> None:
+    monk = _actor("monk_lock_timing", "party")
+    monk.level = 5
+    monk.traits = {"open hand technique": {}}
+    target = _actor("target_lock_timing", "enemy")
+    target.actions = [
+        ActionDefinition(
+            name="riposte",
+            action_type="attack",
+            action_cost="reaction",
+            to_hit=0,
+            damage="1",
+        )
+    ]
+    lock_action = ActionDefinition(
+        name="flurry_of_blows",
+        action_type="attack",
+        to_hit=8,
+        damage="1",
+        tags=["flurry_of_blows", "open_hand_rider:no_reactions"],
+    )
+    damage_dealt, damage_taken, threat_scores, resources_spent = _combat_trackers(monk, target)
+
+    _execute_action(
+        rng=FixedRng([15]),
+        actor=monk,
+        action=lock_action,
+        targets=[target],
+        actors={monk.actor_id: monk, target.actor_id: target},
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    target.reaction_available = True
+    _tick_conditions_for_actor(random.Random(1), target, boundary="turn_start")
+    assert "open_hand_no_reactions" in target.conditions
+    assert _action_available(target, target.actions[0]) is False
+
+    target.reaction_available = True
+    _tick_conditions_for_actor(random.Random(2), target, boundary="turn_start")
+    assert "open_hand_no_reactions" not in target.conditions
+    assert _action_available(target, target.actions[0]) is True

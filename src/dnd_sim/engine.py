@@ -62,6 +62,7 @@ from dnd_sim.rules_2014 import (
     apply_damage,
     apply_damage_bundle,
     attack_roll,
+    monk_bonus_action_legal,
     parse_damage_expression,
     resolve_death_save,
     roll_damage,
@@ -9335,6 +9336,8 @@ def _action_available(
     if _has_tag(action, "fighter_action_surge") and (
         turn_token is None or not _is_same_turn_for_actor(actor, turn_token)
     ):
+        return False
+    if not monk_bonus_action_legal(actor, action):
         return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False
