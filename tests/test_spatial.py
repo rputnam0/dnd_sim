@@ -6,6 +6,7 @@ from dnd_sim.spatial import (
     distance_euclidean,
     find_path,
     move_towards,
+    path_movement_cost,
 )
 
 
@@ -89,3 +90,36 @@ def test_find_path_avoids_occupied_space() -> None:
     assert path[-1] == target
     assert len(path) > 2
     assert (15.0, 0.0, 0.0) not in path
+
+
+def test_find_path_routes_around_blocking_terrain_cells() -> None:
+    start = (0.0, 0.0, 0.0)
+    target = (20.0, 0.0, 0.0)
+    obstacles = [AABB(min_pos=(10.0, -5.0, -1.0), max_pos=(10.0, 5.0, 1.0), cover_level="TOTAL")]
+
+    path = find_path(start, target, obstacles=obstacles)
+
+    assert path[0] == start
+    assert path[-1] == target
+    assert len(path) > 2
+    assert any(abs(waypoint[1]) >= 5.0 for waypoint in path[1:-1])
+
+
+def test_difficult_terrain_doubles_movement_cost() -> None:
+    path = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (10.0, 0.0, 0.0)]
+    difficult = [(5.0, 0.0, 0.0)]
+
+    assert path_movement_cost(path) == 10.0
+    assert path_movement_cost(path, difficult_terrain_positions=difficult) == 15.0
+
+
+def test_find_path_handles_no_route_gracefully() -> None:
+    start = (0.0, 0.0, 0.0)
+    target = (10.0, 0.0, 0.0)
+    blocked_target = [
+        AABB(min_pos=(9.0, -1.0, -1.0), max_pos=(11.0, 1.0, 1.0), cover_level="TOTAL")
+    ]
+
+    path = find_path(start, target, obstacles=blocked_target)
+
+    assert path == [start]
