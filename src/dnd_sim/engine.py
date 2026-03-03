@@ -4397,7 +4397,10 @@ def _spend_action_resource_cost(
     resources_spent: dict[str, dict[str, int]],
     *,
     spell_cast_request: SpellCastRequest | None = None,
+    turn_token: str | None = None,
 ) -> bool:
+    if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
+        return False
     if not _can_pay_resource_cost(actor, action, spell_cast_request=spell_cast_request):
         return False
 
@@ -4962,6 +4965,7 @@ def _run_opportunity_attacks_for_movement(
             reaction_attack,
             resources_spent,
             spell_cast_request=spell_cast_request,
+            turn_token=turn_token,
         ):
             continue
         enemy.reaction_available = False
@@ -6005,6 +6009,7 @@ def _execute_declared_action_step_or_error(
         action,
         resources_spent,
         spell_cast_request=spell_cast_request,
+        turn_token=turn_token,
     ):
         _raise_turn_declaration_error(
             actor=actor,
@@ -8263,6 +8268,7 @@ def _dispatch_combat_event(
             action,
             resources_spent,
             spell_cast_request=spell_cast_request,
+            turn_token=turn_token,
         ):
             continue
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
@@ -8644,6 +8650,7 @@ def _trigger_readied_actions(
                                 reaction_action,
                                 resources_spent,
                                 spell_cast_request=spell_cast_request,
+                                turn_token=turn_token,
                             )
                         if targets and paid_reaction_cost:
                             actor.reaction_available = False
@@ -8714,6 +8721,7 @@ def _trigger_readied_actions(
                 reaction_action,
                 resources_spent,
                 spell_cast_request=spell_cast_request,
+                turn_token=turn_token,
             ):
                 continue
 
@@ -10947,6 +10955,7 @@ def _run_lair_actions(
             action,
             resources_spent,
             spell_cast_request=spell_cast_request,
+            turn_token=lair_turn_token,
         ):
             continue
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
@@ -11023,6 +11032,7 @@ def _run_legendary_actions(
             action,
             resources_spent,
             spell_cast_request=spell_cast_request,
+            turn_token=turn_token,
         ):
             continue
         actor.per_action_uses[action.name] = actor.per_action_uses.get(action.name, 0) + 1
@@ -11590,6 +11600,7 @@ def run_simulation(
                         action,
                         resources_spent,
                         spell_cast_request=spell_cast_request,
+                        turn_token=turn_token,
                     ):
                         _resolve_turn_end(actor, turn_token)
                         continue
@@ -11669,6 +11680,7 @@ def run_simulation(
                                     bonus_action,
                                     resources_spent,
                                     spell_cast_request=bonus_spell_cast_request,
+                                    turn_token=turn_token,
                                 ):
                                     actor.per_action_uses[bonus_action.name] = (
                                         actor.per_action_uses.get(bonus_action.name, 0) + 1
@@ -11751,6 +11763,7 @@ def run_simulation(
                                         surge_action,
                                         resources_spent,
                                         spell_cast_request=surge_spell_cast_request,
+                                        turn_token=turn_token,
                                     ):
 
                                         actor.per_action_uses[surge_action.name] = (
