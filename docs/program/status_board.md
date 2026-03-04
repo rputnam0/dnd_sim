@@ -126,3 +126,5 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - 2026-03-04: Subwave 4F launched for `SPL-03` and `SPL-04` on `feat/spl-03-area-family` and `feat/spl-04-summon-conjure-transform`.
 - 2026-03-04: Subwave 4F PRs merged (`#78`, `#77`) to `int/wave-4-integration` after multi-pass explorer and gh-api remediation loops, plus mandatory rebases.
 - 2026-03-04: Final Wave 4 integration gate passed on `int/wave-4-integration` head `c7e3777` (`uv run --with pytest python -m pytest -q`, exit code 0).
+- 2026-03-04: Final consolidation PR #79 (`int/wave-4-integration` -> `main`) merged with commit `547b27d`; Wave 4 marked complete.
+- 2026-03-04: Confirmed no open Wave 4 PRs remain (`feat/chr-*`, `feat/spl-*`, `int/wave-4-integration`).

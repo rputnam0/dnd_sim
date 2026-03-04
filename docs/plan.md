@@ -40,4 +40,4 @@ This file is now the entrypoint for the full multiagent implementation program.
 - [x] Subwave 4E complete (`SPL-02`, `SPL-05`) - merged via PRs `#75`, `#76` on 2026-03-04.
 - [x] Subwave 4F complete (`SPL-03`, `SPL-04`) - merged via PRs `#78`, `#77` on 2026-03-04.
 - [x] Integration gate complete on `int/wave-4-integration` (full suite + tracker sync) - passed on `c7e3777` on 2026-03-04.
-- [ ] Final consolidation PR merged (`int/wave-4-integration` -> `main`).
+- [x] Final consolidation PR merged (`int/wave-4-integration` -> `main`) via PR `#79` on 2026-03-04.
