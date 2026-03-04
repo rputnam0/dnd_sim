@@ -19,7 +19,7 @@ from dnd_sim.engine import (
 from dnd_sim.io import load_character_db, load_scenario
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
-from tests.helpers import build_enemy
+from tests.helpers import build_enemy, with_class_levels
 from tests.test_engine_integration import _setup_env
 
 
@@ -101,7 +101,7 @@ def _wizard_character(
         payload["class_levels"] = dict(class_levels)
     if current_resources is not None:
         payload["current_resources"] = dict(current_resources)
-    return payload
+    return with_class_levels(payload)
 
 
 def _enemy(actor_id: str) -> ActorRuntimeState:

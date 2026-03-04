@@ -19,7 +19,7 @@ from dnd_sim.engine import (
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
-from tests.helpers import build_enemy
+from tests.helpers import build_enemy, with_class_levels
 from tests.test_engine_integration import _setup_env
 
 
@@ -76,7 +76,7 @@ def _paladin_character(
     }
     if class_levels is not None:
         payload["class_levels"] = dict(class_levels)
-    return payload
+    return with_class_levels(payload)
 
 
 def _actor(actor_id: str, team: str) -> ActorRuntimeState:
@@ -115,7 +115,7 @@ def test_build_actor_infers_paladin_package_traits_resources_and_action_from_mul
     assert any(action.name == "lay_on_hands" for action in actor.actions)
 
 
-def test_explicit_lay_on_hands_trait_keeps_legacy_pool_with_non_paladin_class_levels() -> None:
+def test_explicit_lay_on_hands_trait_does_not_infer_pool_without_paladin_levels() -> None:
     character = _paladin_character(
         level=5,
         class_level="Fighter 5",
@@ -125,8 +125,8 @@ def test_explicit_lay_on_hands_trait_keeps_legacy_pool_with_non_paladin_class_le
 
     actor = _build_actor_from_character(character, traits_db={})
 
-    assert actor.max_resources["lay_on_hands_pool"] == 25
-    assert actor.resources["lay_on_hands_pool"] == 25
+    assert "lay_on_hands_pool" not in actor.max_resources
+    assert "lay_on_hands_pool" not in actor.resources
 
 
 def test_lay_on_hands_pool_spend_short_rest_and_long_rest_recovery() -> None:

@@ -14,6 +14,7 @@ from dnd_sim.engine import (
     _mark_action_cost_used,
 )
 from dnd_sim.models import ActorRuntimeState
+from tests.helpers import with_class_levels
 
 
 class FixedRng:
@@ -27,36 +28,38 @@ class FixedRng:
 
 
 def _gwm_character(*, damage: str) -> dict:
-    return {
-        "character_id": "gwm_hero",
-        "name": "GWM Hero",
-        "class_level": "Fighter 8",
-        "max_hp": 50,
-        "ac": 16,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 18,
-            "dex": 12,
-            "con": 14,
-            "int": 10,
-            "wis": 10,
-            "cha": 10,
-        },
-        "save_mods": {"str": 4, "dex": 1, "con": 2, "int": 0, "wis": 0, "cha": 0},
-        "skill_mods": {},
-        "attacks": [
-            {
-                "name": "Greatsword",
-                "to_hit": 8,
-                "damage": damage,
-                "damage_type": "slashing",
-            }
-        ],
-        "resources": {},
-        "traits": ["Great Weapon Master"],
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": "gwm_hero",
+            "name": "GWM Hero",
+            "class_level": "Fighter 8",
+            "max_hp": 50,
+            "ac": 16,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 18,
+                "dex": 12,
+                "con": 14,
+                "int": 10,
+                "wis": 10,
+                "cha": 10,
+            },
+            "save_mods": {"str": 4, "dex": 1, "con": 2, "int": 0, "wis": 0, "cha": 0},
+            "skill_mods": {},
+            "attacks": [
+                {
+                    "name": "Greatsword",
+                    "to_hit": 8,
+                    "damage": damage,
+                    "damage_type": "slashing",
+                }
+            ],
+            "resources": {},
+            "traits": ["Great Weapon Master"],
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def _enemy(actor_id: str, *, hp: int) -> ActorRuntimeState:
@@ -234,29 +237,31 @@ def test_gwm_trigger_is_not_reusable_on_later_turn() -> None:
 
 
 def _martial_character(*, traits: list[str], attacks: list[dict]) -> dict:
-    return {
-        "character_id": "martial_tester",
-        "name": "Martial Tester",
-        "class_level": "Fighter 5",
-        "max_hp": 40,
-        "ac": 16,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 10,
-            "dex": 18,
-            "con": 14,
-            "int": 10,
-            "wis": 10,
-            "cha": 10,
-        },
-        "save_mods": {"str": 0, "dex": 4, "con": 2, "int": 0, "wis": 0, "cha": 0},
-        "skill_mods": {},
-        "attacks": attacks,
-        "resources": {},
-        "traits": traits,
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": "martial_tester",
+            "name": "Martial Tester",
+            "class_level": "Fighter 5",
+            "max_hp": 40,
+            "ac": 16,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 10,
+                "dex": 18,
+                "con": 14,
+                "int": 10,
+                "wis": 10,
+                "cha": 10,
+            },
+            "save_mods": {"str": 0, "dex": 4, "con": 2, "int": 0, "wis": 0, "cha": 0},
+            "skill_mods": {},
+            "attacks": attacks,
+            "resources": {},
+            "traits": traits,
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def _dual_light_attacks() -> list[dict]:
@@ -329,7 +334,9 @@ def test_two_weapon_offhand_baseline_keeps_negative_ability_modifier() -> None:
     character["ability_scores"]["dex"] = 8
     character["save_mods"]["dex"] = -1
     offhand = next(
-        attack for attack in character["attacks"] if attack["attack_profile_id"] == "offhand_profile"
+        attack
+        for attack in character["attacks"]
+        if attack["attack_profile_id"] == "offhand_profile"
     )
     offhand["damage"] = "1d4-1"
 

@@ -4,6 +4,8 @@ import random
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 import dnd_sim.engine as engine_module
 from dnd_sim.engine import (
     _apply_effect,
@@ -70,12 +72,26 @@ def test_parse_recharge_threshold_supports_common_monster_formats() -> None:
     assert _parse_recharge_threshold("Recharge seven") is None
 
 
-def test_class_levels_payload_falls_back_to_class_level_text_when_explicit_levels_empty() -> None:
+def test_class_levels_payload_requires_non_empty_mapping() -> None:
     character = {"class_levels": {}, "class_level": "Rogue 5 / Fighter 1"}
 
-    class_levels = _class_levels_from_character_payload(character)
+    with pytest.raises(ValueError, match="class_levels mapping is required"):
+        _class_levels_from_character_payload(character)
 
-    assert class_levels == {"rogue": 5, "fighter": 1}
+
+def test_build_actor_rejects_missing_class_levels_mapping() -> None:
+    character = build_character(
+        character_id="missing_levels",
+        name="Missing Levels",
+        max_hp=20,
+        ac=13,
+        to_hit=5,
+        damage="1d8+2",
+    )
+    character.pop("class_levels", None)
+
+    with pytest.raises(ValueError, match="class_levels mapping is required"):
+        _build_actor_from_character(character, traits_db={})
 
 
 def test_saving_throw_consumes_legendary_resistance_on_failed_save() -> None:
@@ -102,6 +118,7 @@ def test_build_actor_applies_passive_max_hp_trait() -> None:
         "character_id": "hero",
         "name": "Hero",
         "class_level": "Fighter 8",
+        "class_levels": {"fighter": 8},
         "max_hp": 20,
         "ac": 15,
         "speed_ft": 30,
@@ -141,6 +158,7 @@ def test_character_without_attacks_gets_single_copy_of_standard_actions() -> Non
         "character_id": "scholar",
         "name": "Scholar",
         "class_level": "Wizard 5",
+        "class_levels": {"wizard": 5},
         "max_hp": 20,
         "ac": 12,
         "speed_ft": 30,
@@ -167,6 +185,7 @@ def test_build_actor_respects_current_hp_override_after_passives() -> None:
         "character_id": "hero",
         "name": "Hero",
         "class_level": "Fighter 8",
+        "class_levels": {"fighter": 8},
         "max_hp": 20,
         "current_hp": 18,
         "ac": 15,
@@ -207,6 +226,7 @@ def test_build_actor_applies_current_resources_override() -> None:
         "character_id": "hero",
         "name": "Hero",
         "class_level": "Monk 8",
+        "class_levels": {"monk": 8},
         "max_hp": 20,
         "ac": 15,
         "speed_ft": 30,
@@ -970,6 +990,7 @@ def test_lay_on_hands_pool_heals_by_missing_hp_and_tracks_spend() -> None:
         "character_id": "paladin",
         "name": "Paladin",
         "class_level": "Paladin 5",
+        "class_levels": {"paladin": 5},
         "max_hp": 40,
         "ac": 16,
         "speed_ft": 30,

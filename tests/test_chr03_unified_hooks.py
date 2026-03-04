@@ -28,15 +28,15 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
     )
 
 
-def test_chr03_trait_hook_schema_accepts_type_alias_for_reaction_hook() -> None:
+def test_chr03_trait_hook_schema_accepts_canonical_reaction_hook_fields() -> None:
     issues = validate_rule_mechanics_payload(
         kind="trait",
         payload={
             "name": "Reflexive Strikes",
-            "type": "subclass_feature",
+            "source_type": "subclass",
             "mechanics": [
                 {
-                    "type": "reaction_attack",
+                    "effect_type": "reaction_attack",
                     "trigger": "creature_attacks_ally_within_5ft",
                 }
             ],
@@ -63,7 +63,7 @@ def test_chr03_dispatch_runs_subclass_reaction_attack_hook() -> None:
     reactor.traits = {
         "battle_reflexes": {
             "name": "Battle Reflexes",
-            "type": "subclass_feature",
+            "source_type": "subclass",
             "mechanics": [
                 {
                     "effect_type": "reaction_attack",
@@ -135,7 +135,7 @@ def test_chr03_dispatch_reports_invalid_hook_trigger_and_skips() -> None:
     reactor.traits = {
         "bad_hook_trait": {
             "name": "Bad Hook Trait",
-            "type": "feat",
+            "source_type": "feat",
             "mechanics": [
                 {
                     "effect_type": "reaction_attack",

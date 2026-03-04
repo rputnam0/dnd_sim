@@ -18,17 +18,33 @@ from dnd_sim.strategy_api import (
 from tests.helpers import build_enemy, write_json
 
 
-class LegacyBasicStrategy(BaseStrategy):
-    def choose_action(self, actor, state):
-        return super().choose_action(actor, state)
+def _can_reach_melee(actor, target) -> bool:
+    distance = max(
+        abs(float(actor.position[0]) - float(target.position[0])),
+        abs(float(actor.position[1]) - float(target.position[1])),
+        abs(float(actor.position[2]) - float(target.position[2])),
+    )
+    return distance <= float(actor.movement_remaining) + 5.0
 
-    def choose_targets(self, actor, intent, state):
+
+class LegacyBasicStrategy(BaseStrategy):
+    def declare_turn(self, actor, state):
         enemies = [
             view for view in state.actors.values() if view.team != actor.team and view.hp > 0
         ]
         if not enemies:
-            return []
-        return [TargetRef(actor_id=enemies[0].actor_id)]
+            return TurnDeclaration()
+        target = enemies[0]
+        movement_path = [actor.position, target.position]
+        if not _can_reach_melee(actor, target):
+            return TurnDeclaration(movement_path=movement_path)
+        return TurnDeclaration(
+            movement_path=movement_path,
+            action=DeclaredAction(
+                action_name="basic",
+                targets=[TargetRef(actor_id=target.actor_id)],
+            )
+        )
 
 
 class ExplicitBasicPlanStrategy(BaseStrategy):
@@ -39,13 +55,11 @@ class ExplicitBasicPlanStrategy(BaseStrategy):
         if not enemies:
             return TurnDeclaration()
         target = enemies[0]
-        move_to = (
-            float(target.position[0]),
-            float(target.position[1] - 5.0),
-            float(target.position[2]),
-        )
+        movement_path = [actor.position, target.position]
+        if not _can_reach_melee(actor, target):
+            return TurnDeclaration(movement_path=movement_path)
         return TurnDeclaration(
-            movement_path=[actor.position, move_to],
+            movement_path=movement_path,
             action=DeclaredAction(
                 action_name="basic",
                 targets=[TargetRef(actor_id=target.actor_id)],
@@ -62,17 +76,8 @@ class IllegalBonusPlanStrategy(BaseStrategy):
         if not enemies:
             return TurnDeclaration()
         target = enemies[0]
-        move_to = (
-            float(target.position[0]),
-            float(target.position[1] - 5.0),
-            float(target.position[2]),
-        )
         return TurnDeclaration(
-            movement_path=[actor.position, move_to],
-            action=DeclaredAction(
-                action_name="basic",
-                targets=[TargetRef(actor_id=target.actor_id)],
-            ),
+            movement_path=[actor.position, target.position],
             bonus_action=DeclaredAction(
                 action_name="basic",
                 targets=[TargetRef(actor_id=target.actor_id)],
@@ -88,8 +93,20 @@ class TurnOnlyNoLegacyFallbackStrategy:
         return None
 
 
-class MixedModeDeclareTurnNoneStrategy(BaseStrategy):
+class LegacyMethodsIgnoredWhenDeclareTurnNoneStrategy:
     def declare_turn(self, actor, state):
+        return None
+
+    def choose_action(self, actor, state):
+        raise AssertionError("Engine should never call choose_action fallback")
+
+    def choose_targets(self, actor, intent, state):
+        raise AssertionError("Engine should never call choose_targets fallback")
+
+    def decide_resource_spend(self, actor, intent, state):
+        raise AssertionError("Engine should never call decide_resource_spend fallback")
+
+    def on_round_start(self, state):
         return None
 
 
@@ -98,11 +115,17 @@ class NoTurnNoLegacyStrategy:
         return None
 
 
+class NoRoundStartStrategy:
+    def declare_turn(self, actor, state):
+        return TurnDeclaration()
+
+
 def _build_action_surge_character(character_id: str) -> dict:
     return {
         "character_id": character_id,
         "name": "Planner",
         "class_level": "Fighter 8",
+        "class_levels": {"fighter": 8},
         "max_hp": 34,
         "ac": 15,
         "speed_ft": 30,
@@ -151,6 +174,7 @@ def _setup_env(tmp_path: Path) -> Path:
                     "character_id": "hero",
                     "name": "Planner",
                     "class_level": "Fighter 8",
+                    "class_levels": {"fighter": 8},
                     "source_pdf": "fixture.pdf",
                 }
             ]
@@ -204,9 +228,14 @@ def test_validate_strategy_instance_accepts_declare_turn_without_legacy_fallback
     validate_strategy_instance(TurnOnlyNoLegacyFallbackStrategy())
 
 
-def test_validate_strategy_instance_rejects_missing_declare_turn_and_legacy_fallback() -> None:
-    with pytest.raises(ValueError, match="must implement declare_turn"):
+def test_validate_strategy_instance_rejects_missing_declare_turn() -> None:
+    with pytest.raises(ValueError, match="missing required methods: declare_turn"):
         validate_strategy_instance(NoTurnNoLegacyStrategy())
+
+
+def test_validate_strategy_instance_rejects_missing_on_round_start() -> None:
+    with pytest.raises(ValueError, match="missing required methods: on_round_start"):
+        validate_strategy_instance(NoRoundStartStrategy())
 
 
 def test_turn_only_strategy_without_legacy_methods_can_noop_turns(tmp_path: Path) -> None:
@@ -228,12 +257,12 @@ def test_turn_only_strategy_without_legacy_methods_can_noop_turns(tmp_path: Path
         if event.get("telemetry_type") == "decision" and event.get("actor_id") == "hero"
     ]
     assert any(
-        event.get("fallback_reason") == "declare_turn_none_no_legacy_fallback"
+        event.get("fallback_reason") == "declare_turn_none"
         for event in hero_decisions
     )
 
 
-def test_strategy_with_legacy_methods_falls_back_when_declare_turn_returns_none(
+def test_strategy_with_legacy_methods_does_not_fall_back_when_declare_turn_returns_none(
     tmp_path: Path,
 ) -> None:
     scenario_path = _setup_env(tmp_path)
@@ -244,21 +273,21 @@ def test_strategy_with_legacy_methods_falls_back_when_declare_turn_returns_none(
         "party_strategy": TurnOnlyNoLegacyFallbackStrategy(),
         "enemy_strategy": LegacyBasicStrategy(),
     }
-    fallback_registry = {
-        "party_strategy": MixedModeDeclareTurnNoneStrategy(),
+    legacy_method_registry = {
+        "party_strategy": LegacyMethodsIgnoredWhenDeclareTurnNoneStrategy(),
         "enemy_strategy": LegacyBasicStrategy(),
     }
     noop_result = run_simulation(loaded, db, {}, noop_registry, trials=8, seed=23, run_id="noop")
-    fallback_result = run_simulation(
-        loaded, db, {}, fallback_registry, trials=8, seed=23, run_id="fallback"
+    legacy_method_result = run_simulation(
+        loaded, db, {}, legacy_method_registry, trials=8, seed=23, run_id="legacy_methods"
     )
 
     noop_damage = sum(trial.damage_dealt.get("hero", 0) for trial in noop_result.trial_results)
-    fallback_damage = sum(
-        trial.damage_dealt.get("hero", 0) for trial in fallback_result.trial_results
+    legacy_method_damage = sum(
+        trial.damage_dealt.get("hero", 0) for trial in legacy_method_result.trial_results
     )
     assert noop_damage == 0
-    assert fallback_damage > noop_damage
+    assert legacy_method_damage == noop_damage
 
 
 def test_hidden_action_surge_is_removed_for_legacy_and_explicit_turn_plans(

@@ -11,6 +11,7 @@ from dnd_sim.engine import (
     short_rest,
 )
 from dnd_sim.models import ActorRuntimeState
+from tests.helpers import with_class_levels
 
 
 class FixedRng:
@@ -31,30 +32,32 @@ def _warlock_character(
     resources: dict[str, Any],
     raw_fields: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
-    return {
-        "character_id": f"warlock_{level}",
-        "name": f"Warlock {level}",
-        "class_level": f"Warlock {level}",
-        "max_hp": 38,
-        "ac": 14,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 8,
-            "dex": 14,
-            "con": 14,
-            "int": 12,
-            "wis": 10,
-            "cha": 18,
-        },
-        "save_mods": {"str": -1, "dex": 2, "con": 2, "int": 1, "wis": 0, "cha": 4},
-        "skill_mods": {},
-        "attacks": [],
-        "spells": spells,
-        "resources": resources,
-        "traits": traits,
-        "raw_fields": raw_fields or [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": f"warlock_{level}",
+            "name": f"Warlock {level}",
+            "class_level": f"Warlock {level}",
+            "max_hp": 38,
+            "ac": 14,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 8,
+                "dex": 14,
+                "con": 14,
+                "int": 12,
+                "wis": 10,
+                "cha": 18,
+            },
+            "save_mods": {"str": -1, "dex": 2, "con": 2, "int": 1, "wis": 0, "cha": 4},
+            "skill_mods": {},
+            "attacks": [],
+            "spells": spells,
+            "resources": resources,
+            "traits": traits,
+            "raw_fields": raw_fields or [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def _enemy(actor_id: str) -> ActorRuntimeState:

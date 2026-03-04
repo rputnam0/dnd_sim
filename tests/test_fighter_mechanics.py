@@ -17,14 +17,22 @@ from dnd_sim.engine import (
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActorRuntimeState
 from dnd_sim.strategy_api import (
-    ActionIntent,
     BaseStrategy,
     DeclaredAction,
     TargetRef,
     TurnDeclaration,
 )
-from tests.helpers import build_enemy
+from tests.helpers import build_enemy, with_class_levels
 from tests.test_engine_integration import _setup_env
+
+
+def _can_reach_melee(actor, target) -> bool:
+    distance = max(
+        abs(float(actor.position[0]) - float(target.position[0])),
+        abs(float(actor.position[1]) - float(target.position[1])),
+        abs(float(actor.position[2]) - float(target.position[2])),
+    )
+    return distance <= float(actor.movement_remaining) + 5.0
 
 
 class FixedRng:
@@ -38,10 +46,24 @@ class FixedRng:
 
 
 class ActionSurgePriorityStrategy(BaseStrategy):
-    def choose_action(self, actor, state):
-        if actor.resources.get("action_surge", 0) > 0:
-            return ActionIntent(action_name="action_surge")
-        return ActionIntent(action_name="basic")
+    def declare_turn(self, actor, state):
+        enemies = [
+            entry for entry in state.actors.values() if entry.team != actor.team and entry.hp > 0
+        ]
+        if not enemies:
+            return TurnDeclaration()
+        target = enemies[0]
+        action_name = "action_surge" if actor.resources.get("action_surge", 0) > 0 else "basic"
+        movement_path = [actor.position, target.position]
+        if not _can_reach_melee(actor, target):
+            return TurnDeclaration(movement_path=movement_path)
+        return TurnDeclaration(
+            movement_path=movement_path,
+            action=DeclaredAction(
+                action_name=action_name,
+                targets=[TargetRef(actor_id=target.actor_id)],
+            ),
+        )
 
 
 class IllegalActionSurgeBonusStrategy(BaseStrategy):
@@ -53,10 +75,7 @@ class IllegalActionSurgeBonusStrategy(BaseStrategy):
             return TurnDeclaration()
         target = enemies[0]
         return TurnDeclaration(
-            action=DeclaredAction(
-                action_name="basic",
-                targets=[TargetRef(actor_id=target.actor_id)],
-            ),
+            movement_path=[actor.position, target.position],
             bonus_action=DeclaredAction(
                 action_name="action_surge",
                 targets=[TargetRef(actor_id=target.actor_id)],
@@ -65,29 +84,33 @@ class IllegalActionSurgeBonusStrategy(BaseStrategy):
 
 
 def _fighter_character(*, level: int, traits: list[str], resources: dict | None = None) -> dict:
-    return {
-        "character_id": f"fighter_{level}",
-        "name": f"Fighter {level}",
-        "class_level": f"Fighter {level}",
-        "max_hp": 55,
-        "ac": 16,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 18,
-            "dex": 14,
-            "con": 14,
-            "int": 10,
-            "wis": 10,
-            "cha": 10,
-        },
-        "save_mods": {"str": 4, "dex": 2, "con": 2, "int": 0, "wis": 0, "cha": 0},
-        "skill_mods": {},
-        "attacks": [{"name": "Longsword", "to_hit": 7, "damage": "1d1", "damage_type": "slashing"}],
-        "resources": resources or {},
-        "traits": traits,
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": f"fighter_{level}",
+            "name": f"Fighter {level}",
+            "class_level": f"Fighter {level}",
+            "max_hp": 55,
+            "ac": 16,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 18,
+                "dex": 14,
+                "con": 14,
+                "int": 10,
+                "wis": 10,
+                "cha": 10,
+            },
+            "save_mods": {"str": 4, "dex": 2, "con": 2, "int": 0, "wis": 0, "cha": 0},
+            "skill_mods": {},
+            "attacks": [
+                {"name": "Longsword", "to_hit": 7, "damage": "1d1", "damage_type": "slashing"}
+            ],
+            "resources": resources or {},
+            "traits": traits,
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def _enemy(actor_id: str) -> ActorRuntimeState:

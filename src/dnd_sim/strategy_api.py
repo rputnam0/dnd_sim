@@ -3,13 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-
-@dataclass(slots=True)
-class ActionIntent:
-    action_name: str | None
-    action_type: str = "attack"
-    action_cost: str = "action"
-    rationale: dict[str, Any] = field(default_factory=dict)
+from dnd_sim.spatial import check_cover, distance_chebyshev, move_towards
 
 
 @dataclass(slots=True)
@@ -82,72 +76,152 @@ class BattleStateView:
 class StrategyModule(Protocol):
     def declare_turn(self, actor: ActorView, state: BattleStateView) -> TurnDeclaration | None: ...
 
-    def choose_action(self, actor: ActorView, state: BattleStateView) -> ActionIntent: ...
-
-    def choose_targets(
-        self,
-        actor: ActorView,
-        intent: ActionIntent,
-        state: BattleStateView,
-    ) -> list[TargetRef]: ...
-
-    def decide_resource_spend(
-        self,
-        actor: ActorView,
-        intent: ActionIntent,
-        state: BattleStateView,
-    ) -> ResourceSpend: ...
-
     def on_round_start(self, state: BattleStateView) -> None: ...
 
 
 class BaseStrategy:
-    """Default baseline behavior: first available action + focus lowest HP enemy."""
+    """Declaration-only baseline behavior."""
 
     def declare_turn(self, actor: ActorView, state: BattleStateView) -> TurnDeclaration | None:
-        return None
+        available = state.metadata.get("available_actions", {}).get(actor.actor_id, [])
+        available_names = [str(name) for name in available if str(name)]
+        if not available_names:
+            return TurnDeclaration(rationale={"reason": "no_available_actions"})
 
-    def choose_action(self, actor: ActorView, state: BattleStateView) -> ActionIntent:
-        return ActionIntent(action_name=None)
+        action_name = "basic" if "basic" in available_names else available_names[0]
+        catalog = state.metadata.get("action_catalog", {}).get(actor.actor_id, [])
+        action_info = next(
+            (
+                row
+                for row in catalog
+                if isinstance(row, dict) and str(row.get("name", "")) == action_name
+            ),
+            None,
+        )
+        if action_info is None:
+            return TurnDeclaration(rationale={"reason": "unknown_action", "action_name": action_name})
 
-    def choose_targets(
-        self,
-        actor: ActorView,
-        intent: ActionIntent,
-        state: BattleStateView,
-    ) -> list[TargetRef]:
-        enemies = [
-            view for view in state.actors.values() if view.team != actor.team and view.hp > 0
-        ]
-        if not enemies:
-            return []
-        target = min(enemies, key=lambda entry: (entry.hp, entry.max_hp))
-        return [TargetRef(actor_id=target.actor_id)]
+        mode = str(action_info.get("target_mode", "single_enemy"))
+        if mode == "self":
+            return TurnDeclaration(
+                action=DeclaredAction(
+                    action_name=action_name,
+                    targets=[TargetRef(actor_id=actor.actor_id)],
+                )
+            )
 
-    def decide_resource_spend(
-        self,
-        actor: ActorView,
-        intent: ActionIntent,
-        state: BattleStateView,
-    ) -> ResourceSpend:
-        return ResourceSpend()
+        enemies = [view for view in state.actors.values() if view.team != actor.team and view.hp > 0]
+        allies = [view for view in state.actors.values() if view.team == actor.team and view.hp > 0]
+        everyone = [view for view in state.actors.values() if view.hp > 0]
+
+        explicit_modes = {
+            "single_enemy",
+            "single_ally",
+            "n_enemies",
+            "n_allies",
+            "random_enemy",
+            "random_ally",
+        }
+
+        if mode == "all_enemies":
+            pool = enemies
+        elif mode == "all_allies":
+            pool = allies
+        elif mode == "all_creatures":
+            pool = everyone
+        elif mode in {"single_ally", "n_allies", "random_ally"}:
+            pool = allies
+        else:
+            pool = enemies
+
+        if not pool:
+            return TurnDeclaration(rationale={"reason": "no_targets", "action_name": action_name})
+
+        def _target_sort_key(entry: ActorView) -> tuple[float, float]:
+            hp_ratio = float(entry.hp) / float(max(entry.max_hp, 1))
+            return (hp_ratio, float(entry.hp))
+
+        sorted_targets = sorted(pool, key=_target_sort_key)
+        primary = sorted_targets[0]
+
+        def _action_range_ft() -> float | None:
+            if mode == "self":
+                return None
+            action_type = str(action_info.get("action_type", ""))
+            if isinstance(action_info.get("range_ft"), (int, float)):
+                return float(action_info["range_ft"])
+            if isinstance(action_info.get("range_normal_ft"), (int, float)):
+                return float(action_info["range_normal_ft"])
+            if isinstance(action_info.get("reach_ft"), (int, float)):
+                return float(action_info["reach_ft"])
+            if action_type == "attack":
+                return 5.0
+            if action_type == "utility":
+                return 30.0
+            return 60.0
+
+        range_ft = _action_range_ft()
+        movement_path: list[tuple[float, float, float]] = []
+        if range_ft is not None:
+            distance = distance_chebyshev(actor.position, primary.position)
+            if distance > range_ft:
+                required = distance - range_ft
+                movement_budget = float(actor.movement_remaining)
+                if required > movement_budget:
+                    return TurnDeclaration(
+                        rationale={
+                            "reason": "target_out_of_reach",
+                            "action_name": action_name,
+                            "target": primary.actor_id,
+                        }
+                    )
+                destination = move_towards(actor.position, primary.position, required)
+                obstacles = state.metadata.get("obstacles", [])
+                if isinstance(obstacles, list) and obstacles:
+                    if check_cover(destination, primary.position, obstacles) == "TOTAL":
+                        return TurnDeclaration(
+                            rationale={
+                                "reason": "target_blocked",
+                                "action_name": action_name,
+                                "target": primary.actor_id,
+                            }
+                        )
+                movement_path = [
+                    (float(actor.position[0]), float(actor.position[1]), float(actor.position[2])),
+                    (float(destination[0]), float(destination[1]), float(destination[2])),
+                ]
+
+        targets: list[TargetRef]
+        if mode == "all_enemies":
+            targets = [TargetRef(actor_id=view.actor_id) for view in enemies]
+        elif mode == "all_allies":
+            targets = [TargetRef(actor_id=view.actor_id) for view in allies]
+        elif mode == "all_creatures":
+            targets = [TargetRef(actor_id=view.actor_id) for view in everyone]
+        elif mode in {"n_enemies", "n_allies"}:
+            max_targets = int(action_info.get("max_targets") or 1)
+            targets = [TargetRef(actor_id=view.actor_id) for view in sorted_targets[:max_targets]]
+        elif mode in explicit_modes:
+            targets = [TargetRef(actor_id=primary.actor_id)]
+        else:
+            targets = [TargetRef(actor_id=primary.actor_id)]
+
+        return TurnDeclaration(
+            movement_path=movement_path,
+            action=DeclaredAction(action_name=action_name, targets=targets),
+        )
 
     def on_round_start(self, state: BattleStateView) -> None:
         return None
 
 
 def validate_strategy_instance(strategy: Any) -> None:
-    if not callable(getattr(strategy, "on_round_start", None)):
-        raise ValueError("Strategy instance missing required methods: on_round_start")
-
-    if callable(getattr(strategy, "declare_turn", None)):
-        return
-
-    legacy_required = ["choose_action", "choose_targets", "decide_resource_spend"]
-    missing = [name for name in legacy_required if not callable(getattr(strategy, name, None))]
+    required = ["declare_turn", "on_round_start"]
+    missing = [name for name in required if not callable(getattr(strategy, name, None))]
     if missing:
-        joined = ", ".join(missing)
+        joined = ", ".join(sorted(missing))
         raise ValueError(
-            "Strategy instance must implement declare_turn(...) or all legacy methods. "
-            f"Missing legacy methods: {joined}"
+            "Strategy instance missing required methods: "
+            f"{joined}. Strategies must define callable declare_turn(actor, state) "
+            "and on_round_start(state)."
         )

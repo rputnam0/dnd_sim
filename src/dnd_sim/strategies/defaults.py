@@ -4,48 +4,429 @@ import math
 from typing import Any
 
 from dnd_sim.rules_2014 import parse_damage_expression
-from dnd_sim.spatial import distance_chebyshev
-from dnd_sim.strategy_api import ActionIntent, BaseStrategy, TargetRef
+from dnd_sim.spatial import check_cover, distance_chebyshev, has_clear_path, move_towards
+from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
+
+_EXPLICIT_TARGET_MODES = {
+    "single_enemy",
+    "single_ally",
+    "n_enemies",
+    "n_allies",
+    "random_enemy",
+    "random_ally",
+}
+
+_AUTO_TARGET_MODES = {"all_enemies", "all_allies", "all_creatures"}
+
+
+def _available_actions_for_actor(actor, state) -> list[str]:
+    raw = state.metadata.get("available_actions", {}).get(actor.actor_id, [])
+    return [str(action_name) for action_name in raw if str(action_name)]
+
+
+def _action_catalog_for_actor(actor, state) -> list[dict[str, Any]]:
+    raw = state.metadata.get("action_catalog", {}).get(actor.actor_id, [])
+    return [entry for entry in raw if isinstance(entry, dict)]
+
+
+def _catalog_action_by_name(actor, state, action_name: str | None) -> dict[str, Any] | None:
+    if not action_name:
+        return None
+    for action in _action_catalog_for_actor(actor, state):
+        if str(action.get("name", "")) == action_name:
+            return action
+    return None
+
+
+def _living_enemies(actor, state) -> list[Any]:
+    return [view for view in state.actors.values() if view.team != actor.team and view.hp > 0]
+
+
+def _living_allies(actor, state) -> list[Any]:
+    return [view for view in state.actors.values() if view.team == actor.team and view.hp > 0]
+
+
+def _basic_or_first_available_action(actor, state) -> str | None:
+    available = _available_actions_for_actor(actor, state)
+    if "basic" in available:
+        return "basic"
+    return available[0] if available else None
+
+
+def _obstacles_from_state(state) -> list[Any]:
+    obstacles = state.metadata.get("obstacles", [])
+    return obstacles if isinstance(obstacles, list) else []
+
+
+def _action_requires_line_of_effect(action: dict[str, Any]) -> bool:
+    if str(action.get("target_mode", "single_enemy")) == "self":
+        return False
+    tags = {str(tag).strip().lower() for tag in action.get("tags", [])}
+    if "ignore_line_of_effect" in tags or "ignore_total_cover" in tags:
+        return False
+    if "ignores_line_of_effect" in tags:
+        return False
+    if "requires_line_of_effect" in tags:
+        return True
+    action_type = str(action.get("action_type", "")).strip().lower()
+    if action_type in {"attack", "save", "grapple", "shove"}:
+        return True
+    if "spell" in tags:
+        return True
+    for effect in [*action.get("effects", []), *action.get("mechanics", [])]:
+        if not isinstance(effect, dict):
+            continue
+        if str(effect.get("effect_type", "")).strip().lower() in {
+            "damage",
+            "apply_condition",
+            "forced_movement",
+        }:
+            return True
+    return False
+
+
+def _line_of_effect_is_clear(
+    origin: tuple[float, float, float],
+    target: Any,
+    action: dict[str, Any],
+    obstacles: list[Any],
+) -> bool:
+    if not obstacles or not _action_requires_line_of_effect(action):
+        return True
+    return check_cover(origin, target.position, obstacles) != "TOTAL"
+
+
+def _coerce_position(position: tuple[float, float, float]) -> tuple[float, float, float]:
+    return (float(position[0]), float(position[1]), float(position[2]))
+
+
+def _movement_path_to_target(
+    actor,
+    target,
+    action: dict[str, Any],
+    *,
+    actor_catalog: list[dict[str, Any]],
+    obstacles: list[Any],
+) -> list[tuple[float, float, float]] | None:
+    origin = _coerce_position(actor.position)
+    target_position = _coerce_position(target.position)
+    action_range = _effective_action_range_ft(action, actor_catalog)
+    if action_range is None:
+        return []
+
+    current_distance = distance_chebyshev(origin, target_position)
+    if current_distance <= action_range:
+        if _line_of_effect_is_clear(origin, target, action, obstacles):
+            return []
+        return None
+
+    movement_remaining = float(actor.movement_remaining)
+    if current_distance > action_range + movement_remaining:
+        return None
+
+    if obstacles and not has_clear_path(origin, target_position, obstacles):
+        return None
+
+    travel_distance = min(movement_remaining, max(0.0, current_distance - action_range))
+    destination = move_towards(origin, target_position, travel_distance)
+    destination = _coerce_position(destination)
+
+    if obstacles and not has_clear_path(origin, destination, obstacles):
+        return None
+    if not _line_of_effect_is_clear(destination, target, action, obstacles):
+        return None
+
+    if destination == origin:
+        return []
+    return [origin, destination]
+
+
+def _effective_action_range_ft(
+    action: dict[str, Any],
+    actor_catalog: list[dict[str, Any]],
+) -> float | None:
+    base_range = _action_range_ft(action)
+    sequence_ranges: list[float] = []
+    for mechanic in action.get("mechanics", []):
+        if not isinstance(mechanic, dict):
+            continue
+        mechanic_type = str(mechanic.get("effect_type", "")).strip().lower()
+        if mechanic_type not in {"attack_sequence", "multiattack_sequence"}:
+            continue
+        raw_sequence = mechanic.get("sequence")
+        if raw_sequence is None:
+            raw_sequence = mechanic.get("attacks")
+        if not isinstance(raw_sequence, list):
+            continue
+        for row in raw_sequence:
+            if isinstance(row, str):
+                action_name = row.strip()
+            elif isinstance(row, dict):
+                action_name = str(row.get("action_name") or row.get("name") or "").strip()
+            else:
+                action_name = ""
+            if not action_name:
+                continue
+            referenced = next(
+                (
+                    entry
+                    for entry in actor_catalog
+                    if str(entry.get("name", "")).strip() == action_name
+                ),
+                None,
+            )
+            if referenced is None:
+                continue
+            referenced_range = _action_range_ft(referenced)
+            if referenced_range is not None:
+                sequence_ranges.append(float(referenced_range))
+    if sequence_ranges:
+        return min(sequence_ranges)
+    return base_range
+
+
+def _declare_turn_for_action(
+    actor,
+    state,
+    *,
+    action_name: str | None,
+    preferred_targets: list[TargetRef] | None = None,
+    rationale: dict[str, Any] | None = None,
+) -> TurnDeclaration:
+    details = dict(rationale or {})
+    if action_name is None:
+        details.setdefault("reason", "no_available_actions")
+        return TurnDeclaration(rationale=details)
+
+    action = _catalog_action_by_name(actor, state, action_name)
+    if action is None:
+        details.setdefault("reason", "unknown_action")
+        details.setdefault("action_name", action_name)
+        return TurnDeclaration(rationale=details)
+
+    mode = str(action.get("target_mode", "single_enemy"))
+    obstacles = _obstacles_from_state(state)
+    actor_catalog = _action_catalog_for_actor(actor, state)
+    actors_by_id = state.actors
+    requested = list(preferred_targets or [])
+
+    if mode == "self":
+        return TurnDeclaration(
+            action=DeclaredAction(
+                action_name=action_name,
+                targets=[TargetRef(actor_id=actor.actor_id)],
+                rationale=details,
+            ),
+            rationale=details,
+        )
+
+    if mode in _AUTO_TARGET_MODES:
+        if mode == "all_enemies":
+            pool = _living_enemies(actor, state)
+        elif mode == "all_allies":
+            pool = _living_allies(actor, state)
+        else:
+            pool = [entry for entry in state.actors.values() if entry.hp > 0]
+        if not pool:
+            details.setdefault("reason", "no_targets")
+            details.setdefault("action_name", action_name)
+            return TurnDeclaration(rationale=details)
+
+        movement_path: list[tuple[float, float, float]] = []
+        legal_anchor_found = False
+        for candidate in pool:
+            plan = _movement_path_to_target(
+                actor,
+                candidate,
+                action,
+                actor_catalog=actor_catalog,
+                obstacles=obstacles,
+            )
+            if plan is None:
+                continue
+            movement_path = plan
+            legal_anchor_found = True
+            break
+        if not legal_anchor_found:
+            details.setdefault("reason", "no_legal_targets")
+            details.setdefault("action_name", action_name)
+            return TurnDeclaration(rationale=details)
+        return TurnDeclaration(
+            movement_path=movement_path,
+            action=DeclaredAction(action_name=action_name, targets=[], rationale=details),
+            rationale=details,
+        )
+
+    if not requested and mode in _EXPLICIT_TARGET_MODES:
+        details.setdefault("reason", "missing_targets")
+        details.setdefault("action_name", action_name)
+        return TurnDeclaration(rationale=details)
+
+    if mode not in _EXPLICIT_TARGET_MODES:
+        # Unknown modes are treated conservatively to avoid invalid declarations.
+        details.setdefault("reason", "unsupported_target_mode")
+        details.setdefault("target_mode", mode)
+        details.setdefault("action_name", action_name)
+        return TurnDeclaration(rationale=details)
+
+    legal_targets: list[TargetRef] = []
+    movement_path: list[tuple[float, float, float]] | None = None
+    seen: set[str] = set()
+    for ref in requested:
+        if ref.actor_id in seen:
+            continue
+        target = actors_by_id.get(ref.actor_id)
+        if target is None or target.hp <= 0:
+            continue
+        candidate_path = _movement_path_to_target(
+            actor,
+            target,
+            action,
+            actor_catalog=actor_catalog,
+            obstacles=obstacles,
+        )
+        if candidate_path is None:
+            continue
+        if movement_path is None:
+            movement_path = candidate_path
+        legal_targets.append(TargetRef(actor_id=ref.actor_id))
+        seen.add(ref.actor_id)
+        if mode in {"single_enemy", "single_ally", "random_enemy", "random_ally"}:
+            break
+
+    if not legal_targets:
+        details.setdefault("reason", "no_legal_targets")
+        details.setdefault("action_name", action_name)
+        return TurnDeclaration(rationale=details)
+
+    if mode in {"n_enemies", "n_allies"}:
+        max_targets = int(action.get("max_targets") or len(legal_targets))
+        legal_targets = legal_targets[:max_targets]
+    else:
+        legal_targets = legal_targets[:1]
+
+    return TurnDeclaration(
+        movement_path=movement_path or [],
+        action=DeclaredAction(action_name=action_name, targets=legal_targets, rationale=details),
+        rationale=details,
+    )
+
+
+def _lowest_hp_enemy_targets(actor, state) -> list[TargetRef]:
+    enemies = _living_enemies(actor, state)
+    if not enemies:
+        return []
+    target = min(enemies, key=lambda entry: (entry.hp, entry.max_hp))
+    return [TargetRef(actor_id=target.actor_id)]
+
+
+def _default_targets_for_action(actor, state, action_name: str | None) -> list[TargetRef]:
+    action = _catalog_action_by_name(actor, state, action_name)
+    enemies = _living_enemies(actor, state)
+    allies = _living_allies(actor, state)
+
+    if action and action.get("target_mode") == "self":
+        return [TargetRef(actor_id=actor.actor_id)]
+    if action and action.get("target_mode") == "all_enemies":
+        return [TargetRef(actor_id=entry.actor_id) for entry in enemies]
+    if action and action.get("target_mode") == "all_allies":
+        return [TargetRef(actor_id=entry.actor_id) for entry in allies]
+    if action and action.get("target_mode") == "all_creatures":
+        everyone = [view for view in state.actors.values() if view.hp > 0]
+        return [TargetRef(actor_id=entry.actor_id) for entry in everyone]
+    if action and action.get("target_mode") == "n_enemies":
+        count = int(action.get("max_targets") or 1)
+        ranked = sorted(enemies, key=lambda entry: (entry.hp, entry.max_hp))
+        return [TargetRef(actor_id=entry.actor_id) for entry in ranked[:count]]
+    if action and action.get("target_mode") == "n_allies":
+        count = int(action.get("max_targets") or 1)
+        ranked = sorted(allies, key=lambda entry: (entry.hp / max(entry.max_hp, 1), entry.hp))
+        return [TargetRef(actor_id=entry.actor_id) for entry in ranked[:count]]
+    return _lowest_hp_enemy_targets(actor, state)
 
 
 class FocusFireLowestHPStrategy(BaseStrategy):
-    pass
+    def declare_turn(self, actor, state):
+        action_name = _basic_or_first_available_action(actor, state)
+        return _declare_turn_for_action(
+            actor,
+            state,
+            action_name=action_name,
+            preferred_targets=_lowest_hp_enemy_targets(actor, state),
+        )
 
 
 class BossHighestThreatTargetStrategy(BaseStrategy):
-    def choose_targets(self, actor, intent, state):
-        enemies = [
-            view for view in state.actors.values() if view.team != actor.team and view.hp > 0
-        ]
-        if not enemies:
-            return []
-        threat_scores = state.metadata.get("threat_scores", {})
-        target = max(
-            enemies,
-            key=lambda entry: (threat_scores.get(entry.actor_id, 0), -entry.hp),
+    def declare_turn(self, actor, state):
+        action_name = _basic_or_first_available_action(actor, state)
+        if action_name is None:
+            return TurnDeclaration(rationale={"reason": "no_available_actions"})
+
+        action = _catalog_action_by_name(actor, state, action_name)
+        if action and action.get("target_mode") in {
+            "self",
+            "all_enemies",
+            "all_allies",
+            "all_creatures",
+            "n_enemies",
+            "n_allies",
+        }:
+            targets = _default_targets_for_action(actor, state, action_name)
+        else:
+            enemies = _living_enemies(actor, state)
+            if not enemies:
+                return TurnDeclaration(rationale={"reason": "no_targets"})
+            threat_scores = state.metadata.get("threat_scores", {})
+            target = max(
+                enemies,
+                key=lambda entry: (threat_scores.get(entry.actor_id, 0), -entry.hp),
+            )
+            targets = [TargetRef(actor_id=target.actor_id)]
+        return _declare_turn_for_action(
+            actor,
+            state,
+            action_name=action_name,
+            preferred_targets=targets,
         )
-        return [TargetRef(actor_id=target.actor_id)]
 
 
 class ConserveResourcesThenBurstStrategy(BaseStrategy):
-    def choose_action(self, actor, state):
-        available = state.metadata.get("available_actions", {}).get(actor.actor_id, [])
+    def declare_turn(self, actor, state):
+        available = _available_actions_for_actor(actor, state)
         burst_threshold = int(state.metadata.get("burst_round_threshold", 3))
+        action_name: str | None
         if state.round_number >= burst_threshold and "signature" in available:
-            return ActionIntent(action_name="signature")
-        if "basic" in available:
-            return ActionIntent(action_name="basic")
-        return ActionIntent(action_name=available[0] if available else None)
+            action_name = "signature"
+        elif "basic" in available:
+            action_name = "basic"
+        else:
+            action_name = available[0] if available else None
+
+        return _declare_turn_for_action(
+            actor,
+            state,
+            action_name=action_name,
+            preferred_targets=_default_targets_for_action(actor, state, action_name),
+        )
 
 
 class AlwaysUseSignatureAbilityStrategy(BaseStrategy):
-    def choose_action(self, actor, state):
-        available = state.metadata.get("available_actions", {}).get(actor.actor_id, [])
+    def declare_turn(self, actor, state):
+        available = _available_actions_for_actor(actor, state)
+        action_name: str | None
         if "signature" in available:
-            return ActionIntent(action_name="signature")
-        if "basic" in available:
-            return ActionIntent(action_name="basic")
-        return ActionIntent(action_name=available[0] if available else None)
+            action_name = "signature"
+        elif "basic" in available:
+            action_name = "basic"
+        else:
+            action_name = available[0] if available else None
+
+        return _declare_turn_for_action(
+            actor,
+            state,
+            action_name=action_name,
+            preferred_targets=_default_targets_for_action(actor, state, action_name),
+        )
 
 
 def _average_damage(expr: str | None, crit: bool = False) -> float:
@@ -331,16 +712,24 @@ def _target_count_for_action(actor, state, action: dict) -> int:
 class OptimalExpectedDamageStrategy(BaseStrategy):
     """Greedy expected-damage maximizer for 5e-2014 encounter simulations."""
 
-    def choose_action(self, actor, state):
-        catalog = state.metadata.get("action_catalog", {}).get(actor.actor_id, [])
+    def declare_turn(self, actor, state):
+        action_name, rationale = self._select_action(actor, state)
+        targets = self._select_targets(actor, action_name, state) if action_name else []
+        return _declare_turn_for_action(
+            actor,
+            state,
+            action_name=action_name,
+            preferred_targets=targets,
+            rationale={"action_selection": rationale},
+        )
+
+    def _select_action(self, actor, state) -> tuple[str | None, dict[str, Any]]:
+        catalog = _action_catalog_for_actor(actor, state)
         enemies = [
             view for view in state.actors.values() if view.team != actor.team and view.hp > 0
         ]
         if not catalog or not enemies:
-            return ActionIntent(
-                action_name=None,
-                rationale={"reason": "no_actions_or_targets"},
-            )
+            return None, {"reason": "no_actions_or_targets"}
 
         policy = _strategy_policy(actor, state)
         concentration_cfg = _policy_section(policy, "concentration_protection")
@@ -366,14 +755,11 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
                 None,
             )
             if dodge is not None:
-                return ActionIntent(
-                    action_name="dodge",
-                    rationale={
-                        "mode": "policy_guardrail",
-                        "guardrail": "concentration_protection",
-                        "hp_ratio": hp_ratio,
-                    },
-                )
+                return "dodge", {
+                    "mode": "policy_guardrail",
+                    "guardrail": "concentration_protection",
+                    "hp_ratio": hp_ratio,
+                }
 
         evaluation_mode = str(state.metadata.get("evaluation_mode", "greedy")).lower()
         lookahead_enabled = evaluation_mode == "lookahead"
@@ -505,10 +891,7 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             )
 
         if not candidates:
-            return ActionIntent(
-                action_name=None,
-                rationale={"reason": "no_viable_actions"},
-            )
+            return None, {"reason": "no_viable_actions"}
 
         ranked = sorted(candidates, key=lambda row: (-row["total_score"], row["cost"], row["name"]))
         best = ranked[0]
@@ -518,19 +901,16 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             if bool(_policy_section(policy, name).get("enabled", False))
         ]
 
-        return ActionIntent(
-            action_name=best["name"],
-            rationale={
-                "mode": evaluation_mode,
-                "selected": best,
-                "top_candidates": ranked[:3],
-                "enabled_policies": enabled_policies,
-            },
-        )
+        return best["name"], {
+            "mode": evaluation_mode,
+            "selected": best,
+            "top_candidates": ranked[:3],
+            "enabled_policies": enabled_policies,
+        }
 
-    def choose_targets(self, actor, intent, state):
-        catalog = state.metadata.get("action_catalog", {}).get(actor.actor_id, [])
-        action = next((entry for entry in catalog if entry.get("name") == intent.action_name), None)
+    def _select_targets(self, actor, action_name: str, state) -> list[TargetRef]:
+        catalog = _action_catalog_for_actor(actor, state)
+        action = next((entry for entry in catalog if entry.get("name") == action_name), None)
         enemies = [
             view for view in state.actors.values() if view.team != actor.team and view.hp > 0
         ]
@@ -590,15 +970,15 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
 
 
 class PackTacticsStrategy(OptimalExpectedDamageStrategy):
-    def choose_targets(self, actor, intent, state):
-        catalog = state.metadata.get("action_catalog", {}).get(actor.actor_id, [])
-        action = next((entry for entry in catalog if entry.get("name") == intent.action_name), None)
+    def _select_targets(self, actor, action_name: str, state) -> list[TargetRef]:
+        catalog = _action_catalog_for_actor(actor, state)
+        action = next((entry for entry in catalog if entry.get("name") == action_name), None)
         enemies = [
             view for view in state.actors.values() if view.team != actor.team and view.hp > 0
         ]
 
         if not enemies or not action or action.get("target_mode") not in {"single_enemy"}:
-            return super().choose_targets(actor, intent, state)
+            return super()._select_targets(actor, action_name, state)
 
         def _can_reach(target) -> bool:
             if action.get("action_type") == "attack":
@@ -633,8 +1013,8 @@ class PackTacticsStrategy(OptimalExpectedDamageStrategy):
 
 
 class HealerStrategy(OptimalExpectedDamageStrategy):
-    def choose_action(self, actor, state):
-        catalog = state.metadata.get("action_catalog", {}).get(actor.actor_id, [])
+    def _select_action(self, actor, state) -> tuple[str | None, dict[str, Any]]:
+        catalog = _action_catalog_for_actor(actor, state)
         allies = [view for view in state.actors.values() if view.team == actor.team]
 
         critical_allies = [a for a in allies if a.hp <= 0 and not "dead" in a.conditions]
@@ -661,13 +1041,18 @@ class HealerStrategy(OptimalExpectedDamageStrategy):
                         if e.get("effect_type") == "heal"
                     ),
                 )
-                return ActionIntent(action_name=best_heal.get("name"))
+                chosen_name = str(best_heal.get("name", "")).strip() or None
+                return chosen_name, {
+                    "mode": "healer_priority",
+                    "target_pool": ("critical_allies" if critical_allies else "low_allies"),
+                    "selected_heal_action": chosen_name,
+                }
 
-        return super().choose_action(actor, state)
+        return super()._select_action(actor, state)
 
-    def choose_targets(self, actor, intent, state):
-        catalog = state.metadata.get("action_catalog", {}).get(actor.actor_id, [])
-        action = next((entry for entry in catalog if entry.get("name") == intent.action_name), None)
+    def _select_targets(self, actor, action_name: str, state) -> list[TargetRef]:
+        catalog = _action_catalog_for_actor(actor, state)
+        action = next((entry for entry in catalog if entry.get("name") == action_name), None)
 
         if action and any(e.get("effect_type") == "heal" for e in action.get("effects", [])):
             allies = [view for view in state.actors.values() if view.team == actor.team]
@@ -680,15 +1065,15 @@ class HealerStrategy(OptimalExpectedDamageStrategy):
             target = min(target_pool, key=lambda a: (a.hp / max(a.max_hp, 1), a.hp))
             return [TargetRef(actor_id=target.actor_id)]
 
-        return super().choose_targets(actor, intent, state)
+        return super()._select_targets(actor, action_name, state)
 
 
 class SkirmisherStrategy(OptimalExpectedDamageStrategy):
-    def choose_action(self, actor, state):
-        intent = super().choose_action(actor, state)
+    def _select_action(self, actor, state) -> tuple[str | None, dict[str, Any]]:
+        action_name, rationale = super()._select_action(actor, state)
 
         # If no good action and movement remaining, or if we want to disengage/dodge
-        catalog = state.metadata.get("action_catalog", {}).get(actor.actor_id, [])
+        catalog = _action_catalog_for_actor(actor, state)
         enemies = [
             view for view in state.actors.values() if view.team != actor.team and view.hp > 0
         ]
@@ -698,10 +1083,8 @@ class SkirmisherStrategy(OptimalExpectedDamageStrategy):
             e for e in enemies if distance_chebyshev(actor.position, e.position) <= 5.0
         ]
 
-        if melee_enemies and intent.action_name:
-            action = next(
-                (entry for entry in catalog if entry.get("name") == intent.action_name), None
-            )
+        if melee_enemies and action_name:
+            action = next((entry for entry in catalog if entry.get("name") == action_name), None)
             if (
                 action
                 and action.get("action_type") == "attack"
@@ -715,6 +1098,11 @@ class SkirmisherStrategy(OptimalExpectedDamageStrategy):
                     None,
                 )
                 if disengage and disengage.get("action_cost") == action.get("action_cost"):
-                    return ActionIntent(action_name=disengage.get("name"))
+                    disengage_name = str(disengage.get("name", "")).strip() or None
+                    return disengage_name, {
+                        "mode": "skirmisher_defensive_swap",
+                        "replaced_action": action_name,
+                        "base_rationale": rationale,
+                    }
 
-        return intent
+        return action_name, rationale
