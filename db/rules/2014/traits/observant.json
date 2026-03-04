@@ -1,6 +1,5 @@
 {
   "name": "Observant",
-  "type": "feat",
   "description": "You increase your Intelligence or Wisdom score by 1, to a maximum of 20. You gain proficiency in Insight, Investigation, or Perception; if you already have proficiency in the chosen skill, you gain Expertise in it instead. Additionally, you can take the Search action as a Bonus Action.",
   "mechanics": [
     {
@@ -19,5 +18,6 @@
       "effect_type": "bonus_action_action",
       "action": "search"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

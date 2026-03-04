@@ -6,6 +6,7 @@
   "casting_time": "action",
   "range_ft": 0,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 0,
   "description": "Holding the rod used in the casting of the spell, you touch a Large or smaller chair that is unoccupied. The rod disappears, and the chair is transformed into a spelljamming helm.",
   "save_ability": null,

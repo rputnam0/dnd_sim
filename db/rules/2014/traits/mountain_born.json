@@ -1,6 +1,5 @@
 {
   "name": "Mountain Born",
-  "type": "racial_trait",
   "description": "You have resistance to cold damage. You also naturally acclimate to high altitudes, even if you've never been to one. This includes elevations above 20,000 feet.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
         "cold"
       ]
     }
-  ]
+  ],
+  "source_type": "species"
 }

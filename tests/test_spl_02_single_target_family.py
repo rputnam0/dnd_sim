@@ -66,7 +66,7 @@ def _hold_person_spell_definition() -> dict[str, Any]:
 
 def _hold_person_sheet_payload() -> dict[str, Any]:
     return {
-        "class_level": "Wizard 5",
+        "class_levels": {"wizard": 5},
         "ability_scores": {
             "str": 10,
             "dex": 14,
@@ -98,7 +98,7 @@ def _sheet_payload_for_spell(
     duration_text: str = "1 minute",
 ) -> dict[str, Any]:
     payload = {
-        "class_level": "Cleric 5",
+        "class_levels": {"cleric": 5},
         "ability_scores": {
             "str": 10,
             "dex": 10,
@@ -157,6 +157,7 @@ def test_single_target_hold_person_applies_condition_and_clears_on_concentration
     spell_rows = _extract_spells_from_raw_fields(_hold_person_sheet_payload())
     actions = _build_spell_actions(
         {
+            "class_levels": {"wizard": 5},
             "spells": spell_rows,
             "resources": {"spell_slots": {"2": 1}},
         },
@@ -366,6 +367,7 @@ def test_single_target_spell_suppressed_by_invalid_state_and_line_of_effect(
     spell_rows = _extract_spells_from_raw_fields(_hold_person_sheet_payload())
     action = _build_spell_actions(
         {
+            "class_levels": {"wizard": 5},
             "spells": spell_rows,
             "resources": {"spell_slots": {"2": 1}},
         },

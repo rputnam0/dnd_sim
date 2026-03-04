@@ -1,10 +1,8 @@
 {
   "name": "Draconic Spells",
-  "type": "subclass_feature",
   "description": "When you reach a Sorcerer level specified in the Draconic Spells table, you thereafter always have the listed spells prepared. Draconic Spells table: 3rd – Alter Self, Chromatic Orb, Command, Dragon's Breath; 5th – Fear, Fly; 7th – Arcane Eye, Charm Monster; 9th – Legend Lore, Summon Dragon.",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "spells_by_level": {
         "3": [
           "Alter Self",
@@ -24,7 +22,9 @@
           "Legend Lore",
           "Summon Dragon"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

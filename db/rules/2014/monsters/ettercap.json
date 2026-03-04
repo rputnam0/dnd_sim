@@ -1,17 +1,33 @@
 {
-  "name": "Ettercap",
-  "meta": "Medium monstrosity, neutral evil",
-  "ac": 13,
-  "hp": 44,
-  "hp_formula": "8d8 + 8",
-  "ability_scores": {
-    "str": 14,
-    "dex": 15,
-    "con": 13,
-    "int": 7,
-    "wis": 12,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ettercap",
+    "name": "Ettercap",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 44,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 2,
+    "dex_mod": 2,
+    "con_mod": 1,
+    "int_mod": -2,
+    "wis_mod": 1,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

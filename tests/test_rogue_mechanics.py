@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dnd_sim.engine import _action_available, _build_actor_from_character, _execute_action
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from tests.helpers import with_class_levels
 
 
 class FixedRng:
@@ -36,33 +37,35 @@ def _actor(actor_id: str, team: str) -> ActorRuntimeState:
 
 
 def _rogue_character(*, level: int, traits: list[str] | None = None) -> dict[str, object]:
-    return {
-        "character_id": f"rogue_{level}",
-        "name": f"Rogue {level}",
-        "class_level": f"Rogue {level}",
-        "max_hp": 34,
-        "ac": 15,
-        "speed_ft": 30,
-        "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 12, "wis": 10, "cha": 12},
-        "save_mods": {"str": 0, "dex": 6, "con": 2, "int": 1, "wis": 0, "cha": 1},
-        "skill_mods": {},
-        "attacks": [
-            {
-                "name": "Shortbow",
-                "to_hit": 8,
-                "damage": "1d6+4",
-                "damage_type": "piercing",
-                "range_ft": 80,
-                "range_normal_ft": 80,
-                "range_long_ft": 320,
-                "weapon_properties": ["ammunition", "ranged"],
-            }
-        ],
-        "resources": {},
-        "traits": list(traits or []),
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": f"rogue_{level}",
+            "name": f"Rogue {level}",
+            "class_level": f"Rogue {level}",
+            "max_hp": 34,
+            "ac": 15,
+            "speed_ft": 30,
+            "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 12, "wis": 10, "cha": 12},
+            "save_mods": {"str": 0, "dex": 6, "con": 2, "int": 1, "wis": 0, "cha": 1},
+            "skill_mods": {},
+            "attacks": [
+                {
+                    "name": "Shortbow",
+                    "to_hit": 8,
+                    "damage": "1d6+4",
+                    "damage_type": "piercing",
+                    "range_ft": 80,
+                    "range_normal_ft": 80,
+                    "range_long_ft": 320,
+                    "weapon_properties": ["ammunition", "ranged"],
+                }
+            ],
+            "resources": {},
+            "traits": list(traits or []),
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def test_build_actor_infers_rogue_package_traits_and_cunning_actions() -> None:

@@ -1,49 +1,47 @@
 {
   "name": "Gnomish Lineage",
-  "type": "racial_trait",
   "description": "You are part of a lineage that grants you supernatural abilities. Choose one of the following options; whichever one you choose, Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the lineage):\n\nForest Gnome: You know the Minor Illusion cantrip. You also always have the Speak with Animals spell prepared. You can cast it without a spell slot a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest. You can also use any spell slots you have to cast the spell.\n\nRock Gnome: You know the Mending and Prestidigitation cantrips. In addition, you can spend 10 minutes casting Prestidigitation to create a Tiny clockwork device (AC 5, 1 HP), such as a toy, fire starter, or music box. When you create the device, you determine its function by choosing one effect from Prestidigitation; the device produces that effect whenever you or another creature takes a bonus action to activate it with a touch. If the chosen effect has options within it, you choose one of those options for the device when you create it. You can have three such devices in existence at a time, and each falls apart 8 hours after its creation or when you dismantle it with a touch as a Utilize action.",
   "mechanics": [
     {
-      "type": "set_spellcasting_ability",
       "options": [
         "Intelligence",
         "Wisdom",
         "Charisma"
-      ]
+      ],
+      "meta_type": "set_spellcasting_ability"
     },
     {
-      "type": "grant_cantrip",
       "spell": "Minor Illusion",
-      "source": "Forest Gnome"
+      "source": "Forest Gnome",
+      "meta_type": "grant_cantrip"
     },
     {
-      "type": "grant_spell_prepared",
       "spell": "Speak with Animals",
-      "source": "Forest Gnome"
+      "source": "Forest Gnome",
+      "meta_type": "grant_spell_prepared"
     },
     {
-      "type": "spell_use_without_slot",
       "spell": "Speak with Animals",
       "uses_per_long_rest": "proficiency_bonus",
-      "source": "Forest Gnome"
+      "source": "Forest Gnome",
+      "meta_type": "spell_use_without_slot"
     },
     {
-      "type": "allow_spell_slot_use",
       "spell": "Speak with Animals",
-      "source": "Forest Gnome"
+      "source": "Forest Gnome",
+      "meta_type": "allow_spell_slot_use"
     },
     {
-      "type": "grant_cantrip",
       "spell": "Mending",
-      "source": "Rock Gnome"
+      "source": "Rock Gnome",
+      "meta_type": "grant_cantrip"
     },
     {
-      "type": "grant_cantrip",
       "spell": "Prestidigitation",
-      "source": "Rock Gnome"
+      "source": "Rock Gnome",
+      "meta_type": "grant_cantrip"
     },
     {
-      "type": "create_clockwork_device",
       "base_spell": "Prestidigitation",
       "creation_time": "10 minutes",
       "device_stats": {
@@ -56,7 +54,9 @@
       "max_devices": 3,
       "duration": "8 hours",
       "dismantle_action": "Utilize",
-      "source": "Rock Gnome"
+      "source": "Rock Gnome",
+      "meta_type": "create_clockwork_device"
     }
-  ]
+  ],
+  "source_type": "species"
 }

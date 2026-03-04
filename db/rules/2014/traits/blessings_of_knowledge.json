@@ -1,26 +1,26 @@
 {
   "name": "Blessings of Knowledge",
-  "type": "subclass_feature",
   "description": "At 1st level, you learn two languages of your choice. You also become proficient in your choice of two of the following skills: Arcana, History, Nature, or Religion. Your proficiency bonus is doubled for any ability check you make that uses either of those skills.",
   "mechanics": [
     {
-      "type": "gain_languages",
       "count": 2,
-      "choice": "any"
+      "choice": "any",
+      "meta_type": "gain_languages"
     },
     {
-      "type": "skill_proficiency",
       "choices": [
         "Arcana",
         "History",
         "Nature",
         "Religion"
       ],
-      "count": 2
+      "count": 2,
+      "meta_type": "skill_proficiency"
     },
     {
-      "type": "double_proficiency_bonus",
-      "applies_to": "ability_checks_using_chosen_skills"
+      "applies_to": "ability_checks_using_chosen_skills",
+      "meta_type": "double_proficiency_bonus"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

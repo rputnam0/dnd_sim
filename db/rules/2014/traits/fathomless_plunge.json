@@ -1,6 +1,5 @@
 {
   "name": "Fathomless Plunge",
-  "type": "subclass_feature",
   "description": "14th-level Fathomless feature. You can magically open temporary conduits to watery destinations. As an action, you can teleport yourself and up to five other willing creatures that you can see within 30 feet of you. Amid a whirl of tentacles, you all vanish and then reappear up to 1 mile away in a body of water you've seen (pond size or larger) or within 30 feet of it, each of you appearing in an unoccupied space within 30 feet of the others. Once you use this feature, you can't use it again until you finish a short or long rest.",
   "mechanics": [
     {
@@ -11,5 +10,6 @@
       "destination_condition": "body of water you have seen (pond size or larger) or within 30 ft of such water",
       "recharge": "short or long rest"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

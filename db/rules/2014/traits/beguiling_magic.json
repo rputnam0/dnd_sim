@@ -1,6 +1,5 @@
 {
   "name": "Beguiling Magic",
-  "type": "subclass_feature",
   "description": "You always have the Charm Person and Mirror Image spells prepared. In addition, immediately after you cast an Enchantment or Illusion spell using a spell slot, you can cause a creature you can see within 60 feet of you to make a Wisdom saving throw against your spell save DC. On a failed save, the target is Charmed or Frightened (your choice) for 1 minute. The target repeats the saving throw at the end of each of its turns, ending the effect on a success. Once you use this benefit, you can't use it again until you finish a long rest. You can also restore your use of it by expending one use of your Bardic Inspiration (no action required).",
   "mechanics": [
     {
@@ -35,5 +34,6 @@
         "cost": 1
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

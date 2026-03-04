@@ -1,9 +1,15 @@
 {
   "name": "Detect Poison and Disease",
-  "meta": "Detect Poison and Disease 1st-\u00ad\u2010\u2011level divination (ritual)",
+  "type": "spell",
+  "level": 1,
+  "school": "Divination",
   "casting_time": "1 action",
-  "range": "Self",
-  "components": "V, S, M (a yew leaf)",
-  "duration": "Concentration, up to 10 minutes",
-  "description": "For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you. You also identify the kind of poison, poisonous creature, or disease in each case. The spell can penetrate most barriers, but it is blocked by 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt. Detect Thoughts 2nd-\u00ad\u2010\u2011level divination"
+  "range_ft": 0,
+  "concentration": true,
+  "ritual": true,
+  "duration_rounds": 100,
+  "description": "For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you. You also identify the kind of poison, poisonous creature, or disease in each case. The spell can penetrate most barriers, but it is blocked by 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt. Detect Thoughts 2nd-­‐‑level divination",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

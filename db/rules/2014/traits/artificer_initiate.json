@@ -1,6 +1,5 @@
 {
   "name": "Artificer Initiate",
-  "type": "feat",
   "description": "You learn one cantrip and one 1st-level spell from the artificer spell list. Intelligence is your spellcasting ability for these spells. You can cast the 1st-level spell once without a spell slot per long rest, or use your own spell slots. You also gain proficiency with one type of artisan's tools, which you can use as a spellcasting focus for any Intelligence-based spell.",
   "mechanics": [
     {
@@ -30,5 +29,6 @@
       "focus_type": "artisan_tools",
       "condition": "int_based_spells"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

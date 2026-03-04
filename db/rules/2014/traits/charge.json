@@ -1,6 +1,5 @@
 {
   "name": "Charge",
-  "type": "racial_trait",
   "description": "If you move at least 30 feet straight toward a target and then hit it with a melee weapon attack on the same turn, you can immediately follow that attack with a bonus action, making one attack against the target with your hooves.",
   "mechanics": [
     {
@@ -12,5 +11,6 @@
       },
       "timing": "same turn"
     }
-  ]
+  ],
+  "source_type": "species"
 }

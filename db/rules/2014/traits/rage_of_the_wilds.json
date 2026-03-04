@@ -1,10 +1,8 @@
 {
   "name": "Rage of the Wilds",
-  "type": "subclass_feature",
   "description": "Your Rage taps into the primal power of animals. Whenever you activate your Rage, you gain one of the following options of your choice. Bear: While your Rage is active, you have resistance to every damage type except force, necrotic, psychic, and radiant. Eagle: When you activate your Rage, you can take the Disengage and Dash actions as part of that bonus action. While your Rage is active, you can take a bonus action to take both of those actions. Wolf: While your Rage is active, your allies have advantage on attack rolls against any enemy of yours within 5 feet of you.",
   "mechanics": [
     {
-      "type": "resistance",
       "damage_types": "all_except",
       "exceptions": [
         "force",
@@ -12,33 +10,35 @@
         "psychic",
         "radiant"
       ],
-      "source": "Bear option"
+      "source": "Bear option",
+      "meta_type": "resistance"
     },
     {
-      "type": "action_option",
       "when": "rage_activation",
       "actions": [
         "disengage",
         "dash"
       ],
       "as_bonus_action": true,
-      "source": "Eagle option"
+      "source": "Eagle option",
+      "meta_type": "action_option"
     },
     {
-      "type": "bonus_action",
       "when": "rage_active",
       "actions": [
         "disengage",
         "dash"
       ],
-      "source": "Eagle option"
+      "source": "Eagle option",
+      "meta_type": "bonus_action"
     },
     {
-      "type": "grant_advantage",
       "target": "allies",
       "condition": "enemy_within_5ft_of_self",
       "on": "attack_rolls",
-      "source": "Wolf option"
+      "source": "Wolf option",
+      "meta_type": "grant_advantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

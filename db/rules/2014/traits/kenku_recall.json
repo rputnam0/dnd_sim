@@ -1,6 +1,5 @@
 {
   "name": "Kenku Recall",
-  "type": "racial_trait",
   "description": "Thanks to your supernaturally good memory, you have proficiency in two skills of your choice. Moreover, when you make an ability check using any skill in which you have proficiency, you can give yourself advantage on the check before rolling the d20. You can give yourself advantage in this way a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
@@ -16,5 +15,6 @@
         "reset": "long_rest"
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

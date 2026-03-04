@@ -1,6 +1,5 @@
 {
   "name": "Radiant Fire",
-  "type": "subclass_feature",
   "description": "One creature you can see within 30 feet of yourself takes 1d4 Fire or Radiant damage (your choice).",
   "mechanics": [
     {
@@ -14,5 +13,6 @@
       ],
       "choice": "damage_type"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -18,7 +18,7 @@ from dnd_sim.engine import (
 from dnd_sim.io import load_character_db, load_scenario
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
-from tests.helpers import build_enemy
+from tests.helpers import build_enemy, with_class_levels
 from tests.test_engine_integration import _setup_env
 
 
@@ -54,29 +54,33 @@ def _cleric_character(
     class_level: str | None = None,
     resources: dict | None = None,
 ) -> dict:
-    return {
-        "character_id": f"cleric_{level}",
-        "name": f"Cleric {level}",
-        "class_level": class_level or f"Cleric {level}",
-        "max_hp": 40,
-        "ac": 16,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 10,
-            "dex": 12,
-            "con": 14,
-            "int": 10,
-            "wis": 18,
-            "cha": 12,
-        },
-        "save_mods": {"str": 0, "dex": 1, "con": 2, "int": 0, "wis": 7, "cha": 1},
-        "skill_mods": {},
-        "attacks": [{"name": "Mace", "to_hit": 6, "damage": "1d6+2", "damage_type": "bludgeoning"}],
-        "resources": resources or {},
-        "traits": traits,
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": f"cleric_{level}",
+            "name": f"Cleric {level}",
+            "class_level": class_level or f"Cleric {level}",
+            "max_hp": 40,
+            "ac": 16,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 10,
+                "dex": 12,
+                "con": 14,
+                "int": 10,
+                "wis": 18,
+                "cha": 12,
+            },
+            "save_mods": {"str": 0, "dex": 1, "con": 2, "int": 0, "wis": 7, "cha": 1},
+            "skill_mods": {},
+            "attacks": [
+                {"name": "Mace", "to_hit": 6, "damage": "1d6+2", "damage_type": "bludgeoning"}
+            ],
+            "resources": resources or {},
+            "traits": traits,
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def _actor(actor_id: str, team: str) -> ActorRuntimeState:

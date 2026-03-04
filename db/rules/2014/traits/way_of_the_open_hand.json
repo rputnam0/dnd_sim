@@ -1,6 +1,5 @@
 {
   "name": "Open Hand Technique",
-  "type": "subclass_feature",
   "description": "When you hit a creature with a monk weapon or an unarmed strike, you can use a bonus action to impose one of the following effects of your choice: push the target up to 15 feet away from you, knock the target prone, or prevent the target from taking reactions until the start of its next turn.",
   "mechanics": [
     {
@@ -27,5 +26,6 @@
       ],
       "usage": "choose one"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

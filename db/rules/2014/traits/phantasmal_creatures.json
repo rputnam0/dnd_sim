@@ -1,33 +1,33 @@
 {
   "name": "Phantasmal Creatures",
-  "type": "subclass_feature",
   "description": "You always have the Summon Beast and Summon Fey spells prepared. Whenever you cast either spell, you can change its school to Illusion, which causes the summoned creature to appear spectral. You can cast the Illusion version of each spell without expending a spell slot, but casting it without a slot halves the creature's Hit Points. Once you cast either spell without a spell slot, you must finish a Long Rest before you can cast the spell in that way again.",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "spells": [
         "Summon Beast",
         "Summon Fey"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "spell_school_change",
       "spells": [
         "Summon Beast",
         "Summon Fey"
       ],
       "new_school": "Illusion",
-      "effect": "summoned creature appears spectral"
+      "effect": "summoned creature appears spectral",
+      "meta_type": "spell_school_change"
     },
     {
-      "type": "free_cast_without_slot",
       "spells": [
         "Summon Beast",
         "Summon Fey"
       ],
       "school": "Illusion",
       "hit_point_modifier": 0.5,
-      "recharge": "long_rest"
+      "recharge": "long_rest",
+      "meta_type": "free_cast_without_slot"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

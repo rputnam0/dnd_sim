@@ -1,6 +1,5 @@
 {
   "name": "Dampening Field",
-  "type": "subclass_feature",
   "description": "You have advantage on Dexterity (Stealth) checks. If the armor normally imposes disadvantage on such checks, the advantage and disadvantage cancel each other, as normal.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
       "skill": "Stealth",
       "ability": "Dexterity"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

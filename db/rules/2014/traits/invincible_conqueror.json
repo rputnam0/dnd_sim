@@ -1,6 +1,5 @@
 {
   "name": "Invincible Conqueror",
-  "type": "subclass_feature",
   "description": "At 20th level, you gain the ability to harness extraordinary martial prowess. As an action, you can magically become an avatar of conquest, gaining the following benefits for 1 minute: You have resistance to all damage. When you take the Attack action on your turn, you can make one additional attack as part of that action. Your melee weapon attacks score a critical hit on a roll of 19 or 20 on the d20. Once you use this feature, you can't use it again until you finish a long rest.",
   "mechanics": [
     {
@@ -12,7 +11,7 @@
     },
     {
       "extra_attack": true,
-      "trigger": "Attack action"
+      "trigger": "attack action"
     },
     {
       "critical_range": [
@@ -23,5 +22,6 @@
     {
       "uses_per_long_rest": 1
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

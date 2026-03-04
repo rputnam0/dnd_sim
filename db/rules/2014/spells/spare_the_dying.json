@@ -6,6 +6,7 @@
   "casting_time": "action",
   "range_ft": 0,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 0,
   "description": "You touch a living creature that has 0 hit points. The creature becomes stable. This spell has no effect on undead or constructs.",
   "save_ability": null,

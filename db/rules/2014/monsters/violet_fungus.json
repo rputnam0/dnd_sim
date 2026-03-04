@@ -1,17 +1,33 @@
 {
-  "name": "Violet Fungus",
-  "meta": "Medium plant, unaligned",
-  "ac": 5,
-  "hp": 18,
-  "hp_formula": "4d8",
-  "ability_scores": {
-    "str": 3,
-    "dex": 1,
-    "con": 10,
-    "int": 1,
-    "wis": 3,
-    "cha": 1
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "violet_fungus",
+    "name": "Violet Fungus",
+    "team": "enemy"
   },
-  "cr": "1/4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 18,
+    "ac": 5,
+    "speed_ft": 30,
+    "initiative_mod": -5,
+    "str_mod": -4,
+    "dex_mod": -5,
+    "con_mod": 0,
+    "int_mod": -5,
+    "wis_mod": -4,
+    "cha_mod": -5,
+    "save_mods": {},
+    "cr": "1/4"
+  },
+  "reactions": [],
+  "actions": []
 }

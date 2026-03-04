@@ -1,6 +1,5 @@
 {
   "name": "Ember of the Fire Giant",
-  "type": "feat",
   "description": "You gain resistance to fire damage and increase your Strength, Constitution, or Wisdom by 1. When you take the Attack action, you can replace one attack with a 15-foot-radius burst of flame centered on you. Each creature of your choice in the area must make a Dexterity saving throw (DC 8 + PB + ability mod) or take 1d8 + PB fire damage and be blinded until the start of your next turn. On a success, they take half damage. This can be used a number of times equal to your proficiency bonus per long rest, but only once per turn.",
   "mechanics": [
     {
@@ -33,5 +32,6 @@
       "reset": "long_rest",
       "limit": "once_per_turn"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

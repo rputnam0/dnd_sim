@@ -1,6 +1,5 @@
 {
   "name": "Wholeness of Body",
-  "type": "subclass_feature",
   "description": "You gain the ability to heal yourself. As an action, you can regain hit points equal to three times your monk level. You must finish a long rest before you can use this feature again.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
       "amount": "3 * monk level",
       "recharge": "long rest"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

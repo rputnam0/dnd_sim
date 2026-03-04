@@ -6,14 +6,27 @@
   "casting_time": "bonus action",
   "range_ft": 0,
   "concentration": true,
+  "ritual": false,
   "duration_rounds": 10,
   "description": "You move like the wind. Until the spell ends, your movement doesn't provoke opportunity attacks. Once before the spell ends, you can give yourself advantage on one weapon attack roll on your turn. That attack deals an extra 1d8 force damage on a hit. Whether you hit or miss, your walking speed increases by 30 feet until the end of that turn.",
   "save_ability": null,
   "damage_type": "force",
   "mechanics": [
-    "Movement does not provoke opportunity attacks",
-    "Gain advantage on one weapon attack roll before spell ends",
-    "Extra 1d8 force damage on that attack",
-    "Increase walking speed by 30 feet until end of turn"
+    {
+      "effect_type": "note",
+      "text": "Movement does not provoke opportunity attacks"
+    },
+    {
+      "effect_type": "note",
+      "text": "Gain advantage on one weapon attack roll before spell ends"
+    },
+    {
+      "effect_type": "note",
+      "text": "Extra 1d8 force damage on that attack"
+    },
+    {
+      "effect_type": "note",
+      "text": "Increase walking speed by 30 feet until end of turn"
+    }
   ]
 }

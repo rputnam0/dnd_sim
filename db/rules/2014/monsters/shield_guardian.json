@@ -1,17 +1,33 @@
 {
-  "name": "Shield Guardian",
-  "meta": "Large construct, unaligned",
-  "ac": 17,
-  "hp": 142,
-  "hp_formula": "15d10 + 60",
-  "ability_scores": {
-    "str": 18,
-    "dex": 8,
-    "con": 18,
-    "int": 7,
-    "wis": 10,
-    "cha": 3
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "shield_guardian",
+    "name": "Shield Guardian",
+    "team": "enemy"
   },
-  "cr": "7",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 142,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 4,
+    "dex_mod": -1,
+    "con_mod": 4,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": -4,
+    "save_mods": {},
+    "cr": "7"
+  },
+  "reactions": [],
+  "actions": []
 }

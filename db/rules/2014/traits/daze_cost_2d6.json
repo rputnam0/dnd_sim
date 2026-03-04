@@ -1,6 +1,5 @@
 {
   "name": "Daze (Cost: 2d6)",
-  "type": "class_feature",
   "description": "The target must succeed on a Constitution saving throw, or on its next turn, it can do only one of the following: move or take an action or a Bonus Action.",
   "mechanics": [
     {
@@ -18,5 +17,6 @@
         ]
       }
     }
-  ]
+  ],
+  "source_type": "class"
 }

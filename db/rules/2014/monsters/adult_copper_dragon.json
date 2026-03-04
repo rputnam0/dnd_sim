@@ -1,17 +1,38 @@
 {
-  "name": "Adult Copper Dragon",
-  "meta": "Huge dragon, chaotic good",
-  "ac": 18,
-  "hp": 184,
-  "hp_formula": "16d12 + 80",
-  "ability_scores": {
-    "str": 23,
-    "dex": 12,
-    "con": 21,
-    "int": 18,
-    "wis": 15,
-    "cha": 17
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "adult_copper_dragon",
+    "name": "Adult Copper Dragon",
+    "team": "enemy"
   },
-  "cr": "14",
-  "saving_throws_text": "Dex +6, Con +10, Wis +7, Cha +8"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 184,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 6,
+    "dex_mod": 1,
+    "con_mod": 5,
+    "int_mod": 4,
+    "wis_mod": 2,
+    "cha_mod": 3,
+    "save_mods": {
+      "dex": 6,
+      "con": 10,
+      "wis": 7,
+      "cha": 8
+    },
+    "cr": "14"
+  },
+  "reactions": [],
+  "actions": []
 }

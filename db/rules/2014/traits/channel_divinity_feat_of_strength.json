@@ -1,12 +1,11 @@
 {
   "name": "Channel Divinity: Feat of Strength",
-  "type": "subclass_feature",
   "description": "At 2nd level, you can use your Channel Divinity to enhance your physical might. When you make an attack roll, ability check, or saving throw using Strength, you can use your Channel Divinity to gain a +10 bonus to the roll. You make this choice after you see the roll, but before the DM says whether the roll succeeds or fails.",
   "mechanics": [
     {
       "effect_type": "channel_divinity",
       "usage": "once per short rest",
-      "trigger": "when making a Strength attack roll, ability check, or saving throw",
+      "trigger": "when making a strength attack roll, ability check, or saving throw",
       "timing": "after roll, before outcome",
       "modifier": {
         "type": "flat",
@@ -19,5 +18,6 @@
         "ability": "Strength"
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

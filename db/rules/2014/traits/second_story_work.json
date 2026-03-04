@@ -1,6 +1,5 @@
 {
   "name": "Second-Story Work",
-  "type": "subclass_feature",
   "description": "When you choose this archetype at 3rd level, you gain the ability to climb faster than normal; climbing no longer costs you extra movement. In addition, when you make a running jump, the distance you cover increases by a number of feet equal to your Dexterity modifier.",
   "mechanics": [
     {
@@ -12,5 +11,6 @@
       "description": "Running jump distance increased by your Dexterity modifier (in feet).",
       "value": "dex_mod"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

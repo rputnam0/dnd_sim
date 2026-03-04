@@ -1,17 +1,38 @@
 {
-  "name": "Ancient Black Dragon",
-  "meta": "Gargantuan dragon, chaotic evil",
-  "ac": 22,
-  "hp": 367,
-  "hp_formula": "21d20 + 147",
-  "ability_scores": {
-    "str": 27,
-    "dex": 14,
-    "con": 25,
-    "int": 16,
-    "wis": 15,
-    "cha": 19
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ancient_black_dragon",
+    "name": "Ancient Black Dragon",
+    "team": "enemy"
   },
-  "cr": "21",
-  "saving_throws_text": "Dex +9, Con +14, Wis +9, Cha +11"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 367,
+    "ac": 22,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 8,
+    "dex_mod": 2,
+    "con_mod": 7,
+    "int_mod": 3,
+    "wis_mod": 2,
+    "cha_mod": 4,
+    "save_mods": {
+      "dex": 9,
+      "con": 14,
+      "wis": 9,
+      "cha": 11
+    },
+    "cr": "21"
+  },
+  "reactions": [],
+  "actions": []
 }

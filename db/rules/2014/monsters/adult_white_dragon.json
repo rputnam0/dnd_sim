@@ -1,17 +1,38 @@
 {
-  "name": "Adult White Dragon",
-  "meta": "Huge dragon, chaotic evil",
-  "ac": 18,
-  "hp": 200,
-  "hp_formula": "16d12 + 96",
-  "ability_scores": {
-    "str": 22,
-    "dex": 10,
-    "con": 22,
-    "int": 8,
-    "wis": 12,
-    "cha": 12
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "adult_white_dragon",
+    "name": "Adult White Dragon",
+    "team": "enemy"
   },
-  "cr": "13",
-  "saving_throws_text": "Dex +5, Con +11, Wis +6, Cha +6"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 200,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 6,
+    "dex_mod": 0,
+    "con_mod": 6,
+    "int_mod": -1,
+    "wis_mod": 1,
+    "cha_mod": 1,
+    "save_mods": {
+      "dex": 5,
+      "con": 11,
+      "wis": 6,
+      "cha": 6
+    },
+    "cr": "13"
+  },
+  "reactions": [],
+  "actions": []
 }

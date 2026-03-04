@@ -1,17 +1,33 @@
 {
-  "name": "Wyvern",
-  "meta": "Large dragon, unaligned",
-  "ac": 13,
-  "hp": 110,
-  "hp_formula": "13d10 + 39",
-  "ability_scores": {
-    "str": 19,
-    "dex": 10,
-    "con": 16,
-    "int": 5,
-    "wis": 12,
-    "cha": 6
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "wyvern",
+    "name": "Wyvern",
+    "team": "enemy"
   },
-  "cr": "6",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 110,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 4,
+    "dex_mod": 0,
+    "con_mod": 3,
+    "int_mod": -3,
+    "wis_mod": 1,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "6"
+  },
+  "reactions": [],
+  "actions": []
 }

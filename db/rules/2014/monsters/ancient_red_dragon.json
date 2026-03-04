@@ -1,17 +1,38 @@
 {
-  "name": "Ancient Red Dragon",
-  "meta": "Gargantuan dragon, chaotic evil",
-  "ac": 22,
-  "hp": 546,
-  "hp_formula": "28d20 + 252",
-  "ability_scores": {
-    "str": 30,
-    "dex": 10,
-    "con": 29,
-    "int": 18,
-    "wis": 15,
-    "cha": 23
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ancient_red_dragon",
+    "name": "Ancient Red Dragon",
+    "team": "enemy"
   },
-  "cr": "24",
-  "saving_throws_text": "Dex +7, Con +16, Wis +9, Cha +13"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 546,
+    "ac": 22,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 10,
+    "dex_mod": 0,
+    "con_mod": 9,
+    "int_mod": 4,
+    "wis_mod": 2,
+    "cha_mod": 6,
+    "save_mods": {
+      "dex": 7,
+      "con": 16,
+      "wis": 9,
+      "cha": 13
+    },
+    "cr": "24"
+  },
+  "reactions": [],
+  "actions": []
 }

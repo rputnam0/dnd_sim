@@ -1,6 +1,5 @@
 {
   "name": "Tandem Footwork",
-  "type": "subclass_feature",
   "description": "When you roll Initiative, you can expend one use of your Bardic Inspiration if you don't have the Incapacitated condition. When you do so, roll your Bardic Inspiration die; you and each ally within 30 feet of you who can see or hear you gain a bonus to Initiative equal to the number rolled.",
   "mechanics": [
     {
@@ -22,5 +21,6 @@
         }
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

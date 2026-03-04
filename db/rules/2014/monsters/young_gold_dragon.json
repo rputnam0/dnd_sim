@@ -1,17 +1,38 @@
 {
-  "name": "Young Gold Dragon",
-  "meta": "Large dragon, lawful good",
-  "ac": 18,
-  "hp": 178,
-  "hp_formula": "17d10 + 85",
-  "ability_scores": {
-    "str": 23,
-    "dex": 14,
-    "con": 21,
-    "int": 16,
-    "wis": 13,
-    "cha": 20
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "young_gold_dragon",
+    "name": "Young Gold Dragon",
+    "team": "enemy"
   },
-  "cr": "10",
-  "saving_throws_text": "Dex +6, Con +9, Wis +5, Cha +9"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 178,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 6,
+    "dex_mod": 2,
+    "con_mod": 5,
+    "int_mod": 3,
+    "wis_mod": 1,
+    "cha_mod": 5,
+    "save_mods": {
+      "dex": 6,
+      "con": 9,
+      "wis": 5,
+      "cha": 9
+    },
+    "cr": "10"
+  },
+  "reactions": [],
+  "actions": []
 }

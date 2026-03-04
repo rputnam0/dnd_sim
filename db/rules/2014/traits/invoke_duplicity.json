@@ -1,10 +1,8 @@
 {
   "name": "Invoke Duplicity",
-  "type": "subclass_feature",
   "description": "As a Bonus Action, you can expend one use of your Channel Divinity to create a perfect visual illusion of yourself in an unoccupied space you can see within 30 feet of yourself. The illusion is intangible and doesn't occupy its space. It lasts for 1 minute, but it ends early if you dismiss it (no action required) or have the Incapacitated condition. The illusion is animated and mimics your expressions and gestures. While it persists, you gain the following benefits. Cast Spells: You can cast spells as though you were in the illusion's space, but you must use your own senses. Distract: When both you and your illusion are within 5 feet of a creature that can see the illusion, you have Advantage on attack rolls against that creature, given how distracting the illusion is to the target. Move: As a Bonus Action, you can move the illusion up to 30 feet to an unoccupied space you can see that is within 120 feet of yourself.",
   "mechanics": [
     {
-      "type": "action",
       "name": "Create Illusion",
       "action_type": "bonus",
       "resource": "Channel Divinity",
@@ -14,27 +12,29 @@
       "ends_early_conditions": [
         "dismissed (no action)",
         "incapacitated"
-      ]
+      ],
+      "meta_type": "action"
     },
     {
-      "type": "action",
       "name": "Move Illusion",
       "action_type": "bonus",
       "range": "120 ft",
-      "move_distance": "30 ft"
+      "move_distance": "30 ft",
+      "meta_type": "action"
     },
     {
-      "type": "benefit",
       "name": "Cast Spells from Illusion",
       "effect": "spell_origin",
       "origin": "illusion_space",
-      "restriction": "use own senses"
+      "restriction": "use own senses",
+      "meta_type": "benefit"
     },
     {
-      "type": "benefit",
       "name": "Distract Advantage",
       "effect": "advantage_on_attacks",
-      "condition": "both you and illusion within 5 ft of a creature that can see the illusion"
+      "condition": "both you and illusion within 5 ft of a creature that can see the illusion",
+      "meta_type": "benefit"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

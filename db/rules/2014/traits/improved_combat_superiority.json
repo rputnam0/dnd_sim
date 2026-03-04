@@ -1,11 +1,11 @@
 {
   "name": "Improved Combat Superiority",
-  "type": "subclass_feature",
   "description": "Your Superiority Die becomes a d10.",
   "mechanics": [
     {
-      "type": "upgrade_superiority_die",
-      "die": "d10"
+      "die": "d10",
+      "meta_type": "upgrade_superiority_die"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

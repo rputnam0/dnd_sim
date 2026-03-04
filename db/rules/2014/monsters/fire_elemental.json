@@ -1,17 +1,33 @@
 {
-  "name": "Fire Elemental",
-  "meta": "Large elemental, neutral",
-  "ac": 13,
-  "hp": 102,
-  "hp_formula": "12d10 + 36",
-  "ability_scores": {
-    "str": 10,
-    "dex": 17,
-    "con": 16,
-    "int": 6,
-    "wis": 10,
-    "cha": 7
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "fire_elemental",
+    "name": "Fire Elemental",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 102,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": 0,
+    "dex_mod": 3,
+    "con_mod": 3,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,16 +1,14 @@
 {
   "name": "Replicate Magic Item",
-  "type": "class_feature",
   "description": "You have learned arcane plans that you use to make magic items.\n\nPlans Known: When you gain this feature, choose four plans to learn from the Magic Item Plans (Artificer Level 2+) table. Recommended plans are Bag of Holding, Cap of Water Breathing, Sending Stones, and +1 Wand of the War Mage. Whenever you gain an Artificer level, you can replace one of the plans you know with a new plan for which you qualify. You learn another plan of your choice when you reach certain Artificer levels, as shown in the Plans Known column of the Artificer Features table. When you choose a plan to learn, you choose it from any Magic Item Plans table for which you qualify; your qualification is based on your Artificer level.\n\nCreating an Item: When you finish a Long Rest, you can create one or two different magic items if you have Tinker's Tools in hand. Each item is based on one of the plans you know for this feature. If a created item requires Attunement, you can attune yourself to it the instant you create it. If you decide to attune to the item later, you must do so using the normal process for Attunement. When you reach certain Artificer levels specified in the Magic Items column of the Artificer Features table, the number of magic items you can create at the end of a Long Rest increases. Each item you create must be based on a different plan you know. You can't have more magic items from this feature than the number shown in the Magic Items column of the Artificer Features table for your level. If you try to exceed your maximum number of magic items for this feature, the oldest item vanishes, and then the new item appears.\n\nDuration: A magic item created by this feature functions as the normal magic item, except its magic isn't permanent; when you die, the magic item vanishes after 1d4 days. If you replace a plan you know with a new plan, any magic item created with the replaced plan immediately vanishes. If an item that you created with this feature is a container, such as a Bag of Holding, and it vanishes, its contents harmlessly appear in and around its space.\n\nSpellcasting Focus: You can use any Wand or Weapon created by this feature as a Spellcasting Focus in lieu of using a set of Artisan's Tools.\n\nCrafting More Magic Items: The Replicate Magic Item feature isn't the only way for an Artificer to make magic items. The Dungeon Master's Guide provides rules for characters—not just Artificers—who want to make magic items of all sorts. Though many different characters can make magic items, Artificers can do it faster than others; each Artificer subclass improves a character's speed at making items of a certain category. When an Artificer crafts a magic item using the normal rules in the Dungeon Master's Guide, the character gains no special connection to that item. Class features that refer to items created by your Replicate Magic Item feature don't apply to items you craft by other means.",
   "mechanics": [
     {
-      "type": "learn_plans",
       "initial_count": 4,
       "replace_on_level_up": true,
-      "plan_selection_criteria": "based on Artificer level and qualified Magic Item Plans tables"
+      "plan_selection_criteria": "based on Artificer level and qualified Magic Item Plans tables",
+      "meta_type": "learn_plans"
     },
     {
-      "type": "create_items_on_long_rest",
       "required_tool": "Tinker's Tools",
       "base_quantity": 1,
       "additional_quantity_by_level": {
@@ -25,29 +23,31 @@
         "10": 4,
         "14": 5
       },
-      "excess_item_handling": "oldest_item_vanishes"
+      "excess_item_handling": "oldest_item_vanishes",
+      "meta_type": "create_items_on_long_rest"
     },
     {
-      "type": "item_vanish_on_death",
-      "duration": "1d4 days after death"
+      "duration": "1d4 days after death",
+      "meta_type": "item_vanish_on_death"
     },
     {
-      "type": "plan_replacement_vanishes_items",
       "trigger": "plan replaced",
-      "effect": "all items created from that plan immediately vanish"
+      "effect": "all items created from that plan immediately vanish",
+      "meta_type": "plan_replacement_vanishes_items"
     },
     {
-      "type": "immediate_attunement",
       "condition": "item requires attunement and is created",
-      "effect": "creator may attune instantly"
+      "effect": "creator may attune instantly",
+      "meta_type": "immediate_attunement"
     },
     {
-      "type": "spellcasting_focus",
       "allowed_items": [
         "Wand created by this feature",
         "Weapon created by this feature"
       ],
-      "replaces": "Artisan's Tools"
+      "replaces": "Artisan's Tools",
+      "meta_type": "spellcasting_focus"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,17 +1,33 @@
 {
-  "name": "Shambling Mound",
-  "meta": "Large plant, unaligned",
-  "ac": 15,
-  "hp": 136,
-  "hp_formula": "16d10 + 48",
-  "ability_scores": {
-    "str": 18,
-    "dex": 8,
-    "con": 16,
-    "int": 5,
-    "wis": 10,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "shambling_mound",
+    "name": "Shambling Mound",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 136,
+    "ac": 15,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 4,
+    "dex_mod": -1,
+    "con_mod": 3,
+    "int_mod": -3,
+    "wis_mod": 0,
+    "cha_mod": -3,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

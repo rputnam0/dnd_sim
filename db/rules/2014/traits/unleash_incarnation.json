@@ -1,20 +1,20 @@
 {
   "name": "Unleash Incarnation",
-  "type": "subclass_feature",
   "description": "3rd-level Echo Knight feature. You can heighten your echo's fury. Whenever you take the Attack action, you can make one additional melee attack from the echo's position. You can use this feature a number of times equal to your Constitution modifier (a minimum of once). You regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "type": "extra_attack",
-      "trigger": "Attack action",
+      "trigger": "attack action",
       "source": "echo",
       "attack_type": "melee",
-      "count": 1
+      "count": 1,
+      "meta_type": "extra_attack"
     },
     {
-      "type": "resource",
       "name": "Unleash Incarnation uses",
       "max": "Constitution modifier (minimum 1)",
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "resource"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

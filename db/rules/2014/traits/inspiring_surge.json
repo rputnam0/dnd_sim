@@ -1,22 +1,22 @@
 {
   "name": "Inspiring Surge",
-  "type": "subclass_feature",
   "description": "Starting at 10th level, when you use your Action Surge feature, you can choose one creature within 60 feet of you that is allied with you. That creature can make one melee or ranged weapon attack with its reaction, provided that it can see or hear you. Starting at 18th level, you can choose two allies within 60 feet of you, rather than one.",
   "mechanics": [
     {
-      "trigger": "Action Surge used",
+      "trigger": "action surge used",
       "target": "allied creature within 60 feet",
       "limit": 1,
       "effect": "allows the target to make one melee or ranged weapon attack as a reaction",
       "condition": "target can see or hear the user"
     },
     {
-      "trigger": "Action Surge used",
+      "trigger": "action surge used",
       "target": "allied creatures within 60 feet",
       "limit": 2,
       "effect": "allows each target to make one melee or ranged weapon attack as a reaction",
       "condition": "targets can see or hear the user",
       "note": "available starting at 18th level"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

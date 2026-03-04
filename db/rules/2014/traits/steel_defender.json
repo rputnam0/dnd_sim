@@ -1,51 +1,51 @@
 {
   "name": "Steel Defender",
-  "type": "subclass_feature",
   "description": "Your tinkering has borne you a companion, a Steel Defender. You determine the defender's appearance and whether it has two legs or four; your choices don't affect the defender's game statistics. The defender is Friendly to you and your allies and obeys you. It vanishes if you die.\n\nThe Defender in Combat: In combat, the defender acts during your turn. It can move and take its reaction on its own, but the only action it takes is the Dodge action unless you take a Bonus Action to command it to take an action. If you have the Incapacitated condition, the defender acts on its own and isn't limited to the Dodge action.\n\nRestoring or Replacing the Defender: If the defender has died within the last hour, you can take a Magic action to touch it and expend a spell slot. The defender returns to life after 1 minute with all its Hit Points restored. Whenever you finish a Long Rest, you can create a new Steel Defender if you have Smith's Tools in hand. If you already have a defender from this feature, the first one vanishes.",
   "mechanics": [
     {
-      "type": "summon",
       "creature": "Steel Defender",
       "duration": "until death",
       "source": "subclass_feature",
-      "level": 3
+      "level": 3,
+      "effect_type": "summon"
     },
     {
-      "type": "default_action",
       "creature": "Steel Defender",
-      "action": "Dodge"
+      "action": "Dodge",
+      "meta_type": "default_action"
     },
     {
-      "type": "control",
       "owner": "self",
       "command_action": "bonus",
-      "allows_action": "any"
+      "allows_action": "any",
+      "meta_type": "control"
     },
     {
-      "type": "reaction_allowed",
       "creature": "Steel Defender",
-      "condition": "any"
+      "condition": "any",
+      "meta_type": "reaction_allowed"
     },
     {
-      "type": "override",
       "creature": "Steel Defender",
       "condition": "owner_incapacitated",
-      "allows_actions": "any"
+      "allows_actions": "any",
+      "meta_type": "override"
     },
     {
-      "type": "revive",
       "creature": "Steel Defender",
       "action": "Magic",
       "cost": "spell_slot",
       "time": "1 minute",
       "hp_restored": "full",
-      "window": "1 hour after death"
+      "window": "1 hour after death",
+      "meta_type": "revive"
     },
     {
-      "type": "create_on_long_rest",
       "creature": "Steel Defender",
       "requires": "Smith's Tools",
-      "replace_existing": true
+      "replace_existing": true,
+      "meta_type": "create_on_long_rest"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

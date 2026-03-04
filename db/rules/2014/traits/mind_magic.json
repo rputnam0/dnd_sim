@@ -1,10 +1,8 @@
 {
   "name": "Mind Magic",
-  "type": "subclass_feature",
   "description": "As a Magic action, you can expend one use of your Channel Divinity to manifest your magical knowledge. Choose one spell from the Divination school on the Knowledge Domain Spells table that you have prepared. As part of that action, you cast that spell without expending a spell slot or needing material components.",
   "mechanics": [
     {
-      "type": "channel_divinity",
       "cost": 1,
       "action": "action",
       "cast_without_spell_slot": true,
@@ -12,7 +10,9 @@
       "spell_filter": {
         "school": "Divination",
         "source": "Knowledge Domain Spells"
-      }
+      },
+      "meta_type": "channel_divinity"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

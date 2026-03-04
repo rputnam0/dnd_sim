@@ -1,11 +1,11 @@
 {
   "name": "Fey",
-  "type": "racial_trait",
   "description": "Your creature type is fey, rather than humanoid.",
   "mechanics": [
     {
-      "type": "setCreatureType",
-      "value": "fey"
+      "value": "fey",
+      "meta_type": "setcreaturetype"
     }
-  ]
+  ],
+  "source_type": "species"
 }

@@ -1,9 +1,15 @@
 {
   "name": "Animal Friendship",
-  "meta": "Animal Friendship 1st-\u00ad\u2010\u2011level enchantment",
+  "type": "spell",
+  "level": 1,
+  "school": "Enchantment",
   "casting_time": "1 action",
-  "range": "30 feet",
-  "components": "V, S, M (a morsel of food)",
-  "duration": "24 hours This spell lets you convince a beast that you mean it no harm. Choose a beast that you can see within range. It must see and hear you. If the beast's Intelligence is 4 or higher, the spell fails. Otherwise, the beast must succeed on a Wisdom saving throw or be charmed by you for the spell's duration. If you or one of your companions harms the target, the spells ends. At Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, you can affect one additional beast t level above 1st.",
-  "description": "Animal Messenger 2nd-\u00ad\u2010\u2011level enchantment (ritual)"
+  "range_ft": 30,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 14400,
+  "description": "Animal Messenger 2nd-­‐‑level enchantment (ritual)",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

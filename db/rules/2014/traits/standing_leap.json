@@ -1,13 +1,13 @@
 {
   "name": "Standing Leap",
-  "type": "racial_trait",
   "description": "Your long jump is up to 20 feet and your high jump is up to 10 feet, with or without a running start.",
   "mechanics": [
     {
-      "type": "jump",
       "long_jump_feet": 20,
       "high_jump_feet": 10,
-      "requires_running_start": false
+      "requires_running_start": false,
+      "meta_type": "jump"
     }
-  ]
+  ],
+  "source_type": "species"
 }

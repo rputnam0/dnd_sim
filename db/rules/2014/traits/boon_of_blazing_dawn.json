@@ -1,6 +1,5 @@
 {
   "name": "Boon of Blazing Dawn",
-  "type": "feat",
   "description": "You gain a +1 bonus to an ability score of your choice, up to a maximum of 30. You have immunity to radiant damage. When you hit a creature with a weapon attack, the damage can be radiant or the weapon's normal damage type. Once per turn when you hit a creature with an attack that deals radiant damage, you can emit sunlight in a 30-foot radius and dim light for an additional 30 feet until the start of your next turn.",
   "mechanics": [
     {
@@ -25,5 +24,6 @@
       "effect": "emit_sunlight",
       "radius": 30
     }
-  ]
+  ],
+  "source_type": "feat"
 }

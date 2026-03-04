@@ -1,6 +1,5 @@
 {
   "name": "Spectral Defense",
-  "type": "subclass_feature",
   "description": "At 15th level, your ability to move between planes enables you to slip through the planar boundaries to lessen the harm done to you during battle. When you take damage from an attack, you can use your reaction to give yourself resistance to all of that attack's damage on this turn.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "reaction": true,
       "effect": "gain resistance to the damage type of that attack until the end of the turn"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

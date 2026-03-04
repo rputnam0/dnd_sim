@@ -1,16 +1,16 @@
 {
   "name": "Hunter's Prey",
-  "type": "subclass_feature",
   "description": "At 3rd level, you gain one of the following features of your choice: Colossus Slayer, Giant Killer, Horde Breaker.",
   "mechanics": [
     {
-      "type": "choice",
       "count": 1,
       "options": [
         "Colossus Slayer",
         "Giant Killer",
         "Horde Breaker"
-      ]
+      ],
+      "meta_type": "choice"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

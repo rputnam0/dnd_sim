@@ -1,13 +1,13 @@
 {
   "name": "Friend of the Sea",
-  "type": "racial_trait",
   "description": "Aquatic animals have an extraordinary affinity with your people. You can communicate simple ideas to any Beast that has a swimming speed. It can understand your words, though you have no special ability to understand it in return.",
   "mechanics": [
     {
-      "type": "communication",
       "target": "beast with swimming speed",
       "content": "simple ideas",
-      "mutual": false
+      "mutual": false,
+      "meta_type": "communication"
     }
-  ]
+  ],
+  "source_type": "species"
 }

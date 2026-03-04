@@ -1,13 +1,13 @@
 {
   "name": "Indomitable (three uses)",
-  "type": "class_feature",
   "description": "At 17th level, you can use Indomitable three times between long rests.",
   "mechanics": [
     {
-      "type": "resource",
       "name": "Indomitable",
       "maxUses": 3,
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "resource"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,9 +1,15 @@
 {
   "name": "Power Word Kill",
-  "meta": "Power Word Kill 9th-\u00ad\u2010\u2011level enchantment",
+  "type": "spell",
+  "level": 9,
+  "school": "Enchantment",
   "casting_time": "1 action",
-  "range": "60 feet",
-  "components": "V",
-  "duration": "Instantaneous",
-  "description": "You utter a word of power that can compel one creature you can see within range to die instantly. If the creature you choose has 100 hit points or fewer, it dies. Otherwise, the spell has no effect. Power Word Stun 8th-\u00ad\u2010\u2011level enchantment"
+  "range_ft": 60,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 0,
+  "description": "You utter a word of power that can compel one creature you can see within range to die instantly. If the creature you choose has 100 hit points or fewer, it dies. Otherwise, the spell has no effect. Power Word Stun 8th-­‐‑level enchantment",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

@@ -1,17 +1,15 @@
 {
   "name": "Perfected Armor",
-  "type": "subclass_feature",
   "description": "Your Arcane Armor gains additional benefits based on its model, as detailed below.\n\nDreadnaught: The damage die of your Force Demolisher increases to 2d6 Force damage. In addition, when you use your Giant Stature, your reach increases by 10 feet, your size can increase to Large or Huge (your choice), and you have advantage on Strength checks and Strength saving throws for the duration.\n\nGuardian: The damage die of your Thunder Pulse increases to 1d10 Thunder damage. In addition, when a Huge or smaller creature you can see ends its turn within 30 feet of you, you can take a reaction to magically force that creature to make a Strength saving throw against your spell save DC. On a failed save, you pull the creature up to 25 feet directly toward you to an unoccupied space. If you pull the target to a space within 5 feet of yourself, you can make a melee weapon attack against it as part of this reaction. You can take this reaction a number of times equal to your Intelligence modifier (minimum of once), and you regain all expended uses when you finish a long rest.\n\nInfiltrator: The damage die of your Lightning Launcher increases to 2d6 Lightning damage. Any creature that takes Lightning damage from your Lightning Launcher glimmers with magical light until the start of your next turn. The glimmering creature sheds dim light in a 5-foot radius, and it has disadvantage on attack rolls against you, as the light jolts it if it attacks you. Additionally, as a bonus action, you can gain a fly speed equal to twice your speed until the end of the current turn. You can take this bonus action a number of times equal to your Intelligence modifier (minimum of once), and you regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "type": "damage_die_increase",
       "ability": "Force Demolisher",
       "damage": "2d6",
-      "damage_type": "force"
+      "damage_type": "force",
+      "meta_type": "damage_die_increase"
     },
     {
-      "type": "conditional_bonus",
-      "trigger": "use Giant Stature",
+      "trigger": "use giant stature",
       "effects": [
         {
           "reach": "+10 ft"
@@ -25,16 +23,16 @@
             "Strength saves"
           ]
         }
-      ]
+      ],
+      "meta_type": "conditional_bonus"
     },
     {
-      "type": "damage_die_increase",
       "ability": "Thunder Pulse",
       "damage": "1d10",
-      "damage_type": "thunder"
+      "damage_type": "thunder",
+      "meta_type": "damage_die_increase"
     },
     {
-      "type": "reaction",
       "trigger": "creature ends turn within 30 ft",
       "save": "Strength",
       "dc": "spell save DC",
@@ -42,16 +40,16 @@
         "move": "up to 25 ft toward you",
         "optional_melee_attack_if_within_5ft": true
       },
-      "uses_per_long_rest": "Int mod (min 1)"
+      "uses_per_long_rest": "Int mod (min 1)",
+      "meta_type": "reaction"
     },
     {
-      "type": "damage_die_increase",
       "ability": "Lightning Launcher",
       "damage": "2d6",
-      "damage_type": "lightning"
+      "damage_type": "lightning",
+      "meta_type": "damage_die_increase"
     },
     {
-      "type": "status_effect",
       "name": "glimmering",
       "applies_to": "creature hit by Lightning Launcher",
       "duration": "until start of your next turn",
@@ -63,14 +61,16 @@
         {
           "disadvantage_on": "attack rolls against you"
         }
-      ]
+      ],
+      "meta_type": "status_effect"
     },
     {
-      "type": "bonus_action",
       "name": "gain fly speed",
       "speed": "twice your speed",
       "duration": "end of turn",
-      "uses_per_long_rest": "Int mod (min 1)"
+      "uses_per_long_rest": "Int mod (min 1)",
+      "meta_type": "bonus_action"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

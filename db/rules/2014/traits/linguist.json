@@ -1,6 +1,5 @@
 {
   "name": "Linguist",
-  "type": "feat",
   "description": "You have studied languages and codes. You increase your Intelligence score by 1, to a maximum of 20. You learn three languages of your choice. You can create written ciphers that others can't decipher unless taught, they succeed on an Intelligence check (DC = your Intelligence score + proficiency bonus), or they use magic.",
   "mechanics": [
     {
@@ -17,5 +16,6 @@
       "effect_type": "cipher_creation",
       "dc_calculation": "int_score_plus_proficiency"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

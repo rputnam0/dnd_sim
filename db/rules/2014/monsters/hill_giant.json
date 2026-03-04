@@ -1,17 +1,33 @@
 {
-  "name": "Hill Giant",
-  "meta": "Huge giant, chaotic evil",
-  "ac": 13,
-  "hp": 105,
-  "hp_formula": "10d12 + 40",
-  "ability_scores": {
-    "str": 21,
-    "dex": 8,
-    "con": 19,
-    "int": 5,
-    "wis": 9,
-    "cha": 6
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "hill_giant",
+    "name": "Hill Giant",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 105,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 5,
+    "dex_mod": -1,
+    "con_mod": 4,
+    "int_mod": -3,
+    "wis_mod": -1,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

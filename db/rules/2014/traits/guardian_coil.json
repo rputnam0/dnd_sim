@@ -1,13 +1,13 @@
 {
   "name": "Guardian Coil",
-  "type": "subclass_feature",
   "description": "6th-level Fathomless feature. Your Tentacle of the Deeps can defend you and others, interposing itself between them and harm. When you or a creature you can see takes damage while within 10 feet of the tentacle, you can use your reaction to choose one of those creatures and reduce the damage to that creature by 1d8. When you reach 10th level in this class, the damage reduced by the tentacle increases to 2d8.",
   "mechanics": [
     {
-      "type": "reaction",
-      "trigger": "When you or a creature you can see takes damage while within 10 feet of the tentacle",
+      "trigger": "when you or a creature you can see takes damage while within 10 feet of the tentacle",
       "action": "Choose one of those creatures and reduce the damage to that creature by 1d8 (2d8 at warlock level 10)",
-      "usage": "once per damage event"
+      "usage": "once per damage event",
+      "meta_type": "reaction"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

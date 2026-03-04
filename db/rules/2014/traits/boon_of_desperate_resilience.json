@@ -1,6 +1,5 @@
 {
   "name": "Boon of Desperate Resilience",
-  "type": "feat",
   "description": "Increase your Strength or Constitution score by 1, to a maximum of 30. While you are Bloodied, you have resistance to every damage type except Force.",
   "mechanics": [
     {
@@ -19,5 +18,6 @@
       "exception": "force",
       "condition": "bloodied"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

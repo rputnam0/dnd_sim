@@ -1,6 +1,6 @@
 {
   "name": "Phlan Survivor",
-  "type": "background_feature",
   "description": "Whatever your prior standing was, you are now one of the many refugees that have come to Mulmaster. You are able to find refuge with others from Phlan and those who sympathize with your plight. Within Mulmaster this means that you can find a place to bed down, recover, and hide from the watch with either other refugees from Phlan, or the Zhents within the ghettos. Note: This feature is a variant of the Folk Hero feature.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

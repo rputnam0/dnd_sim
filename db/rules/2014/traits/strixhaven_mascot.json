@@ -1,6 +1,5 @@
 {
   "name": "Strixhaven Mascot",
-  "type": "feat",
   "description": "You can cast the find familiar spell as a ritual, choosing a mascot associated with your Strixhaven college. When you take the Attack action, you can forgo one attack to allow your mascot familiar to make one attack of its own with its reaction. Additionally, as an action, you can swap places with your mascot familiar within 60 feet once per long rest, or by expending a spell slot of 2nd level or higher.",
   "mechanics": [
     {
@@ -23,5 +22,6 @@
       "reset": "long_rest",
       "spell_slot_cost": 2
     }
-  ]
+  ],
+  "source_type": "feat"
 }

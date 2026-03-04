@@ -1,6 +1,5 @@
 {
   "name": "Mark of Healing",
-  "type": "feat",
   "description": "You gain a 1d4 bonus to Wisdom (Medicine) checks and ability checks with a Herbalism Kit. You always have Cure Wounds prepared and can cast it once per long rest without a spell slot. At level 3, you also have Lesser Restoration prepared and can cast it once per long rest without a spell slot. You can also cast these spells using spell slots. Choose Intelligence, Wisdom, or Charisma as your spellcasting ability for these. If you have Spellcasting or Pact Magic, several healing spells are added to your spell list.",
   "mechanics": [
     {
@@ -48,5 +47,6 @@
         "greater restoration"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

@@ -1,17 +1,33 @@
 {
-  "name": "Minotaur",
-  "meta": "Large monstrosity, chaotic evil",
-  "ac": 14,
-  "hp": 76,
-  "hp_formula": "9d10 + 27",
-  "ability_scores": {
-    "str": 18,
-    "dex": 11,
-    "con": 16,
-    "int": 6,
-    "wis": 16,
-    "cha": 9
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "minotaur",
+    "name": "Minotaur",
+    "team": "enemy"
   },
-  "cr": "3",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 76,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 4,
+    "dex_mod": 0,
+    "con_mod": 3,
+    "int_mod": -2,
+    "wis_mod": 3,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "3"
+  },
+  "reactions": [],
+  "actions": []
 }

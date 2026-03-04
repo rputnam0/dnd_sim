@@ -6,6 +6,7 @@
   "casting_time": "action",
   "range_ft": 0,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 600,
   "description": "You draw on knowledge from spirits of the past. Choose one skill in which you lack proficiency. For the spell's duration, you have proficiency in the chosen skill. The spell ends early if you cast it again.",
   "save_ability": null,

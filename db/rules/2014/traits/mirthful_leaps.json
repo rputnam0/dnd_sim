@@ -1,10 +1,8 @@
 {
   "name": "Mirthful Leaps",
-  "type": "racial_trait",
   "description": "Whenever you make a long or high jump, you can roll a d8 and add the number rolled to the number of feet you cover, even when making a standing jump. This extra distance costs movement as normal.",
   "mechanics": [
     {
-      "type": "jump_distance_modifier",
       "dice": "1d8",
       "applies_to": [
         "long_jump",
@@ -12,7 +10,9 @@
         "standing_jump"
       ],
       "adds_feet": true,
-      "costs_movement": true
+      "costs_movement": true,
+      "meta_type": "jump_distance_modifier"
     }
-  ]
+  ],
+  "source_type": "species"
 }

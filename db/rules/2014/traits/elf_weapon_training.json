@@ -1,6 +1,5 @@
 {
   "name": "Elf Weapon Training",
-  "type": "racial_trait",
   "description": "You have proficiency with the longsword, shortsword, shortbow, and longbow.",
   "mechanics": [
     {
@@ -13,5 +12,6 @@
         ]
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

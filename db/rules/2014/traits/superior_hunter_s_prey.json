@@ -1,14 +1,14 @@
 {
   "name": "Superior Hunter's Prey",
-  "type": "subclass_feature",
   "description": "Once per turn when you deal damage to a creature marked by your Hunter's Mark, you can also deal that spell's extra damage to a different creature that you can see within 30 feet of the first creature.",
   "mechanics": [
     {
-      "trigger": "when you deal damage to a creature marked by your Hunter's Mark",
+      "trigger": "when you deal damage to a creature marked by your hunter's mark",
       "frequency": "once per turn",
       "effect": "deal the extra damage of Hunter's Mark",
       "target": "a different creature you can see",
       "range": "30 feet from the creature you originally damaged"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

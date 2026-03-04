@@ -1,18 +1,18 @@
 {
   "name": "Absorb Spells",
-  "type": "subclass_feature",
   "description": "You always have Counterspell prepared. Additionally, whenever a target fails the saving throw against a Counterspell you cast, you regain 1d4 Sorcery Points.",
   "mechanics": [
     {
-      "type": "always_prepared",
-      "spell": "Counterspell"
+      "spell": "Counterspell",
+      "meta_type": "always_prepared"
     },
     {
-      "type": "gain_resource",
       "resource": "Sorcery Points",
       "amount": "1d4",
       "trigger": "target_fails_save",
-      "spell": "Counterspell"
+      "spell": "Counterspell",
+      "meta_type": "gain_resource"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

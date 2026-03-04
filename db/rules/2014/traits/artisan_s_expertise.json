@@ -1,28 +1,28 @@
 {
   "name": "Artisan's Expertise",
-  "type": "racial_trait",
   "description": "You gain proficiency with two kinds of artisan's tools of your choice. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies. In addition, whenever you make an Intelligence (History) check related to the origin of any architectural construction (including buildings, public works such as canals and aqueducts, and the massive cogwork that underlies much of the construction of Ghirapur), you are considered proficient in the History skill and add double your proficiency bonus to the check, instead of your normal proficiency bonus.",
   "mechanics": [
     {
-      "type": "tool_proficiency",
       "count": 2,
-      "choice": "any"
+      "choice": "any",
+      "meta_type": "tool_proficiency"
     },
     {
-      "type": "double_proficiency_bonus",
       "applies_to": "tool_checks",
-      "condition": "uses_chosen_artisan_tools"
+      "condition": "uses_chosen_artisan_tools",
+      "meta_type": "double_proficiency_bonus"
     },
     {
-      "type": "skill_proficiency",
       "skill": "History",
-      "condition": "architectural_construction_related"
+      "condition": "architectural_construction_related",
+      "meta_type": "skill_proficiency"
     },
     {
-      "type": "double_proficiency_bonus",
       "applies_to": "skill_checks",
       "skill": "History",
-      "condition": "architectural_construction_related"
+      "condition": "architectural_construction_related",
+      "meta_type": "double_proficiency_bonus"
     }
-  ]
+  ],
+  "source_type": "species"
 }

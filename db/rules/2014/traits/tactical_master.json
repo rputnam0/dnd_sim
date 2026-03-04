@@ -1,6 +1,5 @@
 {
   "name": "Tactical Master",
-  "type": "class_feature",
   "description": "When you attack with a weapon whose mastery property you can use, you can replace that property with the Push, Sap, or Slow mastery property for that attack.",
   "mechanics": [
     {
@@ -11,5 +10,6 @@
         "Slow"
       ]
     }
-  ]
+  ],
+  "source_type": "class"
 }

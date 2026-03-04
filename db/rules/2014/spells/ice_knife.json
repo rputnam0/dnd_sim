@@ -6,13 +6,23 @@
   "casting_time": "action",
   "range_ft": 60,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 0,
   "description": "You create a shard of ice and fling it at one creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 piercing damage. Hit or miss, the shard then explodes. The target and each creature within 5 feet of it must succeed on a Dexterity saving throw or take 2d6 cold damage.",
   "save_ability": "dex",
   "damage_type": "piercing",
   "mechanics": [
-    "ranged spell attack",
-    "Dexterity saving throw",
-    "area of effect: 5 ft radius"
+    {
+      "effect_type": "note",
+      "text": "ranged spell attack"
+    },
+    {
+      "effect_type": "note",
+      "text": "Dexterity saving throw"
+    },
+    {
+      "effect_type": "note",
+      "text": "area of effect: 5 ft radius"
+    }
   ]
 }

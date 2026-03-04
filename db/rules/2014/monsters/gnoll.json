@@ -1,17 +1,33 @@
 {
-  "name": "Gnoll",
-  "meta": "Medium humanoid (gnoll), chaotic evil",
-  "ac": 15,
-  "hp": 22,
-  "hp_formula": "5d8",
-  "ability_scores": {
-    "str": 14,
-    "dex": 12,
-    "con": 11,
-    "int": 6,
-    "wis": 10,
-    "cha": 7
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "gnoll",
+    "name": "Gnoll",
+    "team": "enemy"
   },
-  "cr": "1/2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 22,
+    "ac": 15,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 2,
+    "dex_mod": 1,
+    "con_mod": 0,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "1/2"
+  },
+  "reactions": [],
+  "actions": []
 }

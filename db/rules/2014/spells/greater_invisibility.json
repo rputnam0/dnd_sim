@@ -1,9 +1,15 @@
 {
   "name": "Greater Invisibility",
-  "meta": "Greater Invisibility 4th-\u00ad\u2010\u2011level illusion",
+  "type": "spell",
+  "level": 4,
+  "school": "Illusion",
   "casting_time": "1 action",
-  "range": "Touch",
-  "components": "V, S",
-  "duration": "Concentration, up to 1 minute",
-  "description": "You or a creature you touch becomes invisible until the spell ends. Anything the target is wearing or carrying is invisible as long as it is on the target\u2019s person."
+  "range_ft": null,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 10,
+  "description": "You or a creature you touch becomes invisible until the spell ends. Anything the target is wearing or carrying is invisible as long as it is on the target’s person.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

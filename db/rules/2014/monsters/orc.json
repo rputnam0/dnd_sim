@@ -1,17 +1,33 @@
 {
-  "name": "Orc",
-  "meta": "Medium humanoid (orc), chaotic evil",
-  "ac": 13,
-  "hp": 15,
-  "hp_formula": "2d8 + 6",
-  "ability_scores": {
-    "str": 16,
-    "dex": 12,
-    "con": 16,
-    "int": 7,
-    "wis": 11,
-    "cha": 10
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "orc",
+    "name": "Orc",
+    "team": "enemy"
   },
-  "cr": "1/2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 15,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 3,
+    "dex_mod": 1,
+    "con_mod": 3,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": 0,
+    "save_mods": {},
+    "cr": "1/2"
+  },
+  "reactions": [],
+  "actions": []
 }

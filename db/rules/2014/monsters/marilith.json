@@ -1,17 +1,38 @@
 {
-  "name": "Marilith",
-  "meta": "Large fiend (demon), chaotic evil",
-  "ac": 18,
-  "hp": 189,
-  "hp_formula": "18d10 + 90",
-  "ability_scores": {
-    "str": 18,
-    "dex": 20,
-    "con": 20,
-    "int": 18,
-    "wis": 16,
-    "cha": 20
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "marilith",
+    "name": "Marilith",
+    "team": "enemy"
   },
-  "cr": "16",
-  "saving_throws_text": "Str +9, Con +10, Wis +8, Cha +10"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 189,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 5,
+    "str_mod": 4,
+    "dex_mod": 5,
+    "con_mod": 5,
+    "int_mod": 4,
+    "wis_mod": 3,
+    "cha_mod": 5,
+    "save_mods": {
+      "str": 9,
+      "con": 10,
+      "wis": 8,
+      "cha": 10
+    },
+    "cr": "16"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,6 +1,5 @@
 {
   "name": "Assassin's Tools",
-  "type": "subclass_feature",
   "description": "You gain a Disguise Kit and a Poisoner's Kit, and you have proficiency with them.",
   "mechanics": [
     {
@@ -15,5 +14,6 @@
         "Poisoner's Kit"
       ]
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

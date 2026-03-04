@@ -1,19 +1,19 @@
 {
   "name": "Natural Resilience",
-  "type": "racial_trait",
   "description": "You have resistance to acid and poison damage, and you have advantage on saving throws against being poisoned.",
   "mechanics": [
     {
-      "type": "damage_resistance",
-      "damage_type": "acid"
+      "damage_type": "acid",
+      "meta_type": "damage_resistance"
     },
     {
-      "type": "damage_resistance",
-      "damage_type": "poison"
+      "damage_type": "poison",
+      "meta_type": "damage_resistance"
     },
     {
-      "type": "saving_throw_advantage",
-      "condition": "poisoned"
+      "condition": "poisoned",
+      "meta_type": "saving_throw_advantage"
     }
-  ]
+  ],
+  "source_type": "species"
 }

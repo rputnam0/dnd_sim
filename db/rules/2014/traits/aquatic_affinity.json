@@ -1,6 +1,5 @@
 {
   "name": "Aquatic Affinity",
-  "type": "subclass_feature",
   "description": "The size of the Emanation created by your Wrath of the Sea increases to 10 feet. In addition, you gain a Swim Speed equal to your Speed.",
   "mechanics": [
     {
@@ -11,5 +10,6 @@
       "effect": "grant_swim_speed",
       "speed": "equal_to_walk_speed"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -6,8 +6,9 @@
   "casting_time": "action",
   "range_ft": 300,
   "concentration": true,
+  "ritual": false,
   "duration_rounds": 100,
-  "description": "You control any freestanding water within a 100\u2011foot cube that you choose. While the spell lasts you can select one of four effects: Flood \u2013 raise the water level up to 20 feet or create a 20\u2011foot\u2011tall wave; Part Water \u2013 split the water to form a trench that later refills; Redirect Flow \u2013 force flowing water to move in any direction you choose; Whirlpool \u2013 create a vortex up to 25 feet tall that pulls creatures toward it, dealing 2d8 bludgeoning damage on a failed Strength saving throw. As an action on your turn you may repeat the same effect or switch to a different one.",
+  "description": "You control any freestanding water within a 100‑foot cube that you choose. While the spell lasts you can select one of four effects: Flood – raise the water level up to 20 feet or create a 20‑foot‑tall wave; Part Water – split the water to form a trench that later refills; Redirect Flow – force flowing water to move in any direction you choose; Whirlpool – create a vortex up to 25 feet tall that pulls creatures toward it, dealing 2d8 bludgeoning damage on a failed Strength saving throw. As an action on your turn you may repeat the same effect or switch to a different one.",
   "save_ability": "str",
   "damage_type": "bludgeoning",
   "mechanics": [

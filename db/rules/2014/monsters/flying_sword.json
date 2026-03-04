@@ -1,17 +1,35 @@
 {
-  "name": "Flying Sword",
-  "meta": "Small construct, unaligned",
-  "ac": 17,
-  "hp": 17,
-  "hp_formula": "5d6",
-  "ability_scores": {
-    "str": 12,
-    "dex": 15,
-    "con": 11,
-    "int": 1,
-    "wis": 5,
-    "cha": 1
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "flying_sword",
+    "name": "Flying Sword",
+    "team": "enemy"
   },
-  "cr": "1/4",
-  "saving_throws_text": "Dex +4"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 17,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 1,
+    "dex_mod": 2,
+    "con_mod": 0,
+    "int_mod": -5,
+    "wis_mod": -3,
+    "cha_mod": -5,
+    "save_mods": {
+      "dex": 4
+    },
+    "cr": "1/4"
+  },
+  "reactions": [],
+  "actions": []
 }

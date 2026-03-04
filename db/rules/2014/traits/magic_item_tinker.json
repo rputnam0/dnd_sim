@@ -1,6 +1,5 @@
 {
   "name": "Magic Item Tinker",
-  "type": "class_feature",
   "description": "Your Replicate Magic Item feature gains the following options.\n\nCharge Magic Item: As a Bonus Action, you can touch a magic item within 5 feet of yourself that you created with Replicate Magic Item and that uses charges. You expend a level 1+ spell slot and recharge the item. The number of charges the item regains is equal to the level of spell slot expended.\n\nDrain Magic Item: As a Bonus Action, you can touch a magic item within 5 feet of yourself that you created with Replicate Magic Item and cause the item to vanish, converting its magical energy into a spell slot. The slot is level 1 if the item is Common or level 2 if the item is Uncommon or Rare. Once you use this feature, you can't do so again until you finish a Long Rest. Any spell slot you create with this feature vanishes when you finish a Long Rest.\n\nTransmute Magic Item: As a Magic action, you can touch one magic item within 5 feet of yourself that you created with Replicate Magic Item and transform it into a different magic item. The resulting item must be based on a magic item plan you know. Once you use this feature, you can't do so again until you finish a Long Rest.",
   "mechanics": [
     {
@@ -28,5 +27,6 @@
       "effect": "transform item",
       "details": "You can transform a magic item you created with Replicate Magic Item into a different magic item you know a plan for. This feature can be used once per long rest."
     }
-  ]
+  ],
+  "source_type": "class"
 }

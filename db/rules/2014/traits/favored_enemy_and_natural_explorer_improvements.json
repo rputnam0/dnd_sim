@@ -1,6 +1,5 @@
 {
   "name": "Favored Enemy and Natural Explorer improvements",
-  "type": "class_feature",
   "description": "At 6th level, you gain an additional favored terrain. At 6th level, you choose one additional favored enemy, as well as an associated language. Your choice should reflect the types of monsters you have encountered on your adventures.",
   "mechanics": [
     {
@@ -12,5 +11,6 @@
       "quantity": 1,
       "grant_language": true
     }
-  ]
+  ],
+  "source_type": "class"
 }

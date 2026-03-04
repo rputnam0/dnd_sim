@@ -1,10 +1,8 @@
 {
   "name": "Ambition Domain (PSA)",
-  "type": "subclass_feature",
   "description": "The worthy shall strive for greatness—supremacy in life leads to supremacy in the afterlife.\nBontu has fully embraced this dictum, and though she expends little effort in teaching it, she surely leads by example. Her viziers subtly plant the seeds that flower into the ambition the God-Pharaoh desires. Through insinuation, they remind acolytes and initiates alike that achieving one's place in the afterlife at the expense of others is not shameful, but is proof of the initiate's determination and drive. Nothing is more important than that drive, they suggest—not the bonds of a crop, not friendship or love. Not even devotion to a deity.\nAt each indicated cleric level, add the listed spells to your spells prepared.\nAmbition Domain Spells:\n1st – bane, disguise self\n3rd – mirror image, ray of enfeeblement\n5th – bestow curse, vampiric touch\n7th – death ward, dimension door\n9th – dominate person, modify memory.\nSee also the Warding Flare feature.",
   "mechanics": [
     {
-      "type": "grant_spells",
       "spells_by_level": {
         "1": [
           "bane",
@@ -26,7 +24,9 @@
           "dominate person",
           "modify memory"
         ]
-      }
+      },
+      "meta_type": "grant_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

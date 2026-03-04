@@ -1,6 +1,5 @@
 {
   "name": "Mark of Detection",
-  "type": "feat",
   "description": "You gain a 1d4 bonus to Investigation and Insight checks. You can cast Detect Magic and Detect Poison and Disease once per long rest without a spell slot, and See Invisibility starting at 3rd level. You can also cast these spells using spell slots, choosing Intelligence, Wisdom, or Charisma as your spellcasting ability. Additionally, you add several detection-themed spells to your class spell list.",
   "mechanics": [
     {
@@ -54,5 +53,6 @@
         "legend lore"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

@@ -1,15 +1,15 @@
 {
   "name": "Blessing of the Trickster",
-  "type": "subclass_feature",
   "description": "You can bless a creature, granting it advantage on Dexterity (Stealth) checks for 1 hour. You can use this feature a number of times equal to your Wisdom modifier (minimum of once), and you regain expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "type": "advantage",
       "target": "creature",
       "skill": "Stealth",
       "duration": "1 hour",
       "uses": "wisdom_modifier",
-      "reset": "long_rest"
+      "reset": "long_rest",
+      "meta_type": "advantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

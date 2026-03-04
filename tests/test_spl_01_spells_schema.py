@@ -37,6 +37,22 @@ def test_canonicalize_spell_payload_normalizes_legacy_spell_record() -> None:
     assert canonical["mechanics"] == []
 
 
+def test_canonicalize_spell_payload_parses_unicode_hyphen_meta_level_and_school() -> None:
+    payload = {
+        "name": "True Resurrection",
+        "meta": "True Resurrection 9th-\u00ad\u2010\u2011level necromancy",
+        "casting_time": "1 hour",
+        "range": "Touch",
+        "duration": "Instantaneous",
+        "description": "Returns a dead creature to life.",
+    }
+
+    canonical = canonicalize_spell_payload(payload, source_path=Path("true_resurrection.json"))
+
+    assert canonical["level"] == 9
+    assert canonical["school"] == "Necromancy"
+
+
 def test_load_spell_database_fails_fast_on_duplicate_lookup_key(tmp_path: Path) -> None:
     (tmp_path / "a.json").write_text(
         json.dumps(

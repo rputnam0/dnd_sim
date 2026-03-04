@@ -1,6 +1,5 @@
 {
   "name": "Legion of One",
-  "type": "subclass_feature",
   "description": "You can use a bonus action to create two echoes with your Manifest Echo feature, and these echoes can coexist. If you try to create a third echo, the previous two echoes are destroyed. Anything you can do from one echo's position can be done from the other's instead. In addition, when you roll initiative and have no uses of your Unleash Incarnation feature left, you regain one use of that feature.",
   "mechanics": [
     {
@@ -19,5 +18,6 @@
       "quantity": 1,
       "description": "Regain one use of Unleash Incarnation when you roll initiative and have none left."
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

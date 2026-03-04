@@ -1,12 +1,12 @@
 {
   "name": "Armor of Hexes",
-  "type": "subclass_feature",
   "description": "At 10th level, your hex grows more powerful. If the target cursed by your Hexblade's Curse hits you with an attack roll, you can use your reaction to roll a d6. On a 4 or higher, the attack instead misses you, regardless of its roll.",
   "mechanics": [
     {
       "action": "reaction",
-      "trigger": "when a creature cursed by your Hexblade's Curse hits you with an attack roll",
+      "trigger": "when a creature cursed by your hexblade's curse hits you with an attack roll",
       "effect": "roll a d6; on a result of 4, 5, or 6 the attack misses you"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

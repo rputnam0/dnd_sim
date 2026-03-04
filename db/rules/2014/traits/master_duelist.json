@@ -1,6 +1,5 @@
 {
   "name": "Master Duelist",
-  "type": "subclass_feature",
   "description": "Beginning at 17th level, your mastery of the blade lets you turn failure into success in combat. If you miss with an attack roll, you can roll it again with advantage. Once you do so, you can't use this feature again until you finish a short or long rest.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       "uses": 1,
       "reset": "short_or_long_rest"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

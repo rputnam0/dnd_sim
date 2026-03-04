@@ -1,17 +1,37 @@
 {
-  "name": "Couatl",
-  "meta": "Medium celestial, lawful good",
-  "ac": 19,
-  "hp": 97,
-  "hp_formula": "13d8 + 39",
-  "ability_scores": {
-    "str": 16,
-    "dex": 20,
-    "con": 17,
-    "int": 18,
-    "wis": 20,
-    "cha": 18
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "couatl",
+    "name": "Couatl",
+    "team": "enemy"
   },
-  "cr": "4",
-  "saving_throws_text": "Con +5, Wis +7, Cha +6"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 97,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 5,
+    "str_mod": 3,
+    "dex_mod": 5,
+    "con_mod": 3,
+    "int_mod": 4,
+    "wis_mod": 5,
+    "cha_mod": 4,
+    "save_mods": {
+      "con": 5,
+      "wis": 7,
+      "cha": 6
+    },
+    "cr": "4"
+  },
+  "reactions": [],
+  "actions": []
 }

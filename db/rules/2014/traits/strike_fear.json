@@ -1,10 +1,8 @@
 {
   "name": "Strike Fear",
-  "type": "subclass_feature",
   "description": "You gain the following Cunning Strike option. Terrify (Cost: 1d6): The target must succeed on a Wisdom saving throw, or it has the Frightened condition for 1 minute. While the target is Frightened in this way, you have advantage on attack rolls against the target. The Frightened target repeats the save at the end of each of its turns, ending the effect on itself on a success.",
   "mechanics": [
     {
-      "type": "save",
       "ability": "wisdom",
       "dc_source": "feature",
       "failure_effect": {
@@ -16,7 +14,9 @@
         "timing": "end_of_target_turn",
         "saves_against": "frightened"
       },
-      "resource_cost": "1d6"
+      "resource_cost": "1d6",
+      "meta_type": "save"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

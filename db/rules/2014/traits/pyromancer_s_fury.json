@@ -1,6 +1,5 @@
 {
   "name": "Pyromancer's Fury",
-  "type": "subclass_feature",
   "description": "Starting at 14th level, when you are hit by a melee attack, you can use your reaction to deal fire damage to the attacker. The damage equals your sorcerer level, and ignores resistance to fire damage.",
   "mechanics": [
     {
@@ -12,5 +11,6 @@
         "ignore_resistance": "fire"
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,31 +1,29 @@
 {
   "name": "Power Surge",
-  "type": "subclass_feature",
   "description": "Starting at 6th level, you can store magical energy within yourself to later empower your damaging spells. In its stored form, this energy is called a power surge. You can store a maximum number of power surges equal to your Intelligence modifier (minimum of one). Whenever you finish a long rest, your number of power surges resets to one. Whenever you successfully end a spell with dispel magic or counterspell, you gain one power surge, as you steal magic from the spell you foiled. If you end a short rest with no power surges, you gain one power surge. Once per turn when you deal damage to a creature or object with a wizard spell, you can spend one power surge to deal extra force damage to that target. The extra damage equals half your wizard level.",
   "mechanics": [
     {
-      "type": "resource",
       "name": "Power Surge",
       "max": "Intelligence modifier (minimum 1)",
       "reset": {
         "trigger": "long_rest",
         "value": 1
-      }
+      },
+      "meta_type": "resource"
     },
     {
-      "type": "gain_resource",
       "trigger": "successful_dispel_magic_or_counterspell",
       "resource": "Power Surge",
-      "amount": 1
+      "amount": 1,
+      "meta_type": "gain_resource"
     },
     {
-      "type": "gain_resource",
       "trigger": "short_rest_with_no_power_surges",
       "resource": "Power Surge",
-      "amount": 1
+      "amount": 1,
+      "meta_type": "gain_resource"
     },
     {
-      "type": "spend_resource",
       "trigger": "once_per_turn_when_dealing_damage_with_wizard_spell",
       "resource": "Power Surge",
       "amount": 1,
@@ -34,7 +32,9 @@
           "type": "force",
           "amount": "half wizard level"
         }
-      }
+      },
+      "meta_type": "spend_resource"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

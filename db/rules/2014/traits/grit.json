@@ -1,20 +1,20 @@
 {
   "name": "Grit",
-  "type": "racial_trait",
   "description": "You have resistance to fire damage and psychic damage. In addition, when you are wearing no armor, your AC is equal to 11 + your Dexterity modifier.",
   "mechanics": [
     {
-      "type": "damage_resistance",
-      "damage_type": "fire"
+      "damage_type": "fire",
+      "meta_type": "damage_resistance"
     },
     {
-      "type": "damage_resistance",
-      "damage_type": "psychic"
+      "damage_type": "psychic",
+      "meta_type": "damage_resistance"
     },
     {
-      "type": "unarmored_ac",
       "base_ac": 11,
-      "modifier": "dexterity"
+      "modifier": "dexterity",
+      "meta_type": "unarmored_ac"
     }
-  ]
+  ],
+  "source_type": "species"
 }

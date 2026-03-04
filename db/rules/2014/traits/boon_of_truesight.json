@@ -1,6 +1,5 @@
 {
   "name": "Boon of Truesight",
-  "type": "feat",
   "description": "You increase one ability score of your choice by 1, to a maximum of 30. You gain Truesight with a range of 60 feet.",
   "mechanics": [
     {
@@ -14,5 +13,6 @@
       "sense": "truesight",
       "range": 60
     }
-  ]
+  ],
+  "source_type": "feat"
 }

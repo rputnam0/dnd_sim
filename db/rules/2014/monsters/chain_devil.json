@@ -1,17 +1,37 @@
 {
-  "name": "Chain Devil",
-  "meta": "Medium fiend (devil), lawful evil",
-  "ac": 16,
-  "hp": 85,
-  "hp_formula": "10d8 + 40",
-  "ability_scores": {
-    "str": 18,
-    "dex": 15,
-    "con": 18,
-    "int": 11,
-    "wis": 12,
-    "cha": 14
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "chain_devil",
+    "name": "Chain Devil",
+    "team": "enemy"
   },
-  "cr": "8",
-  "saving_throws_text": "Con +7, Wis +4, Cha +5"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 85,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 4,
+    "dex_mod": 2,
+    "con_mod": 4,
+    "int_mod": 0,
+    "wis_mod": 1,
+    "cha_mod": 2,
+    "save_mods": {
+      "con": 7,
+      "wis": 4,
+      "cha": 5
+    },
+    "cr": "8"
+  },
+  "reactions": [],
+  "actions": []
 }

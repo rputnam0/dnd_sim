@@ -6,6 +6,7 @@
   "casting_time": "bonus action",
   "range_ft": null,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 600,
   "description": "A shimmering, spectral snake encircles your body for the duration. You gain 15 temporary hit points; the spell ends early if you have no temporary hit points left. While the spell is active, you gain the following benefits: Climbing – You gain a climb speed equal to your speed. Venomous Bite – As a magic action, you can make a ranged spell attack using the snake against one creature within 50 feet. On a hit, the target takes 1d6 force damage and is poisoned until the start of your next turn. While poisoned, the target is incapacitated. When cast using a higher-level spell slot, for each slot level above 3 the number of temporary hit points increases by 5, and the damage of Venomous Bite increases by 1d6 per slot level.",
   "save_ability": null,

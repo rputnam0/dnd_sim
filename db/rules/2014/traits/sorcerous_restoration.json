@@ -1,13 +1,13 @@
 {
   "name": "Sorcerous Restoration",
-  "type": "class_feature",
   "description": "At 20th level, you regain 4 expended sorcery points whenever you finish a short rest.",
   "mechanics": [
     {
-      "type": "resource_regeneration",
       "resource": "sorcery points",
       "amount": 4,
-      "trigger": "short rest"
+      "trigger": "short rest",
+      "meta_type": "resource_regeneration"
     }
-  ]
+  ],
+  "source_type": "class"
 }

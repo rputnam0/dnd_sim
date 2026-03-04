@@ -1,6 +1,6 @@
 {
   "name": "Martial Archetype feature",
-  "type": "class_feature",
   "description": "At 7th level, you gain a feature granted by your Martial Archetype.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "class"
 }

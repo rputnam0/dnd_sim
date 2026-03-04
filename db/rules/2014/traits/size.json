@@ -1,10 +1,10 @@
 {
   "name": "Size",
-  "type": "racial_trait",
   "description": "Aarakocra are about 5 feet tall. They have thin, lightweight bodies that weigh between 80 and 100 pounds. Your size is Medium.",
   "mechanics": [
     {
       "size": "Medium"
     }
-  ]
+  ],
+  "source_type": "species"
 }

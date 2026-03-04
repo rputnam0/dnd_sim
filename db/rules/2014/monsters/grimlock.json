@@ -1,17 +1,33 @@
 {
-  "name": "Grimlock",
-  "meta": "Medium humanoid (grimlock), neutral evil",
-  "ac": 11,
-  "hp": 11,
-  "hp_formula": "2d8 + 2",
-  "ability_scores": {
-    "str": 16,
-    "dex": 12,
-    "con": 12,
-    "int": 9,
-    "wis": 8,
-    "cha": 6
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "grimlock",
+    "name": "Grimlock",
+    "team": "enemy"
   },
-  "cr": "1/4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 11,
+    "ac": 11,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 3,
+    "dex_mod": 1,
+    "con_mod": 1,
+    "int_mod": -1,
+    "wis_mod": -1,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "1/4"
+  },
+  "reactions": [],
+  "actions": []
 }

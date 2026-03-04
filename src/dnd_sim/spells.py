@@ -13,11 +13,11 @@ _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SPELL_PUNCT_RE = re.compile(r"[^a-z0-9\s]")
 _RANGE_FEET_RE = re.compile(r"(\d+)\s*(?:feet|foot|ft\.?)", flags=re.IGNORECASE)
 _RANGE_MILES_RE = re.compile(r"(\d+)\s*miles?", flags=re.IGNORECASE)
-_LEVEL_RE = re.compile(r"(\d+)(?:st|nd|rd|th)-level", flags=re.IGNORECASE)
+_LEVEL_RE = re.compile(r"(\d+)(?:st|nd|rd|th)\s*[- ]+\s*level", flags=re.IGNORECASE)
 _CANTRIP_RE = re.compile(r"\bcantrip\b", flags=re.IGNORECASE)
 _SCHOOL_CANTRIP_RE = re.compile(r"([A-Za-z]+)\s+cantrip\b", flags=re.IGNORECASE)
 _SCHOOL_LEVELED_RE = re.compile(
-    r"\d+(?:st|nd|rd|th)-level\s+([A-Za-z]+)",
+    r"\d+(?:st|nd|rd|th)\s*[- ]+\s*level\s+([A-Za-z]+)",
     flags=re.IGNORECASE,
 )
 _DURATION_VALUE_RE = re.compile(
@@ -38,6 +38,20 @@ _ABILITY_NAME_TO_SHORT = {
 }
 _ABILITY_SHORT = set(_ABILITY_NAME_TO_SHORT.values())
 _SPELL_DB_CACHE: tuple[Path, DuplicatePolicy, dict[str, dict[str, Any]]] | None = None
+_META_HYPHEN_TRANSLATION = str.maketrans(
+    {
+        "\u2010": "-",
+        "\u2011": "-",
+        "\u2012": "-",
+        "\u2013": "-",
+        "\u2014": "-",
+        "\u2212": "-",
+        "\u00ad": "-",
+        "\u2043": "-",
+        "\uFE63": "-",
+        "\uFF0D": "-",
+    }
+)
 
 
 class SpellDatabaseValidationError(ValueError):
@@ -121,10 +135,18 @@ def spell_name_variants(name: str) -> list[str]:
     return [value for value in variants if value]
 
 
+def _normalize_meta_text(meta: str) -> str:
+    text = str(meta).translate(_META_HYPHEN_TRANSLATION)
+    text = re.sub(r"-{2,}", "-", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
 def _parse_level_from_meta(meta: str) -> int | None:
-    if _CANTRIP_RE.search(meta):
+    normalized_meta = _normalize_meta_text(meta)
+    if _CANTRIP_RE.search(normalized_meta):
         return 0
-    match = _LEVEL_RE.search(meta)
+    match = _LEVEL_RE.search(normalized_meta)
     if not match:
         return None
     try:
@@ -134,10 +156,11 @@ def _parse_level_from_meta(meta: str) -> int | None:
 
 
 def _parse_school_from_meta(meta: str) -> str | None:
-    cantrip_match = _SCHOOL_CANTRIP_RE.search(meta)
+    normalized_meta = _normalize_meta_text(meta)
+    cantrip_match = _SCHOOL_CANTRIP_RE.search(normalized_meta)
     if cantrip_match:
         return cantrip_match.group(1).title()
-    leveled_match = _SCHOOL_LEVELED_RE.search(meta)
+    leveled_match = _SCHOOL_LEVELED_RE.search(normalized_meta)
     if leveled_match:
         return leveled_match.group(1).title()
     return None

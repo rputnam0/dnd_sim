@@ -1,6 +1,5 @@
 {
   "name": "Climbing",
-  "type": "racial_trait",
   "description": "You also have a climbing speed of 30 feet as long as you are not encumbered or wearing heavy armor.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
         "condition": "not encumbered or wearing heavy armor"
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

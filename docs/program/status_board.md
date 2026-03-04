@@ -14,6 +14,18 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Subwave D: Targeted maintainability refactor | codex/repo-cleanup-20260304 | in_progress | Extracted `engine_resources.py` and `engine_spell_inference.py`; added `docs/agent_index.yaml`; retained entrypoint compatibility. |
 | Subwave E: Validation gate | codex/repo-cleanup-20260304 | in_progress | Full suite and determinism spot-check corpus passed; awaiting cleanup PR merge. |
 
+## Legacy Decommission Program (2026-03-04)
+
+| Workstream | Branch | Status | Notes |
+|---|---|---|---|
+| Subwave 0: Baseline snapshot | codex/legacy-deprecation-hardcut | completed | Added `docs/deprecation/legacy_*_20260304` artifacts and reproducible reporting script (`scripts/migrations/report_legacy_surface.py`). |
+| Subwave 1: Strategy runtime hard cut | codex/legacy-deprecation-hardcut | completed | Engine runtime now declaration-only; legacy strategy fallback path removed from execution loop. |
+| Subwave 2: Strategy implementation migration | codex/legacy-deprecation-hardcut | completed | Built-in + encounter strategy modules migrated to declaration-only; no legacy strategy method defs remain in runtime strategy modules. |
+| Subwave 3: Runtime alias removal | codex/legacy-deprecation-hardcut | completed | Removed runtime/ingest alias promotion from `type`/`event_trigger`; removed effect alias remap paths in runtime application. |
+| Subwave 4: Canonical data migration | codex/legacy-deprecation-hardcut | completed | Traits/spells/monsters/characters migrated to canonical schema; duplicate spell lookup keys resolved to zero. |
+| Subwave 5: Test and docs realignment | codex/legacy-deprecation-hardcut | completed | Canonical-only contract tests updated; full suite green on branch (`uv run python -m pytest -q`). |
+| Subwave 6: Class progression hard cut | int/class-levels-canonical-hardcut | completed | `class_level` removed from canonical parser/model outputs and load-normalized payloads; SQLite migration script + tests added; river_line character JSON/index now `class_levels`-only. |
+
 ## Wave 1
 
 | Task | Owner Agent | Branch | PR | Status | Notes |

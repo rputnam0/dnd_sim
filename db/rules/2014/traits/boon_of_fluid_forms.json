@@ -1,6 +1,5 @@
 {
   "name": "Boon of Fluid Forms",
-  "type": "feat",
   "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30. Once per long rest, you can use a Magic action to shape-shift into a Beast, Humanoid, or Monstrosity with a CR of 10 or lower for 1 hour. You gain temporary hit points equal to the form's hit points plus 20. You retain your Intelligence, Wisdom, and Charisma scores, hit points, hit point dice, proficiencies, and spellcasting ability while transformed.",
   "mechanics": [
     {
@@ -39,5 +38,6 @@
       "amount": "form_hp + 20",
       "trigger": "shape_shift"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

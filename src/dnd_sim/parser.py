@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from dnd_sim.characters import validate_class_level_representation
+from dnd_sim.characters import parse_class_levels_strict
 from dnd_sim.models import AttackProfile, CharacterRecord, RawField
 
 _SECTION_RE = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
@@ -198,8 +198,12 @@ def _build_character_record(pdf_name: str, raw_fields: list[RawField]) -> Charac
             by_field[raw.field] = raw.value
 
     name = by_field.get("CharacterName") or by_field.get("CharacterName2") or pdf_name
-    class_level = by_field.get("CLASS  LEVEL") or by_field.get("CLASS  LEVEL2") or "Unknown"
-    class_progression = validate_class_level_representation(class_level_text=class_level)
+    class_level_text = by_field.get("CLASS  LEVEL") or by_field.get("CLASS  LEVEL2") or ""
+    class_levels = parse_class_levels_strict(class_level_text)
+    if not class_levels:
+        raise ValueError(
+            f"invalid class_levels: missing parseable class progression for '{name}' in {pdf_name}"
+        )
 
     ability_scores = {
         key: _extract_int(by_field.get(field, "0")) for field, key in _ABILITY_FIELDS.items()
@@ -222,7 +226,7 @@ def _build_character_record(pdf_name: str, raw_fields: list[RawField]) -> Charac
     return CharacterRecord(
         character_id=slugify(name),
         name=name,
-        class_level=class_progression.class_level_text,
+        class_levels=class_levels,
         max_hp=_extract_int(by_field.get("MaxHP", "1"), default=1),
         ac=_extract_int(by_field.get("AC", "10"), default=10),
         speed_ft=speed_ft,
@@ -234,7 +238,6 @@ def _build_character_record(pdf_name: str, raw_fields: list[RawField]) -> Charac
         traits=traits,
         raw_fields=raw_fields,
         source={"pdf_name": pdf_name},
-        class_levels=class_progression.class_levels,
     )
 
 
@@ -266,7 +269,6 @@ def write_character_db(records: list[CharacterRecord], out_dir: Path) -> None:
             {
                 "character_id": record.character_id,
                 "name": record.name,
-                "class_level": record.class_level,
                 "class_levels": record.class_levels,
                 "source_pdf": record.source["pdf_name"],
             }

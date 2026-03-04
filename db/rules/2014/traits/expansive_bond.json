@@ -1,6 +1,5 @@
 {
   "name": "Expansive Bond",
-  "type": "subclass_feature",
   "description": "17th-level Peace Domain feature. The benefits of your Emboldening Bond and Protective Bond features now work when the creatures are within 60 feet of each other. Moreover, when a creature uses Protective Bond to take someone else's damage, the creature has resistance to that damage.",
   "mechanics": [
     {
@@ -15,8 +14,9 @@
     {
       "effect": "damage_resistance",
       "source_feature": "Protective Bond",
-      "trigger": "when the creature uses Protective Bond to take another creature's damage",
+      "trigger": "when the creature uses protective bond to take another creature's damage",
       "benefit": "the creature gains resistance to that damage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

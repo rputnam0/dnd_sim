@@ -1,6 +1,5 @@
 {
   "name": "Spellfire Adept",
-  "type": "feat",
   "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. Once per turn, when a spell you cast deals Radiant damage, you can expend up to two Hit Dice, roll them, and add the total rolled to one damage roll of the spell. Additionally, when you make a damage roll that deals Radiant damage, it ignores resistance to Radiant damage.",
   "mechanics": [
     {
@@ -32,5 +31,6 @@
       "effect_type": "ignore_resistance",
       "damage_type": "radiant"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

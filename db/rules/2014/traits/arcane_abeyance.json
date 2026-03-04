@@ -1,16 +1,14 @@
 {
   "name": "Arcane Abeyance",
-  "type": "subclass_feature",
   "description": "10th-level Chronurgy Magic feature. When you cast a spell using a spell slot of 4th level or lower, you can condense the spell's magic into a mote. The spell is frozen in time at the moment of casting and held within a gray bead for 1 hour. This bead is a Tiny object with AC 15 and 1 hit point, and it is immune to poison and psychic damage. When the duration ends, or if the bead is destroyed, it vanishes in a flash of light, and the spell is lost. A creature holding the bead can use its action to release the spell within, whereupon the bead disappears. The spell uses your spell attack bonus and save DC, and the spell treats the creature who released it as the caster for all other purposes. Once you create a bead with this feature, you can't do so again until you finish a short or long rest.",
   "mechanics": [
     {
-      "type": "spell_condensation",
       "trigger": "cast_spell",
       "max_slot_level": 4,
-      "result": "create_bead"
+      "result": "create_bead",
+      "meta_type": "spell_condensation"
     },
     {
-      "type": "object",
       "name": "Arcane Abeyance bead",
       "size": "Tiny",
       "ac": 15,
@@ -19,23 +17,25 @@
         "poison",
         "psychic"
       ],
-      "duration": "1 hour"
+      "duration": "1 hour",
+      "meta_type": "object"
     },
     {
-      "type": "action",
       "name": "Release condensed spell",
       "activation": "action",
       "effect": "release_spell",
-      "caster": "holder"
+      "caster": "holder",
+      "meta_type": "action"
     },
     {
-      "type": "resource",
       "name": "Arcane Abeyance usage",
       "limit": 1,
       "reset": [
         "short_rest",
         "long_rest"
-      ]
+      ],
+      "meta_type": "resource"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

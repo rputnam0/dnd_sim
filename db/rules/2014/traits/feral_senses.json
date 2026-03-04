@@ -1,21 +1,21 @@
 {
   "name": "Feral Senses",
-  "type": "class_feature",
   "description": "At 18th level, you gain preternatural senses that help you fight creatures you can't see. When you attack a creature you can't see, your inability to see it doesn't impose disadvantage on your attack rolls against it. You are also aware of the location of any invisible creature within 30 feet of you, provided that the creature isn't hidden from you and you aren't blinded or deafened.",
   "mechanics": [
     {
-      "type": "ignore_disadvantage",
       "condition": "target_unseen",
-      "applies_to": "attack_rolls"
+      "applies_to": "attack_rolls",
+      "meta_type": "ignore_disadvantage"
     },
     {
-      "type": "sense",
       "range": 30,
       "target_condition": "invisible",
       "requires_not_hidden": true,
       "requires_not_blinded": true,
       "requires_not_deafened": true,
-      "effect": "aware_of_location"
+      "effect": "aware_of_location",
+      "effect_type": "sense"
     }
-  ]
+  ],
+  "source_type": "class"
 }

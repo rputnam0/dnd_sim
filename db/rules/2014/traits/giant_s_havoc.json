@@ -1,23 +1,23 @@
 {
   "name": "Giant's Havoc",
-  "type": "subclass_feature",
   "description": "3rd-Level Path of the Giant Feature. Your rages pull strength from the primal might of giants, transforming you into a hulking force of destruction. While raging, you gain the following benefits: Crushing Throw: When you make a successful ranged attack with a thrown weapon using Strength, you can add your Rage Damage bonus to the attack's damage roll. Giant Stature: Your reach increases by 5 feet, and if you are smaller than Large, you become Large, along with anything you are wearing. If there isn't enough room for you to increase your size, your size doesn't change.",
   "mechanics": [
     {
-      "type": "damage_bonus",
       "condition": "ranged attack with a thrown weapon using Strength while raging and the attack hits",
-      "value": "Rage Damage bonus"
+      "value": "Rage Damage bonus",
+      "meta_type": "damage_bonus"
     },
     {
-      "type": "reach_increase",
       "value": 5,
       "unit": "feet",
-      "condition": "while raging"
+      "condition": "while raging",
+      "meta_type": "reach_increase"
     },
     {
-      "type": "size_change",
       "to": "Large",
-      "condition": "while raging and current size is smaller than Large"
+      "condition": "while raging and current size is smaller than Large",
+      "meta_type": "size_change"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

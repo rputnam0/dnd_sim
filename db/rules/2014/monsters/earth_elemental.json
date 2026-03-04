@@ -1,17 +1,33 @@
 {
-  "name": "Earth Elemental",
-  "meta": "Large elemental, neutral",
-  "ac": 17,
-  "hp": 126,
-  "hp_formula": "12d10 + 60",
-  "ability_scores": {
-    "str": 20,
-    "dex": 8,
-    "con": 20,
-    "int": 5,
-    "wis": 10,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "earth_elemental",
+    "name": "Earth Elemental",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 126,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 5,
+    "dex_mod": -1,
+    "con_mod": 5,
+    "int_mod": -3,
+    "wis_mod": 0,
+    "cha_mod": -3,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

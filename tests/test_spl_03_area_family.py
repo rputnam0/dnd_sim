@@ -70,7 +70,7 @@ def _sheet_payload_for_spell(
     duration_text: str = "Instantaneous",
 ) -> dict[str, Any]:
     return {
-        "class_level": "Wizard 7",
+        "class_levels": {"wizard": 7},
         "ability_scores": {
             "str": 10,
             "dex": 14,
@@ -157,7 +157,7 @@ def test_area_family_pipeline_uses_template_resolution_golden(monkeypatch) -> No
         )
     )
     action = _build_spell_actions(
-        {"spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
+        {"class_levels": {"wizard": 7}, "spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
         character_level=7,
     )[0]
 
@@ -208,7 +208,7 @@ def test_area_family_invalid_origin_line_of_effect_blocks_cast(monkeypatch) -> N
         )
     )
     action = _build_spell_actions(
-        {"spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
+        {"class_levels": {"wizard": 7}, "spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
         character_level=7,
     )[0]
 
@@ -260,7 +260,7 @@ def test_area_family_suppressed_by_antimagic_invalid_state(monkeypatch) -> None:
         )
     )
     action = _build_spell_actions(
-        {"spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
+        {"class_levels": {"wizard": 7}, "spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
         character_level=7,
     )[0]
 
@@ -328,7 +328,7 @@ def test_self_range_non_inferred_area_control_spell_remains_castable(monkeypatch
         )
     )
     action = _build_spell_actions(
-        {"spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
+        {"class_levels": {"wizard": 7}, "spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
         character_level=7,
     )[0]
     assert action.aoe_type is None
@@ -421,7 +421,11 @@ def test_self_range_directional_area_spell_gets_range_override_and_casts(monkeyp
             )
         )
         action = _build_spell_actions(
-            {"spells": spell_rows, "resources": {"spell_slots": {"3": 1, "1": 1}}},
+            {
+                "class_levels": {"wizard": 7},
+                "spells": spell_rows,
+                "resources": {"spell_slots": {"3": 1, "1": 1}},
+            },
             character_level=7,
         )[0]
 
@@ -496,7 +500,7 @@ def test_area_point_you_choose_spell_does_not_require_sight(monkeypatch) -> None
         )
     )
     action = _build_spell_actions(
-        {"spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
+        {"class_levels": {"wizard": 7}, "spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
         character_level=7,
     )[0]
     assert "requires_sight" not in set(action.tags)
@@ -561,7 +565,7 @@ def test_area_point_you_can_see_spell_still_requires_sight(monkeypatch) -> None:
         )
     )
     action = _build_spell_actions(
-        {"spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
+        {"class_levels": {"wizard": 7}, "spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
         character_level=7,
     )[0]
     assert "requires_sight" in set(action.tags)
@@ -629,7 +633,7 @@ def test_area_family_concentration_effects_clear_when_concentration_breaks(monke
         )
     )
     action = _build_spell_actions(
-        {"spells": spell_rows, "resources": {"spell_slots": {"4": 1}}},
+        {"class_levels": {"wizard": 7}, "spells": spell_rows, "resources": {"spell_slots": {"4": 1}}},
         character_level=7,
     )[0]
 

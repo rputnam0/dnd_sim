@@ -1,9 +1,15 @@
 {
   "name": "Glibness",
-  "meta": "Glibness 8th-\u00ad\u2010\u2011level transmutation",
+  "type": "spell",
+  "level": 8,
+  "school": "Transmutation",
   "casting_time": "1 action",
-  "range": "Self",
-  "components": "V",
-  "duration": "1 hour",
-  "description": "Until the spell ends, when you make a Charisma check, you can replace the number you roll with a 15. Additionally, no matter what you say, magic that would determine if you are telling the truth indicates that you are being truthful."
+  "range_ft": 0,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 600,
+  "description": "Until the spell ends, when you make a Charisma check, you can replace the number you roll with a 15. Additionally, no matter what you say, magic that would determine if you are telling the truth indicates that you are being truthful.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

@@ -1,6 +1,5 @@
 {
   "name": "Crafter",
-  "type": "feat",
   "description": "You gain proficiency with three artisan's tools of your choice from a specific list. You receive a 20 percent discount when buying nonmagical items. Additionally, after a long rest, you can craft a temporary piece of gear from the Fast Crafting table if you have the required tools and proficiency; the item lasts until your next long rest.",
   "mechanics": [
     {
@@ -27,5 +26,6 @@
       "effect_type": "long_rest_crafting",
       "item_duration": "until_long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

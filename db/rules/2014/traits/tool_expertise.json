@@ -1,6 +1,5 @@
 {
   "name": "Tool Expertise",
-  "type": "class_feature",
   "description": "6th-level artificer feature. Your proficiency bonus is now doubled for any ability check you make that uses your proficiency with a tool.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "target": "ability_check",
       "condition": "uses_tool_proficiency"
     }
-  ]
+  ],
+  "source_type": "class"
 }

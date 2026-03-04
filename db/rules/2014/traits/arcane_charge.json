@@ -1,14 +1,14 @@
 {
   "name": "Arcane Charge",
-  "type": "subclass_feature",
   "description": "At 15th level, you gain the ability to teleport up to 30 feet to an unoccupied space you can see when you use your Action Surge. You can teleport before or after the additional action.",
   "mechanics": [
     {
-      "trigger": "Action Surge",
+      "trigger": "action surge",
       "effect": "Teleport",
       "distance": 30,
       "target": "unoccupied space you can see",
       "timing": "before or after the additional action"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Living Legend",
-  "type": "subclass_feature",
   "description": "20th-level Oath of Glory feature. You can empower yourself with the legends—whether true or exaggerated—of your great deeds. As a bonus action, you gain the following benefits for 1 minute: You are blessed with an otherworldly presence, gaining advantage on all Charisma checks. Once on each of your turns when you make a weapon attack and miss, you can cause that attack to hit instead. If you fail a saving throw, you can use your reaction to reroll it. You must use this new roll. Once you use this feature, you can't use it again until you finish a long rest, unless you expend a 5th-level spell slot to use it again.",
   "mechanics": [
     {
@@ -14,19 +13,20 @@
       }
     },
     {
-      "type": "advantage",
-      "target": "charisma_checks"
+      "target": "charisma_checks",
+      "meta_type": "advantage"
     },
     {
-      "type": "replace_missed_weapon_attack",
       "once_per_turn": true,
-      "description": "When you make a weapon attack and miss, you may cause that attack to hit instead."
+      "description": "When you make a weapon attack and miss, you may cause that attack to hit instead.",
+      "meta_type": "replace_missed_weapon_attack"
     },
     {
-      "type": "reroll_failed_save",
       "use": "reaction",
       "must_use_new_roll": true,
-      "description": "If you fail a saving throw, you can use your reaction to reroll it and must use the new roll."
+      "description": "If you fail a saving throw, you can use your reaction to reroll it and must use the new roll.",
+      "meta_type": "reroll_failed_save"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

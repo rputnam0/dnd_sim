@@ -1,6 +1,5 @@
 {
   "name": "Quicksmithing",
-  "type": "feat",
   "description": "Requires Intelligence 13. You gain proficiency with one artisan's tool. You learn two 1st-level ritual spells from any class list, using Intelligence as your spellcasting ability. You can learn additional ritual spells of a level up to half your level (rounded up) by spending 2 hours and 50 gp per spell level. Additionally, you can spend 1 hour and 10 gp to create a Tiny clockwork device (max 3) that lasts 24 hours. Options include a Clockwork Toy, Fire Starter, or Music Box.",
   "mechanics": [
     {
@@ -10,7 +9,6 @@
     },
     {
       "effect_type": "proficiency",
-      "type": "artisans_tools",
       "count": 1
     },
     {
@@ -31,5 +29,6 @@
       "max_active": 3,
       "duration_hours": 24
     }
-  ]
+  ],
+  "source_type": "feat"
 }

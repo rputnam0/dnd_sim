@@ -1,6 +1,5 @@
 {
   "name": "Deflect Attacks",
-  "type": "class_feature",
   "description": "When an attack roll hits you and its damage includes bludgeoning, piercing, or slashing damage, you can take a reaction to reduce the attack's total damage against you. The reduction equals 1d10 plus your Dexterity modifier and your monk level. If you reduce the damage to 0, you can expend 1 focus point to redirect some of the attack's force. Choose a creature you can see within 5 feet of you if the attack was melee, or within 60 feet that isn’t behind total cover if the attack was ranged. That creature must succeed on a Dexterity saving throw or take damage equal to two rolls of your Martial Arts die plus your Dexterity modifier. The damage is the same type as the attack.",
   "mechanics": [
     {
@@ -15,5 +14,6 @@
       "save": "Dexterity saving throw",
       "onFail": "damage = 2 × Martial Arts die + Dexterity modifier (same damage type as the original attack)"
     }
-  ]
+  ],
+  "source_type": "class"
 }

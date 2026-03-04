@@ -1,11 +1,10 @@
 {
   "name": "Rhonas's Blessing",
-  "type": "subclass_feature",
   "description": "At 6th level, when a creature within 30 feet of you makes an attack roll, ability check, or saving throw using Strength, you can use your reaction to grant that creature a +10 bonus to the roll, using your Channel Divinity. You make this choice after you see the roll, but before the DM says whether the roll succeeds or fail.",
   "mechanics": [
     {
       "action": "reaction",
-      "trigger": "creature within 30 feet makes an attack roll, ability check, or saving throw using Strength",
+      "trigger": "creature within 30 feet makes an attack roll, ability check, or saving throw using strength",
       "effect": {
         "type": "bonus",
         "value": 10,
@@ -19,5 +18,6 @@
       },
       "resource": "Channel Divinity"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

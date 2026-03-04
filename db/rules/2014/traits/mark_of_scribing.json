@@ -1,6 +1,5 @@
 {
   "name": "Mark of Scribing",
-  "type": "feat",
   "description": "You gain a 1d4 bonus to Intelligence (History) checks and ability checks using Calligrapher's Supplies. You learn the Message cantrip. You also always have Comprehend Languages prepared and, starting at 3rd level, Magic Mouth prepared. You can cast each of these spells once per long rest without a spell slot, or use your own spell slots. Your spellcasting ability for these is Intelligence, Wisdom, or Charisma (chosen when you take the feat). Additionally, a list of specific spells is added to your class spell list if you have the Spellcasting or Pact Magic feature.",
   "mechanics": [
     {
@@ -52,5 +51,6 @@
         "dream"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

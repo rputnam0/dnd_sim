@@ -1,40 +1,40 @@
 {
   "name": "Ghost Walk",
-  "type": "subclass_feature",
   "description": "You can phase partially into the realm of the dead, becoming like a ghost. As a bonus action, you assume a spectral form. While in this form, you have a flying speed of 10 feet, you can hover, and attack rolls have disadvantage against you. You can also move through creatures and objects as if they were difficult terrain, but you take 1d10 force damage if you end your turn inside a creature or an object. You stay in this form for 10 minutes or until you end it as a bonus action. To use this feature again, you must finish a long rest or destroy one of your soul trinkets as part of the bonus action you use to activate Ghost Walk.",
   "mechanics": [
     {
-      "type": "activation",
       "action": "bonus_action",
       "effect": "assume_spectral_form",
-      "duration": "10 minutes or until ended"
+      "duration": "10 minutes or until ended",
+      "meta_type": "activation"
     },
     {
-      "type": "speed",
       "mode": "fly",
       "value": "10 ft",
-      "hover": true
+      "hover": true,
+      "meta_type": "speed"
     },
     {
-      "type": "condition",
       "target": "self",
-      "effect": "attack_rolls_disadvantage"
+      "effect": "attack_rolls_disadvantage",
+      "meta_type": "condition"
     },
     {
-      "type": "movement",
       "ability": "move_through_creatures_objects",
-      "treat_as": "difficult_terrain"
+      "treat_as": "difficult_terrain",
+      "meta_type": "movement"
     },
     {
-      "type": "damage",
       "trigger": "end_turn_inside_creature_or_object",
       "damage": "1d10",
-      "damage_type": "force"
+      "damage_type": "force",
+      "effect_type": "damage"
     },
     {
-      "type": "recharge",
       "requirement": "long_rest_or_destroy_soul_trinket",
-      "action": "bonus_action"
+      "action": "bonus_action",
+      "meta_type": "recharge"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,13 +1,13 @@
 {
   "name": "Elegant Maneuver",
-  "type": "subclass_feature",
   "description": "Starting at 13th level, you can use a bonus action on your turn to gain advantage on the next Dexterity (Acrobatics) or Strength (Athletics) check you make during the same turn.",
   "mechanics": [
     {
-      "type": "grant_advantage",
       "trigger": "bonus_action",
       "target": "next Dexterity (Acrobatics) or Strength (Athletics) check",
-      "duration": "same_turn"
+      "duration": "same_turn",
+      "meta_type": "grant_advantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

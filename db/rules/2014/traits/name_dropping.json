@@ -1,6 +1,6 @@
 {
   "name": "Name Dropping",
-  "type": "background_feature",
   "description": "You know and have met any number of powerful people across the land—and some of them might even remember you. You might be able to wrangle minor assistance from a major figure in the campaign, at the DM's discretion. Additionally, the common folk treat you with deference, and your heritage and the stories you tell might be good for a free meal or a place to sleep.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

@@ -5,7 +5,7 @@ from dnd_sim.strategies.defaults import (
     _evaluate_action_score,
     _expected_damage_against,
 )
-from dnd_sim.strategy_api import ActionIntent, ActorView, BattleStateView
+from dnd_sim.strategy_api import ActorView, BattleStateView
 
 
 class _Target:
@@ -101,9 +101,11 @@ def test_optimal_strategy_prioritizes_high_threat_target_when_policy_enabled() -
         },
     )
 
-    targets = strategy.choose_targets(actor, ActionIntent(action_name="basic"), state)
+    declaration = strategy.declare_turn(actor, state)
 
-    assert [target.actor_id for target in targets] == ["warlock"]
+    assert declaration is not None
+    assert declaration.action is not None
+    assert [target.actor_id for target in declaration.action.targets] == ["warlock"]
 
 
 def test_optimal_strategy_chooses_dodge_to_protect_concentration_when_low_hp() -> None:
@@ -162,9 +164,11 @@ def test_optimal_strategy_chooses_dodge_to_protect_concentration_when_low_hp() -
         },
     )
 
-    intent = strategy.choose_action(actor, state)
+    declaration = strategy.declare_turn(actor, state)
 
-    assert intent.action_name == "dodge"
+    assert declaration is not None
+    assert declaration.action is not None
+    assert declaration.action.action_name == "dodge"
 
 
 def test_optimal_strategy_prioritizes_objective_action_when_policy_enabled() -> None:
@@ -216,9 +220,11 @@ def test_optimal_strategy_prioritizes_objective_action_when_policy_enabled() -> 
         },
     )
 
-    intent = strategy.choose_action(actor, state)
+    declaration = strategy.declare_turn(actor, state)
 
-    assert intent.action_name == "secure_objective"
+    assert declaration is not None
+    assert declaration.action is not None
+    assert declaration.action.action_name == "secure_objective"
 
 
 def test_optimal_strategy_lookahead_mode_prefers_tactical_branch_setup_action() -> None:
@@ -278,9 +284,11 @@ def test_optimal_strategy_lookahead_mode_prefers_tactical_branch_setup_action() 
         },
     )
 
-    intent = strategy.choose_action(actor, state)
+    declaration = strategy.declare_turn(actor, state)
 
-    assert intent.action_name == "set_up"
+    assert declaration is not None
+    assert declaration.action is not None
+    assert declaration.action.action_name == "set_up"
 
 
 def test_evaluate_action_score_handles_invalid_aoe_sizes_without_exception() -> None:
@@ -289,7 +297,11 @@ def test_evaluate_action_score_handles_invalid_aoe_sizes_without_exception() -> 
     nearby_enemy = _actor_view(actor_id="nearby", team="enemy", position=(12.0, 0.0, 0.0))
     state = BattleStateView(
         round_number=1,
-        actors={actor.actor_id: actor, target.actor_id: target, nearby_enemy.actor_id: nearby_enemy},
+        actors={
+            actor.actor_id: actor,
+            target.actor_id: target,
+            nearby_enemy.actor_id: nearby_enemy,
+        },
         actor_order=[actor.actor_id, target.actor_id, nearby_enemy.actor_id],
         metadata={},
     )
@@ -306,10 +318,14 @@ def test_evaluate_action_score_handles_invalid_aoe_sizes_without_exception() -> 
         "effects": [],
         "mechanics": [],
     }
-    expected_single_target = _expected_damage_against(action, target, save_mod=target.save_mods["dex"])
+    expected_single_target = _expected_damage_against(
+        action, target, save_mod=target.save_mods["dex"]
+    )
 
     for invalid_size in ("not-a-number", "0", -5):
-        score = _evaluate_action_score({**action, "aoe_size_ft": invalid_size}, target, actor, state)
+        score = _evaluate_action_score(
+            {**action, "aoe_size_ft": invalid_size}, target, actor, state
+        )
         assert abs(score - expected_single_target) < 1e-9
 
 
@@ -350,6 +366,8 @@ def test_evaluate_action_score_keeps_valid_aoe_multi_target_behavior() -> None:
     expected_enemy = _expected_damage_against(
         action, nearby_enemy, save_mod=nearby_enemy.save_mods["dex"]
     )
-    expected_ally = _expected_damage_against(action, nearby_ally, save_mod=nearby_ally.save_mods["dex"])
+    expected_ally = _expected_damage_against(
+        action, nearby_ally, save_mod=nearby_ally.save_mods["dex"]
+    )
     expected_score = expected_target + expected_enemy - (expected_ally * 1.5)
     assert abs(score - expected_score) < 1e-9

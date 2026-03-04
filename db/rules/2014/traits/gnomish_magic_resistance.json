@@ -1,16 +1,16 @@
 {
   "name": "Gnomish Magic Resistance",
-  "type": "racial_trait",
   "description": "You have advantage on Intelligence, Wisdom, and Charisma saving throws against spells.",
   "mechanics": [
     {
-      "type": "saving_throw_advantage",
       "abilities": [
         "intelligence",
         "wisdom",
         "charisma"
       ],
-      "against": "spells"
+      "against": "spells",
+      "meta_type": "saving_throw_advantage"
     }
-  ]
+  ],
+  "source_type": "species"
 }

@@ -1,14 +1,14 @@
 {
   "name": "Telepathic Insight",
-  "type": "racial_trait",
   "description": "Your mind's connection to the world around you strengthens your will. You have advantage on all Wisdom and Charisma saving throws.",
   "mechanics": [
     {
-      "type": "saving_throw_advantage",
       "abilities": [
         "wisdom",
         "charisma"
-      ]
+      ],
+      "meta_type": "saving_throw_advantage"
     }
-  ]
+  ],
+  "source_type": "species"
 }

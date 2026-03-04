@@ -6,6 +6,7 @@
   "casting_time": "action",
   "range_ft": 0,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 1,
   "description": "You extend your hand and trace a sigil of warding in the air. Until the end of your next turn, you have resistance against bludgeoning, piercing, and slashing damage dealt by weapon attacks.",
   "save_ability": null,

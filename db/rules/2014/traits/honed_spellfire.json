@@ -1,17 +1,17 @@
 {
   "name": "Honed Spellfire",
-  "type": "subclass_feature",
   "description": "Your Spellfire Burst improves. You add your Sorcerer level to the Temporary Hit Points gained from Bolstering Flames, and the damage of Radiant Fire increases to 1d8.",
   "mechanics": [
     {
-      "type": "temp_hp_bonus",
       "source": "Bolstering Flames",
-      "value": "sorcerer_level"
+      "value": "sorcerer_level",
+      "meta_type": "temp_hp_bonus"
     },
     {
-      "type": "damage_increase",
       "source": "Radiant Fire",
-      "dice": "1d8"
+      "dice": "1d8",
+      "meta_type": "damage_increase"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -6,6 +6,7 @@
   "casting_time": "reaction",
   "range_ft": 60,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 10,
   "description": "Choose up to five falling creatures within range. A falling creature's rate of descent slows to 60 feet per round until the spell ends. If the creature lands before the spell ends, it takes no falling damage and can land on its feet, and the spell ends for that creature.",
   "save_ability": null,

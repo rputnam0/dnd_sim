@@ -1,11 +1,11 @@
 {
   "name": "Guardian of the Depths",
-  "type": "racial_trait",
   "description": "Adapted to the frigid ocean depths, you have resistance to cold damage.",
   "mechanics": [
     {
-      "type": "damage_resistance",
-      "damage_type": "cold"
+      "damage_type": "cold",
+      "meta_type": "damage_resistance"
     }
-  ]
+  ],
+  "source_type": "species"
 }

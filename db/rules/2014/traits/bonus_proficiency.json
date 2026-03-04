@@ -1,11 +1,11 @@
 {
   "name": "Bonus Proficiency",
-  "type": "subclass_feature",
   "description": "When the cleric chooses this domain at 1st level, he or she gains proficiency with martial weapons.",
   "mechanics": [
     {
-      "type": "proficiency",
-      "category": "martial weapons"
+      "category": "martial weapons",
+      "meta_type": "proficiency"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

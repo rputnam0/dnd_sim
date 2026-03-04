@@ -19,36 +19,38 @@ from dnd_sim.engine import (
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.rules_2014 import apply_damage
-from tests.helpers import build_enemy
+from tests.helpers import build_enemy, with_class_levels
 from tests.test_engine_integration import _setup_env
 
 
 def _barbarian_character(*, level: int, traits: list[str], resources: dict | None = None) -> dict:
-    return {
-        "character_id": f"barbarian_{level}",
-        "name": f"Barbarian {level}",
-        "class_level": f"Barbarian {level}",
-        "max_hp": 58,
-        "ac": 15,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 18,
-            "dex": 14,
-            "con": 16,
-            "int": 8,
-            "wis": 10,
-            "cha": 10,
-        },
-        "save_mods": {"str": 7, "dex": 2, "con": 6, "int": -1, "wis": 0, "cha": 0},
-        "skill_mods": {},
-        "attacks": [
-            {"name": "Greataxe", "to_hit": 7, "damage": "1d12+4", "damage_type": "slashing"}
-        ],
-        "resources": resources or {},
-        "traits": traits,
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": f"barbarian_{level}",
+            "name": f"Barbarian {level}",
+            "class_level": f"Barbarian {level}",
+            "max_hp": 58,
+            "ac": 15,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 18,
+                "dex": 14,
+                "con": 16,
+                "int": 8,
+                "wis": 10,
+                "cha": 10,
+            },
+            "save_mods": {"str": 7, "dex": 2, "con": 6, "int": -1, "wis": 0, "cha": 0},
+            "skill_mods": {},
+            "attacks": [
+                {"name": "Greataxe", "to_hit": 7, "damage": "1d12+4", "damage_type": "slashing"}
+            ],
+            "resources": resources or {},
+            "traits": traits,
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
@@ -172,7 +174,7 @@ def test_rage_ends_on_downed_dead_or_unconscious_terminal_states(terminal_state:
 
 def test_build_actor_infers_rage_from_barbarian_level_not_total_level() -> None:
     character = _barbarian_character(level=11, traits=["Rage"])
-    character["class_level"] = "Barbarian 3 / Fighter 8"
+    character["class_levels"] = {"barbarian": 3, "fighter": 8}
 
     actor = _build_actor_from_character(character, traits_db={})
 
@@ -186,7 +188,7 @@ def test_chr04_integration_multiclass_rage_inference_survives_scenario_build(
     tmp_path: Path,
 ) -> None:
     barbarian = _barbarian_character(level=11, traits=["Rage"])
-    barbarian["class_level"] = "Barbarian 3 / Fighter 8"
+    barbarian["class_levels"] = {"barbarian": 3, "fighter": 8}
     enemies = [build_enemy(enemy_id="dummy", name="Dummy", hp=250, ac=8, to_hit=0, damage="1")]
     scenario_path = _setup_env(
         tmp_path / "chr04_rage_integration",

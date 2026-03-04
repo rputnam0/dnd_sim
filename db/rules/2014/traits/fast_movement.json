@@ -1,13 +1,13 @@
 {
   "name": "Fast Movement",
-  "type": "class_feature",
   "description": "Starting at 5th level, your speed increases by 10 feet while you aren't wearing heavy armor.",
   "mechanics": [
     {
-      "type": "speed_modifier",
       "value": 10,
       "unit": "feet",
-      "condition": "not_heavy_armor"
+      "condition": "not_heavy_armor",
+      "meta_type": "speed_modifier"
     }
-  ]
+  ],
+  "source_type": "class"
 }

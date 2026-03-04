@@ -1,10 +1,8 @@
 {
   "name": "Tireless Precision",
-  "type": "racial_trait",
   "description": "You are proficient in one of the following skills of your choice: Arcana, History, Investigation, Medicine, Performance, or Sleight of Hand. You are also proficient with one tool of your choice. Whenever you make an ability check with the chosen skill or tool, roll a d4 and add the number rolled to the check's total.",
   "mechanics": [
     {
-      "type": "proficiency",
       "category": "skill",
       "choice": true,
       "options": [
@@ -14,18 +12,20 @@
         "Medicine",
         "Performance",
         "Sleight of Hand"
-      ]
+      ],
+      "meta_type": "proficiency"
     },
     {
-      "type": "proficiency",
       "category": "tool",
-      "choice": true
+      "choice": true,
+      "meta_type": "proficiency"
     },
     {
-      "type": "bonus_die",
       "die": "d4",
       "applies_to": "ability_check",
-      "condition": "using the chosen skill or tool"
+      "condition": "using the chosen skill or tool",
+      "meta_type": "bonus_die"
     }
-  ]
+  ],
+  "source_type": "species"
 }

@@ -1,17 +1,38 @@
 {
-  "name": "Ancient Blue Dragon",
-  "meta": "Gargantuan dragon, lawful evil",
-  "ac": 22,
-  "hp": 481,
-  "hp_formula": "26d20 + 208",
-  "ability_scores": {
-    "str": 29,
-    "dex": 10,
-    "con": 27,
-    "int": 18,
-    "wis": 17,
-    "cha": 21
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ancient_blue_dragon",
+    "name": "Ancient Blue Dragon",
+    "team": "enemy"
   },
-  "cr": "23",
-  "saving_throws_text": "Dex +7, Con +15, Wis +10, Cha +12"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 481,
+    "ac": 22,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 9,
+    "dex_mod": 0,
+    "con_mod": 8,
+    "int_mod": 4,
+    "wis_mod": 3,
+    "cha_mod": 5,
+    "save_mods": {
+      "dex": 7,
+      "con": 15,
+      "wis": 10,
+      "cha": 12
+    },
+    "cr": "23"
+  },
+  "reactions": [],
+  "actions": []
 }

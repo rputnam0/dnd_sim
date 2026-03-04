@@ -1,41 +1,41 @@
 {
   "name": "Channel Divinity: Invoke Duplicity",
-  "type": "subclass_feature",
   "description": "Starting at 2nd level, you can use your Channel Divinity to create an illusory duplicate of yourself. As an action, you create a perfect illusion of yourself that lasts for 1 minute, or until you lose your concentration (as if you were concentrating on a spell). The illusion appears in an unoccupied space that you can see within 30 feet of you. As a bonus action on your turn, you can move the illusion up to 30 feet to a space you can see, but it must remain within 120 feet of you. For the duration, you can cast spells as though you were in the illusion's space, but you must use your own senses. Additionally, when both you and your illusion are within 5 feet of a creature that can see the illusion, you have advantage on attack rolls against that creature, given how distracting the illusion is to the target.",
   "mechanics": [
     {
-      "type": "resource",
       "resource": "Channel Divinity",
-      "cost": 1
+      "cost": 1,
+      "meta_type": "resource"
     },
     {
-      "type": "action",
       "name": "Create Illusory Duplicate",
       "activation": "action",
       "duration": "1 minute",
       "concentration": true,
       "range": "30 ft",
-      "effect": "Creates a perfect illusion of the caster in an unoccupied space the caster can see."
+      "effect": "Creates a perfect illusion of the caster in an unoccupied space the caster can see.",
+      "meta_type": "action"
     },
     {
-      "type": "action",
       "name": "Move Illusion",
       "activation": "bonus action",
       "movement": "30 ft",
       "rangeLimit": "120 ft",
-      "condition": "Illusion must remain within 120 feet of the caster."
+      "condition": "Illusion must remain within 120 feet of the caster.",
+      "meta_type": "action"
     },
     {
-      "type": "spellcasting",
       "origin": "illusion space",
       "senses": "caster's own senses",
-      "description": "Caster can cast spells as though they were in the illusion's space."
+      "description": "Caster can cast spells as though they were in the illusion's space.",
+      "meta_type": "spellcasting"
     },
     {
-      "type": "advantage",
       "condition": "Both caster and illusion are within 5 feet of a creature that can see the illusion.",
       "appliesTo": "attack rolls",
-      "description": "Caster has advantage on attack rolls against that creature."
+      "description": "Caster has advantage on attack rolls against that creature.",
+      "meta_type": "advantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -47,7 +47,6 @@
     }
   ],
   "character_id": "isak_wissa",
-  "class_level": "Monk 8",
   "max_hp": 77,
   "name": "Isak Wissa",
   "raw_fields": [
@@ -74,7 +73,7 @@
     {
       "field": "Actions1",
       "page": 1,
-      "value": "=== ACTIONS === \nStandard Actions \n     Attack, Magic, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Utilize, Opportunity Attack, Grapple, Shove, Improvise, Two-Weapon Fighting, Interact with an Object, Study, Influence \n\nWholeness of Body \u2022 1 / Long Rest \n     Once per long rest as an action, you can regain 24 HP. \n\n=== BONUS ACTIONS === \nFlurry of Blows \n     After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action."
+      "value": "=== ACTIONS === \nStandard Actions \n     Attack, Magic, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Utilize, Opportunity Attack, Grapple, Shove, Improvise, Two-Weapon Fighting, Interact with an Object, Study, Influence \n\nWholeness of Body • 1 / Long Rest \n     Once per long rest as an action, you can regain 24 HP. \n\n=== BONUS ACTIONS === \nFlurry of Blows \n     After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action."
     },
     {
       "field": "Actions2",
@@ -179,7 +178,7 @@
     {
       "field": "DexProf",
       "page": 1,
-      "value": "\u2022"
+      "value": "•"
     },
     {
       "field": "EXPERIENCE POINTS",
@@ -424,7 +423,7 @@
     {
       "field": "StrProf",
       "page": 1,
-      "value": "\u2022"
+      "value": "•"
     },
     {
       "field": "Survival",
@@ -759,17 +758,17 @@
     {
       "field": "FeaturesTraits1",
       "page": 2,
-      "value": "=== MONK FEATURES === \n\n* Hit Points \u2022 PHB 77 \n\n* Proficiencies \u2022 PHB 77 \n\n* Unarmored Defense \u2022 PHB 78 \nWhile not wearing armor and not using a shield, your AC equals 10 + DEX modifier + WIS modifier. \n\n* Martial Arts \u2022 PHB 78 \nWhile you are unarmed or wielding only monk weapons and you aren\u2019t wearing armor or wielding a shield, you can use DEX instead of STR for the attack and damage rolls, you can roll your Martial Arts damage die in place of the normal damage, and when you use the Attack action on your turn, you can make one unarmed strike as a bonus action. \n\n   \\| Unarmed Strike: 1 Bonus Action \n\n* Ki \u2022 PHB 78 \nYou can spend Ki Points to fuel ki features. You have 8 points per short rest and your Ki save DC is 13. \n\nFlurry of Blows - After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action. \n\nPatient Defense - You can spend 1 ki point to take the Dodge action as a bonus action on your turn. \n\nStep of the Wind - You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn. \n\n   \\| Ki Points: 8 / Short Rest \u2022 Special \n\n   \\| Flurry of Blows: 1 Bonus Action \n\n   \\| Patient Defense: 1 Bonus Action"
+      "value": "=== MONK FEATURES === \n\n* Hit Points • PHB 77 \n\n* Proficiencies • PHB 77 \n\n* Unarmored Defense • PHB 78 \nWhile not wearing armor and not using a shield, your AC equals 10 + DEX modifier + WIS modifier. \n\n* Martial Arts • PHB 78 \nWhile you are unarmed or wielding only monk weapons and you aren’t wearing armor or wielding a shield, you can use DEX instead of STR for the attack and damage rolls, you can roll your Martial Arts damage die in place of the normal damage, and when you use the Attack action on your turn, you can make one unarmed strike as a bonus action. \n\n   \\| Unarmed Strike: 1 Bonus Action \n\n* Ki • PHB 78 \nYou can spend Ki Points to fuel ki features. You have 8 points per short rest and your Ki save DC is 13. \n\nFlurry of Blows - After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action. \n\nPatient Defense - You can spend 1 ki point to take the Dodge action as a bonus action on your turn. \n\nStep of the Wind - You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn. \n\n   \\| Ki Points: 8 / Short Rest • Special \n\n   \\| Flurry of Blows: 1 Bonus Action \n\n   \\| Patient Defense: 1 Bonus Action"
     },
     {
       "field": "FeaturesTraits2",
       "page": 2,
-      "value": "\\| Step of the Wind: 1 Bonus Action \n\n* Unarmored Movement \u2022 PHB 78 \nYour speed increases by 15 feet while you are not wearing armor or wielding a shield. \n\n* Monastic Tradition \u2022 PHB 78 \n\n   \\| Way of the Open Hand \n\n* Deflect Missiles \u2022 PHB 78 \nYou can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. When you do so, the damage you take from the attack is reduced by 1d10 +12. If you reduce damage to 0 and have a free hand, you can spend 1 ki point to make a ranged attack (as with a monk weapon) with range 20/60. \n\n   \\| 1 Reaction \n\n   \\| Deflect Missiles Attack: 1 Reaction \n\n* Open Hand Technique \u2022 PHB 79 \nWhenever you hit with one of your Flurry of Blows attacks, you can impose one of the following effects on that target: fall prone if it fails a DEX saving throw (DC 13), get pushed up to 15 ft. if it fails a STR saving throw (DC 13), or it can't take reaction until the end of your next turn. \n\n   \\| Special \n\n* Ability Score Improvement \u2022 PHB 78 \n\n* Slow Fall \u2022 PHB 78 \nYou can use your reaction when you fall to reduce any falling damage you take by 40. \n\n   \\| 1 Reaction"
+      "value": "\\| Step of the Wind: 1 Bonus Action \n\n* Unarmored Movement • PHB 78 \nYour speed increases by 15 feet while you are not wearing armor or wielding a shield. \n\n* Monastic Tradition • PHB 78 \n\n   \\| Way of the Open Hand \n\n* Deflect Missiles • PHB 78 \nYou can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. When you do so, the damage you take from the attack is reduced by 1d10 +12. If you reduce damage to 0 and have a free hand, you can spend 1 ki point to make a ranged attack (as with a monk weapon) with range 20/60. \n\n   \\| 1 Reaction \n\n   \\| Deflect Missiles Attack: 1 Reaction \n\n* Open Hand Technique • PHB 79 \nWhenever you hit with one of your Flurry of Blows attacks, you can impose one of the following effects on that target: fall prone if it fails a DEX saving throw (DC 13), get pushed up to 15 ft. if it fails a STR saving throw (DC 13), or it can't take reaction until the end of your next turn. \n\n   \\| Special \n\n* Ability Score Improvement • PHB 78 \n\n* Slow Fall • PHB 78 \nYou can use your reaction when you fall to reduce any falling damage you take by 40. \n\n   \\| 1 Reaction"
     },
     {
       "field": "FeaturesTraits3",
       "page": 2,
-      "value": "* Extra Attack \u2022 PHB 79 \nYou can attack twice, instead of once, whenever you take the Attack action on your turn. \n\n* Stunning Strike \u2022 PHB 79 \nWhen you hit with a melee weapon attack, you can spend 1 ki point to make the target stunned until the end of your next turn if it fails a CON saving throw (DC 13). \n\n   \\| Special \n\n* Ki-Empowered Strikes \u2022 PHB 79 \nYour unarmed strikes count as magical for the purpose of overcoming resistance and immunity. \n\n* Wholeness of Body \u2022 PHB 79 \nOnce per long rest as an action, you can regain 24 HP. \n\n   \\| 1 / Long Rest \u2022 1 Action \n\n* Evasion \u2022 PHB 79 \nWhen you are subjected to an effect that allows you to make a DEX saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail. \n\n* Stillness of Mind \u2022 PHB 79 \nYou can use an action to end one effect on yourself that is causing you to be charmed or frightened. \n\n   \\| 1 Action \n\n\n=== GNOME SPECIES TRAITS === \n\n* Creature Type \u2022 PHB-2024 191 \nYou are a Humanoid. \n\n* Size \u2022 PHB-2024 191"
+      "value": "* Extra Attack • PHB 79 \nYou can attack twice, instead of once, whenever you take the Attack action on your turn. \n\n* Stunning Strike • PHB 79 \nWhen you hit with a melee weapon attack, you can spend 1 ki point to make the target stunned until the end of your next turn if it fails a CON saving throw (DC 13). \n\n   \\| Special \n\n* Ki-Empowered Strikes • PHB 79 \nYour unarmed strikes count as magical for the purpose of overcoming resistance and immunity. \n\n* Wholeness of Body • PHB 79 \nOnce per long rest as an action, you can regain 24 HP. \n\n   \\| 1 / Long Rest • 1 Action \n\n* Evasion • PHB 79 \nWhen you are subjected to an effect that allows you to make a DEX saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail. \n\n* Stillness of Mind • PHB 79 \nYou can use an action to end one effect on yourself that is causing you to be charmed or frightened. \n\n   \\| 1 Action \n\n\n=== GNOME SPECIES TRAITS === \n\n* Creature Type • PHB-2024 191 \nYou are a Humanoid. \n\n* Size • PHB-2024 191"
     },
     {
       "field": "GP",
@@ -829,12 +828,12 @@
     {
       "field": "FeaturesTraits4",
       "page": 3,
-      "value": "You are Small. \n\n* Speed \u2022 PHB-2024 191 \nYour Speed is 30 ft. \n\n* Darkvision \u2022 PHB-2024 191 \nYou have Darkvision with a range of 60 ft. \n\n* Gnomish Cunning \u2022 PHB-2024 191 \nYou have Advantage on Intelligence, Wisdom, and Charisma saving throws. \n\n* Gnomish Lineage \u2022 PHB-2024 191 \n\n* Gnomish Lineage Spells \u2022 PHB-2024 191 \n\n   \\| Forest Gnome - Intelligence \u2022  \n\n* Languages \u2022 PHB-2024 37 \nYour character knows at least three languages: Common plus two languages you roll or choose from the Standard Languages table. Knowledge of a language means your character can communicate in it, read it, and write it. \n\n\n=== FEATS === \n\n* Magic Initiate (Wizard) \u2022 PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice from the Wizard spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. \n\nSpell Change. Whenever you gain a new level, you"
+      "value": "You are Small. \n\n* Speed • PHB-2024 191 \nYour Speed is 30 ft. \n\n* Darkvision • PHB-2024 191 \nYou have Darkvision with a range of 60 ft. \n\n* Gnomish Cunning • PHB-2024 191 \nYou have Advantage on Intelligence, Wisdom, and Charisma saving throws. \n\n* Gnomish Lineage • PHB-2024 191 \n\n* Gnomish Lineage Spells • PHB-2024 191 \n\n   \\| Forest Gnome - Intelligence •  \n\n* Languages • PHB-2024 37 \nYour character knows at least three languages: Common plus two languages you roll or choose from the Standard Languages table. Knowledge of a language means your character can communicate in it, read it, and write it. \n\n\n=== FEATS === \n\n* Magic Initiate (Wizard) • PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice from the Wizard spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. \n\nSpell Change. Whenever you gain a new level, you"
     },
     {
       "field": "FeaturesTraits5",
       "page": 3,
-      "value": "can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   \\| Wisdom \u2022  \n\n* Savage Attacker \u2022 PHB-2024 201 \nOnce per turn when you hit a target with a weapon, you can roll the weapon\u2019s damage dice twice and use either roll against the target. \n\n* Soldier Ability Score Improvements \u2022 PHB-2024 185 \n\n   \\| Increase three scores (+1 / +1 / +1) \u2022"
+      "value": "can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   \\| Wisdom •  \n\n* Savage Attacker • PHB-2024 201 \nOnce per turn when you hit a target with a weapon, you can roll the weapon’s damage dice twice and use either roll against the target. \n\n* Soldier Ability Score Improvements • PHB-2024 185 \n\n   \\| Increase three scores (+1 / +1 / +1) •"
     },
     {
       "field": "PLAYER NAME3",
@@ -854,7 +853,7 @@
     {
       "field": "Backstory",
       "page": 4,
-      "value": "Isak Wissa is a gnome monk of the Way of the Open Hand, trained first by his grandmother in a small village tradition that taught Ley was not a weapon or a commodity, but the breath of the world\u2014something to be guided back into balance rather than dominated. After her death, he completed his training at a monastery loosely aligned with the Aureate Crown, though he never fully embraced the Crown\u2019s doctrine that magic must be licensed and controlled. Drafted and stationed at the River Line on the Jungle Front, Isak serves as a scout and close-quarters specialist, positioned between the Crown and the industrial ambitions of the Iron Concord. Quiet, introverted, and lethally precise, he fights not for ideology but for survival and for the deep loyalty he feels toward his unit. He believes the Ley in the jungle is strained\u2014not corrupted, but listening\u2014and he carries a private doubt: a missing week of memory after a patrol near the DMZ, from which he returned uninjured yet covered in river mud. Since then, when he meditates, his heartbeat seems to echo the rhythm of the jungle itself."
+      "value": "Isak Wissa is a gnome monk of the Way of the Open Hand, trained first by his grandmother in a small village tradition that taught Ley was not a weapon or a commodity, but the breath of the world—something to be guided back into balance rather than dominated. After her death, he completed his training at a monastery loosely aligned with the Aureate Crown, though he never fully embraced the Crown’s doctrine that magic must be licensed and controlled. Drafted and stationed at the River Line on the Jungle Front, Isak serves as a scout and close-quarters specialist, positioned between the Crown and the industrial ambitions of the Iron Concord. Quiet, introverted, and lethally precise, he fights not for ideology but for survival and for the deep loyalty he feels toward his unit. He believes the Ley in the jungle is strained—not corrupted, but listening—and he carries a private doubt: a missing week of memory after a patrol near the DMZ, from which he returned uninjured yet covered in river mud. Since then, when he meditates, his heartbeat seems to echo the rhythm of the jungle itself."
     },
     {
       "field": "CharacterName4",
@@ -1251,5 +1250,8 @@
     "Unarmored Defense",
     "Unarmored Movement",
     "Wholeness of Body"
-  ]
+  ],
+  "class_levels": {
+    "monk": 8
+  }
 }

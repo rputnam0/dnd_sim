@@ -1,6 +1,5 @@
 {
   "name": "Thousand Forms",
-  "type": "subclass_feature",
   "description": "By 14th level, you have learned to use magic to alter your physical form in more subtle ways. You can cast the alter self spell at will.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "spell": "alter self",
       "usage": "at will"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

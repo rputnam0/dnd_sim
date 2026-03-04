@@ -1,6 +1,5 @@
 {
   "name": "Experimental Elixir",
-  "type": "subclass_feature",
   "description": "Whenever you finish a long rest while holding Alchemist's Supplies, you can use that tool to magically produce two elixirs. For each elixir, roll on the Experimental Elixir table to determine its effect; the effect is triggered when the elixir is drunk. The elixir appears in a vial that vanishes when the elixir is consumed or poured out. Any remaining elixirs vanish when you finish a long rest. Drinking an elixir is a bonus action; you can drink it yourself or administer it to a creature within 5 feet. As an action while holding Alchemist's Supplies, you can expend a spell slot to create another elixir, choosing its effect from the Experimental Elixir table instead of rolling. When you reach certain Artificer levels you can make additional elixirs at the end of each long rest: three at 5th level, four at 9th level, and five at 15th level.",
   "mechanics": [
     {
@@ -32,5 +31,6 @@
       },
       "effect": "additional_elixir_creation"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

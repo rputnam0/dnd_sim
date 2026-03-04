@@ -1,6 +1,6 @@
 {
   "name": "Maneuver Options",
-  "type": "subclass_feature",
   "description": "3rd-level fighter optional class features. If you have access to maneuvers, the following maneuvers are added to the list of options available to you. Maneuvers are available to Battle Masters but also to characters who have a special feature like the Superior Technique fighting style or the Martial Adept feat. The following optional features are available: Ambush, Bait and Switch, Brace, Commanding Presence, Grappling Strike, Quick Toss, Tactical Assessment.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "subclass"
 }

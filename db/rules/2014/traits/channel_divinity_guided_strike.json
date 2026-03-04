@@ -1,14 +1,14 @@
 {
   "name": "Channel Divinity: Guided Strike",
-  "type": "subclass_feature",
   "description": "Starting at 2nd level, you can use your Channel Divinity to strike with supernatural accuracy. When you make an attack roll, you can use your Channel Divinity to gain a +10 bonus to the roll. You make this choice after you see the roll, but before the DM says whether the attack hits or misses.",
   "mechanics": [
     {
-      "type": "attack_roll_modifier",
       "value": 10,
       "trigger": "when making an attack roll",
       "timing": "after seeing the roll, before the outcome is determined",
-      "resource": "Channel Divinity"
+      "resource": "Channel Divinity",
+      "meta_type": "attack_roll_modifier"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

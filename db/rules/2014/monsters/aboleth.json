@@ -1,17 +1,37 @@
 {
-  "name": "Aboleth",
-  "meta": "Large aberration, lawful evil",
-  "ac": 17,
-  "hp": 135,
-  "hp_formula": "18d10 + 36",
-  "ability_scores": {
-    "str": 21,
-    "dex": 9,
-    "con": 15,
-    "int": 18,
-    "wis": 15,
-    "cha": 18
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "aboleth",
+    "name": "Aboleth",
+    "team": "enemy"
   },
-  "cr": "10",
-  "saving_throws_text": "Con +6, Int +8, Wis +6"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 135,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 5,
+    "dex_mod": -1,
+    "con_mod": 2,
+    "int_mod": 4,
+    "wis_mod": 2,
+    "cha_mod": 4,
+    "save_mods": {
+      "con": 6,
+      "int": 8,
+      "wis": 6
+    },
+    "cr": "10"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,15 +1,15 @@
 {
   "name": "Oceanic Soul",
-  "type": "subclass_feature",
   "description": "You are now even more at home in the depths. You gain resistance to cold damage. In addition, when you are fully submerged, any creature that is also fully submerged can understand your speech, and you can understand theirs.",
   "mechanics": [
     {
-      "type": "damage_resistance",
-      "damage_type": "cold"
+      "damage_type": "cold",
+      "meta_type": "damage_resistance"
     },
     {
-      "type": "underwater_communication",
-      "condition": "fully_submerged"
+      "condition": "fully_submerged",
+      "meta_type": "underwater_communication"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

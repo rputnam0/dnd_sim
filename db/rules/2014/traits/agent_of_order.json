@@ -1,6 +1,5 @@
 {
   "name": "Agent of Order",
-  "type": "feat",
   "description": "You increase one ability score of your choice by 1. Once per turn, when you damage a creature you can see within 60 feet of yourself, you can deal an extra 1d8 force damage to the target. Additionally, the target must succeed on a Wisdom saving throw (DC 8 + proficiency bonus + spellcasting modifier) or be restrained until the start of your next turn. You can use this feature a number of times equal to your proficiency bonus, regaining all uses after a long rest.",
   "mechanics": [
     {
@@ -32,5 +31,6 @@
       "uses": "pb",
       "reset": "long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

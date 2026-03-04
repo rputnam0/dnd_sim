@@ -1,30 +1,30 @@
 {
   "name": "Martial Arts",
-  "type": "class_feature",
   "description": "Your practice of martial arts gives you mastery of combat styles that use unarmed strikes and monk weapons, which are shortswords and any simple melee weapons that don't have the two-handed or heavy property. You gain the following benefits while you are unarmed or wielding only monk weapons and you aren't wearing armor or wielding a shield. You can use Dexterity instead of Strength for the attack and damage rolls of your unarmed strikes and monk weapons. You can roll a d4 in place of the normal damage of your unarmed strike or monk weapon. This die changes as you gain monk levels, as shown in the Martial Arts column of the Monk table. When you use the Attack action with an unarmed strike or a monk weapon on your turn, you can make one unarmed strike as a bonus action. For example, if you take the Attack action and attack with a quarterstaff, you can also make an unarmed strike as a bonus action, assuming you haven't already taken a bonus action this turn. Certain monasteries use specialized forms of the monk weapons. For example, you might use a club that is two lengths of wood connected by a short chain (called a nunchaku) or a sickle with a shorter, straighter blade (called a kama).",
   "mechanics": [
     {
-      "type": "ability_score_substitution",
       "replace": "Strength",
       "with": "Dexterity",
       "applies_to": [
         "unarmed strike",
         "monk weapon"
-      ]
+      ],
+      "meta_type": "ability_score_substitution"
     },
     {
-      "type": "damage_die_override",
       "damage_die": "d4",
       "applies_to": [
         "unarmed strike",
         "monk weapon"
       ],
-      "note": "Die scales with monk level as shown in the Martial Arts column."
+      "note": "Die scales with monk level as shown in the Martial Arts column.",
+      "meta_type": "damage_die_override"
     },
     {
-      "type": "bonus_action_attack",
-      "trigger": "Attack action with unarmed strike or monk weapon",
-      "effect": "make one additional unarmed strike as a bonus action"
+      "trigger": "attack action with unarmed strike or monk weapon",
+      "effect": "make one additional unarmed strike as a bonus action",
+      "meta_type": "bonus_action_attack"
     }
-  ]
+  ],
+  "source_type": "class"
 }

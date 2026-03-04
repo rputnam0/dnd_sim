@@ -1,10 +1,9 @@
 {
   "name": "Blaze of Glory",
-  "type": "subclass_feature",
   "description": "Starting at 17th level, you can delay death for an instant to perform a final heroic act. When you are reduced to 0 hit points by an attacker you can see, even if you would be killed outright, you can use your reaction to move up to your speed toward the attacker and make one melee weapon attack against it, as long as the movement brings it within your reach. You make this attack with advantage. If the attack hits, the creature takes an extra 5d10 fire damage and an extra 5d10 damage of the weapon's type. You then fall unconscious and begin making death saving throws as normal, or you die if the damage you took would have killed you outright. Once you use this feature, you can't use it again until you finish a long rest.",
   "mechanics": [
     {
-      "trigger": "Reduced to 0 hit points by a visible attacker",
+      "trigger": "reduced to 0 hit points by a visible attacker",
       "action": "reaction",
       "movement": {
         "type": "move",
@@ -28,5 +27,6 @@
       "after_effect": "You fall unconscious and begin making death saving throws as normal (or die if the damage would have killed you outright).",
       "usage": "once per long rest"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

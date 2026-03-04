@@ -1,9 +1,15 @@
 {
   "name": "Stone Shape",
-  "meta": "Stone Shape 4th-\u00ad\u2010\u2011level transmutation",
+  "type": "spell",
+  "level": 4,
+  "school": "Transmutation",
   "casting_time": "1 action",
-  "range": "Touch",
-  "components": "V, S, M (soft clay, which must be worked into roughly the desired shape of the stone object)",
-  "duration": "Instantaneous",
-  "description": "You touch a stone object of Medium size or smaller or a section of stone no more than 5 feet in any dimension and form it into any shape that suits your purpose. So, for example, you could shape a large rock into a weapon, idol, or coffer, or make a small passage through a wall, as long as the wall is less than 5 feet thick. You could also shape a stone door or its frame to seal the door shut. The object you create can have up to two hinges and a latch, but finer mechanical detail isn\u2019t possible."
+  "range_ft": null,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 0,
+  "description": "You touch a stone object of Medium size or smaller or a section of stone no more than 5 feet in any dimension and form it into any shape that suits your purpose. So, for example, you could shape a large rock into a weapon, idol, or coffer, or make a small passage through a wall, as long as the wall is less than 5 feet thick. You could also shape a stone door or its frame to seal the door shut. The object you create can have up to two hinges and a latch, but finer mechanical detail isn’t possible.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

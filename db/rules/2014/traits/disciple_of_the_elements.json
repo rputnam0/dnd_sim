@@ -1,37 +1,35 @@
 {
   "name": "Disciple of the Elements",
-  "type": "subclass_feature",
   "description": "You learn magical disciplines that harness the power of the four elements. A discipline requires you to spend ki points each time you use it.\n\nYou know the Elemental Attunement discipline and one other elemental discipline of your choice. You learn one additional elemental discipline of your choice at 6th, 11th, and 17th level.\n\nWhenever you learn a new elemental discipline, you can also replace one elemental discipline that you already know with a different discipline.\n\nCasting Elemental Spells\nSome elemental disciplines allow you to cast spells. See chapter 10 of the Player's Handbook for the general rules of spellcasting. To cast one of these spells, you use its casting time and other rules, but you don't need to provide material components for it.\n\nOnce you reach 5th level in this class, you can spend additional ki points to increase the level of an elemental discipline spell that you cast, provided that the spell has an enhanced effect at a higher level, as burning hands does. The spell's level increases by 1 for each additional ki point you spend. For example, if you are a 5th-level monk and use Sweeping Cinder Strike to cast burning hands, you can spend 3 ki points to cast it as a 2nd-level spell (the discipline's base cost of 2 ki points plus 1).\n\nThe maximum number of ki points you can spend to cast a spell in this way (including its base ki point cost and any additional ki points you spend to increase its level) is determined by your monk level, as shown in the Spells and Ki Points table. At 5th level, you may spend up to 3 ki points; this increases to 4 ki points at 9th level, 5 at 13th level, and 6 at 17th level.\n\nSpells and Ki Points\nMonk Levels | Maximum Ki Points for a Spell\n5th-8th | 3\n9th-12th | 4\n13th-16th | 5\n17th-20th | 6",
   "mechanics": [
     {
-      "type": "resource_cost",
       "resource": "ki",
-      "cost": "variable per discipline use"
+      "cost": "variable per discipline use",
+      "meta_type": "resource_cost"
     },
     {
-      "type": "discipline_known",
       "initial": [
         "Elemental Attunement",
         "choice of one other elemental discipline"
-      ]
+      ],
+      "meta_type": "discipline_known"
     },
     {
-      "type": "discipline_gain",
       "levels": [
         6,
         11,
         17
       ],
       "count": 1,
-      "description": "Gain one additional elemental discipline of your choice at each listed level"
+      "description": "Gain one additional elemental discipline of your choice at each listed level",
+      "meta_type": "discipline_gain"
     },
     {
-      "type": "discipline_replace",
       "trigger": "learn new elemental discipline",
-      "effect": "may replace one known elemental discipline with a different one"
+      "effect": "may replace one known elemental discipline with a different one",
+      "meta_type": "discipline_replace"
     },
     {
-      "type": "spell_casting",
       "ki_cost_base": "discipline's base ki cost",
       "additional_ki_per_spell_level": 1,
       "max_ki_by_monk_level": [
@@ -52,7 +50,9 @@
           "max_ki": 6
         }
       ],
-      "material_components_required": false
+      "material_components_required": false,
+      "meta_type": "spell_casting"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

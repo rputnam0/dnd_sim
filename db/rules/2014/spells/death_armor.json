@@ -6,12 +6,19 @@
   "casting_time": "action",
   "range_ft": 0,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 600,
   "description": "For the duration, an inky aura surrounds one creature you touch. The target has advantage on death saving throws, and once per turn, when a creature within 5 feet of the target hits it with a melee attack roll, the attacker takes 2d4 necrotic damage.",
   "save_ability": null,
   "damage_type": "necrotic",
   "mechanics": [
-    "Target gains advantage on death saving throws",
-    "When a creature within 5 feet hits the target with a melee attack, the attacker takes 2d4 necrotic damage (once per turn)"
+    {
+      "effect_type": "note",
+      "text": "Target gains advantage on death saving throws"
+    },
+    {
+      "effect_type": "note",
+      "text": "When a creature within 5 feet hits the target with a melee attack, the attacker takes 2d4 necrotic damage (once per turn)"
+    }
   ]
 }

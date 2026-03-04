@@ -59,7 +59,7 @@ def test_build_character_actions_expands_metamagic_legality_matrix() -> None:
     character = {
         "character_id": "sorc",
         "name": "Sorcerer",
-        "class_level": "Sorcerer 10",
+        "class_levels": {"sorcerer": 10},
         "max_hp": 50,
         "ac": 14,
         "speed_ft": 30,
@@ -166,7 +166,7 @@ def test_build_character_actions_adds_font_of_magic_conversion_actions() -> None
     character = {
         "character_id": "sorc",
         "name": "Sorcerer",
-        "class_level": "Sorcerer 12",
+        "class_levels": {"sorcerer": 12},
         "max_hp": 60,
         "ac": 15,
         "speed_ft": 30,

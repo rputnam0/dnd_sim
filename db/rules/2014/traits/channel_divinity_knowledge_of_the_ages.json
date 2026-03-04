@@ -1,6 +1,5 @@
 {
   "name": "Channel Divinity: Knowledge of the Ages",
-  "type": "subclass_feature",
   "description": "Starting at 2nd level, you can use your Channel Divinity to tap into a divine well of knowledge. As an action, you choose one skill or tool. For 10 minutes, you have proficiency with the chosen skill or tool.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       "target": "chosen skill or tool",
       "duration": "10 minutes"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

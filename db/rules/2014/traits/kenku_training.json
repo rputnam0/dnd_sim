@@ -1,6 +1,5 @@
 {
   "name": "Kenku Training",
-  "type": "racial_trait",
   "description": "You are proficient in your choice of two of the following skills: Acrobatics, Deception, Stealth, and Sleight of Hand.",
   "mechanics": [
     {
@@ -14,5 +13,6 @@
         ]
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

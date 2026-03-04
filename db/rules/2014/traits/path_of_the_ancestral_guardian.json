@@ -1,6 +1,6 @@
 {
   "name": "Ancestral Protectors",
-  "type": "subclass_feature",
   "description": "",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "subclass"
 }

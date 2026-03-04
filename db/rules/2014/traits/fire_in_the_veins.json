@@ -1,16 +1,16 @@
 {
   "name": "Fire in the Veins",
-  "type": "subclass_feature",
   "description": "At 6th level, you gain resistance to fire damage. In addition, spells you cast ignore resistance to fire damage.",
   "mechanics": [
     {
-      "type": "damage_resistance",
-      "damage_type": "fire"
+      "damage_type": "fire",
+      "meta_type": "damage_resistance"
     },
     {
-      "type": "ignore_resistance",
       "damage_type": "fire",
-      "applies_to": "spells"
+      "applies_to": "spells",
+      "effect_type": "ignore_resistance"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

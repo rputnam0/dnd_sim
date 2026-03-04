@@ -1,29 +1,29 @@
 {
   "name": "Mobile Flourish",
-  "type": "subclass_feature",
   "description": "You can expend one use of your Bardic Inspiration to cause the weapon to deal extra damage to the target you hit. The damage equals the number you roll on the Bardic Inspiration die. You can also push the target up to 5 feet away from you, plus a number of feet equal to the number you roll on that die. You can then immediately use your reaction to move up to your walking speed to an unoccupied space within 5 feet of the target.",
   "mechanics": [
     {
-      "type": "resource_expenditure",
       "resource": "Bardic Inspiration",
-      "amount": 1
+      "amount": 1,
+      "meta_type": "resource_expenditure"
     },
     {
-      "type": "extra_damage",
       "damage_source": "Bardic Inspiration die",
-      "description": "Add the rolled Bardic Inspiration die to weapon damage"
+      "description": "Add the rolled Bardic Inspiration die to weapon damage",
+      "meta_type": "extra_damage"
     },
     {
-      "type": "push",
       "base_distance_feet": 5,
       "additional_distance": "Bardic Inspiration die",
-      "description": "Push target away from you by 5 feet plus the rolled Bardic Inspiration die"
+      "description": "Push target away from you by 5 feet plus the rolled Bardic Inspiration die",
+      "meta_type": "push"
     },
     {
-      "type": "reaction_movement",
       "distance": "walking speed",
       "target_condition": "within 5 feet of the target",
-      "description": "Use your reaction to move up to your walking speed to an unoccupied space within 5 feet of the target"
+      "description": "Use your reaction to move up to your walking speed to an unoccupied space within 5 feet of the target",
+      "meta_type": "reaction_movement"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

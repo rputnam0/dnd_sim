@@ -1,6 +1,5 @@
 {
   "name": "Jack of All Trades",
-  "type": "class_feature",
   "description": "Starting at 2nd level, you can add half your proficiency bonus, rounded down, to any ability check you make that doesn't already include your proficiency bonus.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
       "condition": "not_proficient",
       "value": "floor(proficiency_bonus / 2)"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Boon of Recovery",
-  "type": "feat",
   "description": "Increase one ability score of your choice by 1, to a maximum of 30. When you would be reduced to 0 hit points, you can drop to 1 hit point instead and regain hit points equal to half your hit point maximum (once per long rest). You also have a pool of ten d10s that you can expend as a bonus action to regain hit points, regaining all dice on a long rest.",
   "mechanics": [
     {
@@ -22,5 +21,6 @@
       "die_type": "d10",
       "reset": "long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

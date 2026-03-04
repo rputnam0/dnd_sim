@@ -1,17 +1,37 @@
 {
-  "name": "Dragon Turtle",
-  "meta": "Gargantuan dragon, neutral",
-  "ac": 20,
-  "hp": 341,
-  "hp_formula": "22d20 + 110",
-  "ability_scores": {
-    "str": 25,
-    "dex": 10,
-    "con": 20,
-    "int": 10,
-    "wis": 12,
-    "cha": 12
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "dragon_turtle",
+    "name": "Dragon Turtle",
+    "team": "enemy"
   },
-  "cr": "17",
-  "saving_throws_text": "Dex +6, Con +11, Wis +7"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 341,
+    "ac": 20,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 7,
+    "dex_mod": 0,
+    "con_mod": 5,
+    "int_mod": 0,
+    "wis_mod": 1,
+    "cha_mod": 1,
+    "save_mods": {
+      "dex": 6,
+      "con": 11,
+      "wis": 7
+    },
+    "cr": "17"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -14,7 +14,7 @@ from dnd_sim.engine import (
 )
 from dnd_sim.io import load_character_db, load_scenario
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
-from tests.helpers import build_enemy
+from tests.helpers import build_enemy, with_class_levels
 from tests.test_engine_integration import _setup_env
 
 
@@ -86,7 +86,7 @@ def _sorcerer_character(
     }
     if class_levels is not None:
         payload["class_levels"] = dict(class_levels)
-    return payload
+    return with_class_levels(payload)
 
 
 def test_build_actor_infers_sorcerer_package_traits_and_sorcery_points() -> None:

@@ -1,6 +1,5 @@
 {
   "name": "Metamagic",
-  "type": "class_feature",
   "description": "At 3rd level, you gain the ability to twist your spells to suit your needs. You gain two of the following Metamagic options of your choice. You gain another one at 10th and 17th level. You can use only one Metamagic option on a spell when you cast it, unless otherwise noted. Choose two Metamagic options from: Careful Spell, Distant Spell, Empowered Spell, Extended Spell, Heightened Spell, Quickened Spell, Subtle Spell, Twinned Spell.",
   "mechanics": [
     {
@@ -22,5 +21,6 @@
       "effect": "limit_metamagic_per_spell",
       "max": 1
     }
-  ]
+  ],
+  "source_type": "class"
 }

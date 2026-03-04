@@ -1,16 +1,16 @@
 {
   "name": "Sculpt Spells",
-  "type": "subclass_feature",
   "description": "Beginning at 2nd level, you can create pockets of relative safety within the effects of your evocation spells. When you cast an evocation spell that affects other creatures that you can see, you can choose a number of them equal to 1 + the spell's level. The chosen creatures automatically succeed on their saving throws against the spell, and they take no damage if they would normally take half damage on a successful save.",
   "mechanics": [
     {
       "name": "Sculpt Spells",
-      "trigger": "When you cast an evocation spell that affects other creatures you can see",
+      "trigger": "when you cast an evocation spell that affects other creatures you can see",
       "target": "Choose up to (1 + spell level) creatures",
       "effect": [
         "Chosen creatures automatically succeed on the spell's saving throw",
         "If the spell would deal half damage on a successful save, the chosen creatures take no damage"
       ]
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

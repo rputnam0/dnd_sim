@@ -1,47 +1,47 @@
 {
   "name": "Battle Smith Spells",
-  "type": "subclass_feature",
   "description": "When you reach an Artificer level specified in the Battle Smith Spells table, you thereafter always have the listed spells prepared. Battle Smith Spells table: 3rd level – Heroism, Shield; 5th level – Shining Smite, Warding Bond; 9th level – Aura of Vitality, Conjure Barrage; 13th level – Aura of Purity, Fire Shield; 17th level – Banishing Smite, Mass Cure Wounds.",
   "mechanics": [
     {
-      "type": "grant_prepared_spells",
       "level": 3,
       "spells": [
         "Heroism",
         "Shield"
-      ]
+      ],
+      "meta_type": "grant_prepared_spells"
     },
     {
-      "type": "grant_prepared_spells",
       "level": 5,
       "spells": [
         "Shining Smite",
         "Warding Bond"
-      ]
+      ],
+      "meta_type": "grant_prepared_spells"
     },
     {
-      "type": "grant_prepared_spells",
       "level": 9,
       "spells": [
         "Aura of Vitality",
         "Conjure Barrage"
-      ]
+      ],
+      "meta_type": "grant_prepared_spells"
     },
     {
-      "type": "grant_prepared_spells",
       "level": 13,
       "spells": [
         "Aura of Purity",
         "Fire Shield"
-      ]
+      ],
+      "meta_type": "grant_prepared_spells"
     },
     {
-      "type": "grant_prepared_spells",
       "level": 17,
       "spells": [
         "Banishing Smite",
         "Mass Cure Wounds"
-      ]
+      ],
+      "meta_type": "grant_prepared_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

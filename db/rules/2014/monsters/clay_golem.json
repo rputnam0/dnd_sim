@@ -1,17 +1,33 @@
 {
-  "name": "Clay Golem",
-  "meta": "Large construct, unaligned",
-  "ac": 14,
-  "hp": 133,
-  "hp_formula": "14d10 + 56",
-  "ability_scores": {
-    "str": 20,
-    "dex": 9,
-    "con": 18,
-    "int": 3,
-    "wis": 8,
-    "cha": 1
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "clay_golem",
+    "name": "Clay Golem",
+    "team": "enemy"
   },
-  "cr": "9",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 133,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 5,
+    "dex_mod": -1,
+    "con_mod": 4,
+    "int_mod": -4,
+    "wis_mod": -1,
+    "cha_mod": -5,
+    "save_mods": {},
+    "cr": "9"
+  },
+  "reactions": [],
+  "actions": []
 }

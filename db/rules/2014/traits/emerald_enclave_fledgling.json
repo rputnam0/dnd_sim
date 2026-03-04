@@ -1,6 +1,5 @@
 {
   "name": "Emerald Enclave Fledgling",
-  "type": "feat",
   "description": "You always have the Speak with Animals spell prepared and can cast it using any spell slots you have, choosing Intelligence, Wisdom, or Charisma as your spellcasting ability. When cast as a ritual, its duration is 8 hours. Additionally, when you take the Help action, you can switch places with a willing ally within 5 feet of you without provoking opportunity attacks, provided the ally is not incapacitated.",
   "mechanics": [
     {
@@ -24,5 +23,6 @@
       "no_opportunity_attacks": true,
       "restriction": "ally_not_incapacitated"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

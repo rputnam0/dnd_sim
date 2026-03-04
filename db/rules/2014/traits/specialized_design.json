@@ -1,6 +1,5 @@
 {
   "name": "Specialized Design",
-  "type": "racial_trait",
   "description": "You gain two tool proficiencies of your choice, selected from the Player's Handbook.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
         "choice": true
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

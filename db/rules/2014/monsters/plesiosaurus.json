@@ -1,17 +1,33 @@
 {
-  "name": "Plesiosaurus",
-  "meta": "Large beast, unaligned",
-  "ac": 13,
-  "hp": 68,
-  "hp_formula": "8d10 + 24",
-  "ability_scores": {
-    "str": 18,
-    "dex": 15,
-    "con": 16,
-    "int": 2,
-    "wis": 12,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "plesiosaurus",
+    "name": "Plesiosaurus",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 68,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 4,
+    "dex_mod": 2,
+    "con_mod": 3,
+    "int_mod": -4,
+    "wis_mod": 1,
+    "cha_mod": -3,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

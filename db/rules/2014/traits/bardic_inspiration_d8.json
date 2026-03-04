@@ -1,12 +1,12 @@
 {
   "name": "Bardic Inspiration (d8)",
-  "type": "class_feature",
   "description": "At 5th level, your Bardic Inspiration die changes to a d8.",
   "mechanics": [
     {
-      "type": "bardic_inspiration_die_change",
       "new_die": "d8",
-      "level": 5
+      "level": 5,
+      "meta_type": "bardic_inspiration_die_change"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,43 +1,43 @@
 {
   "name": "Bladesong",
-  "type": "subclass_feature",
   "description": "Starting at 2nd level, you can invoke a secret elven magic called the Bladesong, provided you aren't wearing medium or heavy armor or using a shield. It graces you with supernatural speed, agility, and focus. You can use a bonus action to start the Bladesong, which lasts for 1 minute. It ends early if you are incapacitated, if you don medium or heavy armor or a shield, or if you use two hands to make an attack with a weapon. You can also dismiss Bladesong at any time you choose (no action required). While your bladesong is active, you gain the following benefits: You gain a bonus to your AC equal to your Intelligence modifier (minimum of +1). Your walking speed increases by 10 feet. You have advantage on Dexterity (Acrobatics) checks. You gain a bonus to any Constitution saving throws you make to maintain concentration on a spell. The bonus equals your Intelligence modifier (minimum of +1). You can use this feature a number of times equal to your proficiency bonus, and you regain all expended uses of it when you finish a long rest.",
   "mechanics": [
     {
-      "type": "activation",
       "action": "bonus action",
       "duration": "1 minute",
-      "description": "Start Bladesong"
+      "description": "Start Bladesong",
+      "meta_type": "activation"
     },
     {
-      "type": "restriction",
       "condition": "incapacitated or wearing medium/heavy armor or using a shield or making a two‑handed weapon attack",
-      "effect": "ends Bladesong"
+      "effect": "ends Bladesong",
+      "meta_type": "restriction"
     },
     {
-      "type": "resource",
       "uses": "proficiency bonus",
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "resource"
     },
     {
-      "type": "benefit",
       "target": "AC",
-      "value": "Intelligence modifier (minimum +1)"
+      "value": "Intelligence modifier (minimum +1)",
+      "meta_type": "benefit"
     },
     {
-      "type": "benefit",
       "target": "walking speed",
-      "value": "+10 feet"
+      "value": "+10 feet",
+      "meta_type": "benefit"
     },
     {
-      "type": "benefit",
       "target": "Dexterity (Acrobatics) checks",
-      "value": "advantage"
+      "value": "advantage",
+      "meta_type": "benefit"
     },
     {
-      "type": "benefit",
       "target": "Constitution saving throws for concentration",
-      "value": "Intelligence modifier (minimum +1)"
+      "value": "Intelligence modifier (minimum +1)",
+      "meta_type": "benefit"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

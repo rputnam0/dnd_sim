@@ -1,17 +1,33 @@
 {
-  "name": "Skeleton",
-  "meta": "Medium undead, lawful evil",
-  "ac": 13,
-  "hp": 13,
-  "hp_formula": "2d8 + 4",
-  "ability_scores": {
-    "str": 10,
-    "dex": 14,
-    "con": 15,
-    "int": 6,
-    "wis": 8,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "skeleton",
+    "name": "Skeleton",
+    "team": "enemy"
   },
-  "cr": "1/4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 13,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 0,
+    "dex_mod": 2,
+    "con_mod": 2,
+    "int_mod": -2,
+    "wis_mod": -1,
+    "cha_mod": -3,
+    "save_mods": {},
+    "cr": "1/4"
+  },
+  "reactions": [],
+  "actions": []
 }

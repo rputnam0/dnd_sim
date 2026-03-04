@@ -1,17 +1,38 @@
 {
-  "name": "Oni",
-  "meta": "Large giant, lawful evil",
-  "ac": 16,
-  "hp": 110,
-  "hp_formula": "13d10 + 39",
-  "ability_scores": {
-    "str": 19,
-    "dex": 11,
-    "con": 16,
-    "int": 14,
-    "wis": 12,
-    "cha": 15
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "oni",
+    "name": "Oni",
+    "team": "enemy"
   },
-  "cr": "7",
-  "saving_throws_text": "Dex +3, Con +6, Wis +4, Cha +5"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 110,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 4,
+    "dex_mod": 0,
+    "con_mod": 3,
+    "int_mod": 2,
+    "wis_mod": 1,
+    "cha_mod": 2,
+    "save_mods": {
+      "dex": 3,
+      "con": 6,
+      "wis": 4,
+      "cha": 5
+    },
+    "cr": "7"
+  },
+  "reactions": [],
+  "actions": []
 }

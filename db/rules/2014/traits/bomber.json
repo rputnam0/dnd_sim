@@ -1,6 +1,5 @@
 {
   "name": "Bomber",
-  "type": "feat",
   "description": "Increase your Dexterity score by 1, to a maximum of 20. When you use the Attack action to throw a vial or flask, you can target an object or creature you can see within 40 feet of yourself. Attacking at long range doesn't impose disadvantage on your attack rolls with Thrown weapons.",
   "mechanics": [
     {
@@ -18,5 +17,6 @@
       "effect_type": "ignore_long_range_disadvantage",
       "weapon_property": "thrown"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

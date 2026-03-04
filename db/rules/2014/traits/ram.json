@@ -1,12 +1,12 @@
 {
   "name": "Ram",
-  "type": "racial_trait",
   "description": "You can use your head and horns to make unarmed strikes. If you hit with them, you deal bludgeoning damage equal to 1d4 + your Strength modifier.",
   "mechanics": [
     {
-      "type": "unarmed_strike",
       "damage": "1d4+Str",
-      "damage_type": "bludgeoning"
+      "damage_type": "bludgeoning",
+      "meta_type": "unarmed_strike"
     }
-  ]
+  ],
+  "source_type": "species"
 }

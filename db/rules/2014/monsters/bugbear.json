@@ -1,17 +1,33 @@
 {
-  "name": "Bugbear",
-  "meta": "Medium humanoid (goblinoid), chaotic evil",
-  "ac": 16,
-  "hp": 27,
-  "hp_formula": "5d8 + 5",
-  "ability_scores": {
-    "str": 15,
-    "dex": 14,
-    "con": 13,
-    "int": 8,
-    "wis": 11,
-    "cha": 9
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "bugbear",
+    "name": "Bugbear",
+    "team": "enemy"
   },
-  "cr": "1",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 27,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 2,
+    "dex_mod": 2,
+    "con_mod": 1,
+    "int_mod": -1,
+    "wis_mod": 0,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "1"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,17 +1,33 @@
 {
-  "name": "Tyrannosaurus Rex",
-  "meta": "Huge beast, unaligned",
-  "ac": 13,
-  "hp": 136,
-  "hp_formula": "13d12 + 52",
-  "ability_scores": {
-    "str": 25,
-    "dex": 10,
-    "con": 19,
-    "int": 2,
-    "wis": 12,
-    "cha": 9
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "tyrannosaurus_rex",
+    "name": "Tyrannosaurus Rex",
+    "team": "enemy"
   },
-  "cr": "8",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 136,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 7,
+    "dex_mod": 0,
+    "con_mod": 4,
+    "int_mod": -4,
+    "wis_mod": 1,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "8"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dnd_sim.engine import _build_actor_from_character, long_rest, short_rest
+from tests.helpers import with_class_levels
 
 
 def _wizard_character(
@@ -31,7 +32,7 @@ def _wizard_character(
         payload["current_resources"] = current_resources
     if spells is not None:
         payload["spells"] = spells
-    return payload
+    return with_class_levels(payload)
 
 
 def test_build_actor_infers_arcane_recovery_resource() -> None:

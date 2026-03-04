@@ -1,17 +1,33 @@
 {
-  "name": "Centaur",
-  "meta": "Large monstrosity, neutral good",
-  "ac": 12,
-  "hp": 45,
-  "hp_formula": "6d10 + 12",
-  "ability_scores": {
-    "str": 18,
-    "dex": 14,
-    "con": 14,
-    "int": 9,
-    "wis": 13,
-    "cha": 11
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "centaur",
+    "name": "Centaur",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 45,
+    "ac": 12,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 4,
+    "dex_mod": 2,
+    "con_mod": 2,
+    "int_mod": -1,
+    "wis_mod": 1,
+    "cha_mod": 0,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

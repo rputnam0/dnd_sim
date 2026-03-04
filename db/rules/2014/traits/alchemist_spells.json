@@ -1,10 +1,8 @@
 {
   "name": "Alchemist Spells",
-  "type": "subclass_feature",
   "description": "When you reach an Artificer level specified in the Alchemist Spells table, you thereafter always have the listed spells prepared.\n\nAlchemist Spells table:\n- Artificer Level 3: Healing Word, Ray of Sickness\n- Artificer Level 5: Flaming Sphere, Melf's Acid Arrow\n- Artificer Level 9: Gaseous Form, Mass Healing Word\n- Artificer Level 13: Death Ward, Vitriolic Sphere\n- Artificer Level 17: Cloudkill, Raise Dead",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "spells_by_level": {
         "3": [
           "Healing Word",
@@ -26,7 +24,9 @@
           "Cloudkill",
           "Raise Dead"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

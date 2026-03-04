@@ -1,6 +1,5 @@
 {
   "name": "Harper Agent",
-  "type": "feat",
   "description": "You gain proficiency with Thieves' Cant and one musical instrument of your choice. Additionally, when you take the Help action to assist an ally's attack roll, the enemy you're distracting can be within 30 feet of you, rather than within 5 feet of you, provided the enemy can see or hear you.",
   "mechanics": [
     {
@@ -18,5 +17,6 @@
       "context": "attack_roll",
       "condition": "target_can_see_or_hear_you"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

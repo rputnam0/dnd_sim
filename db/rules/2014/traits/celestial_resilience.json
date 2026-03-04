@@ -1,6 +1,5 @@
 {
   "name": "Celestial Resilience",
-  "type": "subclass_feature",
   "description": "Starting at 10th level, you gain temporary hit points whenever you finish a short or long rest. These temporary hit points equal your warlock level plus your Charisma modifier. Additionally, you can choose up to five creatures you can see at the end of the rest; each of those creatures gains temporary hit points equal to half your warlock level (rounded down) plus your Charisma modifier.",
   "mechanics": [
     {
@@ -17,5 +16,6 @@
       "condition": "visible_at_end_of_rest",
       "amount": "floor(warlock_level / 2) + charisma_modifier"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

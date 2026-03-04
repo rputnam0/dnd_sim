@@ -1,17 +1,38 @@
 {
-  "name": "Adult Gold Dragon",
-  "meta": "Huge dragon, lawful good",
-  "ac": 19,
-  "hp": 256,
-  "hp_formula": "19d12 + 133",
-  "ability_scores": {
-    "str": 27,
-    "dex": 14,
-    "con": 25,
-    "int": 16,
-    "wis": 15,
-    "cha": 24
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "adult_gold_dragon",
+    "name": "Adult Gold Dragon",
+    "team": "enemy"
   },
-  "cr": "17",
-  "saving_throws_text": "Dex +8, Con +13, Wis +8, Cha +13"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 256,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 8,
+    "dex_mod": 2,
+    "con_mod": 7,
+    "int_mod": 3,
+    "wis_mod": 2,
+    "cha_mod": 7,
+    "save_mods": {
+      "dex": 8,
+      "con": 13,
+      "wis": 8,
+      "cha": 13
+    },
+    "cr": "17"
+  },
+  "reactions": [],
+  "actions": []
 }

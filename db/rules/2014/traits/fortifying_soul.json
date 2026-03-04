@@ -1,10 +1,8 @@
 {
   "name": "Fortifying Soul",
-  "type": "subclass_feature",
   "description": "As a Magic action, you can choose a number of creatures you can see equal to your Wisdom modifier (minimum of one). Each chosen creature regains hit points equal to 1d10 plus your Ranger level and has advantage on saving throws to avoid or end the frightened condition for 1 hour. Once you use this feature, you can't use it again until you finish a Long Rest.",
   "mechanics": [
     {
-      "type": "action",
       "action_type": "magic",
       "uses": "1 per long rest",
       "target": "creatures you can see up to your Wisdom modifier (minimum 1)",
@@ -12,7 +10,9 @@
       "advantage_on_saves": {
         "condition": "frightened",
         "duration": "1 hour"
-      }
+      },
+      "meta_type": "action"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

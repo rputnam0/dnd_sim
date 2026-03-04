@@ -1,35 +1,35 @@
 {
   "name": "Dragon Wings",
-  "type": "subclass_feature",
   "description": "At 14th level, you gain the ability to sprout a pair of dragon wings from your back, gaining a flying speed equal to your current speed. You can create these wings as a bonus action on your turn. They last until you dismiss them as a bonus action on your turn. You can't manifest your wings while wearing armor unless the armor is made to accommodate them, and clothing not made to accommodate your wings might be destroyed when you manifest them.",
   "mechanics": [
     {
-      "type": "grant_flying_speed",
       "value": "current_speed",
-      "description": "You gain a flying speed equal to your current walking speed."
+      "description": "You gain a flying speed equal to your current walking speed.",
+      "meta_type": "grant_flying_speed"
     },
     {
-      "type": "activation",
       "action": "bonus_action",
       "trigger": "create_wings",
-      "description": "You can create the wings as a bonus action."
+      "description": "You can create the wings as a bonus action.",
+      "meta_type": "activation"
     },
     {
-      "type": "duration",
       "value": "until_dismissed",
-      "description": "The wings last until you dismiss them as a bonus action."
+      "description": "The wings last until you dismiss them as a bonus action.",
+      "meta_type": "duration"
     },
     {
-      "type": "restriction",
       "condition": "wearing_armor_without_accommodation",
       "effect": "cannot_manifest_wings",
-      "description": "You cannot manifest your wings while wearing armor unless the armor is made to accommodate them."
+      "description": "You cannot manifest your wings while wearing armor unless the armor is made to accommodate them.",
+      "meta_type": "restriction"
     },
     {
-      "type": "risk",
       "condition": "clothing_without_accommodation",
       "effect": "possible_destruction",
-      "description": "Clothing not made to accommodate your wings might be destroyed when you manifest them."
+      "description": "Clothing not made to accommodate your wings might be destroyed when you manifest them.",
+      "meta_type": "risk"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

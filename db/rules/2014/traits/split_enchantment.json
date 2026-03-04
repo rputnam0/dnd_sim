@@ -1,15 +1,15 @@
 {
   "name": "Split Enchantment",
-  "type": "subclass_feature",
   "description": "Starting at 10th level, when you cast an enchantment spell of 1st level or higher that targets only one creature, you can have it target a second creature.",
   "mechanics": [
     {
-      "type": "extra_target",
       "spellSchool": "enchantment",
       "minimumSpellLevel": 1,
       "originalTargetCount": 1,
       "additionalTargets": 1,
-      "condition": "spell targets only one creature"
+      "condition": "spell targets only one creature",
+      "meta_type": "extra_target"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

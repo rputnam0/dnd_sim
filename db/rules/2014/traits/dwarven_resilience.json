@@ -1,6 +1,5 @@
 {
   "name": "Dwarven Resilience",
-  "type": "racial_trait",
   "description": "You have advantage on saving throws you make to avoid or end the poisoned condition on yourself. You also have resistance to poison damage.",
   "mechanics": [
     {
@@ -13,5 +12,6 @@
       "effect": "resistance",
       "damage_type": "poison"
     }
-  ]
+  ],
+  "source_type": "species"
 }

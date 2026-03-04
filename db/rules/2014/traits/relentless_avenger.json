@@ -1,6 +1,5 @@
 {
   "name": "Relentless Avenger",
-  "type": "subclass_feature",
   "description": "By 7th level, your supernatural focus helps you close off a foe's retreat. When you hit a creature with an opportunity attack, you can move up to half your speed immediately after the attack and as part of the same reaction. This movement doesn't provoke opportunity attacks.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       "asPartOfReaction": true,
       "doesNotProvokeOpportunityAttacks": true
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

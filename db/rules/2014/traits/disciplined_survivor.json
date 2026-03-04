@@ -1,21 +1,21 @@
 {
   "name": "Disciplined Survivor",
-  "type": "class_feature",
   "description": "Your physical and mental discipline grant you proficiency in all saving throws. Additionally, whenever you make a saving throw and fail, you can expend 1 Focus Point to reroll it, and you must use the new roll.",
   "mechanics": [
     {
-      "type": "grant_proficiency",
       "target": "saving_throw",
-      "scope": "all"
+      "scope": "all",
+      "meta_type": "grant_proficiency"
     },
     {
-      "type": "save_reroll",
       "trigger": "failed_save",
       "cost": {
         "resource": "Focus Point",
         "amount": 1
       },
-      "effect": "reroll_and_use_new_result"
+      "effect": "reroll_and_use_new_result",
+      "meta_type": "save_reroll"
     }
-  ]
+  ],
+  "source_type": "class"
 }

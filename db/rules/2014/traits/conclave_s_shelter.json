@@ -1,6 +1,6 @@
 {
   "name": "Conclave's Shelter",
-  "type": "background_feature",
   "description": "As a member of the Selesnya Conclave, you can count on your guild mates to provide shelter and aid. You and your companions can find a place to hide or rest in any Selesnya enclave in the city, unless you have proven to be a danger to them. The members of the enclave will shield you from the law or anyone else searching for you, though they will not risk their lives in this effort. In addition, as a guild member you can receive free healing and care at a Selesnya enclave, though you must provide any material components needed for spells.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

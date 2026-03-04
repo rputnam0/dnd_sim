@@ -11,9 +11,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from dnd_sim.characters import (
-    class_level_for,
     normalize_class_levels,
-    parse_class_levels as parse_character_class_levels,
     spell_slots_for_multiclass,
     total_character_level,
 )
@@ -390,12 +388,10 @@ def _normalize_trait_mechanics_for_runtime(raw_mechanics: Any) -> list[Any]:
             normalized.append(mechanic)
             continue
         payload = dict(mechanic)
-        payload["effect_type"] = _normalize_hook_type(
-            payload.get("effect_type", payload.get("type"))
-        )
-        payload["trigger"] = _normalize_hook_trigger(
-            payload.get("trigger", payload.get("event_trigger"))
-        )
+        if "effect_type" in payload:
+            payload["effect_type"] = _normalize_hook_type(payload.get("effect_type"))
+        if "trigger" in payload:
+            payload["trigger"] = _normalize_hook_trigger(payload.get("trigger"))
         normalized.append(payload)
     return normalized
 
@@ -416,9 +412,7 @@ def _normalize_trait_payload_for_runtime(trait_name: str, payload: Any) -> dict[
         return {}
     normalized = dict(payload)
     normalized["name"] = str(normalized.get("name", trait_name))
-    normalized["source_type"] = _normalize_feature_source_type(
-        normalized.get("source_type", normalized.get("type"))
-    )
+    normalized["source_type"] = _normalize_feature_source_type(normalized.get("source_type"))
     normalized["mechanics"] = _normalize_trait_mechanics_for_runtime(normalized.get("mechanics"))
     return normalized
 
@@ -440,14 +434,12 @@ def _build_feature_hook_registrations(actor: ActorRuntimeState) -> list[FeatureH
         for mechanic_index, mechanic in enumerate(mechanics):
             if not isinstance(mechanic, dict):
                 continue
-            hook_type = _normalize_hook_type(mechanic.get("effect_type", mechanic.get("type")))
+            hook_type = _normalize_hook_type(mechanic.get("effect_type"))
             if hook_type != "reaction_attack":
                 continue
             trigger = _default_reaction_attack_trigger(
                 feature_name=feature_name,
-                trigger=_normalize_hook_trigger(
-                    mechanic.get("trigger", mechanic.get("event_trigger"))
-                ),
+                trigger=_normalize_hook_trigger(mechanic.get("trigger")),
             )
             registrations.append(
                 FeatureHookRegistration(
@@ -540,55 +532,46 @@ def _resolve_character_traits(
                 break
         return match
 
-    class_level_text = str(character.get("class_level", "") or "")
     class_levels = _class_levels_from_character_payload(character)
     explicit_candidates: set[str] = set(str(value) for value in (character.get("traits", []) or []))
     explicit_candidates.update(
         _infer_rogue_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     explicit_candidates.update(
         _infer_bard_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     explicit_candidates.update(
         _infer_ranger_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     explicit_candidates.update(
         _infer_paladin_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     explicit_candidates.update(
         _infer_warlock_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     explicit_candidates.update(
         _infer_wizard_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     explicit_candidates.update(
         _infer_sorcerer_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     explicit_candidates.update(
         _infer_druid_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     for candidate in explicit_candidates:
@@ -675,15 +658,7 @@ _CLERIC_CHANNEL_DIVINITY_OPTION_KEYS = frozenset(
 
 
 def _cleric_level_from_character(character: dict[str, Any], *, fallback_level: int) -> int:
-    explicit_class_levels = character.get("class_levels")
-    class_levels: dict[str, int] = {}
-    if isinstance(explicit_class_levels, dict):
-        try:
-            class_levels = normalize_class_levels(explicit_class_levels)
-        except ValueError:
-            class_levels = {}
-    if not class_levels:
-        class_levels = _parse_class_levels(str(character.get("class_level", "")))
+    class_levels = _class_levels_from_character_payload(character)
     cleric_level = int(class_levels.get("cleric", 0))
     if cleric_level > 0:
         return cleric_level
@@ -691,15 +666,7 @@ def _cleric_level_from_character(character: dict[str, Any], *, fallback_level: i
 
 
 def _druid_level_from_character(character: dict[str, Any], *, fallback_level: int) -> int:
-    explicit_class_levels = character.get("class_levels")
-    class_levels: dict[str, int] = {}
-    if isinstance(explicit_class_levels, dict):
-        try:
-            class_levels = normalize_class_levels(explicit_class_levels)
-        except ValueError:
-            class_levels = {}
-    if not class_levels:
-        class_levels = _parse_class_levels(str(character.get("class_level", "")))
+    class_levels = _class_levels_from_character_payload(character)
     if class_levels:
         return int(class_levels.get("druid", 0))
     return max(0, int(fallback_level))
@@ -1161,27 +1128,6 @@ def _append_damage_packet(
     )
 
 
-def _parse_character_level(class_level: str) -> int:
-    """Extract the numeric level from a class_level string like 'Fighter 8' or 'Wizard 5 / Cleric 3'."""
-    class_levels = parse_character_class_levels(class_level)
-    if class_levels:
-        return total_character_level(class_levels)
-    numbers = re.findall(r"\d+", class_level)
-    return sum(int(n) for n in numbers) if numbers else 1
-
-
-def _parse_class_level(class_level_text: str, class_name: str) -> int:
-    class_levels = parse_character_class_levels(class_level_text)
-    if class_levels:
-        return class_level_for(class_levels, class_name)
-    pattern = re.compile(rf"\b{re.escape(class_name)}\b[^0-9]*(\d+)", re.IGNORECASE)
-    return sum(int(match.group(1)) for match in pattern.finditer(class_level_text or ""))
-
-
-def _parse_class_levels(class_level_text: str) -> dict[str, int]:
-    return parse_character_class_levels(class_level_text)
-
-
 _ROGUE_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
     (1, "sneak attack"),
     (1, "expertise"),
@@ -1269,24 +1215,19 @@ _DRUID_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
 
 def _class_levels_from_character_payload(character: dict[str, Any]) -> dict[str, int]:
     explicit_class_levels = character.get("class_levels")
-    if isinstance(explicit_class_levels, dict):
-        try:
-            class_levels = normalize_class_levels(explicit_class_levels)
-            if class_levels:
-                return class_levels
-        except ValueError:
-            pass
-    return _parse_class_levels(str(character.get("class_level", "")))
+    if not isinstance(explicit_class_levels, dict):
+        raise ValueError("invalid class_levels: class_levels mapping is required")
+    class_levels = normalize_class_levels(explicit_class_levels)
+    if not class_levels:
+        raise ValueError("invalid class_levels: class_levels mapping is required")
+    return class_levels
 
 
 def _infer_rogue_package_trait_names(
     *,
     class_levels: dict[str, int],
-    class_level_text: str,
 ) -> set[str]:
     rogue_level = int(class_levels.get("rogue", 0))
-    if rogue_level <= 0 and not class_levels:
-        rogue_level = _parse_class_level(class_level_text, "rogue")
     if rogue_level <= 0:
         return set()
     return {
@@ -1299,11 +1240,8 @@ def _infer_rogue_package_trait_names(
 def _infer_bard_package_trait_names(
     *,
     class_levels: dict[str, int],
-    class_level_text: str,
 ) -> set[str]:
     bard_level = int(class_levels.get("bard", 0))
-    if bard_level <= 0 and not class_levels:
-        bard_level = _parse_class_level(class_level_text, "bard")
     if bard_level <= 0:
         return set()
     return {
@@ -1316,11 +1254,8 @@ def _infer_bard_package_trait_names(
 def _infer_ranger_package_trait_names(
     *,
     class_levels: dict[str, int],
-    class_level_text: str,
 ) -> set[str]:
     ranger_level = int(class_levels.get("ranger", 0))
-    if ranger_level <= 0 and not class_levels:
-        ranger_level = _parse_class_level(class_level_text, "ranger")
     if ranger_level <= 0:
         return set()
     return {
@@ -1333,11 +1268,8 @@ def _infer_ranger_package_trait_names(
 def _infer_paladin_package_trait_names(
     *,
     class_levels: dict[str, int],
-    class_level_text: str,
 ) -> set[str]:
     paladin_level = int(class_levels.get("paladin", 0))
-    if paladin_level <= 0 and not class_levels:
-        paladin_level = _parse_class_level(class_level_text, "paladin")
     if paladin_level <= 0:
         return set()
     return {
@@ -1350,11 +1282,8 @@ def _infer_paladin_package_trait_names(
 def _infer_warlock_package_trait_names(
     *,
     class_levels: dict[str, int],
-    class_level_text: str,
 ) -> set[str]:
     warlock_level = int(class_levels.get("warlock", 0))
-    if warlock_level <= 0 and not class_levels:
-        warlock_level = _parse_class_level(class_level_text, "warlock")
     if warlock_level <= 0:
         return set()
     return {
@@ -1367,11 +1296,8 @@ def _infer_warlock_package_trait_names(
 def _infer_wizard_package_trait_names(
     *,
     class_levels: dict[str, int],
-    class_level_text: str,
 ) -> set[str]:
     wizard_level = int(class_levels.get("wizard", 0))
-    if wizard_level <= 0 and not class_levels:
-        wizard_level = _parse_class_level(class_level_text, "wizard")
     if wizard_level <= 0:
         return set()
     return {
@@ -1384,11 +1310,8 @@ def _infer_wizard_package_trait_names(
 def _infer_sorcerer_package_trait_names(
     *,
     class_levels: dict[str, int],
-    class_level_text: str,
 ) -> set[str]:
     sorcerer_level = int(class_levels.get("sorcerer", 0))
-    if sorcerer_level <= 0 and not class_levels:
-        sorcerer_level = _parse_class_level(class_level_text, "sorcerer")
     if sorcerer_level <= 0:
         return set()
     return {
@@ -1401,11 +1324,8 @@ def _infer_sorcerer_package_trait_names(
 def _infer_druid_package_trait_names(
     *,
     class_levels: dict[str, int],
-    class_level_text: str,
 ) -> set[str]:
     druid_level = int(class_levels.get("druid", 0))
-    if druid_level <= 0 and not class_levels:
-        druid_level = _parse_class_level(class_level_text, "druid")
     if druid_level <= 0:
         return set()
     return {
@@ -1536,11 +1456,7 @@ def _fighter_superiority_die_size(
 
 def _warlock_level_from_character(character: dict[str, Any]) -> int:
     class_levels = _class_levels_from_character_payload(character)
-    warlock_level = int(class_levels.get("warlock", 0))
-    if warlock_level <= 0 and not class_levels:
-        class_level_text = str(character.get("class_level", ""))
-        warlock_level = _parse_class_level(class_level_text, "warlock")
-    return warlock_level
+    return int(class_levels.get("warlock", 0))
 
 
 def _warlock_pact_slot_profile_for_level(warlock_level: int) -> tuple[int, int] | None:
@@ -3344,7 +3260,7 @@ def _load_spell_definition(name: str) -> dict[str, Any] | None:
         return _lookup_validated_spell_definition(
             name,
             spells_dir=_spell_root_dir(),
-            duplicate_policy="prefer_richest",
+            duplicate_policy="fail_fast",
         )
     except SpellDatabaseValidationError:
         return None
@@ -3433,17 +3349,13 @@ _PREPARED_SPELL_LIST_CLASSES = ("artificer", "cleric", "druid", "paladin", "wiza
 
 
 def _character_uses_known_spell_list(character: dict[str, Any]) -> bool:
-    class_level_text = str(character.get("class_level", "") or "")
-    if not class_level_text:
-        return False
+    class_levels = _class_levels_from_character_payload(character)
 
     has_known = any(
-        _parse_class_level(class_level_text, class_name) > 0
-        for class_name in _KNOWN_SPELL_LIST_CLASSES
+        int(class_levels.get(class_name, 0)) > 0 for class_name in _KNOWN_SPELL_LIST_CLASSES
     )
     has_prepared = any(
-        _parse_class_level(class_level_text, class_name) > 0
-        for class_name in _PREPARED_SPELL_LIST_CLASSES
+        int(class_levels.get(class_name, 0)) > 0 for class_name in _PREPARED_SPELL_LIST_CLASSES
     )
     return has_known and not has_prepared
 
@@ -4822,64 +4734,51 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
         _normalize_attack_definition(attack, idx)
         for idx, attack in enumerate(character.get("attacks", []), start=1)
     ]
-    class_level_text = str(character.get("class_level", "1"))
     class_levels = _class_levels_from_character_payload(character)
     resources = dict(character.get("resources", {}))
     traits = {_normalize_trait_name(trait) for trait in character.get("traits", [])}
     traits.update(
         _infer_rogue_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     traits.update(
         _infer_bard_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     traits.update(
         _infer_ranger_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     traits.update(
         _infer_paladin_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     traits.update(
         _infer_warlock_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     traits.update(
         _infer_wizard_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     traits.update(
         _infer_sorcerer_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     traits.update(
         _infer_druid_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
-    character_level = (
-        total_character_level(class_levels)
-        if class_levels
-        else _parse_character_level(class_level_text)
-    )
-    fighter_level = _parse_class_level(class_level_text, "fighter")
+    character_level = total_character_level(class_levels)
+    fighter_level = int(class_levels.get("fighter", 0))
     ability_scores = character.get("ability_scores", {})
     str_mod = (int(ability_scores.get("str", 10)) - 10) // 2
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
@@ -4894,8 +4793,6 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             has_explicit_inspiration_pool = inspiration_pool > 0
         if not has_explicit_inspiration_pool:
             bard_level = int(class_levels.get("bard", 0))
-            if bard_level <= 0 and not class_levels:
-                bard_level = _parse_class_level(class_level_text, "bard")
             if bard_level > 0:
                 resources["bardic_inspiration"] = {"max": max(1, cha_mod)}
 
@@ -4908,8 +4805,6 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             has_explicit_sorcery_points = sorcery_points_pool > 0
         if not has_explicit_sorcery_points:
             sorcerer_level = int(class_levels.get("sorcerer", 0))
-            if sorcerer_level <= 0 and not class_levels:
-                sorcerer_level = _parse_class_level(class_level_text, "sorcerer")
             if sorcerer_level >= 2:
                 resources["sorcery_points"] = {"max": min(20, sorcerer_level)}
 
@@ -5454,17 +5349,8 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
         "second_wind": "second_wind",
         "superiority_dice": "superiority_dice",
     }
-    class_level_text = str(character.get("class_level", ""))
     raw = character.get("resources", {})
-    explicit_class_levels = character.get("class_levels")
-    class_levels: dict[str, int]
-    if isinstance(explicit_class_levels, dict):
-        try:
-            class_levels = normalize_class_levels(explicit_class_levels)
-        except ValueError:
-            class_levels = _parse_class_levels(class_level_text)
-    else:
-        class_levels = _parse_class_levels(class_level_text)
+    class_levels = _class_levels_from_character_payload(character)
     has_pact_magic = _is_pact_magic_character(character)
     warlock_level = _warlock_level_from_character(character)
     raw_spell_slots = raw.get("spell_slots")
@@ -5519,16 +5405,10 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
     traits.update(
         _infer_paladin_package_trait_names(
             class_levels=class_levels,
-            class_level_text=class_level_text,
         )
     )
     if _normalize_trait_name("lay on hands") in traits and "lay_on_hands_pool" not in result:
-        has_explicit_lay_on_hands = _normalize_trait_name("lay on hands") in explicit_traits
         paladin_level = int(class_levels.get("paladin", 0))
-        if paladin_level <= 0 and not class_levels:
-            paladin_level = _parse_class_level(class_level_text, "paladin")
-        if paladin_level <= 0 and (not class_levels or has_explicit_lay_on_hands):
-            paladin_level = _parse_character_level(class_level_text or "1")
         if paladin_level > 0:
             result["lay_on_hands_pool"] = max(0, paladin_level * 5)
     if _normalize_trait_name("paladin's smite") in traits and "paladins_smite_free" not in result:
@@ -5574,14 +5454,7 @@ def _trait_attunement_limit(actor: ActorRuntimeState) -> int | None:
             if not isinstance(mechanic, dict):
                 continue
             effect_type = (
-                str(
-                    mechanic.get("effect_type")
-                    or mechanic.get("effect")
-                    or mechanic.get("type")
-                    or ""
-                )
-                .strip()
-                .lower()
+                str(mechanic.get("effect_type") or mechanic.get("effect") or "").strip().lower()
             )
             if effect_type != "increase_attunement_limit":
                 continue
@@ -5615,67 +5488,47 @@ def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int
 
 def _apply_inferred_fighter_resources(
     actor: ActorRuntimeState,
-    *,
-    class_level_text: str,
 ) -> None:
     _apply_inferred_fighter_resources_impl(
         actor,
-        class_level_text=class_level_text,
         has_trait=_has_trait,
-        parse_class_level=_parse_class_level,
         superiority_dice_count=_fighter_superiority_dice_count,
     )
 
 
 def _apply_inferred_barbarian_resources(
     actor: ActorRuntimeState,
-    *,
-    class_level_text: str,
 ) -> None:
     _apply_inferred_barbarian_resources_impl(
         actor,
-        class_level_text=class_level_text,
         has_trait=_has_trait,
-        parse_class_level=_parse_class_level,
     )
 
 
 def _apply_inferred_bard_resources(
     actor: ActorRuntimeState,
-    *,
-    class_level_text: str,
 ) -> None:
     _apply_inferred_bard_resources_impl(
         actor,
-        class_level_text=class_level_text,
         has_trait=_has_trait,
-        parse_class_level=_parse_class_level,
     )
 
 
 def _apply_inferred_sorcerer_resources(
     actor: ActorRuntimeState,
-    *,
-    class_level_text: str,
 ) -> None:
     _apply_inferred_sorcerer_resources_impl(
         actor,
-        class_level_text=class_level_text,
         has_trait=_has_trait,
-        parse_class_level=_parse_class_level,
     )
 
 
 def _apply_inferred_druid_resources(
     actor: ActorRuntimeState,
-    *,
-    class_level_text: str,
 ) -> None:
     _apply_inferred_druid_resources_impl(
         actor,
-        class_level_text=class_level_text,
         has_trait=_has_trait,
-        parse_class_level=_parse_class_level,
         druid_wild_shape_uses_for_level=_druid_wild_shape_uses_for_level,
     )
 
@@ -5741,21 +5594,8 @@ def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
 def _build_actor_from_character(
     character: dict[str, Any], traits_db: dict[str, dict[str, Any]] = None
 ) -> ActorRuntimeState:
-    class_level_text = str(character.get("class_level", "1"))
-    explicit_class_levels = character.get("class_levels")
-    class_levels: dict[str, int] = {}
-    if isinstance(explicit_class_levels, dict):
-        try:
-            class_levels = normalize_class_levels(explicit_class_levels)
-        except ValueError:
-            class_levels = {}
-    if not class_levels:
-        class_levels = _parse_class_levels(class_level_text)
-    character_level = (
-        total_character_level(class_levels)
-        if class_levels
-        else _parse_character_level(class_level_text)
-    )
+    class_levels = _class_levels_from_character_payload(character)
+    character_level = total_character_level(class_levels)
     ability_scores = character.get("ability_scores", {})
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
     con_mod = (int(ability_scores.get("con", 10)) - 10) // 2
@@ -5799,11 +5639,11 @@ def _build_actor_from_character(
     _apply_trait_attunement_limit(actor)
     _apply_artificer_infusion_passives(actor)
     _apply_inferred_wizard_resources(actor)
-    _apply_inferred_fighter_resources(actor, class_level_text=class_level_text)
-    _apply_inferred_barbarian_resources(actor, class_level_text=class_level_text)
-    _apply_inferred_bard_resources(actor, class_level_text=class_level_text)
-    _apply_inferred_sorcerer_resources(actor, class_level_text=class_level_text)
-    _apply_inferred_druid_resources(actor, class_level_text=class_level_text)
+    _apply_inferred_fighter_resources(actor)
+    _apply_inferred_barbarian_resources(actor)
+    _apply_inferred_bard_resources(actor)
+    _apply_inferred_sorcerer_resources(actor)
+    _apply_inferred_druid_resources(actor)
     _register_actor_feature_hooks(actor)
     current_hp = character.get("current_hp")
     if current_hp is not None:
@@ -9751,14 +9591,7 @@ def _apply_effect(
     rule_trace: list[dict[str, Any]] | None = None,
 ) -> None:
     recipient = _resolve_effect_target(effect, actor=actor, target=target)
-    raw_effect_type = str(effect.get("effect_type", effect.get("type", ""))).strip().lower()
-    effect_type = {
-        "command_construct_companion": "command_allied",
-        "summon_creature": "summon",
-        "shapechange": "transform",
-        "antimagic": "antimagic_field",
-        "antimagic_zone": "antimagic_field",
-    }.get(raw_effect_type, raw_effect_type)
+    effect_type = str(effect.get("effect_type", "")).strip().lower()
 
     if effect_type == "antimagic_field":
         normalized_effect = dict(effect)
@@ -14504,6 +14337,7 @@ def _build_round_metadata(
     threat_scores: dict[str, int],
     burst_round_threshold: int,
     active_hazards: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
     light_level: str = "bright",
     strategy_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -14525,6 +14359,7 @@ def _build_round_metadata(
         "threat_scores": dict(threat_scores),
         "burst_round_threshold": burst_round_threshold,
         "active_hazards": list(active_hazards or []),
+        "obstacles": list(obstacles or []),
         "light_level": str(light_level),
         "strategy_policy": strategy_policy,
         "evaluation_mode": str(overrides.get("evaluation_mode", "greedy")),
@@ -15167,52 +15002,14 @@ def run_simulation(
                             scenario.config.resource_policy.get("burst_round_threshold", 3)
                         ),
                         active_hazards=active_hazards,
+                        obstacles=battlefield_obstacles,
                         light_level=light_level,
                         strategy_overrides=assumption_overrides,
                     )
                     state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
                     actor_view = state_view.actors[actor.actor_id]
-                    declare_turn = getattr(strategy, "declare_turn", None)
-                    choose_action = getattr(strategy, "choose_action", None)
-                    choose_targets = getattr(strategy, "choose_targets", None)
-                    decide_resource_spend = getattr(strategy, "decide_resource_spend", None)
-                    has_legacy_fallback = all(
-                        callable(method)
-                        for method in (choose_action, choose_targets, decide_resource_spend)
-                    )
-                    turn_declaration = (
-                        declare_turn(actor_view, state_view) if callable(declare_turn) else None
-                    )
-                    if turn_declaration is not None:
-                        if not isinstance(turn_declaration, TurnDeclaration):
-                            _raise_turn_declaration_error(
-                                actor=actor,
-                                code="invalid_turn_declaration_type",
-                                field="turn_declaration",
-                                message="declare_turn(...) must return TurnDeclaration or None.",
-                                details={"actual_type": type(turn_declaration).__name__},
-                            )
-                        _execute_declared_turn_or_error(
-                            rng=rng,
-                            actor=actor,
-                            declaration=turn_declaration,
-                            strategy_name=strategy_name,
-                            actors=actors,
-                            damage_dealt=damage_dealt,
-                            damage_taken=damage_taken,
-                            threat_scores=threat_scores,
-                            resources_spent=resources_spent,
-                            active_hazards=active_hazards,
-                            telemetry=trial_telemetry,
-                            obstacles=battlefield_obstacles,
-                            light_level=light_level,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            rule_trace=trial_rule_trace,
-                        )
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-                    if not has_legacy_fallback:
+                    turn_declaration = strategy.declare_turn(actor_view, state_view)
+                    if turn_declaration is None:
                         trial_telemetry.append(
                             {
                                 "telemetry_type": "decision",
@@ -15222,7 +15019,7 @@ def run_simulation(
                                 "team": actor.team,
                                 "intent_action": None,
                                 "resolved_action": None,
-                                "fallback_reason": "declare_turn_none_no_legacy_fallback",
+                                "fallback_reason": "declare_turn_none",
                                 "requested_targets": [],
                                 "resolved_targets": [],
                                 "rationale": {},
@@ -15232,144 +15029,32 @@ def run_simulation(
                         )
                         _resolve_turn_end(actor, turn_token)
                         continue
-
-                    intent = choose_action(actor_view, state_view)
-                    action = _resolve_action_selection(actor, intent.action_name)
-                    fallback_reason: str | None = None
-
-                    if not _action_available(actor, action, turn_token=turn_token):
-                        fallback = _fallback_action(actor)
-                        if fallback is None:
-                            _resolve_turn_end(actor, turn_token)
-                            continue
-                        action = fallback
-                        fallback_reason = "intent_unavailable"
-
-                    extra_spend = decide_resource_spend(actor_view, intent, state_view).amounts
-                    base_cost = dict(action.resource_cost)
-                    extra_cost: dict[str, int] = {}
-                    for key, amount in extra_spend.items():
-                        if int(amount) <= 0:
-                            continue
-                        extra_cost[key] = extra_cost.get(key, 0) + int(amount)
-                    cost = dict(base_cost)
-                    for key, amount in extra_cost.items():
-                        cost[key] = cost.get(key, 0) + amount
-
-                    non_slot_base_cost, _slot_amount, _slot_levels = _split_spell_slot_cost(
-                        base_cost
-                    )
-                    can_pay_extra = True
-                    for key, amount in extra_cost.items():
-                        required = amount + int(non_slot_base_cost.get(key, 0))
-                        if int(actor.resources.get(key, 0)) < required:
-                            can_pay_extra = False
-                            break
-
-                    if not _can_pay_resource_cost(actor, action) or not can_pay_extra:
-                        action = _resolve_action_selection(actor, "basic")
-                        cost = dict(action.resource_cost)
-                        extra_cost = {}
-                        fallback_reason = "insufficient_resources"
-
-                    targets = choose_targets(actor_view, intent, state_view)
-                    spell_cast_request = SpellCastRequest() if "spell" in action.tags else None
-                    resolved_targets = _resolve_targets_for_action(
+                    if not isinstance(turn_declaration, TurnDeclaration):
+                        _raise_turn_declaration_error(
+                            actor=actor,
+                            code="invalid_turn_declaration_type",
+                            field="turn_declaration",
+                            message="declare_turn(...) must return TurnDeclaration or None.",
+                            details={"actual_type": type(turn_declaration).__name__},
+                        )
+                    _execute_declared_turn_or_error(
                         rng=rng,
                         actor=actor,
-                        action=action,
-                        actors=actors,
-                        requested=targets,
-                        obstacles=battlefield_obstacles,
-                        spell_cast_request=spell_cast_request,
-                    )
-                    trial_telemetry.append(
-                        {
-                            "telemetry_type": "decision",
-                            "round": rounds,
-                            "strategy": strategy_name,
-                            "actor_id": actor.actor_id,
-                            "team": actor.team,
-                            "intent_action": intent.action_name,
-                            "resolved_action": action.name,
-                            "fallback_reason": fallback_reason,
-                            "requested_targets": [target.actor_id for target in targets],
-                            "resolved_targets": [target.actor_id for target in resolved_targets],
-                            "rationale": (
-                                dict(intent.rationale)
-                                if isinstance(getattr(intent, "rationale", {}), dict)
-                                else {}
-                            ),
-                            "extra_resource_request": dict(extra_spend),
-                            "resource_cost": dict(cost),
-                        }
-                    )
-                    if not resolved_targets:
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-
-                    if not _spend_action_resource_cost(
-                        actor,
-                        action,
-                        resources_spent,
-                        spell_cast_request=spell_cast_request,
-                        turn_token=turn_token,
-                    ):
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-                    if extra_cost:
-                        spent_extra = _spend_resources(actor, extra_cost)
-                        for key, amount in spent_extra.items():
-                            resources_spent[actor.actor_id][key] = (
-                                resources_spent[actor.actor_id].get(key, 0) + amount
-                            )
-
-                    actor.per_action_uses[action.name] = (
-                        actor.per_action_uses.get(action.name, 0) + 1
-                    )
-                    if action.recharge:
-                        actor.recharge_ready[action.name] = False
-                    _mark_action_cost_used(actor, action)
-
-                    _execute_action(
-                        rng=rng,
-                        actor=actor,
-                        action=action,
-                        targets=resolved_targets,
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
-                        round_number=rounds,
-                        turn_token=turn_token,
-                        rule_trace=trial_rule_trace,
-                        telemetry=trial_telemetry,
+                        declaration=turn_declaration,
                         strategy_name=strategy_name,
-                        spell_cast_request=spell_cast_request,
-                    )
-                    _dispatch_combat_event(
-                        rng=rng,
-                        event="after_action",
-                        trigger_actor=actor,
-                        trigger_target=resolved_targets[0] if resolved_targets else None,
-                        trigger_action=action,
                         actors=actors,
-                        round_number=rounds,
-                        turn_token=turn_token,
                         damage_dealt=damage_dealt,
                         damage_taken=damage_taken,
                         threat_scores=threat_scores,
                         resources_spent=resources_spent,
                         active_hazards=active_hazards,
-                        rule_trace=trial_rule_trace,
+                        telemetry=trial_telemetry,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
+                        round_number=rounds,
+                        turn_token=turn_token,
+                        rule_trace=trial_rule_trace,
                     )
-
                     _resolve_turn_end(actor, turn_token)
 
                 if (

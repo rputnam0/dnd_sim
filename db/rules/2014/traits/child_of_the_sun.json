@@ -1,6 +1,5 @@
 {
   "name": "Child of the Sun",
-  "type": "feat",
   "description": "You and allies within 10 feet of you have advantage on saving throws made to avoid or end the Blinded condition. You learn the Faerie Fire spell and can cast it once per long rest without a spell slot using Intelligence, Wisdom, or Charisma as your spellcasting ability. When cast this way, taking damage cannot break your concentration on the spell.",
   "mechanics": [
     {
@@ -27,5 +26,6 @@
       "trigger": "damage",
       "condition": "cast_without_slot"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

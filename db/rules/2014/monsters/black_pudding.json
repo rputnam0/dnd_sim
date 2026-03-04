@@ -1,17 +1,33 @@
 {
-  "name": "Black Pudding",
-  "meta": "Large ooze, unaligned",
-  "ac": 7,
-  "hp": 85,
-  "hp_formula": "10d10 + 30",
-  "ability_scores": {
-    "str": 16,
-    "dex": 5,
-    "con": 16,
-    "int": 1,
-    "wis": 6,
-    "cha": 1
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "black_pudding",
+    "name": "Black Pudding",
+    "team": "enemy"
   },
-  "cr": "4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 85,
+    "ac": 7,
+    "speed_ft": 30,
+    "initiative_mod": -3,
+    "str_mod": 3,
+    "dex_mod": -3,
+    "con_mod": 3,
+    "int_mod": -5,
+    "wis_mod": -2,
+    "cha_mod": -5,
+    "save_mods": {},
+    "cr": "4"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,6 +1,5 @@
 {
   "name": "Interception",
-  "type": "feat",
   "description": "When a creature you can see hits another creature within 5 feet of you with an attack roll, you can use your reaction to reduce the damage dealt by 1d10 + your Proficiency Bonus. You must be wielding a shield or a simple or martial weapon.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       "bonus": "proficiency_bonus",
       "requirement": "shield_or_weapon"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

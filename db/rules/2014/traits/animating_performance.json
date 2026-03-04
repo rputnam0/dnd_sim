@@ -1,10 +1,8 @@
 {
   "name": "Animating Performance",
-  "type": "subclass_feature",
   "description": "As an action, you can animate one Large or smaller nonmagical item within 30 feet of you that isn’t being worn or carried. The animated item uses the Dancing Item stat block, which uses your proficiency bonus. The item is friendly to you and your companions and obeys your commands. It lives for 1 hour, until it is reduced to 0 hit points, or until you die.\n\nIn combat, the item shares your initiative count, but it takes its turn immediately after yours. It can move and use its reaction on its own, but the only action it takes on its turn is the Dodge action, unless you take a bonus action on your turn to command it to take another action. That action can be one in its stat block or some other action. If you are incapacitated, the item can take any action of its choice, not just Dodge.\n\nWhen you use your Bardic Inspiration feature, you can command the item as part of the same bonus action you use for Bardic Inspiration.\n\nOnce you animate an item with this feature, you can’t do so again until you finish a long rest, unless you expend a spell slot of 3rd level or higher to use this feature again. You can have only one item animated by this feature at a time; if you use this action and already have a dancing item from this feature, the first one immediately becomes inanimate.",
   "mechanics": [
     {
-      "type": "action",
       "name": "Animate Item",
       "activation": "action",
       "range": "30 ft",
@@ -17,35 +15,37 @@
       "spellSlot": {
         "minLevel": 3,
         "description": "Expend a spell slot of 3rd level or higher to use again before a long rest"
-      }
+      },
+      "meta_type": "action"
     },
     {
-      "type": "initiative",
-      "description": "Animated item shares caster's initiative and takes its turn immediately after the caster"
+      "description": "Animated item shares caster's initiative and takes its turn immediately after the caster",
+      "meta_type": "initiative"
     },
     {
-      "type": "action_default",
       "owner": "animated_item",
-      "defaultAction": "Dodge"
+      "defaultAction": "Dodge",
+      "meta_type": "action_default"
     },
     {
-      "type": "bonus_action",
       "name": "Command Item",
-      "description": "If you use a bonus action to command the animated item, it may take an action other than Dodge (any action from its stat block or another action). This can be combined with the bonus action used for Bardic Inspiration."
+      "description": "If you use a bonus action to command the animated item, it may take an action other than Dodge (any action from its stat block or another action). This can be combined with the bonus action used for Bardic Inspiration.",
+      "meta_type": "bonus_action"
     },
     {
-      "type": "condition",
       "condition": "incapacitated",
-      "effect": "Animated item may take any action of its choice, not limited to Dodge"
+      "effect": "Animated item may take any action of its choice, not limited to Dodge",
+      "meta_type": "condition"
     },
     {
-      "type": "reaction",
       "owner": "animated_item",
-      "description": "Animated item can use its reaction on its own"
+      "description": "Animated item can use its reaction on its own",
+      "meta_type": "reaction"
     },
     {
-      "type": "restriction",
-      "description": "Only one item can be animated at a time; animating a new item ends the previous one"
+      "description": "Only one item can be animated at a time; animating a new item ends the previous one",
+      "meta_type": "restriction"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

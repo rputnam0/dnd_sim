@@ -1,6 +1,5 @@
 {
   "name": "Avenging Angel",
-  "type": "subclass_feature",
   "description": "At 20th level, you can assume the form of an angelic avenger. Using your action, you undergo a transformation. For 1 hour, you gain the following benefits: Wings sprout from your back and grant you a flying speed of 60 feet. You emanate an aura of menace in a 30-foot radius. The first time any enemy creature enters the aura or starts its turn there during a battle, the creature must succeed on a Wisdom saving throw or become frightened of you for 1 minute or until it takes any damage. Attack rolls against the frightened creature have advantage. Once you use this feature, you can't use it again until you finish a long rest.",
   "mechanics": [
     {
@@ -29,5 +28,6 @@
       "activation": "action",
       "duration": "1 hour"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,17 +1,33 @@
 {
-  "name": "Doppelganger",
-  "meta": "Medium monstrosity (shapechanger), neutral",
-  "ac": 14,
-  "hp": 52,
-  "hp_formula": "8d8 + 16",
-  "ability_scores": {
-    "str": 11,
-    "dex": 18,
-    "con": 14,
-    "int": 11,
-    "wis": 12,
-    "cha": 14
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "doppelganger",
+    "name": "Doppelganger",
+    "team": "enemy"
   },
-  "cr": "3",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 52,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 4,
+    "str_mod": 0,
+    "dex_mod": 4,
+    "con_mod": 2,
+    "int_mod": 0,
+    "wis_mod": 1,
+    "cha_mod": 2,
+    "save_mods": {},
+    "cr": "3"
+  },
+  "reactions": [],
+  "actions": []
 }

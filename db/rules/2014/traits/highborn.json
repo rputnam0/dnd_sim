@@ -1,6 +1,6 @@
 {
   "name": "Highborn",
-  "type": "background_feature",
   "description": "Mulmaster is run by and for its aristocracy. Every other class of citizen in the city defers to you, and even the priesthood, Soldiery, Hawks, and Cloaks treat you with deference. Other aristocrats and nobles accept you in their circles and likely know you or of you. Your connections can get you the ear of a Zor or Zora under the right circumstances. Note: This feature is a variant of the Noble feature.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

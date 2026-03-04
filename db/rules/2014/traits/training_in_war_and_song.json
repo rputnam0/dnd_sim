@@ -1,10 +1,8 @@
 {
   "name": "Training in War and Song",
-  "type": "subclass_feature",
   "description": "You gain proficiency with all melee martial weapons that don't have the Two-Handed or Heavy property. You can use a melee weapon with which you have proficiency as a spellcasting focus for your wizard spells. You also gain proficiency in one of the following skills of your choice: Acrobatics, Athletics, Performance, or Persuasion.",
   "mechanics": [
     {
-      "type": "proficiency",
       "category": "weapon",
       "filter": {
         "weapon_type": "martial",
@@ -13,22 +11,24 @@
           "Two-Handed",
           "Heavy"
         ]
-      }
+      },
+      "meta_type": "proficiency"
     },
     {
-      "type": "spellcasting_focus",
       "weapon_category": "melee",
-      "requires_proficiency": true
+      "requires_proficiency": true,
+      "meta_type": "spellcasting_focus"
     },
     {
-      "type": "proficiency",
       "category": "skill",
       "choice": [
         "Acrobatics",
         "Athletics",
         "Performance",
         "Persuasion"
-      ]
+      ],
+      "meta_type": "proficiency"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

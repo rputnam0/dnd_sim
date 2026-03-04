@@ -1,58 +1,58 @@
 {
   "name": "Giant Ancestry",
-  "type": "racial_trait",
   "description": "You are descended from giants. Choose one of the following benefits—a supernatural boon from your ancestry; you can use the chosen benefit a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.\n• Cloud's Jaunt (Cloud Giant): As a bonus action, you magically teleport up to 30 feet to an unoccupied space you can see.\n• Fire's Burn (Fire Giant): When you hit a target with an attack roll and deal damage to it, you can also deal 1d10 fire damage to that target.\n• Frost's Chill (Frost Giant): When you hit a target with an attack roll and deal damage to it, you can also deal 1d6 cold damage to that target and reduce its speed by 10 feet until the start of your next turn.\n• Hill's Tumble (Hill Giant): When you hit a Large or smaller creature with an attack roll and deal damage to it, you can give that target the prone condition.\n• Stone's Endurance (Stone Giant): When you take damage, you can use a reaction to roll 1d12, add your Constitution modifier, and reduce the damage by that total.\n• Storm's Thunder (Storm Giant): When you take damage from a creature within 60 feet of you, you can use a reaction to deal 1d8 thunder damage to that creature.",
   "mechanics": [
     {
-      "type": "resource",
       "uses": "proficiency bonus",
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "resource"
     },
     {
       "name": "Cloud's Jaunt",
-      "type": "teleport",
       "range": 30,
-      "action": "bonus"
+      "action": "bonus",
+      "meta_type": "teleport"
     },
     {
       "name": "Fire's Burn",
-      "type": "extra_damage",
       "damage": "1d10 fire",
-      "trigger": "hit"
+      "trigger": "hit",
+      "meta_type": "extra_damage"
     },
     {
       "name": "Frost's Chill",
-      "type": "extra_damage",
       "damage": "1d6 cold",
-      "trigger": "hit"
+      "trigger": "hit",
+      "meta_type": "extra_damage"
     },
     {
       "name": "Frost's Chill",
-      "type": "speed_reduction",
       "amount": 10,
-      "duration": "until start of next turn"
+      "duration": "until start of next turn",
+      "meta_type": "speed_reduction"
     },
     {
       "name": "Hill's Tumble",
-      "type": "condition",
       "condition": "prone",
       "trigger": "hit",
-      "target_size": "Large or smaller"
+      "target_size": "Large or smaller",
+      "meta_type": "condition"
     },
     {
       "name": "Stone's Endurance",
-      "type": "damage_reduction",
       "dice": "1d12",
       "ability_modifier": "Constitution",
       "trigger": "when you take damage",
-      "action": "reaction"
+      "action": "reaction",
+      "meta_type": "damage_reduction"
     },
     {
       "name": "Storm's Thunder",
-      "type": "damage",
       "damage": "1d8 thunder",
       "trigger": "when you take damage from creature within 60 ft",
-      "action": "reaction"
+      "action": "reaction",
+      "effect_type": "damage"
     }
-  ]
+  ],
+  "source_type": "species"
 }

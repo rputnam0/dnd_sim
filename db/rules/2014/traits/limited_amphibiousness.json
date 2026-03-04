@@ -1,6 +1,6 @@
 {
   "name": "Limited Amphibiousness",
-  "type": "racial_trait",
   "description": "You can breathe air and water, but you need to be submerged at least once every 4 hours to avoid suffocating.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "species"
 }

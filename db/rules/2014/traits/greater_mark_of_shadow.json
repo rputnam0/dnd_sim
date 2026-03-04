@@ -1,6 +1,5 @@
 {
   "name": "Greater Mark of Shadow",
-  "type": "feat",
   "description": "Increase one ability score of your choice by 1. Your Cunning Intuition die from the Mark of Shadow feat increases from a d4 to a d6. Additionally, when you cast Invisibility using the Shape Shadows benefit of your Mark of Shadow feat without a spell slot, you cast it as a 3rd-level spell.",
   "mechanics": [
     {
@@ -29,5 +28,6 @@
       "feature": "Shape Shadows",
       "new_level": 3
     }
-  ]
+  ],
+  "source_type": "feat"
 }

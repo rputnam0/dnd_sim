@@ -1,10 +1,9 @@
 {
   "name": "Greater Divine Intervention",
-  "type": "class_feature",
   "description": "You can call on even more powerful divine intervention. When you use your Divine Intervention feature, you can choose Wish when you select a spell. If you do so, you can't use Divine Intervention again until you finish 2d4 Long Rests.",
   "mechanics": [
     {
-      "trigger": "Divine Intervention",
+      "trigger": "divine intervention",
       "option": {
         "type": "spell_selection",
         "spell": "Wish"
@@ -14,5 +13,6 @@
         "dice": "2d4"
       }
     }
-  ]
+  ],
+  "source_type": "class"
 }

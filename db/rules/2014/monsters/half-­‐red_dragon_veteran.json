@@ -1,17 +1,33 @@
 {
-  "name": "Half-\u00ad\u2010Red Dragon Veteran",
-  "meta": "Medium humanoid (human), any alignment",
-  "ac": 18,
-  "hp": 65,
-  "hp_formula": "10d8 + 20",
-  "ability_scores": {
-    "str": 16,
-    "dex": 13,
-    "con": 14,
-    "int": 10,
-    "wis": 11,
-    "cha": 10
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "half_red_dragon_veteran",
+    "name": "Half-­‐Red Dragon Veteran",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 65,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 3,
+    "dex_mod": 1,
+    "con_mod": 2,
+    "int_mod": 0,
+    "wis_mod": 0,
+    "cha_mod": 0,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

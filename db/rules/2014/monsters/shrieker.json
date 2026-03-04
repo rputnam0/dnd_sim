@@ -1,17 +1,33 @@
 {
-  "name": "Shrieker",
-  "meta": "Medium plant, unaligned",
-  "ac": 5,
-  "hp": 13,
-  "hp_formula": "3d8",
-  "ability_scores": {
-    "str": 1,
-    "dex": 1,
-    "con": 10,
-    "int": 1,
-    "wis": 3,
-    "cha": 1
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "shrieker",
+    "name": "Shrieker",
+    "team": "enemy"
   },
-  "cr": "0",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 13,
+    "ac": 5,
+    "speed_ft": 30,
+    "initiative_mod": -5,
+    "str_mod": -5,
+    "dex_mod": -5,
+    "con_mod": 0,
+    "int_mod": -5,
+    "wis_mod": -4,
+    "cha_mod": -5,
+    "save_mods": {},
+    "cr": "0"
+  },
+  "reactions": [],
+  "actions": []
 }

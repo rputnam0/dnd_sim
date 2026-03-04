@@ -1,13 +1,13 @@
 {
   "name": "Bite",
-  "type": "racial_trait",
   "description": "Your fanged maw is a natural weapon, which you can use to make unarmed strikes. If you hit with it, you deal piercing damage equal to 1d4 + your Strength modifier, instead of the bludgeoning damage normal for an unarmed strike.",
   "mechanics": [
     {
-      "type": "natural_weapon",
       "damage": "1d4 + Str",
       "damage_type": "piercing",
-      "attack_type": "unarmed_strike"
+      "attack_type": "unarmed_strike",
+      "meta_type": "natural_weapon"
     }
-  ]
+  ],
+  "source_type": "species"
 }

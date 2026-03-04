@@ -1,10 +1,8 @@
 {
   "name": "Frozen Haunt",
-  "type": "subclass_feature",
   "description": "When you cast Hunter's Mark, you can adopt a ghostly, snowy form that lasts until the spell ends. While you are in this form you gain the following benefits. Once you use this feature, you can't use it again until you finish a Long Rest unless you expend a level 4 or higher spell slot (no action required). Frozen Soul: You have immunity to cold damage. When you first adopt this form and at the start of each of your subsequent turns, each creature of your choice in a 15‑foot emanation originating from you takes 2d4 cold damage. Partially Incorporeal: You have immunity to the grappled, prone, and restrained conditions. You can move through creatures and objects as if they were difficult terrain, but you take 1d10 force damage if you end your turn inside a creature or an object. If the form ends while you are inside a creature or an object, you are shunted to the nearest unoccupied space.",
   "mechanics": [
     {
-      "type": "form",
       "trigger": "cast_spell",
       "spell": "Hunter's Mark",
       "duration": "spell",
@@ -12,43 +10,45 @@
       "alternative_recharge": {
         "spell_slot_level": 4,
         "action_required": false
-      }
+      },
+      "meta_type": "form"
     },
     {
-      "type": "immunity",
-      "damage_type": "cold"
+      "damage_type": "cold",
+      "meta_type": "immunity"
     },
     {
-      "type": "damage_over_time",
       "damage": "2d4",
       "damage_type": "cold",
       "area": "emanation",
       "radius": 15,
       "timing": "start_of_turn",
-      "target": "creature_of_choice"
+      "target": "creature_of_choice",
+      "meta_type": "damage_over_time"
     },
     {
-      "type": "immunity",
       "condition": [
         "grappled",
         "prone",
         "restrained"
-      ]
+      ],
+      "meta_type": "immunity"
     },
     {
-      "type": "movement",
-      "through_creatures_objects": "difficult_terrain"
+      "through_creatures_objects": "difficult_terrain",
+      "meta_type": "movement"
     },
     {
-      "type": "damage_on_end_turn",
       "damage": "1d10",
       "damage_type": "force",
-      "condition": "inside_creature_or_object"
+      "condition": "inside_creature_or_object",
+      "meta_type": "damage_on_end_turn"
     },
     {
-      "type": "shunt_on_form_end",
       "condition": "inside_creature_or_object",
-      "effect": "move_to_nearest_unoccupied_space"
+      "effect": "move_to_nearest_unoccupied_space",
+      "meta_type": "shunt_on_form_end"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

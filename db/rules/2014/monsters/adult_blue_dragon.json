@@ -1,17 +1,38 @@
 {
-  "name": "Adult Blue Dragon",
-  "meta": "Huge dragon, lawful evil",
-  "ac": 19,
-  "hp": 225,
-  "hp_formula": "18d12 + 108",
-  "ability_scores": {
-    "str": 25,
-    "dex": 10,
-    "con": 23,
-    "int": 16,
-    "wis": 15,
-    "cha": 19
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "adult_blue_dragon",
+    "name": "Adult Blue Dragon",
+    "team": "enemy"
   },
-  "cr": "16",
-  "saving_throws_text": "Dex +5, Con +11, Wis +7, Cha +9"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 225,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 7,
+    "dex_mod": 0,
+    "con_mod": 6,
+    "int_mod": 3,
+    "wis_mod": 2,
+    "cha_mod": 4,
+    "save_mods": {
+      "dex": 5,
+      "con": 11,
+      "wis": 7,
+      "cha": 9
+    },
+    "cr": "16"
+  },
+  "reactions": [],
+  "actions": []
 }

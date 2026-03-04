@@ -1,6 +1,5 @@
 {
   "name": "Fey-Touched",
-  "type": "feat",
   "description": "Your exposure to the Feywild's magic grants you a +1 increase to Intelligence, Wisdom, or Charisma. You learn the Misty Step spell and one 1st-level spell from the Divination or Enchantment school. You can cast each of these spells once without expending a spell slot per long rest, and you can also cast them using your spell slots. The spellcasting ability for these spells is the ability increased by this feat.",
   "mechanics": [
     {
@@ -33,5 +32,6 @@
       "use_spell_slots": true,
       "ability_inherit": true
     }
-  ]
+  ],
+  "source_type": "feat"
 }

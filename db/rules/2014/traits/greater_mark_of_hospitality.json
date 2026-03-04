@@ -1,6 +1,5 @@
 {
   "name": "Greater Mark of Hospitality",
-  "type": "feat",
   "description": "You increase one ability score of your choice by 1. Your Ever Hospitable die increases from a d4 to a d6. Additionally, once per long rest, when you cast Purify Food and Drink, you can choose to instead reduce the exhaustion level of each creature of your choice within 30 feet by 1 and grant them temporary hit points equal to your proficiency bonus plus your Intelligence, Wisdom, or Charisma modifier.",
   "mechanics": [
     {
@@ -21,5 +20,6 @@
       "frequency": "1/long_rest",
       "temp_hp_formula": "proficiency_bonus + spellcasting_modifier"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

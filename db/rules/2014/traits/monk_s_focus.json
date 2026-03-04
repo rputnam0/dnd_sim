@@ -1,22 +1,22 @@
 {
   "name": "Monk's Focus",
-  "type": "class_feature",
   "description": "Your focus and martial training allow you to harness a well of extraordinary energy within yourself. This energy is represented by Focus Points. Your Monk level determines the number of points you have, as shown in the Focus Points column of the Monk Features table. You can expend these points to enhance or fuel certain Monk features. You start knowing three such features: Flurry of Blows, Patient Defense, and Step of the Wind, each of which is detailed below. When you expend a Focus Point, it is unavailable until you finish a Short Rest or Long Rest, at the end of which you regain all your expended points. Some features that use Focus Points require your target to make a saving throw. The save DC equals 8 plus your Wisdom modifier and Proficiency Bonus.",
   "mechanics": [
     {
-      "type": "resource",
       "name": "Focus Points",
-      "max": "determined by Monk level"
+      "max": "determined by Monk level",
+      "meta_type": "resource"
     },
     {
-      "type": "resource_regeneration",
       "resource": "Focus Points",
-      "trigger": "short_rest_or_long_rest"
+      "trigger": "short_rest_or_long_rest",
+      "meta_type": "resource_regeneration"
     },
     {
-      "type": "save_dc",
       "source": "Focus Point feature",
-      "formula": "8 + Wisdom modifier + proficiency bonus"
+      "formula": "8 + Wisdom modifier + proficiency bonus",
+      "meta_type": "save_dc"
     }
-  ]
+  ],
+  "source_type": "class"
 }

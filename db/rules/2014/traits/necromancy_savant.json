@@ -1,6 +1,5 @@
 {
   "name": "Necromancy Savant",
-  "type": "subclass_feature",
   "description": "Beginning when you select this school at 2nd level, the gold and time you must spend to copy a necromancy spell into your spellbook is halved.",
   "mechanics": [
     {
@@ -11,5 +10,6 @@
         "time"
       ]
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

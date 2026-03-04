@@ -1,17 +1,33 @@
 {
-  "name": "Treant",
-  "meta": "Huge plant, chaotic good",
-  "ac": 16,
-  "hp": 138,
-  "hp_formula": "12d12 + 60",
-  "ability_scores": {
-    "str": 23,
-    "dex": 8,
-    "con": 21,
-    "int": 12,
-    "wis": 16,
-    "cha": 12
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "treant",
+    "name": "Treant",
+    "team": "enemy"
   },
-  "cr": "9",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 138,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 6,
+    "dex_mod": -1,
+    "con_mod": 5,
+    "int_mod": 1,
+    "wis_mod": 3,
+    "cha_mod": 1,
+    "save_mods": {},
+    "cr": "9"
+  },
+  "reactions": [],
+  "actions": []
 }

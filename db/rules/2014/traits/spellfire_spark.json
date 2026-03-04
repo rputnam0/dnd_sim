@@ -1,6 +1,5 @@
 {
   "name": "Spellfire Spark",
-  "type": "feat",
   "description": "You gain the Magic Absorption ability, allowing you to reduce damage from spells or magical effects by 1d4 once per turn while not incapacitated. You also learn the Sacred Flame cantrip using Intelligence, Wisdom, or Charisma as your spellcasting ability. You can cast Sacred Flame as a bonus action a number of times equal to your proficiency bonus per long rest.",
   "mechanics": [
     {
@@ -25,5 +24,6 @@
       "uses": "proficiency_bonus",
       "reset": "long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Black Blood Healing",
-  "type": "racial_trait",
   "description": "The black blood that is a sign of your people's connection to That-Which-Endures boosts your natural healing. When you roll a 1 or 2 on any Hit Die you spend at the end of a short rest, you can reroll the die and must use the new roll.",
   "mechanics": [
     {
@@ -15,5 +14,6 @@
       "effect": "reroll_die",
       "must_use_new_roll": true
     }
-  ]
+  ],
+  "source_type": "species"
 }

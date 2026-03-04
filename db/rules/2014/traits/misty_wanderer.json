@@ -1,25 +1,25 @@
 {
   "name": "Misty Wanderer",
-  "type": "subclass_feature",
   "description": "You can slip in and out of the Feywild to move in a blink of an eye: you can cast misty step without expending a spell slot. You can do so a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a long rest. In addition, whenever you cast misty step, you can bring along one willing creature you can see within 5 feet of you. That creature teleports to an unoccupied space of your choice within 5 feet of your destination space.",
   "mechanics": [
     {
-      "type": "spell_cast",
       "spell": "misty step",
       "cost": "none",
       "uses": {
         "per": "long_rest",
         "max": "wis_mod",
         "minimum": 1
-      }
+      },
+      "meta_type": "spell_cast"
     },
     {
-      "type": "teleport",
       "trigger": "casting misty step",
       "target": "willing creature",
       "target_range": 5,
       "destination_range": 5,
-      "description": "The creature teleports to an unoccupied space of your choice within 5 feet of your destination space."
+      "description": "The creature teleports to an unoccupied space of your choice within 5 feet of your destination space.",
+      "meta_type": "teleport"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }
