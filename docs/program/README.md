@@ -16,9 +16,7 @@ This directory contains the execution artifacts for the full D&D 5e 2014 backend
 - `agent_assignment.csv`
 - `dependency_graph.mmd`
 
-## Utility Scripts
-- `scripts/backlog_ready_tasks.sh`
-- `scripts/launch_wave_agents.sh`
-- `scripts/wave_agent_status.sh`
-- `scripts/wave_backlog_status.sh`
-- `scripts/create_backlog_issues.sh`
+## Orchestration Policy
+- Use Codex native multi-agent tooling only (`spawn_agent`, `send_input`, `wait`, `close_agent`).
+- Do not add or rely on custom local shell orchestration wrappers for wave execution.
+- Keep planning and assignment artifacts in this directory as the source of truth for coordination.
