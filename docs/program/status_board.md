@@ -17,7 +17,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Track | Scope | Status | Milestone | Notes |
 |---|---|---|---|---|
-| DOC | Documentation Control | not_started | 5A-doc-control | Start from the first unmerged dependency in `backlog.csv`. |
+| DOC | Documentation Control | in_progress | 5A-doc-control | `DOC-01` is active on branch `feat/doc-01-establish-canonical-docs-entrypoints-and-source-of`. |
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | Start from the first unmerged dependency in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | Start from the first unmerged dependency in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | Start from the first unmerged dependency in `backlog.csv`. |
@@ -31,7 +31,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
-| - | - | - | - | None yet. Start at `DOC-01`. |
+| DOC-01 | feat/doc-01-establish-canonical-docs-entrypoints-and-source-of | doc_control_lead | in_progress | Canonical planning entrypoint task in flight. |
 
 ## Open PRs
 
@@ -41,4 +41,4 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 ## Current blockers
 
-- None. The first blocking action is to merge `DOC-01` through `DOC-05` and remove stale live planning surfaces.
+- `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` remain blocked until `DOC-01` merges.

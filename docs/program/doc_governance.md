@@ -37,7 +37,7 @@ These are the only live planning files after `DOC-01` and `DOC-02` merge:
 2. Replace `docs/program/README.md` so it declares the full canonical live surface.
 3. Replace `docs/program/roadmap_2014_backend.md` and rename Wave 5 inside the roadmap to `Backbone Hardening, World Systems, and Completion`.
 4. Replace `docs/program/backlog.csv`, `docs/program/agent_assignment.csv`, `docs/program/dependency_graph.mmd`, `docs/program/status_board.md`, `docs/program/test_acceptance_matrix.md`, `docs/program/risk_register.md`, and `docs/program/labels_and_milestones.md`.
-5. Replace `docs/agent_feature_assignments.md` so it points only to the machine-readable assignment map.
+5. Replace `docs/agent_feature_assignments.md` with a redirect-only root entrypoint that points only to `docs/program/README.md`.
 6. Convert `docs/review_checklist.md` into the active closeout checklist for this program.
 7. Create `docs/archive/README.md`.
 8. Move `docs/program/wave3_gap_report.md`, `docs/program/wave3_run_20260303_085619.md`, and `docs/program/wave4_run_20260303_110536.md` to `docs/archive/program_runs/`.

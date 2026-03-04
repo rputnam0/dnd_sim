@@ -5,43 +5,50 @@ Owner: program-control
 Last updated: 2026-03-04  
 Canonical source: `docs/program/README.md`
 
-This directory is the only canonical planning surface for the DnD Sim completion program.
+This file is the single canonical planning entrypoint for the DnD Sim completion program.
 
-## Objective
+## Start here
 
-Complete the D&D 5e 2014 simulator as an agent-maintainable VTT backbone. The program now covers documentation control, runtime decomposition, capability reporting, replayable observability, persistence hardening, tactical AI, rules closure, world systems, and final completion gates.
+1. Use this file as the only planning entrypoint.
+2. Use `docs/program/backlog.csv` as the task-level source of truth.
+3. Use `docs/program/status_board.md` as the human-readable dashboard.
+4. Follow `docs/program/doc_governance.md` for canonical vs historical doc rules.
 
-## Start order
+## Root planning entrypoints
 
-1. `docs/program/doc_governance.md`
-2. `docs/program/roadmap_2014_backend.md`
-3. `docs/program/backlog.csv`
-4. `docs/program/agent_assignment.csv`
-5. `docs/program/status_board.md`
-6. `docs/program/agent_execution_runbook.md`
+- `docs/plan.md` is canonical and redirect-only.
+- `docs/agent_feature_assignments.md` is canonical and redirect-only.
+- Both root planning entrypoints must point only to `docs/program/README.md`.
 
-## Canonical live files
+## Planning document registry
 
-- `README.md`
-- `doc_governance.md`
-- `roadmap_2014_backend.md`
-- `backlog.csv`
-- `agent_assignment.csv`
-- `dependency_graph.mmd`
-- `agent_execution_runbook.md`
-- `merge_and_review_runbook.md`
-- `test_acceptance_matrix.md`
-- `risk_register.md`
-- `labels_and_milestones.md`
-- `status_board.md`
-- `completion_task_cards.md`
-- `capability_report.md` once `CAP-06` lands
+| Path | Status | Role |
+|---|---|---|
+| `docs/plan.md` | canonical | Redirect-only root entrypoint to this README. |
+| `docs/agent_feature_assignments.md` | canonical | Redirect-only root entrypoint to this README. |
+| `docs/review_checklist.md` | canonical | Program closeout checklist. |
+| `docs/agent_index.yaml` | canonical | Runtime module ownership and invariants. |
+| `docs/archive/README.md` | canonical | Archive policy index for historical records. |
+| `docs/program/README.md` | canonical | Single planning entrypoint. |
+| `docs/program/doc_governance.md` | canonical | Live planning surface and governance rules. |
+| `docs/program/roadmap_2014_backend.md` | canonical | Program roadmap and sequencing detail. |
+| `docs/program/backlog.csv` | canonical | Task-level source of truth. |
+| `docs/program/agent_assignment.csv` | canonical | Machine-readable owner assignment map. |
+| `docs/program/dependency_graph.mmd` | canonical | Task dependency graph source. |
+| `docs/program/agent_execution_runbook.md` | canonical | Multi-agent execution rules. |
+| `docs/program/merge_and_review_runbook.md` | canonical | Merge and review sequencing rules. |
+| `docs/program/test_acceptance_matrix.md` | canonical | Required test coverage matrix by track. |
+| `docs/program/risk_register.md` | canonical | Program risk tracking. |
+| `docs/program/labels_and_milestones.md` | canonical | Labeling and milestone mapping. |
+| `docs/program/status_board.md` | canonical | Human-readable status dashboard. |
+| `docs/program/completion_task_cards.md` | canonical | Human-readable task expansion of backlog. |
+| `docs/program/capability_report.md` | canonical after CAP-06 | Capability report output surface. |
 
-## Non-canonical content policy
+## Historical planning scope
 
-- Historical wave run reports belong in `docs/archive/`.
-- Cleanup and deprecation snapshots are historical records, not live planning state.
-- No new planning file becomes canonical until this README links to it and `docs/program/doc_governance.md` registers it.
+- Any planning file under `docs/archive/` other than `docs/archive/README.md` is historical and must carry `Status: historical`.
+- Any planning file under `docs/cleanup/` or `docs/deprecation/` is historical and must carry `Status: historical`.
+- Historical files are reference-only and must not be used as planning entrypoints.
 
 ## Multi-agent policy
 
