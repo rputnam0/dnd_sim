@@ -1,13 +1,13 @@
 {
   "name": "Master's Flourish",
-  "type": "subclass_feature",
   "description": "Starting at 14th level, whenever you use a Blade Flourish option, you can roll a d6 and use it instead of expending a Bardic Inspiration die.",
   "mechanics": [
     {
       "effect": "resource_substitution",
-      "trigger": "use Blade Flourish",
+      "trigger": "use blade flourish",
       "original_resource": "Bardic Inspiration die",
       "substitute": "d6 roll"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

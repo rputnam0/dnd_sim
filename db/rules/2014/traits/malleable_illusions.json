@@ -1,6 +1,5 @@
 {
   "name": "Malleable Illusions",
-  "type": "subclass_feature",
   "description": "Starting at 6th level, when you cast an illusion spell that has a duration of 1 minute or longer, you can use your action to change the nature of that illusion (using the spell's normal parameters for the illusion), provided that you can see the illusion.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
       "trigger": "cast illusion spell with duration >= 1 minute",
       "condition": "you can see the illusion"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

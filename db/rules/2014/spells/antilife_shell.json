@@ -1,9 +1,15 @@
 {
   "name": "Antilife Shell",
-  "meta": "Antilife Shell 5th-\u00ad\u2010\u2011level abjuration",
+  "type": "spell",
+  "level": 5,
+  "school": "Abjuration",
   "casting_time": "1 action",
-  "range": "Self (10-\u00ad\u2010\u2011foot radius)",
-  "components": "V, S",
-  "duration": "Concentration, up to 1 hour",
-  "description": "A shimmering barrier extends out from you in a 10-\u00ad\u2010\u2011 foot radius and moves with you, remaining centered on you and hedging out creatures other than undead and constructs. The barrier lasts for the duration. The barrier prevents an affected creature from passing or reaching through. An affected creature can cast spells or make attacks with ranged or reach weapons through the barrier. If you move so that an affected creature is forced to pass through the barrier, the spell ends."
+  "range_ft": null,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 600,
+  "description": "A shimmering barrier extends out from you in a 10-­‐‑ foot radius and moves with you, remaining centered on you and hedging out creatures other than undead and constructs. The barrier lasts for the duration. The barrier prevents an affected creature from passing or reaching through. An affected creature can cast spells or make attacks with ranged or reach weapons through the barrier. If you move so that an affected creature is forced to pass through the barrier, the spell ends.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

@@ -1,11 +1,11 @@
 {
   "name": "Slippery Mind",
-  "type": "class_feature",
   "description": "By 15th level, you have acquired greater mental strength. You gain proficiency in Wisdom saving throws.",
   "mechanics": [
     {
-      "type": "saving_throw_proficiency",
-      "ability": "wisdom"
+      "ability": "wisdom",
+      "meta_type": "saving_throw_proficiency"
     }
-  ]
+  ],
+  "source_type": "class"
 }

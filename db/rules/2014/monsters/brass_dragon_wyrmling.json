@@ -1,17 +1,38 @@
 {
-  "name": "Brass Dragon Wyrmling",
-  "meta": "Medium dragon, chaotic good",
-  "ac": 16,
-  "hp": 16,
-  "hp_formula": "3d8 + 3",
-  "ability_scores": {
-    "str": 15,
-    "dex": 10,
-    "con": 13,
-    "int": 10,
-    "wis": 11,
-    "cha": 13
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "brass_dragon_wyrmling",
+    "name": "Brass Dragon Wyrmling",
+    "team": "enemy"
   },
-  "cr": "1",
-  "saving_throws_text": "Dex +2, Con +3, Wis +2, Cha +3"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 16,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 2,
+    "dex_mod": 0,
+    "con_mod": 1,
+    "int_mod": 0,
+    "wis_mod": 0,
+    "cha_mod": 1,
+    "save_mods": {
+      "dex": 2,
+      "con": 3,
+      "wis": 2,
+      "cha": 3
+    },
+    "cr": "1"
+  },
+  "reactions": [],
+  "actions": []
 }

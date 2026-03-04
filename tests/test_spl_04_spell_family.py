@@ -3,6 +3,8 @@ from __future__ import annotations
 import random
 from pathlib import Path
 
+import pytest
+
 from dnd_sim.engine import (
     _break_concentration,
     _execute_action,
@@ -10,11 +12,7 @@ from dnd_sim.engine import (
     run_simulation,
 )
 from dnd_sim.io import ActionConfig, load_character_db, load_scenario
-from dnd_sim.mechanics_schema import (
-    EXECUTABLE_EFFECT_TYPES,
-    KNOWN_EFFECT_TYPES,
-    validate_rule_mechanics_payload,
-)
+from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import AABB
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
@@ -169,9 +167,6 @@ def test_transform_effect_applies_and_clears_with_concentration_dependency() -> 
 
 
 def test_transform_schema_and_mechanics_validation_accept_transform() -> None:
-    assert "shapechange" in KNOWN_EFFECT_TYPES
-    assert "shapechange" in EXECUTABLE_EFFECT_TYPES
-
     action = ActionConfig.model_validate(
         {
             "name": "beast_shape",
@@ -190,23 +185,23 @@ def test_transform_schema_and_mechanics_validation_accept_transform() -> None:
     )
     assert action.effects[0].effect_type == "transform"
 
-    legacy_action = ActionConfig.model_validate(
-        {
-            "name": "legacy_beast_shape",
-            "action_type": "utility",
-            "action_cost": "action",
-            "target_mode": "single_ally",
-            "effects": [
-                {
-                    "effect_type": "shapechange",
-                    "target": "target",
-                    "condition": "beast_form",
-                    "duration_rounds": 10,
-                }
-            ],
-        }
-    )
-    assert legacy_action.effects[0].effect_type == "transform"
+    with pytest.raises(ValueError):
+        ActionConfig.model_validate(
+            {
+                "name": "legacy_beast_shape",
+                "action_type": "utility",
+                "action_cost": "action",
+                "target_mode": "single_ally",
+                "effects": [
+                    {
+                        "effect_type": "shapechange",
+                        "target": "target",
+                        "condition": "beast_form",
+                        "duration_rounds": 10,
+                    }
+                ],
+            }
+        )
 
     issues = validate_rule_mechanics_payload(
         kind="spell",
@@ -240,10 +235,11 @@ def test_transform_schema_and_mechanics_validation_accept_transform() -> None:
             ],
         },
     )
-    assert legacy_issues == []
+    assert legacy_issues
+    assert any("shapechange" in issue and "unsupported" in issue for issue in legacy_issues)
 
 
-def test_legacy_shapechange_effect_executes_via_transform_alias() -> None:
+def test_legacy_shapechange_effect_is_ignored_at_runtime() -> None:
     caster = _actor(actor_id="caster", team="party")
     target = _actor(actor_id="target", team="enemy")
     action = ActionDefinition(
@@ -278,7 +274,7 @@ def test_legacy_shapechange_effect_executes_via_transform_alias() -> None:
         active_hazards=[],
     )
 
-    assert "beast_form" in target.conditions
+    assert "beast_form" not in target.conditions
 
 
 def test_transform_targeting_line_of_effect_and_suppression_are_enforced() -> None:
@@ -420,6 +416,7 @@ def test_spl04_integration_spell_family_sequence_is_deterministic(tmp_path: Path
         to_hit=6,
         damage="1d8+3",
     )
+    hero["class_levels"] = {"fighter": 8}
     hero["spells"] = [
         {
             "name": "summon_wolf",
@@ -533,6 +530,7 @@ def test_summary_aggregation_handles_ephemeral_summon_actor_missing_in_later_tri
         to_hit=5,
         damage="1d8+2",
     )
+    hero["class_levels"] = {"fighter": 8}
     hero["spells"] = [
         {
             "name": "summon_wolf",

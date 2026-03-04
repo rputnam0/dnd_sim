@@ -1,12 +1,12 @@
 {
   "name": "Skillful",
-  "type": "racial_trait",
   "description": "You gain proficiency in one skill of your choice.",
   "mechanics": [
     {
-      "type": "gain_proficiency",
       "target": "skill",
-      "choice": true
+      "choice": true,
+      "meta_type": "gain_proficiency"
     }
-  ]
+  ],
+  "source_type": "species"
 }

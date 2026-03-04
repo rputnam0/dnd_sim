@@ -1,10 +1,8 @@
 {
   "name": "Nature's Sanctuary",
-  "type": "subclass_feature",
   "description": "When you reach 14th level, creatures of the natural world sense your connection to nature and become hesitant to attack you. When a beast or plant creature attacks you, that creature must make a Wisdom saving throw against your druid spell save DC. On a failed save, the creature must choose a different target, or the attack automatically misses. On a successful save, the creature is immune to this effect for 24 hours. The creature is aware of this effect before it makes its attack against you.",
   "mechanics": [
     {
-      "type": "saving_throw",
       "target": "beast_or_plant_creature",
       "ability": "wisdom",
       "dc_source": "druid_spell_save_dc",
@@ -16,7 +14,9 @@
         "effect": "grant_immunity",
         "immunity_to": "Nature's Sanctuary",
         "duration": "24h"
-      }
+      },
+      "meta_type": "saving_throw"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

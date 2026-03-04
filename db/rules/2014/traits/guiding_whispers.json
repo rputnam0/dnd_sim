@@ -1,13 +1,13 @@
 {
   "name": "Guiding Whispers",
-  "type": "subclass_feature",
   "description": "3rd-level College of Spirits feature. You can reach out to spirits to guide you and others. You learn the guidance cantrip, which doesn't count against the number of bard cantrips you know. For you, it has a range of 60 feet when you cast it.",
   "mechanics": [
     {
-      "type": "grant_cantrip",
       "cantrip": "guidance",
       "range_feet": 60,
-      "ignore_cantrip_limit": true
+      "ignore_cantrip_limit": true,
+      "meta_type": "grant_cantrip"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

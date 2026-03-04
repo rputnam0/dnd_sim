@@ -1,6 +1,5 @@
 {
   "name": "Boon of Bountiful Health",
-  "type": "feat",
   "description": "Increase one ability score of your choice by 1, to a maximum of 30. When you gain temporary hit points, increase the number of temporary hit points you gain by 5. When you spend one or more Hit Dice to regain hit points, you can instead use the highest number possible for each die.",
   "mechanics": [
     {
@@ -16,5 +15,6 @@
     {
       "effect_type": "maximize_hit_dice_healing"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

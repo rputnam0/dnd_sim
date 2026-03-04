@@ -1,17 +1,33 @@
 {
-  "name": "Wraith",
-  "meta": "Medium undead, neutral evil",
-  "ac": 13,
-  "hp": 67,
-  "hp_formula": "9d8 + 27",
-  "ability_scores": {
-    "str": 6,
-    "dex": 16,
-    "con": 16,
-    "int": 12,
-    "wis": 14,
-    "cha": 15
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "wraith",
+    "name": "Wraith",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 67,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": -2,
+    "dex_mod": 3,
+    "con_mod": 3,
+    "int_mod": 1,
+    "wis_mod": 2,
+    "cha_mod": 2,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

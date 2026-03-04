@@ -1,15 +1,15 @@
 {
   "name": "Magic Item Savant",
-  "type": "class_feature",
   "description": "14th-level artificer feature. Your skill with magic items deepens: You can attune to up to five magic items at once. You ignore all class, race, spell, and level requirements on attuning to or using a magic item.",
   "mechanics": [
     {
-      "type": "increase_attunement_limit",
-      "value": 5
+      "value": 5,
+      "meta_type": "increase_attunement_limit"
     },
     {
-      "type": "ignore_item_requirements",
-      "value": true
+      "value": true,
+      "meta_type": "ignore_item_requirements"
     }
-  ]
+  ],
+  "source_type": "class"
 }

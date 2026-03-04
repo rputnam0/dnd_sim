@@ -1,17 +1,17 @@
 {
   "name": "Hex Magic",
-  "type": "racial_trait",
   "description": "You can cast the disguise self and hex spells with this trait. Once you cast either of these spells with this trait, you can't cast that spell with it again until you finish a long rest. You can also cast these spells using any spell slots you have. Intelligence, Wisdom, or Charisma is your spellcasting ability for these spells (choose the ability when you gain this lineage). Becoming a Hag: Hags can undertake a ritual to irreversibly transform a hexblood they created into a new hag, either one of their own kind or that embodies the hexblood's nature. This requires that both the hag and hexblood be in the same place and consent to the lengthy ritual—circumstances most hexbloods shun but might come to accept over the course of centuries. Once a hexblood undergoes this irreversible ritual, they emerge as a hag NPC no longer under the control of the hexblood's player, unless the DM rules otherwise.",
   "mechanics": [
     {
-      "type": "spellcasting",
       "spells": [
         "disguise self",
         "hex"
       ],
       "uses_per_long_rest": 1,
       "allows_spell_slots": true,
-      "spellcasting_ability": "Intelligence, Wisdom, or Charisma (choose one)"
+      "spellcasting_ability": "Intelligence, Wisdom, or Charisma (choose one)",
+      "meta_type": "spellcasting"
     }
-  ]
+  ],
+  "source_type": "species"
 }

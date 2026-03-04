@@ -1,14 +1,14 @@
 {
   "name": "Horde Breaker",
-  "type": "subclass_feature",
   "description": "Once on each of your turns when you make a weapon attack, you can make another attack with the same weapon against a different creature that is within 5 feet of the original target and within range of your weapon.",
   "mechanics": [
     {
-      "type": "extra_attack",
       "frequency": "once per turn",
       "trigger": "when you make a weapon attack",
       "condition": "target is a different creature within 5 feet of the original target and within the weapon's range",
-      "weapon": "same weapon as the original attack"
+      "weapon": "same weapon as the original attack",
+      "meta_type": "extra_attack"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

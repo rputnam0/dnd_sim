@@ -1,16 +1,16 @@
 {
   "name": "Psionic Fortitude",
-  "type": "racial_trait",
   "description": "You have advantage on saving throws you make to avoid or end the charmed or stunned condition on yourself.",
   "mechanics": [
     {
-      "type": "advantage_on_saving_throws",
       "target": "self",
       "conditions": [
         "charmed",
         "stunned"
       ],
-      "when": "avoid_or_end"
+      "when": "avoid_or_end",
+      "meta_type": "advantage_on_saving_throws"
     }
-  ]
+  ],
+  "source_type": "species"
 }

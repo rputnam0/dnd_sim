@@ -1,35 +1,35 @@
 {
   "name": "Tokens of the Departed",
-  "type": "subclass_feature",
   "description": "When a creature you can see dies within 30 feet of you, you can use your reaction to cause a Tiny trinket (a soul trinket) to appear in your free hand. The DM determines its form or you roll on the Trinket table. You can have a number of soul trinkets equal to your proficiency bonus and cannot create one while at that maximum. While a soul trinket is on your person you have advantage on death saving throws and Constitution saving throws. When you deal Sneak Attack damage on your turn, you can destroy one of your soul trinkets and then immediately use the Wails from the Grave feature without expending a use. As an action, you can destroy a soul trinket anywhere to ask its associated spirit one question; the spirit appears and answers in a language it knew in life, concisely and without any obligation to be truthful.",
   "mechanics": [
     {
-      "type": "reaction",
       "trigger": "creature you can see dies within 30 feet",
       "effect": "create a soul trinket (Tiny trinket) in your free hand",
-      "limit": "cannot exceed a number of soul trinkets equal to your proficiency bonus"
+      "limit": "cannot exceed a number of soul trinkets equal to your proficiency bonus",
+      "meta_type": "reaction"
     },
     {
-      "type": "resource",
       "name": "soul trinkets",
       "max": "proficiency bonus",
-      "description": "Tracks the number of soul trinkets you possess"
+      "description": "Tracks the number of soul trinkets you possess",
+      "meta_type": "resource"
     },
     {
-      "type": "condition",
       "condition": "you have at least one soul trinket on your person",
-      "effect": "advantage on death saving throws and Constitution saving throws"
+      "effect": "advantage on death saving throws and Constitution saving throws",
+      "meta_type": "condition"
     },
     {
-      "type": "optional",
-      "trigger": "you deal Sneak Attack damage on your turn",
+      "trigger": "you deal sneak attack damage on your turn",
       "cost": "destroy one soul trinket you are carrying",
-      "effect": "use Wails from the Grave without expending its use"
+      "effect": "use Wails from the Grave without expending its use",
+      "meta_type": "optional"
     },
     {
-      "type": "action",
       "cost": "destroy one soul trinket (anywhere)",
-      "effect": "ask the associated spirit one question; the spirit appears and answers in a language it knew in life, concisely, and is not obligated to be truthful"
+      "effect": "ask the associated spirit one question; the spirit appears and answers in a language it knew in life, concisely, and is not obligated to be truthful",
+      "meta_type": "action"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

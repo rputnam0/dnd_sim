@@ -1,10 +1,8 @@
 {
   "name": "Silver Tongue",
-  "type": "subclass_feature",
   "description": "You are a master at saying the right thing at the right time. When you make a Charisma (Persuasion) or Charisma (Deception) check, you can treat a d20 roll of 9 or lower as a 10.",
   "mechanics": [
     {
-      "type": "roll_adjustment",
       "target": "ability_check",
       "ability": "Charisma",
       "skills": [
@@ -14,7 +12,9 @@
       "condition": {
         "max_roll": 9
       },
-      "adjusted_result": 10
+      "adjusted_result": 10,
+      "meta_type": "roll_adjustment"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

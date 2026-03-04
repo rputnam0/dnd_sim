@@ -1,6 +1,5 @@
 {
   "name": "Improved War Magic",
-  "type": "subclass_feature",
   "description": "Starting at 18th level, when you use your action to cast a spell, you can make one weapon attack as a bonus action.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
       "timing": "bonus_action",
       "count": 1
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

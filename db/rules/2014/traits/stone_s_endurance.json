@@ -1,18 +1,18 @@
 {
   "name": "Stone's Endurance",
-  "type": "racial_trait",
   "description": "You can supernaturally draw on unyielding stone to shrug off harm. When you take damage, you can use your reaction to roll a d12, add your Constitution modifier to the number rolled, and reduce the damage by that total. You can use this trait a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "type": "reaction",
       "trigger": "when you take damage",
       "action": "roll d12 and add your Constitution modifier",
-      "effect": "reduce the damage taken by the total rolled"
+      "effect": "reduce the damage taken by the total rolled",
+      "meta_type": "reaction"
     },
     {
-      "type": "resource",
       "uses": "proficiency bonus",
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "resource"
     }
-  ]
+  ],
+  "source_type": "species"
 }

@@ -6,6 +6,7 @@
   "casting_time": "minute",
   "range_ft": 0,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 0,
   "description": "You touch an object weighing 10 pounds or less whose longest dimension is 6 feet or less, leaving an invisible mark on it and inscribing the object's name on a sapphire worth 1,000 gp. Later, as an action, you can speak the item's name and crush the sapphire; the item instantly appears in your hand regardless of physical or planar distance, and the spell ends. If another creature is holding or carrying the item, crushing the sapphire instead reveals who possesses the object and roughly where that creature is located. The spell ends if the sapphire is dispelled or a similar effect is applied to it.",
   "save_ability": null,

@@ -1,17 +1,33 @@
 {
-  "name": "Mimic",
-  "meta": "Medium monstrosity (shapechanger), neutral",
-  "ac": 12,
-  "hp": 58,
-  "hp_formula": "9d8 + 18",
-  "ability_scores": {
-    "str": 17,
-    "dex": 12,
-    "con": 15,
-    "int": 5,
-    "wis": 13,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "mimic",
+    "name": "Mimic",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 58,
+    "ac": 12,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 3,
+    "dex_mod": 1,
+    "con_mod": 2,
+    "int_mod": -3,
+    "wis_mod": 1,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

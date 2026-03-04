@@ -1,6 +1,6 @@
 {
   "name": "Tenets of the Ancients",
-  "type": "subclass_feature",
   "description": "The tenets of the Oath of the Ancients have been preserved for uncounted centuries. This oath emphasizes the principles of good above any concerns of law or chaos. Its four central principles are simple.\n\nKindle the Light: Through your acts of mercy, kindness, and forgiveness, kindle the light of hope in the world, beating back despair.\n\nShelter the Light: Where there is good, beauty, love, and laughter in the world, stand against the wickedness that would swallow it. Where life flourishes, stand against the forces that would render it barren.\n\nPreserve Your Own Light: Delight in song and laughter, in beauty and art. If you allow the light to die in your own heart, you can't preserve it in the world.\n\nBe the Light: Be a glorious beacon for all who live in despair. Let the light of your joy and courage shine forth in all your deeds.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "subclass"
 }

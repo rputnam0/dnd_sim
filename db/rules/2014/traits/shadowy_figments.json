@@ -1,6 +1,5 @@
 {
   "name": "Shadowy Figments",
-  "type": "subclass_feature",
   "description": "You know the Minor Illusion spell. Wisdom is your spellcasting ability for it.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
         "castingAbility": "wisdom"
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

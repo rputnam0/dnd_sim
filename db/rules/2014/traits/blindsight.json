@@ -1,12 +1,12 @@
 {
   "name": "Blindsight",
-  "type": "racial_trait",
   "description": "You have no eyes, and cannot be blinded. You can perceive your surroundings within 30 ft., or 10 ft. while deafened. You are considered blind beyond this radius.",
   "mechanics": [
     {
-      "type": "blindsight",
       "range": 30,
-      "range_while_deafened": 10
+      "range_while_deafened": 10,
+      "meta_type": "blindsight"
     }
-  ]
+  ],
+  "source_type": "species"
 }

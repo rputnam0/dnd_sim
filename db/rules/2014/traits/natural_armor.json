@@ -1,12 +1,12 @@
 {
   "name": "Natural Armor",
-  "type": "racial_trait",
   "description": "Your scales function as natural armor, granting you a +3 bonus to Armor Class.",
   "mechanics": [
     {
-      "type": "ac_bonus",
       "value": 3,
-      "description": "Natural armor provides a +3 bonus to AC."
+      "description": "Natural armor provides a +3 bonus to AC.",
+      "meta_type": "ac_bonus"
     }
-  ]
+  ],
+  "source_type": "species"
 }

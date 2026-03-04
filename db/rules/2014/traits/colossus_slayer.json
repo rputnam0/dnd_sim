@@ -1,14 +1,14 @@
 {
   "name": "Colossus Slayer",
-  "type": "subclass_feature",
   "description": "Your tenacity can wear down the most potent foes. When you hit a creature with a weapon attack, the creature takes an extra 1d8 damage if it's below its hit point maximum. You can deal this extra damage only once per turn.",
   "mechanics": [
     {
-      "type": "extra_damage",
       "damage": "1d8",
       "trigger": "weapon attack hit",
       "condition": "target hit points less than its maximum",
-      "limit": "once per turn"
+      "limit": "once per turn",
+      "meta_type": "extra_damage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

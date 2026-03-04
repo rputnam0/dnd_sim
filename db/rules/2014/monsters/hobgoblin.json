@@ -1,17 +1,33 @@
 {
-  "name": "Hobgoblin",
-  "meta": "Medium humanoid (goblinoid), lawful evil",
-  "ac": 18,
-  "hp": 11,
-  "hp_formula": "2d8 + 2",
-  "ability_scores": {
-    "str": 13,
-    "dex": 12,
-    "con": 12,
-    "int": 10,
-    "wis": 10,
-    "cha": 9
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "hobgoblin",
+    "name": "Hobgoblin",
+    "team": "enemy"
   },
-  "cr": "1/2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 11,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 1,
+    "dex_mod": 1,
+    "con_mod": 1,
+    "int_mod": 0,
+    "wis_mod": 0,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "1/2"
+  },
+  "reactions": [],
+  "actions": []
 }

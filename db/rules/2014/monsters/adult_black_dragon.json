@@ -1,17 +1,38 @@
 {
-  "name": "Adult Black Dragon",
-  "meta": "Huge dragon, chaotic evil",
-  "ac": 19,
-  "hp": 195,
-  "hp_formula": "17d12 + 85",
-  "ability_scores": {
-    "str": 23,
-    "dex": 14,
-    "con": 21,
-    "int": 14,
-    "wis": 13,
-    "cha": 17
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "adult_black_dragon",
+    "name": "Adult Black Dragon",
+    "team": "enemy"
   },
-  "cr": "14",
-  "saving_throws_text": "Dex +7, Con +10, Wis +6, Cha +8"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 195,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 6,
+    "dex_mod": 2,
+    "con_mod": 5,
+    "int_mod": 2,
+    "wis_mod": 1,
+    "cha_mod": 3,
+    "save_mods": {
+      "dex": 7,
+      "con": 10,
+      "wis": 6,
+      "cha": 8
+    },
+    "cr": "14"
+  },
+  "reactions": [],
+  "actions": []
 }

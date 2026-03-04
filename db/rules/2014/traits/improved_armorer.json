@@ -1,13 +1,13 @@
 {
   "name": "Improved Armorer",
-  "type": "subclass_feature",
   "description": "You gain the following benefits. Armor Replication: You learn an additional plan for your Replicate Magic Item feature, and it must be in the Armor category. If you replace that plan, you must replace it with another Armor plan. In addition, you can create an additional item with that feature, and the item must also be in the Armor category. Improved Arsenal: You gain a +1 bonus to attack and damage rolls made with the special weapon of your Arcane Armor model.",
   "mechanics": [
     {
-      "type": "bonus",
       "target": "attack_and_damage",
       "value": 1,
-      "condition": "when using the special weapon of your Arcane Armor model"
+      "condition": "when using the special weapon of your Arcane Armor model",
+      "meta_type": "bonus"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

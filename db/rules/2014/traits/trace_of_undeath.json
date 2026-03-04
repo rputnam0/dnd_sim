@@ -1,11 +1,11 @@
 {
   "name": "Trace of Undeath",
-  "type": "racial_trait",
   "description": "You have Resistance to Necrotic damage.",
   "mechanics": [
     {
-      "type": "damage_resistance",
-      "damage_type": "necrotic"
+      "damage_type": "necrotic",
+      "meta_type": "damage_resistance"
     }
-  ]
+  ],
+  "source_type": "species"
 }

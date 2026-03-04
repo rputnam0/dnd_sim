@@ -1,15 +1,15 @@
 {
   "name": "Versatile Trickster",
-  "type": "subclass_feature",
   "description": "At 13th level, you gain the ability to distract targets with your mage hand. As a bonus action on your turn, you can designate a creature within 5 feet of the spectral hand created by the spell. Doing so gives you advantage on attack rolls against that creature until the end of the turn.",
   "mechanics": [
     {
-      "type": "grant_advantage",
       "trigger": "bonus_action",
       "target": "creature",
       "condition": "designated creature within 5 feet of the mage hand spectral hand",
       "duration": "until end of turn",
-      "applies_to": "attack_rolls"
+      "applies_to": "attack_rolls",
+      "meta_type": "grant_advantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

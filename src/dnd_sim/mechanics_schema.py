@@ -25,11 +25,8 @@ KNOWN_EFFECT_TYPES = {
     "reaction_attack",
     "summon",
     "conjure",
-    "summon_creature",
     "transform",
-    "shapechange",
     "command_allied",
-    "command_construct_companion",
     "mount",
     "dismount",
 }
@@ -54,11 +51,8 @@ EXECUTABLE_EFFECT_TYPES = {
     "reaction_attack",
     "summon",
     "conjure",
-    "summon_creature",
     "transform",
-    "shapechange",
     "command_allied",
-    "command_construct_companion",
     "mount",
     "dismount",
 }
@@ -80,7 +74,6 @@ _REQUIRED_FIELDS: dict[str, set[str]] = {
     "damage_roll_floor": {"damage_type", "floor"},
     "reaction_attack": {"trigger"},
     "transform": {"condition"},
-    "shapechange": {"condition"},
 }
 
 _SUPPORTED_REACTION_ATTACK_TRIGGERS = {
@@ -97,15 +90,8 @@ _ACTION_GROUPS = (
     "lair_actions",
 )
 
-_EFFECT_TYPE_ALIASES = {
-    "summon_creature": "summon",
-    "shapechange": "transform",
-}
-
-
 def _canonical_effect_type(effect_type: str) -> str:
-    normalized = str(effect_type).strip().lower()
-    return _EFFECT_TYPE_ALIASES.get(normalized, normalized)
+    return str(effect_type).strip().lower()
 
 
 def _iter_json_payloads(path: Path) -> list[tuple[Path, dict[str, Any]]]:
@@ -137,9 +123,12 @@ def _validate_mechanics_list(mechanics: Any, *, prefix: str) -> list[str]:
             issues.append(f"{path} must be an object")
             continue
 
-        raw_effect_type = row.get("effect_type", row.get("type"))
+        raw_effect_type = row.get("effect_type")
         if not isinstance(raw_effect_type, str) or not raw_effect_type.strip():
-            issues.append(f"{path}.effect_type is required")
+            raw_meta_type = row.get("meta_type")
+            if isinstance(raw_meta_type, str) and raw_meta_type.strip():
+                continue
+            issues.append(f"{path}.effect_type or {path}.meta_type is required")
             continue
 
         normalized_effect = _canonical_effect_type(raw_effect_type)
@@ -234,9 +223,12 @@ def _collect_monster_mechanics(payload: dict[str, Any]) -> list[Any]:
 
 def _classify_effect_type(value: Any) -> str:
     if isinstance(value, dict):
-        effect_type = value.get("effect_type", value.get("type"))
+        effect_type = value.get("effect_type")
         if isinstance(effect_type, str) and effect_type.strip():
             return _canonical_effect_type(effect_type)
+        meta_type = value.get("meta_type")
+        if isinstance(meta_type, str) and meta_type.strip():
+            return "<meta>"
     return "<invalid>"
 
 
@@ -273,6 +265,8 @@ def build_mechanics_coverage_report(
                 effect_type = _classify_effect_type(mechanic)
                 if effect_type in EXECUTABLE_EFFECT_TYPES:
                     executable += 1
+                elif effect_type == "<meta>":
+                    continue
                 else:
                     unsupported += 1
                     unsupported_effect_types.add(effect_type)

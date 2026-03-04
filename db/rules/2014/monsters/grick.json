@@ -1,17 +1,33 @@
 {
-  "name": "Grick",
-  "meta": "Medium monstrosity, neutral",
-  "ac": 14,
-  "hp": 27,
-  "hp_formula": "6d8",
-  "ability_scores": {
-    "str": 14,
-    "dex": 14,
-    "con": 11,
-    "int": 3,
-    "wis": 14,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "grick",
+    "name": "Grick",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 27,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 2,
+    "dex_mod": 2,
+    "con_mod": 0,
+    "int_mod": -4,
+    "wis_mod": 2,
+    "cha_mod": -3,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,17 +1,33 @@
 {
-  "name": "Invisible Stalker",
-  "meta": "Medium elemental, neutral",
-  "ac": 14,
-  "hp": 104,
-  "hp_formula": "16d8 + 32",
-  "ability_scores": {
-    "str": 16,
-    "dex": 19,
-    "con": 14,
-    "int": 10,
-    "wis": 15,
-    "cha": 11
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "invisible_stalker",
+    "name": "Invisible Stalker",
+    "team": "enemy"
   },
-  "cr": "6",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 104,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 4,
+    "str_mod": 3,
+    "dex_mod": 4,
+    "con_mod": 2,
+    "int_mod": 0,
+    "wis_mod": 2,
+    "cha_mod": 0,
+    "save_mods": {},
+    "cr": "6"
+  },
+  "reactions": [],
+  "actions": []
 }

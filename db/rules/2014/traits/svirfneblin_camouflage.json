@@ -1,6 +1,5 @@
 {
   "name": "Svirfneblin Camouflage",
-  "type": "racial_trait",
   "description": "When you make a Dexterity (Stealth) check, you can make the check with advantage. You can use this trait a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
@@ -12,5 +11,6 @@
         "reset": "long_rest"
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

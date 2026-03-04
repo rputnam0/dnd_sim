@@ -1,6 +1,5 @@
 {
   "name": "Amorphous",
-  "type": "racial_trait",
   "description": "You can squeeze through a space as narrow as 1 inch wide, provided you are wearing and carrying nothing. You have advantage on ability checks you make to initiate or escape a grapple.",
   "mechanics": [
     {
@@ -13,5 +12,6 @@
       "target": "ability_checks",
       "context": "grapple_initiation_or_escape"
     }
-  ]
+  ],
+  "source_type": "species"
 }

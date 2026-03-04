@@ -1,26 +1,26 @@
 {
   "name": "Eldritch Versatility",
-  "type": "class_feature",
   "description": "4th-level warlock optional class features. Whenever you reach a level in this class that grants the Ability Score Improvement feature, you can do one of the following, representing a change of focus in your occult studies: Replace one cantrip you learned from this class's Pact Magic feature with another cantrip from the warlock spell list. Replace the option you chose for the Pact Boon feature with one of that feature's other options. If you're 12th level or higher, replace one spell from your Mystic Arcanum feature with another warlock spell of the same level. If this change makes you ineligible for any of your Eldritch Invocations, you must also replace them now, choosing invocations for which you qualify.",
   "mechanics": [
     {
-      "type": "replace",
       "target": "cantrip",
       "source": "Pact Magic",
-      "newOptions": "any warlock cantrip"
+      "newOptions": "any warlock cantrip",
+      "meta_type": "replace"
     },
     {
-      "type": "replace",
       "target": "pact_boon",
       "source": "Pact Boon",
-      "newOptions": "any other pact boon option"
+      "newOptions": "any other pact boon option",
+      "meta_type": "replace"
     },
     {
-      "type": "replace",
       "target": "mystic_arcanum_spell",
       "source": "Mystic Arcanum",
       "condition": "character level >= 12",
-      "newOptions": "warlock spell of the same level"
+      "newOptions": "warlock spell of the same level",
+      "meta_type": "replace"
     }
-  ]
+  ],
+  "source_type": "class"
 }

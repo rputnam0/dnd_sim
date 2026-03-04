@@ -1,6 +1,5 @@
 {
   "name": "Shape Self",
-  "type": "racial_trait",
   "description": "As an action, you can reshape your body to a two-legged Humanoid shape or to a four-legged Beast shape. While you have a Humanoid shape, you can wear clothing and armor made for a Humanoid of your size.",
   "mechanics": [
     {
@@ -13,5 +12,6 @@
       "duration": "until you change shape again",
       "notes": "While in Humanoid shape you can wear clothing and armor made for a Humanoid of your size."
     }
-  ]
+  ],
+  "source_type": "species"
 }

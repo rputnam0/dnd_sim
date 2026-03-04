@@ -1,6 +1,5 @@
 {
   "name": "Silverquill Initiate",
-  "type": "background_feature",
   "description": "You gain the Strixhaven Initiate feat and must choose Silverquill within it. In addition, if you have the Spellcasting or Pact Magic feature, the spells on the Silverquill Spells table are added to the spell list of your spellcasting class (if you are a multiclass character with multiple spell lists, these spells are added to all of them). Silverquill Spells: 1st level – Dissonant Whispers, Silvery Barbs; 2nd level – Calm Emotions, Darkness; 3rd level – Beacon of Hope, Daylight; 4th level – Compulsion, Confusion; 5th level – Dominate Person, Rary's Telepathic Bond. Consider customizing how your spells look when you cast them. Your Silverquill spells might be accompanied by visual effects resembling splotches of ink or radiating ripples of golden light. Any auditory effects of your spells often sound like amplified echoes of your own voice speaking the spells' verbal components—even amid the crash of lightning or a fiery eruption.",
   "mechanics": [
     {
@@ -48,5 +47,6 @@
         ]
       }
     }
-  ]
+  ],
+  "source_type": "background"
 }

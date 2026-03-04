@@ -1,21 +1,21 @@
 {
   "name": "Flurry of Blows",
-  "type": "class_feature",
   "description": "Immediately after you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action.",
   "mechanics": [
     {
-      "type": "resource_spend",
       "resource": "ki",
-      "amount": 1
+      "amount": 1,
+      "meta_type": "resource_spend"
     },
     {
-      "type": "bonus_action_attack",
       "weapon": "unarmed",
-      "attack_count": 2
+      "attack_count": 2,
+      "meta_type": "bonus_action_attack"
     },
     {
-      "type": "trigger",
-      "event": "after_attack_action"
+      "event": "after_attack_action",
+      "meta_type": "trigger"
     }
-  ]
+  ],
+  "source_type": "class"
 }

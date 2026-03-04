@@ -4,34 +4,37 @@ import pytest
 
 from dnd_sim.engine import _build_actor_from_character
 from dnd_sim.inventory import CurrencyWallet, InventoryItem, InventoryState
+from tests.helpers import with_class_levels
 
 
 def _base_character() -> dict[str, object]:
-    return {
-        "character_id": "hero",
-        "name": "Hero",
-        "class_level": "Wizard 8",
-        "max_hp": 38,
-        "ac": 14,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 8,
-            "dex": 14,
-            "con": 14,
-            "int": 18,
-            "wis": 12,
-            "cha": 10,
-        },
-        "save_mods": {"str": -1, "dex": 2, "con": 2, "int": 4, "wis": 1, "cha": 0},
-        "skill_mods": {},
-        "attacks": [
-            {"name": "Staff", "to_hit": 5, "damage": "1d6+2", "damage_type": "bludgeoning"}
-        ],
-        "resources": {},
-        "traits": [],
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": "hero",
+            "name": "Hero",
+            "class_level": "Wizard 8",
+            "max_hp": 38,
+            "ac": 14,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 8,
+                "dex": 14,
+                "con": 14,
+                "int": 18,
+                "wis": 12,
+                "cha": 10,
+            },
+            "save_mods": {"str": -1, "dex": 2, "con": 2, "int": 4, "wis": 1, "cha": 0},
+            "skill_mods": {},
+            "attacks": [
+                {"name": "Staff", "to_hit": 5, "damage": "1d6+2", "damage_type": "bludgeoning"}
+            ],
+            "resources": {},
+            "traits": [],
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def test_attunement_requires_item_opt_in_and_respects_limit() -> None:
@@ -183,7 +186,7 @@ def test_build_actor_uses_trait_mechanics_to_increase_attunement_limit() -> None
         traits_db={
             "magic item savant": {
                 "name": "Magic Item Savant",
-                "mechanics": [{"type": "increase_attunement_limit", "value": 5}],
+                "mechanics": [{"effect_type": "increase_attunement_limit", "value": 5}],
             }
         },
     )

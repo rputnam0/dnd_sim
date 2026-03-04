@@ -1,17 +1,33 @@
 {
-  "name": "Triceratops",
-  "meta": "Huge beast, unaligned",
-  "ac": 13,
-  "hp": 95,
-  "hp_formula": "10d12 + 30",
-  "ability_scores": {
-    "str": 22,
-    "dex": 9,
-    "con": 17,
-    "int": 2,
-    "wis": 11,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "triceratops",
+    "name": "Triceratops",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 95,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 6,
+    "dex_mod": -1,
+    "con_mod": 3,
+    "int_mod": -4,
+    "wis_mod": 0,
+    "cha_mod": -3,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

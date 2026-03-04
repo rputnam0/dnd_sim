@@ -1,17 +1,35 @@
 {
-  "name": "Ogre Zombie",
-  "meta": "Large undead, neutral evil",
-  "ac": 8,
-  "hp": 85,
-  "hp_formula": "9d10 + 36",
-  "ability_scores": {
-    "str": 19,
-    "dex": 6,
-    "con": 18,
-    "int": 3,
-    "wis": 6,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ogre_zombie",
+    "name": "Ogre Zombie",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": "Wis +0"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 85,
+    "ac": 8,
+    "speed_ft": 30,
+    "initiative_mod": -2,
+    "str_mod": 4,
+    "dex_mod": -2,
+    "con_mod": 4,
+    "int_mod": -4,
+    "wis_mod": -2,
+    "cha_mod": -3,
+    "save_mods": {
+      "wis": 0
+    },
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,10 +1,10 @@
 {
   "name": "Feat",
-  "type": "racial_trait",
   "description": "You gain one feat of your choice for which you qualify.",
   "mechanics": [
     {
       "grantFeat": 1
     }
-  ]
+  ],
+  "source_type": "species"
 }

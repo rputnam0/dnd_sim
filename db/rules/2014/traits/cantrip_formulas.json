@@ -1,15 +1,15 @@
 {
   "name": "Cantrip Formulas",
-  "type": "class_feature",
   "description": "You have scribed a set of arcane formulas in your spellbook that you can use to formulate a cantrip in your mind. Whenever you finish a long rest and consult those formulas in your spellbook, you can replace one wizard cantrip you know with another cantrip from the wizard spell list.",
   "mechanics": [
     {
-      "type": "replace_cantrip",
       "trigger": "long_rest",
       "source": "spellbook",
       "limit": 1,
       "allowed_spell_list": "wizard",
-      "description": "Replace one known wizard cantrip with another wizard cantrip after a long rest."
+      "description": "Replace one known wizard cantrip with another wizard cantrip after a long rest.",
+      "meta_type": "replace_cantrip"
     }
-  ]
+  ],
+  "source_type": "class"
 }

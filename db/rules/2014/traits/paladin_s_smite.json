@@ -1,6 +1,5 @@
 {
   "name": "Paladin's Smite",
-  "type": "class_feature",
   "description": "You always have the Divine Smite spell prepared. In addition, you can cast it without expending a spell slot, but you must finish a Long Rest before you can cast it in this way again.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "spell": "Divine Smite",
       "frequency": "once per long rest"
     }
-  ]
+  ],
+  "source_type": "class"
 }

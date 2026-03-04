@@ -1,17 +1,33 @@
 {
-  "name": "Lamia",
-  "meta": "Large monstrosity, chaotic evil",
-  "ac": 13,
-  "hp": 97,
-  "hp_formula": "13d10 + 26",
-  "ability_scores": {
-    "str": 16,
-    "dex": 13,
-    "con": 15,
-    "int": 14,
-    "wis": 15,
-    "cha": 16
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "lamia",
+    "name": "Lamia",
+    "team": "enemy"
   },
-  "cr": "4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 97,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 3,
+    "dex_mod": 1,
+    "con_mod": 2,
+    "int_mod": 2,
+    "wis_mod": 2,
+    "cha_mod": 3,
+    "save_mods": {},
+    "cr": "4"
+  },
+  "reactions": [],
+  "actions": []
 }

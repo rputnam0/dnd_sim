@@ -1,17 +1,38 @@
 {
-  "name": "Young Copper Dragon",
-  "meta": "Large dragon, chaotic good",
-  "ac": 17,
-  "hp": 119,
-  "hp_formula": "14d10 + 42",
-  "ability_scores": {
-    "str": 19,
-    "dex": 12,
-    "con": 17,
-    "int": 16,
-    "wis": 13,
-    "cha": 15
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "young_copper_dragon",
+    "name": "Young Copper Dragon",
+    "team": "enemy"
   },
-  "cr": "7",
-  "saving_throws_text": "Dex +4, Con +6, Wis +4, Cha +5"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 119,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 4,
+    "dex_mod": 1,
+    "con_mod": 3,
+    "int_mod": 3,
+    "wis_mod": 1,
+    "cha_mod": 2,
+    "save_mods": {
+      "dex": 4,
+      "con": 6,
+      "wis": 4,
+      "cha": 5
+    },
+    "cr": "7"
+  },
+  "reactions": [],
+  "actions": []
 }

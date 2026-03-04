@@ -1,10 +1,8 @@
 {
   "name": "Knock Out (Cost: 6d6)",
-  "type": "class_feature",
   "description": "The target must succeed on a Constitution saving throw, or it has the Unconscious condition for 1 minute or until it takes any damage. The Unconscious target repeats the save at the end of each of its turns, ending the effect on itself on a success.",
   "mechanics": [
     {
-      "type": "saving_throw",
       "ability": "Constitution",
       "on_fail": {
         "condition": "Unconscious",
@@ -14,7 +12,9 @@
           "timing": "end_of_turn",
           "ends_on_success": true
         }
-      }
+      },
+      "meta_type": "saving_throw"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Thaumaturge",
-  "type": "class_feature",
   "description": "You know one extra cantrip from the Cleric spell list. In addition, your mystical connection to the divine gives you a bonus to your Intelligence (Arcana or Religion) checks. The bonus equals your Wisdom modifier (minimum of +1).",
   "mechanics": [
     {
@@ -16,5 +15,6 @@
       ],
       "bonus": "Wisdom modifier (minimum +1)"
     }
-  ]
+  ],
+  "source_type": "class"
 }

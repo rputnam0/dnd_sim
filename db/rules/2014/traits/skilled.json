@@ -1,6 +1,5 @@
 {
   "name": "Skilled",
-  "type": "feat",
   "description": "You gain proficiency in any combination of three skills or tools of your choice. You can take this feat more than once.",
   "mechanics": [
     {
@@ -14,5 +13,6 @@
     {
       "effect_type": "repeatable"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

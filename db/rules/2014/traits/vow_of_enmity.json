@@ -1,15 +1,13 @@
 {
   "name": "Vow of Enmity",
-  "type": "subclass_feature",
   "description": "As a bonus action, you can utter a vow of enmity against a creature you can see within 10 feet of you, using your Channel Divinity. You gain advantage on attack rolls against the creature for 1 minute or until it drops to 0 hit points or falls unconscious.",
   "mechanics": [
     {
-      "type": "use_resource",
       "resource": "Channel Divinity",
-      "action": "bonus"
+      "action": "bonus",
+      "meta_type": "use_resource"
     },
     {
-      "type": "grant_advantage",
       "target": "self",
       "against": "creature",
       "range": 10,
@@ -17,7 +15,9 @@
       "endsOn": [
         "target hit points <= 0",
         "target unconscious"
-      ]
+      ],
+      "meta_type": "grant_advantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,13 +1,13 @@
 {
   "name": "Psionic Mind",
-  "type": "racial_trait",
   "description": "You can send telepathic messages to any creature you can see within 30 feet of you. You don't need to share a language with the creature for it to understand these messages, but it must be able to understand at least one language to comprehend them.",
   "mechanics": [
     {
-      "type": "telepathic_message",
       "range": 30,
       "requires_line_of_sight": true,
-      "language_requirement": "target knows at least one language"
+      "language_requirement": "target knows at least one language",
+      "meta_type": "telepathic_message"
     }
-  ]
+  ],
+  "source_type": "species"
 }

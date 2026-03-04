@@ -15,6 +15,7 @@ from dnd_sim.engine import (
     short_rest,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from tests.helpers import with_class_levels
 
 
 class FixedRng:
@@ -59,41 +60,55 @@ def _combat_trackers(
 
 
 def _monk_character(*, ki: int) -> dict:
-    return {
-        "character_id": "monk_legality",
-        "name": "Monk",
-        "class_level": "Monk 5",
-        "max_hp": 38,
-        "ac": 16,
-        "speed_ft": 30,
-        "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 10, "wis": 16, "cha": 8},
-        "save_mods": {"str": 0, "dex": 7, "con": 2, "int": 0, "wis": 6, "cha": -1},
-        "skill_mods": {},
-        "attacks": [
-            {"name": "Unarmed Strike", "to_hit": 7, "damage": "1d6+4", "damage_type": "bludgeoning"}
-        ],
-        "resources": {"ki": {"max": ki}},
-        "traits": ["Extra Attack", "Martial Arts", "Flurry of Blows"],
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": "monk_legality",
+            "name": "Monk",
+            "class_level": "Monk 5",
+            "max_hp": 38,
+            "ac": 16,
+            "speed_ft": 30,
+            "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 10, "wis": 16, "cha": 8},
+            "save_mods": {"str": 0, "dex": 7, "con": 2, "int": 0, "wis": 6, "cha": -1},
+            "skill_mods": {},
+            "attacks": [
+                {
+                    "name": "Unarmed Strike",
+                    "to_hit": 7,
+                    "damage": "1d6+4",
+                    "damage_type": "bludgeoning",
+                }
+            ],
+            "resources": {"ki": {"max": ki}},
+            "traits": ["Extra Attack", "Martial Arts", "Flurry of Blows"],
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def test_build_character_actions_monk_flurry_and_ki_economy() -> None:
-    character = {
-        "character_id": "monk",
-        "name": "Monk",
-        "class_level": "Monk 5",
-        "max_hp": 38,
-        "ac": 16,
-        "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 10, "wis": 16, "cha": 8},
-        "save_mods": {"str": 0, "dex": 7, "con": 2, "int": 0, "wis": 6, "cha": -1},
-        "attacks": [
-            {"name": "Unarmed Strike", "to_hit": 7, "damage": "1d6+4", "damage_type": "bludgeoning"}
-        ],
-        "resources": {"ki": {"max": 5}},
-        "traits": ["Martial Arts", "Flurry of Blows"],
-    }
+    character = with_class_levels(
+        {
+            "character_id": "monk",
+            "name": "Monk",
+            "class_level": "Monk 5",
+            "max_hp": 38,
+            "ac": 16,
+            "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 10, "wis": 16, "cha": 8},
+            "save_mods": {"str": 0, "dex": 7, "con": 2, "int": 0, "wis": 6, "cha": -1},
+            "attacks": [
+                {
+                    "name": "Unarmed Strike",
+                    "to_hit": 7,
+                    "damage": "1d6+4",
+                    "damage_type": "bludgeoning",
+                }
+            ],
+            "resources": {"ki": {"max": 5}},
+            "traits": ["Martial Arts", "Flurry of Blows"],
+        }
+    )
 
     actions = _build_character_actions(character)
     action_by_name = {action.name: action for action in actions}

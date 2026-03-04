@@ -1,6 +1,5 @@
 {
   "name": "Mark of Sentinel",
-  "type": "feat",
   "description": "You gain a 1d4 bonus to Wisdom (Insight) and Wisdom (Perception) checks. You learn the Shield spell, which you can cast once per long rest for free or using spell slots, choosing Intelligence, Wisdom, or Charisma as the casting ability. You can use a reaction to swap places with a creature within 5 feet that is hit by an attack, taking the hit yourself, up to a number of times equal to your proficiency bonus per long rest. You also add several spells to your spellcasting class's spell list.",
   "mechanics": [
     {
@@ -42,5 +41,6 @@
         "bigby's hand"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

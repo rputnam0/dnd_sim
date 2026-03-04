@@ -1,17 +1,33 @@
 {
-  "name": "Basilisk",
-  "meta": "Medium monstrosity, unaligned",
-  "ac": 15,
-  "hp": 52,
-  "hp_formula": "8d8 + 16",
-  "ability_scores": {
-    "str": 16,
-    "dex": 8,
-    "con": 15,
-    "int": 2,
-    "wis": 8,
-    "cha": 7
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "basilisk",
+    "name": "Basilisk",
+    "team": "enemy"
   },
-  "cr": "3",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 52,
+    "ac": 15,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 3,
+    "dex_mod": -1,
+    "con_mod": 2,
+    "int_mod": -4,
+    "wis_mod": -1,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "3"
+  },
+  "reactions": [],
+  "actions": []
 }

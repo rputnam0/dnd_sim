@@ -1,47 +1,47 @@
 {
   "name": "Oath of Vengeance Spells",
-  "type": "subclass_feature",
   "description": "The magic of your oath ensures you always have certain spells ready; when you reach a Paladin level specified in the Oath of Vengeance Spells table, you thereafter always have the listed spells prepared. Oath of Vengeance Spells table: 3rd – Bane, Hunter's Mark; 5th – Hold Person, Misty Step; 9th – Haste, Protection from Energy; 13th – Banishment, Dimension Door; 17th – Hold Monster, Scrying.",
   "mechanics": [
     {
-      "type": "spell_prepared",
       "level": 3,
       "spells": [
         "Bane",
         "Hunter's Mark"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     },
     {
-      "type": "spell_prepared",
       "level": 5,
       "spells": [
         "Hold Person",
         "Misty Step"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     },
     {
-      "type": "spell_prepared",
       "level": 9,
       "spells": [
         "Haste",
         "Protection from Energy"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     },
     {
-      "type": "spell_prepared",
       "level": 13,
       "spells": [
         "Banishment",
         "Dimension Door"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     },
     {
-      "type": "spell_prepared",
       "level": 17,
       "spells": [
         "Hold Monster",
         "Scrying"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

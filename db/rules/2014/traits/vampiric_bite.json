@@ -1,20 +1,18 @@
 {
   "name": "Vampiric Bite",
-  "type": "racial_trait",
   "description": "When you use your Unarmed Strike and deal damage, you can choose to bite with your fangs. You deal piercing damage equal to 1d4 plus your Constitution modifier instead of the normal damage of an Unarmed Strike. In addition, when you deal this damage to a creature that isn’t a construct or an undead, you can empower yourself in one of the following ways: Drain – you regain hit points equal to the piercing damage dealt; Strengthen – you gain a bonus to the next ability check or attack roll you make within the next minute equal to the piercing damage dealt. You can empower yourself with this trait a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "type": "damage_replacement",
       "trigger": "use_unarmed_strike",
       "new_damage": {
         "dice": "1d4",
         "ability_modifier": "Constitution",
         "damage_type": "piercing"
       },
-      "description": "Replace normal unarmed strike damage with 1d4 + Con modifier piercing damage."
+      "description": "Replace normal unarmed strike damage with 1d4 + Con modifier piercing damage.",
+      "meta_type": "damage_replacement"
     },
     {
-      "type": "empowerment",
       "trigger": "deal_vampiric_bite_damage",
       "conditions": {
         "target_not": [
@@ -48,7 +46,9 @@
       "uses": {
         "max_per_long_rest": "proficiency_bonus",
         "reset": "long_rest"
-      }
+      },
+      "meta_type": "empowerment"
     }
-  ]
+  ],
+  "source_type": "species"
 }

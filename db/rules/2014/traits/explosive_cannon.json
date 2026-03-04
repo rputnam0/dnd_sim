@@ -1,11 +1,9 @@
 {
   "name": "Explosive Cannon",
-  "type": "subclass_feature",
   "description": "Every Eldritch Cannon you create is now more destructive. You gain the following benefits.\nDetonate: When your cannon takes damage, you can take a Reaction to command the cannon to detonate if you are within 60 feet of it. Doing so destroys the cannon and forces each creature within 20 feet of it to make a Dexterity saving throw against your spell save DC, taking 3d10 Force damage on a failed save or half as much damage on a successful one.\nFirepower: The cannon's damage rolls and the number of Temporary Hit Points granted by Protector increase by 1d8.",
   "mechanics": [
     {
       "name": "Detonate",
-      "type": "reaction",
       "trigger": "cannon takes damage",
       "range": 60,
       "effect": {
@@ -20,15 +18,17 @@
             "half_on_success": true
           }
         }
-      }
+      },
+      "meta_type": "reaction"
     },
     {
       "name": "Firepower",
-      "type": "passive",
       "effect": {
         "damage_roll_bonus": "1d8",
         "temporary_hit_points_bonus": "1d8"
-      }
+      },
+      "meta_type": "passive"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

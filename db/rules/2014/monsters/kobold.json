@@ -1,17 +1,33 @@
 {
-  "name": "Kobold",
-  "meta": "Small humanoid (kobold), lawful evil",
-  "ac": 12,
-  "hp": 5,
-  "hp_formula": "2d6 \u2212 2",
-  "ability_scores": {
-    "str": 7,
-    "dex": 15,
-    "con": 9,
-    "int": 8,
-    "wis": 7,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "kobold",
+    "name": "Kobold",
+    "team": "enemy"
   },
-  "cr": "1/8",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 5,
+    "ac": 12,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": -2,
+    "dex_mod": 2,
+    "con_mod": -1,
+    "int_mod": -1,
+    "wis_mod": -2,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "1/8"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,22 +1,22 @@
 {
   "name": "Giant Power",
-  "type": "subclass_feature",
   "description": "3rd-Level Path of the Giant Feature. When you choose this path, you learn to speak, read, and write Giant or one other language of your choice if you already know Giant. Additionally, you learn a cantrip of your choice: either druidcraft or thaumaturgy. Wisdom is your spellcasting ability for this spell.",
   "mechanics": [
     {
-      "type": "grant_language",
       "languages": [
         "Giant"
       ],
-      "additional_option": "one other language of your choice if you already know Giant"
+      "additional_option": "one other language of your choice if you already know Giant",
+      "meta_type": "grant_language"
     },
     {
-      "type": "grant_cantrip",
       "options": [
         "druidcraft",
         "thaumaturgy"
       ],
-      "spellcasting_ability": "wisdom"
+      "spellcasting_ability": "wisdom",
+      "meta_type": "grant_cantrip"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

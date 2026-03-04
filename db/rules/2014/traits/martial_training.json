@@ -1,6 +1,5 @@
 {
   "name": "Martial Training",
-  "type": "racial_trait",
   "description": "You are proficient with two martial weapons of your choice and with light armor.",
   "mechanics": [
     {
@@ -17,5 +16,6 @@
         "type": "light"
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

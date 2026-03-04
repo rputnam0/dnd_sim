@@ -1,9 +1,15 @@
 {
   "name": "True Strike Divination",
-  "meta": "True Strike Divination cantrip",
+  "type": "spell",
+  "level": 0,
+  "school": "Divination",
   "casting_time": "1 action",
-  "range": "30 feet",
-  "components": "S",
-  "duration": "Concentration, up to 1 round",
-  "description": "You extend your hand and point a finger at a target in range. Your magic grants you a brief insight into the target\u2019s defenses. On your next turn, you gain advantage on your first attack roll against the target, provided that this spell hasn\u2019t ended. Unseen Servant 1st-\u00ad\u2010\u2011level conjuration (ritual)"
+  "range_ft": 30,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 1,
+  "description": "You extend your hand and point a finger at a target in range. Your magic grants you a brief insight into the target’s defenses. On your next turn, you gain advantage on your first attack roll against the target, provided that this spell hasn’t ended. Unseen Servant 1st-­‐‑level conjuration (ritual)",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

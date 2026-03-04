@@ -1,17 +1,33 @@
 {
-  "name": "Goblin",
-  "meta": "Small humanoid (goblinoid), neutral evil",
-  "ac": 15,
-  "hp": 7,
-  "hp_formula": "2d6",
-  "ability_scores": {
-    "str": 8,
-    "dex": 14,
-    "con": 10,
-    "int": 10,
-    "wis": 8,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "goblin",
+    "name": "Goblin",
+    "team": "enemy"
   },
-  "cr": "1/4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 7,
+    "ac": 15,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": -1,
+    "dex_mod": 2,
+    "con_mod": 0,
+    "int_mod": 0,
+    "wis_mod": -1,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "1/4"
+  },
+  "reactions": [],
+  "actions": []
 }

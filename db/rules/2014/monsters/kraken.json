@@ -1,17 +1,38 @@
 {
-  "name": "Kraken",
-  "meta": "Gargantuan monstrosity (titan), chaotic evil",
-  "ac": 18,
-  "hp": 472,
-  "hp_formula": "27d20 + 189",
-  "ability_scores": {
-    "str": 30,
-    "dex": 11,
-    "con": 25,
-    "int": 22,
-    "wis": 18,
-    "cha": 20
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "kraken",
+    "name": "Kraken",
+    "team": "enemy"
   },
-  "cr": "23",
-  "saving_throws_text": "Str +17, Dex +7, Con +14, Int +13, Wis"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 472,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 10,
+    "dex_mod": 0,
+    "con_mod": 7,
+    "int_mod": 6,
+    "wis_mod": 4,
+    "cha_mod": 5,
+    "save_mods": {
+      "str": 17,
+      "dex": 7,
+      "con": 14,
+      "int": 13
+    },
+    "cr": "23"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,6 +1,5 @@
 {
   "name": "Observant & Athletic",
-  "type": "racial_trait",
   "description": "You have proficiency in the Athletics and Perception skills.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
         "Perception"
       ]
     }
-  ]
+  ],
+  "source_type": "species"
 }

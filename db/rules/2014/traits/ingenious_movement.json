@@ -1,15 +1,15 @@
 {
   "name": "Ingenious Movement",
-  "type": "subclass_feature",
   "description": "When you use your Flash of Genius, you or a willing creature of your choice that you can see within 30 feet of yourself can teleport up to 30 feet to an unoccupied space you can see as part of that same Reaction.",
   "mechanics": [
     {
-      "trigger": "When you use Flash of Genius",
+      "trigger": "when you use flash of genius",
       "action": "reaction",
-      "type": "teleport",
       "range": 30,
       "target": "self or willing creature you can see within 30 feet",
-      "destination": "unoccupied space you can see within 30 feet"
+      "destination": "unoccupied space you can see within 30 feet",
+      "meta_type": "teleport"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

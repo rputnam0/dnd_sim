@@ -1,6 +1,5 @@
 {
   "name": "Nature's Intuition",
-  "type": "racial_trait",
   "description": "Thanks to your mystical connection to nature, you gain proficiency with two of the following skills of your choice: Animal Handling, Medicine, Nature, Perception, Stealth, or Survival.",
   "mechanics": [
     {
@@ -17,5 +16,6 @@
         "count": 2
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

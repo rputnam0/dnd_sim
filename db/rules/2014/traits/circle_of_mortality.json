@@ -1,6 +1,5 @@
 {
   "name": "Circle of Mortality",
-  "type": "subclass_feature",
   "description": "At 1st level, you gain the ability to manipulate the line between life and death. When you would normally roll one or more dice to restore hit points with a spell to a creature at 0 hit points, you instead use the highest number possible for each die. In addition, you learn the spare the dying cantrip, which doesn't count against the number of cleric cantrips you know. For you, it has a range of 30 feet, and you can cast it as a bonus action.",
   "mechanics": [
     {
@@ -13,11 +12,12 @@
     },
     {
       "learn_spell": "spare the dying",
-      "type": "cantrip",
       "range": 30,
       "casting_time": "bonus action",
       "ignore_cantrip_limit": true,
-      "description": "You learn the spare the dying cantrip; it does not count against your known cleric cantrips."
+      "description": "You learn the spare the dying cantrip; it does not count against your known cleric cantrips.",
+      "meta_type": "cantrip"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

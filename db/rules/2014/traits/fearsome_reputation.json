@@ -1,6 +1,6 @@
 {
   "name": "Fearsome Reputation",
-  "type": "background_feature",
   "description": "People recognize you as a member of the Cult of Rakdos, and they're careful not to draw your anger or ridicule. You can get away with minor criminal offenses, such as refusing to pay for food at a restaurant or breaking down a door at a local shop, if no legal authorities witness the crime. Most people are too daunted by you to report your wrongdoing to the Azorius.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

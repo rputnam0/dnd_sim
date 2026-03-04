@@ -1,15 +1,15 @@
 {
   "name": "Unarmored Movement improvement",
-  "type": "class_feature",
   "description": "At 9th level, you gain the ability to move along vertical surfaces and across liquids on your turn without falling during the move.",
   "mechanics": [
     {
-      "type": "movement",
       "allowsMovementOn": [
         "vertical_surfaces",
         "liquids"
       ],
-      "preventsFalling": true
+      "preventsFalling": true,
+      "meta_type": "movement"
     }
-  ]
+  ],
+  "source_type": "class"
 }

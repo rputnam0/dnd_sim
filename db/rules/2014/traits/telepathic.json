@@ -1,6 +1,5 @@
 {
   "name": "Telepathic",
-  "type": "feat",
   "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. You can speak telepathically to any creature you can see within 60 feet of yourself. You also always have the Detect Thoughts spell prepared and can cast it once per long rest without a spell slot or components, or using your own spell slots.",
   "mechanics": [
     {
@@ -29,5 +28,6 @@
       "frequency": "1/long_rest",
       "no_components": true
     }
-  ]
+  ],
+  "source_type": "feat"
 }

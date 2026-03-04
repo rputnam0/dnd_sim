@@ -1,6 +1,5 @@
 {
   "name": "Greater Mark of Storm",
-  "type": "feat",
   "description": "Increase one ability score of your choice by 1. Your Windwright's Intuition die increases to a d6. When you cast Gust of Wind using your Storm Magic benefit, you gain a fly speed of 60 feet for the duration of the spell.",
   "mechanics": [
     {
@@ -20,5 +19,6 @@
       "value": 60,
       "condition": "casting Gust of Wind via Storm Magic"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

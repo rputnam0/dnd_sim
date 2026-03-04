@@ -1,16 +1,16 @@
 {
   "name": "Hawkeyed",
-  "type": "racial_trait",
   "description": "You have proficiency in the Perception skill. In addition, attacking at long range doesn't impose disadvantage on your ranged weapon attack rolls.",
   "mechanics": [
     {
-      "type": "skill_proficiency",
-      "skill": "Perception"
+      "skill": "Perception",
+      "meta_type": "skill_proficiency"
     },
     {
-      "type": "ranged_attack",
       "range": "long",
-      "disadvantage": false
+      "disadvantage": false,
+      "meta_type": "ranged_attack"
     }
-  ]
+  ],
+  "source_type": "species"
 }

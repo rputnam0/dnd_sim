@@ -1,17 +1,38 @@
 {
-  "name": "Glabrezu",
-  "meta": "Large fiend (demon), chaotic evil",
-  "ac": 17,
-  "hp": 157,
-  "hp_formula": "15d10 + 75",
-  "ability_scores": {
-    "str": 20,
-    "dex": 15,
-    "con": 21,
-    "int": 19,
-    "wis": 17,
-    "cha": 16
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "glabrezu",
+    "name": "Glabrezu",
+    "team": "enemy"
   },
-  "cr": "9",
-  "saving_throws_text": "Str +9, Con +9, Wis +7, Cha +7"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 157,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 5,
+    "dex_mod": 2,
+    "con_mod": 5,
+    "int_mod": 4,
+    "wis_mod": 3,
+    "cha_mod": 3,
+    "save_mods": {
+      "str": 9,
+      "con": 9,
+      "wis": 7,
+      "cha": 7
+    },
+    "cr": "9"
+  },
+  "reactions": [],
+  "actions": []
 }

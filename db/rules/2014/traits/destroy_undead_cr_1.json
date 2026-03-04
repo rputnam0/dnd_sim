@@ -1,6 +1,5 @@
 {
   "name": "Destroy Undead (CR 1)",
-  "type": "class_feature",
   "description": "Starting at 8th level, when an undead of CR 1 or lower fails its saving throw against your Turn Undead feature, the creature is instantly destroyed.",
   "mechanics": [
     {
@@ -15,5 +14,6 @@
         "target": "creature"
       }
     }
-  ]
+  ],
+  "source_type": "class"
 }

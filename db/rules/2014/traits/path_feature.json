@@ -1,6 +1,6 @@
 {
   "name": "Path Feature",
-  "type": "class_feature",
   "description": "At 6th level, you gain a feature from your Primal Path.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "class"
 }

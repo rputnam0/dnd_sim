@@ -1,6 +1,5 @@
 {
   "name": "Shadowmoor Hexer",
-  "type": "feat",
   "description": "You always have the Hex spell prepared. Intelligence, Wisdom, or Charisma is your spellcasting ability for this spell. You can cast it once without a spell slot per long rest, or using any spell slots you have. When a creature that you've cursed with Hex hits you with an attack roll, the creature takes Psychic damage equal to your Proficiency Bonus once per turn.",
   "mechanics": [
     {
@@ -27,5 +26,6 @@
       "amount": "proficiency_bonus",
       "limit": "once_per_turn"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

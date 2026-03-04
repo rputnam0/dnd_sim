@@ -1,6 +1,5 @@
 {
   "name": "Acrobatic Movement",
-  "type": "class_feature",
   "description": "While you aren't wearing armor or wielding a shield, you gain the ability to move along vertical surfaces and across liquids on your turn without falling during the movement.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "condition": "not wearing armor or shield",
       "movement": "vertical surfaces, liquids"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,17 +1,35 @@
 {
-  "name": "Zombie",
-  "meta": "Medium undead, neutral evil",
-  "ac": 8,
-  "hp": 22,
-  "hp_formula": "3d8 + 9",
-  "ability_scores": {
-    "str": 13,
-    "dex": 6,
-    "con": 16,
-    "int": 3,
-    "wis": 6,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "zombie",
+    "name": "Zombie",
+    "team": "enemy"
   },
-  "cr": "1/4",
-  "saving_throws_text": "Wis +0"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 22,
+    "ac": 8,
+    "speed_ft": 30,
+    "initiative_mod": -2,
+    "str_mod": 1,
+    "dex_mod": -2,
+    "con_mod": 3,
+    "int_mod": -4,
+    "wis_mod": -2,
+    "cha_mod": -3,
+    "save_mods": {
+      "wis": 0
+    },
+    "cr": "1/4"
+  },
+  "reactions": [],
+  "actions": []
 }

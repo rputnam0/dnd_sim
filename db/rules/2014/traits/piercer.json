@@ -1,6 +1,5 @@
 {
   "name": "Piercer",
-  "type": "feat",
   "description": "You increase your Strength or Dexterity score by 1, to a maximum of 20. Once per turn, when you hit a creature with an attack that deals Piercing damage, you can reroll one of the attack's damage dice, and you must use the new roll. When you score a critical hit that deals Piercing damage to a creature, you can roll one additional damage die when determining the extra Piercing damage the target takes.",
   "mechanics": [
     {
@@ -24,5 +23,6 @@
       "damage_type": "piercing",
       "amount": 1
     }
-  ]
+  ],
+  "source_type": "feat"
 }

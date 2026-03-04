@@ -1,10 +1,10 @@
 {
   "name": "Language",
-  "type": "racial_trait",
   "description": "You can speak, read, and write Auran.",
   "mechanics": [
     {
       "grantLanguage": "Auran"
     }
-  ]
+  ],
+  "source_type": "species"
 }

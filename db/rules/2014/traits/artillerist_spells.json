@@ -1,10 +1,8 @@
 {
   "name": "Artillerist Spells",
-  "type": "subclass_feature",
   "description": "When you reach an Artificer level specified in the Artillerist Spells table, you thereafter always have the listed spells prepared. Artillerist Spells table: 3rd level – Shield, Thunderwave; 5th level – Scorching Ray, Shatter; 9th level – Fireball, Wind Wall; 13th level – Ice Storm, Wall of Fire; 17th level – Cone of Cold, Wall of Force.",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "spells_by_level": {
         "3": [
           "Shield",
@@ -26,7 +24,9 @@
           "Cone of Cold",
           "Wall of Force"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

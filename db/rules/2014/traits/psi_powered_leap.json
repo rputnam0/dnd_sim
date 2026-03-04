@@ -1,6 +1,5 @@
 {
   "name": "Psi-Powered Leap",
-  "type": "subclass_feature",
   "description": "As a bonus action, you can propel your body with your mind. You gain a flying speed equal to twice your walking speed until the end of the current turn. Once you take this bonus action, you can't do so again until you finish a short or long rest, unless you expend a Psionic Energy die to take it again.",
   "mechanics": [
     {
@@ -14,5 +13,6 @@
         "type": "expend"
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

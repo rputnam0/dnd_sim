@@ -1,12 +1,12 @@
 {
   "name": "Pack Tactics",
-  "type": "racial_trait",
   "description": "You have advantage on an attack roll against a creature if at least one of your allies is within 5 feet of the creature and the ally isn't incapacitated.",
   "mechanics": [
     {
-      "type": "grant_advantage",
       "trigger": "attack_roll",
-      "condition": "ally within 5 feet of target and ally not incapacitated"
+      "condition": "ally within 5 feet of target and ally not incapacitated",
+      "meta_type": "grant_advantage"
     }
-  ]
+  ],
+  "source_type": "species"
 }

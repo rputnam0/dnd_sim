@@ -1,20 +1,20 @@
 {
   "name": "Astral Spark",
-  "type": "racial_trait",
   "description": "Your psychic connection to the Astral Plane enables you to mystically access a spark of divine power, which you can channel through your weapons. When you hit a target with a simple or martial weapon, you can cause the target to take extra force damage equal to your proficiency bonus. You can use this trait a number of times equal to your proficiency bonus, but you can use it no more than once per turn. You regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "type": "extra_damage",
       "damage_type": "force",
       "amount": "proficiency_bonus",
-      "trigger": "hit with simple or martial weapon"
+      "trigger": "hit with simple or martial weapon",
+      "meta_type": "extra_damage"
     },
     {
-      "type": "resource",
       "name": "Astral Spark uses",
       "max_uses": "proficiency_bonus",
       "reset": "long_rest",
-      "per_turn_limit": 1
+      "per_turn_limit": 1,
+      "meta_type": "resource"
     }
-  ]
+  ],
+  "source_type": "species"
 }

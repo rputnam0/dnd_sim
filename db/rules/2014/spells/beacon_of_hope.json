@@ -1,9 +1,15 @@
 {
   "name": "Beacon of Hope",
-  "meta": "Beacon of Hope 3rd-\u00ad\u2010\u2011level abjuration",
+  "type": "spell",
+  "level": 3,
+  "school": "Abjuration",
   "casting_time": "1 action",
-  "range": "30 feet",
-  "components": "V, S",
-  "duration": "Concentration, up to 1 minute",
-  "description": "This spell bestows hope and vitality. Choose any number of creatures within range. For the duration, each target has advantage on Wisdom saving throws and death saving throws, and regains the maximum number of hit points possible from any healing. Bestow Curse 3rd-\u00ad\u2010\u2011level necromancy"
+  "range_ft": 30,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 10,
+  "description": "This spell bestows hope and vitality. Choose any number of creatures within range. For the duration, each target has advantage on Wisdom saving throws and death saving throws, and regains the maximum number of hit points possible from any healing. Bestow Curse 3rd-­‐‑level necromancy",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

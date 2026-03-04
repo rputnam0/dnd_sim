@@ -1,6 +1,5 @@
 {
   "name": "Primal Intuition",
-  "type": "racial_trait",
   "description": "You have proficiency in two of the following skills of your choice: Animal Handling, Insight, Intimidation, Medicine, Nature, Perception, and Survival.",
   "mechanics": [
     {
@@ -18,5 +17,6 @@
         "choose": 2
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

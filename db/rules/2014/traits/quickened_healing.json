@@ -1,17 +1,17 @@
 {
   "name": "Quickened Healing",
-  "type": "class_feature",
   "description": "4th-level monk (optional class feature). As an action, you can spend 2 ki points and roll a Martial Arts die. You regain a number of hit points equal to the number rolled plus your proficiency bonus.",
   "mechanics": [
     {
-      "type": "resource_spend",
       "resource": "ki",
-      "amount": 2
+      "amount": 2,
+      "meta_type": "resource_spend"
     },
     {
-      "type": "heal",
       "formula": "Martial Arts die + proficiency_bonus",
-      "trigger": "action"
+      "trigger": "action",
+      "effect_type": "heal"
     }
-  ]
+  ],
+  "source_type": "class"
 }

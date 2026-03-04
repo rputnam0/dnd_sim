@@ -1,17 +1,17 @@
 {
   "name": "Guarded Mind",
-  "type": "subclass_feature",
   "description": "10th-level Psi Warrior feature. The psionic energy flowing through you has bolstered your mind. You have resistance to psychic damage. Moreover, if you start your turn charmed or frightened, you can expend a Psionic Energy die and end every effect on yourself subjecting you to those conditions.",
   "mechanics": [
     {
-      "type": "damage_resistance",
-      "damage_type": "psychic"
+      "damage_type": "psychic",
+      "meta_type": "damage_resistance"
     },
     {
-      "type": "condition_removal",
       "trigger": "start_of_turn_if_charmed_or_frightened",
       "resource": "Psionic Energy die",
-      "effect": "end_charmed_and_frightened"
+      "effect": "end_charmed_and_frightened",
+      "meta_type": "condition_removal"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

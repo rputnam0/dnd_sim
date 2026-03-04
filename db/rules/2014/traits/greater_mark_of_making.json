@@ -1,6 +1,5 @@
 {
   "name": "Greater Mark of Making",
-  "type": "feat",
   "description": "You increase one ability score of your choice by 1. Your Artisan's Intuition die increases from a d4 to a d6. When you use your Spellsmith benefit to cast Magic Weapon without a spell slot, you cast it at 3rd level.",
   "mechanics": [
     {
@@ -20,5 +19,6 @@
       "feature": "Spellsmith",
       "cast_level": 3
     }
-  ]
+  ],
+  "source_type": "feat"
 }

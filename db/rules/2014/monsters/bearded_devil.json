@@ -1,17 +1,37 @@
 {
-  "name": "Bearded Devil",
-  "meta": "Medium fiend (devil), lawful evil",
-  "ac": 13,
-  "hp": 52,
-  "hp_formula": "8d8 + 16",
-  "ability_scores": {
-    "str": 16,
-    "dex": 15,
-    "con": 15,
-    "int": 9,
-    "wis": 11,
-    "cha": 11
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "bearded_devil",
+    "name": "Bearded Devil",
+    "team": "enemy"
   },
-  "cr": "3",
-  "saving_throws_text": "Str +5, Con +4, Wis +2"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 52,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 3,
+    "dex_mod": 2,
+    "con_mod": 2,
+    "int_mod": -1,
+    "wis_mod": 0,
+    "cha_mod": 0,
+    "save_mods": {
+      "str": 5,
+      "con": 4,
+      "wis": 2
+    },
+    "cr": "3"
+  },
+  "reactions": [],
+  "actions": []
 }

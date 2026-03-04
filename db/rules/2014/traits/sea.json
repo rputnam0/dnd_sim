@@ -1,10 +1,8 @@
 {
   "name": "Sea",
-  "type": "subclass_feature",
   "description": "When this effect is activated, you can choose one other creature you can see in your aura. The target must make a Dexterity saving throw. The target takes 1d6 lightning damage on a failed save, or half as much damage on a successful one. The damage increases when you reach certain levels in this class, increasing to 2d6 at 10th level, 3d6 at 15th level, and 4d6 at 20th level.",
   "mechanics": [
     {
-      "type": "damage",
       "damage": {
         "dice": "1d6",
         "damage_type": "lightning"
@@ -28,7 +26,9 @@
           "level": 20,
           "dice": "4d6"
         }
-      ]
+      ],
+      "effect_type": "damage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

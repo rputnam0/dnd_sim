@@ -1,15 +1,13 @@
 {
   "name": "Arcane Shot Options",
-  "type": "subclass_feature",
   "description": "The Arcane Shot feature lets you choose options for it at certain levels. The options are presented here in alphabetical order. They are all magical effects, and each one is associated with one of the schools of magic. If an option requires a saving throw, your Arcane Shot save DC is calculated using your Intelligence ability. Available options: Banishing Arrow, Beguiling Arrow, Bursting Arrow, Enfeebling Arrow, Grasping Arrow, Piercing Arrow, Seeking Arrow, Shadow Arrow.",
   "mechanics": [
     {
-      "type": "ability_dc",
       "name": "Arcane Shot",
-      "ability": "int"
+      "ability": "int",
+      "meta_type": "ability_dc"
     },
     {
-      "type": "choice",
       "count": 2,
       "options": [
         "Banishing Arrow",
@@ -20,7 +18,9 @@
         "Piercing Arrow",
         "Seeking Arrow",
         "Shadow Arrow"
-      ]
+      ],
+      "meta_type": "choice"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

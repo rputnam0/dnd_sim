@@ -1,6 +1,5 @@
 {
   "name": "Lightning Launcher",
-  "type": "subclass_feature",
   "description": "A gemlike node appears on one of your armored fists or on the chest (your choice). It counts as a simple ranged weapon, with a normal range of 90 feet and a long range of 300 feet, and it deals 1d6 lightning damage on a hit. Once on each of your turns when you hit a creature with it, you can deal an extra 1d6 lightning damage to that target.",
   "mechanics": [
     {
@@ -20,5 +19,6 @@
         "frequency": "once per turn"
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

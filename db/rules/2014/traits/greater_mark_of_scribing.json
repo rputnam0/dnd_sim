@@ -1,6 +1,5 @@
 {
   "name": "Greater Mark of Scribing",
-  "type": "feat",
   "description": "You increase one ability score of your choice by 1. Your Gifted Scribe die increases from a d4 to a d6. Additionally, once per long rest, when you cast Comprehend Languages, you can target up to three willing creatures within 30 feet to also receive the spell's benefits and gain telepathic communication with you and each other within a 1-mile range for the duration.",
   "mechanics": [
     {
@@ -22,5 +21,6 @@
       "uses": 1,
       "reset": "long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

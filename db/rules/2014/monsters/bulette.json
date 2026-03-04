@@ -1,17 +1,33 @@
 {
-  "name": "Bulette",
-  "meta": "Large monstrosity, unaligned",
-  "ac": 17,
-  "hp": 94,
-  "hp_formula": "9d10 + 45",
-  "ability_scores": {
-    "str": 19,
-    "dex": 11,
-    "con": 21,
-    "int": 2,
-    "wis": 10,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "bulette",
+    "name": "Bulette",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 94,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 4,
+    "dex_mod": 0,
+    "con_mod": 5,
+    "int_mod": -4,
+    "wis_mod": 0,
+    "cha_mod": -3,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

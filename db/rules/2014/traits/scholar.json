@@ -1,10 +1,8 @@
 {
   "name": "Scholar",
-  "type": "class_feature",
   "description": "While studying magic, you also specialized in another field of study. Choose one of the following skills in which you have proficiency: Arcana, History, Investigation, Medicine, Nature, or Religion. You have Expertise in the chosen skill.",
   "mechanics": [
     {
-      "type": "skill_expertise",
       "options": [
         "Arcana",
         "History",
@@ -14,7 +12,9 @@
         "Religion"
       ],
       "grantProficiency": true,
-      "grantExpertise": true
+      "grantExpertise": true,
+      "meta_type": "skill_expertise"
     }
-  ]
+  ],
+  "source_type": "class"
 }

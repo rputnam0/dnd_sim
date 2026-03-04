@@ -1,6 +1,5 @@
 {
   "name": "Natural Weapon",
-  "type": "racial_trait",
   "description": "You can use your horns as a natural weapon to make unarmed strikes. If you hit with your horns, you deal bludgeoning damage equal to 1d6 + your Strength modifier.",
   "mechanics": [
     {
@@ -13,5 +12,6 @@
         "property": "unarmed"
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

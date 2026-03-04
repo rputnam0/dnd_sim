@@ -1,14 +1,14 @@
 {
   "name": "Student of War",
-  "type": "subclass_feature",
   "description": "At 3rd level, you gain proficiency with one type of artisan's tools of your choice.",
   "mechanics": [
     {
-      "type": "gain_proficiency",
       "category": "tool",
       "tool_type": "artisan's tools",
       "choice": true,
-      "quantity": 1
+      "quantity": 1,
+      "meta_type": "gain_proficiency"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Boon of Exquisite Radiance",
-  "type": "feat",
   "description": "Increase one ability score of your choice by 1, to a maximum of 30. Creatures you reduce to 0 hit points can't become Undead. Once per long rest, when you make a damage roll that deals Radiant damage, you can instead use the highest number possible for each damage die.",
   "mechanics": [
     {
@@ -18,5 +17,6 @@
       "effect_type": "prevent_undead_transformation",
       "trigger": "reduce_to_zero_hp"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

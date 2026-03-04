@@ -1,6 +1,5 @@
 {
   "name": "Greater Mark of Warding",
-  "type": "feat",
   "description": "You gain a +1 bonus to an ability score of your choice. Your Warder's Intuition die increases to a d6. As a reaction, you can impose disadvantage on an attack roll against you or a creature within 30 feet, a number of times equal to your proficiency bonus per long rest.",
   "mechanics": [
     {
@@ -22,5 +21,6 @@
       "uses": "proficiency_bonus",
       "reset": "long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

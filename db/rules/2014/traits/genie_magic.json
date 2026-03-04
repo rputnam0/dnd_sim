@@ -1,6 +1,5 @@
 {
   "name": "Genie Magic",
-  "type": "feat",
   "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. You can cast a 1st-level Sorcerer spell with a casting time of an action once per long rest. The spell's spellcasting ability is the one increased by this feat. The spell's level increases to 2nd at level 11 and 3rd at level 17.",
   "mechanics": [
     {
@@ -30,5 +29,6 @@
         }
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

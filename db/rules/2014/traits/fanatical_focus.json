@@ -1,13 +1,13 @@
 {
   "name": "Fanatical Focus",
-  "type": "subclass_feature",
   "description": "Starting at 6th level, the divine power that fuels your rage can protect you. If you fail a saving throw while you're raging, you can reroll it, and you must use the new roll. You can use this ability only once per rage.",
   "mechanics": [
     {
-      "type": "save_reroll",
       "trigger": "fail saving throw while raging",
       "effect": "reroll the saving throw and use the new result",
-      "limit": "once per rage"
+      "limit": "once per rage",
+      "meta_type": "save_reroll"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Cat's Talents",
-  "type": "racial_trait",
   "description": "You have proficiency in the Perception and Stealth skills.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
         "Stealth"
       ]
     }
-  ]
+  ],
+  "source_type": "species"
 }

@@ -1,9 +1,15 @@
 {
   "name": "Contact Other Plane",
-  "meta": "Contact Other Plane 5th-\u00ad\u2010\u2011level divination (ritual)",
+  "type": "spell",
+  "level": 5,
+  "school": "Divination",
   "casting_time": "1 minute",
-  "range": "Self",
-  "components": "V",
-  "duration": "1 minute",
-  "description": "You mentally contact a demigod, the spirit of a long-\u00ad\u2010\u2011 dead sage, or some other mysterious entity from another plane. Contacting this extraplanar intelligence can strain or even break your mind. When you cast this spell, make a DC 15 Intelligence saving throw. On a failure, you take 6d6 psychic damage and are insane until you finish a long rest. While insane, you can\u2019t take actions, can\u2019t understand what other creatures say, can\u2019t read, and speak only in gibberish. A greater restoration spell cast on you ends this effect. On a successful save, you can ask the entity up to five questions. You must ask your questions before the spell ends. The GM answers each question with one word, such as \u201cyes,\u201d \u201cno,\u201d \u201cmaybe,\u201d \u201cnever,\u201d \u201cirrelevant,\u201d or \u201cunclear\u201d (if the entity doesn\u2019t know the answer to the question). If a one-\u00ad\u2010\u2011word answer would be misleading, the GM might instead offer a short phrase as an answer. Contagion 5th-\u00ad\u2010\u2011level necromancy"
+  "range_ft": 0,
+  "concentration": false,
+  "ritual": true,
+  "duration_rounds": 10,
+  "description": "You mentally contact a demigod, the spirit of a long-­‐‑ dead sage, or some other mysterious entity from another plane. Contacting this extraplanar intelligence can strain or even break your mind. When you cast this spell, make a DC 15 Intelligence saving throw. On a failure, you take 6d6 psychic damage and are insane until you finish a long rest. While insane, you can’t take actions, can’t understand what other creatures say, can’t read, and speak only in gibberish. A greater restoration spell cast on you ends this effect. On a successful save, you can ask the entity up to five questions. You must ask your questions before the spell ends. The GM answers each question with one word, such as “yes,” “no,” “maybe,” “never,” “irrelevant,” or “unclear” (if the entity doesn’t know the answer to the question). If a one-­‐‑word answer would be misleading, the GM might instead offer a short phrase as an answer. Contagion 5th-­‐‑level necromancy",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

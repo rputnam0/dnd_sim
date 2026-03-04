@@ -1,17 +1,33 @@
 {
-  "name": "Wererat",
-  "meta": "Medium humanoid (human, shapechanger), lawful evil",
-  "ac": 12,
-  "hp": 33,
-  "hp_formula": "6d8 + 6",
-  "ability_scores": {
-    "str": 10,
-    "dex": 15,
-    "con": 12,
-    "int": 11,
-    "wis": 10,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "wererat",
+    "name": "Wererat",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 33,
+    "ac": 12,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 0,
+    "dex_mod": 2,
+    "con_mod": 1,
+    "int_mod": 0,
+    "wis_mod": 0,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

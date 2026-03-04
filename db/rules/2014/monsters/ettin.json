@@ -1,17 +1,33 @@
 {
-  "name": "Ettin",
-  "meta": "Large giant, chaotic evil",
-  "ac": 12,
-  "hp": 85,
-  "hp_formula": "10d10 + 30",
-  "ability_scores": {
-    "str": 21,
-    "dex": 8,
-    "con": 17,
-    "int": 6,
-    "wis": 10,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ettin",
+    "name": "Ettin",
+    "team": "enemy"
   },
-  "cr": "4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 85,
+    "ac": 12,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 5,
+    "dex_mod": -1,
+    "con_mod": 3,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "4"
+  },
+  "reactions": [],
+  "actions": []
 }

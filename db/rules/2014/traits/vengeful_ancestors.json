@@ -1,14 +1,14 @@
 {
   "name": "Vengeful Ancestors",
-  "type": "subclass_feature",
   "description": "At 14th level, your ancestral spirits grow powerful enough to retaliate. When you use your Spirit Shield to reduce the damage of an attack, the attacker takes an amount of force damage equal to the damage that your Spirit Shield prevents.",
   "mechanics": [
     {
-      "trigger": "when Spirit Shield reduces damage",
+      "trigger": "when spirit shield reduces damage",
       "action": "deal_damage",
       "target": "attacker",
       "damage_type": "force",
       "amount": "equal to the amount of damage prevented by Spirit Shield"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

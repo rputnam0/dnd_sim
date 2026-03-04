@@ -1,11 +1,11 @@
 {
   "name": "Purity of Spirit",
-  "type": "subclass_feature",
   "description": "Beginning at 15th level, you are always under the effects of a protection from evil and good spell.",
   "mechanics": [
     {
-      "type": "always_under_spell",
-      "spell": "protection from evil and good"
+      "spell": "protection from evil and good",
+      "meta_type": "always_under_spell"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

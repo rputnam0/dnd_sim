@@ -1,17 +1,33 @@
 {
-  "name": "Will-\u00ad\u2010o\u2019-\u00ad\u2010Wisp",
-  "meta": "Tiny undead, chaotic evil",
-  "ac": 19,
-  "hp": 22,
-  "hp_formula": "9d4",
-  "ability_scores": {
-    "str": 1,
-    "dex": 28,
-    "con": 10,
-    "int": 13,
-    "wis": 14,
-    "cha": 11
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "will_o_wisp",
+    "name": "Will-­‐o’-­‐Wisp",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 22,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 9,
+    "str_mod": -5,
+    "dex_mod": 9,
+    "con_mod": 0,
+    "int_mod": 1,
+    "wis_mod": 2,
+    "cha_mod": 0,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

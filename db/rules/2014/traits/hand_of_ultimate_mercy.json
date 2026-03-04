@@ -1,20 +1,18 @@
 {
   "name": "Hand of Ultimate Mercy",
-  "type": "subclass_feature",
   "description": "Your mastery of life energy opens the door to the ultimate mercy. As an action, you can touch the corpse of a creature that died within the past 24 hours and expend 5 ki points. The creature then returns to life, regaining a number of hit points equal to 4d10 + your Wisdom modifier. If the creature died while subject to any of the following conditions, it revives with them removed: blinded, deafened, paralyzed, poisoned, and stunned. Once you use this feature, you can't use it again until you finish a long rest.",
   "mechanics": [
     {
-      "type": "resource",
       "resource": "ki",
-      "cost": 5
+      "cost": 5,
+      "meta_type": "resource"
     },
     {
-      "type": "action",
       "action": "action",
-      "description": "Touch the corpse of a creature that died within the past 24 hours."
+      "description": "Touch the corpse of a creature that died within the past 24 hours.",
+      "meta_type": "action"
     },
     {
-      "type": "revive",
       "hit_points": "4d10 + Wisdom modifier",
       "remove_conditions": [
         "blinded",
@@ -22,11 +20,13 @@
         "paralyzed",
         "poisoned",
         "stunned"
-      ]
+      ],
+      "meta_type": "revive"
     },
     {
-      "type": "recharge",
-      "recharge": "long rest"
+      "recharge": "long rest",
+      "meta_type": "recharge"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

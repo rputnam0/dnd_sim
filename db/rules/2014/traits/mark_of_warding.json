@@ -1,6 +1,5 @@
 {
   "name": "Mark of Warding",
-  "type": "feat",
   "description": "You gain a 1d4 bonus to Intelligence (Investigation) checks and ability checks using Thieves' Tools. You always have the Alarm and Mage Armor spells prepared, and can cast each once per long rest without a spell slot. At level 3, you also prepare and can cast Arcane Lock once per long rest. You can also cast these spells using your spell slots. Choose Intelligence, Wisdom, or Charisma as your spellcasting ability. Additionally, if you have Spellcasting or Pact Magic, several specific spells are added to your spell list.",
   "mechanics": [
     {
@@ -51,5 +50,6 @@
         "antilife shell"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

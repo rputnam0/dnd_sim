@@ -1,10 +1,8 @@
 {
   "name": "Wild Resurgence",
-  "type": "class_feature",
   "description": "Once on each of your turns, if you have no uses of Wild Shape left, you can give yourself one use by expending a spell slot (no action required). In addition, you can expend one use of Wild Shape (no action required) to give yourself a level 1 spell slot, but you can't do so again until you finish a Long Rest.",
   "mechanics": [
     {
-      "type": "resource",
       "resource": "Wild Shape",
       "change": 1,
       "condition": {
@@ -15,10 +13,10 @@
         "resource": "spell_slot",
         "amount": 1
       },
-      "frequency": "once_per_turn"
+      "frequency": "once_per_turn",
+      "meta_type": "resource"
     },
     {
-      "type": "resource",
       "resource": "spell_slot",
       "level": 1,
       "change": 1,
@@ -27,7 +25,9 @@
         "amount": 1
       },
       "recharge": "long_rest",
-      "action": "none"
+      "action": "none",
+      "meta_type": "resource"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,18 +1,18 @@
 {
   "name": "Flight",
-  "type": "racial_trait",
   "description": "You have a flying speed of 50 feet. To use this speed, you can't be wearing medium or heavy armor.",
   "mechanics": [
     {
       "effect": "grant_speed",
       "speed": 50,
       "unit": "feet",
-      "type": "fly"
+      "meta_type": "fly"
     },
     {
       "effect": "restriction",
       "condition": "cannot wear medium or heavy armor",
       "applies_to": "flight_speed"
     }
-  ]
+  ],
+  "source_type": "species"
 }

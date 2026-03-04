@@ -1,17 +1,33 @@
 {
-  "name": "Wereboar",
-  "meta": "Medium humanoid (human, shapechanger), neutral evil",
-  "ac": 10,
-  "hp": 78,
-  "hp_formula": "12d8 + 24",
-  "ability_scores": {
-    "str": 17,
-    "dex": 10,
-    "con": 15,
-    "int": 10,
-    "wis": 11,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "wereboar",
+    "name": "Wereboar",
+    "team": "enemy"
   },
-  "cr": "4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 78,
+    "ac": 10,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 3,
+    "dex_mod": 0,
+    "con_mod": 2,
+    "int_mod": 0,
+    "wis_mod": 0,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "4"
+  },
+  "reactions": [],
+  "actions": []
 }

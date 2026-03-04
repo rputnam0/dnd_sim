@@ -1,17 +1,37 @@
 {
-  "name": "Lich",
-  "meta": "Medium undead, any evil alignment",
-  "ac": 17,
-  "hp": 135,
-  "hp_formula": "18d8 + 54",
-  "ability_scores": {
-    "str": 11,
-    "dex": 16,
-    "con": 16,
-    "int": 20,
-    "wis": 14,
-    "cha": 16
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "lich",
+    "name": "Lich",
+    "team": "enemy"
   },
-  "cr": "21",
-  "saving_throws_text": "Con +10, Int +12, Wis +9"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 135,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": 0,
+    "dex_mod": 3,
+    "con_mod": 3,
+    "int_mod": 5,
+    "wis_mod": 2,
+    "cha_mod": 3,
+    "save_mods": {
+      "con": 10,
+      "int": 12,
+      "wis": 9
+    },
+    "cr": "21"
+  },
+  "reactions": [],
+  "actions": []
 }

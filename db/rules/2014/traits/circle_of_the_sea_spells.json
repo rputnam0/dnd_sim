@@ -1,10 +1,8 @@
 {
   "name": "Circle of the Sea Spells",
-  "type": "subclass_feature",
   "description": "When you reach a Druid level specified in the Circle of the Sea Spells table, you thereafter always have the listed spells prepared. Circle of the Sea Spells table: 3rd – Fog Cloud, Gust of Wind, Ray of Frost, Shatter, Thunderwave; 5th – Lightning Bolt, Water Breathing; 7th – Control Water, Ice Storm; 9th – Conjure Elemental, Hold Monster.",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "spells_by_level": {
         "3": [
           "Fog Cloud",
@@ -25,7 +23,9 @@
           "Conjure Elemental",
           "Hold Monster"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

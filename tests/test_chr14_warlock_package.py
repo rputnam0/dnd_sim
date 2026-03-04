@@ -15,7 +15,7 @@ from dnd_sim.engine import (
 )
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActorRuntimeState
-from tests.helpers import build_enemy
+from tests.helpers import build_enemy, with_class_levels
 from tests.test_engine_integration import _setup_env
 
 
@@ -64,7 +64,7 @@ def _warlock_character(
     }
     if class_levels is not None:
         payload["class_levels"] = dict(class_levels)
-    return payload
+    return with_class_levels(payload)
 
 
 def _enemy(actor_id: str) -> ActorRuntimeState:

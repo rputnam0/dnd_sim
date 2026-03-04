@@ -1,6 +1,5 @@
 {
   "name": "Shifting",
-  "type": "racial_trait",
   "description": "As a bonus action, you can shift into a more bestial appearance for up to 1 minute or until you use a bonus action to revert. While shifted you gain temporary hit points equal to 2 × your proficiency bonus. You can shift a number of times equal to your proficiency bonus, and all expended uses are regained after a long rest. When you shift you choose one of the following options: Beasthide – you gain an additional 1d6 temporary hit points and a +1 bonus to AC while shifted; Longtooth – while shifted you can use a bonus action on your turn to make an unarmed strike with your fangs that deals 1d6 + your Strength modifier piercing damage on a hit; Swiftstride – your speed increases by 10 feet while shifted, and you can use a reaction to move up to 10 feet when a creature ends its turn within 5 feet of you, without provoking opportunity attacks; Wildhunt – you have advantage on Wisdom checks while shifted, and no creature within 30 feet of you can have advantage on an attack roll against you unless you are incapacitated.",
   "mechanics": [
     {
@@ -61,5 +60,6 @@
       ],
       "condition": "while_shifted"
     }
-  ]
+  ],
+  "source_type": "species"
 }

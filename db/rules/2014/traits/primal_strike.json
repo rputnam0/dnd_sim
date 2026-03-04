@@ -1,6 +1,5 @@
 {
   "name": "Primal Strike",
-  "type": "class_feature",
   "description": "Once on each of your turns when you hit a creature with an attack roll using a weapon or a Beast form's attack in Wild Shape, you can cause the target to take an extra 1d8 Cold, Fire, Lightning, or Thunder damage (choose when you hit).",
   "mechanics": [
     {
@@ -17,5 +16,6 @@
         ]
       }
     }
-  ]
+  ],
+  "source_type": "class"
 }

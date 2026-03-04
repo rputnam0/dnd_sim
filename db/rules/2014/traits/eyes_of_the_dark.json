@@ -1,34 +1,34 @@
 {
   "name": "Eyes of the Dark",
-  "type": "subclass_feature",
   "description": "Starting at 1st level, you have darkvision with a range of 120 feet. When you reach 3rd level in this class, you learn the darkness spell, which doesn't count against your number of sorcerer spells known. In addition, you can cast it by spending 2 sorcery points or by expending a spell slot. If you cast it with sorcery points, you can see through the darkness created by the spell.",
   "mechanics": [
     {
-      "type": "sense",
       "sense": "darkvision",
-      "range_feet": 120
+      "range_feet": 120,
+      "effect_type": "sense"
     },
     {
-      "type": "spell_learning",
       "spell": "darkness",
-      "countsAgainstSpellsKnown": false
+      "countsAgainstSpellsKnown": false,
+      "meta_type": "spell_learning"
     },
     {
-      "type": "spell_cast",
       "spell": "darkness",
       "cost": {
         "sorcery_points": 2
       },
       "alternativeCost": {
         "spell_slot": true
-      }
+      },
+      "meta_type": "spell_cast"
     },
     {
-      "type": "vision_through_darkness",
       "condition": {
         "castWith": "sorcery_points"
       },
-      "spell": "darkness"
+      "spell": "darkness",
+      "meta_type": "vision_through_darkness"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

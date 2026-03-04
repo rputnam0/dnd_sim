@@ -1,17 +1,38 @@
 {
-  "name": "Adult Bronze Dragon",
-  "meta": "Huge dragon, lawful good",
-  "ac": 19,
-  "hp": 212,
-  "hp_formula": "17d12 + 102",
-  "ability_scores": {
-    "str": 25,
-    "dex": 10,
-    "con": 23,
-    "int": 16,
-    "wis": 15,
-    "cha": 19
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "adult_bronze_dragon",
+    "name": "Adult Bronze Dragon",
+    "team": "enemy"
   },
-  "cr": "15",
-  "saving_throws_text": "Dex +5, Con +11, Wis +7, Cha +9"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 212,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 7,
+    "dex_mod": 0,
+    "con_mod": 6,
+    "int_mod": 3,
+    "wis_mod": 2,
+    "cha_mod": 4,
+    "save_mods": {
+      "dex": 5,
+      "con": 11,
+      "wis": 7,
+      "cha": 9
+    },
+    "cr": "15"
+  },
+  "reactions": [],
+  "actions": []
 }

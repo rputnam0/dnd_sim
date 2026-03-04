@@ -1,10 +1,8 @@
 {
   "name": "Armorer Spells",
-  "type": "subclass_feature",
   "description": "When you reach an Artificer level specified in the Armorer Spells table, you thereafter always have the listed spells prepared. Armorer Spells table: 3rd level – Magic Missile, Thunderwave; 5th level – Mirror Image, Shatter; 9th level – Hypnotic Pattern, Lightning Bolt; 13th level – Fire Shield, Greater Invisibility; 17th level – Passwall, Wall of Force.",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "spells_by_level": {
         "3": [
           "Magic Missile",
@@ -26,7 +24,9 @@
           "Passwall",
           "Wall of Force"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

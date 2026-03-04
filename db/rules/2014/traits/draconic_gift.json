@@ -1,20 +1,20 @@
 {
   "name": "Draconic Gift",
-  "type": "subclass_feature",
   "description": "The bond you share with your drake creates a connection to dragonkind, granting you understanding and empowering your presence. You gain the following benefits: Thaumaturgy. You learn the thaumaturgy cantrip, which is a ranger spell for you. Tongue of Dragons. You learn to speak, read, and write Draconic or one other language of your choice.",
   "mechanics": [
     {
-      "type": "grant_cantrip",
       "cantrip": "thaumaturgy",
-      "spellcasting_class": "ranger"
+      "spellcasting_class": "ranger",
+      "meta_type": "grant_cantrip"
     },
     {
-      "type": "grant_language",
       "languages": [
         "Draconic"
       ],
       "choice_allowed": true,
-      "choice_description": "one other language of your choice"
+      "choice_description": "one other language of your choice",
+      "meta_type": "grant_language"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

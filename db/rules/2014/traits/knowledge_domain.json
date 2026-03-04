@@ -1,10 +1,8 @@
 {
   "name": "Blessings of Knowledge",
-  "type": "subclass_feature",
   "description": "At each indicated cleric level, you add the listed spells to your spells prepared.",
   "mechanics": [
     {
-      "type": "addDomainSpells",
       "spellsByLevel": {
         "1": [
           "command",
@@ -26,7 +24,9 @@
           "legend lore",
           "scrying"
         ]
-      }
+      },
+      "meta_type": "adddomainspells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -93,12 +93,10 @@ def recover_spell_slots_with_budget(
 def apply_inferred_fighter_resources(
     actor: Any,
     *,
-    class_level_text: str,
     has_trait: Callable[[Any, str], bool],
-    parse_class_level: Callable[[str, str], int],
     superiority_dice_count: Callable[[int], int] = fighter_superiority_dice_count,
 ) -> None:
-    fighter_level = parse_class_level(class_level_text, "fighter")
+    fighter_level = int(actor.class_levels.get("fighter", 0))
 
     if has_trait(actor, "action surge"):
         action_surge_uses = (
@@ -121,15 +119,11 @@ def apply_inferred_fighter_resources(
 def apply_inferred_barbarian_resources(
     actor: Any,
     *,
-    class_level_text: str,
     has_trait: Callable[[Any, str], bool],
-    parse_class_level: Callable[[str, str], int],
 ) -> None:
     if not has_trait(actor, "rage"):
         return
-    barbarian_level = parse_class_level(class_level_text, "barbarian")
-    if barbarian_level <= 0 and not actor.class_levels:
-        barbarian_level = int(actor.level)
+    barbarian_level = int(actor.class_levels.get("barbarian", 0))
     rage_uses = barbarian_rage_uses_for_level(barbarian_level)
     if rage_uses <= 0:
         return
@@ -139,17 +133,11 @@ def apply_inferred_barbarian_resources(
 def apply_inferred_bard_resources(
     actor: Any,
     *,
-    class_level_text: str,
     has_trait: Callable[[Any, str], bool],
-    parse_class_level: Callable[[str, str], int],
 ) -> None:
     if not has_trait(actor, "bardic inspiration"):
         return
     bard_level = int(actor.class_levels.get("bard", 0))
-    if bard_level <= 0 and not actor.class_levels:
-        bard_level = parse_class_level(class_level_text, "bard")
-    if bard_level <= 0 and not actor.class_levels:
-        bard_level = int(actor.level)
     if bard_level <= 0:
         return
     ensure_resource_cap(actor, "bardic_inspiration", max(1, int(actor.cha_mod)))
@@ -158,17 +146,11 @@ def apply_inferred_bard_resources(
 def apply_inferred_sorcerer_resources(
     actor: Any,
     *,
-    class_level_text: str,
     has_trait: Callable[[Any, str], bool],
-    parse_class_level: Callable[[str, str], int],
 ) -> None:
     if not has_trait(actor, "font of magic"):
         return
     sorcerer_level = int(actor.class_levels.get("sorcerer", 0))
-    if sorcerer_level <= 0 and not actor.class_levels:
-        sorcerer_level = parse_class_level(class_level_text, "sorcerer")
-    if sorcerer_level <= 0 and not actor.class_levels:
-        sorcerer_level = int(actor.level)
     points = sorcery_points_for_level(sorcerer_level)
     if points <= 0:
         return
@@ -178,9 +160,7 @@ def apply_inferred_sorcerer_resources(
 def apply_inferred_druid_resources(
     actor: Any,
     *,
-    class_level_text: str,
     has_trait: Callable[[Any, str], bool],
-    parse_class_level: Callable[[str, str], int],
     druid_wild_shape_uses_for_level: Callable[[int], int],
 ) -> None:
     if not has_trait(actor, "wild shape"):
@@ -188,10 +168,6 @@ def apply_inferred_druid_resources(
     if has_trait(actor, "archdruid"):
         return
     druid_level = int(actor.class_levels.get("druid", 0))
-    if druid_level <= 0 and not actor.class_levels:
-        druid_level = parse_class_level(class_level_text, "druid")
-    if druid_level <= 0 and not actor.class_levels:
-        druid_level = int(actor.level)
     if druid_level <= 0:
         return
     ensure_resource_cap(actor, "wild_shape", druid_wild_shape_uses_for_level(druid_level))
@@ -205,8 +181,6 @@ def apply_inferred_wizard_resources(
     if not has_trait(actor, "arcane recovery"):
         return
     wizard_level = int(actor.class_levels.get("wizard", 0))
-    if wizard_level <= 0 and not actor.class_levels:
-        wizard_level = int(actor.level)
     if wizard_level <= 0:
         return
     ensure_resource_cap(actor, "arcane_recovery", 1)
@@ -223,8 +197,6 @@ def apply_arcane_recovery(
     if uses_remaining <= 0:
         return
     wizard_level = int(actor.class_levels.get("wizard", 0))
-    if wizard_level <= 0 and not actor.class_levels:
-        wizard_level = int(actor.level)
     if wizard_level <= 0:
         return
     recovery_budget = max(1, (wizard_level + 1) // 2)

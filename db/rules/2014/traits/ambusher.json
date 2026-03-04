@@ -1,6 +1,5 @@
 {
   "name": "Ambusher",
-  "type": "racial_trait",
   "description": "In the first round of a combat, you have advantage on attack rolls against any creature who is surprised.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
         "target_status": "surprised"
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

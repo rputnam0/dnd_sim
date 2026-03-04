@@ -1,17 +1,38 @@
 {
-  "name": "Ancient Gold Dragon",
-  "meta": "Gargantuan dragon, lawful good",
-  "ac": 22,
-  "hp": 546,
-  "hp_formula": "28d20 + 252",
-  "ability_scores": {
-    "str": 30,
-    "dex": 14,
-    "con": 29,
-    "int": 18,
-    "wis": 17,
-    "cha": 28
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ancient_gold_dragon",
+    "name": "Ancient Gold Dragon",
+    "team": "enemy"
   },
-  "cr": "24",
-  "saving_throws_text": "Dex +9, Con +16, Wis +10, Cha +16"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 546,
+    "ac": 22,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 10,
+    "dex_mod": 2,
+    "con_mod": 9,
+    "int_mod": 4,
+    "wis_mod": 3,
+    "cha_mod": 9,
+    "save_mods": {
+      "dex": 9,
+      "con": 16,
+      "wis": 10,
+      "cha": 16
+    },
+    "cr": "24"
+  },
+  "reactions": [],
+  "actions": []
 }

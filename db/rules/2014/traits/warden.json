@@ -1,17 +1,17 @@
 {
   "name": "Warden",
-  "type": "class_feature",
   "description": "Trained for battle, you gain proficiency with Martial weapons and training with Medium armor.",
   "mechanics": [
     {
-      "type": "proficiency",
       "category": "weapon",
-      "value": "martial"
+      "value": "martial",
+      "meta_type": "proficiency"
     },
     {
-      "type": "proficiency",
       "category": "armor",
-      "value": "medium"
+      "value": "medium",
+      "meta_type": "proficiency"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,17 +1,33 @@
 {
-  "name": "Ice Mephit",
-  "meta": "Small elemental, neutral evil",
-  "ac": 11,
-  "hp": 21,
-  "hp_formula": "6d6",
-  "ability_scores": {
-    "str": 7,
-    "dex": 13,
-    "con": 10,
-    "int": 9,
-    "wis": 11,
-    "cha": 12
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ice_mephit",
+    "name": "Ice Mephit",
+    "team": "enemy"
   },
-  "cr": "1/2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 21,
+    "ac": 11,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": -2,
+    "dex_mod": 1,
+    "con_mod": 0,
+    "int_mod": -1,
+    "wis_mod": 0,
+    "cha_mod": 1,
+    "save_mods": {},
+    "cr": "1/2"
+  },
+  "reactions": [],
+  "actions": []
 }

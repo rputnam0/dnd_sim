@@ -1,14 +1,14 @@
 {
   "name": "Magical Inspiration",
-  "type": "class_feature",
   "description": "If a creature has a Bardic Inspiration die from you and casts a spell that restores hit points or deals damage, the creature can roll that die and choose a target affected by the spell. Add the number rolled as a bonus to the hit points regained or the damage dealt. The Bardic Inspiration die is then lost.",
   "mechanics": [
     {
-      "type": "spell_bonus",
       "trigger": "spell_cast",
       "condition": "has_bardic_inspiration_die",
       "effect": "add_die_to_healing_or_damage",
-      "consumes_die": true
+      "consumes_die": true,
+      "meta_type": "spell_bonus"
     }
-  ]
+  ],
+  "source_type": "class"
 }

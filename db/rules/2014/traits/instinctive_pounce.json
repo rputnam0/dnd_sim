@@ -1,12 +1,12 @@
 {
   "name": "Instinctive Pounce",
-  "type": "class_feature",
   "description": "7th-level barbarian optional class features (optional feature). As part of the bonus action you take to enter your rage, you can move up to half your speed.",
   "mechanics": [
     {
-      "type": "movement",
       "distance": "half speed",
-      "trigger": "when you use the bonus action to enter rage"
+      "trigger": "when you use the bonus action to enter rage",
+      "meta_type": "movement"
     }
-  ]
+  ],
+  "source_type": "class"
 }

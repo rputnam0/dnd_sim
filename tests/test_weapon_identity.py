@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dnd_sim.engine import _build_actor_from_character, _execute_action
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from tests.helpers import with_class_levels
 
 
 class SequenceRng:
@@ -36,57 +37,59 @@ def _actor(actor_id: str, team: str) -> ActorRuntimeState:
 
 
 def _character_with_weapon_profiles() -> dict[str, object]:
-    return {
-        "character_id": "weapon_tester",
-        "name": "Weapon Tester",
-        "class_level": "Rogue 3 / Fighter 1",
-        "max_hp": 38,
-        "ac": 14,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 14,
-            "dex": 18,
-            "con": 14,
-            "int": 10,
-            "wis": 10,
-            "cha": 10,
-        },
-        "save_mods": {"str": 2, "dex": 6, "con": 2, "int": 0, "wis": 0, "cha": 0},
-        "skill_mods": {},
-        "attacks": [
-            {
-                "id": "attack_heavy_blade",
-                "weapon_id": "weapon_greatsword",
-                "item_id": "item_greatsword",
-                "name": "Executioner's Edge",
-                "to_hit": 5,
-                "damage": "1d1",
-                "damage_type": "slashing",
-                "weapon_properties": ["heavy", "reach", "magical"],
-                "reach_ft": 10,
-                "range_ft": 10,
-                "range_normal_ft": 10,
-                "range_long_ft": 10,
+    return with_class_levels(
+        {
+            "character_id": "weapon_tester",
+            "name": "Weapon Tester",
+            "class_level": "Rogue 3 / Fighter 1",
+            "max_hp": 38,
+            "ac": 14,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 14,
+                "dex": 18,
+                "con": 14,
+                "int": 10,
+                "wis": 10,
+                "cha": 10,
             },
-            {
-                "id": "attack_finesse_knife",
-                "weapon_id": "weapon_dagger",
-                "item_id": "item_dagger",
-                "name": "Needle Fang",
-                "to_hit": 7,
-                "damage": "1d1",
-                "damage_type": "piercing",
-                "weapon_properties": ["finesse", "light", "thrown"],
-                "range_ft": 20,
-                "range_normal_ft": 20,
-                "range_long_ft": 60,
-            },
-        ],
-        "resources": {},
-        "traits": ["Great Weapon Master", "Sneak Attack"],
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+            "save_mods": {"str": 2, "dex": 6, "con": 2, "int": 0, "wis": 0, "cha": 0},
+            "skill_mods": {},
+            "attacks": [
+                {
+                    "id": "attack_heavy_blade",
+                    "weapon_id": "weapon_greatsword",
+                    "item_id": "item_greatsword",
+                    "name": "Executioner's Edge",
+                    "to_hit": 5,
+                    "damage": "1d1",
+                    "damage_type": "slashing",
+                    "weapon_properties": ["heavy", "reach", "magical"],
+                    "reach_ft": 10,
+                    "range_ft": 10,
+                    "range_normal_ft": 10,
+                    "range_long_ft": 10,
+                },
+                {
+                    "id": "attack_finesse_knife",
+                    "weapon_id": "weapon_dagger",
+                    "item_id": "item_dagger",
+                    "name": "Needle Fang",
+                    "to_hit": 7,
+                    "damage": "1d1",
+                    "damage_type": "piercing",
+                    "weapon_properties": ["finesse", "light", "thrown"],
+                    "range_ft": 20,
+                    "range_normal_ft": 20,
+                    "range_long_ft": 60,
+                },
+            ],
+            "resources": {},
+            "traits": ["Great Weapon Master", "Sneak Attack"],
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def _run_attack_for_profile(profile_id: str) -> tuple[int, bool]:

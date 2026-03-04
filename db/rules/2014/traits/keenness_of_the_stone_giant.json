@@ -1,6 +1,5 @@
 {
   "name": "Keenness of the Stone Giant",
-  "type": "feat",
   "description": "Increase your Strength, Constitution, or Wisdom score by 1, to a maximum of 20. You gain darkvision with a range of 60 feet, or increase your existing darkvision range by 60 feet. As a bonus action, you can make a ranged spell attack with a rock (range 60 feet) using the chosen ability score. On a hit, the target takes 1d10 force damage and must succeed on a Strength saving throw (DC 8 + PB + Mod) or be knocked prone. You can use this bonus action a number of times equal to your proficiency bonus per long rest.",
   "mechanics": [
     {
@@ -32,5 +31,6 @@
       "uses": "proficiency_bonus",
       "reset": "long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

@@ -99,3 +99,22 @@ Base: origin/main
   - `uv run --with pytest python -m pytest tests/test_fnd06_turn_declaration.py -q` ✅
   - `uv run --with pytest python -m pytest -q` ✅
   - Determinism pack (10 selected tests) ✅
+
+## Legacy Decommission Hard-Cut Follow-Up (2026-03-04)
+- Executed phased legacy decommission program on `codex/legacy-deprecation-hardcut`.
+- Added baseline + mapping + counts artifacts:
+  - `docs/deprecation/legacy_surface_inventory_20260304.md`
+  - `docs/deprecation/legacy_cutover_mappings_20260304.md`
+  - `docs/deprecation/legacy_data_counts_20260304.tsv`
+- Canonical schema migration outcomes:
+  - Traits: top-level `type` removed (`source_type` canonicalized across all files).
+  - Spells: canonical fields explicit across all records; duplicate lookup key groups reduced to `0`.
+  - Monsters: canonical `identity` + `stat_block` shape across all records.
+  - Characters: canonical `class_levels` present across all river-line character payloads.
+- Runtime/API outcomes:
+  - Strategy runtime execution path is declaration-only.
+  - Runtime/ingest alias promotion from `type`/`event_trigger` for mechanics rows removed.
+  - Runtime effect alias remap paths removed; canonical effect names required.
+  - Runtime spell lookup switched to `fail_fast` duplicate policy.
+- Validation gate:
+  - `uv run python -m pytest -q` ✅

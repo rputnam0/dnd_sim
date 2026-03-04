@@ -1,17 +1,38 @@
 {
-  "name": "Ancient Brass Dragon",
-  "meta": "Gargantuan dragon, chaotic good",
-  "ac": 20,
-  "hp": 297,
-  "hp_formula": "17d20 + 119",
-  "ability_scores": {
-    "str": 27,
-    "dex": 10,
-    "con": 25,
-    "int": 16,
-    "wis": 15,
-    "cha": 19
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ancient_brass_dragon",
+    "name": "Ancient Brass Dragon",
+    "team": "enemy"
   },
-  "cr": "20",
-  "saving_throws_text": "Dex +6, Con +13, Wis +8, Cha +10"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 297,
+    "ac": 20,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 8,
+    "dex_mod": 0,
+    "con_mod": 7,
+    "int_mod": 3,
+    "wis_mod": 2,
+    "cha_mod": 4,
+    "save_mods": {
+      "dex": 6,
+      "con": 13,
+      "wis": 8,
+      "cha": 10
+    },
+    "cr": "20"
+  },
+  "reactions": [],
+  "actions": []
 }

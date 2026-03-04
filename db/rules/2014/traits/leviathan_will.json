@@ -1,10 +1,8 @@
 {
   "name": "Leviathan Will",
-  "type": "racial_trait",
   "description": "You have advantage on saving throws against being charmed, frightened, paralyzed, poisoned, stunned, or put to sleep.",
   "mechanics": [
     {
-      "type": "advantage_on_saving_throws",
       "conditions": [
         "charmed",
         "frightened",
@@ -12,7 +10,9 @@
         "poisoned",
         "stunned",
         "sleep"
-      ]
+      ],
+      "meta_type": "advantage_on_saving_throws"
     }
-  ]
+  ],
+  "source_type": "species"
 }

@@ -1,9 +1,15 @@
 {
   "name": "Protection from Evil and Good",
-  "meta": "Protection from Evil and Good 1st-\u00ad\u2010\u2011level abjuration",
+  "type": "spell",
+  "level": 1,
+  "school": "Abjuration",
   "casting_time": "1 action",
-  "range": "Touch",
-  "components": "V, S, M (holy water or powdered silver and iron, which the spell consumes)",
-  "duration": "Concentration up to 10 minutes",
-  "description": "Until the spell ends, one willing creature you touch is protected against certain types of creatures: aberrations, celestials, elementals, fey, fiends, and undead. The protection grants several benefits. Creatures of those types have disadvantage on attack rolls against the target. The target also can\u2019t be charmed, frightened, or possessed by them. If the target is already charmed, frightened, or possessed by such a creature, the target has advantage on any new saving throw against the relevant effect."
+  "range_ft": null,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 100,
+  "description": "Until the spell ends, one willing creature you touch is protected against certain types of creatures: aberrations, celestials, elementals, fey, fiends, and undead. The protection grants several benefits. Creatures of those types have disadvantage on attack rolls against the target. The target also can’t be charmed, frightened, or possessed by them. If the target is already charmed, frightened, or possessed by such a creature, the target has advantage on any new saving throw against the relevant effect.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

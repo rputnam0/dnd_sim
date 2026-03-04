@@ -1,17 +1,33 @@
 {
-  "name": "Hippogriff",
-  "meta": "Large monstrosity, unaligned",
-  "ac": 11,
-  "hp": 19,
-  "hp_formula": "3d10 + 3",
-  "ability_scores": {
-    "str": 17,
-    "dex": 13,
-    "con": 13,
-    "int": 2,
-    "wis": 12,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "hippogriff",
+    "name": "Hippogriff",
+    "team": "enemy"
   },
-  "cr": "1",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 19,
+    "ac": 11,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 3,
+    "dex_mod": 1,
+    "con_mod": 1,
+    "int_mod": -4,
+    "wis_mod": 1,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "1"
+  },
+  "reactions": [],
+  "actions": []
 }

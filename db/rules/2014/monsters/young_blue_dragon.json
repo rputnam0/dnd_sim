@@ -1,17 +1,38 @@
 {
-  "name": "Young Blue Dragon",
-  "meta": "Large dragon, lawful evil",
-  "ac": 18,
-  "hp": 152,
-  "hp_formula": "16d10 + 64",
-  "ability_scores": {
-    "str": 21,
-    "dex": 10,
-    "con": 19,
-    "int": 14,
-    "wis": 13,
-    "cha": 17
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "young_blue_dragon",
+    "name": "Young Blue Dragon",
+    "team": "enemy"
   },
-  "cr": "9",
-  "saving_throws_text": "Dex +4, Con +8, Wis +5, Cha +7"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 152,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 5,
+    "dex_mod": 0,
+    "con_mod": 4,
+    "int_mod": 2,
+    "wis_mod": 1,
+    "cha_mod": 3,
+    "save_mods": {
+      "dex": 4,
+      "con": 8,
+      "wis": 5,
+      "cha": 7
+    },
+    "cr": "9"
+  },
+  "reactions": [],
+  "actions": []
 }

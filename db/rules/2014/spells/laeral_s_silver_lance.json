@@ -6,9 +6,10 @@
   "casting_time": "action",
   "range_ft": 120,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": null,
   "description": "Silver energy bursts out from you in a 120-foot-long, 5-foot-wide line. Each creature of your choice in the line makes a Strength saving throw. On a failed save, a creature takes 3d10 Force damage and has the Prone condition. On a successful save, a creature takes half as much damage only. When using a higher-level spell slot, the damage increases by 1d10 for every spell slot level above 3.",
-  "save_ability": "strength",
+  "save_ability": "str",
   "damage_type": "force",
   "mechanics": []
 }

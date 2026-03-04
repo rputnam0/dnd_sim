@@ -1,17 +1,38 @@
 {
-  "name": "Storm Giant",
-  "meta": "Huge giant, chaotic good",
-  "ac": 16,
-  "hp": 230,
-  "hp_formula": "20d12 + 100",
-  "ability_scores": {
-    "str": 29,
-    "dex": 14,
-    "con": 20,
-    "int": 16,
-    "wis": 18,
-    "cha": 18
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "storm_giant",
+    "name": "Storm Giant",
+    "team": "enemy"
   },
-  "cr": "13",
-  "saving_throws_text": "Str +14, Con +10, Wis +9, Cha +9"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 230,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 9,
+    "dex_mod": 2,
+    "con_mod": 5,
+    "int_mod": 3,
+    "wis_mod": 4,
+    "cha_mod": 4,
+    "save_mods": {
+      "str": 14,
+      "con": 10,
+      "wis": 9,
+      "cha": 9
+    },
+    "cr": "13"
+  },
+  "reactions": [],
+  "actions": []
 }

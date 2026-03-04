@@ -1,17 +1,33 @@
 {
-  "name": "Gibbering Mouther",
-  "meta": "Medium aberration, neutral",
-  "ac": 9,
-  "hp": 67,
-  "hp_formula": "9d8 + 27",
-  "ability_scores": {
-    "str": 10,
-    "dex": 8,
-    "con": 16,
-    "int": 3,
-    "wis": 10,
-    "cha": 6
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "gibbering_mouther",
+    "name": "Gibbering Mouther",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 67,
+    "ac": 9,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 0,
+    "dex_mod": -1,
+    "con_mod": 3,
+    "int_mod": -4,
+    "wis_mod": 0,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

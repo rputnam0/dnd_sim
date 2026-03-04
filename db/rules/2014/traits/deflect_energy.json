@@ -1,11 +1,11 @@
 {
   "name": "Deflect Energy",
-  "type": "class_feature",
   "description": "You can now use your Deflect Attacks feature against attacks that deal any damage type, not just Bludgeoning, Piercing, or Slashing.",
   "mechanics": [
     {
       "effect": "deflect_attacks",
       "damageTypes": "any"
     }
-  ]
+  ],
+  "source_type": "class"
 }

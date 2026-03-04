@@ -1,9 +1,15 @@
 {
   "name": "Lesser Restoration",
-  "meta": "Lesser Restoration 2nd-\u00ad\u2010\u2011level abjuration",
+  "type": "spell",
+  "level": 2,
+  "school": "Abjuration",
   "casting_time": "1 action",
-  "range": "Touch",
-  "components": "V, S",
-  "duration": "Instantaneous",
-  "description": "You touch a creature and can end either one disease or one condition afflicting it. The condition can be blinded, deafened, paralyzed, or poisoned. Levitate 2nd-\u00ad\u2010\u2011level transmutation"
+  "range_ft": null,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 0,
+  "description": "You touch a creature and can end either one disease or one condition afflicting it. The condition can be blinded, deafened, paralyzed, or poisoned. Levitate 2nd-­‐‑level transmutation",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

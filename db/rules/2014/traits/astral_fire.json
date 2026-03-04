@@ -1,23 +1,23 @@
 {
   "name": "Astral Fire",
-  "type": "racial_trait",
   "description": "You know one of the following cantrips of your choice: dancing lights, light, or sacred flame. Intelligence, Wisdom, or Charisma is your spellcasting ability for it (choose when you select this race).",
   "mechanics": [
     {
-      "type": "grant_cantrip",
       "choices": [
         "dancing lights",
         "light",
         "sacred flame"
-      ]
+      ],
+      "meta_type": "grant_cantrip"
     },
     {
-      "type": "choose_spellcasting_ability",
       "choices": [
         "Intelligence",
         "Wisdom",
         "Charisma"
-      ]
+      ],
+      "meta_type": "choose_spellcasting_ability"
     }
-  ]
+  ],
+  "source_type": "species"
 }

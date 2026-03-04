@@ -1,10 +1,8 @@
 {
   "name": "Oath of the Ancients Spells",
-  "type": "subclass_feature",
   "description": "The magic of your oath ensures you always have certain spells ready; when you reach a Paladin level specified in the Oath of the Ancients Spells table, you thereafter always have the listed spells prepared.\n\nOath of the Ancients Spells:\nPaladin Level – Spells\n3rd – Ensnaring Strike, Speak with Animals\n5th – Misty Step, Moonbeam\n9th – Plant Growth, Protection from Energy\n13th – Ice Storm, Stoneskin\n17th – Commune with Nature, Tree Stride",
   "mechanics": [
     {
-      "type": "spell_prepared",
       "spells_by_level": {
         "3": [
           "Ensnaring Strike",
@@ -26,7 +24,9 @@
           "Commune with Nature",
           "Tree Stride"
         ]
-      }
+      },
+      "meta_type": "spell_prepared"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

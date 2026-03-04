@@ -1,10 +1,8 @@
 {
   "name": "Drunkard's Luck",
-  "type": "subclass_feature",
   "description": "Starting at 11th level, you always seem to get a lucky bounce at the right moment. When you make an ability check, an attack roll, or a saving throw and have disadvantage on the roll, you can spend 2 ki points to cancel the disadvantage for that roll.",
   "mechanics": [
     {
-      "type": "spend_resource",
       "resource": "ki",
       "amount": 2,
       "effect": "cancel_disadvantage",
@@ -12,7 +10,9 @@
         "ability_check",
         "attack_roll",
         "saving_throw"
-      ]
+      ],
+      "meta_type": "spend_resource"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

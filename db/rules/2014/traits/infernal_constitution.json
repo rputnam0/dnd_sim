@@ -1,6 +1,5 @@
 {
   "name": "Infernal Constitution",
-  "type": "feat",
   "description": "Fiendish blood runs strong in you, unlocking a resilience akin to that possessed by some fiends. Increase your Constitution score by 1, to a maximum of 20. You have resistance to cold and poison damage, and you have advantage on saving throws against being poisoned.",
   "mechanics": [
     {
@@ -21,5 +20,6 @@
       "effect_type": "advantage_save",
       "condition": "poisoned"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

@@ -1,9 +1,15 @@
 {
   "name": "Grease",
-  "meta": "Grease 1st-\u00ad\u2010\u2011level conjuration",
+  "type": "spell",
+  "level": 1,
+  "school": "Conjuration",
   "casting_time": "1 action",
-  "range": "60 feet",
-  "components": "V, S, M (a bit of pork rind or butter)",
-  "duration": "1 minute",
-  "description": "Slick grease covers the ground in a 10-\u00ad\u2010\u2011foot square centered on a point within range and turns it into difficult terrain for the duration. When the grease appears, each creature standing in its area must succeed on a Dexterity saving throw or fall prone. A creature that enters the area or ends its turn there must also succeed on a Dexterity saving throw or fall prone. Greater Invisibility 4th-\u00ad\u2010\u2011level illusion"
+  "range_ft": 60,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 10,
+  "description": "Slick grease covers the ground in a 10-­‐‑foot square centered on a point within range and turns it into difficult terrain for the duration. When the grease appears, each creature standing in its area must succeed on a Dexterity saving throw or fall prone. A creature that enters the area or ends its turn there must also succeed on a Dexterity saving throw or fall prone. Greater Invisibility 4th-­‐‑level illusion",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

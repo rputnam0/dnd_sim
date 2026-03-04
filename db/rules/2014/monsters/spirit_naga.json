@@ -1,17 +1,38 @@
 {
-  "name": "Spirit Naga",
-  "meta": "Large monstrosity, chaotic evil",
-  "ac": 15,
-  "hp": 75,
-  "hp_formula": "10d10 + 20",
-  "ability_scores": {
-    "str": 18,
-    "dex": 17,
-    "con": 14,
-    "int": 16,
-    "wis": 15,
-    "cha": 16
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "spirit_naga",
+    "name": "Spirit Naga",
+    "team": "enemy"
   },
-  "cr": "8",
-  "saving_throws_text": "Dex +6, Con +5, Wis +5, Cha +6"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 75,
+    "ac": 15,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": 4,
+    "dex_mod": 3,
+    "con_mod": 2,
+    "int_mod": 3,
+    "wis_mod": 2,
+    "cha_mod": 3,
+    "save_mods": {
+      "dex": 6,
+      "con": 5,
+      "wis": 5,
+      "cha": 6
+    },
+    "cr": "8"
+  },
+  "reactions": [],
+  "actions": []
 }

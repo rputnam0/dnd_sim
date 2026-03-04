@@ -1,6 +1,5 @@
 {
   "name": "Scion of the Outer Planes",
-  "type": "feat",
   "description": "Choose a type of plane: Chaotic Outer Plane (Poison resistance, Minor Illusion), Evil Outer Plane (Necrotic resistance, Chill Touch), Good Outer Plane (Radiant resistance, Sacred Flame), Lawful Outer Plane (Force resistance, Guidance), or The Outlands (Psychic resistance, Mage Hand). You gain the corresponding resistance and cantrip. You can cast the cantrip without material components, using Intelligence, Wisdom, or Charisma as your spellcasting ability.",
   "mechanics": [
     {
@@ -63,5 +62,6 @@
       "spellcasting_ability": "int, wis, or cha",
       "no_material_components": true
     }
-  ]
+  ],
+  "source_type": "feat"
 }

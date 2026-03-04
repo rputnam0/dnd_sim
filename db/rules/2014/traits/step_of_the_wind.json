@@ -1,6 +1,5 @@
 {
   "name": "Step of the Wind",
-  "type": "class_feature",
   "description": "You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn.",
   "mechanics": [
     {
@@ -24,5 +23,6 @@
         "duration": "turn"
       }
     }
-  ]
+  ],
+  "source_type": "class"
 }

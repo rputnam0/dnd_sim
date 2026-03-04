@@ -1,11 +1,9 @@
 {
   "name": "Elemental Rebuke",
-  "type": "subclass_feature",
   "description": "When you are hit by an attack roll, you can take a reaction to halve the attack's damage against yourself (round down) and force the attacker to make a Dexterity saving throw against your spell save DC. On a failed save, the attacker takes damage equal to 2d10 plus your Charisma modifier of one of the following types (your choice): Acid, Cold, Fire, Lightning, or Thunder. On a successful save, the attacker takes half as much damage. You can use this feature a number of times equal to your Charisma modifier (minimum of once), and you regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "type": "reaction",
-      "trigger": "When you are hit by an attack roll",
+      "trigger": "when you are hit by an attack roll",
       "effects": [
         {
           "type": "damage_halving",
@@ -48,7 +46,9 @@
       "uses": {
         "per_long_rest": true,
         "max_uses": "Charisma modifier (minimum 1)"
-      }
+      },
+      "meta_type": "reaction"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

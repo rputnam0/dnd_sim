@@ -1,17 +1,33 @@
 {
-  "name": "Warhorse Skeleton",
-  "meta": "Large undead, lawful evil",
-  "ac": 13,
-  "hp": 22,
-  "hp_formula": "3d10 + 6",
-  "ability_scores": {
-    "str": 18,
-    "dex": 12,
-    "con": 15,
-    "int": 2,
-    "wis": 8,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "warhorse_skeleton",
+    "name": "Warhorse Skeleton",
+    "team": "enemy"
   },
-  "cr": "1/2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 22,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 4,
+    "dex_mod": 1,
+    "con_mod": 2,
+    "int_mod": -4,
+    "wis_mod": -1,
+    "cha_mod": -3,
+    "save_mods": {},
+    "cr": "1/2"
+  },
+  "reactions": [],
+  "actions": []
 }

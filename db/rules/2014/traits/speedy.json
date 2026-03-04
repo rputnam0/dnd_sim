@@ -1,6 +1,5 @@
 {
   "name": "Speedy",
-  "type": "feat",
   "description": "You increase your Dexterity or Constitution score by 1, to a maximum of 20. Your speed increases by 10 feet. When you take the Dash action on your turn, difficult terrain doesn't cost you extra movement for the rest of that turn. Opportunity attacks have disadvantage against you.",
   "mechanics": [
     {
@@ -25,5 +24,6 @@
       "effect_type": "disadvantage_attack_against",
       "trigger": "opportunity_attack"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

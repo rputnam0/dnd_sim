@@ -1,48 +1,48 @@
 {
   "name": "Exalted Champion",
-  "type": "subclass_feature",
   "description": "At 20th level, your presence on the field of battle is an inspiration to those dedicated to your cause. You can use your action to gain the following benefits for 1 hour: You have resistance to bludgeoning, piercing, and slashing damage from nonmagical weapons. Your allies have advantage on death saving throws while within 30 feet of you. You have advantage on Wisdom saving throws, as do your allies within 30 feet of you. This effect ends early if you are incapacitated or die. Once you use this feature, you can't use it again until you finish a long rest.",
   "mechanics": [
     {
-      "type": "activation",
       "action": "action",
       "duration": "1 hour",
       "endsEarlyIf": [
         "incapacitated",
         "dead"
-      ]
+      ],
+      "meta_type": "activation"
     },
     {
-      "type": "resistance",
       "damageTypes": [
         "bludgeoning",
         "piercing",
         "slashing"
       ],
       "source": "nonmagical weapons",
-      "target": "self"
+      "target": "self",
+      "meta_type": "resistance"
     },
     {
-      "type": "advantage",
       "on": "death saving throws",
       "target": "allies",
       "range": 30,
-      "condition": "within 30 feet"
+      "condition": "within 30 feet",
+      "meta_type": "advantage"
     },
     {
-      "type": "advantage",
       "on": "Wisdom saving throws",
       "target": [
         "self",
         "allies"
       ],
       "range": 30,
-      "condition": "within 30 feet"
+      "condition": "within 30 feet",
+      "meta_type": "advantage"
     },
     {
-      "type": "recharge",
       "uses": 1,
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "recharge"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

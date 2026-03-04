@@ -1,19 +1,19 @@
 {
   "name": "Stroke of Luck",
-  "type": "class_feature",
   "description": "At 20th level, you have an uncanny knack for succeeding when you need to. If your attack misses a target within range, you can turn the miss into a hit. Alternatively, if you fail an ability check, you can treat the d20 roll as a 20. Once you use this feature, you can't use it again until you finish a short or long rest.",
   "mechanics": [
     {
-      "type": "once_per_rest",
       "trigger": "attack_miss",
       "effect": "treat_as_hit",
-      "reset": "short_or_long_rest"
+      "reset": "short_or_long_rest",
+      "meta_type": "once_per_rest"
     },
     {
-      "type": "once_per_rest",
       "trigger": "ability_check_failure",
       "effect": "treat_roll_as_20",
-      "reset": "short_or_long_rest"
+      "reset": "short_or_long_rest",
+      "meta_type": "once_per_rest"
     }
-  ]
+  ],
+  "source_type": "class"
 }

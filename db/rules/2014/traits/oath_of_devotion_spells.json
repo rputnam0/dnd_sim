@@ -1,47 +1,47 @@
 {
   "name": "Oath of Devotion Spells",
-  "type": "subclass_feature",
   "description": "The magic of your oath ensures you always have certain spells ready; when you reach a Paladin level specified in the Oath of Devotion Spells table, you thereafter always have the listed spells prepared.\n\nOath of Devotion Spells:\n- 3rd level: Protection from Evil And Good, Shield of Faith\n- 5th level: Aid, Zone of Truth\n- 9th level: Beacon of Hope, Dispel Magic\n- 13th level: Freedom of Movement, Guardian of Faith\n- 17th level: Commune, Flame Strike",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "level": 3,
       "spells": [
         "Protection from Evil And Good",
         "Shield of Faith"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "always_prepared_spells",
       "level": 5,
       "spells": [
         "Aid",
         "Zone of Truth"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "always_prepared_spells",
       "level": 9,
       "spells": [
         "Beacon of Hope",
         "Dispel Magic"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "always_prepared_spells",
       "level": 13,
       "spells": [
         "Freedom of Movement",
         "Guardian of Faith"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "always_prepared_spells",
       "level": 17,
       "spells": [
         "Commune",
         "Flame Strike"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

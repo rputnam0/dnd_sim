@@ -1,12 +1,12 @@
 {
   "name": "Halfling Nimbleness",
-  "type": "racial_trait",
   "description": "You can move through the space of any creature that is of a size larger than yours.",
   "mechanics": [
     {
-      "type": "movement",
       "allows": "move_through_space",
-      "condition": "target.size > self.size"
+      "condition": "target.size > self.size",
+      "meta_type": "movement"
     }
-  ]
+  ],
+  "source_type": "species"
 }

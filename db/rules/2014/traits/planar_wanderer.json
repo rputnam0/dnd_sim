@@ -1,6 +1,5 @@
 {
   "name": "Planar Wanderer",
-  "type": "feat",
   "description": "You gain resistance to acid, cold, or fire damage (your choice) after a long rest until your next long rest. You can use an action to force a portal open or closed with a DC 20 Intelligence (Arcana) check, taking 3d8 psychic damage on a failure. You can also use an action to detect portals within 30 feet once per long rest.",
   "mechanics": [
     {
@@ -26,5 +25,6 @@
       "usage": 1,
       "reset": "long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

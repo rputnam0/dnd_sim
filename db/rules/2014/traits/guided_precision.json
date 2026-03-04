@@ -1,18 +1,18 @@
 {
   "name": "Guided Precision",
-  "type": "subclass_feature",
   "description": "Once per turn, whenever you cast a spell from your Cartographer Spells list or hit a creature affected by your Faerie Fire with an attack roll, you can add your Intelligence modifier to one damage roll of the spell or attack. In addition, taking damage can't cause you to lose Concentration on Faerie Fire.",
   "mechanics": [
     {
-      "type": "damage_modifier",
-      "trigger": "once_per_turn_when_cast_Cartographer_spell_or_hit_faerie_fire",
+      "trigger": "once_per_turn_when_cast_cartographer_spell_or_hit_faerie_fire",
       "modifier": "Intelligence modifier",
-      "applies_to": "one_damage_roll_of_spell_or_attack"
+      "applies_to": "one_damage_roll_of_spell_or_attack",
+      "meta_type": "damage_modifier"
     },
     {
-      "type": "concentration_protection",
       "spell": "Faerie Fire",
-      "condition": "taking_damage"
+      "condition": "taking_damage",
+      "meta_type": "concentration_protection"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

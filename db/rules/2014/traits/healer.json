@@ -1,6 +1,5 @@
 {
   "name": "Healer",
-  "type": "feat",
   "description": "You can use a Healer's Kit to allow a creature to expend a Hit Die and regain HP equal to the roll plus your Proficiency Bonus. Additionally, when you roll dice to restore HP with a spell or the Battle Medic benefit, you can reroll any 1s (must use the new roll).",
   "mechanics": [
     {
@@ -22,5 +21,6 @@
       "reroll_value": 1,
       "mandatory_new_roll": true
     }
-  ]
+  ],
+  "source_type": "feat"
 }

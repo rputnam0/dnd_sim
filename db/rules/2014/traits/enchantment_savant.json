@@ -1,6 +1,5 @@
 {
   "name": "Enchantment Savant",
-  "type": "subclass_feature",
   "description": "Beginning when you select this school at 2nd level, the gold and time you must spend to copy an enchantment spell into your spellbook is halved.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "school": "Enchantment",
       "multiplier": 0.5
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

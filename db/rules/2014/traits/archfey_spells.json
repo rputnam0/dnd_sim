@@ -1,10 +1,8 @@
 {
   "name": "Archfey Spells",
-  "type": "subclass_feature",
   "description": "The magic of your patron ensures you always have certain spells ready; when you reach a Warlock level specified in the Archfey Spells table, you thereafter always have the listed spells prepared.\n\nLevel 3: Calm Emotions, Faerie Fire, Misty Step, Phantasmal Force, Sleep\nLevel 5: Blink, Plant Growth\nLevel 7: Dominate Beast, Greater Invisibility\nLevel 9: Dominate Person, Seeming",
   "mechanics": [
     {
-      "type": "spell_prepared",
       "level": 3,
       "spells": [
         "Calm Emotions",
@@ -12,31 +10,33 @@
         "Misty Step",
         "Phantasmal Force",
         "Sleep"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     },
     {
-      "type": "spell_prepared",
       "level": 5,
       "spells": [
         "Blink",
         "Plant Growth"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     },
     {
-      "type": "spell_prepared",
       "level": 7,
       "spells": [
         "Dominate Beast",
         "Greater Invisibility"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     },
     {
-      "type": "spell_prepared",
       "level": 9,
       "spells": [
         "Dominate Person",
         "Seeming"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

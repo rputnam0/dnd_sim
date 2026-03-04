@@ -1,16 +1,16 @@
 {
   "name": "Vedalken Cunning",
-  "type": "racial_trait",
   "description": "You have advantage on all Intelligence, Wisdom, and Charisma saving throws against magic.",
   "mechanics": [
     {
-      "type": "advantage_on_saving_throws",
       "abilities": [
         "intelligence",
         "wisdom",
         "charisma"
       ],
-      "condition": "against magic"
+      "condition": "against magic",
+      "meta_type": "advantage_on_saving_throws"
     }
-  ]
+  ],
+  "source_type": "species"
 }

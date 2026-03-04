@@ -1,6 +1,5 @@
 {
   "name": "Celestial Resistance",
-  "type": "racial_trait",
   "description": "You have resistance to necrotic and radiant damage.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
         "radiant"
       ]
     }
-  ]
+  ],
+  "source_type": "species"
 }

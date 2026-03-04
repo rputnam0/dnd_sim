@@ -1,22 +1,22 @@
 {
   "name": "Self-Restoration",
-  "type": "class_feature",
   "description": "Through sheer force of will, you can remove one of the following conditions from yourself at the end of each of your turns: Charmed, Frightened, or Poisoned. In addition, forgoing food and drink doesn't give you levels of Exhaustion.",
   "mechanics": [
     {
-      "type": "remove_condition",
       "target": "self",
       "conditions": [
         "charmed",
         "frightened",
         "poisoned"
       ],
-      "timing": "end_of_turn"
+      "timing": "end_of_turn",
+      "effect_type": "remove_condition"
     },
     {
-      "type": "exhaustion_immunity",
       "source": "lack_of_food_or_drink",
-      "applies_to": "self"
+      "applies_to": "self",
+      "meta_type": "exhaustion_immunity"
     }
-  ]
+  ],
+  "source_type": "class"
 }

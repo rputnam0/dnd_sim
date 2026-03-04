@@ -1,10 +1,8 @@
 {
   "name": "Unwavering Mark",
-  "type": "subclass_feature",
   "description": "Starting at 3rd level, you can menace your foes, foiling their attacks and punishing them for harming others. When you hit a creature with a melee weapon attack, you can mark the creature until the end of your next turn. This effect ends early if you are incapacitated or you die, or if someone else marks the creature. While it is within 5 feet of you, a creature marked by you has disadvantage on any attack roll that doesn't target you. In addition, if a creature marked by you deals damage to anyone other than you, you can make a special melee weapon attack against the marked creature as a bonus action on your next turn. You have advantage on the attack roll, and if it hits, the attack's weapon deals extra damage to the target equal to half your fighter level. Regardless of the number of creatures you mark, you can make this special attack a number of times equal to your Strength modifier (minimum of once), and you regain all expended uses of it when you finish a long rest.",
   "mechanics": [
     {
-      "type": "mark",
       "trigger": "hit_melee_weapon_attack",
       "condition_name": "Unwavering Mark",
       "duration": "until_end_of_next_turn",
@@ -12,17 +10,17 @@
         "source_incapacitated",
         "source_dead",
         "other_mark_applied"
-      ]
+      ],
+      "meta_type": "mark"
     },
     {
-      "type": "disadvantage",
       "source_condition": "Unwavering Mark",
       "range": "5 ft",
       "effect": "attack_roll",
-      "applies_to": "attacks_not_targeting_source"
+      "applies_to": "attacks_not_targeting_source",
+      "meta_type": "disadvantage"
     },
     {
-      "type": "retaliation_attack",
       "trigger": "marked_creature_deals_damage_to_other",
       "grant": {
         "action_type": "bonus_action",
@@ -36,7 +34,9 @@
       "uses_per_long_rest": {
         "base": "strength_modifier",
         "minimum": 1
-      }
+      },
+      "meta_type": "retaliation_attack"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

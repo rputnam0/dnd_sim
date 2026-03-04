@@ -1,18 +1,18 @@
 {
   "name": "Dragon Ancestor",
-  "type": "subclass_feature",
   "description": "At 1st level, you choose one type of dragon as your ancestor. The damage type associated with each dragon is used by features you gain later. Draconic Ancestry: Black (Acid), Blue (Lightning), Brass (Fire), Bronze (Lightning), Copper (Acid), Gold (Fire), Green (Poison), Red (Fire), Silver (Cold), White (Cold). You can speak, read, and write Draconic. Additionally, whenever you make a Charisma check when interacting with dragons, your proficiency bonus is doubled if it applies to the check.",
   "mechanics": [
     {
-      "type": "language",
       "language": "Draconic",
-      "proficiency": "full"
+      "proficiency": "full",
+      "meta_type": "language"
     },
     {
-      "type": "skill_check_modifier",
       "skill": "Charisma",
       "condition": "interacting with dragons",
-      "proficiency_bonus_multiplier": 2
+      "proficiency_bonus_multiplier": 2,
+      "meta_type": "skill_check_modifier"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

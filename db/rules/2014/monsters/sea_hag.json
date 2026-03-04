@@ -1,17 +1,33 @@
 {
-  "name": "Sea Hag",
-  "meta": "Medium fey, chaotic evil",
-  "ac": 14,
-  "hp": 52,
-  "hp_formula": "7d8 + 21",
-  "ability_scores": {
-    "str": 16,
-    "dex": 13,
-    "con": 16,
-    "int": 12,
-    "wis": 12,
-    "cha": 13
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "sea_hag",
+    "name": "Sea Hag",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 52,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 3,
+    "dex_mod": 1,
+    "con_mod": 3,
+    "int_mod": 1,
+    "wis_mod": 1,
+    "cha_mod": 1,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

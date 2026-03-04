@@ -1,10 +1,8 @@
 {
   "name": "Echoes of Victory",
-  "type": "background_feature",
   "description": "You have attracted admiration among spectators, fellow athletes, and trainers in the region that hosted your past athletic victories. When visiting any settlement within 100 miles of where you grew up, there is a 50% chance you can find someone there who admires you and is willing to provide information or temporary shelter.\n\nBetween adventures, you might compete in athletic events sufficient enough to maintain a comfortable lifestyle, as per the \"Practicing a Profession\" downtime activity in chapter 8 of the Player's Handbook.",
   "mechanics": [
     {
-      "type": "random_friendly_npc",
       "trigger": {
         "location_type": "settlement",
         "distance_from_hometown_miles": 100
@@ -13,7 +11,9 @@
       "benefits": [
         "information",
         "temporary_shelter"
-      ]
+      ],
+      "meta_type": "random_friendly_npc"
     }
-  ]
+  ],
+  "source_type": "background"
 }

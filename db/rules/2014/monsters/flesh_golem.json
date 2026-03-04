@@ -1,17 +1,33 @@
 {
-  "name": "Flesh Golem",
-  "meta": "Medium construct, neutral",
-  "ac": 9,
-  "hp": 93,
-  "hp_formula": "11d8 + 44",
-  "ability_scores": {
-    "str": 19,
-    "dex": 9,
-    "con": 18,
-    "int": 6,
-    "wis": 10,
-    "cha": 5
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "flesh_golem",
+    "name": "Flesh Golem",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 93,
+    "ac": 9,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 4,
+    "dex_mod": -1,
+    "con_mod": 4,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": -3,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

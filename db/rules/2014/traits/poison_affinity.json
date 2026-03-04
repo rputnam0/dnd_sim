@@ -1,6 +1,5 @@
 {
   "name": "Poison Affinity",
-  "type": "racial_trait",
   "description": "You gain proficiency with the poisoner's kit.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
         "item": "poisoner's kit"
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

@@ -1,13 +1,13 @@
 {
   "name": "Font of Inspiration",
-  "type": "class_feature",
   "description": "Beginning when you reach 5th level, you regain all of your expended uses of Bardic Inspiration when you finish a short or long rest.",
   "mechanics": [
     {
-      "type": "resource_regeneration",
       "resource": "Bardic Inspiration",
       "trigger": "short_or_long_rest",
-      "amount": "all"
+      "amount": "all",
+      "meta_type": "resource_regeneration"
     }
-  ]
+  ],
+  "source_type": "class"
 }

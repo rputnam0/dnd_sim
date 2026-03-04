@@ -1,16 +1,16 @@
 {
   "name": "Sudden Strike",
-  "type": "subclass_feature",
   "description": "Starting at 17th level, you can strike with deadly speed. If you take the Attack action on your turn, you can make one additional attack as a bonus action. This attack can benefit from your Sneak Attack even if you have already used it this turn, but you can't use your Sneak Attack against the same target more than once in a turn.",
   "mechanics": [
     {
-      "type": "extra_attack",
-      "trigger": "Attack action",
+      "trigger": "attack action",
       "action": "bonus_action",
       "sneak_attack": {
         "allowed": true,
         "max_per_target_per_turn": 1
-      }
+      },
+      "meta_type": "extra_attack"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

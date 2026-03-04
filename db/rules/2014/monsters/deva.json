@@ -1,17 +1,36 @@
 {
-  "name": "Deva",
-  "meta": "Medium celestial, lawful good",
-  "ac": 17,
-  "hp": 136,
-  "hp_formula": "16d8 + 64",
-  "ability_scores": {
-    "str": 18,
-    "dex": 18,
-    "con": 18,
-    "int": 17,
-    "wis": 20,
-    "cha": 20
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "deva",
+    "name": "Deva",
+    "team": "enemy"
   },
-  "cr": "10",
-  "saving_throws_text": "Wis +9, Cha +9"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 136,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 4,
+    "str_mod": 4,
+    "dex_mod": 4,
+    "con_mod": 4,
+    "int_mod": 3,
+    "wis_mod": 5,
+    "cha_mod": 5,
+    "save_mods": {
+      "wis": 9,
+      "cha": 9
+    },
+    "cr": "10"
+  },
+  "reactions": [],
+  "actions": []
 }

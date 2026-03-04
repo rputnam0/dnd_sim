@@ -1,6 +1,6 @@
 {
   "name": "Pyromancer (PSK)",
-  "type": "subclass_feature",
   "description": "Your innate magic manifests in fire. You are your fire, and your fire is you.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "subclass"
 }

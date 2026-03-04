@@ -1,6 +1,6 @@
 {
   "name": "Additional Rune Known",
-  "type": "subclass_feature",
   "description": "You learn an additional Rune.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "subclass"
 }

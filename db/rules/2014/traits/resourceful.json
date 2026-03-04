@@ -1,11 +1,11 @@
 {
   "name": "Resourceful",
-  "type": "racial_trait",
   "description": "You gain Heroic Inspiration whenever you finish a Long Rest.",
   "mechanics": [
     {
       "trigger": "finish_long_rest",
       "effect": "gain_heroic_inspiration"
     }
-  ]
+  ],
+  "source_type": "species"
 }

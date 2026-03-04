@@ -1,17 +1,33 @@
 {
-  "name": "Succubus/Incubus",
-  "meta": "Medium fiend (shapechanger), neutral evil",
-  "ac": 15,
-  "hp": 66,
-  "hp_formula": "12d8 + 12",
-  "ability_scores": {
-    "str": 8,
-    "dex": 17,
-    "con": 13,
-    "int": 15,
-    "wis": 12,
-    "cha": 20
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "succubus_incubus",
+    "name": "Succubus/Incubus",
+    "team": "enemy"
   },
-  "cr": "4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 66,
+    "ac": 15,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": -1,
+    "dex_mod": 3,
+    "con_mod": 1,
+    "int_mod": 2,
+    "wis_mod": 1,
+    "cha_mod": 5,
+    "save_mods": {},
+    "cr": "4"
+  },
+  "reactions": [],
+  "actions": []
 }

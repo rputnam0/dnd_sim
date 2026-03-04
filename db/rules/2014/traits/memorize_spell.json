@@ -1,13 +1,13 @@
 {
   "name": "Memorize Spell",
-  "type": "class_feature",
   "description": "Whenever you finish a Short Rest, you can study your spellbook and replace one of the level 1+ Wizard spells you have prepared for your Spellcasting feature with another level 1+ spell from the book.",
   "mechanics": [
     {
-      "type": "spell_preparation_swap",
       "trigger": "short_rest",
       "min_spell_level": 1,
-      "detail": "Replace one prepared spell of level 1 or higher with another spell of the same level or higher from your spellbook."
+      "detail": "Replace one prepared spell of level 1 or higher with another spell of the same level or higher from your spellbook.",
+      "meta_type": "spell_preparation_swap"
     }
-  ]
+  ],
+  "source_type": "class"
 }

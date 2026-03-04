@@ -1,17 +1,38 @@
 {
-  "name": "Ice Devil",
-  "meta": "Large fiend (devil), lawful evil",
-  "ac": 18,
-  "hp": 180,
-  "hp_formula": "19d10 + 76",
-  "ability_scores": {
-    "str": 21,
-    "dex": 14,
-    "con": 18,
-    "int": 18,
-    "wis": 15,
-    "cha": 18
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ice_devil",
+    "name": "Ice Devil",
+    "team": "enemy"
   },
-  "cr": "14",
-  "saving_throws_text": "Dex +7, Con +9, Wis +7, Cha +9"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 180,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 5,
+    "dex_mod": 2,
+    "con_mod": 4,
+    "int_mod": 4,
+    "wis_mod": 2,
+    "cha_mod": 4,
+    "save_mods": {
+      "dex": 7,
+      "con": 9,
+      "wis": 7,
+      "cha": 9
+    },
+    "cr": "14"
+  },
+  "reactions": [],
+  "actions": []
 }

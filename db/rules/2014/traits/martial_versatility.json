@@ -1,18 +1,18 @@
 {
   "name": "Martial Versatility",
-  "type": "class_feature",
   "description": "This is an optional 4th-level fighter class feature. Whenever you reach a level in this class that grants the Ability Score Improvement feature, you can do one of the following, as you shift the focus of your martial practice: replace a fighting style you know with another fighting style available to fighters; if you know any maneuvers from the Battle Master archetype, you can replace one maneuver you know with a different maneuver.",
   "mechanics": [
     {
-      "type": "replace_fighting_style",
       "trigger": "ability_score_improvement",
-      "description": "Replace a known fighting style with another fighting style available to fighters."
+      "description": "Replace a known fighting style with another fighting style available to fighters.",
+      "meta_type": "replace_fighting_style"
     },
     {
-      "type": "replace_maneuver",
       "trigger": "ability_score_improvement",
       "archetype": "Battle Master",
-      "description": "Replace a known Battle Master maneuver with a different maneuver."
+      "description": "Replace a known Battle Master maneuver with a different maneuver.",
+      "meta_type": "replace_maneuver"
     }
-  ]
+  ],
+  "source_type": "class"
 }

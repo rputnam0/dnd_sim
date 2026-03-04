@@ -1,11 +1,11 @@
 {
   "name": "Hold Breath",
-  "type": "racial_trait",
   "description": "You can hold your breath for up to 15 minutes at a time.",
   "mechanics": [
     {
-      "type": "hold_breath",
-      "max_duration_minutes": 15
+      "max_duration_minutes": 15,
+      "meta_type": "hold_breath"
     }
-  ]
+  ],
+  "source_type": "species"
 }

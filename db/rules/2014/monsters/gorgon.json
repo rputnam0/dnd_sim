@@ -1,17 +1,33 @@
 {
-  "name": "Gorgon",
-  "meta": "Large monstrosity, unaligned",
-  "ac": 19,
-  "hp": 114,
-  "hp_formula": "12d10 + 48",
-  "ability_scores": {
-    "str": 20,
-    "dex": 11,
-    "con": 18,
-    "int": 2,
-    "wis": 12,
-    "cha": 7
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "gorgon",
+    "name": "Gorgon",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 114,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 5,
+    "dex_mod": 0,
+    "con_mod": 4,
+    "int_mod": -4,
+    "wis_mod": 1,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

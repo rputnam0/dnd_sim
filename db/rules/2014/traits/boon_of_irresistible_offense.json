@@ -1,6 +1,5 @@
 {
   "name": "Boon of Irresistible Offense",
-  "type": "feat",
   "description": "You increase your Strength or Dexterity score by 1, to a maximum of 30. The Bludgeoning, Piercing, and Slashing damage you deal always ignores Resistance. When you roll a 20 on the d20 for an attack roll, you can deal extra damage to the target equal to the ability score increased by this feat, of the same type as the attack.",
   "mechanics": [
     {
@@ -29,5 +28,6 @@
       "amount": "ability_score",
       "damage_type": "same_as_attack"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

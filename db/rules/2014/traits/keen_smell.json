@@ -1,17 +1,17 @@
 {
   "name": "Keen Smell",
-  "type": "racial_trait",
   "description": "Thanks to your sensitive trunk, you have advantage on Wisdom (Perception), Wisdom (Survival), and Intelligence (Investigation) checks that involve smell.",
   "mechanics": [
     {
-      "type": "advantage",
       "target": "skill_checks",
       "skills": [
         "Perception",
         "Survival",
         "Investigation"
       ],
-      "condition": "checks that involve smell"
+      "condition": "checks that involve smell",
+      "meta_type": "advantage"
     }
-  ]
+  ],
+  "source_type": "species"
 }

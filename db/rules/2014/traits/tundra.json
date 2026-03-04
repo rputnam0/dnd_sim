@@ -1,10 +1,8 @@
 {
   "name": "Tundra",
-  "type": "subclass_feature",
   "description": "When this effect is activated, each creature of your choice in your aura gains 2 temporary hit points, as icy spirits inure it to suffering. The temporary hit points increase when you reach certain levels in this class, increasing to 3 at 5th level, 4 at 10th level, 5 at 15th level, and 6 at 20th level.",
   "mechanics": [
     {
-      "type": "temporary_hit_points",
       "target": "creature_of_choice_in_aura",
       "amount": 2,
       "scaling": [
@@ -24,7 +22,9 @@
           "level": 20,
           "amount": 6
         }
-      ]
+      ],
+      "meta_type": "temporary_hit_points"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

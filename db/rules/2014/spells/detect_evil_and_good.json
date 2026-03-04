@@ -1,9 +1,15 @@
 {
   "name": "Detect Evil and Good",
-  "meta": "Detect Evil and Good 1st-\u00ad\u2010\u2011level divination",
+  "type": "spell",
+  "level": 1,
+  "school": "Divination",
   "casting_time": "1 action",
-  "range": "Self",
-  "components": "V, S",
-  "duration": "Concentration, up to 10 minutes",
-  "description": "For the duration, you know if there is an aberration, celestial, elemental, fey, fiend, or undead within 30 feet of you, as well as where the creature is located. Similarly, you know if there is a place or object within 30 feet of you that has been magically consecrated or desecrated. The spell can penetrate most barriers, but it is blocked by 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt. Detect Magic 1st-\u00ad\u2010\u2011level divination (ritual)"
+  "range_ft": 0,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 100,
+  "description": "For the duration, you know if there is an aberration, celestial, elemental, fey, fiend, or undead within 30 feet of you, as well as where the creature is located. Similarly, you know if there is a place or object within 30 feet of you that has been magically consecrated or desecrated. The spell can penetrate most barriers, but it is blocked by 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt. Detect Magic 1st-­‐‑level divination (ritual)",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

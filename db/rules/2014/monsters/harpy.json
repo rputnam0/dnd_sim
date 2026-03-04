@@ -1,17 +1,33 @@
 {
-  "name": "Harpy",
-  "meta": "Medium monstrosity, chaotic evil",
-  "ac": 11,
-  "hp": 38,
-  "hp_formula": "7d8 + 7",
-  "ability_scores": {
-    "str": 12,
-    "dex": 13,
-    "con": 12,
-    "int": 7,
-    "wis": 10,
-    "cha": 13
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "harpy",
+    "name": "Harpy",
+    "team": "enemy"
   },
-  "cr": "1",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 38,
+    "ac": 11,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 1,
+    "dex_mod": 1,
+    "con_mod": 1,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": 1,
+    "save_mods": {},
+    "cr": "1"
+  },
+  "reactions": [],
+  "actions": []
 }

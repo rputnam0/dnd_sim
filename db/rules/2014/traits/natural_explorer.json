@@ -1,42 +1,42 @@
 {
   "name": "Natural Explorer",
-  "type": "class_feature",
   "description": "You are particularly familiar with one type of natural environment and are adept at traveling and surviving in such regions. Choose one type of favored terrain: arctic, coast, desert, forest, grassland, mountain, swamp, or the Underdark. When you make an Intelligence or Wisdom check related to your favored terrain, your proficiency bonus is doubled if you are using a skill that you're proficient in.\n\nWhile traveling for an hour or more in your favored terrain, you gain the following benefits:\n- Difficult terrain doesn't slow your group's travel.\n- Your group can't become lost except by magical means.\n- Even when you are engaged in another activity while traveling (such as foraging, navigating, or tracking), you remain alert to danger.\n- If you are traveling alone, you can move stealthily at a normal pace.\n- When you forage, you find twice as much food as you normally would.\n- While tracking other creatures, you also learn their exact number, their sizes, and how long ago they passed through the area.\n\nYou choose additional favored terrain types at 6th and 10th level.",
   "mechanics": [
     {
-      "type": "ability_check_modifier",
       "ability": [
         "Intelligence",
         "Wisdom"
       ],
       "condition": "check related to favored terrain",
       "skill_proficiency_required": true,
-      "modifier": "double proficiency bonus"
+      "modifier": "double proficiency bonus",
+      "meta_type": "ability_check_modifier"
     },
     {
-      "type": "travel_speed",
       "condition": "traveling in favored terrain",
-      "effect": "ignore difficult terrain"
+      "effect": "ignore difficult terrain",
+      "meta_type": "travel_speed"
     },
     {
-      "type": "lost_immunity",
       "condition": "traveling in favored terrain",
-      "effect": "cannot become lost except by magical means"
+      "effect": "cannot become lost except by magical means",
+      "meta_type": "lost_immunity"
     },
     {
-      "type": "stealth_movement",
       "condition": "traveling alone in favored terrain",
-      "effect": "stealth at normal travel pace"
+      "effect": "stealth at normal travel pace",
+      "meta_type": "stealth_movement"
     },
     {
-      "type": "foraging_yield",
       "condition": "foraging in favored terrain",
-      "effect": "double food found"
+      "effect": "double food found",
+      "meta_type": "foraging_yield"
     },
     {
-      "type": "tracking_information",
       "condition": "tracking in favored terrain",
-      "effect": "learn exact number, sizes, and time since passage of tracked creatures"
+      "effect": "learn exact number, sizes, and time since passage of tracked creatures",
+      "meta_type": "tracking_information"
     }
-  ]
+  ],
+  "source_type": "class"
 }

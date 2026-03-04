@@ -1,13 +1,13 @@
 {
   "name": "Stone Camouflage",
-  "type": "racial_trait",
   "description": "You have advantage on Dexterity (Stealth) checks to hide in rocky terrain.",
   "mechanics": [
     {
-      "type": "advantage",
       "target": "skill",
       "skill": "Stealth",
-      "condition": "rocky terrain"
+      "condition": "rocky terrain",
+      "meta_type": "advantage"
     }
-  ]
+  ],
+  "source_type": "species"
 }

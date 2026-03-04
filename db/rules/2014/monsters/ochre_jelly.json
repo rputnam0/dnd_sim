@@ -1,17 +1,33 @@
 {
-  "name": "Ochre Jelly",
-  "meta": "Large ooze, unaligned",
-  "ac": 8,
-  "hp": 45,
-  "hp_formula": "6d10 + 12",
-  "ability_scores": {
-    "str": 15,
-    "dex": 6,
-    "con": 14,
-    "int": 2,
-    "wis": 6,
-    "cha": 1
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ochre_jelly",
+    "name": "Ochre Jelly",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 45,
+    "ac": 8,
+    "speed_ft": 30,
+    "initiative_mod": -2,
+    "str_mod": 2,
+    "dex_mod": -2,
+    "con_mod": 2,
+    "int_mod": -4,
+    "wis_mod": -2,
+    "cha_mod": -5,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

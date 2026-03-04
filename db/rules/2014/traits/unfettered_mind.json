@@ -1,6 +1,5 @@
 {
   "name": "Unfettered Mind",
-  "type": "subclass_feature",
   "description": "You gain telepathy out to 60 feet. When you use this telepathy, you can simultaneously contact a number of creatures equal to your Wisdom modifier (minimum of one). Additionally, you gain proficiency in Intelligence saving throws. If you already have this proficiency, you instead gain saving throw proficiency with one ability in which you lack it.",
   "mechanics": [
     {
@@ -13,5 +12,6 @@
       "ability": "Intelligence",
       "fallback": "If already proficient, grant proficiency in one other ability saving throw you lack"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

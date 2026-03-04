@@ -1,12 +1,12 @@
 {
   "name": "Temporal Awareness",
-  "type": "subclass_feature",
   "description": "2nd-level Chronurgy Magic feature. You can add your Intelligence modifier to your initiative rolls.",
   "mechanics": [
     {
-      "type": "add_modifier",
       "target": "initiative",
-      "modifier": "Intelligence"
+      "modifier": "Intelligence",
+      "meta_type": "add_modifier"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

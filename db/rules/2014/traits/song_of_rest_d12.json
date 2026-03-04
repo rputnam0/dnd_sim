@@ -1,11 +1,11 @@
 {
   "name": "Song of Rest (d12)",
-  "type": "class_feature",
   "description": "At 17th level, the extra hit points gained from Song of Rest increases to 1d12.",
   "mechanics": [
     {
       "effect": "song_of_rest_healing_increase",
       "dice": "1d12"
     }
-  ]
+  ],
+  "source_type": "class"
 }

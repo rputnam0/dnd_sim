@@ -1,6 +1,5 @@
 {
   "name": "Archery",
-  "type": "feat",
   "description": "You gain a +2 bonus to attack rolls you make with Ranged weapons.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "weapon_type": "ranged",
       "bonus": 2
     }
-  ]
+  ],
+  "source_type": "feat"
 }

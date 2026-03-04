@@ -1,17 +1,36 @@
 {
-  "name": "Vampire Spawn",
-  "meta": "Medium undead, neutral evil",
-  "ac": 15,
-  "hp": 82,
-  "hp_formula": "11d8 + 33",
-  "ability_scores": {
-    "str": 16,
-    "dex": 16,
-    "con": 16,
-    "int": 11,
-    "wis": 10,
-    "cha": 12
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "vampire_spawn",
+    "name": "Vampire Spawn",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": "Dex +6, Wis +3"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 82,
+    "ac": 15,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": 3,
+    "dex_mod": 3,
+    "con_mod": 3,
+    "int_mod": 0,
+    "wis_mod": 0,
+    "cha_mod": 1,
+    "save_mods": {
+      "dex": 6,
+      "wis": 3
+    },
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

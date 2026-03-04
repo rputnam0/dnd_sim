@@ -1,9 +1,15 @@
 {
   "name": "Shocking Grasp Evocation",
-  "meta": "Shocking Grasp Evocation cantrip",
+  "type": "spell",
+  "level": 0,
+  "school": "Evocation",
   "casting_time": "1 action",
-  "range": "Touch",
-  "components": "V, S",
-  "duration": "Instantaneous",
-  "description": "Lightning springs from your hand to deliver a shock to a creature you try to touch. Make a melee spell attack against the target. You have advantage on the attack roll if the target is wearing armor made of metal. On a hit, the target takes 1d8 lightning damage, and it can\u2019t take reactions until the start of its next turn. The spell\u2019s damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8). Silence 2nd-\u00ad\u2010\u2011level illusion (ritual)"
+  "range_ft": null,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 0,
+  "description": "Lightning springs from your hand to deliver a shock to a creature you try to touch. Make a melee spell attack against the target. You have advantage on the attack roll if the target is wearing armor made of metal. On a hit, the target takes 1d8 lightning damage, and it can’t take reactions until the start of its next turn. The spell’s damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8). Silence 2nd-­‐‑level illusion (ritual)",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

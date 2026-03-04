@@ -1,6 +1,5 @@
 {
   "name": "Wildspace Adaptation",
-  "type": "background_feature",
   "description": "You gain the Tough feat from the Player's Handbook. In addition, you learned how to adapt to zero gravity. Being weightless doesn't give you disadvantage on any of your melee attack rolls (see \"Weightlessness\" in chapter 2).",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
     {
       "weightless_melee_no_disadvantage": true
     }
-  ]
+  ],
+  "source_type": "background"
 }

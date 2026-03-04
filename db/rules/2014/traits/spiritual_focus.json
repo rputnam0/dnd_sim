@@ -1,15 +1,15 @@
 {
   "name": "Spiritual Focus",
-  "type": "subclass_feature",
   "description": "3rd-level College of Spirits feature. You employ tools that aid you in channeling spirits, be they historical figures or fictional archetypes. You can use the following objects as a spellcasting focus for your bard spells: a candle, crystal ball, skull, spirit board, or tarokka deck. Starting at 6th level, when you cast a bard spell that deals damage or restores hit points through the Spiritual Focus, roll a d6, and you gain a bonus to one damage or healing roll of the spell equal to the number rolled.",
   "mechanics": [
     {
-      "type": "damage_healing_bonus",
       "trigger": "cast_spell_using_spiritual_focus",
       "condition": "spell_deals_damage_or_restores_hit_points",
       "dice": "1d6",
       "apply_to": "one_damage_or_healing_roll",
-      "value": "dice_result"
+      "value": "dice_result",
+      "meta_type": "damage_healing_bonus"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

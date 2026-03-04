@@ -1,9 +1,15 @@
 {
   "name": "Bless",
-  "meta": "Bless 1st-\u00ad\u2010\u2011level enchantment",
+  "type": "spell",
+  "level": 1,
+  "school": "Enchantment",
   "casting_time": "1 action",
-  "range": "30 feet",
-  "components": "V, S, M (a sprinkling of holy water)",
-  "duration": "Concentration, up to 1 minute",
-  "description": "You bless up to three creatures of your choice within range. Whenever a target makes an attack roll or a saving throw before the spell ends, the target can roll a d4 and add the number rolled to the attack roll or saving throw. At Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st. Blight 4th-\u00ad\u2010\u2011level necromancy"
+  "range_ft": 30,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 10,
+  "description": "You bless up to three creatures of your choice within range. Whenever a target makes an attack roll or a saving throw before the spell ends, the target can roll a d4 and add the number rolled to the attack roll or saving throw. At Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st. Blight 4th-­‐‑level necromancy",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

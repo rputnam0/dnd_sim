@@ -1,20 +1,20 @@
 {
   "name": "Fungal Body",
-  "type": "subclass_feature",
   "description": "At 14th level, the fungal spores in your body alter you: you can't be blinded, deafened, frightened, or poisoned, and any critical hit against you counts as a normal hit instead, unless you're incapacitated.",
   "mechanics": [
     {
-      "type": "condition_immunity",
       "conditions": [
         "blinded",
         "deafened",
         "frightened",
         "poisoned"
-      ]
+      ],
+      "meta_type": "condition_immunity"
     },
     {
-      "type": "critical_hit_normalization",
-      "exception": "incapacitated"
+      "exception": "incapacitated",
+      "meta_type": "critical_hit_normalization"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

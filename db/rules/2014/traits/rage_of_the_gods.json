@@ -1,6 +1,5 @@
 {
   "name": "Rage of the Gods",
-  "type": "subclass_feature",
   "description": "When you activate your Rage, you can assume the form of a divine warrior. This form lasts for 1 minute or until you drop to 0 hit points. Once you use this feature, you can't do so again until you finish a long rest. While in this form, you gain the following benefits: Flight – you have a fly speed equal to your speed and can hover. Resistance – you have resistance to necrotic, psychic, and radiant damage. Revivification – when a creature within 30 feet of you would drop to 0 hit points, you can take a reaction to expend a use of your Rage to instead change the target's hit points to a number equal to your Barbarian level.",
   "mechanics": [
     {
@@ -11,19 +10,19 @@
     },
     {
       "name": "Flight",
-      "type": "speed",
       "mode": "fly",
       "value": "equal to walking speed",
-      "hover": true
+      "hover": true,
+      "meta_type": "speed"
     },
     {
       "name": "Resistance",
-      "type": "damage_resistance",
       "damage_types": [
         "necrotic",
         "psychic",
         "radiant"
-      ]
+      ],
+      "meta_type": "damage_resistance"
     },
     {
       "name": "Revivification",
@@ -32,5 +31,6 @@
       "cost": "expend a use of Rage",
       "effect": "set target hit points to barbarian level"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

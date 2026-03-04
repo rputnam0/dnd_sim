@@ -1,10 +1,8 @@
 {
   "name": "Firbolg Magic",
-  "type": "racial_trait",
   "description": "You can cast detect magic and disguise self spells with this trait. When you use this version of disguise self, you can seem up to 3 feet shorter or taller. Once you cast either of these spells with this trait, you can't cast that spell with it again until you finish a long rest. You can also cast these spells using any spell slots you have. Intelligence, Wisdom, or Charisma is your spellcasting ability for these spells when you cast them with this trait (choose when you select this race).",
   "mechanics": [
     {
-      "type": "spellcasting",
       "spells": [
         "detect magic",
         "disguise self"
@@ -15,7 +13,9 @@
         "Intelligence",
         "Wisdom",
         "Charisma"
-      ]
+      ],
+      "meta_type": "spellcasting"
     }
-  ]
+  ],
+  "source_type": "species"
 }

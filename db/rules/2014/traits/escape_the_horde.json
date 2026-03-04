@@ -1,12 +1,12 @@
 {
   "name": "Escape the Horde",
-  "type": "subclass_feature",
   "description": "Opportunity attacks against you are made with disadvantage.",
   "mechanics": [
     {
-      "type": "disadvantage",
       "source": "opportunity attacks",
-      "target": "self"
+      "target": "self",
+      "meta_type": "disadvantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

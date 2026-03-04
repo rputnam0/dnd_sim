@@ -1,10 +1,10 @@
 {
   "name": "Damage Resistance",
-  "type": "racial_trait",
   "description": "You have resistance to the damage type associated with your draconic ancestry.",
   "mechanics": [
     {
       "damage_resistance": "draconic ancestry"
     }
-  ]
+  ],
+  "source_type": "species"
 }

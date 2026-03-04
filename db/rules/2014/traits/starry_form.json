@@ -1,6 +1,5 @@
 {
   "name": "Starry Form",
-  "type": "subclass_feature",
   "description": "As a bonus action, you can expend a use of your Wild Shape feature to take on a starry form, rather than transforming into a beast. While in your starry form, you retain your game statistics, but your body becomes luminous; your joints glimmer like stars, and glowing lines connect them as on a star chart. This form sheds bright light in a 10‑foot radius and dim light for an additional 10 feet. The form lasts for 10 minutes. It ends early if you dismiss it (no action required), are incapacitated, die, or use this feature again. When you assume the form you choose one of the constellations—Archer, Chalice, or Dragon—which grants additional benefits.",
   "mechanics": [
     {
@@ -27,5 +26,6 @@
         "re‑use"
       ]
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

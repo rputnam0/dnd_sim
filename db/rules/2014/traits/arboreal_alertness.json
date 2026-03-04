@@ -1,11 +1,11 @@
 {
   "name": "Arboreal Alertness",
-  "type": "racial_trait",
   "description": "You have proficiency in the Perception skill.",
   "mechanics": [
     {
-      "type": "skill_proficiency",
-      "skill": "Perception"
+      "skill": "Perception",
+      "meta_type": "skill_proficiency"
     }
-  ]
+  ],
+  "source_type": "species"
 }

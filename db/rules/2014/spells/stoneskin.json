@@ -1,9 +1,15 @@
 {
   "name": "Stoneskin",
-  "meta": "Stoneskin 4th-\u00ad\u2010\u2011level abjuration",
+  "type": "spell",
+  "level": 4,
+  "school": "Abjuration",
   "casting_time": "1 action",
-  "range": "Touch",
-  "components": "V, S, M (diamond dust worth 100 gp, which the spell consumes)",
-  "duration": "Concentration, up to 1 hour",
-  "description": "This spell turns the flesh of a willing creature you touch as hard as stone. Until the spell ends, the target has resistance to nonmagical bludgeoning, piercing, and slashing damage. Storm of Vengeance 9th-\u00ad\u2010\u2011level conjuration"
+  "range_ft": null,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 600,
+  "description": "This spell turns the flesh of a willing creature you touch as hard as stone. Until the spell ends, the target has resistance to nonmagical bludgeoning, piercing, and slashing damage. Storm of Vengeance 9th-­‐‑level conjuration",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

@@ -1,6 +1,5 @@
 {
   "name": "Treacherous Allure",
-  "type": "feat",
   "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. You always have the Charm Person spell prepared. You can cast it once without a spell slot per long rest, and you can also cast it using spell slots. You have advantage on attack rolls against creatures with the Charmed condition.",
   "mechanics": [
     {
@@ -24,5 +23,6 @@
       "effect_type": "advantage_attack",
       "target_condition": "charmed"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

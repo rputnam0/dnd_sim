@@ -1,6 +1,5 @@
 {
   "name": "Whirlwind Attack",
-  "type": "subclass_feature",
   "description": "You can use your action to make a melee attack against any number of creatures within 5 feet of you, with a separate attack roll for each target.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       "targets": "any number of creatures",
       "separate_attack_roll": true
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

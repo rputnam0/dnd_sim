@@ -1,6 +1,5 @@
 {
   "name": "Vampire Touched",
-  "type": "feat",
   "description": "You increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. You always have the Spider Climb spell and one 1st-level spell of your choice from the Enchantment or Illusion school prepared. You can cast each of these spells once without expending a spell slot, and you must finish a long rest before you can cast them in this way again. When you cast Spider Climb in this way, you must target yourself. You can also cast these spells using spell slots you have of the appropriate level. Your spellcasting ability for these spells is the ability increased by this feat.",
   "mechanics": [
     {
@@ -33,5 +32,6 @@
       "effect_type": "spellcasting_ability",
       "ability_source": "feat_stat_choice"
     }
-  ]
+  ],
+  "source_type": "feat"
 }
