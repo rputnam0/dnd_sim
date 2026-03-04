@@ -1,24 +1,28 @@
 # Risk Register
 
-## High-Risk Integration Areas
+Status: canonical  
+Owner: integration-review  
+Last updated: 2026-03-04  
+Canonical source: `docs/program/README.md`
 
-| Risk ID | Area | Risk | Mitigation | Gate |
-|---|---|---|---|---|
-| R-01 | `engine.py` timing flow | Event bus migration breaks existing action resolution order | Merge FND-01 first, add event-order golden tests | Wave 1 integration tests |
-| R-02 | Condition model | Converting string conditions to effect instances regresses derived checks | Dual-path compatibility tests + explicit derived-state unit tests | FND-02 test gate |
-| R-03 | Attack identity | Weapon property assumptions hidden in action names stop working | Canonical weapon IDs + property-based legality tests | FND-03 gate |
-| R-04 | Damage resolution | Mixed damage types mitigated incorrectly after typed packets | Packet-level mitigation tests and smite/sneak mixed-damage integration tests | FND-04 gate |
-| R-05 | Spell timing | Counterspell/Shield/bonus-action restrictions conflict | Centralized spell declaration/resolution windows + reaction tests | FND-05 + BUG-04/05/17 |
-| R-06 | Strategy API | Backward compatibility breaks clients | Migration notes + structured validation errors + adapter shims where needed | FND-06 gate |
-| R-07 | Spatial/pathing | Pathfinding and AoE legality drift from existing assumptions | Separate geometry test corpus; no merge without path legality tests | BUG-21 + COM-04 |
-| R-08 | Class expansion | Per-class branches diverge in shared hooks | Require CHR-03 hook API first and rebase class branches weekly | Wave 4 merge policy |
-| R-09 | Data pipeline | New schema validation blocks existing content | Add migration scripts and fixture updates in same task PR | SYS-07 gate |
-| R-10 | Determinism | Parallel merges introduce nondeterministic ordering | Determinism corpus + seeded replay diff in wave gates | Every wave |
+## High-risk areas
 
-## Operational Risks
+| Risk ID | Area | Required mitigation | Gate |
+|---|---|---|---|
+| R-01 | Documentation drift | Merge `DOC-01` through `DOC-05` before any large code track; fail CI on doc drift. | 5A |
+| R-02 | Engine decomposition | Extract bounded modules in dependency order and compare deterministic replays before and after every ARC merge. | 5B |
+| R-03 | Reaction and timing regressions | Isolate reaction windows in `reaction_runtime.py` and require trigger-order golden tests. | ARC-06 |
+| R-04 | Capability false positives | Require explicit unsupported reason codes and tested-state coverage before content is marked executable. | CAP-05 |
+| R-05 | Observability overhead | Keep event payloads structured and deterministic; run replay/perf comparisons on every observability merge. | 5D |
+| R-06 | Persistence migration breakage | Add forward and rollback migrations with mixed old/new read tests. | 5E |
+| R-07 | AI tactical regressions | Require benchmark corpus and rationale traces before AI merges. | 5F |
+| R-08 | Rules closure churn | Close feat and rage gaps with deterministic feature-specific tests before broader world-system merges. | 5G |
+| R-09 | World-state schema churn | Land canonical state tables before quest, faction, and campaign runtime work. | 5E and 5H |
+| R-10 | Completion declared too early | Block completion on every `FIN-*` gate and do not rely on partial checklist state. | 5I |
 
-| Risk ID | Risk | Mitigation |
-|---|---|---|
-| O-01 | Too many concurrent branches cause conflict churn | Run strict wave batching and dependency-ordered merges |
-| O-02 | Review bottleneck delays merges | Assign dedicated explorer reviewers by bundle |
-| O-03 | Incomplete task closure | Enforce status board updates and PR checklists |
+## Operational rules
+
+- Rebase every hotspot task after any merge touching the same module.
+- Preserve replay diff artifacts for any deterministic drift.
+- Do not add transitional compatibility shims without a removal task in `backlog.csv`.
+- Do not mark a task merged until `status_board.md` reflects the same state.

@@ -1,44 +1,74 @@
 # Merge and Review Runbook
 
-## Integration Strategy
-- Create one integration branch per wave: `int/wave-<n>-integration` from `origin/main` (or prior wave tag).
-- Merge tasks in dependency order, not completion order.
-- Resolve conflicts on task branch first, then merge into integration branch.
+Status: canonical  
+Owner: integration-review  
+Last updated: 2026-03-04  
+Canonical source: `docs/program/README.md`
 
-## Dependency-Ordered Merge Rules
-- Do not merge tasks with unresolved dependencies from `backlog.csv`.
-- If two tasks touch same hotspot (`engine.py`, rules core, strategy schema), merge lower-level dependency first.
-- Rebase outstanding task branches after each hotspot merge.
+## Integration strategy
 
-## PR Review Process
-1. Worker opens PR for one task ID.
-2. Explorer reviews for:
-- rules correctness
-- regression risk
-- missing tests
-- deterministic behavior drift
-3. Required findings are fixed on the same branch.
-4. PR is approved only when all gates are green.
+Use one integration branch per track:
 
-## Comment and Issue Handling
-- Use GitHub API (`gh api`) to fetch PR comments/reviews.
-- Address actionable items in code/tests.
-- Reply inline with resolution summary and commit reference.
+- `int/5a-doc-control`
+- `int/5b-runtime-decomposition`
+- `int/5c-capability-manifest`
+- `int/5d-observability`
+- `int/5e-persistence`
+- `int/5f-ai-hardening`
+- `int/5g-rules-closure`
+- `int/5h-world-systems`
+- `int/5i-completion-gates`
 
-## Wave Gate Checklist
-- All task PRs for wave merged into integration branch.
-- Full test suite pass on integration branch.
-- Determinism/golden checks pass.
-- Documentation updates complete.
-- Status board updated to `merged` for tasks.
+Merge tracks in dependency order.
 
-## Main Branch Merge Rules
-- Merge one wave PR to `main` at a time.
-- After merge:
-  - run smoke tests on `main`
-  - tag baseline (`wave-<n>-green`)
-  - prune merged feature branches
+## Hotspot merge rules
 
-## Backout Policy
-- If post-merge regressions occur, revert the minimal offending task merge commit.
-- Reopen task issue with failure context and expected fix scope.
+The following hotspots require dependency-ordered merges and rebases after every merge:
+
+- `src/dnd_sim/engine.py`
+- `src/dnd_sim/spatial.py`
+- `src/dnd_sim/rules_2014.py`
+- `src/dnd_sim/strategy_api.py`
+- `src/dnd_sim/strategies/defaults.py`
+- `src/dnd_sim/db.py`
+- `docs/agent_index.yaml`
+- `docs/program/backlog.csv`
+- `docs/program/status_board.md`
+
+## PR review checklist
+
+Explorer review must confirm all of the following:
+
+- task scope matches `backlog.csv`,
+- no unrelated runtime logic moved into the branch,
+- new runtime modules have ownership and invariants in `docs/agent_index.yaml`,
+- required tests exist and pass,
+- deterministic behavior is unchanged or intentionally documented,
+- structured telemetry was added for runtime-touching tasks,
+- live docs changed with the code,
+- no new compatibility shim was introduced without a removal task,
+- hotspot file size moved in the correct direction when the task is a decomposition task.
+
+## Wave gate checklist
+
+A track integration branch is mergeable only when:
+
+- all scheduled task branches for the batch are merged into the integration branch,
+- full `uv run python -m pytest` passes,
+- deterministic replay/golden checks pass,
+- doc consistency checks pass,
+- status board entries for the merged tasks are updated,
+- no critical or high explorer findings remain.
+
+## Main branch merge rules
+
+- Merge one track integration PR to `main` at a time.
+- After each merge, run the smoke suite on `main`.
+- Update `docs/program/status_board.md` to merged for the completed track.
+- Tag the baseline after `FIN-06`.
+
+## Backout policy
+
+- Revert the smallest offending merge commit.
+- Reopen the task ID in `backlog.csv` and `status_board.md`.
+- Preserve the replay diff and failing trace artifacts for the follow-up fix branch.
