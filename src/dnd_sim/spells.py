@@ -294,6 +294,8 @@ def _record_richness(record: dict[str, Any]) -> tuple[int, int]:
         score += 3
     if record.get("concentration"):
         score += 1
+    if record.get("ritual"):
+        score += 1
     if record.get("description"):
         score += 1
     return score, len(record.get("description", ""))

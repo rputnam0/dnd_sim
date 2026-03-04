@@ -12305,7 +12305,7 @@ def _resolve_dispel_magic(
             if zone_id != chosen_zone_id:
                 kept_hazards.append(zone)
                 continue
-            removed_zone_source_ids.add(str(zone.get("concentration_owner_id", "")).strip())
+            removed_zone_source_ids.add(str(zone.get("source_id", "")).strip())
         active_hazards[:] = kept_hazards
         _prune_actor_zone_memberships(actors, active_hazards)
         for source_id in removed_zone_source_ids:

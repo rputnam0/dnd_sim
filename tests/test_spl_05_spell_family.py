@@ -459,6 +459,87 @@ def test_dispel_magic_removes_spell_created_zone_at_target_location() -> None:
     assert active_hazards == []
 
 
+def test_dispel_magic_zone_path_syncs_concentration_using_zone_source_id() -> None:
+    rng = FixedRng([10])  # 10 + INT 4 => DC 14 success for a 4th-level zone.
+    source = _base_actor(actor_id="source", team="enemy")
+    source.int_mod = 3
+    dispeller = _base_actor(actor_id="dispeller", team="party")
+    dispeller.int_mod = 4
+    victim = _base_actor(actor_id="victim", team="party")
+    source.position = (0.0, 0.0, 0.0)
+    victim.position = (5.0, 0.0, 0.0)
+    dispeller.position = (20.0, 0.0, 0.0)
+
+    self_centered_zone = ActionDefinition(
+        name="storm_aura",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+        concentration=True,
+        tags=["spell", "spell_level:4"],
+        effects=[
+            {
+                "effect_type": "persistent_zone",
+                "target": "target",
+                "zone_type": "cloud",
+                "radius_ft": 10,
+                "duration_rounds": 10,
+                "effect_id": "storm_aura",
+            }
+        ],
+    )
+    dispel_magic = ActionDefinition(
+        name="dispel_magic",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        tags=["spell", "dispel"],
+    )
+
+    actors = {a.actor_id: a for a in (source, dispeller, victim)}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        source, dispeller, victim
+    )
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=random.Random(15),
+        actor=source,
+        action=self_centered_zone,
+        targets=[source],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+
+    assert source.concentrating is True
+    assert victim.actor_id not in source.concentrated_targets
+    assert len(active_hazards) == 1
+    # Simulate migrated/legacy zone payload that only carries source_id.
+    active_hazards[0].pop("concentration_owner_id", None)
+
+    _execute_action(
+        rng=rng,
+        actor=dispeller,
+        action=dispel_magic,
+        targets=[victim],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+
+    assert active_hazards == []
+    assert source.concentrating is False
+    assert source.concentrated_spell is None
+    assert source.concentrated_spell_level is None
+
+
 def test_dispel_magic_only_removes_targeted_concentration_effect_not_whole_package() -> None:
     rng = FixedRng([20])  # Ensure dispel succeeds even for high-level effect.
     source = _base_actor(actor_id="source", team="enemy")

@@ -67,6 +67,43 @@ def test_load_spell_database_fails_fast_on_duplicate_lookup_key(tmp_path: Path) 
         load_spell_database(tmp_path)
 
 
+def test_load_spell_database_prefer_richest_counts_ritual_marker(tmp_path: Path) -> None:
+    (tmp_path / "a.json").write_text(
+        json.dumps(
+            {
+                "name": "Echo Ward",
+                "type": "spell",
+                "level": 1,
+                "casting_time": "action",
+                "ritual": False,
+                "description": "A longer baseline duplicate description to win tie-breakers.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "b.json").write_text(
+        json.dumps(
+            {
+                "name": "Echo Ward",
+                "type": "spell",
+                "level": 1,
+                "casting_time": "action",
+                "ritual": True,
+                "description": "Short duplicate.",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    database = load_spell_database(tmp_path, duplicate_policy="prefer_richest")
+
+    assert len(database) == 1
+    spell = next(iter(database.values()))
+    assert spell["name"] == "Echo Ward"
+    assert spell["ritual"] is True
+    assert spell["description"] == "Short duplicate."
+
+
 def test_engine_spell_lookup_uses_validated_canonical_records(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
