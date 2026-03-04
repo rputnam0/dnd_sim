@@ -88,6 +88,11 @@ class TurnOnlyNoLegacyFallbackStrategy:
         return None
 
 
+class MixedModeDeclareTurnNoneStrategy(BaseStrategy):
+    def declare_turn(self, actor, state):
+        return None
+
+
 class NoTurnNoLegacyStrategy:
     def on_round_start(self, state):
         return None
@@ -202,6 +207,58 @@ def test_validate_strategy_instance_accepts_declare_turn_without_legacy_fallback
 def test_validate_strategy_instance_rejects_missing_declare_turn_and_legacy_fallback() -> None:
     with pytest.raises(ValueError, match="must implement declare_turn"):
         validate_strategy_instance(NoTurnNoLegacyStrategy())
+
+
+def test_turn_only_strategy_without_legacy_methods_can_noop_turns(tmp_path: Path) -> None:
+    scenario_path = _setup_env(tmp_path)
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    registry = {
+        "party_strategy": TurnOnlyNoLegacyFallbackStrategy(),
+        "enemy_strategy": LegacyBasicStrategy(),
+    }
+    result = run_simulation(loaded, db, {}, registry, trials=1, seed=23, run_id="noop")
+
+    assert len(result.trial_results) == 1
+    assert result.trial_results[0].resources_spent["hero"].get("action_surge", 0) == 0
+    hero_decisions = [
+        event
+        for event in result.trial_results[0].telemetry
+        if event.get("telemetry_type") == "decision" and event.get("actor_id") == "hero"
+    ]
+    assert any(
+        event.get("fallback_reason") == "declare_turn_none_no_legacy_fallback"
+        for event in hero_decisions
+    )
+
+
+def test_strategy_with_legacy_methods_falls_back_when_declare_turn_returns_none(
+    tmp_path: Path,
+) -> None:
+    scenario_path = _setup_env(tmp_path)
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    noop_registry = {
+        "party_strategy": TurnOnlyNoLegacyFallbackStrategy(),
+        "enemy_strategy": LegacyBasicStrategy(),
+    }
+    fallback_registry = {
+        "party_strategy": MixedModeDeclareTurnNoneStrategy(),
+        "enemy_strategy": LegacyBasicStrategy(),
+    }
+    noop_result = run_simulation(loaded, db, {}, noop_registry, trials=8, seed=23, run_id="noop")
+    fallback_result = run_simulation(
+        loaded, db, {}, fallback_registry, trials=8, seed=23, run_id="fallback"
+    )
+
+    noop_damage = sum(trial.damage_dealt.get("hero", 0) for trial in noop_result.trial_results)
+    fallback_damage = sum(
+        trial.damage_dealt.get("hero", 0) for trial in fallback_result.trial_results
+    )
+    assert noop_damage == 0
+    assert fallback_damage > noop_damage
 
 
 def test_hidden_action_surge_is_removed_for_legacy_and_explicit_turn_plans(
