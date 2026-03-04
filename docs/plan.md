@@ -41,3 +41,11 @@ This file is now the entrypoint for the full multiagent implementation program.
 - [x] Subwave 4F complete (`SPL-03`, `SPL-04`) - merged via PRs `#78`, `#77` on 2026-03-04.
 - [x] Integration gate complete on `int/wave-4-integration` (full suite + tracker sync) - passed on `c7e3777` on 2026-03-04.
 - [x] Final consolidation PR merged (`int/wave-4-integration` -> `main`) via PR `#79` on 2026-03-04.
+
+## Repo Cleanup Program Milestones (Execution Tracking)
+
+- [x] Subwave A complete: inventory snapshots, archive tags for non-merged delete candidates, and safety bundle created.
+- [x] Subwave B complete: aggressive local/remote branch cleanup and worktree pruning completed with allowlist protections.
+- [x] Subwave C complete: duplicate engine helper definitions removed, legacy-only strategy validation path retired, dead scripts removed.
+- [x] Subwave D complete: extracted resource/recovery and spell-target inference helpers into dedicated modules; added `docs/agent_index.yaml`.
+- [x] Subwave E complete: targeted regressions, full suite, and determinism spot-check corpus passed.

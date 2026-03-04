@@ -88,6 +88,11 @@ class TurnOnlyNoLegacyFallbackStrategy:
         return None
 
 
+class NoTurnNoLegacyStrategy:
+    def on_round_start(self, state):
+        return None
+
+
 def _build_action_surge_character(character_id: str) -> dict:
     return {
         "character_id": character_id,
@@ -190,9 +195,13 @@ def _setup_env(tmp_path: Path) -> Path:
     return scenario_path
 
 
-def test_validate_strategy_instance_rejects_declare_turn_without_legacy_fallback() -> None:
-    with pytest.raises(ValueError, match="legacy methods"):
-        validate_strategy_instance(TurnOnlyNoLegacyFallbackStrategy())
+def test_validate_strategy_instance_accepts_declare_turn_without_legacy_fallback() -> None:
+    validate_strategy_instance(TurnOnlyNoLegacyFallbackStrategy())
+
+
+def test_validate_strategy_instance_rejects_missing_declare_turn_and_legacy_fallback() -> None:
+    with pytest.raises(ValueError, match="must implement declare_turn"):
+        validate_strategy_instance(NoTurnNoLegacyStrategy())
 
 
 def test_hidden_action_surge_is_removed_for_legacy_and_explicit_turn_plans(

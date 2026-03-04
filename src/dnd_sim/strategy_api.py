@@ -140,8 +140,14 @@ def validate_strategy_instance(strategy: Any) -> None:
     if not callable(getattr(strategy, "on_round_start", None)):
         raise ValueError("Strategy instance missing required methods: on_round_start")
 
+    if callable(getattr(strategy, "declare_turn", None)):
+        return
+
     legacy_required = ["choose_action", "choose_targets", "decide_resource_spend"]
     missing = [name for name in legacy_required if not callable(getattr(strategy, name, None))]
     if missing:
         joined = ", ".join(missing)
-        raise ValueError(f"Strategy instance missing required legacy methods: {joined}")
+        raise ValueError(
+            "Strategy instance must implement declare_turn(...) or all legacy methods. "
+            f"Missing legacy methods: {joined}"
+        )
