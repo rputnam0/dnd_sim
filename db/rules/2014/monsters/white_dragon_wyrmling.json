@@ -1,17 +1,38 @@
 {
-  "name": "White Dragon Wyrmling",
-  "meta": "Medium dragon, chaotic evil",
-  "ac": 16,
-  "hp": 32,
-  "hp_formula": "5d8 + 10",
-  "ability_scores": {
-    "str": 14,
-    "dex": 10,
-    "con": 14,
-    "int": 5,
-    "wis": 10,
-    "cha": 11
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "white_dragon_wyrmling",
+    "name": "White Dragon Wyrmling",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": "Dex +2, Con +4, Wis +2, Cha +2"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 32,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 2,
+    "dex_mod": 0,
+    "con_mod": 2,
+    "int_mod": -3,
+    "wis_mod": 0,
+    "cha_mod": 0,
+    "save_mods": {
+      "dex": 2,
+      "con": 4,
+      "wis": 2,
+      "cha": 2
+    },
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,48 +1,48 @@
 {
   "name": "Genie Spells",
-  "type": "subclass_feature",
   "description": "When you reach a Paladin level specified in the Genie Spells table, you thereafter always have the listed spells prepared. At 3rd level: Chromatic Orb, Elementalism, Thunderous Smite. At 5th level: Mirror Image, Phantasmal Force. At 9th level: Fly, Gaseous Form. At 13th level: Conjure Minor Elementals, Summon Elemental. At 17th level: Banishing Smite, Contact Other Plane.",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "level": 3,
       "spells": [
         "Chromatic Orb",
         "Elementalism",
         "Thunderous Smite"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "always_prepared_spells",
       "level": 5,
       "spells": [
         "Mirror Image",
         "Phantasmal Force"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "always_prepared_spells",
       "level": 9,
       "spells": [
         "Fly",
         "Gaseous Form"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "always_prepared_spells",
       "level": 13,
       "spells": [
         "Conjure Minor Elementals",
         "Summon Elemental"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "always_prepared_spells",
       "level": 17,
       "spells": [
         "Banishing Smite",
         "Contact Other Plane"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,11 +1,9 @@
 {
   "name": "Guardian",
-  "type": "subclass_feature",
   "description": "You design your armor to be in the front line of conflict. It has the following features: Thunder Pulse: You can discharge concussive blasts with strikes from your armor. The pulse counts as a Simple Melee weapon and deals 1d8 Thunder damage on a hit. A creature hit by the pulse has disadvantage on attack rolls against targets other than you until the start of your next turn. Defensive Field: While bloodied, you can take a bonus action to gain temporary hit points equal to your Artificer level. You lose these temporary hit points if you doff the armor.",
   "mechanics": [
     {
       "name": "Thunder Pulse",
-      "type": "weapon_attack",
       "weapon_category": "simple melee",
       "damage": {
         "dice": "1d8",
@@ -14,7 +12,8 @@
       "on_hit": {
         "effect": "disadvantage on attack rolls against targets other than you",
         "duration": "until the start of your next turn"
-      }
+      },
+      "meta_type": "weapon_attack"
     },
     {
       "name": "Defensive Field",
@@ -26,5 +25,6 @@
       },
       "duration": "until the armor is doffed"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

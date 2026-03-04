@@ -1,35 +1,35 @@
 {
   "name": "Divine Intervention",
-  "type": "class_feature",
   "description": "Beginning at 10th level, you can call on your deity to intervene on your behalf when your need is great. Imploring your deity's aid requires you to use your action. Describe the assistance you seek, and roll percentile dice. If you roll a number equal to or lower than your cleric level, your deity intervenes. The DM chooses the nature of the intervention; the effect of any cleric spell or cleric domain spell would be appropriate. If your deity intervenes, you can't use this feature again for 7 days. Otherwise, you can use it again after you finish a long rest. At 20th level, your call for intervention succeeds automatically, no roll required.",
   "mechanics": [
     {
-      "type": "action",
       "cost": "action",
-      "description": "Use an action to call for divine intervention."
+      "description": "Use an action to call for divine intervention.",
+      "meta_type": "action"
     },
     {
-      "type": "roll",
       "dice": "d100",
       "target": "<= cleric level",
-      "description": "Roll a percentile die; success if the result is equal to or lower than your cleric level."
+      "description": "Roll a percentile die; success if the result is equal to or lower than your cleric level.",
+      "meta_type": "roll"
     },
     {
-      "type": "cooldown",
       "duration": "7 days",
       "condition": "success",
-      "description": "If the intervention succeeds, the feature cannot be used again for 7 days."
+      "description": "If the intervention succeeds, the feature cannot be used again for 7 days.",
+      "meta_type": "cooldown"
     },
     {
-      "type": "reset",
       "duration": "long rest",
       "condition": "failure",
-      "description": "If the intervention fails, the feature can be used again after a long rest."
+      "description": "If the intervention fails, the feature can be used again after a long rest.",
+      "meta_type": "reset"
     },
     {
-      "type": "auto_success",
       "level": 20,
-      "description": "At 20th level, the intervention succeeds automatically without a roll."
+      "description": "At 20th level, the intervention succeeds automatically without a roll.",
+      "meta_type": "auto_success"
     }
-  ]
+  ],
+  "source_type": "class"
 }

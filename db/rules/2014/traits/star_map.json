@@ -1,6 +1,5 @@
 {
   "name": "Star Map",
-  "type": "subclass_feature",
   "description": "2nd-level Circle of the Stars feature. You've created a star chart as part of your heavenly studies. It is a Tiny object and can serve as a spellcasting focus for your druid spells. You determine its form by rolling on the Star Map table or by choosing one. While holding this map, you have these benefits: you know the guidance cantrip; you have the guiding bolt spell prepared, and it counts as a druid spell for you and doesn't count against the number of spells you can have prepared; you can cast guiding bolt without expending a spell slot a number of times equal to your proficiency bonus, regaining all expended uses after a long rest. If you lose the map, you can perform a 1‑hour ceremony to magically create a replacement during a short or long rest, which destroys the previous map.",
   "mechanics": [
     {
@@ -26,5 +25,6 @@
         "class": "druid"
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

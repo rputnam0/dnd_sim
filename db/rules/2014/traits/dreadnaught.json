@@ -1,10 +1,8 @@
 {
   "name": "Dreadnaught",
-  "type": "subclass_feature",
   "description": "You design your armor to become a towering juggernaut in battle. It has the following features: Force Demolisher: An arcane wrecking ball or sledgehammer projects from your armor. The demolisher counts as a Simple Melee weapon with the Reach property, and it deals 1d10 Force damage on a hit. If you hit a creature that is at least one size smaller than you with the demolisher, you can push the creature up to 10 feet straight away from yourself or pull the creature up to 10 feet toward yourself. Giant Stature: As a Bonus Action, you transform and enlarge your armor for 1 minute. For the duration, your reach increases by 5 feet, and if you are smaller than Large, you become Large, along with anything you are wearing. If there isn't enough room for you to increase your size, your size doesn't change. You can use this Bonus Action a number of times equal to your Intelligence modifier (minimum of once). You regain all expended uses when you finish a Long Rest.",
   "mechanics": [
     {
-      "type": "weapon",
       "name": "Force Demolisher",
       "category": "Simple",
       "weapon_type": "Melee",
@@ -13,10 +11,10 @@
       ],
       "damage": "1d10",
       "damage_type": "Force",
-      "special": "When you hit a creature at least one size smaller than you, you may push the creature up to 10 feet away from you or pull it up to 10 feet toward you."
+      "special": "When you hit a creature at least one size smaller than you, you may push the creature up to 10 feet away from you or pull it up to 10 feet toward you.",
+      "meta_type": "weapon"
     },
     {
-      "type": "size_change",
       "name": "Giant Stature",
       "activation": "Bonus Action",
       "duration": "1 minute",
@@ -24,7 +22,9 @@
       "size_target": "Large",
       "size_condition": "If you are smaller than Large and there is sufficient space.",
       "uses_per_long_rest": "Intelligence modifier (minimum 1)",
-      "recharge": "Long Rest"
+      "recharge": "Long Rest",
+      "meta_type": "size_change"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

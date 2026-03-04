@@ -1,6 +1,5 @@
 {
   "name": "Long-Limbed",
-  "type": "racial_trait",
   "description": "When you make a melee attack on your turn, your reach for it is 5 feet greater than normal.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       "scope": "melee attacks",
       "trigger": "when you make a melee attack on your turn"
     }
-  ]
+  ],
+  "source_type": "species"
 }

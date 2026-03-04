@@ -1,6 +1,5 @@
 {
   "name": "Quandrix Initiate",
-  "type": "background_feature",
   "description": "You gain the Strixhaven Initiate feat and must choose Quandrix within it. In addition, if you have the Spellcasting or Pact Magic feature, the spells on the Quandrix Spells table are added to the spell list of your spellcasting class. (If you are a multiclass character with multiple spell lists, these spells are added to all of them.) Consider customizing how your spells look when you cast them. Your Quandrix spells might manifest amid kaleidoscopic swirls of fractal patterns, amplifying the tiniest movements of your somatic components. When your magic creates or alters creatures, it might briefly surround the targets with shimmering fractal designs or tessellated patterns.",
   "mechanics": [
     {
@@ -34,5 +33,6 @@
         "applies_to_all_spell_lists": true
       }
     }
-  ]
+  ],
+  "source_type": "background"
 }

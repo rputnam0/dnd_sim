@@ -1,9 +1,15 @@
 {
   "name": "Blur",
-  "meta": "Blur 2nd-\u00ad\u2010\u2011level illusion",
+  "type": "spell",
+  "level": 2,
+  "school": "Illusion",
   "casting_time": "1 action",
-  "range": "Self",
-  "components": "V",
-  "duration": "Concentration, up to 1 minute",
-  "description": "Your body becomes blurred, shifting and wavering to all who can see you. For the duration, any creature has disadvantage on attack rolls against you. An attacker is immune to this effect if it doesn\u2019t rely on sight, as with blindsight, or can see through illusions, as with truesight."
+  "range_ft": 0,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 10,
+  "description": "Your body becomes blurred, shifting and wavering to all who can see you. For the duration, any creature has disadvantage on attack rolls against you. An attacker is immune to this effect if it doesn’t rely on sight, as with blindsight, or can see through illusions, as with truesight.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

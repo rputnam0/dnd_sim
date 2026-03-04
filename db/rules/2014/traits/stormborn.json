@@ -1,13 +1,13 @@
 {
   "name": "Stormborn",
-  "type": "subclass_feature",
   "description": "At 17th level, you have a flying speed equal to your current walking speed whenever you are not underground or indoors.",
   "mechanics": [
     {
-      "type": "grant_speed",
       "speed_type": "fly",
       "value": "walking_speed",
-      "condition": "not underground or indoors"
+      "condition": "not underground or indoors",
+      "meta_type": "grant_speed"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Focused Conjuration",
-  "type": "subclass_feature",
   "description": "Beginning at 10th level, while you are concentrating on a conjuration spell, your concentration can't be broken as a result of taking damage.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "trigger": "damage",
       "condition": "concentrating_on_conjuration_spell"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,15 +1,13 @@
 {
   "name": "Marid's Surge",
-  "type": "subclass_feature",
   "description": "The target of your Divine Smite and each creature of your choice in a 10-foot emanation originating from you make a Strength saving throw against your spell save DC. On a failed save, a creature is pushed 15 feet straight away from you and has the Prone condition.",
   "mechanics": [
     {
-      "type": "resource_consumption",
       "resource": "Channel Divinity",
-      "amount": 1
+      "amount": 1,
+      "meta_type": "resource_consumption"
     },
     {
-      "type": "saving_throw",
       "ability": "Strength",
       "dc_source": "spell_save_dc",
       "targets": [
@@ -22,7 +20,9 @@
           "direction": "away_from_caster"
         },
         "condition": "prone"
-      }
+      },
+      "meta_type": "saving_throw"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

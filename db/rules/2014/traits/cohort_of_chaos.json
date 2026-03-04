@@ -1,6 +1,5 @@
 {
   "name": "Cohort of Chaos",
-  "type": "feat",
   "description": "Increase your Strength, Dexterity, Constitution, Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. When you roll a 1 or a 20 on an attack roll or a saving throw, you trigger a Chaotic Flare that lasts until the end of your next turn. Roll a d4 to determine the effect: 1 (Battle Fury: A creature of your choice has advantage on attack rolls and disadvantage on ability checks), 2 (Disruption Field: Creatures starting their turn or entering within 5 feet of you take 1d8 force damage), 3 (Unbound: You can teleport using your walking speed), or 4 (Wailing Winds: You and creatures within 15 feet have disadvantage on Wisdom saving throws). A new flare cannot occur until the current one ends.",
   "mechanics": [
     {
@@ -32,5 +31,6 @@
       "radius": 15,
       "condition": "chaotic_flare_wailing_winds"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

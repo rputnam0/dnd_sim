@@ -1,6 +1,5 @@
 {
   "name": "Spell Sniper",
-  "type": "feat",
   "description": "You gain a +1 bonus to Intelligence, Wisdom, or Charisma. Your spell attack rolls ignore half cover and three-quarters cover. Being within 5 feet of an enemy doesn't impose disadvantage on your spell attack rolls. When you cast a spell with a range of at least 10 feet that requires an attack roll, the range increases by 60 feet.",
   "mechanics": [
     {
@@ -32,5 +31,6 @@
       "min_range": 10,
       "attack_type": "spell"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

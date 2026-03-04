@@ -1,6 +1,5 @@
 {
   "name": "Skill Versatility",
-  "type": "racial_trait",
   "description": "You gain proficiency in two skills of your choice.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
         "choice": true
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

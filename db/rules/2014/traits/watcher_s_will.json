@@ -1,10 +1,8 @@
 {
   "name": "Watcher's Will",
-  "type": "subclass_feature",
   "description": "You can use your Channel Divinity to invest your presence with the warding power of your faith. As an action, you can choose a number of creatures you can see within 30 feet of you, up to a number equal to your Charisma modifier (minimum of one creature). For 1 minute, you and the chosen creatures have advantage on Intelligence, Wisdom, and Charisma saving throws.",
   "mechanics": [
     {
-      "type": "grant_advantage",
       "activation": "action",
       "resource": "Channel Divinity",
       "targets": "self_and_selected",
@@ -18,7 +16,9 @@
         "wisdom",
         "charisma"
       ],
-      "duration": "1 minute"
+      "duration": "1 minute",
+      "meta_type": "grant_advantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

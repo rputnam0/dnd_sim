@@ -1,17 +1,36 @@
 {
-  "name": "Purple Worm",
-  "meta": "Gargantuan monstrosity, unaligned",
-  "ac": 18,
-  "hp": 247,
-  "hp_formula": "15d20 + 90",
-  "ability_scores": {
-    "str": 28,
-    "dex": 7,
-    "con": 22,
-    "int": 1,
-    "wis": 8,
-    "cha": 4
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "purple_worm",
+    "name": "Purple Worm",
+    "team": "enemy"
   },
-  "cr": "15",
-  "saving_throws_text": "Con +11, Wis +4"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 247,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": -2,
+    "str_mod": 9,
+    "dex_mod": -2,
+    "con_mod": 6,
+    "int_mod": -5,
+    "wis_mod": -1,
+    "cha_mod": -3,
+    "save_mods": {
+      "con": 11,
+      "wis": 4
+    },
+    "cr": "15"
+  },
+  "reactions": [],
+  "actions": []
 }

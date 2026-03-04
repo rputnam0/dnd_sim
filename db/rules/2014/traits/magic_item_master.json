@@ -1,11 +1,11 @@
 {
   "name": "Magic Item Master",
-  "type": "class_feature",
   "description": "You can now attune to up to six magic items at once.",
   "mechanics": [
     {
       "effect": "increase_attunement_limit",
       "new_limit": 6
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,24 +1,22 @@
 {
   "name": "Hex Warrior",
-  "type": "subclass_feature",
   "description": "At 1st level, you acquire the training necessary to effectively arm yourself for battle. You gain proficiency with medium armor, shields, and martial weapons. The influence of your patron also allows you to mystically channel your will through a particular weapon. Whenever you finish a long rest, you can touch one weapon that you are proficient with and that lacks the two-handed property. When you attack with that weapon, you can use your Charisma modifier, instead of Strength or Dexterity, for the attack and damage rolls. This benefit lasts until you finish a long rest. If you later gain the Pact of the Blade feature, this benefit extends to every pact weapon you conjure with that feature, no matter the weapon's type.",
   "mechanics": [
     {
-      "type": "grant_proficiency",
       "category": "armor",
-      "armor_type": "medium"
+      "armor_type": "medium",
+      "meta_type": "grant_proficiency"
     },
     {
-      "type": "grant_proficiency",
-      "category": "shield"
+      "category": "shield",
+      "meta_type": "grant_proficiency"
     },
     {
-      "type": "grant_proficiency",
       "category": "weapon",
-      "weapon_type": "martial"
+      "weapon_type": "martial",
+      "meta_type": "grant_proficiency"
     },
     {
-      "type": "weapon_modifier",
       "name": "Hex Warrior",
       "effect": "use_charisma_for_attack_and_damage",
       "condition": {
@@ -26,13 +24,15 @@
         "weapon_property_excludes": "two-handed"
       },
       "activation": "long_rest",
-      "duration": "until_next_long_rest"
+      "duration": "until_next_long_rest",
+      "meta_type": "weapon_modifier"
     },
     {
-      "type": "feature_extension",
       "source_feature": "Hex Warrior",
       "target_feature": "Pact of the Blade",
-      "effect": "apply_charisma_modifier_to_all_pact_weapons"
+      "effect": "apply_charisma_modifier_to_all_pact_weapons",
+      "meta_type": "feature_extension"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

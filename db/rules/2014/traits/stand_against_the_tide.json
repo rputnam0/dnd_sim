@@ -1,12 +1,12 @@
 {
   "name": "Stand Against the Tide",
-  "type": "subclass_feature",
   "description": "When a hostile creature misses you with a melee attack, you can use your reaction to force that creature to repeat the same attack against another creature (other than itself) of your choice.",
   "mechanics": [
     {
-      "type": "reaction",
       "trigger": "hostile creature misses you with a melee attack",
-      "effect": "force that creature to repeat the same attack against another creature of your choice (not itself)"
+      "effect": "force that creature to repeat the same attack against another creature of your choice (not itself)",
+      "meta_type": "reaction"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

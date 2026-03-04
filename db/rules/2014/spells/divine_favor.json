@@ -6,6 +6,7 @@
   "casting_time": "bonus_action",
   "range_ft": 0,
   "concentration": true,
+  "ritual": false,
   "duration_rounds": 10,
   "description": "Your prayer empowers you with divine radiance. Until the spell ends, your weapon attacks deal an extra 1d4 radiant damage on a hit.",
   "save_ability": null,

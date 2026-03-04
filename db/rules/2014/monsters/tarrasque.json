@@ -1,17 +1,37 @@
 {
-  "name": "Tarrasque",
-  "meta": "Gargantuan monstrosity (titan), unaligned",
-  "ac": 25,
-  "hp": 676,
-  "hp_formula": "33d20 + 330",
-  "ability_scores": {
-    "str": 30,
-    "dex": 11,
-    "con": 30,
-    "int": 3,
-    "wis": 11,
-    "cha": 11
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "tarrasque",
+    "name": "Tarrasque",
+    "team": "enemy"
   },
-  "cr": "30",
-  "saving_throws_text": "Int +5, Wis +9, Cha +9"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 676,
+    "ac": 25,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 10,
+    "dex_mod": 0,
+    "con_mod": 10,
+    "int_mod": -4,
+    "wis_mod": 0,
+    "cha_mod": 0,
+    "save_mods": {
+      "int": 5,
+      "wis": 9,
+      "cha": 9
+    },
+    "cr": "30"
+  },
+  "reactions": [],
+  "actions": []
 }

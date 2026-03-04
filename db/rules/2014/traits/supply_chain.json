@@ -1,6 +1,6 @@
 {
   "name": "Supply Chain",
-  "type": "background_feature",
   "description": "From your time as a merchant, you retain connections with wholesalers, suppliers, and other merchants and entrepreneurs. You can call upon these connections when looking for items or information.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

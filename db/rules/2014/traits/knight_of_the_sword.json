@@ -1,6 +1,5 @@
 {
   "name": "Knight of the Sword",
-  "type": "feat",
   "description": "You increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 20. Once per turn, when you hit a creature with a weapon attack roll, you can force the target to make a Wisdom saving throw (DC 8 + proficiency bonus + the ability modifier of the score increased by this feat). On a failure, the target is frightened of you until the end of your next turn. On a success, the target has disadvantage on its next attack roll before the end of its next turn. You can use this a number of times equal to your proficiency bonus per long rest.",
   "mechanics": [
     {
@@ -25,5 +24,6 @@
       "uses": "proficiency_bonus",
       "reset": "long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

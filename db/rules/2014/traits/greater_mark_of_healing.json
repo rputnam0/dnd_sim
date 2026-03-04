@@ -1,6 +1,5 @@
 {
   "name": "Greater Mark of Healing",
-  "type": "feat",
   "description": "Increase one ability score of your choice by 1. Your Medical Intuition die from the Mark of Healing feat increases to a d6. You can cast Cure Wounds without a spell slot a number of times equal to your proficiency bonus per long rest. When you cast Cure Wounds, any 1 or 2 rolled on the dice is treated as a 3.",
   "mechanics": [
     {
@@ -24,5 +23,6 @@
       "spell": "Cure Wounds",
       "minimum_die_value": 3
     }
-  ]
+  ],
+  "source_type": "feat"
 }

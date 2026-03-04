@@ -1,12 +1,12 @@
 {
   "name": "Manipulate Elements",
-  "type": "subclass_feature",
   "description": "You know the Elementalism spell. Wisdom is your spellcasting ability for it.",
   "mechanics": [
     {
-      "type": "grant_spell",
       "spell": "Elementalism",
-      "castingAbility": "Wisdom"
+      "castingAbility": "Wisdom",
+      "meta_type": "grant_spell"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

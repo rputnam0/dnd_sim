@@ -1,24 +1,24 @@
 {
   "name": "Battle Ready",
-  "type": "subclass_feature",
   "description": "Your combat training and your experiments with magic have paid off in two ways.\n\nArcane Empowerment: When you attack with a magic weapon, you can use your Intelligence modifier, instead of your Strength or Dexterity modifier, for the attack and damage rolls.\n\nWeapon Knowledge: You gain proficiency with Martial weapons. You can use a weapon with which you have proficiency as a Spellcasting Focus for your Artificer spells.",
   "mechanics": [
     {
-      "type": "attack_modifier",
       "condition": "attacking with a magic weapon",
       "ability_used": "Intelligence",
       "replaces": [
         "Strength",
         "Dexterity"
-      ]
+      ],
+      "meta_type": "attack_modifier"
     },
     {
-      "type": "grant_proficiency",
-      "weapon_category": "martial"
+      "weapon_category": "martial",
+      "meta_type": "grant_proficiency"
     },
     {
-      "type": "spellcasting_focus",
-      "allowed_weapon": "any weapon you are proficient with"
+      "allowed_weapon": "any weapon you are proficient with",
+      "meta_type": "spellcasting_focus"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

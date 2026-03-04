@@ -1,6 +1,5 @@
 {
   "name": "Boon of Communication",
-  "type": "feat",
   "description": "You increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30. You don't have disadvantage on ability checks to influence hostile creatures. You understand the literal meaning of any language you hear, see signed, or see written. You gain telepathy with a range of 120 feet.",
   "mechanics": [
     {
@@ -23,5 +22,6 @@
       "effect_type": "telepathy",
       "range": 120
     }
-  ]
+  ],
+  "source_type": "feat"
 }

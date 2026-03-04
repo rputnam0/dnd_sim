@@ -1,6 +1,5 @@
 {
   "name": "Greater Aberrant Mark",
-  "type": "feat",
   "description": "You increase your Constitution score by 1. Your Aberrant Fortitude die increases to 1d6 and you regain its use on a short or long rest. When you cast a cantrip, you can expend 1 or 2 Hit Dice to gain temporary hit points equal to the roll plus your Constitution modifier and deal force damage equal to the roll to a creature within 30 feet. You can use this a number of times equal to your proficiency bonus per long rest.",
   "mechanics": [
     {
@@ -26,5 +25,6 @@
       "uses": "proficiency_bonus",
       "reset": "long_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

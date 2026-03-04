@@ -1,10 +1,8 @@
 {
   "name": "Totemic Attunement",
-  "type": "subclass_feature",
   "description": "At 14th level, you gain a magical benefit based on a totem animal of your choice. You can choose the same animal you selected previously or a different one. Choose one of the following totem animal benefits: Bear, Eagle, Elk, Tiger, Wolf.",
   "mechanics": [
     {
-      "type": "choice",
       "count": 1,
       "options": [
         "Bear",
@@ -12,7 +10,9 @@
         "Elk",
         "Tiger",
         "Wolf"
-      ]
+      ],
+      "meta_type": "choice"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

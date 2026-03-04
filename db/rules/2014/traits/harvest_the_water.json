@@ -1,18 +1,18 @@
 {
   "name": "Harvest the Water",
-  "type": "background_feature",
   "description": "You gain advantage on ability checks made using fishing tackle. If you have access to a body of water that sustains marine life, you can maintain a moderate lifestyle while working as a fisher, and you can catch enough food to feed yourself and up to ten other people each day.",
   "mechanics": [
     {
-      "type": "advantage",
       "target": "ability_check",
-      "condition": "using fishing tackle"
+      "condition": "using fishing tackle",
+      "meta_type": "advantage"
     },
     {
-      "type": "sustenance",
       "provides": "food",
       "amount": "self + 10 people per day",
-      "condition": "access to a body of water that sustains marine life"
+      "condition": "access to a body of water that sustains marine life",
+      "meta_type": "sustenance"
     }
-  ]
+  ],
+  "source_type": "background"
 }

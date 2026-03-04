@@ -1,6 +1,6 @@
 {
   "name": "Age",
-  "type": "racial_trait",
   "description": "Aarakocra reach maturity by age 3. Compared to humans, aarakocra don't usually live longer than 30 years.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "species"
 }

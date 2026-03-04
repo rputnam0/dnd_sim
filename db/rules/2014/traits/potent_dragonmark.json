@@ -1,6 +1,5 @@
 {
   "name": "Potent Dragonmark",
-  "type": "feat",
   "description": "Increase the spellcasting ability score used by your Dragonmark feat by 1, to a maximum of 20. You always have the spells on your Spells of the Mark list (if any) prepared. You gain one extra spell slot to cast spells granted by your Dragonmark feat or the Dragonmark Preparation benefit. The spell slot's level is half your level (rounded up), to a maximum of level 5, and you regain the expended slot when you finish a short or long rest.",
   "mechanics": [
     {
@@ -21,5 +20,6 @@
       "recharge": "short_rest",
       "restriction": "dragonmark_spells"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

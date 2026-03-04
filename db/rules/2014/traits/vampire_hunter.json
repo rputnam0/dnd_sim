@@ -1,6 +1,5 @@
 {
   "name": "Vampire Hunter",
-  "type": "feat",
   "description": "You have advantage on checks to escape from nonmagical restraints or the grappled condition. Additionally, when you take necrotic damage, you can use your reaction to reduce the damage by a number of d6s equal to your proficiency bonus. Once you use this benefit, you can't use it again until you finish a short or long rest.",
   "mechanics": [
     {
@@ -18,5 +17,6 @@
       "limit": 1,
       "reset": "short_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

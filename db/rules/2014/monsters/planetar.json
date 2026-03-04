@@ -1,17 +1,37 @@
 {
-  "name": "Planetar",
-  "meta": "Large celestial, lawful good",
-  "ac": 19,
-  "hp": 200,
-  "hp_formula": "16d10 + 112",
-  "ability_scores": {
-    "str": 24,
-    "dex": 20,
-    "con": 24,
-    "int": 19,
-    "wis": 22,
-    "cha": 25
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "planetar",
+    "name": "Planetar",
+    "team": "enemy"
   },
-  "cr": "16",
-  "saving_throws_text": "Con +12, Wis +11, Cha +12"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 200,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 5,
+    "str_mod": 7,
+    "dex_mod": 5,
+    "con_mod": 7,
+    "int_mod": 4,
+    "wis_mod": 6,
+    "cha_mod": 7,
+    "save_mods": {
+      "con": 12,
+      "wis": 11,
+      "cha": 12
+    },
+    "cr": "16"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,11 +1,11 @@
 {
   "name": "Improved Combat Superiority (d10)",
-  "type": "subclass_feature",
   "description": "At 10th level, your superiority dice turn into d10s.",
   "mechanics": [
     {
-      "type": "upgrade_superiority_dice",
-      "newSize": "d10"
+      "newSize": "d10",
+      "meta_type": "upgrade_superiority_dice"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,17 +1,33 @@
 {
-  "name": "Lemure",
-  "meta": "Medium fiend (devil), lawful evil",
-  "ac": 7,
-  "hp": 13,
-  "hp_formula": "3d8",
-  "ability_scores": {
-    "str": 10,
-    "dex": 5,
-    "con": 11,
-    "int": 1,
-    "wis": 11,
-    "cha": 3
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "lemure",
+    "name": "Lemure",
+    "team": "enemy"
   },
-  "cr": "0",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 13,
+    "ac": 7,
+    "speed_ft": 30,
+    "initiative_mod": -3,
+    "str_mod": 0,
+    "dex_mod": -3,
+    "con_mod": 0,
+    "int_mod": -5,
+    "wis_mod": 0,
+    "cha_mod": -4,
+    "save_mods": {},
+    "cr": "0"
+  },
+  "reactions": [],
+  "actions": []
 }

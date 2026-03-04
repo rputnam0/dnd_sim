@@ -1,15 +1,13 @@
 {
   "name": "One with the Word",
-  "type": "subclass_feature",
   "description": "Your connection to your Awakened Spellbook has become so profound that your soul has become entwined with it. While the book is on your person, you have advantage on all Intelligence (Arcana) checks, as the spellbook helps you remember magical lore. Moreover, if you take damage while your spellbook's mind is manifested, you can prevent all of that damage to you by using your reaction to dismiss the spectral mind, using its magic to save yourself. Then you roll 3d6. The spellbook temporarily loses spells of your choice that have a combined spell level equal to that roll or higher. If there aren't enough spells in the book to cover this cost, you drop to 0 hit points. Until you finish 1d6 long rests, you are incapable of casting the lost spells, even if you find them on a scroll or in another spellbook. After you finish the required number of rests, the spells reappear in the spellbook. Once you use this reaction, you can't do so again until you finish a long rest.",
   "mechanics": [
     {
-      "type": "advantage",
       "target": "Intelligence (Arcana) checks",
-      "condition": "spellbook on person"
+      "condition": "spellbook on person",
+      "meta_type": "advantage"
     },
     {
-      "type": "reaction",
       "trigger": "taking damage while spellbook's mind is manifested",
       "effect": "prevent all damage",
       "additional": {
@@ -24,7 +22,9 @@
           "cannotCastLostSpells": true
         },
         "recharge": "once per long rest"
-      }
+      },
+      "meta_type": "reaction"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

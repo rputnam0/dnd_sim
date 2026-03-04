@@ -1,6 +1,5 @@
 {
   "name": "Purple Dragon Commandant",
-  "type": "feat",
   "description": "Increase your Strength or Dexterity score by 1, to a maximum of 20. As a bonus action, you can bolster an ally within 30 feet, granting them 2d6 + your Strength or Dexterity modifier in temporary hit points. You can use this feature a number of times equal to your proficiency bonus per long rest. Additionally, you have advantage on attack rolls while you are bloodied.",
   "mechanics": [
     {
@@ -25,5 +24,6 @@
       "effect_type": "advantage_attack",
       "trigger": "bloodied"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

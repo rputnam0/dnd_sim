@@ -1,6 +1,5 @@
 {
   "name": "Boon of the Furious Storm",
-  "type": "feat",
   "description": "You increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30. You gain resistance to lightning and thunder damage. While you are bloodied (at or below half your maximum hit points), you instead have immunity to lightning and thunder damage. Additionally, creatures have disadvantage on saving throws against any spells you cast that deal lightning or thunder damage.",
   "mechanics": [
     {
@@ -51,5 +50,6 @@
       "trigger_damage_type": "thunder",
       "trigger_source": "spell"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

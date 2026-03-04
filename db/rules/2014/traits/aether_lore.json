@@ -1,15 +1,15 @@
 {
   "name": "Aether Lore",
-  "type": "racial_trait",
   "description": "Whenever you make an Intelligence (History) check related to magic items or aether-powered technological devices, you can add twice your proficiency bonus, instead of any proficiency bonus you normally apply.",
   "mechanics": [
     {
-      "type": "ability_check_modifier",
       "ability": "intelligence",
       "skill": "history",
       "condition": "check related to magic items or aether-powered technological devices",
       "bonus": "twice proficiency bonus",
-      "replace_normal_proficiency": true
+      "replace_normal_proficiency": true,
+      "meta_type": "ability_check_modifier"
     }
-  ]
+  ],
+  "source_type": "species"
 }

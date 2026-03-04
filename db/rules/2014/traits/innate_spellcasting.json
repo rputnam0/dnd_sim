@@ -1,36 +1,36 @@
 {
   "name": "Innate Spellcasting",
-  "type": "racial_trait",
   "description": "You have an innate ability to cast the following spells, requiring no material components: At will: nondetection (self only). 1/day each: blindness/deafness, blur, disguise self. Intelligence is your spellcasting ability for these spells.",
   "mechanics": [
     {
-      "type": "spell_granted",
       "name": "nondetection",
       "frequency": "at will",
       "target": "self",
-      "components": "none"
+      "components": "none",
+      "meta_type": "spell_granted"
     },
     {
-      "type": "spell_granted",
       "name": "blindness/deafness",
       "frequency": "1/day",
-      "components": "none"
+      "components": "none",
+      "meta_type": "spell_granted"
     },
     {
-      "type": "spell_granted",
       "name": "blur",
       "frequency": "1/day",
-      "components": "none"
+      "components": "none",
+      "meta_type": "spell_granted"
     },
     {
-      "type": "spell_granted",
       "name": "disguise self",
       "frequency": "1/day",
-      "components": "none"
+      "components": "none",
+      "meta_type": "spell_granted"
     },
     {
-      "type": "spellcasting_ability",
-      "ability": "Intelligence"
+      "ability": "Intelligence",
+      "meta_type": "spellcasting_ability"
     }
-  ]
+  ],
+  "source_type": "species"
 }

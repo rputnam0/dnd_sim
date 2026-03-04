@@ -1,29 +1,29 @@
 {
   "name": "Awakened Astral Self",
-  "type": "subclass_feature",
   "description": "17th-level Way of the Astral Self feature. Your connection to your astral self is complete, allowing you to unleash its full potential. As a bonus action, you can spend 5 ki points to summon the arms, visage, and body of your astral self and awaken it for 10 minutes. This awakening ends early if you are incapacitated or die. While your astral self is awakened, you gain the following benefits. Armor of the Spirit: You gain a +2 bonus to Armor Class. Astral Barrage: Whenever you use the Extra Attack feature to attack twice, you can instead attack three times if all the attacks are made with your astral arms.",
   "mechanics": [
     {
-      "type": "resource_spend",
       "resource": "ki",
       "amount": 5,
-      "action": "bonus"
+      "action": "bonus",
+      "meta_type": "resource_spend"
     },
     {
-      "type": "duration",
       "duration": "10 minutes",
-      "ending_condition": "incapacitated or death"
+      "ending_condition": "incapacitated or death",
+      "meta_type": "duration"
     },
     {
-      "type": "ac_bonus",
       "value": 2,
-      "source": "Armor of the Spirit"
+      "source": "Armor of the Spirit",
+      "meta_type": "ac_bonus"
     },
     {
-      "type": "extra_attack_modification",
       "original_attacks": 2,
       "new_attacks": 3,
-      "condition": "all attacks made with astral arms"
+      "condition": "all attacks made with astral arms",
+      "meta_type": "extra_attack_modification"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

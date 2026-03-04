@@ -1,17 +1,33 @@
 {
-  "name": "Rakshasa",
-  "meta": "Medium fiend, lawful evil",
-  "ac": 16,
-  "hp": 110,
-  "hp_formula": "13d8 + 52",
-  "ability_scores": {
-    "str": 14,
-    "dex": 17,
-    "con": 18,
-    "int": 13,
-    "wis": 16,
-    "cha": 20
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "rakshasa",
+    "name": "Rakshasa",
+    "team": "enemy"
   },
-  "cr": "13",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 110,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": 2,
+    "dex_mod": 3,
+    "con_mod": 4,
+    "int_mod": 1,
+    "wis_mod": 3,
+    "cha_mod": 5,
+    "save_mods": {},
+    "cr": "13"
+  },
+  "reactions": [],
+  "actions": []
 }

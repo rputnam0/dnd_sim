@@ -1,9 +1,15 @@
 {
   "name": "Augury",
-  "meta": "Augury 2nd-\u00ad\u2010\u2011level divination (ritual)",
+  "type": "spell",
+  "level": 2,
+  "school": "Divination",
   "casting_time": "1 minute",
-  "range": "Self",
-  "components": "V, S, M (specially marked sticks, bones, or similar tokens worth at least 25 gp)",
-  "duration": "Instantaneous",
-  "description": "By casting gem-\u00ad\u2010\u2011inlaid sticks, rolling dragon bones, laying out ornate cards, or employing some other divining tool, you receive an omen from an otherworldly entity about the results of a specific course of action that you plan to take within the next 30 minutes. The GM chooses from the following possible omens: \u2022 Weal, for good results \u2022 Woe, for bad results \u2022 Weal and woe, for both good and bad results \u2022 Nothing, for results that aren\u2019t especially good or bad The spell doesn\u2019t take into account any possible circumstances that might change the outcome, such as the casting of additional spells or the loss or gain of a companion. If you cast the spell two or more times before completing your next long rest, there is a cumulative 25 percent chance for each casting after the first that you get a random reading. The GM makes this roll in secret. Awaken 5th-\u00ad\u2010\u2011level transmutation"
+  "range_ft": 0,
+  "concentration": false,
+  "ritual": true,
+  "duration_rounds": 0,
+  "description": "By casting gem-­‐‑inlaid sticks, rolling dragon bones, laying out ornate cards, or employing some other divining tool, you receive an omen from an otherworldly entity about the results of a specific course of action that you plan to take within the next 30 minutes. The GM chooses from the following possible omens: • Weal, for good results • Woe, for bad results • Weal and woe, for both good and bad results • Nothing, for results that aren’t especially good or bad The spell doesn’t take into account any possible circumstances that might change the outcome, such as the casting of additional spells or the loss or gain of a companion. If you cast the spell two or more times before completing your next long rest, there is a cumulative 25 percent chance for each casting after the first that you get a random reading. The GM makes this roll in secret. Awaken 5th-­‐‑level transmutation",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

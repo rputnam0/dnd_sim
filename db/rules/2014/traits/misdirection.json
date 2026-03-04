@@ -1,12 +1,12 @@
 {
   "name": "Misdirection",
-  "type": "subclass_feature",
   "description": "Beginning at 13th level, you can sometimes cause another creature to suffer an attack meant for you. When you are targeted by an attack while a creature within 5 feet of you is granting you cover against that attack, you can use your reaction to have the attack target that creature instead of you.",
   "mechanics": [
     {
-      "type": "reaction",
-      "trigger": "You are targeted by an attack while a creature within 5 feet is granting you cover",
-      "effect": "The attack targets that creature instead of you"
+      "trigger": "you are targeted by an attack while a creature within 5 feet is granting you cover",
+      "effect": "The attack targets that creature instead of you",
+      "meta_type": "reaction"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

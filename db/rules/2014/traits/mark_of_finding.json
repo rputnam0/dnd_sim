@@ -1,6 +1,5 @@
 {
   "name": "Mark of Finding",
-  "type": "feat",
   "description": "You gain a 1d4 bonus to Wisdom (Perception) and Wisdom (Survival) checks. You always have Hunter's Mark prepared and can cast it once per long rest without a spell slot. At level 3, you gain the same benefit for Locate Object. You can also cast these spells using your spell slots. Additionally, a specific list of spells is added to your spellcasting class's spell list.",
   "mechanics": [
     {
@@ -55,5 +54,6 @@
         "commune with nature"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

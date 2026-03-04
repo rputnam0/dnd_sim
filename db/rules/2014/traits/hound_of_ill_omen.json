@@ -1,58 +1,58 @@
 {
   "name": "Hound of Ill Omen",
-  "type": "subclass_feature",
   "description": "At 6th level, you gain the ability to call forth a howling creature of darkness to harass your foes. As a bonus action, you can spend 3 sorcery points to magically summon a hound of ill omen to target one creature you can see within 120 feet of you. The hound uses the dire wolf's statistics, with the following changes: The hound is size Medium, not Large, and it counts as a monstrosity, not a beast. It appears with a number of temporary hit points equal to half your sorcerer level. It can move through other creatures and objects as if they were difficult terrain. The hound takes 5 force damage if it ends its turn inside an object. At the start of its turn, the hound automatically knows its target's location. If the target was hidden, it is no longer hidden from the hound. The hound appears in an unoccupied space of your choice within 30 feet of the target. Roll initiative for the hound. On its turn, it can move only toward its target by the most direct route, and it can use its action only to attack its target. The hound can make opportunity attacks, but only against its target. Additionally, while the hound is within 5 feet of the target, the target has disadvantage on saving throws against any spell you cast. The hound disappears if it is reduced to 0 hit points, if its target is reduced to 0 hit points, or after 5 minutes.",
   "mechanics": [
     {
-      "type": "resource_cost",
       "resource": "sorcery point",
-      "amount": 3
+      "amount": 3,
+      "meta_type": "resource_cost"
     },
     {
-      "type": "action",
       "action": "bonus",
-      "description": "Summon Hound of Ill Omen"
+      "description": "Summon Hound of Ill Omen",
+      "meta_type": "action"
     },
     {
-      "type": "summon",
       "creature": "hound of ill omen",
       "duration": "5 minutes or until reduced to 0 HP or target reduced to 0 HP",
-      "temporary_hit_points": "half sorcerer level"
+      "temporary_hit_points": "half sorcerer level",
+      "effect_type": "summon"
     },
     {
-      "type": "size_change",
-      "size": "Medium"
+      "size": "Medium",
+      "meta_type": "size_change"
     },
     {
-      "type": "creature_type",
-      "creature_type": "monstrosity"
+      "creature_type": "monstrosity",
+      "meta_type": "creature_type"
     },
     {
-      "type": "movement",
       "through_objects": true,
       "damage_on_end_turn_inside_object": {
         "damage_type": "force",
         "amount": 5
-      }
+      },
+      "meta_type": "movement"
     },
     {
-      "type": "visibility",
-      "effect": "hound automatically knows target location and removes hidden condition from target at start of its turn"
+      "effect": "hound automatically knows target location and removes hidden condition from target at start of its turn",
+      "meta_type": "visibility"
     },
     {
-      "type": "initiative",
-      "owner": "hound"
+      "owner": "hound",
+      "meta_type": "initiative"
     },
     {
-      "type": "behavior",
       "movement": "only toward its target by the most direct route",
       "action": "attack its target only",
-      "opportunity_attack_target": "only its target"
+      "opportunity_attack_target": "only its target",
+      "meta_type": "behavior"
     },
     {
-      "type": "disadvantage",
       "condition": "target saving throws against caster's spells",
-      "range": "within 5 feet of the hound"
+      "range": "within 5 feet of the hound",
+      "meta_type": "disadvantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

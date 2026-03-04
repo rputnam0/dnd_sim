@@ -1,6 +1,5 @@
 {
   "name": "Water Dependency",
-  "type": "racial_trait",
   "description": "If you fail to immerse yourself in water for at least 1 hour during a day, you suffer one level of exhaustion at the end of that day. You can only recover from this exhaustion through magic or by immersing yourself in water for at least 1 hour.",
   "mechanics": [
     {
@@ -21,5 +20,6 @@
         "required_duration": "1h"
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

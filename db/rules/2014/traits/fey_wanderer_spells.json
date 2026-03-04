@@ -1,20 +1,18 @@
 {
   "name": "Fey Wanderer Spells",
-  "type": "subclass_feature",
   "description": "When you reach a Ranger level specified in the Fey Wanderer Spells table, you thereafter always have the listed spells prepared. The spells are: 3rd level – Charm Person; 5th level – Misty Step; 9th level – Summon Fey; 13th level – Dimension Door; 17th level – Mislead. You also possess a fey blessing. Choose it from the Feywild Gifts table or determine it randomly. Feywild Gifts: 1 – Illusory butterflies flutter around you while you take a Short or Long Rest; 2 – Flowers bloom from your hair each dawn; 3 – You faintly smell of cinnamon, lavender, nutmeg, or another comforting herb or spice; 4 – Your shadow dances while no one is looking directly at it; 5 – Horns or antlers sprout from your head; 6 – Your skin and hair change color each dawn.",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "spells_by_level": {
         "3": "Charm Person",
         "5": "Misty Step",
         "9": "Summon Fey",
         "13": "Dimension Door",
         "17": "Mislead"
-      }
+      },
+      "meta_type": "always_prepared_spells"
     },
     {
-      "type": "fey_blessing",
       "options": [
         "Illusory butterflies flutter around you while you take a Short or Long Rest",
         "Flowers bloom from your hair each dawn",
@@ -22,7 +20,9 @@
         "Your shadow dances while no one is looking directly at it",
         "Horns or antlers sprout from your head",
         "Your skin and hair change color each dawn"
-      ]
+      ],
+      "meta_type": "fey_blessing"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,17 +1,33 @@
 {
-  "name": "Water Elemental",
-  "meta": "Large elemental, neutral",
-  "ac": 14,
-  "hp": 114,
-  "hp_formula": "12d10 + 48",
-  "ability_scores": {
-    "str": 18,
-    "dex": 14,
-    "con": 18,
-    "int": 5,
-    "wis": 10,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "water_elemental",
+    "name": "Water Elemental",
+    "team": "enemy"
   },
-  "cr": "5",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 114,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 4,
+    "dex_mod": 2,
+    "con_mod": 4,
+    "int_mod": -3,
+    "wis_mod": 0,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "5"
+  },
+  "reactions": [],
+  "actions": []
 }

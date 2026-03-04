@@ -1,14 +1,14 @@
 {
   "name": "Luck",
-  "type": "racial_trait",
   "description": "When you roll a 1 on the d20 of a D20 Test, you can reroll the die, and you must use the new roll.",
   "mechanics": [
     {
-      "type": "reroll",
       "trigger": "d20 roll",
       "condition": "result == 1",
       "newRoll": "d20",
-      "mustUseNew": true
+      "mustUseNew": true,
+      "meta_type": "reroll"
     }
-  ]
+  ],
+  "source_type": "species"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Kender Curiosity",
-  "type": "racial_trait",
   "description": "Thanks to the mystical origin of your people, you gain proficiency with one of the following skills of your choice: Insight, Investigation, Sleight of Hand, Stealth, or Survival.",
   "mechanics": [
     {
@@ -16,5 +15,6 @@
         "choose": 1
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

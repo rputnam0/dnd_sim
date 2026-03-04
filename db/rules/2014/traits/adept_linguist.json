@@ -1,6 +1,6 @@
 {
   "name": "Adept Linguist",
-  "type": "background_feature",
   "description": "You can communicate with humanoids who don't speak any language you know. You must observe the humanoids interacting with one another for at least 1 day, after which you learn a handful of important words, expressions, and gestures - enough to communicate on a rudimentary level.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

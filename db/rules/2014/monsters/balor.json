@@ -1,17 +1,38 @@
 {
-  "name": "Balor",
-  "meta": "Huge fiend (demon), chaotic evil",
-  "ac": 19,
-  "hp": 262,
-  "hp_formula": "21d12 + 126",
-  "ability_scores": {
-    "str": 26,
-    "dex": 15,
-    "con": 22,
-    "int": 20,
-    "wis": 16,
-    "cha": 22
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "balor",
+    "name": "Balor",
+    "team": "enemy"
   },
-  "cr": "19",
-  "saving_throws_text": "Str +14, Con +12, Wis +9, Cha +12"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 262,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 8,
+    "dex_mod": 2,
+    "con_mod": 6,
+    "int_mod": 5,
+    "wis_mod": 3,
+    "cha_mod": 6,
+    "save_mods": {
+      "str": 14,
+      "con": 12,
+      "wis": 9,
+      "cha": 12
+    },
+    "cr": "19"
+  },
+  "reactions": [],
+  "actions": []
 }

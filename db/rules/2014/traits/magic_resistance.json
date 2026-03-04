@@ -1,6 +1,5 @@
 {
   "name": "Magic Resistance",
-  "type": "racial_trait",
   "description": "You have advantage on saving throws against spells and other magical effects.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "target": "saving_throws",
       "condition": "against spells and other magical effects"
     }
-  ]
+  ],
+  "source_type": "species"
 }

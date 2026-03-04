@@ -1,10 +1,10 @@
 {
   "name": "Epic Boon",
-  "type": "class_feature",
   "description": "You gain an Epic Boon feat or another feat of your choice for which you qualify. Boon of Energy Resistance is recommended.",
   "mechanics": [
     {
       "grant_feat": "any"
     }
-  ]
+  ],
+  "source_type": "class"
 }

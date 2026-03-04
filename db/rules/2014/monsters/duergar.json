@@ -1,17 +1,33 @@
 {
-  "name": "Duergar",
-  "meta": "Medium humanoid (dwarf), lawful evil",
-  "ac": 16,
-  "hp": 26,
-  "hp_formula": "4d8 + 8",
-  "ability_scores": {
-    "str": 14,
-    "dex": 11,
-    "con": 14,
-    "int": 11,
-    "wis": 10,
-    "cha": 9
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "duergar",
+    "name": "Duergar",
+    "team": "enemy"
   },
-  "cr": "1",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 26,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 2,
+    "dex_mod": 0,
+    "con_mod": 2,
+    "int_mod": 0,
+    "wis_mod": 0,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "1"
+  },
+  "reactions": [],
+  "actions": []
 }

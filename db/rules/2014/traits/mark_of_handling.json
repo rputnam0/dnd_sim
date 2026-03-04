@@ -1,6 +1,5 @@
 {
   "name": "Mark of Handling",
-  "type": "feat",
   "description": "You gain a 1d4 bonus to Intelligence (Nature) and Wisdom (Animal Handling) checks. You always have Animal Friendship and Speak with Animals prepared and can cast each once per long rest without a spell slot using Intelligence, Wisdom, or Charisma as your spellcasting ability. Starting at level 3, these spells can also target Monstrosities with an Intelligence of 3 or lower. Additionally, a specific list of spells is added to your spellcasting class's spell list.",
   "mechanics": [
     {
@@ -65,5 +64,6 @@
         "awaken"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

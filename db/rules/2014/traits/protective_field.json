@@ -1,6 +1,5 @@
 {
   "name": "Protective Field",
-  "type": "subclass_feature",
   "description": "When you or another creature you can see within 30 feet of you takes damage, you can use your reaction to expend one Psionic Energy die, roll the die, and reduce the damage taken by the number rolled plus your Intelligence modifier (minimum reduction of 1), as you create a momentary shield of telekinetic force.",
   "mechanics": [
     {
@@ -16,5 +15,6 @@
         "minimum_reduction": 1
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

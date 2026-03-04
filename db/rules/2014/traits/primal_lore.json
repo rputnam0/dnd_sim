@@ -1,21 +1,19 @@
 {
   "name": "Primal Lore",
-  "type": "subclass_feature",
   "description": "You learn Druidic and one cantrip from the Druid spell list. It counts as a Bard spell for you but doesn't count against the number of cantrips you know. Whenever you gain a Bard level, you can replace this cantrip with another cantrip of your choice from the Druid spell list. Additionally, choose one of the following skills: Animal Handling, Insight, Medicine, Nature, Perception, or Survival. You have proficiency in that skill.",
   "mechanics": [
     {
-      "type": "learn_language",
-      "language": "Druidic"
+      "language": "Druidic",
+      "meta_type": "learn_language"
     },
     {
-      "type": "grant_cantrip",
       "spell_list": "Druid",
       "counts_as_class": "Bard",
       "excludes_from_cantrip_limit": true,
-      "replace_on_level_up": true
+      "replace_on_level_up": true,
+      "meta_type": "grant_cantrip"
     },
     {
-      "type": "grant_skill_proficiency",
       "choice": true,
       "options": [
         "Animal Handling",
@@ -24,7 +22,9 @@
         "Nature",
         "Perception",
         "Survival"
-      ]
+      ],
+      "meta_type": "grant_skill_proficiency"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

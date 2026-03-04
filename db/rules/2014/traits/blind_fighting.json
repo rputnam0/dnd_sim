@@ -1,6 +1,5 @@
 {
   "name": "Blind Fighting",
-  "type": "feat",
   "description": "You have Blindsight with a range of 10 feet.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "sense": "blindsight",
       "range": 10
     }
-  ]
+  ],
+  "source_type": "feat"
 }

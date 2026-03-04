@@ -1,16 +1,16 @@
 {
   "name": "Body and Mind",
-  "type": "class_feature",
   "description": "You have developed your body and mind to new heights. Your Dexterity and Wisdom scores increase by 4, to a maximum of 25.",
   "mechanics": [
     {
-      "type": "ability_score_increase",
       "abilities": [
         "Dexterity",
         "Wisdom"
       ],
       "increase": 4,
-      "maximum": 25
+      "maximum": 25,
+      "meta_type": "ability_score_increase"
     }
-  ]
+  ],
+  "source_type": "class"
 }

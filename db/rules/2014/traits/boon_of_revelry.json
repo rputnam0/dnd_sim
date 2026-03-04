@@ -1,6 +1,5 @@
 {
   "name": "Boon of Revelry",
-  "type": "feat",
   "description": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30. You always have the Otto's Irresistible Dance spell prepared. You can cast it once without a spell slot or components, and regain the ability to do so after a long rest. Damage doesn't break your concentration on this spell. While a creature is charmed by this spell, it cannot cast spells with verbal components and sings delightful nonsense.",
   "mechanics": [
     {
@@ -40,5 +39,6 @@
       "trigger": "charmed_by_otto_s_irresistible_dance",
       "restriction": "cannot_cast_verbal_spells"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

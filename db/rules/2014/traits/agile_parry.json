@@ -1,13 +1,13 @@
 {
   "name": "Agile Parry",
-  "type": "subclass_feature",
   "description": "If you make an unarmed strike as part of the Attack action on your turn and are holding a kensei weapon, you can use it to defend yourself if it is a melee weapon. You gain a +2 bonus to AC until the start of your next turn, while the weapon is in your hand and you aren't incapacitated.",
   "mechanics": [
     {
-      "type": "ac_bonus",
       "value": 2,
       "duration": "until the start of your next turn",
-      "condition": "you make an unarmed strike as part of the Attack action on your turn, you are holding a kensei melee weapon, and you aren't incapacitated"
+      "condition": "you make an unarmed strike as part of the Attack action on your turn, you are holding a kensei melee weapon, and you aren't incapacitated",
+      "meta_type": "ac_bonus"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

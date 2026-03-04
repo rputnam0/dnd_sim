@@ -1,6 +1,6 @@
 {
   "name": "Harborfolk",
-  "type": "background_feature",
   "description": "You grew up on the docks and waters of Mulmaster Harbor. The harborfolk remember you and still treat you as one of them. They welcome you and your companions. While they might charge you for it, they'll always offer what food and shelter they have; they'll even hide you if the City Watch is after you (but not if the Hawks are). Note: This feature is a variant of the Folk Hero feature.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

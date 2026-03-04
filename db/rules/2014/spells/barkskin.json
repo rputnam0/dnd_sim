@@ -1,9 +1,15 @@
 {
   "name": "Barkskin",
-  "meta": "Barkskin 2nd-\u00ad\u2010\u2011level transmutation",
+  "type": "spell",
+  "level": 2,
+  "school": "Transmutation",
   "casting_time": "1 action",
-  "range": "Touch",
-  "components": "V, S, M (a handful of oak bark)",
-  "duration": "Concentration, up to 1 hour",
-  "description": "You touch a willing creature. Until the spell ends, the target\u2019s skin has a rough, bark-\u00ad\u2010\u2011like appearance, and the target\u2019s AC can\u2019t be less than 16, regardless of what kind of armor it is wearing."
+  "range_ft": null,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 600,
+  "description": "You touch a willing creature. Until the spell ends, the target’s skin has a rough, bark-­‐‑like appearance, and the target’s AC can’t be less than 16, regardless of what kind of armor it is wearing.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

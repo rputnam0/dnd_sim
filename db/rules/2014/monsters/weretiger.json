@@ -1,17 +1,33 @@
 {
-  "name": "Weretiger",
-  "meta": "Medium humanoid (human, shapechanger), neutral",
-  "ac": 12,
-  "hp": 120,
-  "hp_formula": "16d8 + 48",
-  "ability_scores": {
-    "str": 17,
-    "dex": 15,
-    "con": 16,
-    "int": 10,
-    "wis": 13,
-    "cha": 11
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "weretiger",
+    "name": "Weretiger",
+    "team": "enemy"
   },
-  "cr": "4",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 120,
+    "ac": 12,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 3,
+    "dex_mod": 2,
+    "con_mod": 3,
+    "int_mod": 0,
+    "wis_mod": 1,
+    "cha_mod": 0,
+    "save_mods": {},
+    "cr": "4"
+  },
+  "reactions": [],
+  "actions": []
 }

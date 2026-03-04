@@ -1,6 +1,5 @@
 {
   "name": "Cold Caster",
-  "type": "feat",
   "description": "You increase your Intelligence, Wisdom, or Charisma by 1, to a maximum of 20. You learn the Ray of Frost cantrip. If you already know it, you learn a different Wizard cantrip of your choice. Once per turn when you hit a creature with an attack roll and deal Cold damage, you can cause the creature to subtract 1d4 from the next saving throw it makes before the end of your next turn.",
   "mechanics": [
     {
@@ -26,5 +25,6 @@
       "debuff": "1d4 penalty to next saving throw",
       "duration": "end_of_your_next_turn"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

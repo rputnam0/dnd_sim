@@ -6,6 +6,7 @@
   "casting_time": "1 minute",
   "range_ft": 0,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 4800,
   "description": "You touch a willing creature. For the duration, the target can add 1d8 to its initiative rolls.",
   "save_ability": null,

@@ -1,6 +1,5 @@
 {
   "name": "Actor",
-  "type": "feat",
   "description": "Increase your Charisma score by 1, to a maximum of 20. You have Advantage on Charisma (Deception or Performance) checks to convince others that you are a person you are disguised as. You can mimic the sounds of other creatures, including speech. A creature that hears the mimicry must succeed on a Wisdom (Insight) check (DC 8 + Charisma modifier + Proficiency Bonus) to determine the effect is faked.",
   "mechanics": [
     {
@@ -19,5 +18,6 @@
       "skill": "performance",
       "condition": "disguised_as_person"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

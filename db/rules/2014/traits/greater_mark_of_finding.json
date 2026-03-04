@@ -1,6 +1,5 @@
 {
   "name": "Greater Mark of Finding",
-  "type": "feat",
   "description": "Increase one ability score of your choice by 1, to a maximum of 20. Your Hunter's Intuition die increases from 1d4 to 1d6. When you cast Hunter's Mark using your Finder's Magic benefit without a spell slot, the range is doubled and the target cannot benefit from the Invisible condition for the duration.",
   "mechanics": [
     {
@@ -21,5 +20,6 @@
       "range_multiplier": 2,
       "special_effect": "negate_invisible_condition"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

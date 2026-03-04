@@ -1,17 +1,15 @@
 {
   "name": "Eyes of Night",
-  "type": "subclass_feature",
   "description": "1st-level Twilight Domain feature. You can see through the deepest gloom. You have darkvision out to a range of 300 feet. In that radius, you can see in dim light as if it were bright light and in darkness as if it were dim light. As an action, you can magically share the darkvision of this feature with willing creatures you can see within 10 feet of you, up to a number of creatures equal to your Wisdom modifier (minimum of one creature). The shared darkvision lasts for 1 hour. Once you share it, you can't do so again until you finish a long rest, unless you expend a spell slot of any level to share it again.",
   "mechanics": [
     {
-      "type": "sense",
       "sense": "darkvision",
       "range": 300,
       "enhancedLighting": true,
-      "description": "You can see in dim light as if it were bright light and in darkness as if it were dim light."
+      "description": "You can see in dim light as if it were bright light and in darkness as if it were dim light.",
+      "effect_type": "sense"
     },
     {
-      "type": "action",
       "name": "Share Darkvision",
       "activation": "action",
       "target": "willing creatures you can see within 10 feet",
@@ -22,7 +20,9 @@
         "reset": "long rest",
         "alternative": "expend a spell slot of any level to use again"
       },
-      "description": "Magically share the darkvision granted by this feature with the targets."
+      "description": "Magically share the darkvision granted by this feature with the targets.",
+      "meta_type": "action"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

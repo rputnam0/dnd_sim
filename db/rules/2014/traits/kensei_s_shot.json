@@ -1,6 +1,5 @@
 {
   "name": "Kensei's Shot",
-  "type": "subclass_feature",
   "description": "You can use a bonus action on your turn to make your ranged attacks with a kensei weapon more deadly. When you do so, any target you hit with a ranged attack using a kensei weapon takes an extra 1d4 damage of the weapon's type. You retain this benefit until the end of the current turn.",
   "mechanics": [
     {
@@ -11,5 +10,6 @@
       "condition": "ranged attack with a kensei weapon",
       "duration": "end_of_turn"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,21 +1,21 @@
 {
   "name": "Thought Shield",
-  "type": "subclass_feature",
   "description": "Starting at 10th level, your thoughts can't be read by telepathy or other means unless you allow it. You also have resistance to psychic damage, and whenever a creature deals psychic damage to you, that creature takes the same amount of damage that you do.",
   "mechanics": [
     {
-      "type": "resistance",
-      "damage_type": "psychic"
+      "damage_type": "psychic",
+      "meta_type": "resistance"
     },
     {
-      "type": "damage_reflection",
       "trigger": "when you take psychic damage",
       "amount": "equal to the damage you take",
-      "target": "source creature"
+      "target": "source creature",
+      "meta_type": "damage_reflection"
     },
     {
-      "type": "mind_protection",
-      "effect": "prevents telepathic or similar reading of thoughts unless you allow it"
+      "effect": "prevents telepathic or similar reading of thoughts unless you allow it",
+      "meta_type": "mind_protection"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

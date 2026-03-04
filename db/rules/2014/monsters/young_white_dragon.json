@@ -1,17 +1,38 @@
 {
-  "name": "Young White Dragon",
-  "meta": "Large dragon, chaotic evil",
-  "ac": 17,
-  "hp": 133,
-  "hp_formula": "14d10 + 56",
-  "ability_scores": {
-    "str": 18,
-    "dex": 10,
-    "con": 18,
-    "int": 6,
-    "wis": 11,
-    "cha": 12
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "young_white_dragon",
+    "name": "Young White Dragon",
+    "team": "enemy"
   },
-  "cr": "6",
-  "saving_throws_text": "Dex +3, Con +7, Wis +3, Cha +4"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 133,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 4,
+    "dex_mod": 0,
+    "con_mod": 4,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": 1,
+    "save_mods": {
+      "dex": 3,
+      "con": 7,
+      "wis": 3,
+      "cha": 4
+    },
+    "cr": "6"
+  },
+  "reactions": [],
+  "actions": []
 }

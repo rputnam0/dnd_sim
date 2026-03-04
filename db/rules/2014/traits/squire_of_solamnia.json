@@ -1,6 +1,5 @@
 {
   "name": "Squire of Solamnia",
-  "type": "feat",
   "description": "Mounting or dismounting costs you only 5 feet of movement. Once per turn, when you make a weapon attack roll against a creature, you can cause the attack roll to have advantage. If the attack hits, you roll a d8 and add the number rolled as a bonus to the attack's damage roll. You can use this benefit a number of times equal to your proficiency bonus, but a use is expended only if the attack hits. You regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
@@ -20,5 +19,6 @@
       "dice": "1d8",
       "trigger": "precise_strike_hit"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

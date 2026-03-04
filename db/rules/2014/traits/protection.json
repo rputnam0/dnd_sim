@@ -1,6 +1,5 @@
 {
   "name": "Protection",
-  "type": "feat",
   "description": "When a creature you can see attacks a target other than you within 5 feet of you, you can use a reaction to interpose your shield if you are holding one. This imposes disadvantage on the triggering attack roll and all subsequent attack rolls against that target until the start of your next turn, provided you remain within 5 feet of the target.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       "duration": "start_of_next_turn",
       "condition": "within_5ft_of_target"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

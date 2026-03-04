@@ -1,6 +1,5 @@
 {
   "name": "Mental Discipline",
-  "type": "racial_trait",
   "description": "Your innate psychic defenses grant you advantage on saving throws you make to avoid or end the charmed and frightened conditions on yourself.",
   "mechanics": [
     {
@@ -12,5 +11,6 @@
       ],
       "purpose": "avoid_or_end"
     }
-  ]
+  ],
+  "source_type": "species"
 }

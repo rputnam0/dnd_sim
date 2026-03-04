@@ -1,21 +1,19 @@
 {
   "name": "Brutal Strike",
-  "type": "class_feature",
   "description": "If you use Reckless Attack, you can forgo any advantage on one Strength-based attack roll of your choice on your turn. The chosen attack roll mustn't have disadvantage. If the chosen attack roll hits, the target takes an extra 1d10 damage of the same type dealt by the weapon or Unarmed Strike, and you can cause one Brutal Strike effect of your choice. You have the following effect options: Forceful Blow – The target is pushed 15 feet straight away from you. You can then move up to half your Speed straight toward the target without provoking Opportunity Attacks. Hamstring Blow – The target's Speed is reduced by 15 feet until the start of your next turn. A target can be affected by only one Hamstring Blow at a time—the most recent one.",
   "mechanics": [
     {
-      "type": "forgo_advantage",
       "condition": "Strength-based attack roll",
       "requires_reckless_attack": true,
-      "must_not_have_disadvantage": true
+      "must_not_have_disadvantage": true,
+      "meta_type": "forgo_advantage"
     },
     {
-      "type": "extra_damage",
       "dice": "1d10",
-      "damage_type": "same_as_weapon_or_unarmed_strike"
+      "damage_type": "same_as_weapon_or_unarmed_strike",
+      "meta_type": "extra_damage"
     },
     {
-      "type": "choose_effect",
       "options": [
         {
           "name": "Forceful Blow",
@@ -44,7 +42,9 @@
             }
           ]
         }
-      ]
+      ],
+      "meta_type": "choose_effect"
     }
-  ]
+  ],
+  "source_type": "class"
 }

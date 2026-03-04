@@ -1,6 +1,6 @@
 {
   "name": "House Connections",
-  "type": "background_feature",
   "description": "As an agent of your house, you can always get food and lodging for yourself and your friends at a house enclave. When the house assigns you a mission, it will usually provide you with the necessary supplies and transportation. Beyond this, you have many old friends, mentors, and rivals in your house, and you may encounter one of them when you interact with a house business. The degree to which such acquaintances are willing to help you depends on your current standing in your house.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

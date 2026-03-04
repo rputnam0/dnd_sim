@@ -1,6 +1,6 @@
 {
   "name": "Never Tell Me the Odds",
-  "type": "background_feature",
   "description": "Odds and probability are your bread and butter. During downtime activities that involve games of chance or figuring odds on the best plan, you can get a solid sense of which choice is likely the best one and which opportunities seem too good to be true, at the DM's determination.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

@@ -1,17 +1,37 @@
 {
-  "name": "Pegasus",
-  "meta": "Large celestial, chaotic good",
-  "ac": 12,
-  "hp": 59,
-  "hp_formula": "7d10 + 21",
-  "ability_scores": {
-    "str": 18,
-    "dex": 15,
-    "con": 16,
-    "int": 10,
-    "wis": 15,
-    "cha": 13
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "pegasus",
+    "name": "Pegasus",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": "Dex +4, Wis +4, Cha +3"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 59,
+    "ac": 12,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 4,
+    "dex_mod": 2,
+    "con_mod": 3,
+    "int_mod": 0,
+    "wis_mod": 2,
+    "cha_mod": 1,
+    "save_mods": {
+      "dex": 4,
+      "wis": 4,
+      "cha": 3
+    },
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

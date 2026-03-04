@@ -1,17 +1,38 @@
 {
-  "name": "Mummy Lord",
-  "meta": "Medium undead, lawful evil",
-  "ac": 17,
-  "hp": 97,
-  "hp_formula": "13d8 + 39",
-  "ability_scores": {
-    "str": 18,
-    "dex": 10,
-    "con": 17,
-    "int": 11,
-    "wis": 18,
-    "cha": 16
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "mummy_lord",
+    "name": "Mummy Lord",
+    "team": "enemy"
   },
-  "cr": "15",
-  "saving_throws_text": "Con +8, Int +5, Wis +9, Cha +8"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 97,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 4,
+    "dex_mod": 0,
+    "con_mod": 3,
+    "int_mod": 0,
+    "wis_mod": 4,
+    "cha_mod": 3,
+    "save_mods": {
+      "con": 8,
+      "int": 5,
+      "wis": 9,
+      "cha": 8
+    },
+    "cr": "15"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,17 +1,38 @@
 {
-  "name": "Silver Dragon Wyrmling",
-  "meta": "Medium dragon, lawful good",
-  "ac": 17,
-  "hp": 45,
-  "hp_formula": "6d8 + 18",
-  "ability_scores": {
-    "str": 19,
-    "dex": 10,
-    "con": 17,
-    "int": 12,
-    "wis": 11,
-    "cha": 15
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "silver_dragon_wyrmling",
+    "name": "Silver Dragon Wyrmling",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": "Dex +2, Con +5, Wis +2, Cha +4"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 45,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 4,
+    "dex_mod": 0,
+    "con_mod": 3,
+    "int_mod": 1,
+    "wis_mod": 0,
+    "cha_mod": 2,
+    "save_mods": {
+      "dex": 2,
+      "con": 5,
+      "wis": 2,
+      "cha": 4
+    },
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

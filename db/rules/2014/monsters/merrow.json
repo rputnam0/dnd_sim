@@ -1,17 +1,33 @@
 {
-  "name": "Merrow",
-  "meta": "Large monstrosity, chaotic evil",
-  "ac": 13,
-  "hp": 45,
-  "hp_formula": "6d10 + 12",
-  "ability_scores": {
-    "str": 18,
-    "dex": 10,
-    "con": 15,
-    "int": 8,
-    "wis": 10,
-    "cha": 9
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "merrow",
+    "name": "Merrow",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 45,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 4,
+    "dex_mod": 0,
+    "con_mod": 2,
+    "int_mod": -1,
+    "wis_mod": 0,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

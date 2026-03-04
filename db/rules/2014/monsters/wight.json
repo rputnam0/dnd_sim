@@ -1,17 +1,33 @@
 {
-  "name": "Wight",
-  "meta": "Medium undead, neutral evil",
-  "ac": 14,
-  "hp": 45,
-  "hp_formula": "6d8 + 18",
-  "ability_scores": {
-    "str": 15,
-    "dex": 14,
-    "con": 16,
-    "int": 10,
-    "wis": 13,
-    "cha": 15
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "wight",
+    "name": "Wight",
+    "team": "enemy"
   },
-  "cr": "3",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 45,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 2,
+    "dex_mod": 2,
+    "con_mod": 3,
+    "int_mod": 0,
+    "wis_mod": 1,
+    "cha_mod": 2,
+    "save_mods": {},
+    "cr": "3"
+  },
+  "reactions": [],
+  "actions": []
 }

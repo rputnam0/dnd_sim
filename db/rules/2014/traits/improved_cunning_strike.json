@@ -1,6 +1,6 @@
 {
   "name": "Improved Cunning Strike",
-  "type": "class_feature",
   "description": "You can use up to two Cunning Strike effects when you deal Sneak Attack damage, paying the die cost for each effect.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "class"
 }

@@ -1,17 +1,17 @@
 {
   "name": "Restore Balance",
-  "type": "subclass_feature",
   "description": "Your connection to the plane of absolute order allows you to equalize chaotic moments. When a creature you can see within 60 feet of you is about to roll a d20 with advantage or disadvantage, you can use your reaction to prevent the roll from being affected by advantage and disadvantage. You can use this feature a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "type": "reaction",
       "trigger": "creature within 60 feet is about to roll a d20 with advantage or disadvantage",
-      "effect": "prevent advantage and disadvantage on the roll"
+      "effect": "prevent advantage and disadvantage on the roll",
+      "meta_type": "reaction"
     },
     {
-      "type": "resource",
       "uses": "proficiency bonus",
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "resource"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

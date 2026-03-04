@@ -1,9 +1,15 @@
 {
   "name": "See Invisibility",
-  "meta": "See Invisibility 2nd-\u00ad\u2010\u2011level divination",
+  "type": "spell",
+  "level": 2,
+  "school": "Divination",
   "casting_time": "1 action",
-  "range": "Self",
-  "components": "V, S, M (a pinch of talc and a small sprinkling of powdered silver)",
-  "duration": "1 hour",
-  "description": "For the duration, you see invisible creatures and objects as if they were visible, and you can see into the Ethereal Plane. Ethereal creatures and objects appear ghostly and translucent. Seeming 5th-\u00ad\u2010\u2011level illusion"
+  "range_ft": 0,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 600,
+  "description": "For the duration, you see invisible creatures and objects as if they were visible, and you can see into the Ethereal Plane. Ethereal creatures and objects appear ghostly and translucent. Seeming 5th-­‐‑level illusion",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

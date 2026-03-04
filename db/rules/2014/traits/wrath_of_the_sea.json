@@ -1,6 +1,5 @@
 {
   "name": "Wrath of the Sea",
-  "type": "subclass_feature",
   "description": "As a bonus action, you can expend a use of your Wild Shape to manifest a 5‑foot emanation that takes the form of ocean spray surrounding you for 10 minutes. It ends early if you dismiss it (no action required), manifest it again, or become incapacitated. While the emanation is present, you can use a bonus action on subsequent turns to choose another creature you can see within the emanation. The target must succeed on a Constitution saving throw against your spell save DC or take cold damage and, if the creature is Large or smaller, be pushed up to 15 feet away from you. The damage is 1d6 per your Wisdom modifier (minimum 1d6).",
   "mechanics": [
     {
@@ -32,5 +31,6 @@
         }
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

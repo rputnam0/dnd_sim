@@ -1,6 +1,5 @@
 {
   "name": "Squat Nimbleness",
-  "type": "feat",
   "description": "You are uncommonly nimble for your race. Increase your Strength or Dexterity score by 1, to a maximum of 20. Your walking speed increases by 5 feet. You gain proficiency in the Acrobatics or Athletics skill. You have advantage on Strength (Athletics) or Dexterity (Acrobatics) checks made to escape being grappled.",
   "mechanics": [
     {
@@ -32,5 +31,6 @@
       ],
       "trigger": "escape_grapple"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Stalker's Flurry",
-  "type": "subclass_feature",
   "description": "At 11th level, you learn to attack with such unexpected speed that you can turn a miss into another strike. Once on each of your turns when you miss with a weapon attack, you can make another weapon attack as part of the same action.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "usage": "once per turn",
       "effect": "make an additional weapon attack as part of the same action"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

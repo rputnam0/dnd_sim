@@ -1,11 +1,11 @@
 {
   "name": "Additional Superiority Die",
-  "type": "subclass_feature",
   "description": "You gain another superiority die at 7th level.",
   "mechanics": [
     {
       "effect": "increaseSuperiorityDice",
       "amount": 1
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

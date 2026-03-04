@@ -1,6 +1,5 @@
 {
   "name": "Mark of Hospitality",
-  "type": "feat",
   "description": "You gain a 1d4 bonus to Charisma (Persuasion) checks and ability checks with Brewer's Supplies or Cook's Utensils. You always have Purify Food and Drink and Unseen Servant prepared, and at level 3, you also have Calm Emotions prepared. You can cast each of these spells once per long rest without a spell slot, or using your own spell slots, using Intelligence, Wisdom, or Charisma as your spellcasting ability. Additionally, a specific list of hospitality-themed spells is added to your spellcasting class list.",
   "mechanics": [
     {
@@ -59,5 +58,6 @@
         "hallow"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

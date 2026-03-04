@@ -1,10 +1,8 @@
 {
   "name": "Improved Reaper",
-  "type": "subclass_feature",
   "description": "Starting at 17th level, when the cleric casts a Necromancy spell of 1st through 5th-level that targets only one creature, the spell can instead target two creatures within range and within 5 feet of each other. If the spell consumes its material components, the cleric must provide them for each target.",
   "mechanics": [
     {
-      "type": "spell_targeting_modification",
       "required_level": 17,
       "spell_school": "Necromancy",
       "spell_level_range": [
@@ -14,7 +12,9 @@
       "original_target_count": 1,
       "new_target_count": 2,
       "additional_target_condition": "targets must be within 5 feet of each other",
-      "material_component_multiplier": 2
+      "material_component_multiplier": 2,
+      "meta_type": "spell_targeting_modification"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

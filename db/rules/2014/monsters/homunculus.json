@@ -1,17 +1,33 @@
 {
-  "name": "Homunculus",
-  "meta": "Tiny construct, neutral",
-  "ac": 13,
-  "hp": 5,
-  "hp_formula": "2d4",
-  "ability_scores": {
-    "str": 4,
-    "dex": 15,
-    "con": 11,
-    "int": 10,
-    "wis": 10,
-    "cha": 7
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "homunculus",
+    "name": "Homunculus",
+    "team": "enemy"
   },
-  "cr": "0",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 5,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": -3,
+    "dex_mod": 2,
+    "con_mod": 0,
+    "int_mod": 0,
+    "wis_mod": 0,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "0"
+  },
+  "reactions": [],
+  "actions": []
 }

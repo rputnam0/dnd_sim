@@ -1,12 +1,12 @@
 {
   "name": "Relentless Hunter",
-  "type": "class_feature",
   "description": "Taking damage can't break your Concentration on Hunter's Mark.",
   "mechanics": [
     {
-      "type": "concentration_immunity",
       "spell": "Hunter's Mark",
-      "trigger": "damage"
+      "trigger": "damage",
+      "meta_type": "concentration_immunity"
     }
-  ]
+  ],
+  "source_type": "class"
 }

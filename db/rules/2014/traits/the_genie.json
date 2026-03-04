@@ -1,11 +1,11 @@
 {
   "name": "The Genie",
-  "type": "subclass_feature",
   "description": "You have made a pact with one of the rarest kinds of genie, a noble genie. Such entities rule vast fiefs on the Elemental Planes and have great influence over lesser genies and elemental creatures. Noble genies are varied in their motivations, but most are arrogant and wield power that rivals that of lesser deities. They delight in turning the table on mortals, who often bind genies into servitude, and readily enter into pacts that expand their reach. You choose your patron's kind or determine it randomly using the Genie Kind table. The Genie lets you choose from an expanded list of spells when you learn a warlock spell. The Genie Expanded Spells table shows the genie spells that are added to the warlock spell list for you, along with the spells associated with your patron's kind (dao, djinni, efreeti, or marid).",
   "mechanics": [
     {
-      "type": "expanded_spell_list",
-      "description": "Adds specific spells to the warlock spell list based on the chosen genie kind (Dao, Djinni, Efreeti, or Marid) as detailed in the Genie Expanded Spells table."
+      "description": "Adds specific spells to the warlock spell list based on the chosen genie kind (Dao, Djinni, Efreeti, or Marid) as detailed in the Genie Expanded Spells table.",
+      "meta_type": "expanded_spell_list"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

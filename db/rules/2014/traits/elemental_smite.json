@@ -1,10 +1,9 @@
 {
   "name": "Elemental Smite",
-  "type": "subclass_feature",
   "description": "Immediately after you cast Divine Smite, you can expend one use of your Channel Divinity and invoke one of the following effects: Dao's Crush, Djinni's Escape, Efreeti's Fury, Marid's Surge.",
   "mechanics": [
     {
-      "trigger": "after casting Divine Smite",
+      "trigger": "after casting divine smite",
       "cost": "Channel Divinity",
       "options": [
         "Dao's Crush",
@@ -12,7 +11,8 @@
         "Efreeti's Fury",
         "Marid's Surge"
       ],
-      "type": "choice_effect"
+      "meta_type": "choice_effect"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

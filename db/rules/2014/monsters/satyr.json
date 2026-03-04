@@ -1,17 +1,33 @@
 {
-  "name": "Satyr",
-  "meta": "Medium fey, chaotic neutral",
-  "ac": 14,
-  "hp": 31,
-  "hp_formula": "7d8",
-  "ability_scores": {
-    "str": 12,
-    "dex": 16,
-    "con": 11,
-    "int": 12,
-    "wis": 10,
-    "cha": 14
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "satyr",
+    "name": "Satyr",
+    "team": "enemy"
   },
-  "cr": "1/2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 31,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": 1,
+    "dex_mod": 3,
+    "con_mod": 0,
+    "int_mod": 1,
+    "wis_mod": 0,
+    "cha_mod": 2,
+    "save_mods": {},
+    "cr": "1/2"
+  },
+  "reactions": [],
+  "actions": []
 }

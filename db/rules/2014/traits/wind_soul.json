@@ -1,22 +1,20 @@
 {
   "name": "Wind Soul",
-  "type": "subclass_feature",
   "description": "At 18th level, you gain immunity to lightning and thunder damage. You also gain a magical flying speed of 60 feet. As an action, you can reduce your flying speed to 30 feet for 1 hour and choose a number of creatures within 30 feet of you equal to 3 + your Charisma modifier. The chosen creatures gain a magical flying speed of 30 feet for 1 hour. Once you reduce your flying speed in this way, you can't do so again until you finish a short or long rest.",
   "mechanics": [
     {
-      "type": "damage_immunity",
       "damage": [
         "lightning",
         "thunder"
-      ]
+      ],
+      "meta_type": "damage_immunity"
     },
     {
-      "type": "speed",
       "mode": "fly",
-      "value": 60
+      "value": 60,
+      "meta_type": "speed"
     },
     {
-      "type": "grant_speed",
       "mode": "fly",
       "value": 30,
       "duration": "1 hour",
@@ -24,7 +22,9 @@
       "max_targets": "3+Cha_mod",
       "action": "action",
       "self_speed_reduction": 30,
-      "recharge": "short_or_long_rest"
+      "recharge": "short_or_long_rest",
+      "meta_type": "grant_speed"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

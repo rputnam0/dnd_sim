@@ -1,10 +1,8 @@
 {
   "name": "Magical Guidance",
-  "type": "class_feature",
   "description": "5th-level sorcerer (optional class feature). You can tap into your inner wellspring of magic to try to conjure success from failure. When you make an ability check that fails, you can spend 1 sorcery point to reroll the d20, and you must use the new roll, potentially turning the failure into a success.",
   "mechanics": [
     {
-      "type": "reroll",
       "trigger": "failed ability check",
       "cost": {
         "resource": "sorcery point",
@@ -12,7 +10,9 @@
       },
       "roll": "d20",
       "mandatory_new_roll": true,
-      "effect": "use the new roll instead of the original"
+      "effect": "use the new roll instead of the original",
+      "meta_type": "reroll"
     }
-  ]
+  ],
+  "source_type": "class"
 }

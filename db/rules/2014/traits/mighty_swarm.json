@@ -1,26 +1,26 @@
 {
   "name": "Mighty Swarm",
-  "type": "subclass_feature",
   "description": "11th-level Swarmkeeper feature. Your Gathered Swarm grows mightier in the following ways: The damage of Gathered Swarm increases to 1d8. If a creature fails its saving throw against being moved by Gathered Swarm, you can also cause the swarm to knock the creature prone. When you are moved by Gathered Swarm, it gives you half cover until the start of your next turn.",
   "mechanics": [
     {
-      "type": "damage_increase",
       "source": "Gathered Swarm",
-      "damage": "1d8"
+      "damage": "1d8",
+      "meta_type": "damage_increase"
     },
     {
-      "type": "condition",
-      "trigger": "failed_save_against_movement_by_Gathered_Swarm",
+      "trigger": "failed_save_against_movement_by_gathered_swarm",
       "target": "creature",
       "condition": "prone",
-      "source": "Gathered Swarm"
+      "source": "Gathered Swarm",
+      "meta_type": "condition"
     },
     {
-      "type": "cover",
-      "trigger": "you_moved_by_Gathered_Swarm",
+      "trigger": "you_moved_by_gathered_swarm",
       "cover": "half",
       "duration": "until_start_of_next_turn",
-      "source": "Gathered Swarm"
+      "source": "Gathered Swarm",
+      "meta_type": "cover"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

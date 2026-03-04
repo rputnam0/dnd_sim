@@ -1,34 +1,34 @@
 {
   "name": "Elemental Burst",
-  "type": "subclass_feature",
   "description": "As a Magic action, you can expend 2 Focus Points to cause elemental energy to burst in a 20-foot-radius sphere centered on a point within 120 feet of yourself. Choose a damage type: Acid, Cold, Fire, Lightning, or Thunder. Each creature in the sphere must make a Dexterity saving throw. On a failed save, a creature takes damage of the chosen type equal to three rolls of your Martial Arts die. On a successful save, a creature takes half as much damage.",
   "mechanics": [
     {
-      "type": "resource_consumption",
       "resource": "Focus Point",
-      "amount": 2
+      "amount": 2,
+      "meta_type": "resource_consumption"
     },
     {
-      "type": "action",
       "name": "Magic",
-      "cost": "action"
+      "cost": "action",
+      "meta_type": "action"
     },
     {
-      "type": "area_effect",
       "shape": "sphere",
       "radius": 20,
-      "range": 120
+      "range": 120,
+      "meta_type": "area_effect"
     },
     {
-      "type": "saving_throw",
       "ability": "Dexterity",
       "on_fail": "damage",
-      "on_success": "half_damage"
+      "on_success": "half_damage",
+      "meta_type": "saving_throw"
     },
     {
-      "type": "damage",
       "dice": "3 * Martial Arts die",
-      "damage_type": "chosen"
+      "damage_type": "chosen",
+      "effect_type": "damage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

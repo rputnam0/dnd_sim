@@ -1,13 +1,13 @@
 {
   "name": "Homing Strikes",
-  "type": "subclass_feature",
   "description": "If you make an attack roll with your Psychic Blades and miss the target, you can roll one Psionic Energy die and add the number rolled to the attack roll. If this causes the attack to hit, you expend the Psionic Energy die.",
   "mechanics": [
     {
-      "trigger": "miss with Psychic Blades attack",
+      "trigger": "miss with psychic blades attack",
       "action": "roll 1 Psionic Energy die and add the result to the attack roll",
       "condition": "if the modified attack roll hits the target",
       "resource": "expend the used Psionic Energy die"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

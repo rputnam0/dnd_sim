@@ -1,15 +1,15 @@
 {
   "name": "Speed Burst",
-  "type": "racial_trait",
   "description": "By lowering your body to the ground and propelling yourself with your arms, you can move more quickly for a time. As a bonus action on your turn, if you have both hands free, you can increase your walking speed by 5 feet until the end of your turn.",
   "mechanics": [
     {
-      "type": "speed_increase",
       "amount": 5,
       "unit": "feet",
       "duration": "until end of turn",
       "activation": "bonus_action",
-      "condition": "both_hands_free"
+      "condition": "both_hands_free",
+      "effect_type": "speed_increase"
     }
-  ]
+  ],
+  "source_type": "species"
 }

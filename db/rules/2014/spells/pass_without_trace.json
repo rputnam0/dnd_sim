@@ -1,9 +1,15 @@
 {
   "name": "Pass without Trace",
-  "meta": "Pass without Trace 2nd-\u00ad\u2010\u2011level abjuration",
+  "type": "spell",
+  "level": 2,
+  "school": "Abjuration",
   "casting_time": "1 action",
-  "range": "Self",
-  "components": "V, S, M (ashes from a burned leaf of mistletoe and a sprig of spruce)",
-  "duration": "Concentration, up to 1 hour",
-  "description": "A veil of shadows and silence radiates from you, masking you and your companions from detection. For the duration, each creature you choose within 30 feet of you (including you) has a +10 bonus to Dexterity (Stealth) checks and can\u2019t be tracked except by magical means. A creature that receives this bonus leaves behind no tracks or other traces of its passage. Passwall 5th-\u00ad\u2010\u2011level transmutation"
+  "range_ft": 0,
+  "concentration": true,
+  "ritual": false,
+  "duration_rounds": 600,
+  "description": "A veil of shadows and silence radiates from you, masking you and your companions from detection. For the duration, each creature you choose within 30 feet of you (including you) has a +10 bonus to Dexterity (Stealth) checks and can’t be tracked except by magical means. A creature that receives this bonus leaves behind no tracks or other traces of its passage. Passwall 5th-­‐‑level transmutation",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

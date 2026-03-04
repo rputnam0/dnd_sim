@@ -1,14 +1,14 @@
 {
   "name": "Keen Hearing and Smell",
-  "type": "racial_trait",
   "description": "You have advantage on Wisdom (Perception) checks that rely on hearing or smell.",
   "mechanics": [
     {
-      "type": "advantage",
       "target": "skill_check",
       "skill": "perception",
       "ability": "wisdom",
-      "condition": "checks that rely on hearing or smell"
+      "condition": "checks that rely on hearing or smell",
+      "meta_type": "advantage"
     }
-  ]
+  ],
+  "source_type": "species"
 }

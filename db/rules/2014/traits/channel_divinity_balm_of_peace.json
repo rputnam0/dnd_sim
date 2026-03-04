@@ -1,20 +1,20 @@
 {
   "name": "Channel Divinity: Balm of Peace",
-  "type": "subclass_feature",
   "description": "You can use your Channel Divinity to make your very presence a soothing balm. As an action, you can move up to your speed, without provoking opportunity attacks, and when you move within 5 feet of any other creature during this action, you can restore a number of hit points to that creature equal to 2d6 + your Wisdom modifier (minimum of 1 hit point). A creature can receive this healing only once whenever you take this action.",
   "mechanics": [
     {
-      "type": "movement",
       "action": "action",
       "distance": "speed",
-      "noOpportunityAttack": true
+      "noOpportunityAttack": true,
+      "meta_type": "movement"
     },
     {
-      "type": "healing",
       "trigger": "move within 5 feet of a creature",
       "amount": "2d6 + Wisdom modifier",
       "minimum": 1,
-      "oncePerActionPerCreature": true
+      "oncePerActionPerCreature": true,
+      "meta_type": "healing"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

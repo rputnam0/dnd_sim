@@ -1,18 +1,18 @@
 {
   "name": "Fury of the Small",
-  "type": "racial_trait",
   "description": "When you damage a creature with an attack or a spell and the creature's size is larger than yours, you can cause the attack or spell to deal extra damage to the creature. The extra damage equals your proficiency bonus. You can use this trait a number of times equal to your proficiency bonus, regaining all expended uses when you finish a long rest, and you can use it no more than once per turn.",
   "mechanics": [
     {
-      "type": "extra_damage",
       "value": "proficiency_bonus",
-      "trigger": "damage a larger creature with an attack or spell"
+      "trigger": "damage a larger creature with an attack or spell",
+      "meta_type": "extra_damage"
     },
     {
-      "type": "limited_uses",
       "uses": "proficiency_bonus",
       "reset": "long_rest",
-      "restriction": "once_per_turn"
+      "restriction": "once_per_turn",
+      "meta_type": "limited_uses"
     }
-  ]
+  ],
+  "source_type": "species"
 }

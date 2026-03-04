@@ -1,6 +1,5 @@
 {
   "name": "Protective Spirit",
-  "type": "subclass_feature",
   "description": "Starting at 15th level, a holy presence mends your wounds in battle. You regain hit points equal to 1d6 + half your paladin level if you end your turn in combat with fewer than half of your hit points remaining and you aren't incapacitated.",
   "mechanics": [
     {
@@ -14,5 +13,6 @@
         "modifier": "half_paladin_level"
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

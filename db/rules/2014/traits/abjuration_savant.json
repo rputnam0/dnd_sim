@@ -1,14 +1,14 @@
 {
   "name": "Abjuration Savant",
-  "type": "subclass_feature",
   "description": "Beginning when you select this school at 2nd level, the gold and time you must spend to copy an abjuration spell into your spellbook is halved.",
   "mechanics": [
     {
-      "type": "cost_modifier",
       "target": "copy_spell",
       "spell_school": "abjuration",
       "gold_multiplier": 0.5,
-      "time_multiplier": 0.5
+      "time_multiplier": 0.5,
+      "meta_type": "cost_modifier"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Great Stature",
-  "type": "subclass_feature",
   "description": "10th-level Rune Knight feature. The magic of your runes permanently alters you. When you gain this feature, roll 3d4. You grow a number of inches in height equal to the roll. Moreover, the extra damage you deal with your Giant's Might feature increases to 1d8.",
   "mechanics": [
     {
@@ -13,5 +12,6 @@
       "source_feature": "Giant's Might",
       "dice": "1d8"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

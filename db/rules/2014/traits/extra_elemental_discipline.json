@@ -1,6 +1,5 @@
 {
   "name": "Extra Elemental Discipline",
-  "type": "subclass_feature",
   "description": "You learn one additional elemental discipline of your choice. You should know 2 elemental disciplines, as well as Elemental Attunement. Whenever you learn a new elemental discipline, you can also replace one elemental discipline that you already know with a different discipline.",
   "mechanics": [
     {
@@ -13,5 +12,6 @@
         "elemental_discipline": true
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

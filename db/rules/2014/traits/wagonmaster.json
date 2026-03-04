@@ -1,6 +1,5 @@
 {
   "name": "Wagonmaster",
-  "type": "background_feature",
   "description": "You are used to being in charge of the operation and your reputation for reliability has you on a short list when the job is critical. Experience has taught you to rely on your gut. Others recognize this and look to you for direction when a situation gets serious. You are able to identify the most defensible locations for camping. If you are part of a caravan outfit, you are able to attract two additional workers that are loyal to you based on your reputation. You have an excellent memory for maps and geography and can always determine your cardinal directions while traveling. Note: This feature is a variant of the Outlander feature.",
   "mechanics": [
     {
@@ -12,5 +11,6 @@
       "effect": "always_know_cardinal_direction",
       "condition": "while traveling"
     }
-  ]
+  ],
+  "source_type": "background"
 }

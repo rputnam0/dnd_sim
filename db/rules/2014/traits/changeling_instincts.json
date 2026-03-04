@@ -1,10 +1,8 @@
 {
   "name": "Changeling Instincts",
-  "type": "racial_trait",
   "description": "Thanks to your connection to the fey realm, you gain proficiency in two of the following skills of your choice: Deception, Insight, Intimidation, Performance, or Persuasion.",
   "mechanics": [
     {
-      "type": "skill_proficiency",
       "choose": 2,
       "options": [
         "Deception",
@@ -12,7 +10,9 @@
         "Intimidation",
         "Performance",
         "Persuasion"
-      ]
+      ],
+      "meta_type": "skill_proficiency"
     }
-  ]
+  ],
+  "source_type": "species"
 }

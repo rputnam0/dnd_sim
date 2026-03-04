@@ -1,6 +1,5 @@
 {
   "name": "Hand of Healing",
-  "type": "subclass_feature",
   "description": "3rd-level Way of Mercy feature. Your mystical touch can mend wounds. As an action, you can spend 1 ki point to touch a creature and restore a number of hit points equal to a roll of your Martial Arts die plus your Wisdom modifier. When you use your Flurry of Blows, you can replace one of the unarmed strikes with a use of this feature without spending a ki point for the healing.",
   "mechanics": [
     {
@@ -25,5 +24,6 @@
       "amount": "MartialArtsDie + WisdomModifier",
       "description": "When using Flurry of Blows, replace one unarmed strike with this healing without spending ki."
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

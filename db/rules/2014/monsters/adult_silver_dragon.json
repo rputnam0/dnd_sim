@@ -1,17 +1,38 @@
 {
-  "name": "Adult Silver Dragon",
-  "meta": "Huge dragon, lawful good",
-  "ac": 19,
-  "hp": 243,
-  "hp_formula": "18d12 + 126",
-  "ability_scores": {
-    "str": 27,
-    "dex": 10,
-    "con": 25,
-    "int": 16,
-    "wis": 13,
-    "cha": 21
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "adult_silver_dragon",
+    "name": "Adult Silver Dragon",
+    "team": "enemy"
   },
-  "cr": "16",
-  "saving_throws_text": "Dex +5, Con +12, Wis +6, Cha +10"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 243,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 8,
+    "dex_mod": 0,
+    "con_mod": 7,
+    "int_mod": 3,
+    "wis_mod": 1,
+    "cha_mod": 5,
+    "save_mods": {
+      "dex": 5,
+      "con": 12,
+      "wis": 6,
+      "cha": 10
+    },
+    "cr": "16"
+  },
+  "reactions": [],
+  "actions": []
 }

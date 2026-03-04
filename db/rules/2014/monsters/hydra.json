@@ -1,17 +1,33 @@
 {
-  "name": "Hydra",
-  "meta": "Huge monstrosity, unaligned",
-  "ac": 15,
-  "hp": 172,
-  "hp_formula": "15d12 + 75",
-  "ability_scores": {
-    "str": 20,
-    "dex": 12,
-    "con": 20,
-    "int": 2,
-    "wis": 10,
-    "cha": 7
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "hydra",
+    "name": "Hydra",
+    "team": "enemy"
   },
-  "cr": "8",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 172,
+    "ac": 15,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 5,
+    "dex_mod": 1,
+    "con_mod": 5,
+    "int_mod": -4,
+    "wis_mod": 0,
+    "cha_mod": -2,
+    "save_mods": {},
+    "cr": "8"
+  },
+  "reactions": [],
+  "actions": []
 }

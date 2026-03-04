@@ -1,17 +1,37 @@
 {
-  "name": "Vampire",
-  "meta": "Medium undead (shapechanger), lawful evil",
-  "ac": 16,
-  "hp": 144,
-  "hp_formula": "17d8 + 68",
-  "ability_scores": {
-    "str": 18,
-    "dex": 18,
-    "con": 18,
-    "int": 17,
-    "wis": 15,
-    "cha": 18
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "vampire",
+    "name": "Vampire",
+    "team": "enemy"
   },
-  "cr": "13",
-  "saving_throws_text": "Dex +9, Wis +7, Cha +9"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 144,
+    "ac": 16,
+    "speed_ft": 30,
+    "initiative_mod": 4,
+    "str_mod": 4,
+    "dex_mod": 4,
+    "con_mod": 4,
+    "int_mod": 3,
+    "wis_mod": 2,
+    "cha_mod": 4,
+    "save_mods": {
+      "dex": 9,
+      "wis": 7,
+      "cha": 9
+    },
+    "cr": "13"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,15 +1,15 @@
 {
   "name": "Obscure (Cost: 3d6)",
-  "type": "class_feature",
   "description": "The target must succeed on a Dexterity saving throw, or it has the blinded condition until the end of its next turn.",
   "mechanics": [
     {
-      "type": "saving_throw",
       "ability": "Dexterity",
       "failure_effect": {
         "condition": "blinded",
         "duration": "until the end of the target's next turn"
-      }
+      },
+      "meta_type": "saving_throw"
     }
-  ]
+  ],
+  "source_type": "class"
 }

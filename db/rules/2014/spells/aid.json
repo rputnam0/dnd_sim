@@ -1,9 +1,15 @@
 {
   "name": "Aid",
-  "meta": "Aid 2nd-\u00ad\u2010\u2011level abjuration",
+  "type": "spell",
+  "level": 2,
+  "school": "Abjuration",
   "casting_time": "1 action",
-  "range": "30 feet",
-  "components": "V, S, M (a tiny strip of white cloth)",
-  "duration": "8 hours",
-  "description": "Your spell bolsters your allies with toughness and resolve. Choose up to three creatures within range. Each target\u2019s hit point maximum and current hit points increase by 5 for the duration. At Higher Levels. When you cast this spell using a spell slot of 3rd level or higher, a target\u2019s hit points increase by an additional 5 for each slot level above 2nd."
+  "range_ft": 30,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 4800,
+  "description": "Your spell bolsters your allies with toughness and resolve. Choose up to three creatures within range. Each target’s hit point maximum and current hit points increase by 5 for the duration. At Higher Levels. When you cast this spell using a spell slot of 3rd level or higher, a target’s hit points increase by an additional 5 for each slot level above 2nd.",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

@@ -1,10 +1,8 @@
 {
   "name": "The Hexblade",
-  "type": "subclass_feature",
   "description": "You have made your pact with a mysterious entity from the Shadowfell—a force that manifests in sentient magic weapons carved from the stuff of shadow. The mighty sword Blackrazor is the most notable of these weapons, which have been spread across the multiverse over the ages. The shadowy force behind these weapons can offer power to warlocks who form pacts with it. Many Hexblade warlocks create weapons that emulate those formed in the Shadowfell. Others forgo such arms, content to weave the dark magic of that plane into their spellcasting. Because the Raven Queen is known to have forged the first of these weapons, many sages speculate that she and the force are one and that the weapons, along with Hexblade warlocks, are tools she uses to manipulate events on the Material Plane to her inscrutable ends. Expanded Spell List: The Hexblade lets you choose from an expanded list of spells when you learn a warlock spell. The following spells are added to the warlock spell list for you. 1st: shield, wrathful smite; 2nd: blur, branding smite; 3rd: blink, elemental weapon; 4th: phantasmal killer, staggering smite; 5th: banishing smite, cone of cold.",
   "mechanics": [
     {
-      "type": "expanded_spell_list",
       "spells_by_level": {
         "1": [
           "shield",
@@ -26,7 +24,9 @@
           "banishing smite",
           "cone of cold"
         ]
-      }
+      },
+      "meta_type": "expanded_spell_list"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

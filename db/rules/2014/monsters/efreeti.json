@@ -1,17 +1,37 @@
 {
-  "name": "Efreeti",
-  "meta": "Large elemental, lawful evil",
-  "ac": 17,
-  "hp": 200,
-  "hp_formula": "16d10 + 112",
-  "ability_scores": {
-    "str": 22,
-    "dex": 12,
-    "con": 24,
-    "int": 16,
-    "wis": 15,
-    "cha": 16
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "efreeti",
+    "name": "Efreeti",
+    "team": "enemy"
   },
-  "cr": "11",
-  "saving_throws_text": "Int +7, Wis +6, Cha +7"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 200,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 6,
+    "dex_mod": 1,
+    "con_mod": 7,
+    "int_mod": 3,
+    "wis_mod": 2,
+    "cha_mod": 3,
+    "save_mods": {
+      "int": 7,
+      "wis": 6,
+      "cha": 7
+    },
+    "cr": "11"
+  },
+  "reactions": [],
+  "actions": []
 }

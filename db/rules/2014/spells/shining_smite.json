@@ -6,6 +6,7 @@
   "casting_time": "bonus action",
   "range_ft": 0,
   "concentration": true,
+  "ritual": false,
   "duration_rounds": 10,
   "description": "The target hit by the strike takes an extra 2d6 radiant damage from the attack. Until the spell ends, the target sheds bright light in a 5-foot radius, attack rolls against it have advantage, and it can't benefit from the invisible condition. When you cast this spell using a higher-level spell slot, the damage increases by 1d6 for each spell slot level above 2.",
   "save_ability": null,

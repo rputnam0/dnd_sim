@@ -1,6 +1,5 @@
 {
   "name": "Chilling Retribution",
-  "type": "subclass_feature",
   "description": "When a creature hits you with an attack roll, you can take a reaction to force the creature to make a Wisdom saving throw against your spell save DC. On a failed save, the target is stunned until the end of your next turn. While stunned, its speed is reduced to 0 feet. You can use this feature a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
@@ -18,5 +17,6 @@
       "uses": "Wisdom modifier (minimum 1)",
       "reset": "long rest"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

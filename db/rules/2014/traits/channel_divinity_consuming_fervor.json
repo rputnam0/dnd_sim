@@ -1,16 +1,16 @@
 {
   "name": "Channel Divinity: Consuming Fervor",
-  "type": "subclass_feature",
   "description": "Starting at 2nd level, you can use your Channel Divinity to channel your zeal into unchecked ferocity. When you roll fire or thunder damage, you can use your Channel Divinity to deal maximum damage instead of rolling.",
   "mechanics": [
     {
-      "type": "replace_damage_roll",
       "damageTypes": [
         "fire",
         "thunder"
       ],
       "newValue": "maximum",
-      "resource": "Channel Divinity"
+      "resource": "Channel Divinity",
+      "meta_type": "replace_damage_roll"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

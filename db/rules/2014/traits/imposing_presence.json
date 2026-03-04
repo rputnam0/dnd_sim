@@ -1,6 +1,5 @@
 {
   "name": "Imposing Presence",
-  "type": "racial_trait",
   "description": "You have proficiency in one of the following skills of your choice: Intimidation or Persuasion.",
   "mechanics": [
     {
@@ -12,5 +11,6 @@
         ]
       }
     }
-  ]
+  ],
+  "source_type": "species"
 }

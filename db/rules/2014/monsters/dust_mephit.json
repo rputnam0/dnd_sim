@@ -1,17 +1,33 @@
 {
-  "name": "Dust Mephit",
-  "meta": "Small elemental, neutral evil",
-  "ac": 12,
-  "hp": 17,
-  "hp_formula": "5d6",
-  "ability_scores": {
-    "str": 5,
-    "dex": 14,
-    "con": 10,
-    "int": 9,
-    "wis": 11,
-    "cha": 10
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "dust_mephit",
+    "name": "Dust Mephit",
+    "team": "enemy"
   },
-  "cr": "1/2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 17,
+    "ac": 12,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": -3,
+    "dex_mod": 2,
+    "con_mod": 0,
+    "int_mod": -1,
+    "wis_mod": 0,
+    "cha_mod": 0,
+    "save_mods": {},
+    "cr": "1/2"
+  },
+  "reactions": [],
+  "actions": []
 }

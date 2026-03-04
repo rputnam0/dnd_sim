@@ -1,10 +1,8 @@
 {
   "name": "Chemical Mastery",
-  "type": "subclass_feature",
   "description": "You gain the following benefits. Alchemical Eruption: When you cast an Artificer spell that deals Acid, Fire, or Poison damage to a target, you can also deal 2d8 Force damage to that target. You can use this benefit only once on each of your turns. Chemical Resistance: You gain resistance to Acid damage and Poison damage. You also gain immunity to the Poisoned condition. Conjured Cauldron: You can cast Tasha's Bubbling Cauldron without expending a spell slot, without preparing the spell, and without material components, provided you use Alchemist's Supplies as the spellcasting focus. Once you use this feature, you can't use it again until you finish a long rest.",
   "mechanics": [
     {
-      "type": "extra_damage",
       "trigger": "cast_spell",
       "spell_class": "Artificer",
       "damage_types": [
@@ -16,27 +14,29 @@
         "dice": "2d8",
         "damage_type": "Force"
       },
-      "usage_limit": "once_per_turn"
+      "usage_limit": "once_per_turn",
+      "meta_type": "extra_damage"
     },
     {
-      "type": "damage_resistance",
       "damage_types": [
         "Acid",
         "Poison"
-      ]
+      ],
+      "meta_type": "damage_resistance"
     },
     {
-      "type": "condition_immunity",
-      "condition": "Poisoned"
+      "condition": "Poisoned",
+      "meta_type": "condition_immunity"
     },
     {
-      "type": "spell_casting",
       "spell": "Tasha's Bubbling Cauldron",
       "no_spell_slot": true,
       "no_preparation": true,
       "no_material_components": true,
       "focus_item": "Alchemist's Supplies",
-      "recharge": "long_rest"
+      "recharge": "long_rest",
+      "meta_type": "spell_casting"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

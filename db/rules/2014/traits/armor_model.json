@@ -1,32 +1,32 @@
 {
   "name": "Armor Model",
-  "type": "subclass_feature",
   "description": "You can customize your Arcane Armor. When you do so, choose one of the following armor models: Dreadnaught, Guardian, or Infiltrator. The model you choose gives you special benefits while you wear it. Each model includes a special weapon. When you attack with that weapon, you can add your Intelligence modifier, instead of your Strength or Dexterity modifier, to the attack and damage rolls. You can change the armor's model whenever you finish a short or long rest if you have Smith's Tools in hand.",
   "mechanics": [
     {
-      "type": "choice",
       "options": [
         "Dreadnaught",
         "Guardian",
         "Infiltrator"
       ],
-      "description": "Choose one armor model, granting its specific benefits while wearing the armor."
+      "description": "Choose one armor model, granting its specific benefits while wearing the armor.",
+      "meta_type": "choice"
     },
     {
-      "type": "weapon_modifier",
       "applies_to": "model's special weapon",
       "attack_modifier": "Intelligence",
       "damage_modifier": "Intelligence",
-      "description": "When attacking with the model's special weapon, use your Intelligence modifier instead of Strength or Dexterity for attack and damage rolls."
+      "description": "When attacking with the model's special weapon, use your Intelligence modifier instead of Strength or Dexterity for attack and damage rolls.",
+      "meta_type": "weapon_modifier"
     },
     {
-      "type": "model_change",
       "trigger": [
         "short rest",
         "long rest"
       ],
       "requirement": "Smith's Tools in hand",
-      "description": "You can change the armor's model after finishing a short or long rest, provided you are holding Smith's Tools."
+      "description": "You can change the armor's model after finishing a short or long rest, provided you are holding Smith's Tools.",
+      "meta_type": "model_change"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

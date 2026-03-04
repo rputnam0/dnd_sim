@@ -1,6 +1,5 @@
 {
   "name": "Gloom Stalker Spells",
-  "type": "subclass_feature",
   "description": "When you reach a Ranger level specified in the Gloom Stalker Spells table, you thereafter always have the listed spells prepared. Gloom Stalker Spells: 3rd – Disguise Self; 5th – Rope Trick; 9th – Fear; 13th – Greater Invisibility; 17th – Seeming.",
   "mechanics": [
     {
@@ -33,5 +32,6 @@
       "required_level": 17,
       "source": "Gloom Stalker"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

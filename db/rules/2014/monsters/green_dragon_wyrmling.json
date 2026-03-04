@@ -1,17 +1,38 @@
 {
-  "name": "Green Dragon Wyrmling",
-  "meta": "Medium dragon, lawful evil",
-  "ac": 17,
-  "hp": 38,
-  "hp_formula": "7d8 + 7",
-  "ability_scores": {
-    "str": 15,
-    "dex": 12,
-    "con": 13,
-    "int": 14,
-    "wis": 11,
-    "cha": 13
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "green_dragon_wyrmling",
+    "name": "Green Dragon Wyrmling",
+    "team": "enemy"
   },
-  "cr": "2",
-  "saving_throws_text": "Dex +3, Con +3, Wis +2, Cha +3"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 38,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 2,
+    "dex_mod": 1,
+    "con_mod": 1,
+    "int_mod": 2,
+    "wis_mod": 0,
+    "cha_mod": 1,
+    "save_mods": {
+      "dex": 3,
+      "con": 3,
+      "wis": 2,
+      "cha": 3
+    },
+    "cr": "2"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,6 +1,6 @@
 {
   "name": "Elf Culture",
-  "type": "racial_trait",
   "description": "The elves of Kaladesh don't organize themselves into nations or tribes. Still, they recognize three distinct cultural groups among their kind—though in truth these groupings are more like attitudes or alignments with regard to the rest of society and the use of technology. Choose one of these cultures.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "species"
 }

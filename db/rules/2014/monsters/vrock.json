@@ -1,17 +1,37 @@
 {
-  "name": "Vrock",
-  "meta": "Large fiend (demon), chaotic evil",
-  "ac": 15,
-  "hp": 104,
-  "hp_formula": "11d10 + 44",
-  "ability_scores": {
-    "str": 17,
-    "dex": 15,
-    "con": 18,
-    "int": 8,
-    "wis": 13,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "vrock",
+    "name": "Vrock",
+    "team": "enemy"
   },
-  "cr": "6",
-  "saving_throws_text": "Dex +5, Wis +4, Cha +2"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 104,
+    "ac": 15,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": 3,
+    "dex_mod": 2,
+    "con_mod": 4,
+    "int_mod": -1,
+    "wis_mod": 1,
+    "cha_mod": -1,
+    "save_mods": {
+      "dex": 5,
+      "wis": 4,
+      "cha": 2
+    },
+    "cr": "6"
+  },
+  "reactions": [],
+  "actions": []
 }

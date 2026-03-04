@@ -1,6 +1,5 @@
 {
   "name": "Knight of the Rose",
-  "type": "feat",
   "description": "You increase your Constitution, Wisdom, or Charisma score by 1. As a bonus action, you can grant a creature within 30 feet (including yourself) temporary hit points equal to 1d8 + your proficiency bonus + the modifier of the ability increased by this feat. You can use this a number of times equal to your proficiency bonus per long rest.",
   "mechanics": [
     {
@@ -22,5 +21,6 @@
       "benefit": "temporary_hit_points",
       "amount": "1d8 + proficiency_bonus + ability_modifier"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

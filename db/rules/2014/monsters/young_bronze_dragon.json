@@ -1,17 +1,38 @@
 {
-  "name": "Young Bronze Dragon",
-  "meta": "Large dragon, lawful good",
-  "ac": 18,
-  "hp": 142,
-  "hp_formula": "15d10 + 60",
-  "ability_scores": {
-    "str": 21,
-    "dex": 10,
-    "con": 19,
-    "int": 14,
-    "wis": 13,
-    "cha": 17
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "young_bronze_dragon",
+    "name": "Young Bronze Dragon",
+    "team": "enemy"
   },
-  "cr": "8",
-  "saving_throws_text": "Dex +3, Con +7, Wis +4, Cha +6"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 142,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 5,
+    "dex_mod": 0,
+    "con_mod": 4,
+    "int_mod": 2,
+    "wis_mod": 1,
+    "cha_mod": 3,
+    "save_mods": {
+      "dex": 3,
+      "con": 7,
+      "wis": 4,
+      "cha": 6
+    },
+    "cr": "8"
+  },
+  "reactions": [],
+  "actions": []
 }

@@ -1,14 +1,14 @@
 {
   "name": "Bewitching Magic",
-  "type": "subclass_feature",
   "description": "Your patron grants you the ability to weave your magic with teleportation. Immediately after you cast an Enchantment or Illusion spell using an action and a spell slot, you can cast Misty Step as part of the same action and without expending a spell slot.",
   "mechanics": [
     {
-      "type": "extra_spell_cast",
       "spell": "Misty Step",
-      "trigger": "after casting an Enchantment or Illusion spell using an action and a spell slot",
+      "trigger": "after casting an enchantment or illusion spell using an action and a spell slot",
       "cost": "no spell slot",
-      "timing": "same action"
+      "timing": "same action",
+      "meta_type": "extra_spell_cast"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

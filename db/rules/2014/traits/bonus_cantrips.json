@@ -1,6 +1,5 @@
 {
   "name": "Bonus Cantrips",
-  "type": "subclass_feature",
   "description": "At 1st level, you learn the sacred flame and light cantrips. They count as warlock cantrips for you, but they don't count against your number of cantrips known.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       ],
       "counts_against_cantrips_known": false
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

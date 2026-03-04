@@ -1,6 +1,5 @@
 {
   "name": "Poisoner",
-  "type": "feat",
   "description": "Increase your Dexterity or Intelligence score by 1, to a maximum of 20. You gain proficiency with the poisoner's kit. When you make a damage roll that deals Poison damage, it ignores Resistance to Poison damage. You can create doses of potent poison with 1 hour of work and 50 GP. As a Bonus Action, you can apply a dose to a weapon or ammunition. The next time you deal damage with that item within 1 minute, the target must succeed on a Constitution saving throw (DC 8 + ability modifier + proficiency bonus) or take 2d8 Poison damage and have the Poisoned condition until the end of your next turn.",
   "mechanics": [
     {
@@ -29,5 +28,6 @@
       "save_type": "con",
       "save_dc_calculation": "8 + ability_mod + pb"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

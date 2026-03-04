@@ -1,11 +1,9 @@
 {
   "name": "Wrath of the Storm",
-  "type": "subclass_feature",
   "description": "Also at 1st level, you can thunderously rebuke attackers. When a creature within 5 feet of you that you can see hits you with an attack, you can use your reaction to cause the creature to make a Dexterity saving throw. The creature takes 2d8 lightning or thunder damage (your choice) on a failed saving throw, and half as much damage on a successful one. You can use this feature a number of times equal to your Wisdom modifier (a minimum of once). You regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "type": "reaction",
-      "trigger": "When a creature within 5 feet that you can see hits you with an attack",
+      "trigger": "when a creature within 5 feet that you can see hits you with an attack",
       "save": {
         "ability": "Dexterity",
         "onFail": {
@@ -24,13 +22,15 @@
           ],
           "choice": true
         }
-      }
+      },
+      "meta_type": "reaction"
     },
     {
-      "type": "resource",
       "name": "Wrath of the Storm uses",
       "maxUses": "Wisdom modifier (minimum 1)",
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "resource"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

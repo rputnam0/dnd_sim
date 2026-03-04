@@ -1,6 +1,5 @@
 {
   "name": "Skulker",
-  "type": "feat",
   "description": "You gain a +1 bonus to Dexterity, Blindsight out to 10 feet, advantage on Stealth checks made with the Hide action during combat, and missing an attack while hidden no longer reveals your location.",
   "mechanics": [
     {
@@ -22,5 +21,6 @@
     {
       "effect_type": "hidden_miss_no_reveal"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

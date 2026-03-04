@@ -1,17 +1,33 @@
 {
-  "name": "Shadow",
-  "meta": "Medium undead, chaotic evil",
-  "ac": 12,
-  "hp": 16,
-  "hp_formula": "3d8 + 3",
-  "ability_scores": {
-    "str": 6,
-    "dex": 14,
-    "con": 13,
-    "int": 6,
-    "wis": 10,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "shadow",
+    "name": "Shadow",
+    "team": "enemy"
   },
-  "cr": "1/2",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 16,
+    "ac": 12,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "str_mod": -2,
+    "dex_mod": 2,
+    "con_mod": 1,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "1/2"
+  },
+  "reactions": [],
+  "actions": []
 }

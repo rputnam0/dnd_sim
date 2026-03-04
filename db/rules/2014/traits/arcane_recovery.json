@@ -1,14 +1,14 @@
 {
   "name": "Arcane Recovery",
-  "type": "class_feature",
   "description": "You have learned to regain some of your magical energy by studying your spellbook. Once per day when you finish a short rest, you can choose expended spell slots to recover. The spell slots can have a combined level that is equal to or less than half your wizard level (rounded up), and none of the slots can be 6th level or higher.\n\nFor example, if you're a 4th-level wizard, you can recover up to two levels worth of spell slots. You can recover either a 2nd-level spell slot or two 1st-level spell slots.",
   "mechanics": [
     {
-      "type": "spell_slot_recovery",
       "frequency": "once per day after short rest",
       "max_total_slot_level": "ceil(wizard_level / 2)",
       "max_individual_slot_level": 5,
-      "description": "Recover expended spell slots whose combined levels do not exceed half the wizard's level (rounded up), with no slot higher than 5th level."
+      "description": "Recover expended spell slots whose combined levels do not exceed half the wizard's level (rounded up), with no slot higher than 5th level.",
+      "meta_type": "spell_slot_recovery"
     }
-  ]
+  ],
+  "source_type": "class"
 }

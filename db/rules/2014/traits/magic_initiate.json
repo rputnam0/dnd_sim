@@ -1,6 +1,5 @@
 {
   "name": "Magic Initiate",
-  "type": "feat",
   "description": "You learn two cantrips and one 1st-level spell from the Cleric, Druid, or Wizard spell list. You choose Intelligence, Wisdom, or Charisma as your spellcasting ability for these spells. You can cast the 1st-level spell once without a spell slot per long rest, and you can also cast it using any spell slots you have. Whenever you gain a level, you can replace one of these spells with another from the same list. You can take this feat multiple times, choosing a different spell list each time.",
   "mechanics": [
     {
@@ -38,5 +37,6 @@
       "effect_type": "cast_with_slots",
       "level": 1
     }
-  ]
+  ],
+  "source_type": "feat"
 }

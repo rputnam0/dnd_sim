@@ -1,17 +1,37 @@
 {
-  "name": "Solar",
-  "meta": "Large celestial, lawful good",
-  "ac": 21,
-  "hp": 243,
-  "hp_formula": "18d10 + 144",
-  "ability_scores": {
-    "str": 26,
-    "dex": 22,
-    "con": 26,
-    "int": 25,
-    "wis": 25,
-    "cha": 30
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "solar",
+    "name": "Solar",
+    "team": "enemy"
   },
-  "cr": "21",
-  "saving_throws_text": "Int +14, Wis +14, Cha +17"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 243,
+    "ac": 21,
+    "speed_ft": 30,
+    "initiative_mod": 6,
+    "str_mod": 8,
+    "dex_mod": 6,
+    "con_mod": 8,
+    "int_mod": 7,
+    "wis_mod": 7,
+    "cha_mod": 10,
+    "save_mods": {
+      "int": 14,
+      "wis": 14,
+      "cha": 17
+    },
+    "cr": "21"
+  },
+  "reactions": [],
+  "actions": []
 }

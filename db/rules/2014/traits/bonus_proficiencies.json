@@ -1,14 +1,14 @@
 {
   "name": "Bonus Proficiencies",
-  "type": "subclass_feature",
   "description": "When you join the College of Lore at 3rd level, you gain proficiency with three skills of your choice.",
   "mechanics": [
     {
-      "type": "gain_proficiency",
       "target": "skill",
       "quantity": 3,
       "choice": true,
-      "description": "Gain proficiency with three skills of your choice."
+      "description": "Gain proficiency with three skills of your choice.",
+      "meta_type": "gain_proficiency"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

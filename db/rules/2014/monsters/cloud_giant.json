@@ -1,17 +1,37 @@
 {
-  "name": "Cloud Giant",
-  "meta": "Huge giant, neutral good (50%) or neutral evil (50%)",
-  "ac": 14,
-  "hp": 200,
-  "hp_formula": "16d12 + 96",
-  "ability_scores": {
-    "str": 27,
-    "dex": 10,
-    "con": 22,
-    "int": 12,
-    "wis": 16,
-    "cha": 16
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "cloud_giant",
+    "name": "Cloud Giant",
+    "team": "enemy"
   },
-  "cr": "9",
-  "saving_throws_text": "Con +10, Wis +7, Cha +7"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 200,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 8,
+    "dex_mod": 0,
+    "con_mod": 6,
+    "int_mod": 1,
+    "wis_mod": 3,
+    "cha_mod": 3,
+    "save_mods": {
+      "con": 10,
+      "wis": 7,
+      "cha": 7
+    },
+    "cr": "9"
+  },
+  "reactions": [],
+  "actions": []
 }

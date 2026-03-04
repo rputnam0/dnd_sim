@@ -1,6 +1,5 @@
 {
   "name": "Rune Shaper",
-  "type": "feat",
   "description": "You learn the Comprehend Languages spell and can cast it once per long rest without a spell slot, or using your own slots. Additionally, you know a number of runes equal to half your proficiency bonus (rounded down). After a long rest, you inscribe these runes onto objects to learn specific 1st-level spells until your next long rest. You can cast each of these spells once per long rest without a spell slot or material components, and also using your own spell slots. Your spellcasting ability for these is Intelligence, Wisdom, or Charisma.",
   "mechanics": [
     {
@@ -45,5 +44,6 @@
       "frequency": "1/long_rest_per_rune",
       "no_material_components": true
     }
-  ]
+  ],
+  "source_type": "feat"
 }

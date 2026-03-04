@@ -1,6 +1,5 @@
 {
   "name": "Thunder Gauntlets",
-  "type": "subclass_feature",
   "description": "Each of the armor's gauntlets counts as a simple melee weapon while you aren't holding anything in it, and it deals 1d8 thunder damage on a hit. A creature hit by the gauntlet has disadvantage on attack rolls against targets other than you until the start of your next turn, as the armor magically emits a distracting pulse when the creature attacks someone else.",
   "mechanics": [
     {
@@ -15,5 +14,6 @@
       "condition": "disadvantage on attack rolls against targets other than you",
       "duration": "until the start of your next turn"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

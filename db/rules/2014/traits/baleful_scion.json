@@ -1,6 +1,5 @@
 {
   "name": "Baleful Scion",
-  "type": "feat",
   "description": "You increase one ability score of your choice by 1. Once per turn, when you damage a creature you can see within 60 feet of yourself, you can deal an extra 1d6 + proficiency bonus necrotic damage to it and regain hit points equal to the necrotic damage dealt. You can use this benefit a number of times equal to your proficiency bonus, regaining all uses after a long rest.",
   "mechanics": [
     {
@@ -23,5 +22,6 @@
       "amount": "equal_to_extra_damage",
       "trigger": "grasp_of_avarice"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

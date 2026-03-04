@@ -1,52 +1,52 @@
 {
   "name": "Manifest Echo",
-  "type": "subclass_feature",
   "description": "You can use a bonus action to magically manifest an echo of yourself in an unoccupied space you can see within 15 feet of you. This echo is a magical, translucent, gray image of you that lasts until it is destroyed, until you dismiss it as a bonus action, until you manifest another echo, or until you're incapacitated.\n\nYour echo has AC 14 + your proficiency bonus, 1 hit point, and immunity to all conditions. If it has to make a saving throw, it uses your saving throw bonus for the roll. It is the same size as you, and it occupies its space. On your turn, you can mentally command the echo to move up to 30 feet in any direction (no action required). If your echo is ever more than 30 feet from you at the end of your turn, it is destroyed.\n\nYou can use the echo in the following ways:\n- As a bonus action, you can teleport, magically swapping places with your echo at a cost of 15 feet of your movement, regardless of the distance between the two of you.\n- When you take the Attack action on your turn, any attack you make with that action can originate from your space or the echo's space. You make this choice for each attack.\n- When a creature that you can see within 5 feet of your echo moves at least 5 feet away from it, you can use your reaction to make an opportunity attack against that creature as if you were in the echo's space.",
   "mechanics": [
     {
-      "type": "create_echo",
       "action": "bonus",
       "range": 15,
-      "duration": "until destroyed, dismissed, another echo manifested, or incapacitated"
+      "duration": "until destroyed, dismissed, another echo manifested, or incapacitated",
+      "meta_type": "create_echo"
     },
     {
-      "type": "echo_stats",
       "ac": "14 + proficiency bonus",
       "hp": 1,
       "immunity": "all conditions",
-      "saving_throw": "uses wielder's saving throw bonus"
+      "saving_throw": "uses wielder's saving throw bonus",
+      "meta_type": "echo_stats"
     },
     {
-      "type": "move_echo",
       "action": "free",
       "distance": 30,
-      "description": "Mentally command the echo to move up to 30 feet in any direction on your turn"
+      "description": "Mentally command the echo to move up to 30 feet in any direction on your turn",
+      "meta_type": "move_echo"
     },
     {
-      "type": "echo_range_limit",
       "max_distance": 30,
       "trigger": "end_of_turn",
-      "effect": "destroy echo if farther than 30 feet from you"
+      "effect": "destroy echo if farther than 30 feet from you",
+      "meta_type": "echo_range_limit"
     },
     {
-      "type": "teleport_swap",
       "action": "bonus",
       "cost_movement": 15,
-      "description": "Swap places with your echo, regardless of distance"
+      "description": "Swap places with your echo, regardless of distance",
+      "meta_type": "teleport_swap"
     },
     {
-      "type": "attack_origin",
       "action": "attack",
       "choice": "self_or_echo",
-      "description": "Each attack of the Attack action can originate from your space or the echo's space"
+      "description": "Each attack of the Attack action can originate from your space or the echo's space",
+      "meta_type": "attack_origin"
     },
     {
-      "type": "opportunity_attack",
       "trigger": "creature_moves_away_from_echo_5ft",
       "action": "reaction",
       "range": 5,
       "source": "echo",
-      "description": "Make an opportunity attack as if you were in the echo's space"
+      "description": "Make an opportunity attack as if you were in the echo's space",
+      "meta_type": "opportunity_attack"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

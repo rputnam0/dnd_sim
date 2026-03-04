@@ -1,17 +1,38 @@
 {
-  "name": "Nalfeshnee",
-  "meta": "Large fiend (demon), chaotic evil",
-  "ac": 18,
-  "hp": 184,
-  "hp_formula": "16d10 + 96",
-  "ability_scores": {
-    "str": 21,
-    "dex": 10,
-    "con": 22,
-    "int": 19,
-    "wis": 12,
-    "cha": 15
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "nalfeshnee",
+    "name": "Nalfeshnee",
+    "team": "enemy"
   },
-  "cr": "13",
-  "saving_throws_text": "Con +11, Int +9, Wis +6, Cha +7"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 184,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 5,
+    "dex_mod": 0,
+    "con_mod": 6,
+    "int_mod": 4,
+    "wis_mod": 1,
+    "cha_mod": 2,
+    "save_mods": {
+      "con": 11,
+      "int": 9,
+      "wis": 6,
+      "cha": 7
+    },
+    "cr": "13"
+  },
+  "reactions": [],
+  "actions": []
 }

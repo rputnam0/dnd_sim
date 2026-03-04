@@ -1,6 +1,5 @@
 {
   "name": "Street Justice",
-  "type": "feat",
   "description": "You increase your Strength or Dexterity score by 1, to a maximum of 20. Your allies have advantage on attack rolls against a creature grappled by you. When you use a chain, manacles, or rope to bind a creature, you add your proficiency bonus to the DC to escape or burst. A creature's hostile attitude doesn't impose disadvantage on your Charisma (Intimidation) checks.",
   "mechanics": [
     {
@@ -31,5 +30,6 @@
       "skill": "intimidation",
       "context": "hostile_attitude"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

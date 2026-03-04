@@ -6,6 +6,7 @@
   "casting_time": "action",
   "range_ft": 300,
   "concentration": false,
+  "ritual": false,
   "duration_rounds": 0,
   "description": "A frigid globe of cold energy streaks from your fingertips to a point of your choice within 300 feet, where it explodes in a 60-foot-radius sphere. Each creature in the area must make a Constitution saving throw. On a failed save the creature takes 10d6 cold damage, or half as much on a successful save. If the globe strikes a body of water or a liquid that is principally water, it freezes the liquid to a depth of 6 inches over an area 30 feet square. The ice lasts for 1 minute. Creatures swimming on the surface become trapped in the ice and can use an action to make a Strength check against your spell save DC to break free. You can refrain from firing the globe after completing the spell; a small globe appears in your hand. The globe can be thrown up to 40 feet or hurled with a sling, shattering on impact with the same effect as the normal casting, or set down. After 1 minute, if it hasn't shattered, it explodes. When cast using a spell slot of 7th level or higher, the damage increases by 1d6 for each slot level above 6th.",
   "save_ability": "con",

@@ -1,15 +1,15 @@
 {
   "name": "Reaper",
-  "type": "subclass_feature",
   "description": "At 1st level, the cleric learns one necromancy cantrip of his or her choice from any spell list. When the cleric casts a necromancy cantrip that normally targets only one creature, the spell can instead target two creatures within range and within 5 feet of each other.",
   "mechanics": [
     {
-      "type": "cantrip_target_modification",
       "spell_school": "necromancy",
       "original_target_count": 1,
       "new_target_count": 2,
       "target_spacing": "within 5 feet of each other",
-      "applies_when": "casting a necromancy cantrip that normally targets only one creature"
+      "applies_when": "casting a necromancy cantrip that normally targets only one creature",
+      "meta_type": "cantrip_target_modification"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

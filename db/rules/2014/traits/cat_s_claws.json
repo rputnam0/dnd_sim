@@ -1,12 +1,12 @@
 {
   "name": "Cat's Claws",
-  "type": "racial_trait",
   "description": "You can use your claws to make unarmed strikes. When you hit with them, the strike deals 1d6 + your Strength modifier slashing damage, instead of the bludgeoning damage normal for an unarmed strike.",
   "mechanics": [
     {
-      "type": "unarmed_strike_damage",
       "damage": "1d6 + STR",
-      "damage_type": "slashing"
+      "damage_type": "slashing",
+      "meta_type": "unarmed_strike_damage"
     }
-  ]
+  ],
+  "source_type": "species"
 }

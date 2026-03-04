@@ -1,6 +1,5 @@
 {
   "name": "Heart of Fire",
-  "type": "subclass_feature",
   "description": "At 1st level, whenever you start casting a spell of 1st level or higher that deals fire damage, fiery magic erupts from you. This eruption causes creatures of your choice that you can see within 10 feet of you to take fire damage equal to half your sorcerer level (minimum of 1).",
   "mechanics": [
     {
@@ -16,5 +15,6 @@
         "damage_formula": "max(floor(sorcerer_level / 2), 1)"
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

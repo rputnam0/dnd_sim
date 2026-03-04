@@ -1,13 +1,13 @@
 {
   "name": "Fleet Step",
-  "type": "subclass_feature",
   "description": "When you take a Bonus Action other than Step of the Wind, you can also use Step of the Wind immediately after that Bonus Action.",
   "mechanics": [
     {
-      "type": "grant_action",
       "action": "Step of the Wind",
       "trigger": "after_bonus_action",
-      "excludes": "Step of the Wind"
+      "excludes": "Step of the Wind",
+      "meta_type": "grant_action"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

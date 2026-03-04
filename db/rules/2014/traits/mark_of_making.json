@@ -1,6 +1,5 @@
 {
   "name": "Mark of Making",
-  "type": "feat",
   "description": "You gain the Mark of Making, granting you artisan's intuition and magical abilities. You can add 1d4 to Intelligence (Arcana) checks or ability checks with artisan's tools. You learn the Mending cantrip and the Magic Weapon spell, which you can cast once per long rest without a spell slot. Additionally, if you have Spellcasting or Pact Magic, several specific spells are added to your spell list.",
   "mechanics": [
     {
@@ -46,5 +45,6 @@
         "creation"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

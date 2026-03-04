@@ -1,6 +1,5 @@
 {
   "name": "Shadow-Touched",
-  "type": "feat",
   "description": "Your exposure to the Shadowfell's magic grants you a +1 bonus to Intelligence, Wisdom, or Charisma (maximum of 20). You learn the Invisibility spell and one 1st-level spell of your choice from the Illusion or Necromancy school. You can cast each of these spells once without expending a spell slot, regaining the ability to do so when you finish a Long Rest. You can also cast these spells using spell slots you have of the appropriate level. The spellcasting ability for these spells is the ability increased by this feat.",
   "mechanics": [
     {
@@ -38,5 +37,6 @@
         "cha"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

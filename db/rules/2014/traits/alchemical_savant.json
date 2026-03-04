@@ -1,10 +1,8 @@
 {
   "name": "Alchemical Savant",
-  "type": "subclass_feature",
   "description": "Whenever you cast a spell using your Alchemist's Supplies as the Spellcasting Focus, you gain a bonus to one roll of the spell. That roll must restore Hit Points or be a damage roll that deals Acid, Fire, or Poison damage. The bonus equals your Intelligence modifier (minimum bonus of +1).",
   "mechanics": [
     {
-      "type": "roll_bonus",
       "trigger": "cast_spell",
       "condition": {
         "using_item": "Alchemist's Supplies",
@@ -22,7 +20,9 @@
       "bonus": {
         "value": "Intelligence modifier",
         "minimum": 1
-      }
+      },
+      "meta_type": "roll_bonus"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

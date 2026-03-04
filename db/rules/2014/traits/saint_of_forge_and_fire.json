@@ -1,21 +1,21 @@
 {
   "name": "Saint of Forge and Fire",
-  "type": "subclass_feature",
   "description": "At 17th level, your blessed affinity with fire and metal becomes more powerful: You gain immunity to fire damage, While wearing heavy armor, you have resistance to bludgeoning, piercing, and slashing damage from nonmagical attacks.",
   "mechanics": [
     {
-      "type": "immunity",
-      "damage_type": "fire"
+      "damage_type": "fire",
+      "meta_type": "immunity"
     },
     {
-      "type": "resistance",
       "damage_types": [
         "bludgeoning",
         "piercing",
         "slashing"
       ],
       "condition": "while wearing heavy armor",
-      "source": "nonmagical attacks"
+      "source": "nonmagical attacks",
+      "meta_type": "resistance"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

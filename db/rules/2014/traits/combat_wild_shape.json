@@ -1,18 +1,18 @@
 {
   "name": "Combat Wild Shape",
-  "type": "subclass_feature",
   "description": "You gain the ability to use Wild Shape on your turn as a bonus action, rather than as an action. Additionally, while you are transformed by Wild Shape, you can use a bonus action to expend one spell slot to regain 1d8 hit points per level of the spell slot expended.",
   "mechanics": [
     {
-      "type": "action_cost_change",
       "action": "Wild Shape",
-      "new_cost": "bonus action"
+      "new_cost": "bonus action",
+      "meta_type": "action_cost_change"
     },
     {
-      "type": "healing",
-      "trigger": "bonus action while transformed by Wild Shape",
+      "trigger": "bonus action while transformed by wild shape",
       "resource": "spell slot",
-      "healing": "1d8 per spell slot level"
+      "healing": "1d8 per spell slot level",
+      "meta_type": "healing"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

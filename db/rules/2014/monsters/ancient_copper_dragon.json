@@ -1,17 +1,38 @@
 {
-  "name": "Ancient Copper Dragon",
-  "meta": "Gargantuan dragon, chaotic good",
-  "ac": 21,
-  "hp": 350,
-  "hp_formula": "20d20 + 140",
-  "ability_scores": {
-    "str": 27,
-    "dex": 12,
-    "con": 25,
-    "int": 20,
-    "wis": 17,
-    "cha": 19
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "ancient_copper_dragon",
+    "name": "Ancient Copper Dragon",
+    "team": "enemy"
   },
-  "cr": "21",
-  "saving_throws_text": "Dex +8, Con +14, Wis +10, Cha +11"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 350,
+    "ac": 21,
+    "speed_ft": 30,
+    "initiative_mod": 1,
+    "str_mod": 8,
+    "dex_mod": 1,
+    "con_mod": 7,
+    "int_mod": 5,
+    "wis_mod": 3,
+    "cha_mod": 4,
+    "save_mods": {
+      "dex": 8,
+      "con": 14,
+      "wis": 10,
+      "cha": 11
+    },
+    "cr": "21"
+  },
+  "reactions": [],
+  "actions": []
 }

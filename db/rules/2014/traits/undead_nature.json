@@ -1,29 +1,29 @@
 {
   "name": "Undead Nature",
-  "type": "racial_trait",
   "description": "You are immune to poison damage and exhaustion, and you can't be poisoned. You don't require air, food, drink, or sleep.",
   "mechanics": [
     {
-      "type": "damage_immunity",
       "damage": [
         "poison"
-      ]
+      ],
+      "meta_type": "damage_immunity"
     },
     {
-      "type": "condition_immunity",
       "conditions": [
         "exhaustion",
         "poisoned"
-      ]
+      ],
+      "meta_type": "condition_immunity"
     },
     {
-      "type": "no_requirements",
       "requirements": [
         "air",
         "food",
         "drink",
         "sleep"
-      ]
+      ],
+      "meta_type": "no_requirements"
     }
-  ]
+  ],
+  "source_type": "species"
 }

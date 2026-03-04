@@ -1,9 +1,15 @@
 {
   "name": "Demiplane",
-  "meta": "Demiplane 8th-\u00ad\u2010\u2011level conjuration",
+  "type": "spell",
+  "level": 8,
+  "school": "Conjuration",
   "casting_time": "1 action",
-  "range": "60 feet",
-  "components": "S",
-  "duration": "1 hour",
-  "description": "You create a shadowy door on a flat solid surface that you can see within range. The door is large enough to allow Medium creatures to pass through unhindered. When opened, the door leads to a demiplane that appears to be an empty room 30 feet in each dimension, made of wood or stone. When the spell ends, the door disappears, and any creatures or objects inside the demiplane remain trapped there, as the door also disappears from the other side. Each time you cast this spell, you can create a new demiplane, or have the shadowy door connect to a demiplane you created with a previous casting of this spell. Additionally, if you know the nature and contents of a demiplane created by a casting of this spell by another creature, you can have the shadowy door connect to its demiplane instead. Detect Evil and Good 1st-\u00ad\u2010\u2011level divination"
+  "range_ft": 60,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 600,
+  "description": "You create a shadowy door on a flat solid surface that you can see within range. The door is large enough to allow Medium creatures to pass through unhindered. When opened, the door leads to a demiplane that appears to be an empty room 30 feet in each dimension, made of wood or stone. When the spell ends, the door disappears, and any creatures or objects inside the demiplane remain trapped there, as the door also disappears from the other side. Each time you cast this spell, you can create a new demiplane, or have the shadowy door connect to a demiplane you created with a previous casting of this spell. Additionally, if you know the nature and contents of a demiplane created by a casting of this spell by another creature, you can have the shadowy door connect to its demiplane instead. Detect Evil and Good 1st-­‐‑level divination",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

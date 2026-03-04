@@ -1,9 +1,15 @@
 {
   "name": "Tongues",
-  "meta": "Tongues 3rd-\u00ad\u2010\u2011level divination",
+  "type": "spell",
+  "level": 3,
+  "school": "Divination",
   "casting_time": "1 action",
-  "range": "Touch",
-  "components": "V, M (a small clay model of a ziggurat)",
-  "duration": "1 hour",
-  "description": "This spell grants the creature you touch the ability to understand any spoken language it hears. Moreover, when the target speaks, any creature that knows at least one language and can hear the target understands what it says. Transport via Plants 6th-\u00ad\u2010\u2011level conjuration"
+  "range_ft": null,
+  "concentration": false,
+  "ritual": false,
+  "duration_rounds": 600,
+  "description": "This spell grants the creature you touch the ability to understand any spoken language it hears. Moreover, when the target speaks, any creature that knows at least one language and can hear the target understands what it says. Transport via Plants 6th-­‐‑level conjuration",
+  "save_ability": null,
+  "damage_type": null,
+  "mechanics": []
 }

@@ -1,16 +1,16 @@
 {
   "name": "Ki-Fueled Attack",
-  "type": "class_feature",
   "description": "3rd-level monk optional class features (optional feature). If you spend 1 ki point or more as part of your action on your turn, you can make one attack with an unarmed strike or a monk weapon as a bonus action before the end of the turn.",
   "mechanics": [
     {
-      "type": "bonus_action_attack",
       "cost": "1 ki point",
       "trigger": "spend ki point as part of your action",
       "attack_options": [
         "unarmed strike",
         "monk weapon"
-      ]
+      ],
+      "meta_type": "bonus_action_attack"
     }
-  ]
+  ],
+  "source_type": "class"
 }

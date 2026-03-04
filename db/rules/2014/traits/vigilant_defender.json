@@ -1,6 +1,5 @@
 {
   "name": "Vigilant Defender",
-  "type": "subclass_feature",
   "description": "Starting at 18th level, you respond to danger with extraordinary vigilance. In combat, you get a special reaction that you can take once on every creature's turn, except your turn. You can use this special reaction only to make an opportunity attack, and you can't use it on the same turn that you take your normal reaction.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       "action": "opportunity attack",
       "exclusion": "cannot be used if you have already taken your normal reaction that turn"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,6 +1,5 @@
 {
   "name": "Boon of Looming Shadows",
-  "type": "feat",
   "description": "Increase one ability score of your choice by 1, to a maximum of 30. When you take the Attack action, your reach for your melee weapon attacks increases by 10 feet until the end of your turn. You can take the Dodge action as a bonus action.",
   "mechanics": [
     {
@@ -19,5 +18,6 @@
     {
       "effect_type": "bonus_action_dodge"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

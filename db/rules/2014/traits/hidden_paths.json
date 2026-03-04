@@ -1,29 +1,29 @@
 {
   "name": "Hidden Paths",
-  "type": "subclass_feature",
   "description": "Starting at 10th level, you can use the hidden, magical pathways that some fey use to traverse space in the blink of an eye. As a bonus action on your turn, you can teleport up to 60 feet to an unoccupied space you can see. Alternatively, you can use your action to teleport one willing creature you touch up to 30 feet to an unoccupied space you can see. You can use this feature a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses of it when you finish a long rest.",
   "mechanics": [
     {
-      "type": "teleport",
       "distance": 60,
       "action": "bonus",
       "target": "self",
-      "description": "Teleport up to 60 feet to an unoccupied space you can see."
+      "description": "Teleport up to 60 feet to an unoccupied space you can see.",
+      "meta_type": "teleport"
     },
     {
-      "type": "teleport",
       "distance": 30,
       "action": "action",
       "target": "creature",
       "condition": "willing",
-      "description": "Teleport one willing creature you touch up to 30 feet to an unoccupied space you can see."
+      "description": "Teleport one willing creature you touch up to 30 feet to an unoccupied space you can see.",
+      "meta_type": "teleport"
     },
     {
-      "type": "resource",
       "resource": "uses",
       "max": "Wisdom modifier (minimum 1)",
       "reset": "long rest",
-      "description": "Number of uses equal to your Wisdom modifier, minimum once, regained after a long rest."
+      "description": "Number of uses equal to your Wisdom modifier, minimum once, regained after a long rest.",
+      "meta_type": "resource"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

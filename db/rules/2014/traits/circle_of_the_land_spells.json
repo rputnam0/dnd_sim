@@ -1,6 +1,5 @@
 {
   "name": "Circle of the Land Spells",
-  "type": "subclass_feature",
   "description": "Whenever you finish a long rest, choose one type of land—arid, polar, temperate, or tropical. Consult the corresponding table; you have the spells listed for your druid level and lower prepared.",
   "mechanics": [
     {
@@ -33,5 +32,6 @@
         }
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

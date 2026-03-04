@@ -1,14 +1,14 @@
 {
   "name": "Spirit Seeker",
-  "type": "subclass_feature",
   "description": "Yours is a path that seeks attunement with the natural world, giving you a kinship with beasts. At 3rd level when you adopt this path, you gain the ability to cast the beast sense and speak with animals spells, but only as rituals, as described in chapter 10.",
   "mechanics": [
     {
-      "type": "ritual_spell",
       "spells": [
         "beast sense",
         "speak with animals"
-      ]
+      ],
+      "meta_type": "ritual_spell"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

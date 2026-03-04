@@ -1,6 +1,5 @@
 {
   "name": "Brutal Critical (3 dice)",
-  "type": "class_feature",
   "description": "At 17th level, you can roll three additional weapon damage dice when determining the extra damage for a critical hit with a melee attack.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
       "dice_source": "weapon",
       "trigger": "critical_hit_melee"
     }
-  ]
+  ],
+  "source_type": "class"
 }

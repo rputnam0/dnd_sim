@@ -1,6 +1,5 @@
 {
   "name": "Greater Mark of Sentinel",
-  "type": "feat",
   "description": "You gain a +1 bonus to an ability score of your choice. Your Sentinel's Intuition die increases from a d4 to a d6. Additionally, when you use the Vigilant Guardian benefit of your Mark of Sentinel feat, you can make one weapon attack or unarmed strike as part of that same reaction.",
   "mechanics": [
     {
@@ -18,5 +17,6 @@
       "effect_type": "reaction_attack",
       "trigger": "vigilant_guardian"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

@@ -1,17 +1,17 @@
 {
   "name": "Stillness of Mind",
-  "type": "class_feature",
   "description": "Starting at 7th level, you can use your action to end one effect on yourself that is causing you to be charmed or frightened.",
   "mechanics": [
     {
-      "type": "end_condition",
       "action": "action",
       "target": "self",
       "conditions": [
         "charmed",
         "frightened"
       ],
-      "limit": 1
+      "limit": 1,
+      "meta_type": "end_condition"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,31 +1,31 @@
 {
   "name": "Mechanical Nature",
-  "type": "racial_trait",
   "description": "You have resistance to poison damage and immunity to disease, and you have advantage on saving throws against being paralyzed or poisoned. You don't need to eat, drink, or breathe.",
   "mechanics": [
     {
-      "type": "damage_resistance",
-      "damage_type": "poison"
+      "damage_type": "poison",
+      "meta_type": "damage_resistance"
     },
     {
-      "type": "condition_immunity",
-      "condition": "disease"
+      "condition": "disease",
+      "meta_type": "condition_immunity"
     },
     {
-      "type": "saving_throw_advantage",
       "conditions": [
         "paralyzed",
         "poisoned"
-      ]
+      ],
+      "meta_type": "saving_throw_advantage"
     },
     {
-      "type": "sustainability",
       "requires": [
         "food",
         "water",
         "air"
       ],
-      "required": false
+      "required": false,
+      "meta_type": "sustainability"
     }
-  ]
+  ],
+  "source_type": "species"
 }

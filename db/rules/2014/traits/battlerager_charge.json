@@ -1,6 +1,5 @@
 {
   "name": "Battlerager Charge",
-  "type": "subclass_feature",
   "description": "Beginning at 10th level, you can take the Dash action as a bonus action while you are raging.",
   "mechanics": [
     {
@@ -9,5 +8,6 @@
       "cost": "bonus_action",
       "condition": "raging"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,17 +1,35 @@
 {
-  "name": "Mummy",
-  "meta": "Medium undead, lawful evil",
-  "ac": 11,
-  "hp": 58,
-  "hp_formula": "9d8 + 18",
-  "ability_scores": {
-    "str": 16,
-    "dex": 8,
-    "con": 15,
-    "int": 6,
-    "wis": 10,
-    "cha": 12
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "mummy",
+    "name": "Mummy",
+    "team": "enemy"
   },
-  "cr": "3",
-  "saving_throws_text": "Wis +2"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 58,
+    "ac": 11,
+    "speed_ft": 30,
+    "initiative_mod": -1,
+    "str_mod": 3,
+    "dex_mod": -1,
+    "con_mod": 2,
+    "int_mod": -2,
+    "wis_mod": 0,
+    "cha_mod": 1,
+    "save_mods": {
+      "wis": 2
+    },
+    "cr": "3"
+  },
+  "reactions": [],
+  "actions": []
 }

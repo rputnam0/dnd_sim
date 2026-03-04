@@ -1,6 +1,5 @@
 {
   "name": "Improved Circle Forms",
-  "type": "subclass_feature",
   "description": "While in a Wild Shape form, you gain the following benefits. Lunar Radiance: Each of your attacks in a Wild Shape form can deal its normal damage type or Radiant damage. You make this choice each time you hit with those attacks. Increased Toughness: You can add your Wisdom modifier to your Constitution saving throws.",
   "mechanics": [
     {
@@ -19,5 +18,6 @@
       "modifier_ability": "wisdom",
       "target_saving_throw": "constitution"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

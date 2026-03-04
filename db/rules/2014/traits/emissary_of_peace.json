@@ -1,6 +1,5 @@
 {
   "name": "Emissary of Peace",
-  "type": "subclass_feature",
   "description": "You can use your Channel Divinity to augment your presence with divine power. As a bonus action, you grant yourself a +5 bonus to Charisma (Persuasion) checks for the next 10 minutes.",
   "mechanics": [
     {
@@ -15,5 +14,6 @@
         "bonus": 5
       }
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

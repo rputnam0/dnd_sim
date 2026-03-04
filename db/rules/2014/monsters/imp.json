@@ -1,17 +1,33 @@
 {
-  "name": "Imp",
-  "meta": "Tiny fiend (devil, shapechanger), lawful evil",
-  "ac": 13,
-  "hp": 10,
-  "hp_formula": "3d4 + 3",
-  "ability_scores": {
-    "str": 6,
-    "dex": 17,
-    "con": 13,
-    "int": 11,
-    "wis": 12,
-    "cha": 14
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "imp",
+    "name": "Imp",
+    "team": "enemy"
   },
-  "cr": "1",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 10,
+    "ac": 13,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": -2,
+    "dex_mod": 3,
+    "con_mod": 1,
+    "int_mod": 0,
+    "wis_mod": 1,
+    "cha_mod": 2,
+    "save_mods": {},
+    "cr": "1"
+  },
+  "reactions": [],
+  "actions": []
 }

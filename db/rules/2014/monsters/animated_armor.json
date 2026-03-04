@@ -1,17 +1,33 @@
 {
-  "name": "Animated Armor",
-  "meta": "Medium construct, unaligned",
-  "ac": 18,
-  "hp": 33,
-  "hp_formula": "6d8 + 6",
-  "ability_scores": {
-    "str": 14,
-    "dex": 11,
-    "con": 13,
-    "int": 1,
-    "wis": 3,
-    "cha": 1
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "animated_armor",
+    "name": "Animated Armor",
+    "team": "enemy"
   },
-  "cr": "1",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 33,
+    "ac": 18,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 2,
+    "dex_mod": 0,
+    "con_mod": 1,
+    "int_mod": -5,
+    "wis_mod": -4,
+    "cha_mod": -5,
+    "save_mods": {},
+    "cr": "1"
+  },
+  "reactions": [],
+  "actions": []
 }

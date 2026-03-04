@@ -1,17 +1,38 @@
 {
-  "name": "Adult Red Dragon",
-  "meta": "Huge dragon, chaotic evil",
-  "ac": 19,
-  "hp": 256,
-  "hp_formula": "19d12 + 133",
-  "ability_scores": {
-    "str": 27,
-    "dex": 10,
-    "con": 25,
-    "int": 16,
-    "wis": 13,
-    "cha": 21
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "adult_red_dragon",
+    "name": "Adult Red Dragon",
+    "team": "enemy"
   },
-  "cr": "17",
-  "saving_throws_text": "Dex +6, Con +13, Wis +7, Cha +11"
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 256,
+    "ac": 19,
+    "speed_ft": 30,
+    "initiative_mod": 0,
+    "str_mod": 8,
+    "dex_mod": 0,
+    "con_mod": 7,
+    "int_mod": 3,
+    "wis_mod": 1,
+    "cha_mod": 5,
+    "save_mods": {
+      "dex": 6,
+      "con": 13,
+      "wis": 7,
+      "cha": 11
+    },
+    "cr": "17"
+  },
+  "reactions": [],
+  "actions": []
 }

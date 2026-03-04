@@ -1,6 +1,5 @@
 {
   "name": "Boon of Siberys",
-  "type": "feat",
   "description": "Increase one ability score of your choice to a maximum of 30. You also learn one spell of 8th level or lower from the Sorcerer spell list or from the Siberys Dragonmark Spells table. You always have this spell prepared and can cast it once without a spell slot or components per short or long rest. You can also cast the spell using any available spell slots. Your spellcasting ability for this spell is Intelligence, Wisdom, or Charisma (chosen when you take the feat).",
   "mechanics": [
     {
@@ -26,5 +25,6 @@
         "cha"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

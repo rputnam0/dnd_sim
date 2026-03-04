@@ -1,6 +1,5 @@
 {
   "name": "Svirfneblin Magic",
-  "type": "feat",
   "description": "You can cast nondetection on yourself at will, without needing a material component. You can also cast blindness/deafness, blur, and disguise self each once per long rest. Intelligence is your spellcasting ability for these spells.",
   "mechanics": [
     {
@@ -29,5 +28,6 @@
       "frequency": "1/long_rest",
       "ability": "int"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

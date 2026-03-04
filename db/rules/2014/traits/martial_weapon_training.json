@@ -1,6 +1,5 @@
 {
   "name": "Martial Weapon Training",
-  "type": "feat",
   "description": "You gain proficiency with Martial weapons and increase your Strength or Dexterity score by 1, to a maximum of 20.",
   "mechanics": [
     {
@@ -18,5 +17,6 @@
       "proficiency_type": "weapon",
       "weapon_category": "martial"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

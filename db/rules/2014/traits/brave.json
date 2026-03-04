@@ -1,6 +1,5 @@
 {
   "name": "Brave",
-  "type": "racial_trait",
   "description": "You have advantage on saving throws against being frightened.",
   "mechanics": [
     {
@@ -8,5 +7,6 @@
       "target": "saving_throws",
       "condition": "frightened"
     }
-  ]
+  ],
+  "source_type": "species"
 }

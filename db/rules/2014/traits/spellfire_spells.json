@@ -1,10 +1,8 @@
 {
   "name": "Spellfire Spells",
-  "type": "subclass_feature",
   "description": "When you reach a Sorcerer level specified in the Spellfire Spells table, you thereafter always have the listed spells prepared.\n\nSpellfire Spells table:\n- Sorcerer Level 3: Cure Wounds, Guiding Bolt, Lesser Restoration, Scorching Ray\n- Sorcerer Level 5: Aura of Vitality, Dispel Magic\n- Sorcerer Level 7: Fire Shield, Wall of Fire\n- Sorcerer Level 9: Greater Restoration, Flame Strike",
   "mechanics": [
     {
-      "type": "always_prepared_spells",
       "spells_by_level": {
         "3": [
           "Cure Wounds",
@@ -24,7 +22,9 @@
           "Greater Restoration",
           "Flame Strike"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

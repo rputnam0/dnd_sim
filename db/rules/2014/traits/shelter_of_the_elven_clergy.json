@@ -1,6 +1,6 @@
 {
   "name": "Shelter of the Elven Clergy",
-  "type": "background_feature",
   "description": "The clerics of Elventree have vowed to care for the Cormanthor refugees. They will help you when they can, including providing you and your companions with free healing and care at temples, shrines, and other established presences in Elventree. They will also provide you (but only you) with a poor lifestyle. Note: This feature is a variant of the Acolyte feature.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "background"
 }

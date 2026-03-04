@@ -1,19 +1,19 @@
 {
   "name": "Primal Champion",
-  "type": "class_feature",
   "description": "At 20th level, you embody the power of the wilds. Your Strength and Constitution scores increase by 4. Your maximum for those scores is now 24.",
   "mechanics": [
     {
-      "type": "ability_score_increase",
       "ability": "Strength",
       "increase": 4,
-      "max": 24
+      "max": 24,
+      "meta_type": "ability_score_increase"
     },
     {
-      "type": "ability_score_increase",
       "ability": "Constitution",
       "increase": 4,
-      "max": 24
+      "max": 24,
+      "meta_type": "ability_score_increase"
     }
-  ]
+  ],
+  "source_type": "class"
 }

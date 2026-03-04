@@ -1,6 +1,5 @@
 {
   "name": "Mark of Passage",
-  "type": "feat",
   "description": "Your speed increases by 5 feet. You can add 1d4 to Strength (Athletics) and Dexterity (Acrobatics) checks. You learn the Misty Step spell, can cast it once per long rest without a spell slot, and can cast it using any spell slots you have. Additionally, if you have the Spellcasting or Pact Magic feature, several mobility-themed spells are added to your spell list.",
   "mechanics": [
     {
@@ -43,5 +42,6 @@
         "teleportation circle"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

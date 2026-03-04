@@ -1,6 +1,5 @@
 {
   "name": "Boon of Terror",
-  "type": "feat",
   "description": "You gain a +1 bonus to Charisma (max 30), immunity to the frightened condition, and proficiency and expertise in the Intimidation skill. Additionally, as a reaction when a frightened creature you can see starts its turn within 60 feet of you, you can force it to make a Wisdom saving throw (DC 8 + Charisma modifier + Proficiency Bonus) or spend its turn moving away from you by the fastest available means. This reaction can be used once per short or long rest.",
   "mechanics": [
     {
@@ -30,5 +29,6 @@
       "uses": 1,
       "reset": "short_rest"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

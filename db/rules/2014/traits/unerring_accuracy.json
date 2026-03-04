@@ -1,13 +1,13 @@
 {
   "name": "Unerring Accuracy",
-  "type": "subclass_feature",
   "description": "At 17th level, your mastery of weapons grants you extraordinary accuracy. If you miss with an attack roll using a monk weapon on your turn, you can reroll it. You can use this feature only once on each of your turns.",
   "mechanics": [
     {
-      "type": "reroll",
       "trigger": "missed attack roll",
       "condition": "using a monk weapon on your turn",
-      "once_per_turn": true
+      "once_per_turn": true,
+      "meta_type": "reroll"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

@@ -1,13 +1,13 @@
 {
   "name": "Dance Virtuoso",
-  "type": "subclass_feature",
   "description": "You have Advantage on any Charisma (Performance) check you make that involves you dancing.",
   "mechanics": [
     {
-      "type": "grant_advantage",
       "ability": "Charisma",
       "skill": "Performance",
-      "condition": "check involves you dancing"
+      "condition": "check involves you dancing",
+      "meta_type": "grant_advantage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

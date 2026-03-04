@@ -1,17 +1,33 @@
 {
-  "name": "Manticore",
-  "meta": "Large monstrosity, lawful evil",
-  "ac": 14,
-  "hp": 68,
-  "hp_formula": "8d10 + 24",
-  "ability_scores": {
-    "str": 17,
-    "dex": 16,
-    "con": 17,
-    "int": 7,
-    "wis": 12,
-    "cha": 8
+  "innate_spellcasting": [],
+  "legendary_actions": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "resources": {},
+  "damage_resistances": [],
+  "identity": {
+    "enemy_id": "manticore",
+    "name": "Manticore",
+    "team": "enemy"
   },
-  "cr": "3",
-  "saving_throws_text": ""
+  "bonus_actions": [],
+  "lair_actions": [],
+  "damage_vulnerabilities": [],
+  "script_hooks": {},
+  "stat_block": {
+    "max_hp": 68,
+    "ac": 14,
+    "speed_ft": 30,
+    "initiative_mod": 3,
+    "str_mod": 3,
+    "dex_mod": 3,
+    "con_mod": 3,
+    "int_mod": -2,
+    "wis_mod": 1,
+    "cha_mod": -1,
+    "save_mods": {},
+    "cr": "3"
+  },
+  "reactions": [],
+  "actions": []
 }

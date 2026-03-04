@@ -1,17 +1,17 @@
 {
   "name": "Protector",
-  "type": "class_feature",
   "description": "Trained for battle, you gain proficiency with martial weapons and training with heavy armor.",
   "mechanics": [
     {
-      "type": "proficiency",
       "category": "weapon",
-      "detail": "martial"
+      "detail": "martial",
+      "meta_type": "proficiency"
     },
     {
-      "type": "proficiency",
       "category": "armor",
-      "detail": "heavy"
+      "detail": "heavy",
+      "meta_type": "proficiency"
     }
-  ]
+  ],
+  "source_type": "class"
 }

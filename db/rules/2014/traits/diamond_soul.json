@@ -1,20 +1,20 @@
 {
   "name": "Diamond Soul",
-  "type": "class_feature",
   "description": "Beginning at 14th level, your mastery of ki grants you proficiency in all saving throws. Additionally, whenever you make a saving throw and fail, you can spend 1 ki point to reroll it and take the second result.",
   "mechanics": [
     {
-      "type": "grant_proficiency",
       "target": "saving_throws",
-      "source": "Diamond Soul"
+      "source": "Diamond Soul",
+      "meta_type": "grant_proficiency"
     },
     {
-      "type": "spend_resource",
       "resource": "ki",
       "amount": 1,
       "trigger": "failed_saving_throw",
       "effect": "reroll_saving_throw",
-      "description": "Spend 1 ki point to reroll a failed saving throw and use the second result."
+      "description": "Spend 1 ki point to reroll a failed saving throw and use the second result.",
+      "meta_type": "spend_resource"
     }
-  ]
+  ],
+  "source_type": "class"
 }

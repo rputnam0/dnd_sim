@@ -1,6 +1,6 @@
 {
   "name": "Oath of Glory",
-  "type": "subclass_feature",
   "description": "Paladins who take the Oath of Glory believe they and their companions are destined to achieve glory through deeds of heroism. They train diligently and encourage their companions so they're all ready when destiny calls.",
-  "mechanics": []
+  "mechanics": [],
+  "source_type": "subclass"
 }

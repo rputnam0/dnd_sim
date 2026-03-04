@@ -1,6 +1,5 @@
 {
   "name": "Initiate of High Sorcery",
-  "type": "feat",
   "description": "You learn one cantrip of your choice from the wizard spell list. You also choose one of the three moons of Krynn (Nuitari, Lunitari, or Solinari) and learn two 1st-level spells associated with that moon. You can cast each of these 1st-level spells once without a spell slot per long rest, and can also cast them using any spell slots you have. Your spellcasting ability for these spells is Intelligence, Wisdom, or Charisma (chosen when you take the feat).",
   "mechanics": [
     {
@@ -43,5 +42,6 @@
         "cha"
       ]
     }
-  ]
+  ],
+  "source_type": "feat"
 }

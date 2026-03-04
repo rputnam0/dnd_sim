@@ -1,6 +1,5 @@
 {
   "name": "Tools of the Trade",
-  "type": "subclass_feature",
   "description": "You gain the following benefits. Tool Proficiency: You gain proficiency with Alchemist's Supplies and the Herbalism Kit. If you already have one of these proficiencies, you gain proficiency with one other type of Artisan's Tools of your choice (or with two other types if you have both). Potion Crafting: When you brew a potion using the crafting rules in the Dungeon Master's Guide, the amount of time required to craft it is halved.",
   "mechanics": [
     {
@@ -32,5 +31,6 @@
       "source": "Dungeon Master's Guide",
       "reference": "DMG p. 6"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

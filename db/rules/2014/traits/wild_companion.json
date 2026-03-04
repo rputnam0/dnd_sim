@@ -1,6 +1,5 @@
 {
   "name": "Wild Companion",
-  "type": "class_feature",
   "description": "You gain the ability to summon a spirit that assumes an animal form: as an action, you can expend a use of your Wild Shape feature to cast the find familiar spell, without material components. When you cast the spell in this way, the familiar is a fey instead of a beast, and the familiar disappears after a number of hours equal to half your druid level.",
   "mechanics": [
     {
@@ -20,5 +19,6 @@
         "value": "half druid level"
       }
     }
-  ]
+  ],
+  "source_type": "class"
 }

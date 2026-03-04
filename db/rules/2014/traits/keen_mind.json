@@ -1,6 +1,5 @@
 {
   "name": "Keen Mind",
-  "type": "feat",
   "description": "You increase your Intelligence score by 1. You gain proficiency or expertise in one of the following skills: Arcana, History, Investigation, Nature, or Religion. Additionally, you can take the Study action as a Bonus Action.",
   "mechanics": [
     {
@@ -24,5 +23,6 @@
       "effect_type": "bonus_action_action",
       "action_name": "study"
     }
-  ]
+  ],
+  "source_type": "feat"
 }

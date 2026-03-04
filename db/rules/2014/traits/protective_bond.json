@@ -1,12 +1,12 @@
 {
   "name": "Protective Bond",
-  "type": "subclass_feature",
   "description": "6th-level Peace Domain feature. The bond you forge between people helps them protect each other. When a creature affected by your Emboldening Bond feature is about to take damage, a second bonded creature within 30 feet of the first can use its reaction to teleport to an unoccupied space within 5 feet of the first creature. The second creature then takes all the damage instead.",
   "mechanics": [
     {
-      "type": "reaction",
-      "trigger": "When a creature affected by your Emboldening Bond feature is about to take damage",
-      "action": "A second bonded creature within 30 feet can teleport to an unoccupied space within 5 feet of the first creature as a reaction and takes the damage instead."
+      "trigger": "when a creature affected by your emboldening bond feature is about to take damage",
+      "action": "A second bonded creature within 30 feet can teleport to an unoccupied space within 5 feet of the first creature as a reaction and takes the damage instead.",
+      "meta_type": "reaction"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

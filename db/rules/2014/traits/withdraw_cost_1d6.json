@@ -1,6 +1,5 @@
 {
   "name": "Withdraw (Cost: 1d6)",
-  "type": "class_feature",
   "description": "Immediately after the attack, you move up to half your Speed without provoking Opportunity Attacks.",
   "mechanics": [
     {
@@ -10,5 +9,6 @@
       "no_opportunity_attack": true,
       "resource_cost": "1d6"
     }
-  ]
+  ],
+  "source_type": "class"
 }

@@ -1,46 +1,46 @@
 {
   "name": "Improved Illusions",
-  "type": "subclass_feature",
   "description": "You can cast Illusion spells without providing Verbal components, and if an Illusion spell you cast has a range of 10+ feet, the range increases by 60 feet. You also know the Minor Illusion cantrip. If you already know it, you learn a different Wizard cantrip of your choice. The cantrip doesn't count against your number of cantrips known. You can create both a sound and an image with a single casting of Minor Illusion, and you can cast it as a Bonus Action.",
   "mechanics": [
     {
-      "type": "component_exemption",
       "spell_school": "Illusion",
       "component": "Verbal",
-      "exempted": true
+      "exempted": true,
+      "meta_type": "component_exemption"
     },
     {
-      "type": "range_modifier",
       "spell_school": "Illusion",
       "minimum_range_feet": 10,
-      "increase_feet": 60
+      "increase_feet": 60,
+      "meta_type": "range_modifier"
     },
     {
-      "type": "grant_cantrip",
       "spell": "Minor Illusion",
-      "source": "subclass"
+      "source": "subclass",
+      "meta_type": "grant_cantrip"
     },
     {
-      "type": "conditional_cantrip_grant",
       "condition": "already_knows_minor_illusion",
       "grant": {
         "type": "wizard_cantrip",
         "choice": true,
         "ignore_cantrip_limit": true
-      }
+      },
+      "meta_type": "conditional_cantrip_grant"
     },
     {
-      "type": "action_type_change",
       "spell": "Minor Illusion",
-      "new_action": "Bonus Action"
+      "new_action": "Bonus Action",
+      "meta_type": "action_type_change"
     },
     {
-      "type": "dual_effect",
       "spell": "Minor Illusion",
       "effects": [
         "sound",
         "image"
-      ]
+      ],
+      "meta_type": "dual_effect"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

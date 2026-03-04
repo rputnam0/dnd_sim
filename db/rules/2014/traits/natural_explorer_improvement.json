@@ -1,11 +1,11 @@
 {
   "name": "Natural Explorer improvement",
-  "type": "class_feature",
   "description": "You gain an additional favored terrain.",
   "mechanics": [
     {
       "effect": "gain_favored_terrain",
       "quantity": 1
     }
-  ]
+  ],
+  "source_type": "class"
 }

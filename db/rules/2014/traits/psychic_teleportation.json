@@ -1,6 +1,5 @@
 {
   "name": "Psychic Teleportation",
-  "type": "subclass_feature",
   "description": "As a bonus action, you manifest one of your Psychic Blades, expend one Psionic Energy die and roll it, and throw the blade at an unoccupied space you can see, up to a number of feet away equal to 10 times the number rolled. You then teleport to that space, and the blade vanishes.",
   "mechanics": [
     {
@@ -19,5 +18,6 @@
       },
       "additional_effect": "Psychic Blade vanishes after teleport"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }

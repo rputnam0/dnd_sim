@@ -1,26 +1,26 @@
 {
   "name": "Battlerager Armor",
-  "type": "subclass_feature",
   "description": "When you choose this path at 3rd level, you gain the ability to use spiked armor as a weapon. While you are wearing spiked armor and are raging, you can use a bonus action to make one melee weapon attack with your armor spikes at a target within 5 feet of you. If the attack hits, the spikes deal 1d4 piercing damage. You use your Strength modifier for the attack and damage rolls. Additionally, when you use the Attack action to grapple a creature, the target takes 3 piercing damage if your grapple check succeeds.",
   "mechanics": [
     {
-      "type": "weapon_use",
       "weapon": "spiked armor",
-      "description": "You can use spiked armor as a weapon."
+      "description": "You can use spiked armor as a weapon.",
+      "meta_type": "weapon_use"
     },
     {
-      "type": "bonus_action_attack",
       "weapon": "spiked armor spikes",
       "damage": "1d4 piercing",
       "ability": "Strength",
       "condition": "wearing spiked armor and raging",
       "range": "5 feet",
-      "target": "creature within 5 feet"
+      "target": "creature within 5 feet",
+      "meta_type": "bonus_action_attack"
     },
     {
-      "type": "grapple_damage",
       "damage": "3 piercing",
-      "trigger": "successful grapple check when using the Attack action"
+      "trigger": "successful grapple check when using the attack action",
+      "meta_type": "grapple_damage"
     }
-  ]
+  ],
+  "source_type": "subclass"
 }
