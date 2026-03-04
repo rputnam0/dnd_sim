@@ -80,3 +80,22 @@ Base: origin/main
   - `chr14 warlock deterministic` (seed `88`)
   - `chr15 wizard deterministic` (seed `95`)
   - `spl04 spell family deterministic` (seed `101`)
+
+## Post-Merge Safety Hotfix (2026-03-04)
+- Context:
+  - After merge of cleanup PR `#82`, a runtime gap was identified:
+    declare-turn-only strategies were accepted by validation, but if `declare_turn()` returned
+    `None`, engine fallback could call missing legacy methods.
+- Fix applied:
+  - `src/dnd_sim/engine.py` now safely handles `declare_turn() -> None` when legacy fallback
+    methods are absent by ending turn as a no-op and emitting a decision telemetry event with
+    `fallback_reason=declare_turn_none_no_legacy_fallback`.
+  - Legacy fallback remains active when legacy methods exist.
+- Regression coverage added in `tests/test_fnd06_turn_declaration.py`:
+  - no-legacy no-op runtime path is accepted and telemetry-tagged.
+  - mixed-mode fallback path (`declare_turn() -> None` + legacy methods present) still executes
+    legacy decisions.
+- Revalidation:
+  - `uv run --with pytest python -m pytest tests/test_fnd06_turn_declaration.py -q` ✅
+  - `uv run --with pytest python -m pytest -q` ✅
+  - Determinism pack (10 selected tests) ✅

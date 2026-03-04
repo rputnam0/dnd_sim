@@ -15173,6 +15173,13 @@ def run_simulation(
                     state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
                     actor_view = state_view.actors[actor.actor_id]
                     declare_turn = getattr(strategy, "declare_turn", None)
+                    choose_action = getattr(strategy, "choose_action", None)
+                    choose_targets = getattr(strategy, "choose_targets", None)
+                    decide_resource_spend = getattr(strategy, "decide_resource_spend", None)
+                    has_legacy_fallback = all(
+                        callable(method)
+                        for method in (choose_action, choose_targets, decide_resource_spend)
+                    )
                     turn_declaration = (
                         declare_turn(actor_view, state_view) if callable(declare_turn) else None
                     )
@@ -15205,7 +15212,28 @@ def run_simulation(
                         )
                         _resolve_turn_end(actor, turn_token)
                         continue
-                    intent = strategy.choose_action(actor_view, state_view)
+                    if not has_legacy_fallback:
+                        trial_telemetry.append(
+                            {
+                                "telemetry_type": "decision",
+                                "round": rounds,
+                                "strategy": strategy_name,
+                                "actor_id": actor.actor_id,
+                                "team": actor.team,
+                                "intent_action": None,
+                                "resolved_action": None,
+                                "fallback_reason": "declare_turn_none_no_legacy_fallback",
+                                "requested_targets": [],
+                                "resolved_targets": [],
+                                "rationale": {},
+                                "extra_resource_request": {},
+                                "resource_cost": {},
+                            }
+                        )
+                        _resolve_turn_end(actor, turn_token)
+                        continue
+
+                    intent = choose_action(actor_view, state_view)
                     action = _resolve_action_selection(actor, intent.action_name)
                     fallback_reason: str | None = None
 
@@ -15217,9 +15245,7 @@ def run_simulation(
                         action = fallback
                         fallback_reason = "intent_unavailable"
 
-                    extra_spend = strategy.decide_resource_spend(
-                        actor_view, intent, state_view
-                    ).amounts
+                    extra_spend = decide_resource_spend(actor_view, intent, state_view).amounts
                     base_cost = dict(action.resource_cost)
                     extra_cost: dict[str, int] = {}
                     for key, amount in extra_spend.items():
@@ -15246,7 +15272,7 @@ def run_simulation(
                         extra_cost = {}
                         fallback_reason = "insufficient_resources"
 
-                    targets = strategy.choose_targets(actor_view, intent, state_view)
+                    targets = choose_targets(actor_view, intent, state_view)
                     spell_cast_request = SpellCastRequest() if "spell" in action.tags else None
                     resolved_targets = _resolve_targets_for_action(
                         rng=rng,
