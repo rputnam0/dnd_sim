@@ -78,10 +78,10 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | CHR-14 | agent_w4_warlock | feat/chr-14-warlock-package | https://github.com/rputnam0/dnd_sim/pull/66 | merged | Merged to `int/wave-4-integration` after fallback harmonization and rebase pass |
 | CHR-15 | agent_w4_wizard | feat/chr-15-wizard-package | https://github.com/rputnam0/dnd_sim/pull/70 | merged | Merged after coverage remediation and rebase/test pass |
 | CHR-16 | agent_w4_content | feat/chr-16-content-completeness | https://github.com/rputnam0/dnd_sim/pull/74 | merged | Merged to `int/wave-4-integration` after content reference validation + SQLite error-handling remediation |
-| SPL-02 | agent_w4_spell_single | feat/spl-02-single-target-family | - | in_progress | Subwave 4E launched; worker worktree `../dnd_sim_worktrees/w4-spl02` |
-| SPL-03 | unassigned | feat/spl-03-area-family | - | not_started | |
-| SPL-04 | unassigned | feat/spl-04-summon-conjure-transform | - | not_started | |
-| SPL-05 | agent_w4_spell_special | feat/spl-05-rituals-dispels-antimagic | - | in_progress | Subwave 4E launched; worker worktree `../dnd_sim_worktrees/w4-spl05` |
+| SPL-02 | agent_w4_spell_single | feat/spl-02-single-target-family | https://github.com/rputnam0/dnd_sim/pull/75 | merged | Merged after multi-pass inference/remediation loop and rebase gate |
+| SPL-03 | agent_w4_spell_area | feat/spl-03-area-family | - | in_progress | Subwave 4F launched; worker worktree `../dnd_sim_worktrees/w4-spl03` |
+| SPL-04 | agent_w4_spell_summon | feat/spl-04-summon-conjure-transform | - | in_progress | Subwave 4F launched; worker worktree `../dnd_sim_worktrees/w4-spl04` |
+| SPL-05 | agent_w4_spell_special | feat/spl-05-rituals-dispels-antimagic | https://github.com/rputnam0/dnd_sim/pull/76 | merged | Merged after zone/dispel/concentration + ritual legality remediation and rebase gate |
 
 ## Wave 5
 
@@ -121,3 +121,6 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - 2026-03-03: Subwave 4D PR merged (`#74`) to `int/wave-4-integration` after explorer/bot remediation (`9b1c8ec`) and rebase gate pass.
 - 2026-03-03: Subwave 4D gate passed on integration head `2d46cca` (`uv run --with pytest python -m pytest -q`, exit code 0).
 - 2026-03-03: Subwave 4E launched for `SPL-02` and `SPL-05` on `feat/spl-02-single-target-family` and `feat/spl-05-rituals-dispels-antimagic`.
+- 2026-03-04: Subwave 4E PRs merged (`#75`, `#76`) to `int/wave-4-integration` after repeated explorer+gh-api remediation loops and mandatory rebases.
+- 2026-03-04: Subwave 4E gate passed on integration head `fcac1b7` (`uv run --with pytest python -m pytest -q`, exit code 0).
+- 2026-03-04: Subwave 4F launched for `SPL-03` and `SPL-04` on `feat/spl-03-area-family` and `feat/spl-04-summon-conjure-transform`.
