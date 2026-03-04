@@ -3679,6 +3679,9 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             if isinstance(spell_def, dict)
             else ""
         ).strip()
+        effective_range_text = range_text
+        if not effective_range_text and isinstance(spell_def, dict):
+            effective_range_text = str(spell_def.get("range") or "")
         action_type = str(hydrated.get("action_type", "utility"))
         aoe_type = str(hydrated.get("aoe_type", "")).strip().lower()
         if not aoe_type:
@@ -3691,7 +3694,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 aoe_type = inferred_aoe_type
                 if _area_template_uses_self_origin(
                     aoe_type=inferred_aoe_type,
-                    range_text=range_text,
+                    range_text=effective_range_text,
                     description=description,
                 ):
                     tags = [
@@ -3699,9 +3702,15 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                     ]
                     tags.append("aoe_origin:self")
                     hydrated["tags"] = list(dict.fromkeys(tags))
-                parsed_range = _coerce_non_negative_int(hydrated.get("range_ft"))
-                if _is_self_range_text(range_text) and (parsed_range is None or parsed_range == 0):
-                    hydrated["range_ft"] = inferred_aoe_size
+        parsed_range = _coerce_non_negative_int(hydrated.get("range_ft"))
+        aoe_size = _coerce_non_negative_int(hydrated.get("aoe_size_ft"))
+        if (
+            _is_self_range_text(effective_range_text)
+            and (parsed_range is None or parsed_range == 0)
+            and aoe_size is not None
+            and aoe_size > 0
+        ):
+            hydrated["range_ft"] = aoe_size
 
         target_mode = str(hydrated.get("target_mode", "")).strip().lower()
         non_single_target = not hydrated.get(

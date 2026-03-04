@@ -361,6 +361,108 @@ def test_self_range_non_inferred_area_control_spell_remains_castable(monkeypatch
     assert "spirit_guardians_slowed" in target.conditions
 
 
+def test_self_range_directional_area_spell_gets_range_override_and_casts(monkeypatch) -> None:
+    spell_defs = {
+        "Burning Hands": {
+            "name": "Burning Hands",
+            "level": 1,
+            "casting_time": "1 action",
+            "description": (
+                "A thin sheet of flames shoots from your fingertips. "
+                "Each creature in a 15-foot cone must make a Dexterity saving throw. "
+                "A creature takes 3d6 fire damage on a failed save, or half as much on success."
+            ),
+            "mechanics": [],
+        },
+        "Lightning Bolt": {
+            "name": "Lightning Bolt",
+            "level": 3,
+            "casting_time": "1 action",
+            "description": (
+                "A stroke of lightning forming a line 100 feet long and 5 feet wide "
+                "blasts out from you in a direction you choose. Each creature in the line "
+                "must make a Dexterity saving throw. A creature takes 8d6 lightning damage "
+                "on a failed save, or half as much on success."
+            ),
+            "mechanics": [],
+        },
+    }
+    monkeypatch.setattr(
+        "dnd_sim.engine._load_spell_definition",
+        lambda name: spell_defs.get(name),
+    )
+
+    cases = (
+        ("Burning Hands", "=== 1st LEVEL ===", "Self (15-foot cone)", "cone", 15, (10.0, 0.0, 0.0)),
+        (
+            "Lightning Bolt",
+            "=== 3rd LEVEL ===",
+            "Self (100-foot line)",
+            "line",
+            100,
+            (60.0, 0.0, 0.0),
+        ),
+    )
+
+    for idx, (
+        name,
+        level_header,
+        range_text,
+        expected_template,
+        expected_range,
+        target_pos,
+    ) in enumerate(cases):
+        spell_rows = _extract_spells_from_raw_fields(
+            _sheet_payload_for_spell(
+                name=name,
+                level_header=level_header,
+                save_hit="DEX 16",
+                range_text=range_text,
+            )
+        )
+        action = _build_spell_actions(
+            {"spells": spell_rows, "resources": {"spell_slots": {"3": 1, "1": 1}}},
+            character_level=7,
+        )[0]
+
+        assert action.aoe_type == expected_template
+        assert action.aoe_size_ft == expected_range
+        assert action.range_ft == expected_range
+
+        caster = _base_actor(actor_id=f"caster_{idx}", team="party")
+        target = _base_actor(actor_id=f"target_{idx}", team="enemy")
+        caster.position = (0.0, 0.0, 0.0)
+        target.position = target_pos
+
+        actors = {caster.actor_id: caster, target.actor_id: target}
+        damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+        active_hazards: list[dict[str, object]] = []
+
+        resolved = _resolve_targets_for_action(
+            rng=random.Random(200 + idx),
+            actor=caster,
+            action=action,
+            actors=actors,
+            requested=[TargetRef(target.actor_id)],
+        )
+        assert [entry.actor_id for entry in resolved] == [target.actor_id]
+
+        _execute_action(
+            rng=random.Random(400 + idx),
+            actor=caster,
+            action=action,
+            targets=resolved,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+        )
+
+        assert target.hp < target.max_hp
+
+
 def test_area_point_you_choose_spell_does_not_require_sight(monkeypatch) -> None:
     monkeypatch.setattr(
         "dnd_sim.engine._load_spell_definition",
