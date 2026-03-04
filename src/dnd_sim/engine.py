@@ -3724,7 +3724,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
         if hydrated.get("aoe_type"):
             tags = [str(tag).strip() for tag in hydrated.get("tags", []) if str(tag).strip()]
             tags.append(_AREA_FAMILY_TAG)
-            if "you can see" in description.lower() or "point you choose" in description.lower():
+            if "you can see" in description.lower():
                 tags.append("requires_sight")
             hydrated["tags"] = list(dict.fromkeys(tags))
 
@@ -6843,7 +6843,15 @@ def _action_range_ft(action: ActionDefinition) -> float | None:
     if action.target_mode == "self":
         return None
     if action.range_ft is not None:
-        return float(action.range_ft)
+        explicit_range = float(action.range_ft)
+        if explicit_range <= 0 and _has_action_tag(action, "spell"):
+            # Self-range spell payloads are represented as range 0. If an area/control
+            # spell misses template inference, do not suppress casting solely because
+            # this placeholder value fails range gating.
+            if action.action_type == "attack":
+                return 5.0
+            return None
+        return explicit_range
     if action.range_normal_ft is not None:
         return float(action.range_normal_ft)
     if action.reach_ft is not None:

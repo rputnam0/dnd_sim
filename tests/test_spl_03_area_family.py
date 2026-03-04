@@ -127,7 +127,7 @@ def test_extract_area_family_infers_template_and_tagging(monkeypatch) -> None:
     assert spell["aoe_type"] == "sphere"
     assert spell["aoe_size_ft"] == 20
     assert "spell_family:area" in tags
-    assert "requires_sight" in tags
+    assert "requires_sight" not in tags
     assert "spell_family:single_target" not in tags
 
 
@@ -291,6 +291,204 @@ def test_area_family_suppressed_by_antimagic_invalid_state(monkeypatch) -> None:
 
     assert target.hp == target.max_hp
     assert damage_dealt[caster.actor_id] == 0
+
+
+def test_self_range_non_inferred_area_control_spell_remains_castable(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "dnd_sim.engine._load_spell_definition",
+        lambda _name: {
+            "name": "Spirit Guardians",
+            "level": 3,
+            "casting_time": "1 action",
+            "concentration": True,
+            "duration_rounds": 10,
+            "description": (
+                "Spirits flit around you to a distance of 15 feet for the duration. "
+                "Creatures within 15 feet of you are hindered, and when a creature "
+                "starts its turn in the area it must make a Wisdom saving throw."
+            ),
+            "mechanics": [
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "condition": "spirit_guardians_slowed",
+                    "apply_on": "save_fail",
+                    "duration_rounds": 10,
+                }
+            ],
+        },
+    )
+    spell_rows = _extract_spells_from_raw_fields(
+        _sheet_payload_for_spell(
+            name="Spirit Guardians",
+            level_header="=== 3rd LEVEL ===",
+            save_hit="WIS 16",
+            range_text="Self (15-foot radius)",
+            duration_text="Concentration, up to 1 minute",
+        )
+    )
+    action = _build_spell_actions(
+        {"spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
+        character_level=7,
+    )[0]
+    assert action.aoe_type is None
+    assert action.range_ft == 0
+
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    target.position = (30.0, 0.0, 0.0)
+
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=FixedRng([1]),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+
+    assert caster.concentrating is True
+    assert caster.concentrated_spell == "Spirit Guardians"
+    assert "spirit_guardians_slowed" in target.conditions
+
+
+def test_area_point_you_choose_spell_does_not_require_sight(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "dnd_sim.engine._load_spell_definition",
+        lambda _name: {
+            "name": "Blast Marker",
+            "level": 3,
+            "casting_time": "1 action",
+            "range_ft": 150,
+            "description": (
+                "Energy erupts at a point you choose within range. "
+                "Each creature in a 20-foot-radius sphere centered on that point "
+                "must make a Dexterity saving throw."
+            ),
+            "mechanics": [
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "condition": "point_marked",
+                    "apply_on": "save_fail",
+                    "duration_rounds": 1,
+                }
+            ],
+        },
+    )
+    spell_rows = _extract_spells_from_raw_fields(
+        _sheet_payload_for_spell(
+            name="Blast Marker",
+            level_header="=== 3rd LEVEL ===",
+            save_hit="DEX 16",
+            range_text="150 ft",
+        )
+    )
+    action = _build_spell_actions(
+        {"spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
+        character_level=7,
+    )[0]
+    assert "requires_sight" not in set(action.tags)
+
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    caster.conditions.add("blinded")
+    caster.position = (0.0, 0.0, 0.0)
+    target.position = (30.0, 0.0, 0.0)
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=FixedRng([1]),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        round_number=1,
+        turn_token="1:caster",
+    )
+
+    assert "point_marked" in target.conditions
+
+
+def test_area_point_you_can_see_spell_still_requires_sight(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "dnd_sim.engine._load_spell_definition",
+        lambda _name: {
+            "name": "Focused Burst",
+            "level": 3,
+            "casting_time": "1 action",
+            "range_ft": 150,
+            "description": (
+                "Energy erupts at a point you can see within range. "
+                "Each creature in a 20-foot-radius sphere centered on that point "
+                "must make a Dexterity saving throw."
+            ),
+            "mechanics": [
+                {
+                    "effect_type": "apply_condition",
+                    "target": "target",
+                    "condition": "seen_marked",
+                    "apply_on": "save_fail",
+                    "duration_rounds": 1,
+                }
+            ],
+        },
+    )
+    spell_rows = _extract_spells_from_raw_fields(
+        _sheet_payload_for_spell(
+            name="Focused Burst",
+            level_header="=== 3rd LEVEL ===",
+            save_hit="DEX 16",
+            range_text="150 ft",
+        )
+    )
+    action = _build_spell_actions(
+        {"spells": spell_rows, "resources": {"spell_slots": {"3": 1}}},
+        character_level=7,
+    )[0]
+    assert "requires_sight" in set(action.tags)
+
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    caster.conditions.add("blinded")
+    caster.position = (0.0, 0.0, 0.0)
+    target.position = (30.0, 0.0, 0.0)
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=NoRollRng(),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        round_number=1,
+        turn_token="1:caster",
+    )
+
+    assert "seen_marked" not in target.conditions
 
 
 def test_area_family_concentration_effects_clear_when_concentration_breaks(monkeypatch) -> None:
