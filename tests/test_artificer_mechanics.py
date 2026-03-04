@@ -24,7 +24,7 @@ def _setup_env(
             {
                 "character_id": character["character_id"],
                 "name": character["name"],
-                "class_level": character["class_level"],
+                "class_levels": character["class_levels"],
                 "source_pdf": "fixture.pdf",
             }
             for character in party
@@ -93,7 +93,7 @@ def _artificer_fixture(*, level: int, traits: list[str]) -> dict:
         to_hit=7,
         damage="1d8+4",
     )
-    character["class_level"] = f"Artificer {level}"
+    character["class_levels"] = {"artificer": level}
     character["ability_scores"]["int"] = 18
     character["traits"] = list(character["traits"]) + traits
     return character

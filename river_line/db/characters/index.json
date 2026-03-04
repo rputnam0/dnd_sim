@@ -2,19 +2,25 @@
   "characters": [
     {
       "character_id": "furyen_fury",
-      "class_level": "Monk 8",
+      "class_levels": {
+        "monk": 8
+      },
       "name": "Furyen (Fury)",
       "source_pdf": "The_Lizardscale_King_161305224.pdf"
     },
     {
       "character_id": "isak_wissa",
-      "class_level": "Monk 8",
+      "class_levels": {
+        "monk": 8
+      },
       "name": "Isak Wissa",
       "source_pdf": "The_Lizardscale_King_161559385.pdf"
     },
     {
       "character_id": "squanch_161607569",
-      "class_level": "Druid 8",
+      "class_levels": {
+        "druid": 8
+      },
       "name": "Squanch",
       "source_pdf": "The_Lizardscale_King_161607569.pdf"
     }

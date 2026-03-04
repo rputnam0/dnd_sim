@@ -5,7 +5,6 @@ import random
 from pathlib import Path
 
 import pytest
-
 from dnd_sim.engine import (
     _action_available,
     _build_actor_from_character,
@@ -20,7 +19,7 @@ from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import AABB
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
-from tests.helpers import build_character, build_enemy, write_json
+from tests.helpers import build_character, build_enemy, with_class_levels, write_json
 
 
 def _setup_env(
@@ -35,19 +34,23 @@ def _setup_env(
     db_dir = tmp_path / "db" / "characters"
     db_dir.mkdir(parents=True, exist_ok=True)
 
+    canonical_party: list[dict] = []
+    for character in party:
+        canonical_party.append(with_class_levels(character))
+
     index = {
         "characters": [
             {
                 "character_id": character["character_id"],
                 "name": character["name"],
-                "class_level": character["class_level"],
+                "class_levels": character["class_levels"],
                 "source_pdf": "fixture.pdf",
             }
-            for character in party
+            for character in canonical_party
         ]
     }
     write_json(db_dir / "index.json", index)
-    for character in party:
+    for character in canonical_party:
         write_json(db_dir / f"{character['character_id']}.json", character)
 
     encounter_dir = tmp_path / "encounters" / "fixture"
@@ -350,6 +353,7 @@ def test_two_weapon_legacy_strategy_does_not_auto_spend_offhand_bonus_action(
             damage_type="piercing",
         )
         fighter["class_level"] = "Fighter 5"
+        fighter["class_levels"] = {"fighter": 5}
         fighter["ability_scores"]["str"] = 10
         fighter["ability_scores"]["dex"] = 18
         fighter["save_mods"]["str"] = 0
@@ -534,6 +538,7 @@ def test_monk_flurry_is_not_auto_spent_without_declared_bonus_action(tmp_path: P
         ki=4,
     )
     monk["class_level"] = "Monk 5"
+    monk["class_levels"] = {"monk": 5}
     monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
 
     enemies = [build_enemy(enemy_id="tank", name="Tank", hp=200, ac=12, to_hit=1, damage="1")]
@@ -577,6 +582,7 @@ def test_declared_monk_flurry_requires_attack_action_before_bonus_step(tmp_path:
         ki=2,
     )
     monk["class_level"] = "Monk 5"
+    monk["class_levels"] = {"monk": 5}
     monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
 
     enemies = [build_enemy(enemy_id="tank", name="Tank", hp=80, ac=12, to_hit=1, damage="1")]
@@ -626,6 +632,7 @@ def test_declared_monk_martial_arts_bonus_requires_attack_action_before_bonus_st
         ki=1,
     )
     monk["class_level"] = "Monk 5"
+    monk["class_levels"] = {"monk": 5}
     monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
 
     enemies = [build_enemy(enemy_id="tank", name="Tank", hp=80, ac=12, to_hit=1, damage="1")]
@@ -690,6 +697,7 @@ def test_declared_monk_flurry_spends_ki_deterministically(tmp_path: Path) -> Non
         ki=2,
     )
     monk["class_level"] = "Monk 5"
+    monk["class_levels"] = {"monk": 5}
     monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
     enemies = [build_enemy(enemy_id="tank", name="Tank", hp=200, ac=12, to_hit=1, damage="1")]
     scenario_path = _setup_env(
@@ -752,6 +760,7 @@ def test_declared_monk_flurry_ki_restores_after_long_rest_between_encounters(
         ki=1,
     )
     monk["class_level"] = "Monk 5"
+    monk["class_levels"] = {"monk": 5}
     monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
     enemies = [build_enemy(enemy_id="spark", name="Spark", hp=20, ac=10, to_hit=0, damage="0")]
 
@@ -1523,30 +1532,32 @@ def _runtime_actor(*, actor_id: str, team: str, hp: int = 30) -> ActorRuntimeSta
 
 
 def _rogue_character_payload(*, level: int, traits: list[str] | None = None) -> dict[str, object]:
-    return {
-        "character_id": f"rogue_{level}",
-        "name": f"Rogue {level}",
-        "class_level": f"Rogue {level}",
-        "max_hp": 34,
-        "ac": 15,
-        "speed_ft": 30,
-        "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 12, "wis": 10, "cha": 12},
-        "save_mods": {"str": 0, "dex": 6, "con": 2, "int": 1, "wis": 0, "cha": 1},
-        "skill_mods": {},
-        "attacks": [
-            {
-                "name": "Rapier",
-                "to_hit": 10,
-                "damage": "1d1",
-                "damage_type": "piercing",
-                "weapon_properties": ["finesse"],
-            }
-        ],
-        "resources": {},
-        "traits": list(traits or []),
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": f"rogue_{level}",
+            "name": f"Rogue {level}",
+            "class_level": f"Rogue {level}",
+            "max_hp": 34,
+            "ac": 15,
+            "speed_ft": 30,
+            "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 12, "wis": 10, "cha": 12},
+            "save_mods": {"str": 0, "dex": 6, "con": 2, "int": 1, "wis": 0, "cha": 1},
+            "skill_mods": {},
+            "attacks": [
+                {
+                    "name": "Rapier",
+                    "to_hit": 10,
+                    "damage": "1d1",
+                    "damage_type": "piercing",
+                    "weapon_properties": ["finesse"],
+                }
+            ],
+            "resources": {},
+            "traits": list(traits or []),
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn() -> None:

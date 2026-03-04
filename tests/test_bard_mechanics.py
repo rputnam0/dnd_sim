@@ -123,6 +123,7 @@ def test_cutting_words_reaction_can_turn_hit_into_miss() -> None:
 def test_extract_spells_includes_magical_secrets_even_if_unprepared(monkeypatch) -> None:
     monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 3})
     character = {
+        "class_levels": {"cleric": 5},
         "raw_fields": [
             {"field": "spellHeader1", "value": "=== 3rd LEVEL ==="},
             {"field": "spellName1", "value": "Fireball"},

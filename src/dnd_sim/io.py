@@ -18,19 +18,12 @@ from dnd_sim.spells import (
     lookup_spell_definition as _lookup_spell_definition,
 )
 from dnd_sim.characters import (
-    validate_class_level_representation,
+    normalize_class_levels,
+    total_character_level,
     validate_multiclass_prerequisites,
 )
 from dnd_sim.strategy_api import BaseStrategy, validate_strategy_instance
 
-_FEATURE_SOURCE_TYPE_MAP = {
-    "feat": "feat",
-    "racial_trait": "species",
-    "species_trait": "species",
-    "background_feature": "background",
-    "subclass_feature": "subclass",
-    "class_feature": "class",
-}
 _RECHARGE_PATTERN = re.compile(
     r"^(?:recharge\s+)?(?P<low>[1-6])(?:\s*-\s*(?P<high>[1-6]))?$",
     flags=re.IGNORECASE,
@@ -202,7 +195,7 @@ def _is_known_spell_reference(name: str) -> bool:
         _lookup_spell_definition(
             name,
             spells_dir=_spell_root_dir(),
-            duplicate_policy="prefer_richest",
+            duplicate_policy="fail_fast",
         )
         is not None
     )
@@ -444,7 +437,7 @@ class SummonEffectConfig(BaseModel):
 
 
 class TransformEffectConfig(BaseModel):
-    effect_type: Literal["transform", "shapechange"] = "transform"
+    effect_type: Literal["transform"] = "transform"
     apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
     target: Literal["target", "source"] = "target"
     condition: str
@@ -452,14 +445,9 @@ class TransformEffectConfig(BaseModel):
     concentration_linked: bool = True
     stack_policy: Literal["independent", "refresh", "replace"] = "refresh"
 
-    @model_validator(mode="after")
-    def normalize_legacy_effect_type(self) -> "TransformEffectConfig":
-        self.effect_type = "transform"
-        return self
-
 
 class CommandAlliedEffectConfig(BaseModel):
-    effect_type: Literal["command_allied", "command_construct_companion"]
+    effect_type: Literal["command_allied"]
     apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
     target: Literal["target", "source"] = "target"
     all_controlled: bool = False
@@ -809,17 +797,17 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
         *,
         payload: dict[str, Any],
     ) -> dict[str, Any]:
-        class_level_text = str(payload.get("class_level", "") or "")
         class_levels_payload = payload.get("class_levels")
-        progression = validate_class_level_representation(
-            class_level_text=class_level_text,
-            class_levels=class_levels_payload if isinstance(class_levels_payload, dict) else None,
-        )
-        payload["class_level"] = progression.class_level_text
-        payload["class_levels"] = progression.class_levels
-        payload["character_level"] = progression.total_level
+        if not isinstance(class_levels_payload, dict):
+            raise ValueError("invalid class_levels: class_levels mapping is required")
+        class_levels = normalize_class_levels(class_levels_payload)
+        if not class_levels:
+            raise ValueError("invalid class_levels: class_levels mapping is required")
+        payload.pop("class_level", None)
+        payload["class_levels"] = class_levels
+        payload["character_level"] = total_character_level(class_levels)
         prereq_errors = validate_multiclass_prerequisites(
-            class_levels=progression.class_levels,
+            class_levels=class_levels,
             ability_scores=payload.get("ability_scores") if isinstance(payload, dict) else {},
         )
         if prereq_errors:
@@ -842,10 +830,10 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
         except json.JSONDecodeError:
             pass
         except ValueError as exc:
+            character_id = str(row["character_id"])
             if str(exc).startswith("invalid content_refs"):
-                character_id = str(row.get("character_id", "<unknown_character_id>"))
                 raise ValueError(f"invalid content_refs for {character_id}: {exc}") from exc
-            # Keep loading when a persisted SQLite row has malformed class progression data.
+            # Ignore malformed persisted rows so local file overrides can still load.
             pass
 
     # 2. Local overriding from db_dir (crucial for pytests using tmp_path configurations)
@@ -864,7 +852,7 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
                 except ValueError as exc:
                     if str(exc).startswith("invalid content_refs"):
                         raise ValueError(f"invalid content_refs for {character_id}: {exc}") from exc
-                    raise ValueError(f"invalid class_level for {character_id}: {exc}") from exc
+                    raise ValueError(f"invalid class_levels for {character_id}: {exc}") from exc
 
     return out
 
@@ -873,7 +861,10 @@ def _normalize_trait_source_type(raw_type: Any) -> str:
     key = str(raw_type or "").strip().lower()
     if key in {"feat", "species", "background", "subclass", "class", "other"}:
         return key
-    return _FEATURE_SOURCE_TYPE_MAP.get(key, "other")
+    raise ValueError(
+        "invalid trait source_type: expected one of "
+        "'feat', 'species', 'background', 'subclass', 'class', or 'other'"
+    )
 
 
 def _normalize_trait_mechanics(raw_mechanics: Any) -> list[Any]:
@@ -888,19 +879,11 @@ def _normalize_trait_mechanics(raw_mechanics: Any) -> list[Any]:
 
         payload = dict(mechanic)
         effect_type = payload.get("effect_type")
-        if not isinstance(effect_type, str) or not effect_type.strip():
-            alias = payload.get("type")
-            if isinstance(alias, str) and alias.strip():
-                payload["effect_type"] = alias.strip().lower()
-        else:
+        if isinstance(effect_type, str):
             payload["effect_type"] = effect_type.strip().lower()
 
         trigger = payload.get("trigger")
-        if not isinstance(trigger, str) or not trigger.strip():
-            alias = payload.get("event_trigger")
-            if isinstance(alias, str) and alias.strip():
-                payload["trigger"] = alias.strip().lower()
-        else:
+        if isinstance(trigger, str):
             payload["trigger"] = trigger.strip().lower()
         normalized.append(payload)
     return normalized
@@ -908,9 +891,7 @@ def _normalize_trait_mechanics(raw_mechanics: Any) -> list[Any]:
 
 def _normalize_trait_payload(trait_data: dict[str, Any]) -> dict[str, Any]:
     payload = dict(trait_data)
-    payload["source_type"] = _normalize_trait_source_type(
-        payload.get("source_type", payload.get("type"))
-    )
+    payload["source_type"] = _normalize_trait_source_type(payload.get("source_type"))
     payload["mechanics"] = _normalize_trait_mechanics(payload.get("mechanics"))
     return payload
 
@@ -947,7 +928,15 @@ def load_spell_db(
 ) -> dict[str, dict[str, Any]]:
     """Load canonical spell records keyed by normalized spell lookup key."""
 
-    return _load_spell_database(spells_dir, duplicate_policy=duplicate_policy)
+    canonical_dir = _spell_root_dir().resolve()
+    resolved_dir = Path(spells_dir).resolve()
+    if resolved_dir != canonical_dir:
+        raise ValueError(
+            f"Spell database path must be canonical: expected {canonical_dir}, got {resolved_dir}"
+        )
+    if duplicate_policy != "fail_fast":
+        raise ValueError("Spell duplicate policy must be 'fail_fast' for canonical loads")
+    return _load_spell_database(canonical_dir, duplicate_policy="fail_fast")
 
 
 def _import_encounter_strategy(module_name: str, path: Path) -> Any:

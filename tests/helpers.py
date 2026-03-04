@@ -4,10 +4,26 @@ import json
 from pathlib import Path
 from typing import Any
 
+from dnd_sim.characters import parse_class_levels_strict
+
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def with_class_levels(payload: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(payload)
+    class_levels = normalized.get("class_levels")
+    if isinstance(class_levels, dict) and class_levels:
+        normalized.pop("class_level", None)
+        return normalized
+    parsed = parse_class_levels_strict(str(normalized.get("class_level", "") or ""))
+    if not parsed:
+        raise ValueError("test payload must include a non-empty class_levels mapping")
+    normalized["class_levels"] = parsed
+    normalized.pop("class_level", None)
+    return normalized
 
 
 def build_character(
@@ -24,43 +40,45 @@ def build_character(
     if ki:
         resources["ki"] = {"max": ki}
 
-    return {
-        "character_id": character_id,
-        "name": name,
-        "class_level": "Fighter 8",
-        "max_hp": max_hp,
-        "ac": ac,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 16,
-            "dex": 14,
-            "con": 14,
-            "int": 10,
-            "wis": 10,
-            "cha": 10,
-        },
-        "save_mods": {
-            "str": 3,
-            "dex": 2,
-            "con": 2,
-            "int": 0,
-            "wis": 0,
-            "cha": 0,
-        },
-        "skill_mods": {},
-        "attacks": [
-            {
-                "name": "Weapon",
-                "to_hit": to_hit,
-                "damage": damage,
-                "damage_type": damage_type,
-            }
-        ],
-        "resources": resources,
-        "traits": ["Extra Attack"],
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": character_id,
+            "name": name,
+            "class_levels": {"fighter": 8},
+            "max_hp": max_hp,
+            "ac": ac,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 16,
+                "dex": 14,
+                "con": 14,
+                "int": 10,
+                "wis": 10,
+                "cha": 10,
+            },
+            "save_mods": {
+                "str": 3,
+                "dex": 2,
+                "con": 2,
+                "int": 0,
+                "wis": 0,
+                "cha": 0,
+            },
+            "skill_mods": {},
+            "attacks": [
+                {
+                    "name": "Weapon",
+                    "to_hit": to_hit,
+                    "damage": damage,
+                    "damage_type": damage_type,
+                }
+            ],
+            "resources": resources,
+            "traits": ["Extra Attack"],
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def build_enemy(

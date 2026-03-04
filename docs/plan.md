@@ -49,3 +49,13 @@ This file is now the entrypoint for the full multiagent implementation program.
 - [x] Subwave C complete: duplicate engine helper definitions removed, legacy-only strategy validation path retired, dead scripts removed.
 - [x] Subwave D complete: extracted resource/recovery and spell-target inference helpers into dedicated modules; added `docs/agent_index.yaml`.
 - [x] Subwave E complete: targeted regressions, full suite, and determinism spot-check corpus passed.
+
+## Legacy Decommission Program Milestones (Execution Tracking)
+
+- [x] Subwave 0 complete: baseline legacy surface snapshot + cutover mapping/data-count artifacts generated in `docs/deprecation/`.
+- [x] Subwave 1 complete: strategy runtime hard cut to declaration-only execution path in `src/dnd_sim/engine.py` and `src/dnd_sim/strategy_api.py`.
+- [x] Subwave 2 complete: built-in and encounter strategy implementations migrated to declaration-only (`declare_turn` + `on_round_start`).
+- [x] Subwave 3 complete: runtime/validator canonical-only alias behavior enforced (`effect_type`/`trigger`/`source_type`; no `type`/`event_trigger` alias promotion for mechanics rows).
+- [x] Subwave 4 complete: canonical data migration applied across traits, spells, monsters, and characters; duplicate spell lookup keys reduced to zero.
+- [x] Subwave 5 complete: canonical-contract tests/docs realigned; full suite gate passed (`uv run python -m pytest -q`).
+- [x] Subwave 6 complete: class progression canonical hard cut (`class_levels` only) applied across parser/model/runtime payload normalization; added SQLite column-drop migration (`scripts/migrations/drop_characters_class_level_column.py`) with migration/rollback tests.

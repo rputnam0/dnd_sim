@@ -23,7 +23,6 @@
     }
   ],
   "character_id": "squanch_161607569",
-  "class_level": "Druid 8",
   "max_hp": 59,
   "name": "Squanch",
   "raw_fields": [
@@ -135,7 +134,7 @@
     {
       "field": "IntProf",
       "page": 1,
-      "value": "\u2022"
+      "value": "•"
     },
     {
       "field": "ST Intelligence",
@@ -145,7 +144,7 @@
     {
       "field": "WisProf",
       "page": 1,
-      "value": "\u2022"
+      "value": "•"
     },
     {
       "field": "ST Wisdom",
@@ -435,12 +434,12 @@
     {
       "field": "Actions1",
       "page": 1,
-      "value": "=== ACTIONS === \nStandard Actions \n     Attack, Magic, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Utilize, Opportunity Attack, Grapple, Shove, Improvise, Two-Weapon Fighting, Interact with an Object, Study, Influence \n\n=== BONUS ACTIONS === \nWild Shape \u2022 3 / Long Rest \n     You shape-shift into a Beast form that you have learned for this feature. You stay in that form for 4 hours or until you use Wild Shape again, have the Incapacitated condition, or die. You can also leave the form early as a Bonus Action. \n\nRules While Shape-Shifted. The following rules apply"
+      "value": "=== ACTIONS === \nStandard Actions \n     Attack, Magic, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Utilize, Opportunity Attack, Grapple, Shove, Improvise, Two-Weapon Fighting, Interact with an Object, Study, Influence \n\n=== BONUS ACTIONS === \nWild Shape • 3 / Long Rest \n     You shape-shift into a Beast form that you have learned for this feature. You stay in that form for 4 hours or until you use Wild Shape again, have the Incapacitated condition, or die. You can also leave the form early as a Bonus Action. \n\nRules While Shape-Shifted. The following rules apply"
     },
     {
       "field": "Actions2",
       "page": 1,
-      "value": "while you\u2019re shape-shifted: \n    \u2022 You retain your personality, memories, and ability to speak. \n    \u2022 When you assume a Wild Shape form, you gain 8 Temporary HP. \n    \u2022 Your game statistics are replaced by the Beast\u2019s stat block, but you retain your creature type; HP; HP Dice; Int., Wis., and Cha. scores; class features; languages; and feats. \n    \u2022 You retain your skill and saving throws and use your Proficiency Bonus for them, and gain any proficiencies of the creature. If the Beast\u2019s stat block has a higher skill or saving throw modifier, use the one in the stat block. \n    \u2022 You can\u2019t cast spells, but shape-shifting doesn\u2019t break your Concentration."
+      "value": "while you’re shape-shifted: \n    • You retain your personality, memories, and ability to speak. \n    • When you assume a Wild Shape form, you gain 8 Temporary HP. \n    • Your game statistics are replaced by the Beast’s stat block, but you retain your creature type; HP; HP Dice; Int., Wis., and Cha. scores; class features; languages; and feats. \n    • You retain your skill and saving throws and use your Proficiency Bonus for them, and gain any proficiencies of the creature. If the Beast’s stat block has a higher skill or saving throw modifier, use the one in the stat block. \n    • You can’t cast spells, but shape-shifting doesn’t break your Concentration."
     },
     {
       "field": "Wpn Name",
@@ -510,17 +509,17 @@
     {
       "field": "FeaturesTraits1",
       "page": 2,
-      "value": "=== DRUID FEATURES === \n\n* Core Druid Traits \u2022 PHB-2024 79 \n\n* Spellcasting \u2022 PHB-2024 79 \n\n* Druidic \u2022 PHB-2024 80 \nYou know Druidic and always have Speak with Animals prepared. \n\nYou can use Druidic to leave hidden message. You and others who know Druidic automatically spot such a message. Others spot the message\u2019s presence with a successful DC 15 Intelligence (Investigation) check but can\u2019t decipher it without magic. \n\n   | Leave Druidic Message: Special \n\n* Primal Order \u2022 PHB-2024 80 \nYou have dedicated yourself to one of the sacred roles. \n\n   | Magician \u2022  \nYou know one extra cantrip from the Druid spell list. You also gain a +4 bonus to Intelligence (Arcana or Nature) checks. \n\n* Wild Shape \u2022 PHB-2024 80 \nAs a Bonus Action, you shape-shift into a Beast form that you have learned for this feature. You stay in that form for 4 hours or until you use Wild Shape again, have the Incapacitated condition, or die. You can also leave the form early as a Bonus Action. \n\nYou can use Wild Shape 3 times per Long Rest, and regain one expended use after finishing a Short Rest. \n\nYou are able to learn a number of Beast forms as outlined below, and whenever you finish a Long Rest, you can replace one of your known forms with another eligible form."
+      "value": "=== DRUID FEATURES === \n\n* Core Druid Traits • PHB-2024 79 \n\n* Spellcasting • PHB-2024 79 \n\n* Druidic • PHB-2024 80 \nYou know Druidic and always have Speak with Animals prepared. \n\nYou can use Druidic to leave hidden message. You and others who know Druidic automatically spot such a message. Others spot the message’s presence with a successful DC 15 Intelligence (Investigation) check but can’t decipher it without magic. \n\n   | Leave Druidic Message: Special \n\n* Primal Order • PHB-2024 80 \nYou have dedicated yourself to one of the sacred roles. \n\n   | Magician •  \nYou know one extra cantrip from the Druid spell list. You also gain a +4 bonus to Intelligence (Arcana or Nature) checks. \n\n* Wild Shape • PHB-2024 80 \nAs a Bonus Action, you shape-shift into a Beast form that you have learned for this feature. You stay in that form for 4 hours or until you use Wild Shape again, have the Incapacitated condition, or die. You can also leave the form early as a Bonus Action. \n\nYou can use Wild Shape 3 times per Long Rest, and regain one expended use after finishing a Short Rest. \n\nYou are able to learn a number of Beast forms as outlined below, and whenever you finish a Long Rest, you can replace one of your known forms with another eligible form."
     },
     {
       "field": "FeaturesTraits2",
       "page": 2,
-      "value": "\u2022 Level 2: You know 4 four Beast Forms with a max CR of 1/4 that lack a Fly Speed. \n    \u2022 Level 4: You know 6 four Beast Forms with a max CR of 1/2 that lack a Fly Speed. \n    \u2022 Level 8  You know 8 four Beast Forms with a max CR of 1 and can adopt a form that has a Fly Speed. \n\n   | 3 / Long Rest \u2022 1 Bonus Action \n\n* Wild Companion \u2022 PHB-2024 81 \nAs a Magic action, you can expend a spell slot or a use of Wild Shape to cast Find Familiar without Material components. When you cast the spell in this way, the familiar is Fey and disappears when you finish a Long Rest. \n\n* Druid Subclass \u2022 PHB-2024 81 \n\n   | Circle of the Land \n\n* Circle of the Land Spells \u2022 PHB-2024 84 \n\n   | Tropical Land \u2022  \n\n* Land\u2019s Aid \u2022 PHB-2024 85 \nAs a Magic action, you can expend a use of Wild Shape and choose a point within 60 ft. of you. A 10-ft.-radius Sphere is centered on that point; each creature of your choice in the Sphere must make a DC 15 Con. saving throw, taking 2d6 Necrotic damage on a failed save or half as much on a successful one. One creature of your choice in that area regains 2d6 HP. \n\n   | Land\u2019s Aid: Damage: 1 Action \n\n   | Land\u2019s Aid: Heal: 1 Action \n\n* Ability Score Improvement \u2022 PHB-2024 81 \n\n* Wild Resurgence \u2022 PHB-2024 81 \nOnce on each of your turns, if you have no uses of"
+      "value": "• Level 2: You know 4 four Beast Forms with a max CR of 1/4 that lack a Fly Speed. \n    • Level 4: You know 6 four Beast Forms with a max CR of 1/2 that lack a Fly Speed. \n    • Level 8  You know 8 four Beast Forms with a max CR of 1 and can adopt a form that has a Fly Speed. \n\n   | 3 / Long Rest • 1 Bonus Action \n\n* Wild Companion • PHB-2024 81 \nAs a Magic action, you can expend a spell slot or a use of Wild Shape to cast Find Familiar without Material components. When you cast the spell in this way, the familiar is Fey and disappears when you finish a Long Rest. \n\n* Druid Subclass • PHB-2024 81 \n\n   | Circle of the Land \n\n* Circle of the Land Spells • PHB-2024 84 \n\n   | Tropical Land •  \n\n* Land’s Aid • PHB-2024 85 \nAs a Magic action, you can expend a use of Wild Shape and choose a point within 60 ft. of you. A 10-ft.-radius Sphere is centered on that point; each creature of your choice in the Sphere must make a DC 15 Con. saving throw, taking 2d6 Necrotic damage on a failed save or half as much on a successful one. One creature of your choice in that area regains 2d6 HP. \n\n   | Land’s Aid: Damage: 1 Action \n\n   | Land’s Aid: Heal: 1 Action \n\n* Ability Score Improvement • PHB-2024 81 \n\n* Wild Resurgence • PHB-2024 81 \nOnce on each of your turns, if you have no uses of"
     },
     {
       "field": "FeaturesTraits3",
       "page": 2,
-      "value": "Wild Shape left, you can give yourself one use by expending a spell slot (no action required). \n\nIn addition, you can expend one use of Wild Shape (no action required) to give yourself a level 1 spell slot, but you can\u2019t do so again until you finish a Long Rest. \n\n   | Wild Resurgence: Regain Wild Shape: No Action \n\n   | Wild Resurgence: Regain Spell Slot: 1 / Long Rest \u2022 No Action \n\n* Natural Recovery \u2022 PHB-2024 85 \nOnce per Long Rest, you can cast one of the level 1+ spells from your chosen land without expending a spell slot. \n\nIn addition, when you finish a Short Rest, you can recover expended spell slots. The spell slot(s) can have a combined level of up to 4. \n\n   | Natural Recovery: Recover Spell Slots: 1 / Long Rest \u2022 Special \n\n   | Natural Recovery: Cast Circle Spell: 1 / Long Rest \u2022 Special \n\n* Elemental Fury \u2022 PHB-2024 81 \nThe might of the elements flows through you. \n\n   | Potent Spellcasting \u2022  \nAdd your Wisdom modifier (+4) to the damage you deal with any Druid cantrip. \n\n* 8: Ability Score Improvement \u2022 PHB-2024 81 \n\n\n=== ELF SPECIES TRAITS === \n\n* Creature Type \u2022 PHB-2024 190 \nYou are a Humanoid."
+      "value": "Wild Shape left, you can give yourself one use by expending a spell slot (no action required). \n\nIn addition, you can expend one use of Wild Shape (no action required) to give yourself a level 1 spell slot, but you can’t do so again until you finish a Long Rest. \n\n   | Wild Resurgence: Regain Wild Shape: No Action \n\n   | Wild Resurgence: Regain Spell Slot: 1 / Long Rest • No Action \n\n* Natural Recovery • PHB-2024 85 \nOnce per Long Rest, you can cast one of the level 1+ spells from your chosen land without expending a spell slot. \n\nIn addition, when you finish a Short Rest, you can recover expended spell slots. The spell slot(s) can have a combined level of up to 4. \n\n   | Natural Recovery: Recover Spell Slots: 1 / Long Rest • Special \n\n   | Natural Recovery: Cast Circle Spell: 1 / Long Rest • Special \n\n* Elemental Fury • PHB-2024 81 \nThe might of the elements flows through you. \n\n   | Potent Spellcasting •  \nAdd your Wisdom modifier (+4) to the damage you deal with any Druid cantrip. \n\n* 8: Ability Score Improvement • PHB-2024 81 \n\n\n=== ELF SPECIES TRAITS === \n\n* Creature Type • PHB-2024 190 \nYou are a Humanoid."
     },
     {
       "field": "CP",
@@ -595,17 +594,17 @@
     {
       "field": "FeaturesTraits4",
       "page": 3,
-      "value": "* Size \u2022 PHB-2024 190 \nYou are Medium. \n\n* Speed \u2022 PHB-2024 190 \nYour speed is 30 ft. \n\n* Darkvision \u2022 PHB-2024 190 \nYou have Darkvision with a range of 60 ft. \n\n* Elven Lineage \u2022 PHB-2024 190 \nChoose a lineage from the Elven Lineages table. You gain the level 1 benefit of that lineage. \n\n   | Wood Elf Lineage \u2022  \nYour Speed increases to 35 ft. and you gain the spells outlined in the Elven Lineages table. \n\n* Elven Lineage Spells \u2022 PHB-2024 189 \n\n   | Wood Elf - Wisdom \u2022  \n\n* Fey Ancestry \u2022 PHB-2024 190 \nYou have Advantage on saving throws you make to avoid or end the Charmed condition. \n\n* Keen Senses \u2022 PHB-2024 190 \nYou have proficiency in the Insight, Perception, or Survival skill. \n\n* Trance \u2022 PHB-2024 190 \nYou don\u2019t need to sleep, and magic can\u2019t put you to sleep. You can finish a Long Rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness. \n\n* Languages \u2022 PHB-2024 37 \nYour character knows at least three languages: Common plus two languages you roll or choose from the Standard Languages table. Knowledge of a language means your character can communicate in it,"
+      "value": "* Size • PHB-2024 190 \nYou are Medium. \n\n* Speed • PHB-2024 190 \nYour speed is 30 ft. \n\n* Darkvision • PHB-2024 190 \nYou have Darkvision with a range of 60 ft. \n\n* Elven Lineage • PHB-2024 190 \nChoose a lineage from the Elven Lineages table. You gain the level 1 benefit of that lineage. \n\n   | Wood Elf Lineage •  \nYour Speed increases to 35 ft. and you gain the spells outlined in the Elven Lineages table. \n\n* Elven Lineage Spells • PHB-2024 189 \n\n   | Wood Elf - Wisdom •  \n\n* Fey Ancestry • PHB-2024 190 \nYou have Advantage on saving throws you make to avoid or end the Charmed condition. \n\n* Keen Senses • PHB-2024 190 \nYou have proficiency in the Insight, Perception, or Survival skill. \n\n* Trance • PHB-2024 190 \nYou don’t need to sleep, and magic can’t put you to sleep. You can finish a Long Rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness. \n\n* Languages • PHB-2024 37 \nYour character knows at least three languages: Common plus two languages you roll or choose from the Standard Languages table. Knowledge of a language means your character can communicate in it,"
     },
     {
       "field": "FeaturesTraits5",
       "page": 3,
-      "value": "read it, and write it. \n\n\n=== FEATS === \n\n* Magic Initiate (Druid) \u2022 PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice from the Druid spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Druid spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. \n\nSpell Change. Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   | Wisdom \u2022  \n\n* Ability Score Improvement \u2022 PHB-2024 202 \nIncrease one ability score by 2 or two ability scores by 1. \n\n* Magic Initiate (Wizard) \u2022 PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice from the Wizard spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots"
+      "value": "read it, and write it. \n\n\n=== FEATS === \n\n* Magic Initiate (Druid) • PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice from the Druid spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Druid spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. \n\nSpell Change. Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   | Wisdom •  \n\n* Ability Score Improvement • PHB-2024 202 \nIncrease one ability score by 2 or two ability scores by 1. \n\n* Magic Initiate (Wizard) • PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice from the Wizard spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots"
     },
     {
       "field": "FeaturesTraits6",
       "page": 3,
-      "value": "you have. \n\nSpell Change. Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   | Wisdom \u2022  \n\n* Sage Ability Score Improvements \u2022 PHB-2024 183 \n\n   | Increase two scores (+2 / +1) \u2022"
+      "value": "you have. \n\nSpell Change. Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   | Wisdom •  \n\n* Sage Ability Score Improvements • PHB-2024 183 \n\n   | Increase two scores (+2 / +1) •"
     },
     {
       "field": "CharacterName4",
@@ -6340,7 +6339,7 @@
     "Elven Lineage Spells",
     "Fey Ancestry",
     "Keen Senses",
-    "Land\u2019s Aid",
+    "Land’s Aid",
     "Languages",
     "Magic Initiate (Druid)",
     "Magic Initiate (Wizard)",
@@ -6354,5 +6353,8 @@
     "Wild Companion",
     "Wild Resurgence",
     "Wild Shape"
-  ]
+  ],
+  "class_levels": {
+    "druid": 8
+  }
 }

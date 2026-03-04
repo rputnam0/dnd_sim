@@ -45,7 +45,6 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS characters (
                 character_id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                class_level TEXT NOT NULL,
                 ac INTEGER NOT NULL,
                 max_hp INTEGER NOT NULL,
                 initiative_mod INTEGER,

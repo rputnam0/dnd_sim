@@ -29,7 +29,7 @@ def _setup_campaign_env(
                 {
                     "character_id": character["character_id"],
                     "name": character["name"],
-                    "class_level": character["class_level"],
+                    "class_levels": character["class_levels"],
                     "source_pdf": "fixture.pdf",
                 }
                 for character in party

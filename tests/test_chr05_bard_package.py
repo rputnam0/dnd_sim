@@ -16,7 +16,7 @@ from dnd_sim.engine import (
 from dnd_sim.io import load_character_db, load_scenario
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
-from tests.helpers import build_enemy
+from tests.helpers import build_enemy, with_class_levels
 from tests.test_engine_integration import _setup_env
 
 
@@ -161,35 +161,37 @@ def _bard_character(*, level: int, current_resources: dict[str, int] | None = No
     }
     if current_resources is not None:
         payload["current_resources"] = current_resources
-    return payload
+    return with_class_levels(payload)
 
 
 def _ally_character() -> dict:
-    return {
-        "character_id": "ally_support",
-        "name": "Support Ally",
-        "class_level": "Fighter 5",
-        "max_hp": 50,
-        "ac": 15,
-        "speed_ft": 30,
-        "ability_scores": {
-            "str": 16,
-            "dex": 14,
-            "con": 14,
-            "int": 10,
-            "wis": 10,
-            "cha": 10,
-        },
-        "save_mods": {"str": 3, "dex": 2, "con": 2, "int": 0, "wis": 0, "cha": 0},
-        "skill_mods": {},
-        "attacks": [
-            {"name": "Longsword", "to_hit": 9, "damage": "1d8+3", "damage_type": "slashing"}
-        ],
-        "resources": {},
-        "traits": ["Extra Attack"],
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": "ally_support",
+            "name": "Support Ally",
+            "class_level": "Fighter 5",
+            "max_hp": 50,
+            "ac": 15,
+            "speed_ft": 30,
+            "ability_scores": {
+                "str": 16,
+                "dex": 14,
+                "con": 14,
+                "int": 10,
+                "wis": 10,
+                "cha": 10,
+            },
+            "save_mods": {"str": 3, "dex": 2, "con": 2, "int": 0, "wis": 0, "cha": 0},
+            "skill_mods": {},
+            "attacks": [
+                {"name": "Longsword", "to_hit": 9, "damage": "1d8+3", "damage_type": "slashing"}
+            ],
+            "resources": {},
+            "traits": ["Extra Attack"],
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def test_build_actor_infers_bard_package_traits_resources_and_action() -> None:
@@ -212,7 +214,6 @@ def test_build_actor_infers_bard_package_traits_resources_and_action() -> None:
 
 def test_build_actor_infers_bard_package_from_class_levels_only_payload() -> None:
     character = _bard_character(level=5)
-    character.pop("class_level")
     character["class_levels"] = {"bard": 5}
 
     actor = _build_actor_from_character(character, traits_db={})
@@ -227,7 +228,6 @@ def test_build_actor_infers_bard_package_from_class_levels_only_payload() -> Non
 
 def test_build_actor_prefers_class_levels_when_class_level_text_mismatches_for_bard() -> None:
     character = _bard_character(level=5)
-    character["class_level"] = "Fighter 5"
     character["class_levels"] = {"bard": 5}
 
     actor = _build_actor_from_character(character, traits_db={})

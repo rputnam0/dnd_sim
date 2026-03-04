@@ -55,6 +55,7 @@ def test_resolve_character_traits_maps_sheet_aliases_to_canonical_db() -> None:
             "Gnomish Lineage Spells",
             "Sage Ability Score Improvements",
         ],
+        "class_levels": {"fighter": 1},
         "raw_fields": [],
     }
     traits_db = {
@@ -76,6 +77,7 @@ def test_resolve_character_traits_maps_sheet_aliases_to_canonical_db() -> None:
 def test_resolve_character_traits_ignores_non_feature_sheet_sections() -> None:
     character = {
         "traits": ["Hit Points", "Skills", "Proficiencies"],
+        "class_levels": {"fighter": 1},
         "raw_fields": [],
     }
 
@@ -98,6 +100,7 @@ def test_extract_spellcasting_profile_parses_spell_attack_bonus() -> None:
 def test_extract_spells_casting_time_hour_not_misclassified_as_reaction(monkeypatch) -> None:
     monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
     character = {
+        "class_levels": {"wizard": 1},
         "raw_fields": [
             {"field": "spellHeader1", "value": "=== 1st LEVEL ==="},
             {"field": "spellName1", "value": "Long Cast"},
@@ -118,7 +121,7 @@ def test_extract_spells_casting_time_hour_not_misclassified_as_reaction(monkeypa
 def test_extract_spells_includes_unprepared_leveled_spells_for_known_casters(monkeypatch) -> None:
     monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
     character = {
-        "class_level": "Bard 5",
+        "class_levels": {"bard": 5},
         "raw_fields": [
             {"field": "spellHeader1", "value": "=== 1st LEVEL ==="},
             {"field": "spellName1", "value": "Dissonant Whispers"},
@@ -136,7 +139,7 @@ def test_extract_spells_includes_unprepared_leveled_spells_for_known_casters(mon
 def test_extract_spells_rejects_unprepared_leveled_for_prepared_casters(monkeypatch) -> None:
     monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
     character = {
-        "class_level": "Cleric 5",
+        "class_levels": {"cleric": 5},
         "raw_fields": [
             {"field": "spellHeader0", "value": "=== CANTRIPS ==="},
             {"field": "spellName0", "value": "Guidance"},
@@ -160,6 +163,7 @@ def test_extract_spells_rejects_unprepared_leveled_for_prepared_casters(monkeypa
 def test_extract_spells_dedupe_preserves_non_concentration_false(monkeypatch) -> None:
     monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
     character = {
+        "class_levels": {"wizard": 1},
         "raw_fields": [
             {"field": "spellHeader1", "value": "=== 1st LEVEL ==="},
             {"field": "spellName1", "value": "Duplicate Spell"},
@@ -192,6 +196,7 @@ def test_extract_spells_hydrates_duration_rounds_from_canonical_spell_db(monkeyp
         },
     )
     character = {
+        "class_levels": {"wizard": 1},
         "raw_fields": [
             {"field": "spellHeader1", "value": "=== 1st LEVEL ==="},
             {"field": "spellName1", "value": "Detect Magic"},

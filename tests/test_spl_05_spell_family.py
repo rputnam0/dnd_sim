@@ -56,6 +56,7 @@ def _trackers(
 
 def test_build_spell_actions_adds_ritual_cast_variant_without_slot_cost() -> None:
     character = {
+        "class_levels": {"wizard": 5},
         "spells": [
             {
                 "name": "detect_magic",

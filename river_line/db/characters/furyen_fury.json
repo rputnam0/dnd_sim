@@ -47,7 +47,6 @@
     }
   ],
   "character_id": "furyen_fury",
-  "class_level": "Monk 8",
   "max_hp": 71,
   "name": "Furyen (Fury)",
   "raw_fields": [
@@ -69,7 +68,7 @@
     {
       "field": "Actions1",
       "page": 1,
-      "value": "=== ACTIONS === \nStandard Actions \n     Attack, Magic, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Utilize, Opportunity Attack, Grapple, Shove, Improvise, Two-Weapon Fighting, Interact with an Object, Study, Influence \n\nWholeness of Body \u2022 1 / Long Rest \n     Once per long rest as an action, you can regain 24 HP. \n\n=== BONUS ACTIONS === \nFlurry of Blows \n     After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action."
+      "value": "=== ACTIONS === \nStandard Actions \n     Attack, Magic, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Utilize, Opportunity Attack, Grapple, Shove, Improvise, Two-Weapon Fighting, Interact with an Object, Study, Influence \n\nWholeness of Body • 1 / Long Rest \n     Once per long rest as an action, you can regain 24 HP. \n\n=== BONUS ACTIONS === \nFlurry of Blows \n     After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action."
     },
     {
       "field": "Actions2",
@@ -174,7 +173,7 @@
     {
       "field": "DexProf",
       "page": 1,
-      "value": "\u2022"
+      "value": "•"
     },
     {
       "field": "EXPERIENCE POINTS",
@@ -424,7 +423,7 @@
     {
       "field": "StrProf",
       "page": 1,
-      "value": "\u2022"
+      "value": "•"
     },
     {
       "field": "Survival",
@@ -849,17 +848,17 @@
     {
       "field": "FeaturesTraits1",
       "page": 2,
-      "value": "=== MONK FEATURES === \n\n* Hit Points \u2022 PHB 77 \n\n* Proficiencies \u2022 PHB 77 \n\n* Unarmored Defense \u2022 PHB 78 \nWhile not wearing armor and not using a shield, your AC equals 10 + DEX modifier + WIS modifier. \n\n* Martial Arts \u2022 PHB 78 \nWhile you are unarmed or wielding only monk weapons and you aren\u2019t wearing armor or wielding a shield, you can use DEX instead of STR for the attack and damage rolls, you can roll your Martial Arts damage die in place of the normal damage, and when you use the Attack action on your turn, you can make one unarmed strike as a bonus action. \n\n   \\| Unarmed Strike: 1 Bonus Action \n\n* Dedicated Weapon \u2022 TCoE 48 \n\n* Ki \u2022 PHB 78 \nYou can spend Ki Points to fuel ki features. You have 8 points per short rest and your Ki save DC is 15. \n\nFlurry of Blows - After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action. \n\nPatient Defense - You can spend 1 ki point to take the Dodge action as a bonus action on your turn. \n\nStep of the Wind - You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn. \n\n   \\| Ki Points: 8 / Short Rest \u2022 Special \n\n   \\| Flurry of Blows: 1 Bonus Action"
+      "value": "=== MONK FEATURES === \n\n* Hit Points • PHB 77 \n\n* Proficiencies • PHB 77 \n\n* Unarmored Defense • PHB 78 \nWhile not wearing armor and not using a shield, your AC equals 10 + DEX modifier + WIS modifier. \n\n* Martial Arts • PHB 78 \nWhile you are unarmed or wielding only monk weapons and you aren’t wearing armor or wielding a shield, you can use DEX instead of STR for the attack and damage rolls, you can roll your Martial Arts damage die in place of the normal damage, and when you use the Attack action on your turn, you can make one unarmed strike as a bonus action. \n\n   \\| Unarmed Strike: 1 Bonus Action \n\n* Dedicated Weapon • TCoE 48 \n\n* Ki • PHB 78 \nYou can spend Ki Points to fuel ki features. You have 8 points per short rest and your Ki save DC is 15. \n\nFlurry of Blows - After you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action. \n\nPatient Defense - You can spend 1 ki point to take the Dodge action as a bonus action on your turn. \n\nStep of the Wind - You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn. \n\n   \\| Ki Points: 8 / Short Rest • Special \n\n   \\| Flurry of Blows: 1 Bonus Action"
     },
     {
       "field": "FeaturesTraits2",
       "page": 2,
-      "value": "\\| Patient Defense: 1 Bonus Action \n\n   \\| Step of the Wind: 1 Bonus Action \n\n* Unarmored Movement \u2022 PHB 78 \nYour speed increases by 15 feet while you are not wearing armor or wielding a shield. \n\n* Ki-Fueled Attack \u2022 TCoE 48 \n\n   \\| Special \n\n* Monastic Tradition \u2022 PHB 78 \n\n   \\| Way of the Open Hand \n\n* Deflect Missiles \u2022 PHB 78 \nYou can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. When you do so, the damage you take from the attack is reduced by 1d10 +13. If you reduce damage to 0 and have a free hand, you can spend 1 ki point to make a ranged attack (as with a monk weapon) with range 20/60. \n\n   \\| 1 Reaction \n\n   \\| Deflect Missiles Attack: 1 Reaction \n\n* Open Hand Technique \u2022 PHB 79 \nWhenever you hit with one of your Flurry of Blows attacks, you can impose one of the following effects on that target: fall prone if it fails a DEX saving throw (DC 15), get pushed up to 15 ft. if it fails a STR saving throw (DC 15), or it can't take reaction until the end of your next turn. \n\n   \\| Special \n\n* Quickened Healing \u2022 TCoE 49"
+      "value": "\\| Patient Defense: 1 Bonus Action \n\n   \\| Step of the Wind: 1 Bonus Action \n\n* Unarmored Movement • PHB 78 \nYour speed increases by 15 feet while you are not wearing armor or wielding a shield. \n\n* Ki-Fueled Attack • TCoE 48 \n\n   \\| Special \n\n* Monastic Tradition • PHB 78 \n\n   \\| Way of the Open Hand \n\n* Deflect Missiles • PHB 78 \nYou can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. When you do so, the damage you take from the attack is reduced by 1d10 +13. If you reduce damage to 0 and have a free hand, you can spend 1 ki point to make a ranged attack (as with a monk weapon) with range 20/60. \n\n   \\| 1 Reaction \n\n   \\| Deflect Missiles Attack: 1 Reaction \n\n* Open Hand Technique • PHB 79 \nWhenever you hit with one of your Flurry of Blows attacks, you can impose one of the following effects on that target: fall prone if it fails a DEX saving throw (DC 15), get pushed up to 15 ft. if it fails a STR saving throw (DC 15), or it can't take reaction until the end of your next turn. \n\n   \\| Special \n\n* Quickened Healing • TCoE 49"
     },
     {
       "field": "FeaturesTraits3",
       "page": 2,
-      "value": "\\| 1 Action \n\n* Ability Score Improvement \u2022 PHB 78 \n\n* Slow Fall \u2022 PHB 78 \nYou can use your reaction when you fall to reduce any falling damage you take by 40. \n\n   \\| 1 Reaction \n\n* Focused Aim \u2022 TCoE 49 \n\n   \\| Special \n\n* Extra Attack \u2022 PHB 79 \nYou can attack twice, instead of once, whenever you take the Attack action on your turn. \n\n* Stunning Strike \u2022 PHB 79 \nWhen you hit with a melee weapon attack, you can spend 1 ki point to make the target stunned until the end of your next turn if it fails a CON saving throw (DC 15). \n\n   \\| Special \n\n* Ki-Empowered Strikes \u2022 PHB 79 \nYour unarmed strikes count as magical for the purpose of overcoming resistance and immunity. \n\n* Wholeness of Body \u2022 PHB 79 \nOnce per long rest as an action, you can regain 24 HP. \n\n   \\| 1 / Long Rest \u2022 1 Action \n\n* Evasion \u2022 PHB 79 \nWhen you are subjected to an effect that allows you to make a DEX saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail."
+      "value": "\\| 1 Action \n\n* Ability Score Improvement • PHB 78 \n\n* Slow Fall • PHB 78 \nYou can use your reaction when you fall to reduce any falling damage you take by 40. \n\n   \\| 1 Reaction \n\n* Focused Aim • TCoE 49 \n\n   \\| Special \n\n* Extra Attack • PHB 79 \nYou can attack twice, instead of once, whenever you take the Attack action on your turn. \n\n* Stunning Strike • PHB 79 \nWhen you hit with a melee weapon attack, you can spend 1 ki point to make the target stunned until the end of your next turn if it fails a CON saving throw (DC 15). \n\n   \\| Special \n\n* Ki-Empowered Strikes • PHB 79 \nYour unarmed strikes count as magical for the purpose of overcoming resistance and immunity. \n\n* Wholeness of Body • PHB 79 \nOnce per long rest as an action, you can regain 24 HP. \n\n   \\| 1 / Long Rest • 1 Action \n\n* Evasion • PHB 79 \nWhen you are subjected to an effect that allows you to make a DEX saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail."
     },
     {
       "field": "GP",
@@ -919,12 +918,12 @@
     {
       "field": "FeaturesTraits4",
       "page": 3,
-      "value": "* Stillness of Mind \u2022 PHB 79 \nYou can use an action to end one effect on yourself that is causing you to be charmed or frightened. \n\n   \\| 1 Action \n\n\n=== VARIANT HUMAN SPECIES TRAITS === \n\n* Languages \u2022 BR 31 \nYou can speak, read, and write Common and one extra language. \n\n* Skills \u2022 BR 31 \nYou gain proficiency in one skill of your choice. \n\n* Feat \u2022 BR 31 \nYou gain one feat of your choice. \n\n\n=== FEATS === \n\n* Fighting Initiate \u2022 TCoE 80 \nYou learn one Fighting Style option of your choice from the fighter class. \n\n   \\| Blind Fighting \u2022 TCoE 41 \nYou have blindsight with a range of 10 ft. Within that range, you can effectively see anything that isn\u2019t behind total cover, even if you\u2019re blinded or in darkness. Moreover, you can see an invisible creature within that range, unless the creature successfully hides from you. \n\n* Ability Score Improvement \u2022 PHB-2024 202 \nIncrease one ability score by 2 or two ability scores by 1. \n\n* Magic Initiate (Wizard) \u2022 PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice"
+      "value": "* Stillness of Mind • PHB 79 \nYou can use an action to end one effect on yourself that is causing you to be charmed or frightened. \n\n   \\| 1 Action \n\n\n=== VARIANT HUMAN SPECIES TRAITS === \n\n* Languages • BR 31 \nYou can speak, read, and write Common and one extra language. \n\n* Skills • BR 31 \nYou gain proficiency in one skill of your choice. \n\n* Feat • BR 31 \nYou gain one feat of your choice. \n\n\n=== FEATS === \n\n* Fighting Initiate • TCoE 80 \nYou learn one Fighting Style option of your choice from the fighter class. \n\n   \\| Blind Fighting • TCoE 41 \nYou have blindsight with a range of 10 ft. Within that range, you can effectively see anything that isn’t behind total cover, even if you’re blinded or in darkness. Moreover, you can see an invisible creature within that range, unless the creature successfully hides from you. \n\n* Ability Score Improvement • PHB-2024 202 \nIncrease one ability score by 2 or two ability scores by 1. \n\n* Magic Initiate (Wizard) • PHB-2024 201 \nTwo Cantrips. You learn two cantrips of your choice"
     },
     {
       "field": "FeaturesTraits5",
       "page": 3,
-      "value": "from the Wizard spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. \n\nSpell Change. Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   \\| Wisdom \u2022  \n\n* Sage Ability Score Improvements \u2022 PHB-2024 183 \n\n   \\| Increase two scores (+2 / +1) \u2022"
+      "value": "from the Wizard spell list. Int., Wis., or Cha. is your spellcasting ability for this feat's spells. \n\nLevel 1 Spell. Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. \n\nSpell Change. Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list. \n\nRepeatable. You can take this feat more than once, but you must choose a different spell list each time. \n\n   \\| Wisdom •  \n\n* Sage Ability Score Improvements • PHB-2024 183 \n\n   \\| Increase two scores (+2 / +1) •"
     },
     {
       "field": "PLAYER NAME3",
@@ -1255,5 +1254,8 @@
     "Unarmored Defense",
     "Unarmored Movement",
     "Wholeness of Body"
-  ]
+  ],
+  "class_levels": {
+    "monk": 8
+  }
 }

@@ -70,7 +70,7 @@ def test_build_actor_imports_unprepared_known_caster_spells(monkeypatch) -> None
     character = {
         "character_id": "bard_1",
         "name": "Bard One",
-        "class_level": "Bard 5",
+        "class_levels": {"bard": 5},
         "max_hp": 24,
         "ac": 14,
         "ability_scores": {"str": 8, "dex": 14, "con": 12, "int": 10, "wis": 10, "cha": 18},
@@ -179,7 +179,7 @@ def test_trait_hydration_resolves_variant_names_from_sheet_traits() -> None:
     character = {
         "character_id": "c1",
         "name": "C1",
-        "class_level": "Wizard 8",
+        "class_levels": {"wizard": 8},
         "max_hp": 20,
         "ac": 12,
         "speed_ft": 30,
@@ -204,7 +204,7 @@ def test_trait_hydration_reads_feature_option_lines() -> None:
     character = {
         "character_id": "c2",
         "name": "C2",
-        "class_level": "Fighter 8",
+        "class_levels": {"fighter": 8},
         "max_hp": 20,
         "ac": 12,
         "speed_ft": 30,

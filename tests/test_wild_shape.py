@@ -10,40 +10,48 @@ from dnd_sim.engine import (
 )
 from dnd_sim.rules_2014 import apply_damage
 from dnd_sim.spatial import can_see
+from tests.helpers import with_class_levels
 
 
 def _druid_character() -> dict:
-    return {
-        "character_id": "druid",
-        "name": "Druid",
-        "class_level": "Druid 4",
-        "max_hp": 20,
-        "ac": 14,
-        "speed_ft": 30,
-        "ability_scores": {"str": 10, "dex": 14, "con": 12, "int": 10, "wis": 16, "cha": 10},
-        "save_mods": {"str": 0, "dex": 2, "con": 1, "int": 0, "wis": 5, "cha": 0},
-        "skill_mods": {},
-        "attacks": [
-            {"name": "Quarterstaff", "to_hit": 4, "damage": "1d6+2", "damage_type": "bludgeoning"}
-        ],
-        "resources": {"wild_shape": {"max": 2}},
-        "traits": ["Wild Shape"],
-        "wild_shape_forms": [
-            {
-                "name": "wolf",
-                "cr": "1/4",
-                "max_hp": 11,
-                "ac": 13,
-                "speed_ft": 40,
-                "str_mod": 1,
-                "dex_mod": 2,
-                "con_mod": 1,
-                "attacks": [{"name": "bite", "to_hit": 4, "damage": "2d4+2"}],
-            }
-        ],
-        "raw_fields": [],
-        "source": {"pdf_name": "fixture.pdf"},
-    }
+    return with_class_levels(
+        {
+            "character_id": "druid",
+            "name": "Druid",
+            "class_level": "Druid 4",
+            "max_hp": 20,
+            "ac": 14,
+            "speed_ft": 30,
+            "ability_scores": {"str": 10, "dex": 14, "con": 12, "int": 10, "wis": 16, "cha": 10},
+            "save_mods": {"str": 0, "dex": 2, "con": 1, "int": 0, "wis": 5, "cha": 0},
+            "skill_mods": {},
+            "attacks": [
+                {
+                    "name": "Quarterstaff",
+                    "to_hit": 4,
+                    "damage": "1d6+2",
+                    "damage_type": "bludgeoning",
+                }
+            ],
+            "resources": {"wild_shape": {"max": 2}},
+            "traits": ["Wild Shape"],
+            "wild_shape_forms": [
+                {
+                    "name": "wolf",
+                    "cr": "1/4",
+                    "max_hp": 11,
+                    "ac": 13,
+                    "speed_ft": 40,
+                    "str_mod": 1,
+                    "dex_mod": 2,
+                    "con_mod": 1,
+                    "attacks": [{"name": "bite", "to_hit": 4, "damage": "2d4+2"}],
+                }
+            ],
+            "raw_fields": [],
+            "source": {"pdf_name": "fixture.pdf"},
+        }
+    )
 
 
 def _activate_wild_shape(actor, action_name: str = "wild_shape") -> None:
@@ -229,7 +237,7 @@ def test_wild_shape_replaces_spell_actions_while_transformed() -> None:
 
 def test_wild_shape_uses_best_legal_form_for_level() -> None:
     character = _druid_character()
-    character["class_level"] = "Druid 2"
+    character["class_levels"] = {"druid": 2}
     character["wild_shape_forms"] = [
         {"name": "bear", "cr": "1", "max_hp": 34, "ac": 11, "speed_ft": 40},
         {"name": "wolf", "cr": "1/4", "max_hp": 11, "ac": 13, "speed_ft": 40},
@@ -241,7 +249,7 @@ def test_wild_shape_uses_best_legal_form_for_level() -> None:
 
 def test_wild_shape_swim_fly_gates_by_level() -> None:
     character = _druid_character()
-    character["class_level"] = "Druid 2"
+    character["class_levels"] = {"druid": 2}
     character["wild_shape_forms"] = [
         {"name": "reef_shark", "cr": "1/2", "max_hp": 22, "ac": 12, "movement": {"swim": 40}},
         {"name": "giant_eagle", "cr": "1", "max_hp": 26, "ac": 13, "movement": {"fly": 80}},
@@ -249,12 +257,12 @@ def test_wild_shape_swim_fly_gates_by_level() -> None:
     low_level_actor = _build_actor_from_character(character, traits_db={})
     assert not any(action.name == "wild_shape" for action in low_level_actor.actions)
 
-    character["class_level"] = "Druid 4"
+    character["class_levels"] = {"druid": 4}
     mid_actor = _build_actor_from_character(character, traits_db={})
     _activate_wild_shape(mid_actor)
     assert mid_actor.wild_shape_form_name == "reef_shark"
 
-    character["class_level"] = "Druid 8"
+    character["class_levels"] = {"druid": 8}
     high_actor = _build_actor_from_character(character, traits_db={})
     _activate_wild_shape(high_actor)
     assert high_actor.wild_shape_form_name == "giant_eagle"
@@ -262,7 +270,7 @@ def test_wild_shape_swim_fly_gates_by_level() -> None:
 
 def test_combat_wild_shape_uses_bonus_action_and_moon_cr_limit() -> None:
     character = _druid_character()
-    character["class_level"] = "Druid 6"
+    character["class_levels"] = {"druid": 6}
     character["traits"] = ["Wild Shape", "Combat Wild Shape", "Circle of the Moon"]
     character["wild_shape_forms"] = [
         {"name": "polar_bear", "cr": "2", "max_hp": 42, "ac": 12, "speed_ft": 40},
@@ -278,7 +286,7 @@ def test_combat_wild_shape_uses_bonus_action_and_moon_cr_limit() -> None:
 
 def test_elemental_wild_shape_requires_level_10_and_costs_two_uses() -> None:
     character = _druid_character()
-    character["class_level"] = "Druid 9"
+    character["class_levels"] = {"druid": 9}
     character["traits"] = ["Wild Shape", "Combat Wild Shape", "Circle of the Moon"]
     character["wild_shape_forms"] = [
         {"name": "wolf", "cr": "1/4", "max_hp": 11, "ac": 13, "speed_ft": 40},
@@ -294,7 +302,7 @@ def test_elemental_wild_shape_requires_level_10_and_costs_two_uses() -> None:
     actor_lvl9 = _build_actor_from_character(character, traits_db={})
     assert not any(action.name == "wild_shape_elemental" for action in actor_lvl9.actions)
 
-    character["class_level"] = "Druid 10"
+    character["class_levels"] = {"druid": 10}
     actor_lvl10 = _build_actor_from_character(character, traits_db={})
     elemental_action = next(
         (action for action in actor_lvl10.actions if action.name == "wild_shape_elemental"),
@@ -311,7 +319,7 @@ def test_elemental_wild_shape_requires_level_10_and_costs_two_uses() -> None:
 
 def test_elemental_wild_shape_can_be_enabled_by_explicit_trait() -> None:
     character = _druid_character()
-    character["class_level"] = "Druid 10"
+    character["class_levels"] = {"druid": 10}
     character["traits"] = ["Wild Shape", "Elemental Wild Shape"]
     character["wild_shape_forms"] = [
         {"name": "wolf", "cr": "1/4", "max_hp": 11, "ac": 13, "speed_ft": 40},

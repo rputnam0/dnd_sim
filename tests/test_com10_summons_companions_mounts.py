@@ -102,7 +102,7 @@ def _setup_env(
                 {
                     "character_id": row["character_id"],
                     "name": row["name"],
-                    "class_level": row["class_level"],
+                    "class_levels": row["class_levels"],
                     "source_pdf": "fixture.pdf",
                 }
                 for row in party

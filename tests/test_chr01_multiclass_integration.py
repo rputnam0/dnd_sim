@@ -13,7 +13,6 @@ def test_multiclass_actor_builds_class_levels_and_recovers_slots_on_short_rest()
         to_hit=6,
         damage="1d8+3",
     )
-    character["class_level"] = "Wizard 3 / Cleric 1"
     character["class_levels"] = {"wizard": 3, "cleric": 1}
     character["traits"] = ["Arcane Recovery"]
     character["resources"] = {}

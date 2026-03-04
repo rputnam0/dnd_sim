@@ -204,6 +204,7 @@ def test_new_concentration_spell_replaces_old_summon_effect() -> None:
 
 def test_upcasting_builds_higher_slot_spell_variants() -> None:
     character = {
+        "class_levels": {"wizard": 10},
         "spells": [
             {
                 "name": "fire_burst",
@@ -538,6 +539,7 @@ def test_spell_components_block_unavailable_casting_constraints() -> None:
 
 def test_build_spell_actions_maps_component_strings_to_tags() -> None:
     character = {
+        "class_levels": {"wizard": 5},
         "spells": [
             {
                 "name": "warding_veil",
