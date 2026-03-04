@@ -10,7 +10,11 @@ from dnd_sim.engine import (
     run_simulation,
 )
 from dnd_sim.io import ActionConfig, load_character_db, load_scenario
-from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
+from dnd_sim.mechanics_schema import (
+    EXECUTABLE_EFFECT_TYPES,
+    KNOWN_EFFECT_TYPES,
+    validate_rule_mechanics_payload,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import AABB
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
@@ -105,6 +109,20 @@ class _NoOpStrategy(BaseStrategy):
         return TurnDeclaration()
 
 
+class _SummonOnOddTurnStrategy(BaseStrategy):
+    def __init__(self) -> None:
+        self._hero_turn_calls = 0
+
+    def declare_turn(self, actor, state):
+        if actor.actor_id != "hero":
+            return None
+
+        self._hero_turn_calls += 1
+        if self._hero_turn_calls % 2 == 1 and "hero_wolf" not in state.actors:
+            return TurnDeclaration(action=DeclaredAction(action_name="summon_wolf"))
+        return TurnDeclaration()
+
+
 def test_transform_effect_applies_and_clears_with_concentration_dependency() -> None:
     caster = _actor(actor_id="caster", team="party")
     target = _actor(actor_id="target", team="enemy")
@@ -151,6 +169,9 @@ def test_transform_effect_applies_and_clears_with_concentration_dependency() -> 
 
 
 def test_transform_schema_and_mechanics_validation_accept_transform() -> None:
+    assert "shapechange" in KNOWN_EFFECT_TYPES
+    assert "shapechange" in EXECUTABLE_EFFECT_TYPES
+
     action = ActionConfig.model_validate(
         {
             "name": "beast_shape",
@@ -499,3 +520,74 @@ def test_spl04_integration_spell_family_sequence_is_deterministic(tmp_path: Path
     summary_a.pop("run_id", None)
     summary_b.pop("run_id", None)
     assert summary_a == summary_b
+
+
+def test_summary_aggregation_handles_ephemeral_summon_actor_missing_in_later_trials(
+    tmp_path: Path,
+) -> None:
+    hero = build_character(
+        character_id="hero",
+        name="Hero",
+        max_hp=30,
+        ac=14,
+        to_hit=5,
+        damage="1d8+2",
+    )
+    hero["spells"] = [
+        {
+            "name": "summon_wolf",
+            "level": 0,
+            "action_type": "utility",
+            "action_cost": "action",
+            "target_mode": "self",
+            "concentration": True,
+            "mechanics": [
+                {
+                    "effect_type": "summon",
+                    "target": "source",
+                    "actor_id": "hero_wolf",
+                    "name": "Hero Wolf",
+                    "max_hp": 12,
+                    "ac": 12,
+                }
+            ],
+        }
+    ]
+    enemy = build_enemy(
+        enemy_id="dummy",
+        name="Dummy",
+        hp=100,
+        ac=10,
+        to_hit=0,
+        damage="1",
+    )
+
+    scenario_path = _setup_env(
+        tmp_path / "spl04_summary_ephemeral_actor",
+        party=[hero],
+        enemies=[enemy],
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+        max_rounds=1,
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    registry = {
+        "party_strategy": _SummonOnOddTurnStrategy(),
+        "enemy_strategy": _NoOpStrategy(),
+    }
+
+    artifacts = run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=2,
+        seed=211,
+        run_id="spl04_ephemeral_actor_summary",
+    )
+    summary = artifacts.summary.to_dict()
+    assert "hero_wolf" in summary["per_actor_damage_dealt"]
+    assert "hero_wolf" in summary["per_actor_damage_taken"]

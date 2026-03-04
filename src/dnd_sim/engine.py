@@ -15414,11 +15414,11 @@ def run_simulation(
     actor_ids = sorted(trial_results[0].damage_taken.keys()) if trial_results else []
 
     per_actor_damage_taken = {
-        actor_id: _metric([trial.damage_taken[actor_id] for trial in trial_results])
+        actor_id: _metric([trial.damage_taken.get(actor_id, 0) for trial in trial_results])
         for actor_id in actor_ids
     }
     per_actor_damage_dealt = {
-        actor_id: _metric([trial.damage_dealt[actor_id] for trial in trial_results])
+        actor_id: _metric([trial.damage_dealt.get(actor_id, 0) for trial in trial_results])
         for actor_id in actor_ids
     }
 

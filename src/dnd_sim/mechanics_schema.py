@@ -27,6 +27,7 @@ KNOWN_EFFECT_TYPES = {
     "conjure",
     "summon_creature",
     "transform",
+    "shapechange",
     "command_allied",
     "command_construct_companion",
     "mount",
@@ -55,6 +56,7 @@ EXECUTABLE_EFFECT_TYPES = {
     "conjure",
     "summon_creature",
     "transform",
+    "shapechange",
     "command_allied",
     "command_construct_companion",
     "mount",
@@ -78,6 +80,7 @@ _REQUIRED_FIELDS: dict[str, set[str]] = {
     "damage_roll_floor": {"damage_type", "floor"},
     "reaction_attack": {"trigger"},
     "transform": {"condition"},
+    "shapechange": {"condition"},
 }
 
 _SUPPORTED_REACTION_ATTACK_TRIGGERS = {
