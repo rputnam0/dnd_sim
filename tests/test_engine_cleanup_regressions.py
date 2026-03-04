@@ -4,16 +4,8 @@ import ast
 from collections import Counter
 from pathlib import Path
 
-_TARGET_HELPERS = {
-    "_ensure_resource_cap",
-    "_apply_inferred_wizard_resources",
-    "_apply_arcane_recovery",
-    "_iter_spell_slot_levels_desc",
-    "_recover_spell_slots_with_budget",
-}
 
-
-def test_engine_cleanup_helpers_have_single_top_level_definition() -> None:
+def test_engine_has_no_duplicate_top_level_function_definitions() -> None:
     engine_path = Path(__file__).resolve().parents[1] / "src" / "dnd_sim" / "engine.py"
     module = ast.parse(engine_path.read_text(encoding="utf-8"))
     counts = Counter(
@@ -21,6 +13,5 @@ def test_engine_cleanup_helpers_have_single_top_level_definition() -> None:
         for node in module.body
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
     )
-
-    for helper_name in sorted(_TARGET_HELPERS):
-        assert counts[helper_name] == 1
+    duplicates = {name: count for name, count in counts.items() if count > 1}
+    assert duplicates == {}

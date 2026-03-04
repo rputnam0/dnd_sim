@@ -66,19 +66,17 @@ Base: origin/main
 
 ## Subwave E Validation Outcomes
 - Targeted cleanup regression tests:
-  - `uv run python -m pytest -q tests/test_engine_cleanup_regressions.py tests/test_fnd06_turn_declaration.py tests/test_strategy_api.py` ✅
-- Additional targeted runtime/spell package checks:
-  - `uv run python -m pytest -q tests/test_engine_integration.py tests/test_spl_04_spell_family.py tests/test_chr15_wizard_package.py` ✅
+  - `uv run python -m pytest -q tests/test_engine_cleanup_regressions.py tests/test_fnd06_turn_declaration.py` ✅
 - Full suite gate:
-  - `uv run python -m pytest -q` ✅
-- Determinism spot-check corpus (10 profiles / 10 fixed seeds) ✅:
+  - `uv run --with pytest python -m pytest -q` ✅
+- Determinism spot-check corpus (10 fixed seeds across 10 scenario profiles) ✅:
   - `test_fixed_seed_is_deterministic` (seed `9`)
+  - `fighter action-surge deterministic` (seed `37`)
   - `chr05 bard deterministic` (seed `61`)
   - `chr06 cleric deterministic` (seed `29`)
+  - `chr07 druid deterministic` (seed `73`)
   - `chr10 paladin deterministic` (seed `53`)
   - `chr13 sorcerer deterministic` (seed `43`)
   - `chr14 warlock deterministic` (seed `88`)
   - `chr15 wizard deterministic` (seed `95`)
   - `spl04 spell family deterministic` (seed `101`)
-  - `com10 summon command flow deterministic` (seed `31`)
-  - `campaign long-rest exploration deterministic` (seed `17`)
