@@ -94,6 +94,16 @@ _ACTION_GROUPS = (
     "lair_actions",
 )
 
+_EFFECT_TYPE_ALIASES = {
+    "summon_creature": "summon",
+    "shapechange": "transform",
+}
+
+
+def _canonical_effect_type(effect_type: str) -> str:
+    normalized = str(effect_type).strip().lower()
+    return _EFFECT_TYPE_ALIASES.get(normalized, normalized)
+
 
 def _iter_json_payloads(path: Path) -> list[tuple[Path, dict[str, Any]]]:
     payloads: list[tuple[Path, dict[str, Any]]] = []
@@ -129,7 +139,7 @@ def _validate_mechanics_list(mechanics: Any, *, prefix: str) -> list[str]:
             issues.append(f"{path}.effect_type is required")
             continue
 
-        normalized_effect = raw_effect_type.strip().lower()
+        normalized_effect = _canonical_effect_type(raw_effect_type)
         if normalized_effect not in KNOWN_EFFECT_TYPES:
             issues.append(f"{path}.effect_type '{normalized_effect}' is unsupported")
             continue
@@ -139,7 +149,7 @@ def _validate_mechanics_list(mechanics: Any, *, prefix: str) -> list[str]:
             if required_field not in row:
                 issues.append(f"{path}.{required_field} is required for {normalized_effect}")
 
-        if normalized_effect in {"summon", "conjure", "summon_creature"}:
+        if normalized_effect in {"summon", "conjure"}:
             has_identity = any(
                 isinstance(row.get(key), str) and str(row.get(key)).strip()
                 for key in ("actor_id", "creature", "name")
@@ -223,7 +233,7 @@ def _classify_effect_type(value: Any) -> str:
     if isinstance(value, dict):
         effect_type = value.get("effect_type", value.get("type"))
         if isinstance(effect_type, str) and effect_type.strip():
-            return effect_type.strip().lower()
+            return _canonical_effect_type(effect_type)
     return "<invalid>"
 
 

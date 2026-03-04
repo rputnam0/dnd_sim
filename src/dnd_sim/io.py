@@ -444,13 +444,18 @@ class SummonEffectConfig(BaseModel):
 
 
 class TransformEffectConfig(BaseModel):
-    effect_type: Literal["transform"]
+    effect_type: Literal["transform", "shapechange"] = "transform"
     apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
     target: Literal["target", "source"] = "target"
     condition: str
     duration_rounds: int | None = None
     concentration_linked: bool = True
     stack_policy: Literal["independent", "refresh", "replace"] = "refresh"
+
+    @model_validator(mode="after")
+    def normalize_legacy_effect_type(self) -> "TransformEffectConfig":
+        self.effect_type = "transform"
+        return self
 
 
 class CommandAlliedEffectConfig(BaseModel):

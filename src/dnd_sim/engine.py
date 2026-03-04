@@ -10065,6 +10065,11 @@ def _apply_effect(
         )
         internal_tags = _normalize_internal_tags(effect.get("internal_tags"))
         internal_tags.add("transform_effect")
+        if action is not None and _has_tag(action, "spell"):
+            internal_tags.add("spell_effect")
+            spell_level = _spell_level_from_action(action)
+            if spell_level > 0:
+                internal_tags.add(f"spell_level:{spell_level}")
         created_effect_ids = _apply_condition(
             recipient,
             transform_condition,

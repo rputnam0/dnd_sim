@@ -18,6 +18,16 @@ from tests.helpers import build_character, build_enemy
 from tests.test_engine_integration import _setup_env
 
 
+class FixedRng:
+    def __init__(self, values: list[int]) -> None:
+        self.values = list(values)
+
+    def randint(self, _a: int, _b: int) -> int:
+        if not self.values:
+            raise AssertionError("RNG exhausted")
+        return self.values.pop(0)
+
+
 def _actor(*, actor_id: str, team: str) -> ActorRuntimeState:
     return ActorRuntimeState(
         actor_id=actor_id,
@@ -159,6 +169,24 @@ def test_transform_schema_and_mechanics_validation_accept_transform() -> None:
     )
     assert action.effects[0].effect_type == "transform"
 
+    legacy_action = ActionConfig.model_validate(
+        {
+            "name": "legacy_beast_shape",
+            "action_type": "utility",
+            "action_cost": "action",
+            "target_mode": "single_ally",
+            "effects": [
+                {
+                    "effect_type": "shapechange",
+                    "target": "target",
+                    "condition": "beast_form",
+                    "duration_rounds": 10,
+                }
+            ],
+        }
+    )
+    assert legacy_action.effects[0].effect_type == "transform"
+
     issues = validate_rule_mechanics_payload(
         kind="spell",
         payload={
@@ -175,6 +203,61 @@ def test_transform_schema_and_mechanics_validation_accept_transform() -> None:
         },
     )
     assert issues == []
+
+    legacy_issues = validate_rule_mechanics_payload(
+        kind="spell",
+        payload={
+            "name": "Legacy Beast Shape",
+            "type": "spell",
+            "mechanics": [
+                {
+                    "effect_type": "shapechange",
+                    "target": "target",
+                    "condition": "beast_form",
+                    "duration_rounds": 10,
+                }
+            ],
+        },
+    )
+    assert legacy_issues == []
+
+
+def test_legacy_shapechange_effect_executes_via_transform_alias() -> None:
+    caster = _actor(actor_id="caster", team="party")
+    target = _actor(actor_id="target", team="enemy")
+    action = ActionDefinition(
+        name="legacy_shapechange_spell",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        concentration=True,
+        tags=["spell"],
+        effects=[
+            {
+                "effect_type": "shapechange",
+                "target": "target",
+                "condition": "beast_form",
+                "duration_rounds": 10,
+            }
+        ],
+    )
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+
+    _execute_action(
+        rng=random.Random(9),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "beast_form" in target.conditions
 
 
 def test_transform_targeting_line_of_effect_and_suppression_are_enforced() -> None:
@@ -237,6 +320,74 @@ def test_transform_targeting_line_of_effect_and_suppression_are_enforced() -> No
         active_hazards=[],
     )
     assert "polymorphed" not in target.conditions
+
+
+def test_dispel_magic_removes_non_concentration_transform_spell_effect() -> None:
+    rng = FixedRng([10])  # 10 + INT 4 => DC 14 success for a 4th-level effect.
+    source = _actor(actor_id="source", team="enemy")
+    source.int_mod = 3
+    dispeller = _actor(actor_id="dispeller", team="party")
+    dispeller.int_mod = 4
+    victim = _actor(actor_id="victim", team="party")
+
+    transform_spell = ActionDefinition(
+        name="beast_hex",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        concentration=False,
+        tags=["spell", "spell_level:4"],
+        effects=[
+            {
+                "effect_type": "transform",
+                "condition": "beast_form",
+                "target": "target",
+                "duration_rounds": 10,
+                "effect_id": "beast_hex",
+            }
+        ],
+    )
+    dispel_magic = ActionDefinition(
+        name="dispel_magic",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_ally",
+        tags=["spell", "dispel"],
+    )
+
+    actors = {actor.actor_id: actor for actor in (source, dispeller, victim)}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        source, dispeller, victim
+    )
+    active_hazards: list[dict[str, object]] = []
+
+    _execute_action(
+        rng=random.Random(11),
+        actor=source,
+        action=transform_spell,
+        targets=[victim],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert "beast_form" in victim.conditions
+
+    _execute_action(
+        rng=rng,
+        actor=dispeller,
+        action=dispel_magic,
+        targets=[victim],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
+    assert "beast_form" not in victim.conditions
 
 
 def test_spl04_integration_spell_family_sequence_is_deterministic(tmp_path: Path) -> None:
