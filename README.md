@@ -18,8 +18,7 @@ uv run python -m dnd_sim.report --run river_line/results/<run_dir>/summary.json 
 
 ## Encounter Schema
 
-- Full example (scenario + enemy with all supported action/effect options):
-  `docs/encounter_schema_full_example.json`
+- Encounter-schema expansion is tracked in `docs/program/backlog.csv` under `WLD-10`.
 
 ## Tests
 

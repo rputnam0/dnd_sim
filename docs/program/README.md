@@ -47,7 +47,7 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 ## Historical planning scope
 
 - Any planning file under `docs/archive/` other than `docs/archive/README.md` is historical and must carry `Status: historical`.
-- Any planning file under `docs/cleanup/` or `docs/deprecation/` is historical and must carry `Status: historical`.
+- Cleanup and deprecation snapshots are historical and must carry `Status: historical`.
 - Historical files are reference-only and must not be used as planning entrypoints.
 
 ## Multi-agent policy
