@@ -112,6 +112,29 @@ def test_wild_shape_transform_and_overflow_damage_revert() -> None:
     assert [entry.name for entry in actor.actions] == pre_actions
 
 
+def test_wild_shape_preserves_distance_already_moved_on_transform() -> None:
+    actor = _build_actor_from_character(_druid_character(), traits_db={})
+    actor.movement_remaining = 10.0  # 20 ft already moved from base 30 ft speed.
+
+    _activate_wild_shape(actor)
+
+    assert actor.speed_ft == 40
+    assert actor.movement_remaining == 20.0
+
+
+def test_wild_shape_preserves_distance_already_moved_on_revert() -> None:
+    actor = _build_actor_from_character(_druid_character(), traits_db={})
+    actor.movement_remaining = 10.0  # 20 ft moved at base speed.
+
+    _activate_wild_shape(actor)
+    actor.movement_remaining = 5.0  # 35 ft moved total while in 40 ft form.
+    _activate_wild_shape(actor, action_name="wild_shape_revert")
+
+    assert actor.wild_shape_active is False
+    assert actor.speed_ft == 30
+    assert actor.movement_remaining == 0.0
+
+
 def test_wild_shape_applies_form_senses_and_reverts_them() -> None:
     character = _druid_character()
     character["wild_shape_forms"] = [

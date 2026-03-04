@@ -9951,6 +9951,8 @@ def _activate_wild_shape(actor: ActorRuntimeState, effect: dict[str, Any]) -> No
     if actor.wild_shape_active:
         return
 
+    distance_moved_this_turn = max(0.0, float(actor.speed_ft) - float(actor.movement_remaining))
+
     actor.wild_shape_base_snapshot = {
         "max_hp": actor.max_hp,
         "hp": actor.hp,
@@ -9978,7 +9980,7 @@ def _activate_wild_shape(actor: ActorRuntimeState, effect: dict[str, Any]) -> No
     actor.speed_ft = _coerce_int(
         effect.get("speed_ft"), int(movement_modes.get("walk", actor.speed_ft))
     )
-    actor.movement_remaining = float(actor.speed_ft)
+    actor.movement_remaining = max(0.0, float(actor.speed_ft) - distance_moved_this_turn)
 
     if "str_mod" in effect:
         actor.str_mod = _coerce_int(effect.get("str_mod"), actor.str_mod)
@@ -10007,6 +10009,7 @@ def _revert_wild_shape(actor: ActorRuntimeState) -> None:
     if not actor.wild_shape_active:
         return
 
+    distance_moved_this_turn = max(0.0, float(actor.speed_ft) - float(actor.movement_remaining))
     snapshot = dict(actor.wild_shape_base_snapshot)
     if snapshot:
         actor.max_hp = _coerce_int(snapshot.get("max_hp"), actor.max_hp)
@@ -10038,7 +10041,7 @@ def _revert_wild_shape(actor: ActorRuntimeState) -> None:
     actor.wild_shape_form_name = None
     actor.wild_shape_base_snapshot = {}
     actor.discard_manual_condition("wild_shaped")
-    actor.movement_remaining = min(actor.movement_remaining, float(actor.speed_ft))
+    actor.movement_remaining = max(0.0, float(actor.speed_ft) - distance_moved_this_turn)
 
 
 def _tick_conditions_for_actor(
