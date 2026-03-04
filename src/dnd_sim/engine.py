@@ -3233,6 +3233,7 @@ def _duration_text_from_rounds(*, rounds: int, concentration: bool) -> str:
 
 
 _SINGLE_TARGET_FAMILY_TAG = "spell_family:single_target"
+_AREA_FAMILY_TAG = "spell_family:area"
 _MULTI_TARGET_COUNT_TOKEN_RE = (
     r"(?:[1-9]\d*|one|two|three|four|five|six|seven|eight|nine|ten|"
     r"eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)"
@@ -3290,19 +3291,104 @@ _ALLY_MULTI_TARGET_HINTS = (
     "injured creature",
     "injured creatures",
 )
+_SPELL_TEXT_DASH_RE = re.compile(r"[\u00ad\u2010\u2011\u2012\u2013\u2014\u2212]")
+_AOE_TEMPLATE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("line", re.compile(r"\bline\s+(?P<size>\d+)\s*feet?\s*long\b", flags=re.IGNORECASE)),
+    ("line", re.compile(r"\b(?P<size>\d+)\s*-\s*foot-long\s+line\b", flags=re.IGNORECASE)),
+    ("sphere", re.compile(r"\b(?P<size>\d+)\s*-\s*foot-radius\s+sphere\b", flags=re.IGNORECASE)),
+    ("sphere", re.compile(r"\b(?P<size>\d+)\s*-\s*foot\s+sphere\b", flags=re.IGNORECASE)),
+    ("cone", re.compile(r"\b(?P<size>\d+)\s*-\s*foot\s+cone\b", flags=re.IGNORECASE)),
+    (
+        "cylinder",
+        re.compile(
+            r"\b(?P<size>\d+)\s*-\s*foot-radius(?:[^.]{0,80})\bcylinder\b",
+            flags=re.IGNORECASE,
+        ),
+    ),
+    ("cube", re.compile(r"\b(?P<size>\d+)\s*-\s*foot\s+cube\b", flags=re.IGNORECASE)),
+    ("line", re.compile(r"\b(?P<size>\d+)\s*-\s*foot\s+line\b", flags=re.IGNORECASE)),
+)
+_AREA_SELF_ORIGIN_HINTS = (
+    "centered on you",
+    "around you",
+    "radiates from you",
+    "emanates from you",
+    "from you",
+)
+
+
+def _normalize_spell_inference_text(text: str) -> str:
+    normalized = str(text or "").lower().replace("’", "'")
+    normalized = _SPELL_TEXT_DASH_RE.sub("-", normalized)
+    normalized = re.sub(r"\s*-\s*", "-", normalized)
+    normalized = re.sub(r"-{2,}", "-", normalized)
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.strip()
+
+
+def _is_self_range_text(range_text: str) -> bool:
+    return _normalize_spell_inference_text(range_text).startswith("self")
+
+
+def _infer_area_template_from_description(
+    *,
+    description: str,
+) -> tuple[str | None, int | None]:
+    normalized = _normalize_spell_inference_text(description)
+    if not normalized:
+        return None, None
+    has_area_targeting_phrase = any(
+        marker in normalized
+        for marker in (
+            "each creature in",
+            "creature in the",
+            "creatures in the",
+            "targets in the",
+        )
+    )
+    if not has_area_targeting_phrase:
+        return None, None
+    for aoe_type, pattern in _AOE_TEMPLATE_PATTERNS:
+        match = pattern.search(normalized)
+        if not match:
+            continue
+        try:
+            size = int(match.group("size"))
+        except (TypeError, ValueError):
+            continue
+        if size <= 0:
+            continue
+        return aoe_type, size
+    return None, None
+
+
+def _area_template_uses_self_origin(
+    *,
+    aoe_type: str,
+    range_text: str,
+    description: str,
+) -> bool:
+    if aoe_type in {"line", "cone"}:
+        return False
+    if _is_self_range_text(range_text):
+        return True
+    normalized_description = _normalize_spell_inference_text(description)
+    return any(marker in normalized_description for marker in _AREA_SELF_ORIGIN_HINTS)
 
 
 def _parse_sheet_spell_range_ft(range_text: str) -> int | None:
-    normalized = str(range_text).strip().lower()
+    normalized = _normalize_spell_inference_text(range_text)
     if not normalized:
         return None
+    if normalized.startswith("self"):
+        return 0
     if "touch" in normalized:
         return 5
 
-    range_match = re.search(r"(\d+)\s*ft", normalized)
+    range_match = re.search(r"(\d+)\s*(?:-| )?\s*ft\b", normalized)
     if range_match:
         return int(range_match.group(1))
-    feet_match = re.search(r"(\d+)\s*feet", normalized)
+    feet_match = re.search(r"(\d+)\s*(?:-| )?\s*feet\b", normalized)
     if feet_match:
         return int(feet_match.group(1))
     return None
@@ -3589,22 +3675,53 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             hydrated["half_on_save"] = False
 
         description = str(
-            (
-                spell_def.get("description")
-                or spell_def.get("description_raw")
-                or ""
-            )
+            (spell_def.get("description") or spell_def.get("description_raw") or "")
             if isinstance(spell_def, dict)
             else ""
         ).strip()
+        effective_range_text = range_text
+        if not effective_range_text and isinstance(spell_def, dict):
+            effective_range_text = str(spell_def.get("range") or "")
+        action_type = str(hydrated.get("action_type", "utility"))
+        aoe_type = str(hydrated.get("aoe_type", "")).strip().lower()
+        if not aoe_type:
+            inferred_aoe_type, inferred_aoe_size = _infer_area_template_from_description(
+                description=description
+            )
+            if inferred_aoe_type and inferred_aoe_size is not None:
+                hydrated["aoe_type"] = inferred_aoe_type
+                hydrated["aoe_size_ft"] = inferred_aoe_size
+                aoe_type = inferred_aoe_type
+                if _area_template_uses_self_origin(
+                    aoe_type=inferred_aoe_type,
+                    range_text=effective_range_text,
+                    description=description,
+                ):
+                    tags = [
+                        str(tag).strip() for tag in hydrated.get("tags", []) if str(tag).strip()
+                    ]
+                    tags.append("aoe_origin:self")
+                    hydrated["tags"] = list(dict.fromkeys(tags))
+        parsed_range = _coerce_non_negative_int(hydrated.get("range_ft"))
+        aoe_size = _coerce_non_negative_int(hydrated.get("aoe_size_ft"))
+        if (
+            _is_self_range_text(effective_range_text)
+            and (parsed_range is None or parsed_range == 0)
+            and aoe_size is not None
+            and aoe_size > 0
+        ):
+            hydrated["range_ft"] = aoe_size
+
         target_mode = str(hydrated.get("target_mode", "")).strip().lower()
         non_single_target = not hydrated.get(
             "aoe_type"
         ) and _description_is_probably_non_single_target(description)
         if not target_mode:
-            if non_single_target:
+            if hydrated.get("aoe_type") and action_type in {"attack", "save"}:
+                target_mode = "single_enemy"
+            elif non_single_target:
                 target_mode = _infer_multi_target_mode_from_description(
-                    action_type=str(hydrated.get("action_type", "utility")),
+                    action_type=action_type,
                     description=description,
                 )
             elif hydrated.get("healing") or "friendly creature" in description.lower():
@@ -3612,6 +3729,13 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             else:
                 target_mode = "single_enemy"
             hydrated["target_mode"] = target_mode
+
+        if hydrated.get("aoe_type"):
+            tags = [str(tag).strip() for tag in hydrated.get("tags", []) if str(tag).strip()]
+            tags.append(_AREA_FAMILY_TAG)
+            if "you can see" in description.lower():
+                tags.append("requires_sight")
+            hydrated["tags"] = list(dict.fromkeys(tags))
 
         if (
             target_mode in {"single_enemy", "single_ally"}
@@ -6728,7 +6852,15 @@ def _action_range_ft(action: ActionDefinition) -> float | None:
     if action.target_mode == "self":
         return None
     if action.range_ft is not None:
-        return float(action.range_ft)
+        explicit_range = float(action.range_ft)
+        if explicit_range <= 0 and _has_action_tag(action, "spell"):
+            # Self-range spell payloads are represented as range 0. If an area/control
+            # spell misses template inference, do not suppress casting solely because
+            # this placeholder value fails range gating.
+            if action.action_type == "attack":
+                return 5.0
+            return None
+        return explicit_range
     if action.range_normal_ft is not None:
         return float(action.range_normal_ft)
     if action.reach_ft is not None:
@@ -7584,6 +7716,7 @@ def _coerce_positive_distance(value: Any) -> float | None:
 def _template_origin_for_primary(
     *,
     actor: ActorRuntimeState,
+    action: ActionDefinition,
     primary: ActorRuntimeState,
     aoe_type: str,
     spell_cast_request: SpellCastRequest | None,
@@ -7591,6 +7724,8 @@ def _template_origin_for_primary(
     if spell_cast_request is not None and spell_cast_request.origin is not None:
         raw = spell_cast_request.origin
         return (float(raw[0]), float(raw[1]), float(raw[2]))
+    if _has_tag(action, "aoe_origin:self"):
+        return actor.position
     if aoe_type in {"sphere", "cylinder", "cube"}:
         return primary.position
     return actor.position
@@ -7646,6 +7781,7 @@ def _resolve_template_targets(
     for primary in primaries:
         origin = _template_origin_for_primary(
             actor=actor,
+            action=action,
             primary=primary,
             aoe_type=aoe_type,
             spell_cast_request=spell_cast_request,
