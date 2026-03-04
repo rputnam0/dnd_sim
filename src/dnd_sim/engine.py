@@ -3474,7 +3474,13 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             hydrated["half_on_save"] = False
 
         description = str(
-            (spell_def or {}).get("description") if isinstance(spell_def, dict) else ""
+            (
+                spell_def.get("description")
+                or spell_def.get("description_raw")
+                or ""
+            )
+            if isinstance(spell_def, dict)
+            else ""
         ).strip()
         target_mode = str(hydrated.get("target_mode", "")).strip().lower()
         non_single_target = not hydrated.get(

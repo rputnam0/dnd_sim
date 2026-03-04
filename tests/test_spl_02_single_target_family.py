@@ -259,6 +259,37 @@ def test_multi_target_wording_does_not_get_single_target_family_tag(monkeypatch)
         assert "spell_family:single_target" not in tags
 
 
+def test_none_description_falls_back_to_description_raw_for_target_inference(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "dnd_sim.engine._load_spell_definition",
+        lambda _name: {
+            "name": "Circle of Shelter",
+            "level": 3,
+            "casting_time": "1 action",
+            "range_ft": 60,
+            "duration_rounds": 10,
+            "description": None,
+            "description_raw": (
+                "Up to ten willing creatures of your choice that you can see within range "
+                "gain resistance to fire damage."
+            ),
+            "mechanics": [],
+        },
+    )
+
+    spells = _extract_spells_from_raw_fields(
+        _sheet_payload_for_spell(name="Circle of Shelter", duration_text="1 minute")
+    )
+
+    assert len(spells) == 1
+    spell = spells[0]
+    assert spell["target_mode"] == "all_allies"
+    assert spell["target_mode"] != "single_enemy"
+    assert "spell_family:single_target" not in set(spell.get("tags", []))
+
+
 def test_real_spell_multi_target_wording_never_defaults_to_single_enemy(monkeypatch) -> None:
     spell_definitions = {
         "Mass Suggestion": {
