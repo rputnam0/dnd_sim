@@ -387,7 +387,8 @@ def druid_wild_shape_action_legal(actor: ActorRuntimeState, action: ActionDefini
     action_key = str(action.name).strip().lower()
     normalized_tags = {str(tag).strip().lower() for tag in action.tags}
     is_wild_shape_revert = (
-        action_key == "wild_shape_revert" or "wild_shape_revert" in normalized_tags
+        action_key in {"wild_shape_revert", "revert_wild_shape"}
+        or "wild_shape_revert" in normalized_tags
     )
     is_wild_shape = (action_key == "wild_shape" or "wild_shape" in normalized_tags) and (
         not is_wild_shape_revert
@@ -675,6 +676,29 @@ def apply_damage_bundle(
         consumed = min(target.temp_hp, remaining)
         target.temp_hp -= consumed
         remaining -= consumed
+
+    if bool(getattr(target, "wild_shape_active", False)) and remaining > 0:
+        current_form_hp = max(0, int(target.hp))
+        if remaining < current_form_hp:
+            target.hp = current_form_hp - remaining
+            return resolution
+
+        overflow = max(0, remaining - current_form_hp)
+        target.hp = 0
+        _remove_condition_everywhere(target, "wild_shaped")
+
+        if overflow > 0:
+            overflow_damage_type = (
+                resolution.packets[0].damage_type if resolution.packets else "bludgeoning"
+            )
+            apply_damage(
+                target,
+                overflow,
+                overflow_damage_type,
+                is_critical=is_critical,
+                source=source,
+            )
+        return resolution
 
     def _mark_dead() -> None:
         target.dead = True
