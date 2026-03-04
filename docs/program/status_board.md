@@ -1,5 +1,7 @@
 # Program Status Board
 
+Last updated: 2026-03-03
+
 Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 ## Wave 1
@@ -63,23 +65,23 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task | Owner Agent | Branch | PR | Status | Notes |
 |---|---|---|---|---|---|
-| CHR-04 | unassigned | feat/chr-04-barbarian-package | - | not_started | |
-| CHR-05 | unassigned | feat/chr-05-bard-package | - | not_started | |
-| CHR-06 | unassigned | feat/chr-06-cleric-package | - | not_started | |
-| CHR-07 | unassigned | feat/chr-07-druid-wild-shape | - | not_started | |
-| CHR-08 | unassigned | feat/chr-08-fighter-package | - | not_started | |
-| CHR-09 | unassigned | feat/chr-09-monk-package | - | not_started | |
-| CHR-10 | unassigned | feat/chr-10-paladin-package | - | not_started | |
-| CHR-11 | unassigned | feat/chr-11-ranger-package | - | not_started | |
-| CHR-12 | unassigned | feat/chr-12-rogue-package | - | not_started | |
-| CHR-13 | unassigned | feat/chr-13-sorcerer-package | - | not_started | |
-| CHR-14 | unassigned | feat/chr-14-warlock-package | - | not_started | |
-| CHR-15 | unassigned | feat/chr-15-wizard-package | - | not_started | |
-| CHR-16 | unassigned | feat/chr-16-content-completeness | - | not_started | |
-| SPL-02 | unassigned | feat/spl-02-single-target-family | - | not_started | |
-| SPL-03 | unassigned | feat/spl-03-area-family | - | not_started | |
-| SPL-04 | unassigned | feat/spl-04-summon-conjure-transform | - | not_started | |
-| SPL-05 | unassigned | feat/spl-05-rituals-dispels-antimagic | - | not_started | |
+| CHR-04 | agent_w4_barbarian | feat/chr-04-barbarian-package | https://github.com/rputnam0/dnd_sim/pull/64 | merged | Merged to `int/wave-4-integration` after review remediation and rebase pass |
+| CHR-05 | agent_w4_bard | feat/chr-05-bard-package | https://github.com/rputnam0/dnd_sim/pull/67 | merged | Merged to `int/wave-4-integration` after remediation and rebase pass |
+| CHR-06 | agent_w4_cleric | feat/chr-06-cleric-package | https://github.com/rputnam0/dnd_sim/pull/69 | merged | Merged to `int/wave-4-integration` after rebase/test pass |
+| CHR-07 | agent_w4_druid | feat/chr-07-druid-wild-shape | https://github.com/rputnam0/dnd_sim/pull/72 | merged | Merged to `int/wave-4-integration` after behavior remediation and conflict rebase pass |
+| CHR-08 | agent_w4_fighter | feat/chr-08-fighter-package | https://github.com/rputnam0/dnd_sim/pull/62 | merged | Merged to `int/wave-4-integration` after dual remediation passes |
+| CHR-09 | agent_w4_monk | feat/chr-09-monk-package | https://github.com/rputnam0/dnd_sim/pull/65 | merged | Merged to `int/wave-4-integration` after review remediation and rebase pass |
+| CHR-10 | agent_w4_paladin | feat/chr-10-paladin-package | https://github.com/rputnam0/dnd_sim/pull/73 | merged | Merged after declared smite fix and compatibility fallback remediation (`lay_on_hands_pool`) |
+| CHR-11 | agent_w4_ranger | feat/chr-11-ranger-package | https://github.com/rputnam0/dnd_sim/pull/68 | merged | Merged to `int/wave-4-integration` after Colossus Slayer timing remediation |
+| CHR-12 | agent_w4_rogue | feat/chr-12-rogue-package | https://github.com/rputnam0/dnd_sim/pull/63 | merged | Merged to `int/wave-4-integration` after review remediation and rebase pass |
+| CHR-13 | agent_w4_sorcerer | feat/chr-13-sorcerer-package | https://github.com/rputnam0/dnd_sim/pull/71 | merged | Merged after coverage remediation and hotspot conflict rebase pass |
+| CHR-14 | agent_w4_warlock | feat/chr-14-warlock-package | https://github.com/rputnam0/dnd_sim/pull/66 | merged | Merged to `int/wave-4-integration` after fallback harmonization and rebase pass |
+| CHR-15 | agent_w4_wizard | feat/chr-15-wizard-package | https://github.com/rputnam0/dnd_sim/pull/70 | merged | Merged after coverage remediation and rebase/test pass |
+| CHR-16 | agent_w4_content | feat/chr-16-content-completeness | https://github.com/rputnam0/dnd_sim/pull/74 | merged | Merged to `int/wave-4-integration` after content reference validation + SQLite error-handling remediation |
+| SPL-02 | agent_w4_spell_single | feat/spl-02-single-target-family | https://github.com/rputnam0/dnd_sim/pull/75 | merged | Merged after multi-pass inference/remediation loop and rebase gate |
+| SPL-03 | agent_w4_spell_area | feat/spl-03-area-family | https://github.com/rputnam0/dnd_sim/pull/78 | merged | Merged after self-range area inference remediations and rebase gate |
+| SPL-04 | agent_w4_spell_summon | feat/spl-04-summon-conjure-transform | https://github.com/rputnam0/dnd_sim/pull/77 | merged | Merged after transform/schema/summarization hardening and rebase gate |
+| SPL-05 | agent_w4_spell_special | feat/spl-05-rituals-dispels-antimagic | https://github.com/rputnam0/dnd_sim/pull/76 | merged | Merged after zone/dispel/concentration + ritual legality remediation and rebase gate |
 
 ## Wave 5
 
@@ -106,3 +108,21 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - 2026-03-03: Additional FND-05 high-severity edge discovered in OA/off-turn reaction turn-context propagation; final narrow remediation requested before merge.
 - 2026-03-03: Opened clean integration PR #18 (`feat/wave1-clean-foundation-integration`) for reviewer verification of finalized FND-05 after resolving gh-api review findings.
 - 2026-03-03: Wave 1 closeout PR #22 (`int/wave-1-closeout`) merged to `main` with commit `1aefbb1de3d992d7cbd21d42340aed0c1909de0b`, consolidating FND-06 and orchestration/tracking fixes.
+- 2026-03-03: Wave 4 orchestration initialized on `int/wave-4-integration`; Subwave 4A task branches/worktrees created for `CHR-04`, `CHR-08`, `CHR-09`, `CHR-12`.
+- 2026-03-03: Subwave 4A PRs merged (`#62`, `#64`, `#65`, `#63`) to `int/wave-4-integration` with mandatory gh-api comment/review loops and rebase gates completed.
+- 2026-03-03: Subwave 4A gate passed on integration head (`uv run --with pytest python -m pytest -q`, exit code 0).
+- 2026-03-03: Subwave 4B launched for `CHR-05`, `CHR-06`, `CHR-11`, and `CHR-14` with dedicated worker worktrees.
+- 2026-03-03: Subwave 4B PRs merged (`#67`, `#68`, `#66`, `#69`) to `int/wave-4-integration` with gh-api review loops and rebase gates completed.
+- 2026-03-03: Subwave 4B gate passed on integration head `20a5ce2` (`uv run --with pytest python -m pytest -q`, exit code 0).
+- 2026-03-03: Subwave 4C launched for `CHR-07`, `CHR-10`, `CHR-13`, and `CHR-15` with dedicated worker worktrees.
+- 2026-03-03: Subwave 4C PRs merged (`#70`, `#71`, `#72`, `#73`) to `int/wave-4-integration` after gh-api review loops, remediation commits, and hotspot rebases.
+- 2026-03-03: Subwave 4C gate passed on integration head `f6b9666` (`uv run --with pytest python -m pytest -q`, exit code 0).
+- 2026-03-03: Subwave 4D launched for `CHR-16` (`All 2014 Sources`) on `feat/chr-16-content-completeness`.
+- 2026-03-03: Subwave 4D PR merged (`#74`) to `int/wave-4-integration` after explorer/bot remediation (`9b1c8ec`) and rebase gate pass.
+- 2026-03-03: Subwave 4D gate passed on integration head `2d46cca` (`uv run --with pytest python -m pytest -q`, exit code 0).
+- 2026-03-03: Subwave 4E launched for `SPL-02` and `SPL-05` on `feat/spl-02-single-target-family` and `feat/spl-05-rituals-dispels-antimagic`.
+- 2026-03-04: Subwave 4E PRs merged (`#75`, `#76`) to `int/wave-4-integration` after repeated explorer+gh-api remediation loops and mandatory rebases.
+- 2026-03-04: Subwave 4E gate passed on integration head `fcac1b7` (`uv run --with pytest python -m pytest -q`, exit code 0).
+- 2026-03-04: Subwave 4F launched for `SPL-03` and `SPL-04` on `feat/spl-03-area-family` and `feat/spl-04-summon-conjure-transform`.
+- 2026-03-04: Subwave 4F PRs merged (`#78`, `#77`) to `int/wave-4-integration` after multi-pass explorer and gh-api remediation loops, plus mandatory rebases.
+- 2026-03-04: Final Wave 4 integration gate passed on `int/wave-4-integration` head `c7e3777` (`uv run --with pytest python -m pytest -q`, exit code 0).

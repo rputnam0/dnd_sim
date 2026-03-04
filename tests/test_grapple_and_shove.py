@@ -27,7 +27,9 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
     )
 
 
-def _trackers(*actors: ActorRuntimeState) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, dict[str, int]]]:
+def _trackers(
+    *actors: ActorRuntimeState,
+) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, dict[str, int]]]:
     damage_dealt = {actor.actor_id: 0 for actor in actors}
     damage_taken = {actor.actor_id: 0 for actor in actors}
     threat_scores = {actor.actor_id: 0 for actor in actors}
@@ -145,3 +147,59 @@ def test_grappled_target_can_use_action_to_escape(monkeypatch) -> None:
     )
 
     assert "grappled" not in grappled.conditions
+
+
+def test_grapple_follow_up_does_not_inherit_action_surge_attack_volume(monkeypatch) -> None:
+    monkeypatch.setattr("dnd_sim.rules_2014.run_contested_check", lambda *_args, **_kwargs: True)
+
+    attacker = _base_actor(actor_id="attacker", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    target.position = (5.0, 0.0, 0.0)
+
+    grapple = ActionDefinition(name="grapple", action_type="grapple", action_cost="action")
+    basic = ActionDefinition(
+        name="basic",
+        action_type="attack",
+        action_cost="action",
+        to_hit=20,
+        damage="1",
+        damage_type="bludgeoning",
+        attack_count=2,
+        range_ft=5,
+    )
+    action_surge = ActionDefinition(
+        name="action_surge",
+        action_type="attack",
+        action_cost="action",
+        to_hit=20,
+        damage="1",
+        damage_type="bludgeoning",
+        attack_count=4,
+        range_ft=5,
+        resource_cost={"action_surge": 1},
+        tags=["action_surge", "fighter_action_surge"],
+    )
+    attacker.actions = [grapple, basic, action_surge]
+    attacker.resources["action_surge"] = 1
+
+    actors = {attacker.actor_id: attacker, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(attacker, target)
+
+    _execute_action(
+        rng=random.Random(17),
+        actor=attacker,
+        action=grapple,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "grappled" in target.conditions
+    assert damage_dealt[attacker.actor_id] == 1
+    assert damage_taken[target.actor_id] == 1
+    assert attacker.resources["action_surge"] == 1
+    assert resources_spent[attacker.actor_id].get("action_surge", 0) == 0

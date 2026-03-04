@@ -8,9 +8,11 @@ import pytest
 
 from dnd_sim.engine import (
     _action_available,
+    _build_actor_from_character,
     _execute_action,
     _resolve_targets_for_action,
     _run_opportunity_attacks_for_movement,
+    TurnDeclarationValidationError,
     run_simulation,
 )
 from dnd_sim.inventory import InventoryItem
@@ -141,6 +143,42 @@ class DeclaredTacticalChoiceStrategy(BaseStrategy):
             ),
             bonus_action=bonus_action,
             rationale={"tactical_choices": {"bonus_action": self._bonus_action_name}},
+        )
+
+
+class DeclaredMonkFlurryPlanStrategy(BaseStrategy):
+    def __init__(self, *, include_action: bool, bonus_action_name: str = "flurry_of_blows"):
+        self._include_action = include_action
+        self._bonus_action_name = bonus_action_name
+
+    def declare_turn(self, actor, state):
+        enemies = [
+            view for view in state.actors.values() if view.team != actor.team and view.hp > 0
+        ]
+        if not enemies:
+            return TurnDeclaration()
+
+        target = enemies[0]
+        move_to = (
+            float(target.position[0]),
+            float(target.position[1] - 5.0),
+            float(target.position[2]),
+        )
+
+        action = None
+        if self._include_action:
+            action = DeclaredAction(
+                action_name="basic",
+                targets=[TargetRef(actor_id=target.actor_id)],
+            )
+
+        return TurnDeclaration(
+            movement_path=[actor.position, move_to],
+            action=action,
+            bonus_action=DeclaredAction(
+                action_name=self._bonus_action_name,
+                targets=[TargetRef(actor_id=target.actor_id)],
+            ),
         )
 
 
@@ -526,6 +564,235 @@ def test_monk_flurry_is_not_auto_spent_without_declared_bonus_action(tmp_path: P
     ).summary.to_dict()
 
     assert summary["per_actor_resources_spent"]["monk"]["ki"]["mean"] == pytest.approx(0.0)
+
+
+def test_declared_monk_flurry_requires_attack_action_before_bonus_step(tmp_path: Path) -> None:
+    monk = build_character(
+        character_id="monk",
+        name="Monk",
+        max_hp=38,
+        ac=16,
+        to_hit=7,
+        damage="1d8+4",
+        ki=2,
+    )
+    monk["class_level"] = "Monk 5"
+    monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
+
+    enemies = [build_enemy(enemy_id="tank", name="Tank", hp=80, ac=12, to_hit=1, damage="1")]
+    scenario_path = _setup_env(
+        tmp_path / "monk_illegal_bonus",
+        party=[monk],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+        max_rounds=1,
+    )
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        run_simulation(
+            loaded,
+            db,
+            {},
+            {
+                "party_strategy": DeclaredMonkFlurryPlanStrategy(include_action=False),
+                "enemy_strategy": BaseStrategy(),
+            },
+            trials=1,
+            seed=29,
+            run_id="monk_illegal_bonus",
+        )
+
+    assert exc_info.value.code == "unavailable_action"
+    assert exc_info.value.actor_id == "monk"
+    assert exc_info.value.field == "bonus_action.action_name"
+
+
+def test_declared_monk_martial_arts_bonus_requires_attack_action_before_bonus_step(
+    tmp_path: Path,
+) -> None:
+    monk = build_character(
+        character_id="monk",
+        name="Monk",
+        max_hp=38,
+        ac=16,
+        to_hit=7,
+        damage="1d8+4",
+        ki=1,
+    )
+    monk["class_level"] = "Monk 5"
+    monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
+
+    enemies = [build_enemy(enemy_id="tank", name="Tank", hp=80, ac=12, to_hit=1, damage="1")]
+    scenario_path = _setup_env(
+        tmp_path / "monk_illegal_martial_arts_bonus",
+        party=[monk],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+        max_rounds=1,
+    )
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        run_simulation(
+            loaded,
+            db,
+            {},
+            {
+                "party_strategy": DeclaredMonkFlurryPlanStrategy(
+                    include_action=False, bonus_action_name="martial_arts_bonus"
+                ),
+                "enemy_strategy": BaseStrategy(),
+            },
+            trials=1,
+            seed=43,
+            run_id="monk_illegal_martial_arts_bonus",
+        )
+
+    assert exc_info.value.code == "unavailable_action"
+    assert exc_info.value.actor_id == "monk"
+    assert exc_info.value.field == "bonus_action.action_name"
+
+    legal_run = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredMonkFlurryPlanStrategy(
+                include_action=True, bonus_action_name="martial_arts_bonus"
+            ),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=43,
+        run_id="monk_legal_martial_arts_bonus",
+    )
+    assert legal_run.trial_results[0].resources_spent["monk"].get("ki", 0) == 0
+
+
+def test_declared_monk_flurry_spends_ki_deterministically(tmp_path: Path) -> None:
+    monk = build_character(
+        character_id="monk",
+        name="Monk",
+        max_hp=38,
+        ac=16,
+        to_hit=7,
+        damage="1d8+4",
+        ki=2,
+    )
+    monk["class_level"] = "Monk 5"
+    monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
+    enemies = [build_enemy(enemy_id="tank", name="Tank", hp=200, ac=12, to_hit=1, damage="1")]
+    scenario_path = _setup_env(
+        tmp_path / "monk_flurry_declared",
+        party=[monk],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+        max_rounds=1,
+    )
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    run_a = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredMonkFlurryPlanStrategy(include_action=True),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=77,
+        run_id="monk_flurry_a",
+    )
+    run_b = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredMonkFlurryPlanStrategy(include_action=True),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=77,
+        run_id="monk_flurry_b",
+    )
+
+    assert run_a.trial_results[0].resources_spent["monk"].get("ki", 0) == 1
+    assert run_b.trial_results[0].resources_spent["monk"].get("ki", 0) == 1
+    summary_a = run_a.summary.to_dict()
+    summary_b = run_b.summary.to_dict()
+    summary_a.pop("run_id", None)
+    summary_b.pop("run_id", None)
+    assert summary_a == summary_b
+
+
+def test_declared_monk_flurry_ki_restores_after_long_rest_between_encounters(
+    tmp_path: Path,
+) -> None:
+    monk = build_character(
+        character_id="monk",
+        name="Monk",
+        max_hp=38,
+        ac=16,
+        to_hit=7,
+        damage="1d8+4",
+        ki=1,
+    )
+    monk["class_level"] = "Monk 5"
+    monk["traits"] = ["Extra Attack", "Martial Arts", "Flurry of Blows"]
+    enemies = [build_enemy(enemy_id="spark", name="Spark", hp=20, ac=10, to_hit=0, damage="0")]
+
+    scenario_path = _setup_env(
+        tmp_path / "monk_ki_lifecycle",
+        party=[monk],
+        enemies=enemies,
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+        max_rounds=1,
+    )
+    payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    payload["enemies"] = []
+    payload["encounters"] = [
+        {"enemies": ["spark"], "long_rest_after": True, "checkpoint": "after_first"},
+        {"enemies": ["spark"], "checkpoint": "after_second"},
+    ]
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    run = run_simulation(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": DeclaredMonkFlurryPlanStrategy(include_action=True),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=101,
+        run_id="monk_ki_lifecycle",
+    )
+    trial = run.trial_results[0]
+
+    assert trial.rounds == 2
+    assert trial.resources_spent["monk"].get("ki", 0) == 2
+    assert trial.state_snapshots[0]["party"]["monk"]["resources"]["ki"] == 1
+    assert trial.state_snapshots[1]["party"]["monk"]["resources"]["ki"] == 0
 
 
 def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
@@ -1255,6 +1522,33 @@ def _runtime_actor(*, actor_id: str, team: str, hp: int = 30) -> ActorRuntimeSta
     )
 
 
+def _rogue_character_payload(*, level: int, traits: list[str] | None = None) -> dict[str, object]:
+    return {
+        "character_id": f"rogue_{level}",
+        "name": f"Rogue {level}",
+        "class_level": f"Rogue {level}",
+        "max_hp": 34,
+        "ac": 15,
+        "speed_ft": 30,
+        "ability_scores": {"str": 10, "dex": 18, "con": 14, "int": 12, "wis": 10, "cha": 12},
+        "save_mods": {"str": 0, "dex": 6, "con": 2, "int": 1, "wis": 0, "cha": 1},
+        "skill_mods": {},
+        "attacks": [
+            {
+                "name": "Rapier",
+                "to_hit": 10,
+                "damage": "1d1",
+                "damage_type": "piercing",
+                "weapon_properties": ["finesse"],
+            }
+        ],
+        "resources": {},
+        "traits": list(traits or []),
+        "raw_fields": [],
+        "source": {"pdf_name": "fixture.pdf"},
+    }
+
+
 def test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn() -> None:
     rogue = _actor("rogue", "party")
     ally = _actor("ally", "party")
@@ -1313,6 +1607,58 @@ def test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn() 
     )
 
     # Rogue should land Sneak Attack on own turn (12) and again on enemy turn OA (8).
+    assert damage_dealt[rogue.actor_id] == 20
+    assert rogue.reaction_available is False
+
+
+def test_rogue_package_applies_sneak_attack_on_turn_and_enemy_turn_reaction() -> None:
+    rogue = _build_actor_from_character(_rogue_character_payload(level=3), traits_db={})
+    ally = _actor("ally", "party")
+    enemy = _actor("enemy", "enemy")
+
+    rogue.position = (0.0, 0.0, 0.0)
+    ally.position = (5.0, 0.0, 0.0)
+    enemy.position = (5.0, 0.0, 0.0)
+    basic_attack = next(action for action in rogue.actions if action.name == "basic")
+
+    actors = {rogue.actor_id: rogue, ally.actor_id: ally, enemy.actor_id: enemy}
+    damage_dealt = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    damage_taken = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    threat_scores = {rogue.actor_id: 0, ally.actor_id: 0, enemy.actor_id: 0}
+    resources_spent = {rogue.actor_id: {}, ally.actor_id: {}, enemy.actor_id: {}}
+
+    _execute_action(
+        rng=_FixedRng([15, 1, 6, 5]),
+        actor=rogue,
+        action=basic_attack,
+        targets=[enemy],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:rogue",
+    )
+
+    _run_opportunity_attacks_for_movement(
+        rng=_FixedRng([15, 1, 4, 3]),
+        mover=enemy,
+        start_pos=(5.0, 0.0, 0.0),
+        end_pos=(20.0, 0.0, 0.0),
+        movement_path=[(5.0, 0.0, 0.0), (20.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:enemy",
+    )
+
+    assert "sneak attack" in rogue.traits
     assert damage_dealt[rogue.actor_id] == 20
     assert rogue.reaction_available is False
 

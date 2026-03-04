@@ -9,6 +9,7 @@ from dnd_sim.engine import (
     _apply_effect,
     _action_available,
     _build_actor_from_character,
+    _class_levels_from_character_payload,
     _build_actor_views,
     _build_actor_from_enemy,
     _create_combat_timing_engine,
@@ -67,6 +68,14 @@ def test_parse_recharge_threshold_supports_common_monster_formats() -> None:
     assert _parse_recharge_threshold("Recharge 6") == 6
     assert _parse_recharge_threshold("(Recharge 5-6)") == 5
     assert _parse_recharge_threshold("Recharge seven") is None
+
+
+def test_class_levels_payload_falls_back_to_class_level_text_when_explicit_levels_empty() -> None:
+    character = {"class_levels": {}, "class_level": "Rogue 5 / Fighter 1"}
+
+    class_levels = _class_levels_from_character_payload(character)
+
+    assert class_levels == {"rogue": 5, "fighter": 1}
 
 
 def test_saving_throw_consumes_legendary_resistance_on_failed_save() -> None:

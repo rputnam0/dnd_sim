@@ -346,6 +346,71 @@ def _has_trait(actor: ActorRuntimeState, trait_name: str) -> bool:
     return any(_normalize_trait_name(key) == needle for key in actor.traits.keys())
 
 
+def _has_monk_martial_arts_context(actor: ActorRuntimeState) -> bool:
+    monk_level = int(actor.class_levels.get("monk", 0))
+    if monk_level > 0:
+        return True
+    return _has_trait(actor, "martial arts") or _has_trait(actor, "flurry of blows")
+
+
+def monk_bonus_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if action.action_cost != "bonus":
+        return True
+    if not _has_monk_martial_arts_context(actor):
+        return True
+
+    action_key = str(action.name).strip().lower()
+    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
+    is_monk_bonus_action = action_key in {"martial_arts_bonus", "flurry_of_blows"} or bool(
+        {"martial_arts", "flurry_of_blows"}.intersection(normalized_tags)
+    )
+    if not is_monk_bonus_action:
+        return True
+
+    return bool(actor.took_attack_action_this_turn)
+
+
+def ranger_vanish_bonus_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    if action.action_cost != "bonus":
+        return True
+
+    action_key = str(action.name).strip().lower()
+    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
+    is_vanish_action = action_key == "vanish_hide" or "vanish" in normalized_tags
+    if not is_vanish_action:
+        return True
+
+    return _has_trait(actor, "vanish")
+
+
+def druid_wild_shape_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
+    action_key = str(action.name).strip().lower()
+    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
+    is_wild_shape_revert = (
+        action_key == "wild_shape_revert" or "wild_shape_revert" in normalized_tags
+    )
+    is_wild_shape = (action_key == "wild_shape" or "wild_shape" in normalized_tags) and (
+        not is_wild_shape_revert
+    )
+
+    if not is_wild_shape and not is_wild_shape_revert:
+        return True
+
+    if is_wild_shape_revert:
+        return "wild_shaped" in actor.conditions
+
+    if not _has_trait(actor, "wild shape"):
+        return False
+
+    if action.action_cost == "reaction":
+        return "readied_response" in normalized_tags
+
+    if action.action_cost == "bonus":
+        return _has_trait(actor, "combat wild shape")
+
+    return action.action_cost in {"action", "none"}
+
+
 def _remove_condition_everywhere(target: ActorRuntimeState, condition: str) -> None:
     # Local import avoids module-level circular dependency.
     from dnd_sim.engine import _remove_condition
@@ -599,6 +664,12 @@ def apply_damage_bundle(
     if adjusted > 0 and "raging" in target.conditions:
         target.rage_sustained_since_last_turn = True
 
+    def _end_rage_if_active() -> None:
+        if "raging" not in target.conditions:
+            return
+        _remove_condition_everywhere(target, "raging")
+        target.rage_sustained_since_last_turn = False
+
     remaining = adjusted
     if target.temp_hp > 0 and remaining > 0:
         consumed = min(target.temp_hp, remaining)
@@ -610,6 +681,7 @@ def apply_damage_bundle(
         target.stable = False
         target.death_failures = max(3, target.death_failures)
         target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
+        _end_rage_if_active()
 
     if target.hp <= 0 and not target.dead:
         if remaining >= target.max_hp:
@@ -636,6 +708,7 @@ def apply_damage_bundle(
         if "prone" not in target.condition_immunities and "all" not in target.condition_immunities:
             downed_conditions.add("prone")
         target.update_manual_conditions(downed_conditions)
+        _end_rage_if_active()
         if not target.was_downed:
             target.downed_count += 1
             target.was_downed = True
