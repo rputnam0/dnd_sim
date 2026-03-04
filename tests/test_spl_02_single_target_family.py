@@ -259,6 +259,72 @@ def test_multi_target_wording_does_not_get_single_target_family_tag(monkeypatch)
         assert "spell_family:single_target" not in tags
 
 
+def test_real_spell_multi_target_wording_never_defaults_to_single_enemy(monkeypatch) -> None:
+    spell_definitions = {
+        "Mass Suggestion": {
+            "name": "Mass Suggestion",
+            "level": 6,
+            "casting_time": "1 action",
+            "range_ft": 60,
+            "duration_rounds": 240,
+            "description": (
+                "You suggest a course of activity to up to twelve creatures of your choice "
+                "that you can see within range."
+            ),
+            "mechanics": [],
+        },
+        "Animal Shapes": {
+            "name": "Animal Shapes",
+            "level": 8,
+            "casting_time": "1 action",
+            "range_ft": 30,
+            "duration_rounds": 240,
+            "description": (
+                "Your magic turns others into beasts. Choose any number of willing creatures "
+                "that you can see within range."
+            ),
+            "mechanics": [],
+        },
+        "Mass Heal": {
+            "name": "Mass Heal",
+            "level": 9,
+            "casting_time": "1 action",
+            "range_ft": 60,
+            "duration_rounds": 0,
+            "description": (
+                "A flood of healing energy flows from you into injured creatures around you. "
+                "Restore hit points divided as you choose among any number of creatures that "
+                "you can see within range."
+            ),
+            "mechanics": [],
+        },
+    }
+
+    monkeypatch.setattr(
+        "dnd_sim.engine._load_spell_definition", lambda name: spell_definitions.get(name)
+    )
+
+    cases = (
+        ("Mass Suggestion", "WIS 18", "all_enemies"),
+        ("Animal Shapes", "", "all_allies"),
+        ("Mass Heal", "", "all_allies"),
+    )
+    for name, save_hit, expected_mode in cases:
+        spells = _extract_spells_from_raw_fields(
+            _sheet_payload_for_spell(
+                name=name,
+                level_header="=== 6th LEVEL ===",
+                save_hit=save_hit,
+                duration_text="24 hours",
+            )
+        )
+        assert len(spells) == 1
+        spell = spells[0]
+        assert spell["target_mode"] == expected_mode
+        assert spell["target_mode"] != "single_enemy"
+        assert "spell_family:single_target" not in set(spell.get("tags", []))
+
+
 def test_single_target_spell_suppressed_by_invalid_state_and_line_of_effect(
     monkeypatch,
 ) -> None:

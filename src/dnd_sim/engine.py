@@ -3140,12 +3140,16 @@ def _duration_text_from_rounds(*, rounds: int, concentration: bool) -> str:
 
 
 _SINGLE_TARGET_FAMILY_TAG = "spell_family:single_target"
-_MULTI_TARGET_COUNT_TOKEN_RE = r"(?:[2-9]\d*|two|three|four|five|six|seven|eight|nine|ten)"
+_MULTI_TARGET_COUNT_TOKEN_RE = (
+    r"(?:[1-9]\d*|one|two|three|four|five|six|seven|eight|nine|ten|"
+    r"eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)"
+)
 _MULTI_TARGET_QUALIFIER_GAP_RE = r"(?:\s+(?:[a-z][a-z'-]*[,;:]?)){0,4}"
 _MULTI_TARGET_NOUN_RE = r"(?:creatures|targets)"
 _MULTI_TARGET_DESCRIPTION_RE = re.compile(
     r"\b(?:"
     + rf"up to\s+{_MULTI_TARGET_COUNT_TOKEN_RE}{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
+    + rf"|any\s+number\s+of{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
     + rf"|one\s+or\s+more{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
     + rf"|one\s+or\s+two{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
     + rf"|two\s+or\s+more{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
@@ -3184,6 +3188,15 @@ _SINGLE_TARGET_CONDITION_RE = re.compile(
     r"\b(?:be|is|becomes|become)\s+(" + "|".join(_SINGLE_TARGET_CONDITIONS) + r")\b",
     flags=re.IGNORECASE,
 )
+_ALLY_MULTI_TARGET_HINTS = (
+    "willing creature",
+    "willing creatures",
+    "friendly creature",
+    "friendly creatures",
+    "allies",
+    "injured creature",
+    "injured creatures",
+)
 
 
 def _parse_sheet_spell_range_ft(range_text: str) -> int | None:
@@ -3210,6 +3223,15 @@ def _description_is_probably_non_single_target(description: str) -> bool:
         return True
     normalized = normalized.lower()
     return any(hint in normalized for hint in _AREA_DESCRIPTION_HINTS)
+
+
+def _infer_multi_target_mode_from_description(*, action_type: str, description: str) -> str:
+    normalized = str(description or "").lower()
+    if any(marker in normalized for marker in _ALLY_MULTI_TARGET_HINTS):
+        return "all_allies"
+    if action_type in {"attack", "save"}:
+        return "all_enemies"
+    return "all_creatures"
 
 
 def _condition_phrase_is_negated(*, description: str, match_start: int) -> bool:
@@ -3455,8 +3477,16 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             (spell_def or {}).get("description") if isinstance(spell_def, dict) else ""
         ).strip()
         target_mode = str(hydrated.get("target_mode", "")).strip().lower()
+        non_single_target = not hydrated.get(
+            "aoe_type"
+        ) and _description_is_probably_non_single_target(description)
         if not target_mode:
-            if hydrated.get("healing") or "friendly creature" in description.lower():
+            if non_single_target:
+                target_mode = _infer_multi_target_mode_from_description(
+                    action_type=str(hydrated.get("action_type", "utility")),
+                    description=description,
+                )
+            elif hydrated.get("healing") or "friendly creature" in description.lower():
                 target_mode = "single_ally"
             else:
                 target_mode = "single_enemy"
@@ -3465,7 +3495,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
         if (
             target_mode in {"single_enemy", "single_ally"}
             and not hydrated.get("aoe_type")
-            and not _description_is_probably_non_single_target(description)
+            and not non_single_target
         ):
             tags = [str(tag).strip() for tag in hydrated.get("tags", []) if str(tag).strip()]
             tags.append(_SINGLE_TARGET_FAMILY_TAG)
