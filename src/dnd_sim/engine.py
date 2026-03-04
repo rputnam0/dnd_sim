@@ -9681,6 +9681,7 @@ def _apply_effect(
     effect_type = {
         "command_construct_companion": "command_allied",
         "summon_creature": "summon",
+        "shapechange": "transform",
         "antimagic": "antimagic_field",
         "antimagic_zone": "antimagic_field",
     }.get(raw_effect_type, raw_effect_type)
@@ -10048,6 +10049,63 @@ def _apply_effect(
         resources_spent.setdefault(summon_id, {})
         if concentration_linked:
             actor.concentrated_targets.add(summon_id)
+        return
+
+    if effect_type == "transform":
+        if recipient.dead or recipient.hp <= 0:
+            return
+
+        transform_condition = str(effect.get("condition", "")).strip().lower()
+        if not transform_condition:
+            return
+
+        before_conditions = set(recipient.conditions)
+        concentration_linked = bool(
+            action and action.concentration and effect.get("concentration_linked", True)
+        )
+        internal_tags = _normalize_internal_tags(effect.get("internal_tags"))
+        internal_tags.add("transform_effect")
+        created_effect_ids = _apply_condition(
+            recipient,
+            transform_condition,
+            duration_rounds=effect.get("duration_rounds"),
+            source_actor_id=actor.actor_id,
+            target_actor_id=recipient.actor_id,
+            effect_id=str(effect.get("effect_id", "")).strip() or None,
+            duration_timing=str(
+                effect.get("duration_timing", effect.get("duration_boundary", "turn_start"))
+            ),
+            concentration_linked=concentration_linked,
+            stack_policy=str(effect.get("stack_policy", "refresh")),
+            save_to_end=bool(
+                effect.get(
+                    "save_to_end",
+                    effect.get("save_to_end_policy", False),
+                )
+            ),
+            internal_tags=internal_tags,
+        )
+        if concentration_linked:
+            actor.concentrated_targets.add(recipient.actor_id)
+            actor.concentration_conditions.add(transform_condition)
+            actor.concentration_effect_instance_ids.update(created_effect_ids)
+        _force_end_concentration_if_needed(recipient, actors=actors, active_hazards=active_hazards)
+        if telemetry is not None and recipient.conditions != before_conditions:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "transform",
+                    "condition": transform_condition,
+                    "applied_amount": 1,
+                }
+            )
         return
 
     if effect_type == "resource_change":
@@ -15377,15 +15435,15 @@ def run_simulation(
         }
 
     per_actor_downed = {
-        actor_id: _metric([trial.downed_counts[actor_id] for trial in trial_results])
+        actor_id: _metric([trial.downed_counts.get(actor_id, 0) for trial in trial_results])
         for actor_id in actor_ids
     }
     per_actor_deaths = {
-        actor_id: _metric([trial.death_counts[actor_id] for trial in trial_results])
+        actor_id: _metric([trial.death_counts.get(actor_id, 0) for trial in trial_results])
         for actor_id in actor_ids
     }
     per_actor_remaining_hp = {
-        actor_id: _metric([trial.remaining_hp[actor_id] for trial in trial_results])
+        actor_id: _metric([trial.remaining_hp.get(actor_id, 0) for trial in trial_results])
         for actor_id in actor_ids
     }
 

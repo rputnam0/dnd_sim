@@ -26,6 +26,7 @@ KNOWN_EFFECT_TYPES = {
     "summon",
     "conjure",
     "summon_creature",
+    "transform",
     "command_allied",
     "command_construct_companion",
     "mount",
@@ -53,6 +54,7 @@ EXECUTABLE_EFFECT_TYPES = {
     "summon",
     "conjure",
     "summon_creature",
+    "transform",
     "command_allied",
     "command_construct_companion",
     "mount",
@@ -75,6 +77,7 @@ _REQUIRED_FIELDS: dict[str, set[str]] = {
     "reduce_damage_taken": {"damage_types", "amount"},
     "damage_roll_floor": {"damage_type", "floor"},
     "reaction_attack": {"trigger"},
+    "transform": {"condition"},
 }
 
 _SUPPORTED_REACTION_ATTACK_TRIGGERS = {

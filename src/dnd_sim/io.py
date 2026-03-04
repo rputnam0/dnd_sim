@@ -443,6 +443,16 @@ class SummonEffectConfig(BaseModel):
         raise ValueError("summon effect requires actor_id or name")
 
 
+class TransformEffectConfig(BaseModel):
+    effect_type: Literal["transform"]
+    apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
+    target: Literal["target", "source"] = "target"
+    condition: str
+    duration_rounds: int | None = None
+    concentration_linked: bool = True
+    stack_policy: Literal["independent", "refresh", "replace"] = "refresh"
+
+
 class CommandAlliedEffectConfig(BaseModel):
     effect_type: Literal["command_allied", "command_construct_companion"]
     apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
@@ -478,6 +488,7 @@ EffectConfig = Annotated[
     | NextAttackDisadvantageEffectConfig
     | ForcedMovementEffectConfig
     | SummonEffectConfig
+    | TransformEffectConfig
     | CommandAlliedEffectConfig
     | MountEffectConfig
     | NoteEffectConfig,
