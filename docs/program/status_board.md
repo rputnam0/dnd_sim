@@ -1,8 +1,18 @@
 # Program Status Board
 
-Last updated: 2026-03-03
+Last updated: 2026-03-04
 
 Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
+
+## Repo Cleanup Program (2026-03-04)
+
+| Workstream | Branch | Status | Notes |
+|---|---|---|---|
+| Subwave A: Inventory + safety snapshot | codex/repo-cleanup-20260304 | merged | Inventory artifacts + archive tags + safety bundle (`artifacts/repo_cleanup_20260304.bundle`) recorded in `docs/cleanup/repo_cleanup_inventory_20260304.md`. |
+| Subwave B: Branch/worktree pruning | codex/repo-cleanup-20260304 | merged | Deleted 100 local branches and 66 merged remote branches; preserved only allowlisted branches/worktrees; `git fsck --full` passed. |
+| Subwave C: Dead code/legacy cleanup | codex/repo-cleanup-20260304 | merged | Removed duplicate engine helper definitions, switched strategy validation to declare-turn-first compatible flow, removed 3 dead scripts. |
+| Subwave D: Targeted maintainability refactor | codex/repo-cleanup-20260304 | merged | Extracted `engine_resources.py` and `engine_spell_inference.py`; added `docs/agent_index.yaml`; retained entrypoint compatibility. |
+| Subwave E: Validation gate | codex/repo-cleanup-20260304 | merged | Full suite and determinism spot-check corpus passed. |
 
 ## Wave 1
 

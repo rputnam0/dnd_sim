@@ -28,3 +28,57 @@ Base: origin/main
 - Protected branch allowlist: main, codex/repo-cleanup-20260304
 - Protected worktree allowlist: active cleanup worktree + worktrees attached to allowlisted branches
 - Remote deletion exclude set: origin/main + open PR heads from /tmp/repo_cleanup_open_pr_heads_20260304.txt
+
+## Subwave B Outcomes (Git Surface Pruning)
+- Local branch pruning: deleted `100` branches; remaining local branches: `main`, `codex/repo-cleanup-20260304`.
+- Remote branch pruning (`origin`): deleted `66` merged branches; remaining remote branch: `origin/main`.
+- Worktree pruning: retained only allowlisted worktrees:
+  - `/Users/rexputnam/Documents/projects/dnd_sim` (`main`)
+  - `/Users/rexputnam/Documents/projects/dnd_sim_worktrees/repo-cleanup` (`codex/repo-cleanup-20260304`)
+- Integrity check: `git fsck --full` completed successfully (dangling object notices only, no fatal errors).
+
+## Subwave C-D Outcomes (Code/Pattern Cleanup + Refactor)
+- Duplicate engine helpers removed to single definitions for:
+  - `_ensure_resource_cap`
+  - `_apply_inferred_wizard_resources`
+  - `_iter_spell_slot_levels_desc`
+  - `_recover_spell_slots_with_budget`
+  - `_apply_arcane_recovery`
+- Agent-native strategy validation enabled in `src/dnd_sim/strategy_api.py`:
+  - declare-turn-first strategies are valid without legacy fallback trio.
+  - legacy fallback path remains supported when `declare_turn` is absent.
+- Resource/recovery helper extraction completed:
+  - Added `src/dnd_sim/engine_resources.py`
+  - `src/dnd_sim/engine.py` now delegates resource inference/recovery helpers.
+- Spell-target inference helper extraction completed:
+  - Added `src/dnd_sim/engine_spell_inference.py`
+  - `src/dnd_sim/engine.py` now imports and uses extracted inference helpers.
+- Dead script removal completed (unreferenced, not in docs/test/CI flows):
+  - Removed `scripts/audit_party_features.py`
+  - Removed `scripts/gemini_parser.py`
+  - Removed `scripts/migrate_to_sqlite.py`
+- Maintainability map added:
+  - `docs/agent_index.yaml`
+- Engine file-size reduction:
+  - Baseline: `15,969` lines
+  - Current: `15,558` lines
+  - Net reduction: `411` lines
+
+## Subwave E Validation Outcomes
+- Targeted cleanup regression tests:
+  - `uv run python -m pytest -q tests/test_engine_cleanup_regressions.py tests/test_fnd06_turn_declaration.py tests/test_strategy_api.py` ✅
+- Additional targeted runtime/spell package checks:
+  - `uv run python -m pytest -q tests/test_engine_integration.py tests/test_spl_04_spell_family.py tests/test_chr15_wizard_package.py` ✅
+- Full suite gate:
+  - `uv run python -m pytest -q` ✅
+- Determinism spot-check corpus (10 profiles / 10 fixed seeds) ✅:
+  - `test_fixed_seed_is_deterministic` (seed `9`)
+  - `chr05 bard deterministic` (seed `61`)
+  - `chr06 cleric deterministic` (seed `29`)
+  - `chr10 paladin deterministic` (seed `53`)
+  - `chr13 sorcerer deterministic` (seed `43`)
+  - `chr14 warlock deterministic` (seed `88`)
+  - `chr15 wizard deterministic` (seed `95`)
+  - `spl04 spell family deterministic` (seed `101`)
+  - `com10 summon command flow deterministic` (seed `31`)
+  - `campaign long-rest exploration deterministic` (seed `17`)

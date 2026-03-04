@@ -80,6 +80,29 @@ from dnd_sim.strategy_api import (
     TargetRef,
     TurnDeclaration,
 )
+from dnd_sim.engine_resources import (
+    apply_arcane_recovery as _apply_arcane_recovery_impl,
+    apply_inferred_barbarian_resources as _apply_inferred_barbarian_resources_impl,
+    apply_inferred_bard_resources as _apply_inferred_bard_resources_impl,
+    apply_inferred_druid_resources as _apply_inferred_druid_resources_impl,
+    apply_inferred_fighter_resources as _apply_inferred_fighter_resources_impl,
+    apply_inferred_sorcerer_resources as _apply_inferred_sorcerer_resources_impl,
+    apply_inferred_wizard_resources as _apply_inferred_wizard_resources_impl,
+    ensure_resource_cap as _ensure_resource_cap_impl,
+    iter_spell_slot_levels_desc as _iter_spell_slot_levels_desc_impl,
+    recover_spell_slots_with_budget as _recover_spell_slots_with_budget_impl,
+)
+from dnd_sim.engine_spell_inference import (
+    area_template_uses_self_origin as _area_template_uses_self_origin,
+    description_is_probably_non_single_target as _description_is_probably_non_single_target,
+    has_apply_condition_effect as _has_apply_condition_effect,
+    infer_area_template_from_description as _infer_area_template_from_description,
+    infer_multi_target_mode_from_description as _infer_multi_target_mode_from_description,
+    is_self_range_text as _is_self_range_text,
+    parse_sheet_spell_range_ft as _parse_sheet_spell_range_ft,
+    single_target_condition_apply_on as _single_target_condition_apply_on,
+    single_target_condition_from_description as _single_target_condition_from_description,
+)
 from dnd_sim.spells import (
     SpellDatabaseValidationError,
     lookup_spell_definition as _lookup_validated_spell_definition,
@@ -1483,93 +1506,6 @@ def _apply_wizard_school_action_hooks(
         for wizard_school in active_schools:
             for hook in _WIZARD_SCHOOL_ACTION_HOOKS.get(wizard_school, ()):
                 hook(action=action, wizard_school=wizard_school, spell_school=spell_school)
-
-
-def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
-    if max_value <= 0:
-        return
-    existing_max = int(actor.max_resources.get(resource, 0))
-    if existing_max < max_value:
-        actor.max_resources[resource] = max_value
-    cap = int(actor.max_resources[resource])
-    if resource not in actor.resources:
-        actor.resources[resource] = cap
-    else:
-        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
-
-
-def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
-    if not _has_trait(actor, "arcane recovery"):
-        return
-    wizard_level = int(actor.class_levels.get("wizard", 0))
-    if wizard_level <= 0 and not actor.class_levels:
-        wizard_level = int(actor.level)
-    if wizard_level <= 0:
-        return
-    _ensure_resource_cap(actor, "arcane_recovery", 1)
-
-
-def _iter_spell_slot_levels_desc(actor: ActorRuntimeState) -> list[int]:
-    levels: set[int] = set()
-    for key in actor.max_resources.keys():
-        if not str(key).startswith("spell_slot_"):
-            continue
-        try:
-            level = int(str(key).rsplit("_", 1)[1])
-        except ValueError:
-            continue
-        if level > 0:
-            levels.add(level)
-    return sorted(levels, reverse=True)
-
-
-def _recover_spell_slots_with_budget(
-    actor: ActorRuntimeState,
-    *,
-    budget: int,
-    max_individual_slot_level: int,
-) -> int:
-    if budget <= 0:
-        return 0
-    recovered_levels = 0
-    for slot_level in _iter_spell_slot_levels_desc(actor):
-        if slot_level > max_individual_slot_level or budget < slot_level:
-            continue
-        slot_key = f"spell_slot_{slot_level}"
-        max_slots = int(actor.max_resources.get(slot_key, 0))
-        current_slots = min(int(actor.resources.get(slot_key, 0)), max_slots)
-        missing_slots = max(0, max_slots - current_slots)
-        recoverable_slots = min(missing_slots, budget // slot_level)
-        if recoverable_slots <= 0:
-            continue
-        actor.resources[slot_key] = current_slots + recoverable_slots
-        recovered_levels += recoverable_slots * slot_level
-        budget -= recoverable_slots * slot_level
-        if budget <= 0:
-            break
-    return recovered_levels
-
-
-def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
-    if not _has_trait(actor, "arcane recovery"):
-        return
-    uses_remaining = int(actor.resources.get("arcane_recovery", 0))
-    if uses_remaining <= 0:
-        return
-    wizard_level = int(actor.class_levels.get("wizard", 0))
-    if wizard_level <= 0 and not actor.class_levels:
-        wizard_level = int(actor.level)
-    if wizard_level <= 0:
-        return
-    recovery_budget = max(1, (wizard_level + 1) // 2)
-    recovered_levels = _recover_spell_slots_with_budget(
-        actor,
-        budget=recovery_budget,
-        max_individual_slot_level=5,
-    )
-    if recovered_levels <= 0:
-        return
-    actor.resources["arcane_recovery"] = uses_remaining - 1
 
 
 def _fighter_superiority_dice_count(fighter_level: int) -> int:
@@ -3563,220 +3499,6 @@ def _duration_text_from_rounds(*, rounds: int, concentration: bool) -> str:
 
 _SINGLE_TARGET_FAMILY_TAG = "spell_family:single_target"
 _AREA_FAMILY_TAG = "spell_family:area"
-_MULTI_TARGET_COUNT_TOKEN_RE = (
-    r"(?:[1-9]\d*|one|two|three|four|five|six|seven|eight|nine|ten|"
-    r"eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)"
-)
-_MULTI_TARGET_QUALIFIER_GAP_RE = r"(?:\s+(?:[a-z][a-z'-]*[,;:]?)){0,4}"
-_MULTI_TARGET_NOUN_RE = r"(?:creatures|targets)"
-_MULTI_TARGET_DESCRIPTION_RE = re.compile(
-    r"\b(?:"
-    + rf"up to\s+{_MULTI_TARGET_COUNT_TOKEN_RE}{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
-    + rf"|any\s+number\s+of{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
-    + rf"|one\s+or\s+more{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
-    + rf"|one\s+or\s+two{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
-    + rf"|two\s+or\s+more{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
-    + rf"|{_MULTI_TARGET_COUNT_TOKEN_RE}{_MULTI_TARGET_QUALIFIER_GAP_RE}\s+{_MULTI_TARGET_NOUN_RE}"
-    + r")\b",
-    flags=re.IGNORECASE,
-)
-_AREA_DESCRIPTION_HINTS = (
-    "each creature",
-    "creatures within",
-    "radius",
-    "cone",
-    "cube",
-    "cylinder",
-    "line",
-    "sphere",
-    "point you choose",
-)
-_SINGLE_TARGET_CONDITIONS = (
-    "blinded",
-    "charmed",
-    "deafened",
-    "frightened",
-    "grappled",
-    "incapacitated",
-    "invisible",
-    "paralyzed",
-    "petrified",
-    "poisoned",
-    "prone",
-    "restrained",
-    "stunned",
-    "unconscious",
-)
-_SINGLE_TARGET_CONDITION_RE = re.compile(
-    r"\b(?:be|is|becomes|become)\s+(" + "|".join(_SINGLE_TARGET_CONDITIONS) + r")\b",
-    flags=re.IGNORECASE,
-)
-_ALLY_MULTI_TARGET_HINTS = (
-    "willing creature",
-    "willing creatures",
-    "friendly creature",
-    "friendly creatures",
-    "allies",
-    "injured creature",
-    "injured creatures",
-)
-_SPELL_TEXT_DASH_RE = re.compile(r"[\u00ad\u2010\u2011\u2012\u2013\u2014\u2212]")
-_AOE_TEMPLATE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("line", re.compile(r"\bline\s+(?P<size>\d+)\s*feet?\s*long\b", flags=re.IGNORECASE)),
-    ("line", re.compile(r"\b(?P<size>\d+)\s*-\s*foot-long\s+line\b", flags=re.IGNORECASE)),
-    ("sphere", re.compile(r"\b(?P<size>\d+)\s*-\s*foot-radius\s+sphere\b", flags=re.IGNORECASE)),
-    ("sphere", re.compile(r"\b(?P<size>\d+)\s*-\s*foot\s+sphere\b", flags=re.IGNORECASE)),
-    ("cone", re.compile(r"\b(?P<size>\d+)\s*-\s*foot\s+cone\b", flags=re.IGNORECASE)),
-    (
-        "cylinder",
-        re.compile(
-            r"\b(?P<size>\d+)\s*-\s*foot-radius(?:[^.]{0,80})\bcylinder\b",
-            flags=re.IGNORECASE,
-        ),
-    ),
-    ("cube", re.compile(r"\b(?P<size>\d+)\s*-\s*foot\s+cube\b", flags=re.IGNORECASE)),
-    ("line", re.compile(r"\b(?P<size>\d+)\s*-\s*foot\s+line\b", flags=re.IGNORECASE)),
-)
-_AREA_SELF_ORIGIN_HINTS = (
-    "centered on you",
-    "around you",
-    "radiates from you",
-    "emanates from you",
-    "from you",
-)
-
-
-def _normalize_spell_inference_text(text: str) -> str:
-    normalized = str(text or "").lower().replace("’", "'")
-    normalized = _SPELL_TEXT_DASH_RE.sub("-", normalized)
-    normalized = re.sub(r"\s*-\s*", "-", normalized)
-    normalized = re.sub(r"-{2,}", "-", normalized)
-    normalized = re.sub(r"\s+", " ", normalized)
-    return normalized.strip()
-
-
-def _is_self_range_text(range_text: str) -> bool:
-    return _normalize_spell_inference_text(range_text).startswith("self")
-
-
-def _infer_area_template_from_description(
-    *,
-    description: str,
-) -> tuple[str | None, int | None]:
-    normalized = _normalize_spell_inference_text(description)
-    if not normalized:
-        return None, None
-    has_area_targeting_phrase = any(
-        marker in normalized
-        for marker in (
-            "each creature in",
-            "creature in the",
-            "creatures in the",
-            "targets in the",
-        )
-    )
-    if not has_area_targeting_phrase:
-        return None, None
-    for aoe_type, pattern in _AOE_TEMPLATE_PATTERNS:
-        match = pattern.search(normalized)
-        if not match:
-            continue
-        try:
-            size = int(match.group("size"))
-        except (TypeError, ValueError):
-            continue
-        if size <= 0:
-            continue
-        return aoe_type, size
-    return None, None
-
-
-def _area_template_uses_self_origin(
-    *,
-    aoe_type: str,
-    range_text: str,
-    description: str,
-) -> bool:
-    if aoe_type in {"line", "cone"}:
-        return False
-    if _is_self_range_text(range_text):
-        return True
-    normalized_description = _normalize_spell_inference_text(description)
-    return any(marker in normalized_description for marker in _AREA_SELF_ORIGIN_HINTS)
-
-
-def _parse_sheet_spell_range_ft(range_text: str) -> int | None:
-    normalized = _normalize_spell_inference_text(range_text)
-    if not normalized:
-        return None
-    if normalized.startswith("self"):
-        return 0
-    if "touch" in normalized:
-        return 5
-
-    range_match = re.search(r"(\d+)\s*(?:-| )?\s*ft\b", normalized)
-    if range_match:
-        return int(range_match.group(1))
-    feet_match = re.search(r"(\d+)\s*(?:-| )?\s*feet\b", normalized)
-    if feet_match:
-        return int(feet_match.group(1))
-    return None
-
-
-def _description_is_probably_non_single_target(description: str) -> bool:
-    normalized = str(description or "")
-    if not normalized:
-        return False
-    if _MULTI_TARGET_DESCRIPTION_RE.search(normalized):
-        return True
-    normalized = normalized.lower()
-    return any(hint in normalized for hint in _AREA_DESCRIPTION_HINTS)
-
-
-def _infer_multi_target_mode_from_description(*, action_type: str, description: str) -> str:
-    normalized = str(description or "").lower()
-    if any(marker in normalized for marker in _ALLY_MULTI_TARGET_HINTS):
-        return "all_allies"
-    if action_type in {"attack", "save"}:
-        return "all_enemies"
-    return "all_creatures"
-
-
-def _condition_phrase_is_negated(*, description: str, match_start: int) -> bool:
-    prefix = str(description[:match_start]).lower().replace("’", "'")
-    return bool(re.search(r"(?:can't|cannot|can not|not|never)\s*$", prefix))
-
-
-def _single_target_condition_from_description(description: str) -> str | None:
-    text = str(description or "")
-    for match in _SINGLE_TARGET_CONDITION_RE.finditer(text):
-        if _condition_phrase_is_negated(description=text, match_start=match.start()):
-            continue
-        return str(match.group(1)).lower()
-    return None
-
-
-def _single_target_condition_apply_on(action_type: str) -> str:
-    if action_type == "save":
-        return "save_fail"
-    if action_type == "attack":
-        return "hit"
-    return "always"
-
-
-def _has_apply_condition_effect(
-    mechanics: list[Any],
-    *,
-    condition: str,
-) -> bool:
-    for row in mechanics:
-        if not isinstance(row, dict):
-            continue
-        if str(row.get("effect_type", "")).strip().lower() != "apply_condition":
-            continue
-        if str(row.get("condition", "")).strip().lower() == condition:
-            return True
-    return False
 
 
 def _spell_is_ritual(spell: dict[str, Any]) -> bool:
@@ -5888,16 +5610,7 @@ def _actor_has_equipped_shield(actor: ActorRuntimeState) -> bool:
 
 
 def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
-    if max_value <= 0:
-        return
-    existing_max = int(actor.max_resources.get(resource, 0))
-    if existing_max < max_value:
-        actor.max_resources[resource] = max_value
-    cap = int(actor.max_resources[resource])
-    if resource not in actor.resources:
-        actor.resources[resource] = cap
-    else:
-        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+    _ensure_resource_cap_impl(actor, resource, max_value)
 
 
 def _apply_inferred_fighter_resources(
@@ -5905,41 +5618,13 @@ def _apply_inferred_fighter_resources(
     *,
     class_level_text: str,
 ) -> None:
-    fighter_level = _parse_class_level(class_level_text, "fighter")
-
-    if _has_trait(actor, "action surge"):
-        action_surge_uses = (
-            2 if fighter_level >= 17 or _has_trait(actor, "action surge (two uses)") else 1
-        )
-        _ensure_resource_cap(actor, "action_surge", action_surge_uses)
-
-    if _has_trait(actor, "second wind"):
-        _ensure_resource_cap(actor, "second_wind", 1)
-
-    superiority_sources = ("combat superiority", "maneuvers", "battle master", "martial adept")
-    if any(_has_trait(actor, trait_name) for trait_name in superiority_sources):
-        superiority_dice = _fighter_superiority_dice_count(fighter_level)
-        if superiority_dice <= 0 and _has_trait(actor, "martial adept"):
-            superiority_dice = 1
-        if superiority_dice > 0:
-            _ensure_resource_cap(actor, "superiority_dice", superiority_dice)
-
-
-def _barbarian_rage_uses_for_level(barbarian_level: int) -> int:
-    if barbarian_level <= 0:
-        return 0
-    if barbarian_level >= 20:
-        # Unlimited in tabletop rules; use a stable high cap for simulation bookkeeping.
-        return 99
-    if barbarian_level >= 17:
-        return 6
-    if barbarian_level >= 12:
-        return 5
-    if barbarian_level >= 6:
-        return 4
-    if barbarian_level >= 3:
-        return 3
-    return 2
+    _apply_inferred_fighter_resources_impl(
+        actor,
+        class_level_text=class_level_text,
+        has_trait=_has_trait,
+        parse_class_level=_parse_class_level,
+        superiority_dice_count=_fighter_superiority_dice_count,
+    )
 
 
 def _apply_inferred_barbarian_resources(
@@ -5947,15 +5632,12 @@ def _apply_inferred_barbarian_resources(
     *,
     class_level_text: str,
 ) -> None:
-    if not _has_trait(actor, "rage"):
-        return
-    barbarian_level = _parse_class_level(class_level_text, "barbarian")
-    if barbarian_level <= 0 and not actor.class_levels:
-        barbarian_level = int(actor.level)
-    rage_uses = _barbarian_rage_uses_for_level(barbarian_level)
-    if rage_uses <= 0:
-        return
-    _ensure_resource_cap(actor, "rage", rage_uses)
+    _apply_inferred_barbarian_resources_impl(
+        actor,
+        class_level_text=class_level_text,
+        has_trait=_has_trait,
+        parse_class_level=_parse_class_level,
+    )
 
 
 def _apply_inferred_bard_resources(
@@ -5963,22 +5645,12 @@ def _apply_inferred_bard_resources(
     *,
     class_level_text: str,
 ) -> None:
-    if not _has_trait(actor, "bardic inspiration"):
-        return
-    bard_level = int(actor.class_levels.get("bard", 0))
-    if bard_level <= 0 and not actor.class_levels:
-        bard_level = _parse_class_level(class_level_text, "bard")
-    if bard_level <= 0 and not actor.class_levels:
-        bard_level = int(actor.level)
-    if bard_level <= 0:
-        return
-    _ensure_resource_cap(actor, "bardic_inspiration", max(1, int(actor.cha_mod)))
-
-
-def _sorcery_points_for_level(sorcerer_level: int) -> int:
-    if sorcerer_level < 2:
-        return 0
-    return min(20, sorcerer_level)
+    _apply_inferred_bard_resources_impl(
+        actor,
+        class_level_text=class_level_text,
+        has_trait=_has_trait,
+        parse_class_level=_parse_class_level,
+    )
 
 
 def _apply_inferred_sorcerer_resources(
@@ -5986,17 +5658,12 @@ def _apply_inferred_sorcerer_resources(
     *,
     class_level_text: str,
 ) -> None:
-    if not _has_trait(actor, "font of magic"):
-        return
-    sorcerer_level = int(actor.class_levels.get("sorcerer", 0))
-    if sorcerer_level <= 0 and not actor.class_levels:
-        sorcerer_level = _parse_class_level(class_level_text, "sorcerer")
-    if sorcerer_level <= 0 and not actor.class_levels:
-        sorcerer_level = int(actor.level)
-    points = _sorcery_points_for_level(sorcerer_level)
-    if points <= 0:
-        return
-    _ensure_resource_cap(actor, "sorcery_points", points)
+    _apply_inferred_sorcerer_resources_impl(
+        actor,
+        class_level_text=class_level_text,
+        has_trait=_has_trait,
+        parse_class_level=_parse_class_level,
+    )
 
 
 def _apply_inferred_druid_resources(
@@ -6004,43 +5671,21 @@ def _apply_inferred_druid_resources(
     *,
     class_level_text: str,
 ) -> None:
-    if not _has_trait(actor, "wild shape"):
-        return
-    if _has_trait(actor, "archdruid"):
-        return
-    druid_level = int(actor.class_levels.get("druid", 0))
-    if druid_level <= 0 and not actor.class_levels:
-        druid_level = _parse_class_level(class_level_text, "druid")
-    if druid_level <= 0 and not actor.class_levels:
-        druid_level = int(actor.level)
-    if druid_level <= 0:
-        return
-    _ensure_resource_cap(actor, "wild_shape", _druid_wild_shape_uses_for_level(druid_level))
+    _apply_inferred_druid_resources_impl(
+        actor,
+        class_level_text=class_level_text,
+        has_trait=_has_trait,
+        parse_class_level=_parse_class_level,
+        druid_wild_shape_uses_for_level=_druid_wild_shape_uses_for_level,
+    )
 
 
 def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
-    if not _has_trait(actor, "arcane recovery"):
-        return
-    wizard_level = int(actor.class_levels.get("wizard", 0))
-    if wizard_level <= 0 and not actor.class_levels:
-        wizard_level = int(actor.level)
-    if wizard_level <= 0:
-        return
-    _ensure_resource_cap(actor, "arcane_recovery", 1)
+    _apply_inferred_wizard_resources_impl(actor, has_trait=_has_trait)
 
 
 def _iter_spell_slot_levels_desc(actor: ActorRuntimeState) -> list[int]:
-    levels: set[int] = set()
-    for key in actor.max_resources.keys():
-        if not str(key).startswith("spell_slot_"):
-            continue
-        try:
-            level = int(str(key).rsplit("_", 1)[1])
-        except ValueError:
-            continue
-        if level > 0:
-            levels.add(level)
-    return sorted(levels, reverse=True)
+    return _iter_spell_slot_levels_desc_impl(actor)
 
 
 def _recover_spell_slots_with_budget(
@@ -6049,47 +5694,15 @@ def _recover_spell_slots_with_budget(
     budget: int,
     max_individual_slot_level: int,
 ) -> int:
-    if budget <= 0:
-        return 0
-    recovered_levels = 0
-    for slot_level in _iter_spell_slot_levels_desc(actor):
-        if slot_level > max_individual_slot_level or budget < slot_level:
-            continue
-        slot_key = f"spell_slot_{slot_level}"
-        max_slots = int(actor.max_resources.get(slot_key, 0))
-        current_slots = min(int(actor.resources.get(slot_key, 0)), max_slots)
-        missing_slots = max(0, max_slots - current_slots)
-        recoverable_slots = min(missing_slots, budget // slot_level)
-        if recoverable_slots <= 0:
-            continue
-        actor.resources[slot_key] = current_slots + recoverable_slots
-        recovered_levels += recoverable_slots * slot_level
-        budget -= recoverable_slots * slot_level
-        if budget <= 0:
-            break
-    return recovered_levels
+    return _recover_spell_slots_with_budget_impl(
+        actor,
+        budget=budget,
+        max_individual_slot_level=max_individual_slot_level,
+    )
 
 
 def _apply_arcane_recovery(actor: ActorRuntimeState) -> None:
-    if not _has_trait(actor, "arcane recovery"):
-        return
-    uses_remaining = int(actor.resources.get("arcane_recovery", 0))
-    if uses_remaining <= 0:
-        return
-    wizard_level = int(actor.class_levels.get("wizard", 0))
-    if wizard_level <= 0 and not actor.class_levels:
-        wizard_level = int(actor.level)
-    if wizard_level <= 0:
-        return
-    recovery_budget = max(1, (wizard_level + 1) // 2)
-    recovered_levels = _recover_spell_slots_with_budget(
-        actor,
-        budget=recovery_budget,
-        max_individual_slot_level=5,
-    )
-    if recovered_levels <= 0:
-        return
-    actor.resources["arcane_recovery"] = uses_remaining - 1
+    _apply_arcane_recovery_impl(actor, has_trait=_has_trait)
 
 
 def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
@@ -6123,30 +5736,6 @@ def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
     actor.max_resources[resource_key] = uses
     if actor.resources.get(resource_key, 0) <= 0:
         actor.resources[resource_key] = uses
-
-
-def _ensure_resource_cap(actor: ActorRuntimeState, resource: str, max_value: int) -> None:
-    if max_value <= 0:
-        return
-    existing_max = int(actor.max_resources.get(resource, 0))
-    if existing_max < max_value:
-        actor.max_resources[resource] = max_value
-    cap = int(actor.max_resources[resource])
-    if resource not in actor.resources:
-        actor.resources[resource] = cap
-    else:
-        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
-
-
-def _apply_inferred_wizard_resources(actor: ActorRuntimeState) -> None:
-    if not _has_trait(actor, "arcane recovery"):
-        return
-    wizard_level = int(actor.class_levels.get("wizard", 0))
-    if wizard_level <= 0 and not actor.class_levels:
-        wizard_level = int(actor.level)
-    if wizard_level <= 0:
-        return
-    _ensure_resource_cap(actor, "arcane_recovery", 1)
 
 
 def _build_actor_from_character(

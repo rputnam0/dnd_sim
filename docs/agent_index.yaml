@@ -1,0 +1,61 @@
+subsystems:
+  simulation_runtime:
+    owner_module: src/dnd_sim/engine.py
+    invariants:
+      - "run_simulation entrypoint and return shape remain backward compatible."
+      - "Fixed-seed scenarios should remain deterministic unless explicitly changed."
+      - "TurnDeclaration validation errors remain structured (code/field/actor_id)."
+    safe_edit_boundaries:
+      - "Safe: decision logic internals, helper delegation, telemetry enrichment."
+      - "Caution: turn order loop, action cost semantics, outcome aggregation."
+      - "Do not break top-level function names consumed by tests/integration."
+  resource_inference:
+    owner_module: src/dnd_sim/engine_resources.py
+    invariants:
+      - "Resource caps are non-negative and clamp current resources to max."
+      - "Inferred class resources only set/normalize keys under resources/max_resources."
+      - "Arcane Recovery consumes one use only when slot recovery succeeds."
+    safe_edit_boundaries:
+      - "Safe: per-class resource formulas and helper decomposition."
+      - "Caution: fallback level parsing and trait gating conditions."
+      - "Do not introduce required new runtime-state fields."
+  spell_target_inference:
+    owner_module: src/dnd_sim/engine_spell_inference.py
+    invariants:
+      - "Inference is heuristic and must be deterministic for identical inputs."
+      - "Self-origin template handling matches current targeting semantics."
+      - "Condition extraction must ignore negated phrases."
+    safe_edit_boundaries:
+      - "Safe: regex tuning and helper extraction."
+      - "Caution: pattern broadening that can change family tags or target_mode."
+      - "Do not add randomness or stateful caches."
+  strategy_interface:
+    owner_module: src/dnd_sim/strategy_api.py
+    invariants:
+      - "Strategies must implement on_round_start."
+      - "Validation accepts either declare_turn-first or complete legacy fallback trio."
+      - "BaseStrategy remains a valid default strategy."
+    safe_edit_boundaries:
+      - "Safe: additive dataclass fields with defaults."
+      - "Caution: validate_strategy_instance error contracts consumed by tests/io."
+      - "Do not require both declare_turn and legacy methods simultaneously."
+  ingest_and_validation:
+    owner_module: src/dnd_sim/io.py
+    invariants:
+      - "Character/spell payload loading remains backward compatible."
+      - "Strategy modules are validated before simulation run."
+      - "Legacy aliases are normalized at ingest boundaries only."
+    safe_edit_boundaries:
+      - "Safe: parser hardening and explicit error messages."
+      - "Caution: schema normalization paths used by fixtures and migration scripts."
+      - "Do not silently drop unknown high-signal fields."
+  mechanics_schema:
+    owner_module: src/dnd_sim/mechanics_schema.py
+    invariants:
+      - "Mechanic validation accepts known effect variants and rejects malformed rows."
+      - "Coverage report output remains machine-readable."
+      - "Unsupported mechanics are reported, not auto-executed."
+    safe_edit_boundaries:
+      - "Safe: support matrix extension and validator tightening."
+      - "Caution: changing canonical field names consumed by mechanics scripts/tests."
+      - "Do not break existing coverage report keys without migration."
