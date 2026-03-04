@@ -259,6 +259,7 @@ class ActorRuntimeState:
     next_attack_advantage: bool = False
     next_attack_disadvantage: bool = False
     speed_ft: int = 30
+    movement_modes: dict[str, float] = field(default_factory=lambda: {"walk": 30.0})
     movement_remaining: float = 0.0
     position: tuple[float, float, float] = (0.0, 0.0, 0.0)
     took_attack_action_this_turn: bool = False
@@ -283,6 +284,9 @@ class ActorRuntimeState:
     active_zone_ids: set[str] = field(default_factory=set)
     class_levels: dict[str, int] = field(default_factory=dict)
     level: int = 1
+    wild_shape_active: bool = False
+    wild_shape_form_name: str | None = None
+    wild_shape_base_snapshot: dict[str, Any] = field(default_factory=dict)
     pending_smite: dict[str, Any] | None = None
     companion_owner_id: str | None = None
     allied_controller_id: str | None = None

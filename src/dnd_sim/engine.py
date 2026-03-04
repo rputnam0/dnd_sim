@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import math
 import random
@@ -688,6 +689,332 @@ def _druid_wild_shape_uses_for_level(level: int) -> int:
         # Unlimited in tabletop rules; use a stable high cap for simulation bookkeeping.
         return 99
     return 2
+
+
+def _coerce_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _coerce_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _normalize_movement_modes(
+    movement: Any,
+    *,
+    default_walk_ft: int,
+) -> dict[str, float]:
+    out: dict[str, float] = {}
+    if isinstance(movement, dict):
+        for key, value in movement.items():
+            distance = _coerce_float(value, 0.0)
+            if distance <= 0:
+                continue
+            out[str(key).strip().lower()] = distance
+    if out.get("walk", 0.0) <= 0:
+        out["walk"] = float(max(1, int(default_walk_ft)))
+    return out
+
+
+def _extract_form_movement_modes(form: dict[str, Any], *, default_walk_ft: int) -> dict[str, float]:
+    movement = _normalize_movement_modes(form.get("movement"), default_walk_ft=default_walk_ft)
+    for mode in ("walk", "climb", "swim", "fly", "burrow"):
+        for key in (f"{mode}_speed_ft", f"{mode}_ft"):
+            if key not in form:
+                continue
+            distance = _coerce_float(form.get(key), 0.0)
+            if distance > 0:
+                movement[mode] = distance
+    if "speed_ft" in form:
+        walk_ft = _coerce_float(form.get("speed_ft"), movement.get("walk", float(default_walk_ft)))
+        if walk_ft > 0:
+            movement["walk"] = walk_ft
+    return movement
+
+
+def _extract_form_senses(form: dict[str, Any]) -> dict[str, float]:
+    out: dict[str, float] = {}
+    raw_senses = form.get("senses")
+    if isinstance(raw_senses, dict):
+        for key, value in raw_senses.items():
+            distance = _coerce_float(value, 0.0)
+            if distance > 0:
+                out[str(key).strip().lower()] = distance
+    for sense in ("darkvision", "blindsight", "tremorsense", "truesight"):
+        direct = form.get(sense)
+        if isinstance(direct, (int, float)):
+            distance = _coerce_float(direct, 0.0)
+            if distance > 0:
+                out[sense] = distance
+            continue
+        keyed = form.get(f"{sense}_ft")
+        distance = _coerce_float(keyed, 0.0)
+        if distance > 0:
+            out[sense] = distance
+    return out
+
+
+def _parse_challenge_rating(value: Any) -> float:
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip()
+    if not text:
+        return 0.0
+    if "/" in text:
+        left, right = text.split("/", 1)
+        try:
+            denominator = float(right)
+            if denominator == 0:
+                return 0.0
+            return float(left) / denominator
+        except ValueError:
+            return 0.0
+    try:
+        return float(text)
+    except ValueError:
+        return 0.0
+
+
+def _moon_wild_shape_enabled(traits: set[str]) -> bool:
+    return any(
+        trait in traits
+        for trait in (
+            _normalize_trait_name("combat wild shape"),
+            _normalize_trait_name("circle of the moon"),
+            _normalize_trait_name("circle forms"),
+        )
+    )
+
+
+def _wild_shape_cr_limit(*, character_level: int, traits: set[str]) -> float:
+    moon_like = _moon_wild_shape_enabled(traits)
+    if moon_like:
+        if character_level >= 6:
+            return float(max(1, character_level // 3))
+        return 1.0
+    if character_level >= 8:
+        return 1.0
+    if character_level >= 4:
+        return 0.5
+    return 0.25
+
+
+def _form_has_movement_mode(form: dict[str, Any], mode: str) -> bool:
+    mode_key = mode.lower()
+    movement = form.get("movement")
+    if isinstance(movement, dict):
+        value = movement.get(mode_key)
+        if isinstance(value, bool):
+            return bool(value)
+        if isinstance(value, (int, float)):
+            return value > 0
+    for key in (f"{mode_key}_speed_ft", f"{mode_key}_ft"):
+        value = form.get(key)
+        if isinstance(value, bool):
+            return bool(value)
+        if isinstance(value, (int, float)) and float(value) > 0:
+            return True
+    direct = form.get(mode_key)
+    if isinstance(direct, bool):
+        return bool(direct)
+    return False
+
+
+def _wild_shape_form_allowed(
+    form: dict[str, Any],
+    *,
+    character_level: int,
+    traits: set[str],
+) -> bool:
+    form_cr = _parse_challenge_rating(form.get("cr"))
+    if form_cr > _wild_shape_cr_limit(character_level=character_level, traits=traits):
+        return False
+    if _form_has_movement_mode(form, "swim") and character_level < 4:
+        return False
+    if _form_has_movement_mode(form, "fly") and character_level < 8:
+        return False
+    return True
+
+
+def _is_elemental_form(form: dict[str, Any]) -> bool:
+    for value in (form.get("form_type"), form.get("type"), form.get("creature_type")):
+        if isinstance(value, str) and "elemental" in value.lower():
+            return True
+    tags = form.get("tags")
+    if isinstance(tags, list):
+        for tag in tags:
+            if isinstance(tag, str) and "elemental" in tag.lower():
+                return True
+    return False
+
+
+def _can_use_elemental_wild_shape(*, character_level: int, traits: set[str]) -> bool:
+    if character_level < 10:
+        return False
+    if _normalize_trait_name("elemental wild shape") in traits:
+        return True
+    return _moon_wild_shape_enabled(traits)
+
+
+def _extract_wild_shape_forms(
+    character: dict[str, Any],
+    *,
+    traits: set[str],
+    character_level: int,
+    include_elemental: bool,
+) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    forms = character.get("wild_shape_forms")
+    if isinstance(forms, list):
+        for row in forms:
+            if isinstance(row, dict):
+                candidates.append(row)
+    single_form = character.get("wild_shape_form")
+    if isinstance(single_form, dict):
+        candidates.append(single_form)
+
+    if not candidates:
+        candidates = [
+            {
+                "name": "wild_shape_default",
+                "cr": "0",
+                "max_hp": max(8, int(character_level) * 2),
+                "ac": 11,
+                "speed_ft": 30,
+                "attacks": [{"name": "bestial_strike", "to_hit": 4, "damage": "1d6+2"}],
+            }
+        ]
+
+    legal = [
+        row
+        for row in candidates
+        if include_elemental or not _is_elemental_form(row)
+        if _wild_shape_form_allowed(row, character_level=character_level, traits=traits)
+    ]
+    legal.sort(
+        key=lambda row: (
+            _parse_challenge_rating(row.get("cr")),
+            _coerce_int(row.get("max_hp"), 0),
+            str(row.get("name", "")),
+        ),
+        reverse=True,
+    )
+    return legal
+
+
+def _build_wild_shape_effect(form: dict[str, Any], *, character_level: int) -> dict[str, Any]:
+    movement_modes = _extract_form_movement_modes(
+        form,
+        default_walk_ft=_coerce_int(form.get("speed_ft"), 30),
+    )
+    effect: dict[str, Any] = {
+        "effect_type": "wild_shape",
+        "target": "source",
+        "form_name": str(form.get("name", "wild_shape_default")),
+        "max_hp": _coerce_int(form.get("max_hp"), max(8, int(character_level) * 2)),
+        "ac": _coerce_int(form.get("ac"), 11),
+        "speed_ft": _coerce_int(form.get("speed_ft"), int(movement_modes.get("walk", 30.0))),
+        "movement_modes": movement_modes,
+        "senses": _extract_form_senses(form),
+        "attacks": (
+            list(form.get("attacks", []))
+            if isinstance(form.get("attacks"), list)
+            else [{"name": "bestial_strike", "to_hit": 4, "damage": "1d6+2"}]
+        ),
+    }
+    for ability_key in ("str_mod", "dex_mod", "con_mod"):
+        if ability_key in form:
+            effect[ability_key] = _coerce_int(form.get(ability_key), 0)
+    return effect
+
+
+def _build_wild_shape_form_actions(effect: dict[str, Any]) -> list[ActionDefinition]:
+    parsed_attacks: list[dict[str, Any]] = []
+    raw_attacks = effect.get("attacks")
+    if isinstance(raw_attacks, list):
+        for row in raw_attacks:
+            if not isinstance(row, dict):
+                continue
+            parsed_attacks.append(
+                {
+                    "name": str(row.get("name", "bestial_strike")),
+                    "to_hit": _coerce_int(row.get("to_hit"), _coerce_int(effect.get("to_hit"), 4)),
+                    "damage": str(row.get("damage", effect.get("damage", "1d6+2"))),
+                    "damage_type": str(
+                        row.get("damage_type", effect.get("damage_type", "bludgeoning"))
+                    ),
+                    "attack_count": max(1, _coerce_int(row.get("attack_count"), 1)),
+                }
+            )
+    if not parsed_attacks:
+        parsed_attacks.append(
+            {
+                "name": str(effect.get("natural_attack_name", "bestial_strike")),
+                "to_hit": _coerce_int(effect.get("to_hit"), 4),
+                "damage": str(effect.get("damage", "1d6+2")),
+                "damage_type": str(effect.get("damage_type", "bludgeoning")),
+                "attack_count": 1,
+            }
+        )
+
+    def _avg_damage(expr: str) -> float:
+        n_dice, dice_size, flat = parse_damage_expression(expr)
+        if n_dice <= 0:
+            return float(flat)
+        return (n_dice * ((dice_size + 1) / 2.0)) + flat
+
+    best_attack = max(
+        parsed_attacks,
+        key=lambda row: (_avg_damage(str(row["damage"])), int(row["to_hit"])),
+    )
+    actions = [
+        ActionDefinition(
+            name="basic",
+            action_type="attack",
+            to_hit=int(best_attack["to_hit"]),
+            damage=str(best_attack["damage"]),
+            damage_type=str(best_attack["damage_type"]),
+            attack_count=int(best_attack["attack_count"]),
+            tags=["basic", "wild_shape_form_attack"],
+        )
+    ]
+    for index, row in enumerate(parsed_attacks, start=1):
+        actions.append(
+            ActionDefinition(
+                name=f"attack_{index}",
+                action_type="attack",
+                to_hit=int(row["to_hit"]),
+                damage=str(row["damage"]),
+                damage_type=str(row["damage_type"]),
+                attack_count=int(row["attack_count"]),
+                tags=["attack_option", "wild_shape_form_attack"],
+            )
+        )
+
+    actions.extend(_get_standard_actions())
+    for revert_name in ("revert_wild_shape", "wild_shape_revert"):
+        actions.append(
+            ActionDefinition(
+                name=revert_name,
+                action_type="utility",
+                action_cost="bonus",
+                target_mode="self",
+                effects=[{"effect_type": "remove_wild_shape", "target": "source"}],
+                tags=[
+                    "class_feature",
+                    "wild_shape",
+                    "wild_shape_revert",
+                    "requires_condition:wild_shaped",
+                ],
+            )
+        )
+    return actions
 
 
 def _channel_divinity_uses_for_actor(actor: ActorRuntimeState) -> int:
@@ -1739,8 +2066,10 @@ def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRunt
         companion_owner_id=owner.actor_id,
         allied_controller_id=owner.actor_id,
         requires_command=True,
+        movement_modes={"walk": float(speed)},
     )
     companion.position = owner.position
+    companion.movement_remaining = float(speed)
     return companion
 
 
@@ -4547,43 +4876,75 @@ def _build_druid_wild_shape_actions(
     druid_level = _druid_level_from_character(character, fallback_level=character_level)
     if druid_level <= 0:
         return []
-    action_cost = "bonus" if has_trait("combat wild shape") else "action"
-    resource_cost: dict[str, int] = {}
-    if druid_level < 20 and not has_trait("archdruid"):
-        resource_cost = {"wild_shape": 1}
 
-    return [
-        ActionDefinition(
-            name="wild_shape",
-            action_type="utility",
-            action_cost=action_cost,
-            target_mode="self",
-            resource_cost=resource_cost,
-            effects=[
-                {
-                    "effect_type": "apply_condition",
-                    "target": "target",
-                    "condition": "wild_shaped",
-                    "stack_policy": "refresh",
-                }
-            ],
-            tags=["wild_shape", "shapechange"],
-        ),
+    legal_forms = _extract_wild_shape_forms(
+        character,
+        traits=traits,
+        character_level=druid_level,
+        include_elemental=True,
+    )
+    if not legal_forms:
+        return []
+
+    action_cost = "bonus" if has_trait("combat wild shape") else "action"
+    non_elemental_forms = [form for form in legal_forms if not _is_elemental_form(form)]
+    elemental_forms = [form for form in legal_forms if _is_elemental_form(form)]
+    elemental_allowed = _can_use_elemental_wild_shape(character_level=druid_level, traits=traits)
+
+    actions: list[ActionDefinition] = []
+
+    primary_form: dict[str, Any] | None = None
+    primary_cost: dict[str, int] = {}
+    if druid_level < 20 and not has_trait("archdruid"):
+        primary_cost = {"wild_shape": 1}
+    if non_elemental_forms:
+        primary_form = non_elemental_forms[0]
+    elif elemental_forms and elemental_allowed:
+        primary_form = elemental_forms[0]
+        primary_cost = {"wild_shape": 2}
+
+    if primary_form is not None:
+        actions.append(
+            ActionDefinition(
+                name="wild_shape",
+                action_type="utility",
+                action_cost=action_cost,
+                target_mode="self",
+                resource_cost=primary_cost,
+                effects=[_build_wild_shape_effect(primary_form, character_level=druid_level)],
+                tags=["wild_shape", "shapechange", "class_feature"],
+            )
+        )
+
+    if elemental_forms and elemental_allowed:
+        actions.append(
+            ActionDefinition(
+                name="wild_shape_elemental",
+                action_type="utility",
+                action_cost=action_cost,
+                target_mode="self",
+                resource_cost={"wild_shape": 2},
+                effects=[
+                    _build_wild_shape_effect(elemental_forms[0], character_level=druid_level),
+                ],
+                tags=["wild_shape", "shapechange", "elemental_wild_shape", "class_feature"],
+            )
+        )
+
+    if not actions:
+        return []
+
+    actions.append(
         ActionDefinition(
             name="wild_shape_revert",
             action_type="utility",
             action_cost="bonus",
             target_mode="self",
-            effects=[
-                {
-                    "effect_type": "remove_condition",
-                    "target": "target",
-                    "condition": "wild_shaped",
-                }
-            ],
+            effects=[{"effect_type": "remove_wild_shape", "target": "source"}],
             tags=["bonus", "wild_shape", "wild_shape_revert", "requires_condition:wild_shaped"],
-        ),
-    ]
+        )
+    )
+    return actions
 
 
 def _apply_warlock_invocations_to_actions(
@@ -5841,6 +6202,8 @@ def _build_actor_from_character(
         level=character_level,
         class_levels=class_levels,
         inventory=InventoryState.from_character_payload(character),
+        speed_ft=int(character.get("speed_ft", 30)),
+        movement_modes={"walk": float(int(character.get("speed_ft", 30)))},
     )
     _ensure_channel_divinity_resource(actor)
     _apply_passive_traits(actor)
@@ -5870,6 +6233,7 @@ def _build_actor_from_character(
             actor.resources[resource_name] = max(
                 0, min(int(actor.max_resources[resource_name]), resource_amount)
             )
+    actor.movement_remaining = float(actor.speed_ft)
     return actor
 
 
@@ -6109,6 +6473,10 @@ def _build_actor_from_enemy(
             int(explicit) if explicit is not None else int(enemy.stat_block.save_mods.get(key, 0))
         )
 
+    enemy_speed_ft = _coerce_int(getattr(enemy.stat_block, "speed_ft", 30), 30)
+    if enemy_speed_ft <= 0:
+        enemy_speed_ft = 30
+
     actor = ActorRuntimeState(
         actor_id=enemy.identity.enemy_id,
         team=enemy.identity.team,
@@ -6143,6 +6511,8 @@ def _build_actor_from_enemy(
             )
             for trait in enemy.traits
         },
+        speed_ft=enemy_speed_ft,
+        movement_modes={"walk": float(enemy_speed_ft)},
     )
     legendary_resistance_uses = _infer_legendary_resistance_from_traits(list(enemy.traits))
     if (
@@ -6152,6 +6522,7 @@ def _build_actor_from_enemy(
     ):
         actor.resources["legendary_resistance"] = legendary_resistance_uses
         actor.max_resources["legendary_resistance"] = legendary_resistance_uses
+    actor.movement_remaining = float(actor.speed_ft)
     _apply_passive_traits(actor)
     _register_actor_feature_hooks(actor)
     return actor
@@ -6193,6 +6564,7 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
 
 
 def long_rest(actor: ActorRuntimeState) -> None:
+    _revert_wild_shape(actor)
     actor.hp = actor.max_hp
     actor.temp_hp = 0
     actor.resources = dict(actor.max_resources)
@@ -9346,6 +9718,9 @@ def _remove_condition(
     if removed_effect or should_remove_manual:
         _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
 
+    if key == "wild_shaped" and actor.wild_shape_active:
+        _revert_wild_shape(actor)
+
     if key == "readying" and not has_condition(actor, "readying"):
         _clear_readied_action_state(actor, clear_held_spell=True)
 
@@ -9557,6 +9932,116 @@ def _apply_condition(
     ):
         actor.add_manual_condition("prone")
     return created_ids
+
+
+def _clone_runtime_traits(traits: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    cloned: dict[str, dict[str, Any]] = {}
+    for key, payload in traits.items():
+        text_key = str(key).strip().lower()
+        if not text_key:
+            continue
+        if isinstance(payload, dict):
+            cloned[text_key] = copy.deepcopy(payload)
+        else:
+            cloned[text_key] = {}
+    return cloned
+
+
+def _activate_wild_shape(actor: ActorRuntimeState, effect: dict[str, Any]) -> None:
+    if actor.wild_shape_active:
+        return
+
+    distance_moved_this_turn = max(0.0, float(actor.speed_ft) - float(actor.movement_remaining))
+
+    actor.wild_shape_base_snapshot = {
+        "max_hp": actor.max_hp,
+        "hp": actor.hp,
+        "ac": actor.ac,
+        "speed_ft": actor.speed_ft,
+        "str_mod": actor.str_mod,
+        "dex_mod": actor.dex_mod,
+        "con_mod": actor.con_mod,
+        "actions": list(actor.actions),
+        "traits": _clone_runtime_traits(actor.traits),
+        "movement_modes": dict(actor.movement_modes),
+    }
+
+    actor.wild_shape_active = True
+    actor.wild_shape_form_name = str(effect.get("form_name", "wild_shape_default"))
+
+    movement_modes = _normalize_movement_modes(
+        effect.get("movement_modes"),
+        default_walk_ft=_coerce_int(effect.get("speed_ft"), actor.speed_ft),
+    )
+    actor.max_hp = max(1, _coerce_int(effect.get("max_hp"), actor.max_hp))
+    actor.hp = actor.max_hp
+    actor.ac = _coerce_int(effect.get("ac"), actor.ac)
+    actor.movement_modes = movement_modes
+    actor.speed_ft = _coerce_int(
+        effect.get("speed_ft"), int(movement_modes.get("walk", actor.speed_ft))
+    )
+    actor.movement_remaining = max(0.0, float(actor.speed_ft) - distance_moved_this_turn)
+
+    if "str_mod" in effect:
+        actor.str_mod = _coerce_int(effect.get("str_mod"), actor.str_mod)
+    if "dex_mod" in effect:
+        actor.dex_mod = _coerce_int(effect.get("dex_mod"), actor.dex_mod)
+    if "con_mod" in effect:
+        actor.con_mod = _coerce_int(effect.get("con_mod"), actor.con_mod)
+
+    base_traits = actor.wild_shape_base_snapshot.get("traits")
+    if isinstance(base_traits, dict):
+        actor.traits = _clone_runtime_traits(base_traits)
+
+    raw_senses = effect.get("senses")
+    if isinstance(raw_senses, dict):
+        for sense, distance in raw_senses.items():
+            range_ft = _coerce_float(distance, 0.0)
+            if range_ft <= 0:
+                continue
+            actor.traits[str(sense).strip().lower()] = {"range_ft": range_ft}
+
+    actor.actions = _build_wild_shape_form_actions(effect)
+    actor.add_manual_condition("wild_shaped")
+
+
+def _revert_wild_shape(actor: ActorRuntimeState) -> None:
+    if not actor.wild_shape_active:
+        return
+
+    distance_moved_this_turn = max(0.0, float(actor.speed_ft) - float(actor.movement_remaining))
+    snapshot = dict(actor.wild_shape_base_snapshot)
+    if snapshot:
+        actor.max_hp = _coerce_int(snapshot.get("max_hp"), actor.max_hp)
+        actor.hp = _coerce_int(snapshot.get("hp"), actor.hp)
+        actor.ac = _coerce_int(snapshot.get("ac"), actor.ac)
+        actor.speed_ft = _coerce_int(snapshot.get("speed_ft"), actor.speed_ft)
+        actor.str_mod = _coerce_int(snapshot.get("str_mod"), actor.str_mod)
+        actor.dex_mod = _coerce_int(snapshot.get("dex_mod"), actor.dex_mod)
+        actor.con_mod = _coerce_int(snapshot.get("con_mod"), actor.con_mod)
+
+        actions = snapshot.get("actions")
+        if isinstance(actions, list):
+            actor.actions = actions
+
+        traits = snapshot.get("traits")
+        if isinstance(traits, dict):
+            actor.traits = _clone_runtime_traits(traits)
+
+        movement_modes = snapshot.get("movement_modes")
+        if isinstance(movement_modes, dict):
+            actor.movement_modes = _normalize_movement_modes(
+                movement_modes,
+                default_walk_ft=actor.speed_ft,
+            )
+        else:
+            actor.movement_modes = {"walk": float(actor.speed_ft)}
+
+    actor.wild_shape_active = False
+    actor.wild_shape_form_name = None
+    actor.wild_shape_base_snapshot = {}
+    actor.discard_manual_condition("wild_shaped")
+    actor.movement_remaining = max(0.0, float(actor.speed_ft) - distance_moved_this_turn)
 
 
 def _tick_conditions_for_actor(
@@ -9876,6 +10361,14 @@ def _apply_effect(
             )
         return
 
+    if effect_type == "remove_wild_shape":
+        _revert_wild_shape(recipient)
+        return
+
+    if effect_type == "wild_shape":
+        _activate_wild_shape(recipient, effect)
+        return
+
     if effect_type in {"hazard", "persistent_zone"}:
         raw_duration = effect.get("duration", effect.get("duration_rounds"))
         if raw_duration is not None and _coerce_positive_int(raw_duration) is None:
@@ -10028,7 +10521,9 @@ def _apply_effect(
             companion_owner_id=controller_id or None,
             allied_controller_id=controller_id or None,
             mount_controller_id=(controller_id or None) if is_mount else None,
+            movement_modes={"walk": float(summon_speed)},
         )
+        summoned_actor.movement_remaining = float(summon_speed)
         summoned_actor.add_manual_condition("summoned")
         if effect_type == "conjure":
             summoned_actor.add_manual_condition("conjured")
