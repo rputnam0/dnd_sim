@@ -401,7 +401,13 @@ def _spell_identifier(payload: dict[str, Any], *, index: int) -> str:
     return f"spell_{index}"
 
 
-def _spell_mechanics_executable(mechanics: list[Any]) -> bool:
+def _spell_supports_extra_damage_runtime(payload: dict[str, Any]) -> bool:
+    name = str(payload.get("name", "")).strip().lower()
+    # Runtime currently resolves `extra_damage` through pending smite setup flow.
+    return bool(name) and name.endswith("smite")
+
+
+def _spell_mechanics_executable(payload: dict[str, Any], mechanics: list[Any]) -> bool:
     has_runtime_effect = False
     for row in mechanics:
         if not isinstance(row, dict):
@@ -410,6 +416,11 @@ def _spell_mechanics_executable(mechanics: list[Any]) -> bool:
         if not effect_type:
             return False
         if effect_type in SPELL_METADATA_EFFECT_TYPES:
+            continue
+        if effect_type == "extra_damage":
+            if not _spell_supports_extra_damage_runtime(payload):
+                return False
+            has_runtime_effect = True
             continue
         if effect_type not in EXECUTABLE_EFFECT_TYPES:
             return False
@@ -436,7 +447,7 @@ def _spell_hook_family_and_state(payload: dict[str, Any]) -> tuple[str, str, str
             return "effect", "unsupported", "unsupported_effect_type", True
         return "invalid", "unsupported", "invalid_mechanics_schema", False
 
-    if not _spell_mechanics_executable(mechanics):
+    if not _spell_mechanics_executable(payload, mechanics):
         return "effect", "unsupported", "non_executable_mechanics", True
     return "effect", "supported", None, True
 
