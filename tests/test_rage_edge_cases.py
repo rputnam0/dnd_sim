@@ -103,12 +103,15 @@ def test_rage_resistance_scope_is_physical_only() -> None:
     target.update_manual_conditions({"raging"})
 
     assert rage_resistance_applies(actor=target, damage_type="slashing (magical)") is True
+    assert rage_resistance_applies(actor=target, damage_type="piercing (cold iron)") is True
     assert rage_resistance_applies(actor=target, damage_type="fire") is False
 
     slashing_applied = apply_damage(target, 10, "slashing (magical)")
+    piercing_applied = apply_damage(target, 10, "piercing (cold iron)")
     fire_applied = apply_damage(target, 10, "fire")
 
     assert slashing_applied == 5
+    assert piercing_applied == 5
     assert fire_applied == 10
 
 

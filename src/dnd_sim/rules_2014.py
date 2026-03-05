@@ -670,9 +670,14 @@ def _normalize_damage_type(value: str) -> str:
     normalized = str(value).strip().lower()
     if not normalized:
         return ""
+    matches: list[tuple[int, str]] = []
     for canonical in _CANONICAL_DAMAGE_TYPES:
-        if re.search(rf"\b{canonical}\b", normalized):
-            return canonical
+        match = re.search(rf"\b{canonical}\b", normalized)
+        if match is not None:
+            matches.append((match.start(), canonical))
+    if matches:
+        matches.sort(key=lambda item: (item[0], item[1]))
+        return matches[0][1]
     return normalized
 
 
