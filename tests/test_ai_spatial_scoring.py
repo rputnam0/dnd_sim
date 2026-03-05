@@ -134,6 +134,35 @@ def test_route_quality_is_one_for_small_move_into_long_range() -> None:
     assert snapshot["spatial"]["route_quality_score"] == pytest.approx(1.0)
 
 
+def test_cover_and_loe_use_post_movement_origin() -> None:
+    actor = _actor_view(actor_id="fighter", team="party", position=(0.0, 0.0, 0.0))
+    enemy = _actor_view(actor_id="enemy", team="enemy", position=(30.0, 0.0, 0.0))
+    action = {
+        "name": "lunge",
+        "action_type": "attack",
+        "target_mode": "single_enemy",
+        "action_cost": "action",
+        "range_ft": 5,
+        "resource_cost": {},
+    }
+    state = _single_action_state(
+        actor=actor,
+        others=[enemy],
+        action=action,
+        metadata={
+            "obstacles": [
+                AABB(min_pos=(10.0, -5.0, -1.0), max_pos=(20.0, 5.0, 1.0), cover_level="TOTAL")
+            ]
+        },
+    )
+
+    snapshot = candidate_snapshots(enumerate_legal_action_candidates(actor, state))[0]
+    assert snapshot["range"]["requires_movement"] is True
+    assert snapshot["spatial"]["line_of_effect_clear"] is True
+    assert snapshot["spatial"]["line_of_effect_penalty"] == 0.0
+    assert snapshot["spatial"]["cover_penalty"] == 0.0
+
+
 def test_cover_and_line_of_effect_penalties_are_scored() -> None:
     actor = _actor_view(actor_id="archer", team="party", position=(0.0, 0.0, 0.0))
     enemy = _actor_view(actor_id="enemy", team="enemy", position=(30.0, 0.0, 0.0))

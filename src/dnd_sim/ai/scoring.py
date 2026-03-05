@@ -727,6 +727,45 @@ def _cover_penalty(cover_level: str) -> float:
     return _COVER_PENALTIES.get(cover_level, _COVER_PENALTIES["TOTAL"])
 
 
+def _effective_origin_for_action(
+    actor: ActorView,
+    *,
+    action: dict[str, Any],
+    primary_target: ActorView | None,
+    movement_path: list[tuple[float, float, float]],
+    difficult_terrain_positions: list[tuple[float, float, float]],
+) -> tuple[float, float, float]:
+    if primary_target is None or len(movement_path) < 2:
+        return actor.position
+
+    action_range_ft = _action_range_ft(action)
+    movement_needed = max(
+        0.0,
+        float(distance_chebyshev(actor.position, primary_target.position)) - action_range_ft,
+    )
+    if movement_needed <= 0.0:
+        return actor.position
+
+    effective_cost = _movement_cost_to_get_within_range(
+        movement_path,
+        target_position=primary_target.position,
+        action_range_ft=action_range_ft,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    movement_budget_ft = min(float(actor.movement_remaining), effective_cost)
+    if movement_budget_ft <= 0.0:
+        return actor.position
+
+    movement_prefix = path_prefix_for_movement(
+        movement_path,
+        movement_budget_ft=movement_budget_ft,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    if not movement_prefix:
+        return actor.position
+    return movement_prefix[-1]
+
+
 def _movement_cost_to_get_within_range(
     movement_path: list[tuple[float, float, float]],
     *,
@@ -866,8 +905,15 @@ def _spatial_inputs(
     cover_penalty = 0.0
     line_of_effect_clear = True
     line_of_effect_penalty = 0.0
+    effective_origin = _effective_origin_for_action(
+        actor,
+        action=action,
+        primary_target=primary_target,
+        movement_path=movement_path,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
     if primary_target is not None and obstacles:
-        cover_level = check_cover(actor.position, primary_target.position, obstacles)
+        cover_level = check_cover(effective_origin, primary_target.position, obstacles)
         cover_penalty = _cover_penalty(cover_level)
         if _action_requires_line_of_effect(action) and cover_level == "TOTAL":
             line_of_effect_clear = False
