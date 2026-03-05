@@ -1,0 +1,573 @@
+{
+  "schema_version": "ai_benchmark.v1",
+  "primary_strategy": "optimal_expected_damage",
+  "comparison_strategies": [
+    "base_strategy",
+    "highest_threat"
+  ],
+  "thresholds": {
+    "minimum_primary_margin_vs_base": 3.0,
+    "minimum_primary_margin_vs_highest_threat": 3.0,
+    "minimum_primary_rationale_coverage": 1.0
+  },
+  "benchmarks": [
+    {
+      "benchmark_id": "hazard_heavy_lane_control",
+      "category": "hazard_heavy",
+      "round_number": 3,
+      "actor_id": "hero",
+      "actors": [
+        {
+          "actor_id": "hero",
+          "team": "party",
+          "hp": 42,
+          "max_hp": 42,
+          "ac": 16,
+          "save_mods": {
+            "str": 3,
+            "dex": 2,
+            "con": 2,
+            "int": 1,
+            "wis": 1,
+            "cha": 1
+          },
+          "resources": {
+            "focus": 2
+          },
+          "conditions": [],
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "speed_ft": 30,
+          "movement_remaining": 30,
+          "traits": {},
+          "concentrating": false
+        },
+        {
+          "actor_id": "hydra_alpha",
+          "team": "enemy",
+          "hp": 55,
+          "max_hp": 55,
+          "ac": 14,
+          "save_mods": {
+            "str": 4,
+            "dex": 1,
+            "con": 3,
+            "int": 0,
+            "wis": 0,
+            "cha": 0
+          },
+          "resources": {},
+          "conditions": [],
+          "position": [
+            5,
+            0,
+            0
+          ],
+          "speed_ft": 30,
+          "movement_remaining": 30,
+          "traits": {},
+          "concentrating": true
+        },
+        {
+          "actor_id": "hydra_beta",
+          "team": "enemy",
+          "hp": 48,
+          "max_hp": 48,
+          "ac": 13,
+          "save_mods": {
+            "str": 3,
+            "dex": 1,
+            "con": 3,
+            "int": 0,
+            "wis": 0,
+            "cha": 0
+          },
+          "resources": {},
+          "conditions": [],
+          "position": [
+            10,
+            0,
+            0
+          ],
+          "speed_ft": 30,
+          "movement_remaining": 30,
+          "traits": {},
+          "concentrating": false
+        }
+      ],
+      "action_catalog": {
+        "hero": [
+          {
+            "name": "basic",
+            "action_type": "attack",
+            "target_mode": "single_enemy",
+            "to_hit": 6,
+            "damage": "1d6+2",
+            "attack_count": 1,
+            "resource_cost": {},
+            "action_cost": "action",
+            "recharge_ready": true,
+            "range_ft": 5,
+            "effects": [],
+            "mechanics": [],
+            "tags": [],
+            "benchmark_outcome_score": 4.0
+          },
+          {
+            "name": "hazard_control",
+            "action_type": "save",
+            "target_mode": "single_enemy",
+            "save_dc": 14,
+            "save_ability": "dex",
+            "damage": "2d10+2",
+            "half_on_save": false,
+            "resource_cost": {
+              "focus": 1
+            },
+            "action_cost": "action",
+            "recharge_ready": true,
+            "range_ft": 60,
+            "effects": [
+              {
+                "effect_type": "forced_movement",
+                "target": "target",
+                "distance_ft": 10
+              }
+            ],
+            "mechanics": [],
+            "tags": [
+              "objective:hazard_lane",
+              "objective_race",
+              "reaction_bait"
+            ],
+            "benchmark_outcome_score": 11.5
+          }
+        ]
+      },
+      "available_actions": {
+        "hero": [
+          "basic",
+          "hazard_control"
+        ]
+      },
+      "metadata": {
+        "strategy_policy": {
+          "objective_play": {
+            "enabled": true,
+            "objective_action_bonus": 4.0
+          },
+          "threat_management": {
+            "enabled": true,
+            "target_weight": 0.25
+          }
+        },
+        "threat_scores": {
+          "hydra_alpha": 18,
+          "hydra_beta": 8
+        },
+        "objective_scores": {
+          "hazard_control": 2.0,
+          "hazard_lane": 3.0
+        },
+        "objective_targets": {
+          "hydra_alpha": 2.0,
+          "hydra_beta": 1.0
+        },
+        "objective_rounds_remaining": 2,
+        "active_hazards": [
+          {
+            "hazard_id": "acid_pool",
+            "damage": "1d6",
+            "radius_ft": 5
+          }
+        ],
+        "hazard_exposure_by_actor": {
+          "hydra_alpha": 2.0,
+          "hydra_beta": 0.75
+        },
+        "enemy_reactions_available_by_actor": {
+          "hydra_alpha": 1,
+          "hydra_beta": 1
+        }
+      }
+    },
+    {
+      "benchmark_id": "objective_heavy_control_node",
+      "category": "objective_heavy",
+      "round_number": 2,
+      "actor_id": "hero",
+      "actors": [
+        {
+          "actor_id": "hero",
+          "team": "party",
+          "hp": 36,
+          "max_hp": 36,
+          "ac": 15,
+          "save_mods": {
+            "str": 2,
+            "dex": 2,
+            "con": 2,
+            "int": 2,
+            "wis": 2,
+            "cha": 1
+          },
+          "resources": {},
+          "conditions": [],
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "speed_ft": 30,
+          "movement_remaining": 30,
+          "traits": {},
+          "concentrating": false
+        },
+        {
+          "actor_id": "captain",
+          "team": "enemy",
+          "hp": 40,
+          "max_hp": 40,
+          "ac": 15,
+          "save_mods": {
+            "str": 3,
+            "dex": 1,
+            "con": 2,
+            "int": 0,
+            "wis": 1,
+            "cha": 1
+          },
+          "resources": {},
+          "conditions": [],
+          "position": [
+            6,
+            0,
+            0
+          ],
+          "speed_ft": 30,
+          "movement_remaining": 30,
+          "traits": {},
+          "concentrating": false
+        }
+      ],
+      "action_catalog": {
+        "hero": [
+          {
+            "name": "basic",
+            "action_type": "attack",
+            "target_mode": "single_enemy",
+            "to_hit": 7,
+            "damage": "1d8+3",
+            "attack_count": 1,
+            "resource_cost": {},
+            "action_cost": "action",
+            "recharge_ready": true,
+            "range_ft": 5,
+            "effects": [],
+            "mechanics": [],
+            "tags": [],
+            "benchmark_outcome_score": 4.5
+          },
+          {
+            "name": "secure_objective",
+            "action_type": "utility",
+            "target_mode": "self",
+            "resource_cost": {},
+            "action_cost": "action",
+            "recharge_ready": true,
+            "range_ft": 0,
+            "effects": [],
+            "mechanics": [],
+            "tags": [
+              "objective:control_node",
+              "objective_race"
+            ],
+            "benchmark_outcome_score": 8.0
+          }
+        ]
+      },
+      "available_actions": {
+        "hero": [
+          "basic",
+          "secure_objective"
+        ]
+      },
+      "metadata": {
+        "strategy_policy": {
+          "objective_play": {
+            "enabled": true,
+            "objective_action_bonus": 8.0
+          }
+        },
+        "objective_scores": {
+          "secure_objective": 6.0,
+          "control_node": 8.0
+        },
+        "objective_rounds_remaining": 1
+      }
+    },
+    {
+      "benchmark_id": "summon_heavy_pressure_turn",
+      "category": "summon_heavy",
+      "round_number": 4,
+      "actor_id": "hero",
+      "actors": [
+        {
+          "actor_id": "hero",
+          "team": "party",
+          "hp": 34,
+          "max_hp": 34,
+          "ac": 15,
+          "save_mods": {
+            "str": 2,
+            "dex": 3,
+            "con": 2,
+            "int": 1,
+            "wis": 2,
+            "cha": 2
+          },
+          "resources": {
+            "summon_slots": 1
+          },
+          "conditions": [],
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "speed_ft": 30,
+          "movement_remaining": 30,
+          "traits": {},
+          "concentrating": false
+        },
+        {
+          "actor_id": "ogre",
+          "team": "enemy",
+          "hp": 58,
+          "max_hp": 58,
+          "ac": 13,
+          "save_mods": {
+            "str": 4,
+            "dex": 0,
+            "con": 3,
+            "int": -1,
+            "wis": 0,
+            "cha": -1
+          },
+          "resources": {},
+          "conditions": [],
+          "position": [
+            8,
+            0,
+            0
+          ],
+          "speed_ft": 30,
+          "movement_remaining": 30,
+          "traits": {},
+          "concentrating": false
+        }
+      ],
+      "action_catalog": {
+        "hero": [
+          {
+            "name": "basic",
+            "action_type": "attack",
+            "target_mode": "single_enemy",
+            "to_hit": 6,
+            "damage": "1d8+2",
+            "attack_count": 1,
+            "resource_cost": {},
+            "action_cost": "action",
+            "recharge_ready": true,
+            "range_ft": 5,
+            "effects": [],
+            "mechanics": [],
+            "tags": [],
+            "benchmark_outcome_score": 4.0
+          },
+          {
+            "name": "summon_reinforcement",
+            "action_type": "utility",
+            "target_mode": "self",
+            "resource_cost": {
+              "summon_slots": 1
+            },
+            "action_cost": "action",
+            "recharge_ready": true,
+            "range_ft": 0,
+            "effects": [
+              {
+                "effect_type": "summon",
+                "actor_id": "spirit_wolf",
+                "name": "Spirit Wolf",
+                "max_hp": 20,
+                "ac": 14,
+                "to_hit": 6,
+                "damage": "1d8+3",
+                "damage_type": "force",
+                "speed_ft": 40,
+                "target_mode": "single_enemy"
+              }
+            ],
+            "mechanics": [],
+            "tags": [
+              "objective:summon_pressure",
+              "objective_race"
+            ],
+            "benchmark_outcome_score": 9.5
+          }
+        ]
+      },
+      "available_actions": {
+        "hero": [
+          "basic",
+          "summon_reinforcement"
+        ]
+      },
+      "metadata": {
+        "strategy_policy": {
+          "objective_play": {
+            "enabled": true,
+            "objective_action_bonus": 6.0
+          }
+        },
+        "objective_scores": {
+          "summon_reinforcement": 4.0,
+          "summon_pressure": 5.0
+        },
+        "objective_rounds_remaining": 2,
+        "controller_links": {
+          "spirit_wolf": "hero"
+        }
+      }
+    },
+    {
+      "benchmark_id": "legendary_recharge_burst_window",
+      "category": "legendary_recharge",
+      "round_number": 5,
+      "actor_id": "hero",
+      "actors": [
+        {
+          "actor_id": "hero",
+          "team": "party",
+          "hp": 48,
+          "max_hp": 48,
+          "ac": 17,
+          "save_mods": {
+            "str": 4,
+            "dex": 2,
+            "con": 3,
+            "int": 1,
+            "wis": 1,
+            "cha": 1
+          },
+          "resources": {
+            "legendary_actions": 2
+          },
+          "conditions": [],
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "speed_ft": 30,
+          "movement_remaining": 30,
+          "traits": {},
+          "concentrating": false
+        },
+        {
+          "actor_id": "ancient_guardian",
+          "team": "enemy",
+          "hp": 72,
+          "max_hp": 72,
+          "ac": 16,
+          "save_mods": {
+            "str": 5,
+            "dex": 1,
+            "con": 4,
+            "int": 1,
+            "wis": 2,
+            "cha": 2
+          },
+          "resources": {},
+          "conditions": [],
+          "position": [
+            10,
+            0,
+            0
+          ],
+          "speed_ft": 30,
+          "movement_remaining": 30,
+          "traits": {},
+          "concentrating": false
+        }
+      ],
+      "action_catalog": {
+        "hero": [
+          {
+            "name": "basic",
+            "action_type": "attack",
+            "target_mode": "single_enemy",
+            "to_hit": 7,
+            "damage": "1d8+3",
+            "attack_count": 1,
+            "resource_cost": {},
+            "action_cost": "action",
+            "recharge_ready": true,
+            "range_ft": 5,
+            "effects": [],
+            "mechanics": [],
+            "tags": [],
+            "benchmark_outcome_score": 4.0
+          },
+          {
+            "name": "dragon_breath",
+            "action_type": "save",
+            "target_mode": "single_enemy",
+            "save_dc": 16,
+            "save_ability": "dex",
+            "damage": "4d8+4",
+            "half_on_save": true,
+            "resource_cost": {
+              "legendary_actions": 1
+            },
+            "action_cost": "action",
+            "recharge_ready": true,
+            "range_ft": 60,
+            "effects": [],
+            "mechanics": [],
+            "tags": [
+              "recharge",
+              "legendary_window",
+              "reaction_bait"
+            ],
+            "benchmark_outcome_score": 12.0
+          }
+        ]
+      },
+      "available_actions": {
+        "hero": [
+          "basic",
+          "dragon_breath"
+        ]
+      },
+      "metadata": {
+        "strategy_policy": {
+          "objective_play": {
+            "enabled": false
+          }
+        },
+        "legendary_actions_remaining_by_actor": {
+          "hero": 2
+        },
+        "enemy_reactions_available_by_actor": {
+          "ancient_guardian": 1
+        },
+        "encounter_expected_rounds": 6
+      }
+    }
+  ]
+}
