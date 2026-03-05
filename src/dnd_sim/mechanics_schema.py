@@ -32,6 +32,11 @@ KNOWN_EFFECT_TYPES = {
     "command_allied",
     "mount",
     "dismount",
+    "extra_damage",
+    "push",
+    "area",
+    "aura",
+    "audible_range",
     "aoe",
     "ranged_spell_attack",
     "melee_spell_attack",
@@ -39,6 +44,9 @@ KNOWN_EFFECT_TYPES = {
 }
 
 SPELL_METADATA_EFFECT_TYPES = {
+    "area",
+    "aura",
+    "audible_range",
     "aoe",
     "ranged_spell_attack",
     "melee_spell_attack",
@@ -69,6 +77,8 @@ EXECUTABLE_EFFECT_TYPES = {
     "command_allied",
     "mount",
     "dismount",
+    "extra_damage",
+    "push",
 }
 
 _REQUIRED_FIELDS: dict[str, set[str]] = {

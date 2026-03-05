@@ -461,7 +461,15 @@ def test_spell_metadata_effect_markers_are_runtime_noops() -> None:
     actors = {source.actor_id: source, target.actor_id: target}
     damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(source, target)
 
-    for effect_type in ("aoe", "ranged_spell_attack", "melee_spell_attack", "save"):
+    for effect_type in (
+        "aoe",
+        "ranged_spell_attack",
+        "melee_spell_attack",
+        "save",
+        "area",
+        "aura",
+        "audible_range",
+    ):
         _apply_effect(
             effect={"effect_type": effect_type},
             rng=random.Random(7),
@@ -483,3 +491,27 @@ def test_spell_metadata_effect_markers_are_runtime_noops() -> None:
     assert damage_dealt == {"source": 0, "target": 0}
     assert damage_taken == {"source": 0, "target": 0}
     assert threat_scores == {"source": 0, "target": 0}
+
+
+def test_push_effect_type_aliases_to_forced_movement() -> None:
+    source = _actor("source", "party")
+    target = _actor("target", "enemy")
+    target.position = (5.0, 0.0, 0.0)
+    actors = {source.actor_id: source, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(source, target)
+
+    _apply_effect(
+        effect={"effect_type": "push", "distance": 10, "direction": "away_from_source"},
+        rng=random.Random(13),
+        actor=source,
+        target=target,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        actors=actors,
+        active_hazards=[],
+    )
+
+    assert target.position != (5.0, 0.0, 0.0)
+    assert target.position[0] > 5.0

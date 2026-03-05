@@ -103,7 +103,7 @@ def test_spell_manifest_uses_unsupported_effect_type_reason() -> None:
 
 @pytest.mark.parametrize(
     "effect_type",
-    ["aoe", "ranged_spell_attack", "melee_spell_attack", "save"],
+    ["aoe", "ranged_spell_attack", "melee_spell_attack", "save", "area", "aura", "audible_range"],
 )
 def test_spell_manifest_marks_metadata_spell_effect_types_non_executable(effect_type: str) -> None:
     manifest = build_spell_capability_manifest(
@@ -128,7 +128,7 @@ def test_spell_manifest_marks_metadata_spell_effect_types_non_executable(effect_
 
 @pytest.mark.parametrize(
     "effect_type",
-    ["aoe", "ranged_spell_attack", "melee_spell_attack", "save"],
+    ["aoe", "ranged_spell_attack", "melee_spell_attack", "save", "area", "aura", "audible_range"],
 )
 def test_spell_manifest_accepts_metadata_effect_types_when_paired_with_runtime_effect(
     effect_type: str,
@@ -154,6 +154,48 @@ def test_spell_manifest_accepts_metadata_effect_types_when_paired_with_runtime_e
     assert record.states.executable is True
     assert record.states.blocked is False
     assert record.states.unsupported_reason is None
+
+
+def test_spell_manifest_marks_extra_damage_smite_spell_executable() -> None:
+    manifest = build_spell_capability_manifest(
+        spell_payloads=[
+            {
+                "name": "Blinding Smite",
+                "type": "spell",
+                "level": 3,
+                "casting_time": "1 bonus action",
+                "description": "Your next hit deals extra radiant damage.",
+                "mechanics": [{"effect_type": "extra_damage", "damage": "3d8"}],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.support_state == "supported"
+    assert record.states.executable is True
+    assert record.states.blocked is False
+    assert record.states.unsupported_reason is None
+
+
+def test_spell_manifest_marks_extra_damage_non_smite_spell_non_executable() -> None:
+    manifest = build_spell_capability_manifest(
+        spell_payloads=[
+            {
+                "name": "Hexed Mark",
+                "type": "spell",
+                "level": 1,
+                "casting_time": "1 bonus action",
+                "description": "A synthetic non-smite bonus damage marker.",
+                "mechanics": [{"effect_type": "extra_damage", "damage": "1d6"}],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.support_state == "unsupported"
+    assert record.states.executable is False
+    assert record.states.blocked is True
+    assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_spell_manifest_uses_invalid_mechanics_schema_reason() -> None:

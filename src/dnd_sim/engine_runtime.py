@@ -9403,6 +9403,33 @@ def _apply_effect(
         recipient.next_attack_advantage = False
         return
 
+    if effect_type == "push":
+        push_effect = dict(effect)
+        push_effect["effect_type"] = "forced_movement"
+        if "distance_ft" not in push_effect:
+            push_effect["distance_ft"] = push_effect.get("distance", 0)
+        _apply_effect(
+            effect=push_effect,
+            rng=rng,
+            actor=actor,
+            target=recipient,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            actors=actors,
+            active_hazards=active_hazards,
+            round_number=round_number,
+            turn_token=turn_token,
+            action=action,
+            rule_trace=rule_trace,
+            telemetry=telemetry,
+            strategy_name=strategy_name,
+            source_bucket=source_bucket,
+            trigger_event=trigger_event,
+        )
+        return
+
     if effect_type == "forced_movement":
         distance_ft = float(effect.get("distance_ft", 0))
         direction = str(effect.get("direction", "away_from_source"))
@@ -9454,7 +9481,11 @@ def _apply_effect(
             )
         return
 
-    # note is schema-valid but non-mechanical in v1/v2.
+    # Schema-valid metadata markers that intentionally do not apply a direct state mutation.
+    if effect_type in {"note", "area", "aura", "audible_range"}:
+        return
+
+    # Fallback for unknown/no-op mechanics.
     return
 
 
