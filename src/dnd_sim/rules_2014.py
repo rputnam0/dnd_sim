@@ -10,6 +10,36 @@ from dnd_sim.noncombat_checks import resolve_contest
 
 _DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
 _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
+_SHIELD_MASTER_INCAPACITATING_CONDITIONS = {
+    "incapacitated",
+    "paralyzed",
+    "petrified",
+    "stunned",
+    "unconscious",
+}
+_RAGE_BLOCKING_CONDITIONS = {
+    "incapacitated",
+    "paralyzed",
+    "petrified",
+    "stunned",
+    "unconscious",
+}
+_RAGE_RESISTANCE_DAMAGE_TYPES = {"bludgeoning", "piercing", "slashing"}
+_CANONICAL_DAMAGE_TYPES = (
+    "acid",
+    "bludgeoning",
+    "cold",
+    "fire",
+    "force",
+    "lightning",
+    "necrotic",
+    "piercing",
+    "poison",
+    "psychic",
+    "radiant",
+    "slashing",
+    "thunder",
+)
 _EventT = TypeVar("_EventT", bound="CombatEvent")
 
 
@@ -107,6 +137,12 @@ class DamageResolvedEvent(CombatEvent):
     resolution: "DamageBundleResolution | None" = None
     round_number: int | None = None
     turn_token: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ReactionWindowResult:
+    allowed: bool
+    reason: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -232,6 +268,14 @@ class DeathSaveResult:
     regained_consciousness: bool
 
 
+@dataclass(frozen=True, slots=True)
+class PowerAttackToggleState:
+    active: bool
+    to_hit_modifier: int = 0
+    damage_bonus: int = 0
+    reason: str | None = None
+
+
 @dataclass(slots=True)
 class DamageRollResult:
     rolled: int
@@ -354,6 +398,183 @@ def _has_monk_martial_arts_context(actor: ActorRuntimeState) -> bool:
     return _has_trait(actor, "martial arts") or _has_trait(actor, "flurry of blows")
 
 
+def _evaluate_reaction_window_gate(
+    *, reactor: ActorRuntimeState, reaction_lock_active: bool
+) -> ReactionWindowResult | None:
+    if not reactor.reaction_available:
+        return ReactionWindowResult(allowed=False, reason="reaction_unavailable")
+    if reaction_lock_active:
+        return ReactionWindowResult(allowed=False, reason="reaction_lock")
+    return None
+
+
+def evaluate_mage_slayer_reaction_window(
+    *,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_action: ActionDefinition | None,
+    distance_ft: float | None,
+    reaction_lock_active: bool = False,
+) -> ReactionWindowResult:
+    gate = _evaluate_reaction_window_gate(
+        reactor=reactor,
+        reaction_lock_active=reaction_lock_active,
+    )
+    if gate is not None:
+        return gate
+    if not _has_trait(reactor, "mage slayer"):
+        return ReactionWindowResult(allowed=False, reason="missing_trait")
+    if trigger_actor is None or trigger_action is None:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
+    if trigger_actor.team == reactor.team:
+        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
+    if "spell" not in {str(tag).strip().lower() for tag in trigger_action.tags}:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_action")
+    if distance_ft is None or float(distance_ft) > 5.0 + 1e-9:
+        return ReactionWindowResult(allowed=False, reason="out_of_range")
+    return ReactionWindowResult(allowed=True, reason=None)
+
+
+def evaluate_sentinel_reaction_window(
+    *,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_target: ActorRuntimeState | None,
+    trigger_action: ActionDefinition | None,
+    distance_ft: float | None,
+    reaction_lock_active: bool = False,
+) -> ReactionWindowResult:
+    gate = _evaluate_reaction_window_gate(
+        reactor=reactor,
+        reaction_lock_active=reaction_lock_active,
+    )
+    if gate is not None:
+        return gate
+    if not _has_trait(reactor, "sentinel"):
+        return ReactionWindowResult(allowed=False, reason="missing_trait")
+    if trigger_actor is None or trigger_target is None or trigger_action is None:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
+    if trigger_action.action_type != "attack":
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_action")
+    if trigger_actor.team == reactor.team:
+        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
+    if trigger_target.actor_id == reactor.actor_id or trigger_target.team != reactor.team:
+        return ReactionWindowResult(allowed=False, reason="invalid_target_window")
+    if distance_ft is None or float(distance_ft) > 5.0 + 1e-9:
+        return ReactionWindowResult(allowed=False, reason="out_of_range")
+    return ReactionWindowResult(allowed=True, reason=None)
+
+
+def evaluate_sentinel_opportunity_window(
+    *,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_distance_ft: float | None,
+    reach_ft: float,
+    mover_disengaged: bool,
+    forced_movement: bool,
+    reaction_lock_active: bool = False,
+) -> ReactionWindowResult:
+    gate = _evaluate_reaction_window_gate(
+        reactor=reactor,
+        reaction_lock_active=reaction_lock_active,
+    )
+    if gate is not None:
+        return gate
+    if trigger_actor is None:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
+    if trigger_actor.team == reactor.team:
+        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
+    if forced_movement:
+        return ReactionWindowResult(allowed=False, reason="forced_movement")
+    if trigger_distance_ft is None:
+        return ReactionWindowResult(allowed=False, reason="out_of_reach")
+    if float(trigger_distance_ft) > max(0.0, float(reach_ft)) + 1e-9:
+        return ReactionWindowResult(allowed=False, reason="out_of_reach")
+    if mover_disengaged:
+        # Sentinel explicitly bypasses Disengage for opportunity attack triggers.
+        return ReactionWindowResult(allowed=True, reason=None)
+    return ReactionWindowResult(allowed=True, reason=None)
+
+
+def _is_spell_action(action: ActionDefinition) -> bool:
+    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
+    if "spell" in normalized_tags:
+        return True
+    if _normalize_trait_name(action.action_type) == "spell":
+        return True
+    return action.spell is not None
+
+
+def _is_one_action_spell(action: ActionDefinition) -> bool:
+    if _normalize_trait_name(action.action_cost) != "action":
+        return False
+    if action.spell is None:
+        return True
+    raw_casting_time = action.spell.casting_time
+    if raw_casting_time is None or not str(raw_casting_time).strip():
+        return True
+    return _normalize_trait_name(str(raw_casting_time)) in {"1 action", "action"}
+
+
+def _war_caster_targets_single_trigger(action: ActionDefinition) -> bool:
+    target_mode = _normalize_trait_name(action.target_mode)
+    if target_mode not in {"single enemy", "single target"}:
+        return False
+    if action.include_self:
+        return False
+    if action.max_targets is None:
+        return True
+    try:
+        return int(action.max_targets) == 1
+    except (TypeError, ValueError):
+        return False
+
+
+def evaluate_war_caster_opportunity_window(
+    *,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_distance_ft: float | None,
+    reach_ft: float,
+    mover_disengaged: bool,
+    forced_movement: bool,
+    reaction_spell: ActionDefinition | None,
+    reaction_lock_active: bool = False,
+) -> ReactionWindowResult:
+    gate = _evaluate_reaction_window_gate(
+        reactor=reactor,
+        reaction_lock_active=reaction_lock_active,
+    )
+    if gate is not None:
+        return gate
+    if not _has_trait(reactor, "war caster"):
+        return ReactionWindowResult(allowed=False, reason="missing_trait")
+    if trigger_actor is None or reaction_spell is None:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
+    if trigger_actor.team == reactor.team:
+        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
+    if forced_movement:
+        return ReactionWindowResult(allowed=False, reason="forced_movement")
+    if mover_disengaged:
+        return ReactionWindowResult(allowed=False, reason="no_opportunity_trigger")
+    if trigger_distance_ft is None:
+        return ReactionWindowResult(allowed=False, reason="out_of_reach")
+    if float(trigger_distance_ft) > max(0.0, float(reach_ft)) + 1e-9:
+        return ReactionWindowResult(allowed=False, reason="out_of_reach")
+    if not _is_spell_action(reaction_spell):
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_action")
+    if not _is_one_action_spell(reaction_spell):
+        return ReactionWindowResult(allowed=False, reason="invalid_casting_time")
+    if not _war_caster_targets_single_trigger(reaction_spell):
+        return ReactionWindowResult(allowed=False, reason="illegal_spell_target")
+    return ReactionWindowResult(allowed=True, reason=None)
+
+
+def sentinel_speed_reduction_applies_on_hit(*, hit: bool, opportunity_attack: bool) -> bool:
+    return bool(hit and opportunity_attack)
+
+
 def monk_bonus_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
     if action.action_cost != "bonus":
         return True
@@ -413,6 +634,312 @@ def druid_wild_shape_action_legal(actor: ActorRuntimeState, action: ActionDefini
     return action.action_cost in {"action", "none"}
 
 
+def _is_same_turn_for_actor(actor: ActorRuntimeState, turn_token: str | None) -> bool:
+    if turn_token is None:
+        return True
+    text = str(turn_token)
+    if ":" in text:
+        token_actor_id = text.split(":", 1)[1]
+        return token_actor_id == actor.actor_id
+    return text == actor.actor_id
+
+
+def _shield_master_active(actor: ActorRuntimeState) -> bool:
+    if actor.dead or actor.hp <= 0:
+        return False
+    if actor.conditions.intersection(_SHIELD_MASTER_INCAPACITATING_CONDITIONS):
+        return False
+    return True
+
+
+def _action_weapon_properties(action: ActionDefinition) -> set[str]:
+    return {str(prop).strip().lower() for prop in action.weapon_properties if str(prop).strip()}
+
+
+def _action_is_ranged_weapon_attack(action: ActionDefinition) -> bool:
+    properties = _action_weapon_properties(action)
+    if properties.intersection({"ammunition", "ranged"}):
+        return True
+    for range_value in (action.range_long_ft, action.range_normal_ft, action.range_ft):
+        if range_value is None:
+            continue
+        try:
+            if int(range_value) > 5:
+                return True
+        except (TypeError, ValueError):
+            continue
+    return False
+
+
+def _normalize_damage_type(value: str) -> str:
+    normalized = str(value).strip().lower()
+    if not normalized:
+        return ""
+    matches: list[tuple[int, str]] = []
+    for canonical in _CANONICAL_DAMAGE_TYPES:
+        match = re.search(rf"\b{canonical}\b", normalized)
+        if match is not None:
+            matches.append((match.start(), canonical))
+    if matches:
+        matches.sort(key=lambda item: (item[0], item[1]))
+        return matches[0][1]
+    return normalized
+
+
+def _rage_benefits_active(actor: ActorRuntimeState) -> bool:
+    if "raging" not in actor.conditions:
+        return False
+    if actor.dead or actor.hp <= 0:
+        return False
+    return not bool(actor.conditions.intersection(_RAGE_BLOCKING_CONDITIONS))
+
+
+def _remove_rage_state(actor: ActorRuntimeState) -> None:
+    if "raging" not in actor.conditions:
+        return
+    _remove_condition_everywhere(actor, "raging")
+    actor.rage_sustained_since_last_turn = False
+
+
+def _sync_rage_state(actor: ActorRuntimeState) -> None:
+    if not _rage_benefits_active(actor):
+        _remove_rage_state(actor)
+
+
+def rage_damage_bonus_for_level(level: int) -> int:
+    bounded_level = max(1, int(level))
+    if bounded_level < 9:
+        return 2
+    if bounded_level < 16:
+        return 3
+    return 4
+
+
+def rage_damage_bonus_for_action(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    using_strength: bool | None = None,
+) -> int:
+    if not _rage_benefits_active(actor):
+        return 0
+    if action.action_type != "attack":
+        return 0
+    if _action_is_ranged_weapon_attack(action):
+        return 0
+    uses_strength = using_strength
+    if uses_strength is None:
+        properties = _action_weapon_properties(action)
+        uses_strength = not ("finesse" in properties and actor.dex_mod > actor.str_mod)
+    if not uses_strength:
+        return 0
+    return rage_damage_bonus_for_level(actor.level)
+
+
+def rage_resistance_applies(*, actor: ActorRuntimeState, damage_type: str) -> bool:
+    if not _rage_benefits_active(actor):
+        return False
+    return _normalize_damage_type(damage_type) in _RAGE_RESISTANCE_DAMAGE_TYPES
+
+
+def rage_activation_legality(actor: ActorRuntimeState) -> tuple[bool, str | None]:
+    if not _has_trait(actor, "rage"):
+        return False, "missing_trait"
+    if "raging" in actor.conditions:
+        return False, "already_raging"
+    if actor.dead or actor.hp <= 0:
+        return False, "unconscious_or_dead"
+    if actor.conditions.intersection(_RAGE_BLOCKING_CONDITIONS):
+        return False, "incapacitated"
+    if int(actor.resources.get("rage", 0)) <= 0:
+        return False, "no_uses_remaining"
+    return True, None
+
+
+def activate_rage(actor: ActorRuntimeState) -> tuple[bool, str | None]:
+    legal, reason = rage_activation_legality(actor)
+    if not legal:
+        return False, reason
+    actor.resources["rage"] = int(actor.resources.get("rage", 0)) - 1
+    actor.update_manual_conditions({"raging"})
+    actor.rage_sustained_since_last_turn = bool(actor.took_attack_action_this_turn)
+    return True, None
+
+
+def _toggle_action_legality_reason(action: ActionDefinition) -> str | None:
+    if action.action_type != "attack":
+        return "non_attack_action"
+    if action.to_hit is None:
+        return "missing_to_hit"
+    return None
+
+
+def _inactive_power_attack_state(reason: str) -> PowerAttackToggleState:
+    return PowerAttackToggleState(
+        active=False,
+        to_hit_modifier=0,
+        damage_bonus=0,
+        reason=reason,
+    )
+
+
+def great_weapon_master_toggle_state(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    enabled: bool,
+) -> PowerAttackToggleState:
+    if not enabled:
+        return _inactive_power_attack_state("toggle_disabled")
+    if not _has_trait(actor, "great weapon master"):
+        return _inactive_power_attack_state("missing_trait")
+    legality_reason = _toggle_action_legality_reason(action)
+    if legality_reason is not None:
+        return _inactive_power_attack_state(legality_reason)
+    properties = _action_weapon_properties(action)
+    if "heavy" not in properties:
+        return _inactive_power_attack_state("weapon_not_heavy")
+    if _action_is_ranged_weapon_attack(action):
+        return _inactive_power_attack_state("weapon_not_melee")
+    return PowerAttackToggleState(active=True, to_hit_modifier=-5, damage_bonus=10, reason=None)
+
+
+def sharpshooter_toggle_state(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    enabled: bool,
+) -> PowerAttackToggleState:
+    if not enabled:
+        return _inactive_power_attack_state("toggle_disabled")
+    if not _has_trait(actor, "sharpshooter"):
+        return _inactive_power_attack_state("missing_trait")
+    legality_reason = _toggle_action_legality_reason(action)
+    if legality_reason is not None:
+        return _inactive_power_attack_state(legality_reason)
+    if not _action_is_ranged_weapon_attack(action):
+        return _inactive_power_attack_state("weapon_not_ranged")
+    return PowerAttackToggleState(active=True, to_hit_modifier=-5, damage_bonus=10, reason=None)
+
+
+def _shield_bonus_from_equipped_items(actor: ActorRuntimeState) -> int:
+    bonus = 0
+    for item in actor.inventory.items.values():
+        if item.equipped_slot is None:
+            continue
+        if item.equipped_slot != "shield":
+            metadata = item.metadata if isinstance(item.metadata, dict) else {}
+            armor_type = _normalize_trait_name(str(metadata.get("armor_type", "")))
+            if armor_type != "shield" and not bool(metadata.get("is_shield")):
+                continue
+        metadata = item.metadata if isinstance(item.metadata, dict) else {}
+        raw_bonus = metadata.get("ac_bonus", 2)
+        try:
+            parsed = int(raw_bonus)
+        except (TypeError, ValueError):
+            parsed = 2
+        bonus = max(bonus, parsed if parsed > 0 else 2)
+    return bonus
+
+
+def shield_master_save_bonus(
+    actor: ActorRuntimeState,
+    *,
+    save_ability: str,
+    effect_target_ids: list[str],
+) -> int:
+    if _normalize_trait_name(save_ability) != "dex":
+        return 0
+    if not _has_trait(actor, "shield master"):
+        return 0
+    if not actor.inventory.has_equipped_shield():
+        return 0
+    if not _shield_master_active(actor):
+        return 0
+
+    targeted_ids = {
+        str(actor_id).strip() for actor_id in effect_target_ids if str(actor_id).strip()
+    }
+    if targeted_ids != {actor.actor_id}:
+        return 0
+    return _shield_bonus_from_equipped_items(actor)
+
+
+def shield_master_bonus_shove_legality(
+    actor: ActorRuntimeState,
+    *,
+    turn_token: str | None = None,
+) -> tuple[bool, str | None]:
+    if not _has_trait(actor, "shield master"):
+        return False, "missing_trait"
+    if not actor.inventory.has_equipped_shield():
+        return False, "missing_shield"
+    if not _shield_master_active(actor):
+        return False, "incapacitated"
+    if not _is_same_turn_for_actor(actor, turn_token):
+        return False, "off_turn"
+    if not actor.bonus_available:
+        return False, "bonus_unavailable"
+    if not actor.took_attack_action_this_turn:
+        return False, "attack_action_not_taken"
+    return True, None
+
+
+def consume_shield_master_bonus_shove(
+    actor: ActorRuntimeState,
+    *,
+    turn_token: str | None = None,
+) -> tuple[bool, str | None]:
+    legal, reason = shield_master_bonus_shove_legality(actor, turn_token=turn_token)
+    if not legal:
+        return False, reason
+    actor.bonus_available = False
+    return True, None
+
+
+def shield_master_reaction_negation_legality(
+    actor: ActorRuntimeState,
+    *,
+    save_ability: str,
+    half_on_save: bool,
+    save_succeeded: bool,
+) -> tuple[bool, str | None]:
+    if _normalize_trait_name(save_ability) != "dex":
+        return False, "non_dex_save"
+    if not half_on_save:
+        return False, "no_half_on_save"
+    if not save_succeeded:
+        return False, "save_failed"
+    if not _has_trait(actor, "shield master"):
+        return False, "missing_trait"
+    if not actor.inventory.has_equipped_shield():
+        return False, "missing_shield"
+    if not _shield_master_active(actor):
+        return False, "incapacitated"
+    if not actor.reaction_available:
+        return False, "reaction_unavailable"
+    return True, None
+
+
+def consume_shield_master_reaction_no_damage(
+    actor: ActorRuntimeState,
+    *,
+    save_ability: str,
+    half_on_save: bool,
+    save_succeeded: bool,
+) -> tuple[bool, str | None]:
+    legal, reason = shield_master_reaction_negation_legality(
+        actor,
+        save_ability=save_ability,
+        half_on_save=half_on_save,
+        save_succeeded=save_succeeded,
+    )
+    if not legal:
+        return False, reason
+    actor.reaction_available = False
+    return True, None
+
+
 def _remove_condition_everywhere(target: ActorRuntimeState, condition: str) -> None:
     # Local import avoids module-level circular dependency.
     from dnd_sim.engine import _remove_condition
@@ -462,6 +989,100 @@ def attack_roll(
     total = natural_roll + to_hit
     hit = crit or (natural_roll != 1 and total >= target_ac)
     return AttackRollResult(hit=hit, crit=crit, natural_roll=natural_roll, total=total)
+
+
+def _spend_luck_point_if_available(
+    actor: ActorRuntimeState,
+    *,
+    resources_spent: dict[str, dict[str, int]],
+) -> bool:
+    if not _has_trait(actor, "lucky"):
+        return False
+    current_points = int(actor.resources.get("luck_points", 0))
+    if current_points <= 0:
+        return False
+    actor.resources["luck_points"] = current_points - 1
+    actor_spend = resources_spent.setdefault(actor.actor_id, {})
+    actor_spend["luck_points"] = actor_spend.get("luck_points", 0) + 1
+    return True
+
+
+def _attack_roll_from_natural(
+    *,
+    natural_roll: int,
+    to_hit_modifier: int,
+    target_ac: int,
+) -> AttackRollResult:
+    crit = natural_roll == 20
+    total = natural_roll + to_hit_modifier
+    hit = crit or (natural_roll != 1 and total >= target_ac)
+    return AttackRollResult(hit=hit, crit=crit, natural_roll=natural_roll, total=total)
+
+
+def apply_lucky_attacker_reroll(
+    *,
+    rng: random.Random,
+    attacker: ActorRuntimeState,
+    roll: AttackRollResult,
+    to_hit_modifier: int,
+    target_ac: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    """Applies Lucky to a failed attack roll made by the actor."""
+    if roll.hit:
+        return roll
+    if not _spend_luck_point_if_available(attacker, resources_spent=resources_spent):
+        return roll
+
+    lucky_natural = rng.randint(1, 20)
+    chosen_natural = max(int(roll.natural_roll), lucky_natural)
+    return _attack_roll_from_natural(
+        natural_roll=chosen_natural,
+        to_hit_modifier=to_hit_modifier,
+        target_ac=target_ac,
+    )
+
+
+def apply_lucky_defender_reroll(
+    *,
+    rng: random.Random,
+    defender: ActorRuntimeState,
+    roll: AttackRollResult,
+    to_hit_modifier: int,
+    target_ac: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    """Applies Lucky to an incoming attack roll against the actor."""
+    if not roll.hit:
+        return roll
+    if not _spend_luck_point_if_available(defender, resources_spent=resources_spent):
+        return roll
+
+    lucky_natural = rng.randint(1, 20)
+    chosen_natural = min(int(roll.natural_roll), lucky_natural)
+    return _attack_roll_from_natural(
+        natural_roll=chosen_natural,
+        to_hit_modifier=to_hit_modifier,
+        target_ac=target_ac,
+    )
+
+
+def apply_lucky_save_reroll(
+    *,
+    rng: random.Random,
+    target: ActorRuntimeState,
+    save_roll: int,
+    save_mod: int,
+    dc: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    """Applies Lucky to a failed saving throw roll and returns the chosen d20 roll."""
+    if int(save_roll) + int(save_mod) >= int(dc):
+        return int(save_roll)
+    if not _spend_luck_point_if_available(target, resources_spent=resources_spent):
+        return int(save_roll)
+    lucky_roll = rng.randint(1, 20)
+    return max(int(save_roll), lucky_roll)
 
 
 def run_contested_check(
@@ -563,10 +1184,10 @@ def apply_damage_type_modifiers(
     immunities: set[str],
     vulnerabilities: set[str],
 ) -> int:
-    dtype = str(damage_type).lower()
-    normalized_resistances = {str(value).lower() for value in resistances}
-    normalized_immunities = {str(value).lower() for value in immunities}
-    normalized_vulnerabilities = {str(value).lower() for value in vulnerabilities}
+    dtype = _normalize_damage_type(damage_type)
+    normalized_resistances = {_normalize_damage_type(value) for value in resistances}
+    normalized_immunities = {_normalize_damage_type(value) for value in immunities}
+    normalized_vulnerabilities = {_normalize_damage_type(value) for value in vulnerabilities}
     if dtype in normalized_immunities or "all" in normalized_immunities:
         return 0
 
@@ -588,7 +1209,7 @@ def _resolve_damage_packet(
     target: ActorRuntimeState,
     source: ActorRuntimeState | None = None,
 ) -> ResolvedDamagePacket:
-    damage_type = str(packet.damage_type).lower()
+    damage_type = _normalize_damage_type(packet.damage_type)
     adjusted = max(0, int(packet.amount))
 
     for trait_data in target.traits.values():
@@ -598,7 +1219,7 @@ def _resolve_damage_packet(
             configured = mechanic.get("damage_types", [])
             if not isinstance(configured, (list, tuple, set)):
                 configured = [configured]
-            normalized_types = {str(value).lower() for value in configured}
+            normalized_types = {_normalize_damage_type(value) for value in configured}
             if damage_type not in normalized_types:
                 continue
             cond = str(mechanic.get("condition", "")).lower()
@@ -607,16 +1228,16 @@ def _resolve_damage_packet(
             amt = int(mechanic.get("amount", 0))
             adjusted = max(0, adjusted - amt)
 
-    effective_resistances = {str(value).lower() for value in target.damage_resistances}
-    if "raging" in target.conditions:
-        effective_resistances.update({"bludgeoning", "piercing", "slashing"})
+    effective_resistances = {_normalize_damage_type(value) for value in target.damage_resistances}
+    if rage_resistance_applies(actor=target, damage_type=damage_type):
+        effective_resistances.update(_RAGE_RESISTANCE_DAMAGE_TYPES)
 
     if source:
         for trait_data in source.traits.values():
             for mechanic in trait_data.get("mechanics", []):
                 if mechanic.get("effect_type") != "ignore_resistance":
                     continue
-                bypass_type = str(mechanic.get("damage_type", "")).lower()
+                bypass_type = _normalize_damage_type(str(mechanic.get("damage_type", "")))
                 if bypass_type in {damage_type, "any_elemental"}:
                     effective_resistances.discard(damage_type)
 
@@ -624,8 +1245,8 @@ def _resolve_damage_packet(
         adjusted,
         damage_type,
         resistances=effective_resistances,
-        immunities={str(value).lower() for value in target.damage_immunities},
-        vulnerabilities={str(value).lower() for value in target.damage_vulnerabilities},
+        immunities={_normalize_damage_type(value) for value in target.damage_immunities},
+        vulnerabilities={_normalize_damage_type(value) for value in target.damage_vulnerabilities},
     )
     return ResolvedDamagePacket(
         amount=max(0, int(packet.amount)),
@@ -662,16 +1283,14 @@ def apply_damage_bundle(
     is_critical: bool = False,
     source: ActorRuntimeState | None = None,
 ) -> DamageBundleResolution:
+    _sync_rage_state(target)
     resolution = resolve_damage_bundle(target, bundle, source=source)
     adjusted = resolution.applied_total
-    if adjusted > 0 and "raging" in target.conditions:
+    if adjusted > 0 and _rage_benefits_active(target):
         target.rage_sustained_since_last_turn = True
 
     def _end_rage_if_active() -> None:
-        if "raging" not in target.conditions:
-            return
-        _remove_condition_everywhere(target, "raging")
-        target.rage_sustained_since_last_turn = False
+        _remove_rage_state(target)
 
     remaining = adjusted
     if target.temp_hp > 0 and remaining > 0:
@@ -783,6 +1402,8 @@ def run_concentration_check(
 ) -> bool:
     if not target.concentrating:
         return True
+    if "raging" in target.conditions:
+        return False
 
     dc = concentration_check_dc(damage_taken)
     advantage = _has_trait(target, "war caster")
