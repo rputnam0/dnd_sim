@@ -15,7 +15,7 @@
     {
       "effect_type": "damage",
       "target": "single_enemy",
-      "apply_on": "save_fail",
+      "apply_on": "always",
       "save_ability": "int",
       "damage": "4d6",
       "damage_type": "psychic"
