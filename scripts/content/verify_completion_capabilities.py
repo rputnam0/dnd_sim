@@ -118,12 +118,13 @@ def verify_manifest_payload(
 
     raw_records = payload.get("records")
     if not isinstance(raw_records, list):
-        return [
+        issues.append(
             CapabilityIssue(
                 code="CAP-GATE-002",
                 message="manifest payload must contain a records array.",
             )
-        ]
+        )
+        return issues
 
     expected_set = set(expected_content_ids)
     seen_ids: set[str] = set()

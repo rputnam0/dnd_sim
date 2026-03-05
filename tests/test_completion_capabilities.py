@@ -150,3 +150,17 @@ def test_legacy_flat_state_fields_are_rejected() -> None:
         issue.code == "CAP-GATE-003" and "legacy flat capability fields" in issue.message
         for issue in issues
     )
+
+
+def test_invalid_records_array_preserves_header_issues() -> None:
+    payload = {
+        "records": "oops",
+    }
+
+    issues = verify_completion_capabilities.verify_manifest_payload(
+        payload,
+        expected_content_ids=(),
+    )
+    messages = [issue.message for issue in issues]
+    assert "manifest payload must declare non-empty manifest_version." in messages
+    assert "manifest payload must contain a records array." in messages
