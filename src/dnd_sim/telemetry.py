@@ -14,6 +14,14 @@ TURN_TRACE_EVENT_TYPES: tuple[str, str, str, str] = (
     "action_resolution",
     "action_outcome",
 )
+STATE_DELTA_EVENT_TYPE = "actor_state_delta"
+EFFECT_LIFECYCLE_EVENT_TYPES: tuple[str, str, str, str, str] = (
+    "effect_apply",
+    "effect_tick",
+    "effect_refresh",
+    "effect_expire",
+    "effect_concentration_break",
+)
 
 JSONScalar: TypeAlias = str | int | float | bool | None
 JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
