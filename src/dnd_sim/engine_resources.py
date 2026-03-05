@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import logging
 from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
 
 
 def ensure_resource_cap(actor: Any, resource: str, max_value: int) -> None:

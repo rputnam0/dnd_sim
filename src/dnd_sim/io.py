@@ -4,6 +4,7 @@ import csv
 import importlib
 import importlib.util
 import json
+import logging
 import re
 from functools import lru_cache
 from datetime import UTC, datetime
@@ -29,6 +30,8 @@ from dnd_sim.characters import (
     validate_multiclass_prerequisites,
 )
 from dnd_sim.strategy_api import BaseStrategy, validate_strategy_instance
+
+logger = logging.getLogger(__name__)
 
 _RECHARGE_PATTERN = re.compile(
     r"^(?:recharge\s+)?(?P<low>[1-6])(?:\s*-\s*(?P<high>[1-6]))?$",

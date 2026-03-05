@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import logging
 from typing import Any, Protocol
 
 from dnd_sim.spatial import check_cover, distance_chebyshev, move_towards
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
