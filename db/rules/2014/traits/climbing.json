@@ -3,6 +3,7 @@
   "description": "You also have a climbing speed of 30 feet as long as you are not encumbered or wearing heavy armor.",
   "mechanics": [
     {
+      "meta_type": "speed",
       "add_speed": {
         "type": "climbing",
         "value": 30,
