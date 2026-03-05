@@ -1,0 +1,20 @@
+{
+  "bundles": {
+    "combat_duel_trace.json": {
+      "sha256": "60a73c82546e1bec867b5fc57776a259249f44077d0c9cb8be4d14d5e2203d69"
+    },
+    "hazard_gauntlet_trace.json": {
+      "sha256": "53572f4a236d16c40246178888449202923a8a2cda357b690ca9fe4c62d01ab6"
+    },
+    "reactions_window_trace.json": {
+      "sha256": "c5ca32da53c05579e92b78dcd3df3d481f877b3ce4639868d1dfdad0cac4d284"
+    },
+    "summons_wave_trace.json": {
+      "sha256": "93958bc8e807da2ba2a5fa33077ef4b8011fb3b21cf615fe24534b279b1786d0"
+    },
+    "world_exploration_trace.json": {
+      "sha256": "e5d4f8862f8f04c12b98258f58378ca7dece70ceae5eac8d1761ec184de7e178"
+    }
+  },
+  "schema_version": "golden_traces.v1"
+}

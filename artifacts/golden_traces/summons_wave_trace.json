@@ -1,0 +1,49 @@
+{
+  "schema_version": "replay.v1",
+  "run_id": "golden_summons_wave",
+  "scenario_id": "golden_summons_wave",
+  "inputs": {
+    "seed": 303,
+    "trials": 1,
+    "ruleset": "5e-2014",
+    "scenario_path": "fixtures/summons_wave.json"
+  },
+  "summary": {
+    "run_id": "golden_summons_wave",
+    "scenario_id": "golden_summons_wave",
+    "trials": 1,
+    "party_win_rate": 1.0,
+    "enemy_win_rate": 0.0,
+    "rounds": {
+      "mean": 4.0,
+      "median": 4.0,
+      "p10": 4.0,
+      "p90": 4.0,
+      "p95": 4.0
+    }
+  },
+  "trials": [
+    {
+      "trial_index": 0,
+      "rounds": 4,
+      "winner": "party",
+      "damage_taken": {"druid": 9, "wolf_companion": 5},
+      "damage_dealt": {"druid": 14, "wolf_companion": 10},
+      "resources_spent": {"druid": {"spell_slot_3": 1}},
+      "downed_counts": {"druid": 0, "wolf_companion": 0},
+      "death_counts": {"druid": 0, "wolf_companion": 0},
+      "remaining_hp": {"druid": 15, "wolf_companion": 7},
+      "telemetry": [
+        {"telemetry_type": "decision", "round": 1, "actor_id": "druid"},
+        {"telemetry_type": "action_resolution", "round": 2, "actor_id": "wolf_companion"}
+      ],
+      "encounter_outcomes": [
+        {"encounter_index": 0, "winner": "party", "summons_active": 1}
+      ],
+      "state_snapshots": [
+        {"round": 1, "summons": ["wolf_companion"]},
+        {"round": 4, "party": {"druid": {"hp": 15}, "wolf_companion": {"hp": 7}}}
+      ]
+    }
+  ]
+}
