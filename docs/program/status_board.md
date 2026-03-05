@@ -32,13 +32,13 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
 | DOC-01 | feat/doc-01-establish-canonical-docs-entrypoints-and-source-of | doc_control_lead | in_progress | Canonical planning entrypoint task in flight. |
-| DOC-02 | codex/feat/doc-02-archive-stale-planning-and-historical-run-artifact | doc_control_a | in_progress | Backfilling historical run/cleanup/deprecation artifacts into `docs/archive/`. |
+| DOC-02 | codex/feat/doc-02-archive-stale-planning-and-historical-run-artifact | doc_control_a | pr_open | Archive backfill and canonical-link cleanup in PR #90. |
 
 ## Open PRs
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
-| - | - | - | - | None yet. |
+| DOC-02 | [#90](https://github.com/rputnam0/dnd_sim/pull/90) | doc_control_a | pending review | Targets `int/5a-doc-control`. |
 
 ## Current blockers
 
