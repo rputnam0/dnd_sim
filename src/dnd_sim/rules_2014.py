@@ -461,6 +461,80 @@ def evaluate_sentinel_opportunity_window(
     return ReactionWindowResult(allowed=True, reason=None)
 
 
+def _is_spell_action(action: ActionDefinition) -> bool:
+    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
+    if "spell" in normalized_tags:
+        return True
+    if _normalize_trait_name(action.action_type) == "spell":
+        return True
+    return action.spell is not None
+
+
+def _is_one_action_spell(action: ActionDefinition) -> bool:
+    if _normalize_trait_name(action.action_cost) != "action":
+        return False
+    if action.spell is None:
+        return True
+    raw_casting_time = action.spell.casting_time
+    if raw_casting_time is None or not str(raw_casting_time).strip():
+        return True
+    return _normalize_trait_name(str(raw_casting_time)) in {"1 action", "action"}
+
+
+def _war_caster_targets_single_trigger(action: ActionDefinition) -> bool:
+    target_mode = _normalize_trait_name(action.target_mode)
+    if target_mode not in {"single enemy", "single target"}:
+        return False
+    if action.include_self:
+        return False
+    if action.max_targets is None:
+        return True
+    try:
+        return int(action.max_targets) == 1
+    except (TypeError, ValueError):
+        return False
+
+
+def evaluate_war_caster_opportunity_window(
+    *,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_distance_ft: float | None,
+    reach_ft: float,
+    mover_disengaged: bool,
+    forced_movement: bool,
+    reaction_spell: ActionDefinition | None,
+    reaction_lock_active: bool = False,
+) -> ReactionWindowResult:
+    gate = _evaluate_reaction_window_gate(
+        reactor=reactor,
+        reaction_lock_active=reaction_lock_active,
+    )
+    if gate is not None:
+        return gate
+    if not _has_trait(reactor, "war caster"):
+        return ReactionWindowResult(allowed=False, reason="missing_trait")
+    if trigger_actor is None or reaction_spell is None:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
+    if trigger_actor.team == reactor.team:
+        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
+    if forced_movement:
+        return ReactionWindowResult(allowed=False, reason="forced_movement")
+    if mover_disengaged:
+        return ReactionWindowResult(allowed=False, reason="no_opportunity_trigger")
+    if trigger_distance_ft is None:
+        return ReactionWindowResult(allowed=False, reason="out_of_reach")
+    if float(trigger_distance_ft) > max(0.0, float(reach_ft)) + 1e-9:
+        return ReactionWindowResult(allowed=False, reason="out_of_reach")
+    if not _is_spell_action(reaction_spell):
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_action")
+    if not _is_one_action_spell(reaction_spell):
+        return ReactionWindowResult(allowed=False, reason="invalid_casting_time")
+    if not _war_caster_targets_single_trigger(reaction_spell):
+        return ReactionWindowResult(allowed=False, reason="illegal_spell_target")
+    return ReactionWindowResult(allowed=True, reason=None)
+
+
 def sentinel_speed_reduction_applies_on_hit(*, hit: bool, opportunity_attack: bool) -> bool:
     return bool(hit and opportunity_attack)
 

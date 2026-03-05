@@ -39,6 +39,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | FIX-01 | `codex/feat/fix-01-close-lucky-attacker-defender-and-saving-throw-cor` | rules_a | in_progress | Closing Lucky correctness for attacks by/against Lucky characters and failed saving throws with deterministic reroll selection and luck-point accounting. |
 | FIX-05 | `codex/feat/fix-05-close-mage-slayer-and-sentinel-reaction-constraint` | rules_e | pr_open | Deterministic Mage Slayer/Sentinel reaction-constraint rules and correctness tests are in PR review. |
 | FIX-03 | `codex/feat/fix-03-close-shield-master-reaction-save-and-shove-correc` | rules_c | pr_open | Shield Master save bonus, shove sequencing, and illegal-window correctness helpers/tests are implemented and under review. |
+| FIX-04 | `codex/feat/fix-04-close-war-caster-opportunity-casting-and-concentra` | rules_d | in_progress | War Caster opportunity spell legality and concentration advantage correctness tests/helpers are implemented and queued for PR. |
 
 ## Open PRs
 
