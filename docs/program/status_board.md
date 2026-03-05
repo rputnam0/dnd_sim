@@ -42,7 +42,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
-| AI-01 | `pending` | ai_core | pending | PR opening from `codex/feat/ai-01-normalize-candidate-action-enumeration-and-scoring` to `int/5f-ai-hardening`; replace with PR link after creation. |
+| AI-01 | [#116](https://github.com/rputnam0/dnd_sim/pull/116) | ai_core | pending | Normalized candidate enumeration and scoring inputs are under review for merge into `int/5f-ai-hardening`. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
