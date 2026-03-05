@@ -24,7 +24,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 |---|---|---|---|---|
 | DOC | Documentation Control | merged | 5A-doc-control | `DOC-01` through `DOC-06` are `merged` in `backlog.csv`; Documentation Control track is complete. |
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
-| CAP | Capability Manifest | in_progress | 5C-capability-manifest | `CAP-01` and `CAP-03` are `pr_open`, while `CAP-02`, `CAP-04`, and `CAP-05` are `in_progress` in `backlog.csv`; `CAP-06` remains `not_started`. |
+| CAP | Capability Manifest | in_progress | 5C-capability-manifest | `CAP-01`, `CAP-03`, and `CAP-06` are `pr_open`, while `CAP-02`, `CAP-04`, and `CAP-05` are `in_progress` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
@@ -41,6 +41,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | CAP-03 | `codex/feat/cap-03-generate-feat-trait-background-and-species-capabil` | content_manifest_feat | pr_open | Feature capability manifest generation is in PR review with feat/trait/background/species coverage and support-state labeling. |
 | CAP-04 | `codex/feat/cap-04-generate-monster-and-monster-action-capability-man` | content_manifest_monster | in_progress | Building monster and monster-action capability manifest coverage including reactions/legendary/lair/recharge/innate entries. |
 | CAP-05 | `codex/feat/cap-05-enforce-capability-manifest-gates-in-import-paths` | content_manifest_gate | in_progress | Enforcing capability gates in import paths and CI with supported-scope tested/schema-valid checks and blocked-record reason-code checks. |
+| CAP-06 | `codex/feat/cap-06-publish-machine-readable-and-markdown-coverage-rep` | content_manifest_report | pr_open | Publishing deterministic machine-readable and markdown coverage reports in artifacts and docs surfaces. |
 
 ## Open PRs
 
@@ -48,6 +49,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 |---|---|---|---|---|
 | CAP-01 | [#94](https://github.com/rputnam0/dnd_sim/pull/94) | content_manifest_lead | pending | CAP-01 schema, CLI, and deterministic manifest tests are under review. |
 | CAP-03 | [#111](https://github.com/rputnam0/dnd_sim/pull/111) | content_manifest_feat | pending | CAP-03 feature capability manifest generation and schema expectations are under review. |
+| CAP-06 | [#125](https://github.com/rputnam0/dnd_sim/pull/125) | content_manifest_report | pending | CAP-06 deterministic coverage report generation and publication is under review. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
@@ -58,4 +60,5 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - `CAP-03` is in PR review and depends on `CAP-01` and `ARC-05` per `backlog.csv`.
 - `CAP-04` is active and depends on `CAP-01` and `ARC-04` per `backlog.csv`.
 - `CAP-05` is active and depends on `CAP-02`, `CAP-03`, `CAP-04`, and `DOC-05` per `backlog.csv`.
+- `CAP-06` is in PR review and depends on `CAP-05` per `backlog.csv`.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
