@@ -4,7 +4,7 @@
   "mechanics": [
     {
       "trigger": "action surge",
-      "effect": "Teleport",
+      "meta_type": "teleport",
       "distance": 30,
       "target": "unoccupied space you can see",
       "timing": "before or after the additional action"

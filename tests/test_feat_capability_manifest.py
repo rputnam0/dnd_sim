@@ -17,6 +17,19 @@ SHARD_A_SPECIES_IDS = {
     "species:brave",
 }
 
+SHARD_B_TRAIT_IDS = {
+    "trait:acrobatic_movement",
+    "trait:action_surge",
+    "trait:action_surge_two_uses",
+    "trait:additional_superiority_die",
+    "trait:arcane_charge",
+    "trait:arcane_ward",
+    "trait:archdruid",
+    "trait:aura_expansion",
+    "trait:aura_improvements",
+    "trait:aura_of_alacrity",
+}
+
 
 def test_feature_manifest_emits_feat_trait_background_species_records() -> None:
     payloads = [
@@ -164,3 +177,26 @@ def test_species_hook_shard_a_records_are_supported() -> None:
         assert record.support_state == "supported"
         assert record.states.blocked is False
         assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
+
+
+def test_trait_hook_shard_b_records_are_supported() -> None:
+    manifest = build_feature_capability_manifest()
+    by_id = {record.content_id: record for record in manifest.records}
+
+    missing_ids = sorted(SHARD_B_TRAIT_IDS - set(by_id))
+    assert missing_ids == []
+
+    blocked_traits_missing_hook = {
+        record.content_id
+        for record in manifest.records
+        if record.content_type == "trait"
+        and record.states.unsupported_reason == "missing_runtime_hook_family"
+    }
+    assert blocked_traits_missing_hook.isdisjoint(SHARD_B_TRAIT_IDS)
+
+    for content_id in sorted(SHARD_B_TRAIT_IDS):
+        record = by_id[content_id]
+        assert record.content_type == "trait"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
+        assert record.runtime_hook_family == "meta"

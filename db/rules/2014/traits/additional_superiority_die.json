@@ -3,7 +3,7 @@
   "description": "You gain another superiority die at 7th level.",
   "mechanics": [
     {
-      "effect": "increaseSuperiorityDice",
+      "meta_type": "superiority_die_increase",
       "amount": 1
     }
   ],

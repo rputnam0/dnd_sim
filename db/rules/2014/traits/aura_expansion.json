@@ -3,7 +3,7 @@
   "description": "Your Aura of Protection is now a 30-foot emanation.",
   "mechanics": [
     {
-      "effect": "Aura of Protection radius",
+      "meta_type": "aura_radius_increase",
       "radius_feet": 30,
       "area_type": "emanation"
     }

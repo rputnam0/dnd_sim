@@ -3,7 +3,7 @@
   "description": "While you aren't wearing armor or wielding a shield, you gain the ability to move along vertical surfaces and across liquids on your turn without falling during the movement.",
   "mechanics": [
     {
-      "effect": "ignore_fall",
+      "meta_type": "movement_surface_traversal",
       "condition": "not wearing armor or shield",
       "movement": "vertical surfaces, liquids"
     }
