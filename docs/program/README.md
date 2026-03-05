@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/README.md`
 
 This file is the single canonical planning entrypoint for the DnD Sim completion program.
@@ -43,6 +43,9 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 | `docs/program/status_board.md` | canonical | Human-readable status dashboard. |
 | `docs/program/completion_task_cards.md` | canonical | Human-readable task expansion of backlog. |
 | `docs/program/capability_report.md` | canonical after CAP-06 | Capability report output surface. |
+
+Ownership and metadata-header requirements for this same live planning surface are defined in
+`docs/program/doc_governance.md`.
 
 ## Historical planning scope
 

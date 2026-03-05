@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/README.md`
 
 ## Objective
@@ -59,6 +59,10 @@ Tasks:
 - DOC-04 Add doc freshness metadata and registry
 - DOC-05 Add doc consistency checker and CI gate
 - DOC-06 Expand agent ownership map for target runtime boundaries
+
+DOC-04 freshness contract:
+- Every live planning markdown file carries `Status`, `Owner`, `Last updated`, and `Canonical source`.
+- `docs/program/doc_governance.md` owns the registry for all live planning paths and owners.
 
 ### 5B Runtime Decomposition
 
