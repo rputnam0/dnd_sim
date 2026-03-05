@@ -118,27 +118,21 @@ def test_encounter_state_round_trip_links_campaign_and_replay() -> None:
     assert loaded["replay_bundle_id"] == "replay_encounter_001"
 
 
-def test_campaign_snapshot_legacy_shape_is_upgraded_for_compatibility() -> None:
+def test_campaign_snapshot_rejects_legacy_shape_under_hard_cut_policy() -> None:
     with _memory_connection() as conn:
         db_module.create_campaign_state_tables(conn)
-        save_campaign_snapshot(
-            conn,
-            campaign_id="legacy_campaign",
-            snapshot={
-                "party": {"hero": {"hp": 10}},
-                "resource_state": {"hero": {"ki": 1}},
-                "effects": [{"condition": "bless", "target_id": "hero"}],
-                "initiative": {"round": 2},
-                "replay": {"bundle_id": "legacy_replay_42"},
-            },
-        )
-        loaded = load_campaign_snapshot(conn, campaign_id="legacy_campaign")
-
-    assert loaded["party_state"] == {"hero": {"hp": 10}}
-    assert loaded["resources"] == {"hero": {"ki": 1}}
-    assert loaded["active_effects"] == [{"condition": "bless", "target_id": "hero"}]
-    assert loaded["initiative_context"] == {"round": 2}
-    assert loaded["replay_bundle_id"] == "legacy_replay_42"
+        with pytest.raises(ValueError, match="missing required keys|unexpected keys"):
+            save_campaign_snapshot(
+                conn,
+                campaign_id="legacy_campaign",
+                snapshot={
+                    "party": {"hero": {"hp": 10}},
+                    "resource_state": {"hero": {"ki": 1}},
+                    "effects": [{"condition": "bless", "target_id": "hero"}],
+                    "initiative": {"round": 2},
+                    "replay": {"bundle_id": "legacy_replay_42"},
+                },
+            )
 
 
 def test_load_campaign_snapshot_rejects_corrupt_json_payload() -> None:
