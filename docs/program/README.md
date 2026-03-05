@@ -44,6 +44,13 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 | `docs/program/completion_task_cards.md` | canonical | Human-readable task expansion of backlog. |
 | `docs/program/capability_report.md` | canonical after CAP-06 | Capability report output surface. |
 
+## Capability Coverage Reports
+
+- Markdown report: [`docs/program/capability_report.md`](capability_report.md)
+- Machine-readable JSON: [`artifacts/capabilities/coverage_report.json`](../../artifacts/capabilities/coverage_report.json)
+- Regenerate both outputs with:
+  `uv run python scripts/content/render_capability_report.py --last-updated YYYY-MM-DD`
+
 Ownership and metadata-header requirements for this same live planning surface are defined in
 `docs/program/doc_governance.md`.
 
