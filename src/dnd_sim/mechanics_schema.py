@@ -81,8 +81,22 @@ _SUPPORTED_REACTION_ATTACK_TRIGGERS = {
     "spell_cast_within_5ft",
     "hit_by_melee_attack_within_5ft",
 }
-_SUPPORTED_DURATION_TIMINGS = {"turn_start", "turn_end"}
-_SUPPORTED_STACK_POLICIES = {"independent", "replace", "refresh"}
+_SUPPORTED_DURATION_TIMING_ALIASES: dict[str, str] = {
+    "turn_start": "turn_start",
+    "turn_end": "turn_end",
+    "end": "turn_end",
+    "end_of_turn": "turn_end",
+    "at_end": "turn_end",
+}
+_SUPPORTED_STACK_POLICY_ALIASES: dict[str, str] = {
+    "independent": "independent",
+    "replace": "replace",
+    "overwrite": "replace",
+    "exclusive": "replace",
+    "refresh": "refresh",
+    "refresh_by_source": "refresh",
+    "by_source": "refresh",
+}
 _SUPPORTED_SAVE_ABILITIES = {"str", "dex", "con", "int", "wis", "cha"}
 
 _ACTION_GROUPS = (
@@ -168,7 +182,7 @@ def _validate_mechanics_list(mechanics: Any, *, prefix: str) -> list[str]:
             if "duration_timing" in row:
                 duration_timing = row.get("duration_timing")
                 normalized_timing = _canonical_effect_type(duration_timing)
-                if normalized_timing not in _SUPPORTED_DURATION_TIMINGS:
+                if normalized_timing not in _SUPPORTED_DURATION_TIMING_ALIASES:
                     issues.append(
                         f"{path}.duration_timing '{normalized_timing}' is unsupported for apply_condition"
                     )
@@ -176,7 +190,7 @@ def _validate_mechanics_list(mechanics: Any, *, prefix: str) -> list[str]:
             if "stack_policy" in row:
                 stack_policy = row.get("stack_policy")
                 normalized_policy = _canonical_effect_type(stack_policy)
-                if normalized_policy not in _SUPPORTED_STACK_POLICIES:
+                if normalized_policy not in _SUPPORTED_STACK_POLICY_ALIASES:
                     issues.append(
                         f"{path}.stack_policy '{normalized_policy}' is unsupported for apply_condition"
                     )
