@@ -16,6 +16,29 @@ _SHIELD_MASTER_INCAPACITATING_CONDITIONS = {
     "stunned",
     "unconscious",
 }
+_RAGE_BLOCKING_CONDITIONS = {
+    "incapacitated",
+    "paralyzed",
+    "petrified",
+    "stunned",
+    "unconscious",
+}
+_RAGE_RESISTANCE_DAMAGE_TYPES = {"bludgeoning", "piercing", "slashing"}
+_CANONICAL_DAMAGE_TYPES = (
+    "acid",
+    "bludgeoning",
+    "cold",
+    "fire",
+    "force",
+    "lightning",
+    "necrotic",
+    "piercing",
+    "poison",
+    "psychic",
+    "radiant",
+    "slashing",
+    "thunder",
+)
 _EventT = TypeVar("_EventT", bound="CombatEvent")
 
 
@@ -643,6 +666,101 @@ def _action_is_ranged_weapon_attack(action: ActionDefinition) -> bool:
     return False
 
 
+def _normalize_damage_type(value: str) -> str:
+    normalized = str(value).strip().lower()
+    if not normalized:
+        return ""
+    matches: list[tuple[int, str]] = []
+    for canonical in _CANONICAL_DAMAGE_TYPES:
+        match = re.search(rf"\b{canonical}\b", normalized)
+        if match is not None:
+            matches.append((match.start(), canonical))
+    if matches:
+        matches.sort(key=lambda item: (item[0], item[1]))
+        return matches[0][1]
+    return normalized
+
+
+def _rage_benefits_active(actor: ActorRuntimeState) -> bool:
+    if "raging" not in actor.conditions:
+        return False
+    if actor.dead or actor.hp <= 0:
+        return False
+    return not bool(actor.conditions.intersection(_RAGE_BLOCKING_CONDITIONS))
+
+
+def _remove_rage_state(actor: ActorRuntimeState) -> None:
+    if "raging" not in actor.conditions:
+        return
+    _remove_condition_everywhere(actor, "raging")
+    actor.rage_sustained_since_last_turn = False
+
+
+def _sync_rage_state(actor: ActorRuntimeState) -> None:
+    if not _rage_benefits_active(actor):
+        _remove_rage_state(actor)
+
+
+def rage_damage_bonus_for_level(level: int) -> int:
+    bounded_level = max(1, int(level))
+    if bounded_level < 9:
+        return 2
+    if bounded_level < 16:
+        return 3
+    return 4
+
+
+def rage_damage_bonus_for_action(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    using_strength: bool | None = None,
+) -> int:
+    if not _rage_benefits_active(actor):
+        return 0
+    if action.action_type != "attack":
+        return 0
+    if _action_is_ranged_weapon_attack(action):
+        return 0
+    uses_strength = using_strength
+    if uses_strength is None:
+        properties = _action_weapon_properties(action)
+        uses_strength = not ("finesse" in properties and actor.dex_mod > actor.str_mod)
+    if not uses_strength:
+        return 0
+    return rage_damage_bonus_for_level(actor.level)
+
+
+def rage_resistance_applies(*, actor: ActorRuntimeState, damage_type: str) -> bool:
+    if not _rage_benefits_active(actor):
+        return False
+    return _normalize_damage_type(damage_type) in _RAGE_RESISTANCE_DAMAGE_TYPES
+
+
+def rage_activation_legality(actor: ActorRuntimeState) -> tuple[bool, str | None]:
+    if not _has_trait(actor, "rage"):
+        return False, "missing_trait"
+    if "raging" in actor.conditions:
+        return False, "already_raging"
+    if actor.dead or actor.hp <= 0:
+        return False, "unconscious_or_dead"
+    if actor.conditions.intersection(_RAGE_BLOCKING_CONDITIONS):
+        return False, "incapacitated"
+    if int(actor.resources.get("rage", 0)) <= 0:
+        return False, "no_uses_remaining"
+    return True, None
+
+
+def activate_rage(actor: ActorRuntimeState) -> tuple[bool, str | None]:
+    legal, reason = rage_activation_legality(actor)
+    if not legal:
+        return False, reason
+    actor.resources["rage"] = int(actor.resources.get("rage", 0)) - 1
+    actor.update_manual_conditions({"raging"})
+    actor.rage_sustained_since_last_turn = bool(actor.took_attack_action_this_turn)
+    return True, None
+
+
 def _toggle_action_legality_reason(action: ActionDefinition) -> str | None:
     if action.action_type != "attack":
         return "non_attack_action"
@@ -1060,10 +1178,10 @@ def apply_damage_type_modifiers(
     immunities: set[str],
     vulnerabilities: set[str],
 ) -> int:
-    dtype = str(damage_type).lower()
-    normalized_resistances = {str(value).lower() for value in resistances}
-    normalized_immunities = {str(value).lower() for value in immunities}
-    normalized_vulnerabilities = {str(value).lower() for value in vulnerabilities}
+    dtype = _normalize_damage_type(damage_type)
+    normalized_resistances = {_normalize_damage_type(value) for value in resistances}
+    normalized_immunities = {_normalize_damage_type(value) for value in immunities}
+    normalized_vulnerabilities = {_normalize_damage_type(value) for value in vulnerabilities}
     if dtype in normalized_immunities or "all" in normalized_immunities:
         return 0
 
@@ -1085,7 +1203,7 @@ def _resolve_damage_packet(
     target: ActorRuntimeState,
     source: ActorRuntimeState | None = None,
 ) -> ResolvedDamagePacket:
-    damage_type = str(packet.damage_type).lower()
+    damage_type = _normalize_damage_type(packet.damage_type)
     adjusted = max(0, int(packet.amount))
 
     for trait_data in target.traits.values():
@@ -1095,7 +1213,7 @@ def _resolve_damage_packet(
             configured = mechanic.get("damage_types", [])
             if not isinstance(configured, (list, tuple, set)):
                 configured = [configured]
-            normalized_types = {str(value).lower() for value in configured}
+            normalized_types = {_normalize_damage_type(value) for value in configured}
             if damage_type not in normalized_types:
                 continue
             cond = str(mechanic.get("condition", "")).lower()
@@ -1104,16 +1222,16 @@ def _resolve_damage_packet(
             amt = int(mechanic.get("amount", 0))
             adjusted = max(0, adjusted - amt)
 
-    effective_resistances = {str(value).lower() for value in target.damage_resistances}
-    if "raging" in target.conditions:
-        effective_resistances.update({"bludgeoning", "piercing", "slashing"})
+    effective_resistances = {_normalize_damage_type(value) for value in target.damage_resistances}
+    if rage_resistance_applies(actor=target, damage_type=damage_type):
+        effective_resistances.update(_RAGE_RESISTANCE_DAMAGE_TYPES)
 
     if source:
         for trait_data in source.traits.values():
             for mechanic in trait_data.get("mechanics", []):
                 if mechanic.get("effect_type") != "ignore_resistance":
                     continue
-                bypass_type = str(mechanic.get("damage_type", "")).lower()
+                bypass_type = _normalize_damage_type(str(mechanic.get("damage_type", "")))
                 if bypass_type in {damage_type, "any_elemental"}:
                     effective_resistances.discard(damage_type)
 
@@ -1121,8 +1239,8 @@ def _resolve_damage_packet(
         adjusted,
         damage_type,
         resistances=effective_resistances,
-        immunities={str(value).lower() for value in target.damage_immunities},
-        vulnerabilities={str(value).lower() for value in target.damage_vulnerabilities},
+        immunities={_normalize_damage_type(value) for value in target.damage_immunities},
+        vulnerabilities={_normalize_damage_type(value) for value in target.damage_vulnerabilities},
     )
     return ResolvedDamagePacket(
         amount=max(0, int(packet.amount)),
@@ -1159,16 +1277,14 @@ def apply_damage_bundle(
     is_critical: bool = False,
     source: ActorRuntimeState | None = None,
 ) -> DamageBundleResolution:
+    _sync_rage_state(target)
     resolution = resolve_damage_bundle(target, bundle, source=source)
     adjusted = resolution.applied_total
-    if adjusted > 0 and "raging" in target.conditions:
+    if adjusted > 0 and _rage_benefits_active(target):
         target.rage_sustained_since_last_turn = True
 
     def _end_rage_if_active() -> None:
-        if "raging" not in target.conditions:
-            return
-        _remove_condition_everywhere(target, "raging")
-        target.rage_sustained_since_last_turn = False
+        _remove_rage_state(target)
 
     remaining = adjusted
     if target.temp_hp > 0 and remaining > 0:
@@ -1280,6 +1396,8 @@ def run_concentration_check(
 ) -> bool:
     if not target.concentrating:
         return True
+    if "raging" in target.conditions:
+        return False
 
     dc = concentration_check_dc(damage_taken)
     advantage = _has_trait(target, "war caster")

@@ -43,10 +43,10 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [x] FIX-03 Close Shield Master reaction, save, and shove correctness
 - [ ] FIX-04 Close War Caster opportunity casting and concentration correctness (in review on [#124](https://github.com/rputnam0/dnd_sim/pull/124))
 - [ ] FIX-05 Close Mage Slayer and Sentinel reaction constraints (in review on [#114](https://github.com/rputnam0/dnd_sim/pull/114))
-- [ ] FIX-06 Close Rage damage, resistance, and illegal state edge cases
+- [ ] FIX-06 Close Rage damage, resistance, and illegal state edge cases (active on `codex/feat/fix-06-close-rage-damage-resistance-and-illegal-state-edg`)
 - [ ] FIX-07 Integrate hazard-aware strategy scoring and close the review checklist
 
-Current in-progress focus: `FIX-01` and `FIX-02` on their assigned codex feature branches for rules-closure correctness.
+Current in-progress focus: `FIX-01`, `FIX-02`, and `FIX-06` on their assigned codex feature branches for rules-closure correctness.
 
 ## Tactical AI Hardening
 
