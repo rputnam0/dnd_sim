@@ -22,7 +22,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Track | Scope | Status | Milestone | Notes |
 |---|---|---|---|---|
-| DOC | Documentation Control | in_progress | 5A-doc-control | `DOC-01` and `DOC-05` are `in_progress`; `DOC-02`, `DOC-03`, and `DOC-04` are `pr_open`; remaining DOC tasks are `not_started` in `backlog.csv`. |
+| DOC | Documentation Control | merged | 5A-doc-control | `DOC-01` through `DOC-06` are `merged` in `backlog.csv`; Documentation Control track is complete. |
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
@@ -36,21 +36,15 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
-| DOC-01 | feat/doc-01-establish-canonical-docs-entrypoints-and-source-of | doc_control_lead | in_progress | Matches `docs/program/backlog.csv`. |
-| DOC-02 | codex/feat/doc-02-archive-stale-planning-and-historical-run-artifact | doc_control_a | pr_open | Matches `docs/program/backlog.csv`. |
-| DOC-03 | feat/doc-03-normalize-status-board-and-merged-baseline-history | doc_control_b | pr_open | Matches `docs/program/backlog.csv`. |
-| DOC-04 | feat/doc-04-add-doc-freshness-metadata-and-registry | doc_control_a | pr_open | Matches `docs/program/backlog.csv`. |
-| DOC-05 | feat/doc-05-add-doc-consistency-checker-and-ci-gate | doc_control_ci | in_progress | Matches `docs/program/backlog.csv`. |
 
 ## Open PRs
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
-| DOC-03 | [#87](https://github.com/rputnam0/dnd_sim/pull/87) | doc_control_b | open | Status-board normalization and baseline history remediation. |
-| DOC-02 | [#90](https://github.com/rputnam0/dnd_sim/pull/90) | doc_control_a | merged | Landed in `int/5a-doc-control`. |
-| DOC-04 | [#89](https://github.com/rputnam0/dnd_sim/pull/89) | doc_control_a | merged | Landed in `int/5a-doc-control`. |
 
-## Dependency notes (from backlog.csv)
+## Dependency and blocker notes (from backlog.csv)
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
+- DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
+- No active DOC blockers remain; active branch and open PR queues are cleared.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
