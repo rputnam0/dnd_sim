@@ -51,3 +51,9 @@ Recovered from pre-deletion snapshot commit `3033ecc62c6b1df3bb815bf908bffda62d1
 | Path | Original path |
 |---|---|
 | `docs/archive/release_prep/fin06_release_prep_20260305.md` | `docs/program/status_board.md` |
+
+### Release Cutover Snapshots (historical)
+
+| Path | Original path |
+|---|---|
+| `docs/archive/releases/pre_fin06_program_surface_20260305.md` | `docs/program/README.md` |

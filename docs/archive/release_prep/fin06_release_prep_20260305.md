@@ -8,21 +8,18 @@ Canonical source: `docs/program/README.md`
 This snapshot captures FIN-06 prep work while dependency gates are evaluated.
 
 Current prep branch: `codex/feat/fin-06-cut-release-baseline-archive-prior-program-artifac`
-Readiness state: `blocked`
+Readiness state: `ready`
 
 ## Dependency Gate Status
 
-- FIN-02: `in_progress` (Enforce full capability manifest green gate for shipped 2014 scope)
-- FIN-03: `not_started` (Enforce deterministic replay corpus gate across combat and world scenarios)
-- FIN-04: `not_started` (Enforce integrated campaign, world, and combat scenario gate)
-- FIN-05: `not_started` (Enforce agent-only maintenance gate)
+- FIN-02: `merged`
+- FIN-03: `merged`
+- FIN-04: `merged`
+- FIN-05: `merged`
 
 ## Blockers
 
-- FIN-02 is `in_progress`
-- FIN-03 is `not_started`
-- FIN-04 is `not_started`
-- FIN-05 is `not_started`
+- None; FIN-06 dependency gate is clear.
 
 ## Parked FIN-06 Finalization Checklist
 
