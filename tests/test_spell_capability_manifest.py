@@ -162,3 +162,27 @@ def test_spell_manifest_shard_a_cantrip_spell_ids_are_executable() -> None:
         assert by_id[content_id].support_state == "supported"
         assert by_id[content_id].states.executable is True
         assert by_id[content_id].states.blocked is False
+
+
+def test_spell_manifest_shard_b_spell_ids_are_executable() -> None:
+    manifest = build_spell_capability_manifest(spells_dir=DEFAULT_SPELLS_DIR)
+    by_id = {record.content_id: record for record in manifest.records}
+
+    shard_ids = {
+        "spell:abi_dalzim_s_horrid_wilting",
+        "spell:aganazzar_s_scorcher",
+        "spell:antagonize",
+        "spell:backlash",
+        "spell:befuddlement",
+        "spell:bones_of_the_earth",
+        "spell:cacophonic_shield",
+        "spell:catapult",
+        "spell:conjure_constructs",
+        "spell:dark_star",
+        "spell:dawn",
+        "spell:dirge",
+    }
+    for content_id in shard_ids:
+        assert by_id[content_id].support_state == "supported"
+        assert by_id[content_id].states.executable is True
+        assert by_id[content_id].states.blocked is False
