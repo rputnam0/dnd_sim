@@ -198,6 +198,43 @@ def transition_world_flag(
     )
 
 
+def set_world_flag_status(
+    state: WorldState,
+    *,
+    flag_id: str,
+    to_status: str,
+    strict_transition: bool = False,
+) -> WorldState:
+    normalized_flag_id = _required_text(flag_id, field_name="flag_id")
+    normalized_status = _normalize_flag_status(to_status, field_name="to_status")
+    current_status = state.world_flags.get(normalized_flag_id)
+    if current_status == normalized_status:
+        return state
+
+    allowed_next = _FLAG_TRANSITIONS.get(current_status, set())
+    if normalized_status in allowed_next:
+        return transition_world_flag(
+            state,
+            flag_id=normalized_flag_id,
+            to_status=normalized_status,
+        )
+
+    if strict_transition:
+        raise ValueError(
+            f"Illegal flag transition for {normalized_flag_id}: {current_status!r} -> {normalized_status!r}"
+        )
+
+    # Scripted hooks may need to directly set a state (for example, unresolved -> resolved).
+    next_flags = dict(state.world_flags)
+    next_flags[normalized_flag_id] = normalized_status
+    return WorldState(
+        turn_index=state.turn_index + 1,
+        world_flags=next_flags,
+        quests=state.quests,
+        factions=state.factions,
+    )
+
+
 def transition_quest_state(
     state: WorldState,
     *,
