@@ -21,6 +21,7 @@
     "missing_action_cost",
     "unsupported_action_cost",
     "malformed_recharge_entry",
+    "source_action_blocked",
     "missing_innate_spell_name",
     "malformed_innate_spellcasting_entry",
     "unsupported_action_payload"

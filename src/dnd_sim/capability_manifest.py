@@ -288,10 +288,16 @@ def _add_action_family_records(
 
         if not has_recharge:
             continue
-        if recharge_text:
-            recharge_states = states if not states.blocked else states
-        else:
+        if not recharge_text:
             recharge_states = _blocked_states(reason="malformed_recharge_entry", schema_valid=False)
+        elif states.blocked:
+            # Recharge support depends on the source action being supported.
+            recharge_states = _blocked_states(
+                reason="source_action_blocked",
+                schema_valid=states.schema_valid,
+            )
+        else:
+            recharge_states = _supported_states()
         if (
             recharge_states.blocked
             and recharge_states.unsupported_reason not in policy.unsupported_reason_codes
