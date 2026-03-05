@@ -193,6 +193,35 @@ def _strategy_instance(strategy_alias: str):
     raise ValueError(f"unsupported benchmark strategy alias '{strategy_alias}'")
 
 
+def _canonical_strategy_alias(strategy_alias: str) -> str:
+    normalized = str(strategy_alias).strip()
+    return STRATEGY_ALIASES.get(normalized, normalized)
+
+
+def _resolve_comparison_strategies(raw_aliases: list[str]) -> list[str]:
+    resolved: list[str] = []
+    seen_canonical: set[str] = set()
+    for raw_alias in raw_aliases:
+        alias = str(raw_alias).strip()
+        if not alias:
+            continue
+        canonical = _canonical_strategy_alias(alias)
+        if canonical == "primary":
+            continue
+        if canonical not in {"base", "highest_threat"}:
+            raise ValueError(f"unsupported comparison strategy alias '{alias}'")
+        if canonical in seen_canonical:
+            continue
+        seen_canonical.add(canonical)
+        resolved.append(alias)
+
+    if {"base", "highest_threat"}.difference(seen_canonical):
+        raise ValueError(
+            "comparison_strategies must include aliases resolving to both base and highest_threat"
+        )
+    return resolved
+
+
 def _selected_target_ids(declaration: TurnDeclaration) -> tuple[str, ...]:
     if declaration.action is None:
         return ()
@@ -348,15 +377,19 @@ def _evaluate_case(
     if isinstance(overrides, dict):
         thresholds.update(overrides)
 
-    primary_outcome = _coerce_float(
-        case_row["strategies"]["primary"]["objective_adjusted_outcome"], default=0.0
-    )
-    base_outcome = _coerce_float(
-        case_row["strategies"]["base"]["objective_adjusted_outcome"], default=0.0
-    )
-    highest_outcome = _coerce_float(
-        case_row["strategies"]["highest_threat"]["objective_adjusted_outcome"], default=0.0
-    )
+    primary_row = case_row["strategies"].get("primary")
+    if not isinstance(primary_row, dict):
+        raise ValueError("primary strategy result is missing for benchmark case evaluation")
+    base_row = case_row["strategies"].get("base")
+    highest_row = case_row["strategies"].get("highest_threat")
+    if not isinstance(base_row, dict) or not isinstance(highest_row, dict):
+        raise ValueError(
+            "comparison_strategies must include aliases resolving to both base and highest_threat"
+        )
+
+    primary_outcome = _coerce_float(primary_row.get("objective_adjusted_outcome"), default=0.0)
+    base_outcome = _coerce_float(base_row.get("objective_adjusted_outcome"), default=0.0)
+    highest_outcome = _coerce_float(highest_row.get("objective_adjusted_outcome"), default=0.0)
 
     margin_vs_base = primary_outcome - base_outcome
     margin_vs_highest = primary_outcome - highest_outcome
@@ -400,10 +433,7 @@ def run_benchmark_suite(corpus_path: Path | str | None = None) -> dict[str, Any]
         if isinstance(baseline_aliases_raw, list)
         else ["base_strategy", "highest_threat"]
     )
-    if len(baseline_aliases) < 2:
-        raise ValueError(
-            "comparison_strategies must include at least base_strategy and highest_threat"
-        )
+    baseline_aliases = _resolve_comparison_strategies(baseline_aliases)
 
     case_rows: list[dict[str, Any]] = []
     for row in payload["benchmarks"]:
@@ -413,7 +443,7 @@ def run_benchmark_suite(corpus_path: Path | str | None = None) -> dict[str, Any]
             _evaluate_case(
                 row,
                 primary_strategy_alias=primary_strategy_alias,
-                baseline_aliases=baseline_aliases[:2],
+                baseline_aliases=baseline_aliases,
                 global_thresholds=global_thresholds,
             )
         )

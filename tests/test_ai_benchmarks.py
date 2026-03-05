@@ -64,6 +64,35 @@ def test_run_benchmark_suite_fails_unreachable_rationale_threshold(tmp_path: Pat
     assert result["all_passed"] is False
 
 
+def test_run_benchmark_suite_resolves_baselines_without_order_assumptions(tmp_path: Path) -> None:
+    payload = json.loads(run_benchmarks.DEFAULT_CORPUS_PATH.read_text(encoding="utf-8"))
+    payload["comparison_strategies"] = [
+        "optimal_expected_damage",
+        "base_strategy",
+        "highest_threat",
+    ]
+    corpus_path = _write_corpus(tmp_path, payload)
+
+    result = run_benchmarks.run_benchmark_suite(corpus_path)
+
+    assert result["all_passed"] is True
+    for case in result["benchmarks"]:
+        assert "base" in case["strategies"]
+        assert "highest_threat" in case["strategies"]
+
+
+def test_run_benchmark_suite_rejects_missing_required_baseline_alias(tmp_path: Path) -> None:
+    payload = json.loads(run_benchmarks.DEFAULT_CORPUS_PATH.read_text(encoding="utf-8"))
+    payload["comparison_strategies"] = ["base_strategy", "base_strategy"]
+    corpus_path = _write_corpus(tmp_path, payload)
+
+    with pytest.raises(
+        ValueError,
+        match="comparison_strategies must include aliases resolving to both base and highest_threat",
+    ):
+        run_benchmarks.run_benchmark_suite(corpus_path)
+
+
 @pytest.mark.parametrize(
     "snapshot",
     [
