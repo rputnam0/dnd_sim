@@ -27,7 +27,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | CAP | Capability Manifest | in_progress | 5C-capability-manifest | `CAP-03`, `CAP-04`, and `CAP-05` are `in_progress` in `backlog.csv`; remaining CAP tasks are `not_started`. |
 | OBS | Replay, Logging, and Observability | in_progress | 5D-observability | `OBS-02` is `in_progress` in `backlog.csv`; remaining OBS tasks are `not_started`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
-| AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
+| AI | Tactical AI Hardening | pr_open | 5F-ai-hardening | `AI-01`, `AI-02`, `AI-03`, `AI-04`, `AI-05`, and `AI-06` are `pr_open`; remaining AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
 | WLD | World Systems and Campaign Platform | in_progress | 5H-world-systems | `WLD-03`, `WLD-06`, `WLD-07`, `WLD-09`, and `WLD-11` are `pr_open`; `WLD-01`, `WLD-02`, `WLD-04`, `WLD-08`, `WLD-10`, and `WLD-12` are `in_progress`; remaining WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
@@ -48,6 +48,12 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | CAP-04 | `codex/feat/cap-04-generate-monster-and-monster-action-capability-man` | content_manifest_monster | in_progress | Building monster capability records for actions, reactions, legendary/lair/recharge entries, and innate spellcasting support-state coverage. |
 | CAP-05 | `codex/feat/cap-05-enforce-capability-manifest-gates-in-import-paths` | content_manifest_gate | in_progress | Enforcing import/CI capability gates for schema-valid tested scope and explicit unsupported-reason codes for blocked scope. |
 | OBS-02 | `feat/obs-02-emit-turn-declaration-and-action-resolution-traces` | observability_b | in_progress | Emitting declaration validation, action selection, action resolution, and action outcome traces for each declared turn. |
+| AI-01 | `codex/feat/ai-01-normalize-candidate-action-enumeration-and-scoring` | ai_core | pr_open | Introduces `src/dnd_sim/ai/scoring.py` candidate enumeration with normalized scoring inputs and routes optimal strategy selection through legal candidate snapshots. |
+| AI-03 | `codex/feat/ai-03-implement-concentration-breaking-control-value-and` | ai_control | pr_open | Concentration-break, condition-application, and enemy action-denial scoring components are in PR review for AI-03. |
+| AI-04 | `codex/feat/ai-04-implement-retreat-survival-objective-race-and-focu` | ai_objective | pr_open | Retreat/survival, objective-race urgency, ally-rescue valuation, and focus-fire tradeoff scoring are implemented and under review. |
+| AI-02 | `codex/feat/ai-02-implement-hazard-geometry-cover-and-line-of-effect` | ai_spatial | pr_open | Implements hazard/geometry/cover/line-of-effect candidate scoring in `src/dnd_sim/ai/scoring.py` with path risk support in `src/dnd_sim/spatial.py` and dedicated tests. |
+| AI-05 | `codex/feat/ai-05-implement-recharge-legendary-reaction-bait-and-lim` | ai_timing | pr_open | Adds timing heuristics for recharge readiness, legendary windows, reaction baiting, and limited-resource spend timing in AI candidate scoring. |
+| AI-06 | `codex/feat/ai-06-build-benchmark-corpus-tuning-thresholds-and-decis` | ai_benchmark | pr_open | Adds deterministic benchmark corpus coverage and tactical quality gate execution in `scripts/ai/run_benchmarks.py` with AI-06-focused tests. |
 | WLD-01 | codex/feat/wld-01-build-ability-check-contest-passive-and-dc-resolut | world_rules_a | in_progress | Implementing deterministic noncombat ability checks, contests, passive checks, and DC evaluation core. |
 | WLD-02 | codex/feat/wld-02-build-skill-tool-proficiency-and-specialist-data-p | world_rules_b | in_progress | Plumbing skill/tool proficiency, expertise, and passive input data for deterministic noncombat resolution. |
 | WLD-03 | codex/feat/wld-03-build-exploration-turn-structure-time-advancement | world_explore_a | pr_open | Exploration turn/time/light runtime and persistence serialization coverage are in PR review. |
@@ -65,6 +71,12 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
 | ARC-07 | [#112](https://github.com/rputnam0/dnd_sim/pull/112) | runtime_spell | pending | Extracts spell runtime pipeline and target adapters from the engine path; awaiting automated + reviewer checks. |
+| AI-01 | [#116](https://github.com/rputnam0/dnd_sim/pull/116) | ai_core | pending | Normalized candidate enumeration and scoring inputs are under review for merge into `int/5f-ai-hardening`. |
+| AI-03 | [#122](https://github.com/rputnam0/dnd_sim/pull/122) | ai_control | pending | Adds concentration-break, control-value, condition-application, and enemy action-denial scoring with focused deterministic tests. |
+| AI-04 | [#119](https://github.com/rputnam0/dnd_sim/pull/119) | ai_objective | pending | Adds survival-threshold, retreat timing, objective-race, ally-rescue, and focus-fire tradeoff scoring snapshots for legal candidates. |
+| AI-02 | [#120](https://github.com/rputnam0/dnd_sim/pull/120) | ai_spatial | pending | Hazard/geometry/cover/line-of-effect scoring and route hazard exposure are under review for merge into `int/5f-ai-hardening`. |
+| AI-05 | [#128](https://github.com/rputnam0/dnd_sim/pull/128) | ai_timing | pending | Recharge, legendary-window, reaction-bait, and limited-resource timing heuristics are under review for merge into `int/5f-ai-hardening`. |
+| AI-06 | [#150](https://github.com/rputnam0/dnd_sim/pull/150) | ai_benchmark | pending | Adds AI benchmark corpus artifacts and benchmark gate execution requiring primary tactical AI outcome margins and rationale coverage. |
 | WLD-03 | [#127](https://github.com/rputnam0/dnd_sim/pull/127) | world_explore_a | pending | WLD-03 exploration turn structure, time advancement, and light tracking changes are in PR review. |
 | WLD-06 | [#141](https://github.com/rputnam0/dnd_sim/pull/141) | world_economy_a | pending | WLD-06 economy/loot/vendor inventory and pricing model changes are in PR review. |
 | WLD-07 | [#147](https://github.com/rputnam0/dnd_sim/pull/147) | world_economy_b | pending | WLD-07 crafting, downtime, encumbrance, and service action changes are in PR review. |
