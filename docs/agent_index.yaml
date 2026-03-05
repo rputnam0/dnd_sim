@@ -11,6 +11,18 @@ subsystems:
       - "Safe: decision logic internals, helper delegation, telemetry enrichment."
       - "Caution: turn order loop, action cost semantics, outcome aggregation."
       - "Do not break top-level function names consumed by tests/integration."
+  baseline_runtime_maintenance:
+    owner_pool: integration_agent_gate
+    owner_task: FIN-05
+    owner_module: src/dnd_sim/*.py
+    invariants:
+      - "Runtime modules publish structured errors with stable machine-readable codes."
+      - "Runtime modules emit or forward deterministic trace events for maintenance diagnostics."
+      - "Runtime modules remain under declared file-size thresholds unless explicit waivers are recorded."
+    safe_edit_boundaries:
+      - "Safe: additive maintenance diagnostics and explicit threshold waivers."
+      - "Caution: broad ownership remaps that hide module accountability."
+      - "Do not remove structured error or trace emission requirements from maintenance coverage."
   resource_inference:
     owner_pool: observability_d
     owner_task: OBS-05
@@ -194,3 +206,11 @@ policies:
       - "Runtime-affecting PRs must update docs/agent_index.yaml in the same branch."
       - "New, renamed, or transferred runtime boundaries must include owner_pool, owner_module, invariants, and safe_edit_boundaries."
       - "Review is blocked when backlog target runtime modules are missing ownership coverage in this file."
+  maintenance_gate:
+    ownership_globs:
+      - src/dnd_sim/*.py
+    default_max_file_lines: 1500
+    file_size_waivers:
+      - module: src/dnd_sim/engine.py
+        max_lines: 18000
+        reason: "Legacy hotspot tracked until ARC extraction tasks reduce engine.py below 3500 lines."
