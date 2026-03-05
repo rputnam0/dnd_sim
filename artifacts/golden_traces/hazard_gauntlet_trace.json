@@ -1,0 +1,49 @@
+{
+  "schema_version": "replay.v1",
+  "run_id": "golden_hazard_gauntlet",
+  "scenario_id": "golden_hazard_gauntlet",
+  "inputs": {
+    "seed": 202,
+    "trials": 1,
+    "ruleset": "5e-2014",
+    "scenario_path": "fixtures/hazard_gauntlet.json"
+  },
+  "summary": {
+    "run_id": "golden_hazard_gauntlet",
+    "scenario_id": "golden_hazard_gauntlet",
+    "trials": 1,
+    "party_win_rate": 0.0,
+    "enemy_win_rate": 1.0,
+    "rounds": {
+      "mean": 3.0,
+      "median": 3.0,
+      "p10": 3.0,
+      "p90": 3.0,
+      "p95": 3.0
+    }
+  },
+  "trials": [
+    {
+      "trial_index": 0,
+      "rounds": 3,
+      "winner": "enemy",
+      "damage_taken": {"rogue": 19},
+      "damage_dealt": {"rogue": 6},
+      "resources_spent": {"rogue": {"cunning_action": 1}},
+      "downed_counts": {"rogue": 1},
+      "death_counts": {"rogue": 0},
+      "remaining_hp": {"rogue": 0},
+      "telemetry": [
+        {"telemetry_type": "action_selection", "round": 1, "actor_id": "rogue"},
+        {"telemetry_type": "resource_delta", "round": 2, "actor_id": "rogue", "resource": "hp"}
+      ],
+      "encounter_outcomes": [
+        {"encounter_index": 0, "winner": "enemy", "hazard_damage": 11}
+      ],
+      "state_snapshots": [
+        {"round": 1, "hazards": [{"id": "spike_trap", "active": true}]},
+        {"round": 3, "party": {"rogue": {"hp": 0}}}
+      ]
+    }
+  ]
+}

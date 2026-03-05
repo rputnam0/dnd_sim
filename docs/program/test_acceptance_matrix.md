@@ -70,6 +70,8 @@ CAP-01 minimum gate:
 
 Required coverage:
 - event schema tests,
+- logger presence tests,
+- event serialization tests,
 - trace completeness tests,
 - state-delta tests,
 - RNG audit determinism tests,

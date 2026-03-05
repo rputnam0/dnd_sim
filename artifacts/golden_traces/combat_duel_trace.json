@@ -1,0 +1,48 @@
+{
+  "schema_version": "replay.v1",
+  "run_id": "golden_combat_duel",
+  "scenario_id": "golden_combat_duel",
+  "inputs": {
+    "seed": 101,
+    "trials": 1,
+    "ruleset": "5e-2014",
+    "scenario_path": "fixtures/combat_duel.json"
+  },
+  "summary": {
+    "run_id": "golden_combat_duel",
+    "scenario_id": "golden_combat_duel",
+    "trials": 1,
+    "party_win_rate": 1.0,
+    "enemy_win_rate": 0.0,
+    "rounds": {
+      "mean": 2.0,
+      "median": 2.0,
+      "p10": 2.0,
+      "p90": 2.0,
+      "p95": 2.0
+    }
+  },
+  "trials": [
+    {
+      "trial_index": 0,
+      "rounds": 2,
+      "winner": "party",
+      "damage_taken": {"fighter": 7},
+      "damage_dealt": {"fighter": 22},
+      "resources_spent": {"fighter": {"action_surge": 1}},
+      "downed_counts": {"fighter": 0},
+      "death_counts": {"fighter": 0},
+      "remaining_hp": {"fighter": 18},
+      "telemetry": [
+        {"telemetry_type": "declaration_validation", "round": 1, "actor_id": "fighter"},
+        {"telemetry_type": "action_outcome", "round": 2, "actor_id": "fighter"}
+      ],
+      "encounter_outcomes": [
+        {"encounter_index": 0, "winner": "party", "rounds": 2}
+      ],
+      "state_snapshots": [
+        {"round": 2, "party": {"fighter": {"hp": 18}}, "enemies": {"orc": {"hp": 0}}}
+      ]
+    }
+  ]
+}

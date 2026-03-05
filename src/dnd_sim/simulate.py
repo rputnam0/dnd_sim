@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 from dnd_sim.engine import run_simulation
@@ -16,6 +17,9 @@ from dnd_sim.io import (
     write_trial_rows,
 )
 from dnd_sim.reporting import build_report_markdown, generate_plots_from_trials
+from dnd_sim.telemetry import emit_event
+
+logger = logging.getLogger(__name__)
 
 
 def _load_traits_db_for_run(character_db_dir: Path) -> dict:
@@ -45,6 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     args = build_parser().parse_args()
 
     loaded = load_scenario(args.scenario)
@@ -128,9 +133,18 @@ def main() -> None:
         )
     (run_dir / "report.md").write_text(report_md, encoding="utf-8")
 
-    print(f"Simulation complete: {run_dir}")
-    print(f"Summary: {run_dir / 'summary.json'}")
-    print(f"Report: {run_dir / 'report.md'}")
+    emit_event(
+        logger,
+        event_type="simulation_complete",
+        source=__name__,
+        payload={
+            "run_dir": str(run_dir),
+            "summary_path": str(run_dir / "summary.json"),
+            "report_path": str(run_dir / "report.md"),
+            "trial_rows_path": str(trial_path),
+            "custom_simulation": bool(custom_runner),
+        },
+    )
 
 
 if __name__ == "__main__":

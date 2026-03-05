@@ -3,9 +3,11 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from dnd_sim.ai.scoring import build_candidate_trace_rows, candidate_rejection_reason_for_action
 from dnd_sim.rules_2014 import parse_damage_expression
 from dnd_sim.spatial import check_cover, distance_chebyshev, has_clear_path, move_towards
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
+from dnd_sim.telemetry import build_ai_action_rationale_trace, build_ai_candidate_scoring_trace
 
 _EXPLICIT_TARGET_MODES = {
     "single_enemy",
@@ -728,13 +730,78 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
         enemies = [
             view for view in state.actors.values() if view.team != actor.team and view.hp > 0
         ]
+        evaluation_mode = str(state.metadata.get("evaluation_mode", "greedy")).lower()
         if not catalog or not enemies:
-            return None, {"reason": "no_actions_or_targets"}
+            trace_events = [
+                build_ai_candidate_scoring_trace(
+                    actor_id=actor.actor_id,
+                    team=actor.team,
+                    strategy=self.__class__.__name__,
+                    round_number=state.round_number,
+                    selected_action=None,
+                    evaluation_mode=evaluation_mode,
+                    candidate_rows=[],
+                    source=__name__,
+                ),
+                build_ai_action_rationale_trace(
+                    actor_id=actor.actor_id,
+                    team=actor.team,
+                    strategy=self.__class__.__name__,
+                    round_number=state.round_number,
+                    selected_action=None,
+                    evaluation_mode=evaluation_mode,
+                    enabled_policies=[],
+                    selected_candidate=None,
+                    source=__name__,
+                ),
+            ]
+            return None, {
+                "reason": "no_actions_or_targets",
+                "mode": evaluation_mode,
+                "trace_events": trace_events,
+            }
 
         policy = _strategy_policy(actor, state)
         concentration_cfg = _policy_section(policy, "concentration_protection")
         concentration_enabled = bool(concentration_cfg.get("enabled", False))
         hp_ratio = actor.hp / max(actor.max_hp, 1)
+
+        enabled_policies = [
+            name
+            for name in ("threat_management", "concentration_protection", "objective_play")
+            if bool(_policy_section(policy, name).get("enabled", False))
+        ]
+
+        def _trace_events(
+            *,
+            selected_action: str | None,
+            selected_candidate: dict[str, Any] | None,
+            candidate_rows: list[dict[str, Any]],
+        ) -> list[dict[str, Any]]:
+            return [
+                build_ai_candidate_scoring_trace(
+                    actor_id=actor.actor_id,
+                    team=actor.team,
+                    strategy=self.__class__.__name__,
+                    round_number=state.round_number,
+                    selected_action=selected_action,
+                    evaluation_mode=evaluation_mode,
+                    candidate_rows=candidate_rows,
+                    source=__name__,
+                ),
+                build_ai_action_rationale_trace(
+                    actor_id=actor.actor_id,
+                    team=actor.team,
+                    strategy=self.__class__.__name__,
+                    round_number=state.round_number,
+                    selected_action=selected_action,
+                    evaluation_mode=evaluation_mode,
+                    enabled_policies=enabled_policies,
+                    selected_candidate=selected_candidate,
+                    source=__name__,
+                ),
+            ]
+
         if (
             concentration_enabled
             and actor.concentrating
@@ -755,13 +822,30 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
                 None,
             )
             if dodge is not None:
+                selected = {
+                    "name": "dodge",
+                    "base_score": 0.0,
+                    "objective_bonus": 0.0,
+                    "lookahead_bonus": 0.0,
+                    "total_score": 0.0,
+                    "cost": sum(int(v) for v in (dodge.get("resource_cost") or {}).values()),
+                }
+                candidate_rows = build_candidate_trace_rows(
+                    ranked_candidates=[selected],
+                    excluded_candidates=[],
+                    selected_action="dodge",
+                )
                 return "dodge", {
                     "mode": "policy_guardrail",
                     "guardrail": "concentration_protection",
                     "hp_ratio": hp_ratio,
+                    "trace_events": _trace_events(
+                        selected_action="dodge",
+                        selected_candidate=selected,
+                        candidate_rows=candidate_rows,
+                    ),
                 }
 
-        evaluation_mode = str(state.metadata.get("evaluation_mode", "greedy")).lower()
         lookahead_enabled = evaluation_mode == "lookahead"
         lookahead_discount = float(state.metadata.get("lookahead_discount", 1.0))
         tactical_branches = state.metadata.get("tactical_branches", {})
@@ -848,10 +932,22 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             return best
 
         candidates: list[dict[str, Any]] = []
+        excluded_candidates: list[dict[str, Any]] = []
         for action in catalog:
             action_name = str(action.get("name", ""))
             used = int(action.get("used_count", 0))
             if not _action_viable(action, resources=actor.resources, used_count=used):
+                excluded_candidates.append(
+                    {
+                        "name": action_name,
+                        "cost": sum(int(v) for v in (action.get("resource_cost") or {}).values()),
+                        "rejection_reason": candidate_rejection_reason_for_action(
+                            action,
+                            resources=actor.resources,
+                            used_count=used,
+                        ),
+                    }
+                )
                 continue
 
             reachable = [target for target in enemies if _can_reach_target(actor, action, target)]
@@ -891,21 +987,40 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             )
 
         if not candidates:
-            return None, {"reason": "no_viable_actions"}
+            candidate_rows = build_candidate_trace_rows(
+                ranked_candidates=[],
+                excluded_candidates=excluded_candidates,
+                selected_action=None,
+            )
+            return None, {
+                "reason": "no_viable_actions",
+                "mode": evaluation_mode,
+                "enabled_policies": enabled_policies,
+                "trace_events": _trace_events(
+                    selected_action=None,
+                    selected_candidate=None,
+                    candidate_rows=candidate_rows,
+                ),
+            }
 
         ranked = sorted(candidates, key=lambda row: (-row["total_score"], row["cost"], row["name"]))
         best = ranked[0]
-        enabled_policies = [
-            name
-            for name in ("threat_management", "concentration_protection", "objective_play")
-            if bool(_policy_section(policy, name).get("enabled", False))
-        ]
+        candidate_rows = build_candidate_trace_rows(
+            ranked_candidates=ranked,
+            excluded_candidates=excluded_candidates,
+            selected_action=best["name"],
+        )
 
         return best["name"], {
             "mode": evaluation_mode,
             "selected": best,
             "top_candidates": ranked[:3],
             "enabled_policies": enabled_policies,
+            "trace_events": _trace_events(
+                selected_action=str(best["name"]),
+                selected_candidate=best,
+                candidate_rows=candidate_rows,
+            ),
         }
 
     def _select_targets(self, actor, action_name: str, state) -> list[TargetRef]:

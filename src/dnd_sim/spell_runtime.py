@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -10,6 +11,8 @@ from dnd_sim.strategy_api import TargetRef
 
 TargetResolver = Callable[..., list[ActorRuntimeState]]
 RangeFilter = Callable[..., list[ActorRuntimeState]]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
