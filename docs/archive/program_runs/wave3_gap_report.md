@@ -1,3 +1,9 @@
+Status: historical
+Owner: program-control
+Last updated: 2026-03-04
+Canonical source: docs/archive/README.md
+Historical note: Recovered from docs/program/wave3_gap_report.md at commit 3033ecc62c6b1df3bb815bf908bffda62d108b8a.
+
 # Wave 3 Gap Report
 
 Generated from multi-agent audit swarm on `int/wave-3-integration` (base `origin/main@5bb7648`).

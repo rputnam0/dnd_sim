@@ -1,3 +1,9 @@
+Status: historical
+Owner: program-control
+Last updated: 2026-03-04
+Canonical source: docs/archive/README.md
+Historical note: Recovered from docs/deprecation/legacy_surface_inventory_20260304.md at commit 3033ecc62c6b1df3bb815bf908bffda62d108b8a.
+
 # Legacy Surface Inventory (2026-03-04)
 
 - Generated at: `2026-03-04 08:02:46Z`

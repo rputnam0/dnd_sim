@@ -1,3 +1,9 @@
+Status: historical
+Owner: program-control
+Last updated: 2026-03-04
+Canonical source: docs/archive/README.md
+Historical note: Recovered from docs/cleanup/repo_cleanup_inventory_20260304.md at commit 3033ecc62c6b1df3bb815bf908bffda62d108b8a.
+
 # Repo Cleanup Inventory 20260304
 
 Generated: 2026-03-04T02:12:55Z (UTC)

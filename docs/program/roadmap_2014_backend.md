@@ -1,144 +1,229 @@
-# Roadmap: Full D&D 5e 2014 Backend
+# Roadmap: Full D&D 5e 2014 Backend and VTT Backbone Completion
 
-## Summary
-This roadmap operationalizes the full backlog into deterministic waves with strict dependency gates.
-Execution model:
-- Foundation tasks first (Wave 1).
-- Bug/combat bundles second (Wave 2).
-- Systems enabling class/content scale third (Wave 3).
-- Class and spell content expansion fourth (Wave 4).
-- Noncombat/full-backend systems fifth (Wave 5).
+Status: canonical  
+Owner: program-control  
+Last updated: 2026-03-05  
+Canonical source: `docs/program/README.md`
 
-Global contract for every task:
-- Code changes
-- Unit tests
-- Integration/golden tests
-- Negative test
-- Deterministic seed stability (unless intentionally changed)
-- Migration notes for API/schema changes
-- One PR per task ID
+## Objective
 
-## Waves
+Complete the simulator as a greenfield, feature-complete D&D 5e 2014 engine and world platform that is maintained primarily by agentic coding agents. Every delivery must optimize for explicit boundaries, deterministic behavior, machine-readable support status, structured errors, and replayable observability.
 
-### Wave 1 (Foundations)
-- FND-01 Formal event/timing engine
-- FND-02 Source-aware effect instances
-- FND-03 Canonical weapon/equipment identity
-- FND-04 Typed damage packets
-- FND-05 Proper spellcasting core
-- FND-06 Full legal turn declaration in strategy API
+## Baseline already merged
 
-### Wave 2 (Defects + Combat Core)
-- BUG-01..BUG-22
-- COM-01..COM-07
+- Waves 1 through 4 are baseline complete.
+- The repo cleanup program is baseline complete.
+- The legacy decommission program is baseline complete.
 
-### Wave 3 (Mid-Core Enablement)
-- COM-08..COM-10
-- CHR-01..CHR-03
-- SPL-01
+Treat all new work below as the active completion program.
 
-### Wave 4 (Class + Spell Completion)
-- CHR-04..CHR-16
-- SPL-02..SPL-05
+## Renamed Wave 5
 
-### Wave 5 (Full Backend Systems)
-- SYS-01..SYS-08
+Rename the old Wave 5 from `Full Backend Systems` to:
 
-## Task Inventory
+**Wave 5 - Backbone Hardening, World Systems, and Completion**
 
-### Foundation
-- FND-01 Introduce formal event/timing engine
-- FND-02 Replace flat conditions with source-aware effect instances
-- FND-03 Preserve weapon/equipment identity through action resolution
-- FND-04 Introduce typed damage packets
-- FND-05 Build proper spellcasting core
-- FND-06 Expand strategy API to full legal turn declaration
+Wave 5 is now split into nine ordered tracks:
 
-### Bug Fixes
-- BUG-01 Fix AoE target expansion runtime crash
-- BUG-02 Make Rage activation apply Rage
-- BUG-03 Canonicalize action/spell IDs for reaction matching
-- BUG-04 Implement correct Counterspell logic
-- BUG-05 Implement Shield as persistent timed effect
-- BUG-06 Correct Martial Arts vs Flurry of Blows
-- BUG-07 Correct baseline two-weapon fighting and style interaction
-- BUG-08 Make Sneak Attack truly once per turn
-- BUG-09 Clear GWM bonus trigger correctly
-- BUG-10 Correct prone/stunned/paralyzed/unconscious semantics
-- BUG-11 Fix death/dying/temp HP/instant death handling
-- BUG-12 Forced movement does not consume movement or provoke normal OA
-- BUG-13 Correct lair/legendary timing
-- BUG-14 Implement real Ready action support
-- BUG-15 Fix spell extraction for prepared vs known casters
-- BUG-16 Support "slot of spell level or higher" and upcasting
-- BUG-17 Enforce bonus-action spellcasting restriction
-- BUG-18 Apply cover correctly to attacks and Dex saves
-- BUG-19 Enforce reach/range/ranged-in-melee disadvantage
-- BUG-20 Add hazard lifecycle processing
-- BUG-21 Replace pathfinding stub with legal routing
-- BUG-22 Remove engine-owned hidden tactics
+- 5A Documentation Control
+- 5B Runtime Decomposition
+- 5C Capability Manifest
+- 5D Replay, Logging, and Observability
+- 5E Persistence and Query Model
+- 5F Tactical AI Hardening
+- 5G Rules Closure
+- 5H World Systems and Campaign Platform
+- 5I Completion Gates
 
-### Combat Systems
-- COM-01 Opportunity attacks/disengage/reach hooks
-- COM-02 Grapple/shove/escape/drag/stand from prone
-- COM-03 Vision/obscurity/invisibility/senses model
-- COM-04 Full AoE geometry templates
-- COM-05 Persistent zones/walls/environment effects
-- COM-06 Attack replacement + multiattack framework
-- COM-07 Concentration dependency graph
-- COM-08 Rest cycle and adventuring-day engine
-- COM-09 Monster recharge/legendary resistance/innate casting/custom actions
-- COM-10 Summons/companions/mounts/allied controllers
+## Mapping from old SYS tasks to the renamed Wave 5
 
-### Character/Progression
-- CHR-01 Character progression + multiclass framework
-- CHR-02 Inventory/equipment/ammunition/shields/attunement
-- CHR-03 Unified feat/species/background/subclass hook system
-- CHR-04 Barbarian package
-- CHR-05 Bard package
-- CHR-06 Cleric package
-- CHR-07 Druid package + Wild Shape framework
-- CHR-08 Fighter package
-- CHR-09 Monk package
-- CHR-10 Paladin package
-- CHR-11 Ranger package
-- CHR-12 Rogue package
-- CHR-13 Sorcerer package
-- CHR-14 Warlock package
-- CHR-15 Wizard package
-- CHR-16 Non-class content completeness pass
+- `SYS-01` maps to `WLD-01` and `WLD-02`.
+- `SYS-02` maps to `WLD-03` and `WLD-04`.
+- `SYS-03` maps to `WLD-05`.
+- `SYS-04` maps to `WLD-06` and `WLD-07`.
+- `SYS-05` maps to `DBS-04`, `DBS-05`, `WLD-08`, and `WLD-09`.
+- `SYS-06` maps to `WLD-10`.
+- `SYS-07` maps to `DBS-01`, `DBS-02`, `CAP-01`, and `WLD-11`.
+- `SYS-08` maps to `OBS-06`, `OBS-07`, `WLD-12`, `FIN-02`, and `FIN-03`.
 
-### Spell/Content
-- SPL-01 Canonical spell database + schema validation
-- SPL-02 Single-target spell family implementation
-- SPL-03 Area spell family implementation
-- SPL-04 Summon/conjure/transform spell family
-- SPL-05 Rituals/dispels/antimagic/special-case spell framework
+## Track definitions
 
-### Systems
-- SYS-01 Ability checks/skills/contests/passives/tools
-- SYS-02 Exploration turn structure/travel/time/light
-- SYS-03 Exhaustion/suffocation/drowning/falling/disease/poison/environment
-- SYS-04 Economy/loot/vendors/crafting/downtime/encumbrance
-- SYS-05 Quest/faction/world flags/persistence
-- SYS-06 Encounter scripting/waves/objectives/map hooks
-- SYS-07 Data schema/validation/import/content IDs
-- SYS-08 Regression corpus/performance/replay diff harness
+### 5A Documentation Control
 
-## Wave Gates
+Purpose: remove stale planning surfaces, establish one canonical entrypoint, and fail CI on documentation drift.
 
-A wave is mergeable only when all are true:
-- All tasks in the wave have open PRs and passed acceptance criteria.
-- Full `uv run python -m pytest` is green on wave integration branch.
-- Golden deterministic scenario checks are green or approved as intentional deltas.
-- Schema validation passes for all modified data classes.
-- Migration notes are present for all API/schema changes.
+Tasks:
+- DOC-01 Establish canonical docs entrypoints and source-of-truth rules
+- DOC-02 Archive stale planning and historical run artifacts
+- DOC-03 Normalize status board and merged baseline history
+- DOC-04 Add doc freshness metadata and registry
+- DOC-05 Add doc consistency checker and CI gate
+- DOC-06 Expand agent ownership map for target runtime boundaries
 
-## Definition of Done (Program)
-Backend is complete only when:
-- A legal turn is fully declarable via public API.
+DOC-04 freshness contract:
+- Every live planning markdown file carries `Status`, `Owner`, `Last updated`, and `Canonical source`.
+- `docs/program/doc_governance.md` owns the registry for all live planning paths and owners.
+
+### 5B Runtime Decomposition
+
+Purpose: split the engine monolith into bounded runtime modules and make `engine.py` a stable orchestration facade.
+
+Tasks:
+- ARC-01 Extract simulation session and turn-loop orchestration from engine.py
+- ARC-02 Extract turn declaration validation and legal action service
+- ARC-03 Extract movement, routing, and spatial legality service
+- ARC-04 Extract action resolution pipeline
+- ARC-05 Extract effect lifecycle, condition state, and concentration graph service
+- ARC-06 Extract reactions, interrupts, and ready-action window manager
+- ARC-07 Extract spell execution pipeline and target resolution adapters
+- ARC-08 Extract replay/reporting adapter layer and reduce engine.py to an orchestration facade
+
+Required structural outcome for 5B:
+- `src/dnd_sim/engine.py` must be reduced below 3500 lines by `ARC-08`.
+- No extracted runtime module may exceed 1500 lines without an explicit waiver recorded in `docs/agent_index.yaml`.
+- The target module set for Wave 5B is:
+  - `src/dnd_sim/engine_runtime.py`
+  - `src/dnd_sim/action_legality.py`
+  - `src/dnd_sim/movement_runtime.py`
+  - `src/dnd_sim/action_resolution.py`
+  - `src/dnd_sim/effects_runtime.py`
+  - `src/dnd_sim/reaction_runtime.py`
+  - `src/dnd_sim/spell_runtime.py`
+  - `src/dnd_sim/replay.py`
+  - `src/dnd_sim/reporting_runtime.py`
+
+### 5C Capability Manifest
+
+Purpose: make content support explicit and queryable for spells, feats, traits, monsters, and world objects.
+
+Tasks:
+- CAP-01 Define capability manifest schema, storage format, and CLI
+- CAP-02 Generate spell capability manifest from canonical spell data
+- CAP-03 Generate feat, trait, background, and species capability manifest
+- CAP-04 Generate monster and monster-action capability manifest
+- CAP-05 Enforce capability manifest gates in import paths and CI
+- CAP-06 Publish machine-readable and markdown coverage reports
+
+Capability states:
+- `cataloged`
+- `schema_valid`
+- `executable`
+- `tested`
+- `blocked`
+- `unsupported_reason`
+
+### 5D Replay, Logging, and Observability
+
+Purpose: emit full-turn traces, state deltas, AI rationale, resource deltas, RNG audits, invariant violations, and replay bundles.
+
+Tasks:
+- OBS-01 Introduce structured event schema and module-level loggers
+- OBS-02 Emit turn declaration and action resolution traces
+- OBS-03 Emit actor state delta and effect lifecycle traces
+- OBS-04 Emit AI candidate scoring and rationale traces
+- OBS-05 Emit resource delta, RNG audit, and invariant violation events
+- OBS-06 Build replay bundle writer, loader, and diff harness
+- OBS-07 Establish golden trace corpus and trace review gate
+
+### 5E Persistence and Query Model
+
+Purpose: replace shallow blob-centric persistence with canonical metadata tables and campaign/world state storage.
+
+Tasks:
+- DBS-01 Add canonical metadata tables for content and support records
+- DBS-02 Add schema version, source lineage, and content hash persistence
+- DBS-03 Add query APIs and CLI for support coverage, schema version, and lineage
+- DBS-04 Add campaign state persistence schema and round-trip tests
+- DBS-05 Add world flags, objectives, factions, and encounter state persistence schema
+- DBS-06 Migrate existing JSON/blob content to the canonical metadata model
+
+Required schema outcome for 5E:
+- `content_records`
+- `content_capabilities`
+- `campaign_states`
+- `encounter_states`
+- `world_states`
+- `faction_states`
+
+### 5F Tactical AI Hardening
+
+Purpose: upgrade AI from baseline heuristic action selection to traceable tactical play with hazard, control, retreat, and resource timing awareness.
+
+Tasks:
+- AI-01 Normalize candidate action enumeration and scoring inputs
+- AI-02 Implement hazard, geometry, cover, and line-of-effect scoring
+- AI-03 Implement concentration breaking, control value, and disable value scoring
+- AI-04 Implement retreat, survival, objective race, and focus-fire tradeoff scoring
+- AI-05 Implement recharge, legendary, reaction-bait, and limited-resource timing heuristics
+- AI-06 Build benchmark corpus, tuning thresholds, and decision-quality gates
+
+### 5G Rules Closure
+
+Purpose: close the remaining rules gaps and move the review checklist to green.
+
+Tasks:
+- FIX-01 Close Lucky attacker, defender, and saving throw correctness
+- FIX-02 Close Great Weapon Master and Sharpshooter toggle correctness
+- FIX-03 Close Shield Master reaction, save, and shove correctness
+- FIX-04 Close War Caster opportunity casting and concentration correctness
+- FIX-05 Close Mage Slayer and Sentinel reaction constraints
+- FIX-06 Close Rage damage, resistance, and illegal state edge cases
+- FIX-07 Integrate hazard-aware strategy scoring and close the review checklist
+
+### 5H World Systems and Campaign Platform
+
+Purpose: deliver the noncombat, exploration, economy, world-state, and campaign platform that makes the simulator full-featured beyond combat.
+
+Tasks:
+- WLD-01 Build ability check, contest, passive, and DC resolution core
+- WLD-02 Build skill, tool, proficiency, and specialist data plumbing
+- WLD-03 Build exploration turn structure, time advancement, and light tracking
+- WLD-04 Build travel pace, navigation, foraging, resting, and day-cycle integration
+- WLD-05 Build environmental exposure, falling, suffocation, drowning, disease, and poison world rules
+- WLD-06 Build economy, loot, vendor inventory, and pricing model
+- WLD-07 Build crafting, downtime, encumbrance, and service actions
+- WLD-08 Build quest, faction, reputation, and world-flag lifecycle
+- WLD-09 Build multi-encounter adventuring-day persistence and recovery flow
+- WLD-10 Build encounter scripting, waves, objectives, and map hooks
+- WLD-11 Hard-cut schema, import, and content IDs across all content classes
+- WLD-12 Build performance harness, regression corpus, and world-scale replay diff suite
+
+### 5I Completion Gates
+
+Purpose: enforce the final blocking gates that decide whether the backend is complete.
+
+Tasks:
+- FIN-01 Enforce program doc sync gate and purge stale live planning docs
+- FIN-02 Enforce full capability manifest green gate for shipped 2014 scope
+- FIN-03 Enforce deterministic replay corpus gate across combat and world scenarios
+- FIN-04 Enforce integrated campaign, world, and combat scenario gate
+- FIN-05 Enforce agent-only maintenance gate
+- FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete
+
+## Global contract for every task
+
+Every task PR must include all of the following:
+
+- code changes,
+- direct unit tests,
+- integration or golden tests,
+- negative or invalid-input tests,
+- deterministic seed stability unless the task intentionally changes rules behavior,
+- doc updates for every touched live planning file,
+- migration notes for any schema or public API change,
+- `docs/agent_index.yaml` updates when runtime boundaries change,
+- structured telemetry coverage when runtime behavior changes.
+
+## Definition of complete backend
+
+Mark the backend complete only when all of the following are true:
+
+- A legal turn is fully declarable and validated through the public API.
 - 2014 combat legality and timing windows are enforced.
-- Character/item/spell/monster/map content is validated and data-driven.
-- Multi-encounter adventuring day and campaign persistence work.
-- Noncombat systems are supported.
-- Regression corpus proves deterministic stability.
+- Character, item, spell, feat, monster, and world content are canonicalized, queryable, and data-driven.
+- Campaign persistence and multi-encounter adventuring-day flow work.
+- Noncombat, exploration, world-state, and economy systems work.
+- Capability manifests are green for the shipped 2014 scope.
+- Replay corpora prove deterministic stability.
+- AI benchmark gates pass with full rationale traces.
+- Documentation is synchronized and stale live plans are purged.

@@ -1,62 +1,72 @@
-# Codex Multiagent Execution Runbook
+# Codex Multi-Agent Execution Runbook
+
+Status: canonical  
+Owner: program-control  
+Last updated: 2026-03-04  
+Canonical source: `docs/program/README.md`
 
 ## Objective
-Run implementation with Codex built-in multiagent tooling while keeping deterministic and merge-safe delivery.
 
-## Agent Roles
-- `worker`: implements code + tests for assigned tasks.
-- `explorer`: performs focused code review and risk audit per completed task.
-- `awaiter`: runs long-running checks (full test suites, long simulations, validation sweeps).
+Execute the completion program with native Codex multi-agent tooling while keeping merges deterministic, reviewable, and aligned to the live docs.
 
-## Branch and Ownership Rules
+## Agent roles
+
+- `worker` implements one task ID on one branch.
+- `explorer` reviews one completed task branch for correctness, risk, and missing coverage.
+- `awaiter` runs the full wave checks, deterministic corpora, and migration sweeps.
+- `doc-warden` verifies that touched live docs changed with the code and that `status_board.md` matches `backlog.csv`.
+
+## Branch rules
+
 - One branch per task ID: `feat/<task-id>-<slug>`.
-- One PR per task ID.
-- One owner agent per task (no shared write ownership).
-- Agents must ignore unrelated edits and not revert others.
+- One task ID per PR.
+- One owner agent per task branch.
+- Explorer findings are fixed on the same task branch.
+- Doc updates are part of the task branch. Do not split docs into a later follow-up branch.
 
-## Per-Task Worker Prompt Contract
-Each spawned worker gets:
-- Task ID and exact acceptance criteria.
-- In-scope files/modules and out-of-scope boundaries.
-- Required tests: at least one unit, one integration/golden, one negative.
-- Determinism requirement and seed behavior constraint.
-- Commit and PR naming template.
+## Worker prompt contract
 
-## Orchestration Flow (Per Wave)
-1. Build ready set from `backlog.csv` where dependencies are complete.
-2. Spawn one worker per ready task.
-3. Wait for all workers in the batch.
-4. For each completed worker task, spawn one explorer for review findings.
-5. Address findings on task branch until explorer sign-off.
-6. Queue task PRs for integration merge in dependency order.
-7. Run awaiter on full wave checks.
-8. Merge wave integration PR when all gates pass.
+Each worker prompt must include:
 
-## Required Checks Before Task PR Is Marked Ready
-- Targeted tests for touched area pass.
-- Added tests for unit/integration/negative coverage pass.
-- Deterministic replay/golden checks pass (or intentional delta documented).
-- Formatting/lint checks required by repo pass.
-- Migration notes included when public API/schema changes.
+- task ID and exact title from `backlog.csv`,
+- dependencies from `backlog.csv`,
+- target modules from `backlog.csv`,
+- required tests from `backlog.csv`,
+- required docs from `backlog.csv`,
+- acceptance text from `backlog.csv`,
+- any runtime ownership updates required in `docs/agent_index.yaml`.
 
-## Required Checks Before Wave Merge
-- All task PRs merged into `int/wave-<n>-integration`.
-- `uv run python -m pytest` passes.
-- Deterministic corpus check passes.
-- No unresolved critical/high explorer findings.
-- `docs/program/status_board.md` updated.
+## Execution order
 
-## Failure Handling
-- If task branch repeatedly fails merge/rebase: pause task, rebase onto latest integration branch, rerun tests.
-- If deterministic drift appears: block merge until drift triage is documented and approved.
-- If schema changes break import: task cannot merge without migration note and validation test updates.
+1. Run the full Documentation Control track first.
+2. Do not start ARC work until `DOC-01` and `DOC-06` are merged.
+3. Run Capability Manifest and Observability as soon as their dependencies are ready.
+4. Start Persistence and AI only after the required ARC modules are extracted.
+5. Start World Systems only after Persistence is ready for campaign/world state.
+6. Run Completion Gates last and block release until every `FIN-*` task is green.
 
-## Logging and Traceability
-Track in `docs/program/status_board.md`:
-- Task ID
-- Owner agent
-- Branch
-- PR URL
-- Test gate results
-- Determinism status
-- Merge status
+## Required checks before a task PR is ready
+
+- direct unit tests pass,
+- integration or golden tests pass,
+- negative tests pass,
+- deterministic seed behavior is unchanged or the change is explicitly documented,
+- touched live docs are updated,
+- `docs/agent_index.yaml` is updated when boundaries changed,
+- no unrelated file churn is present.
+
+## Required checks before a track integration merge
+
+- every task in the ready batch has an open PR,
+- explorer review is complete for every task,
+- awaiter full-suite run passes,
+- deterministic replay/golden checks pass,
+- `status_board.md` and `backlog.csv` are synchronized,
+- no critical or high findings remain open.
+
+## Failure handling
+
+- If a hotspot task conflicts on `engine.py`, `spatial.py`, `rules_2014.py`, `strategy_api.py`, `strategies/defaults.py`, `db.py`, or `docs/program/*`, rebase that task before any further code changes.
+- If deterministic drift appears, block merge and open a replay diff report in the same branch.
+- If a task adds a runtime module without updating `docs/agent_index.yaml`, the task is not ready.
+- If a task changes live planning docs without updating `status_board.md`, the task is not ready.

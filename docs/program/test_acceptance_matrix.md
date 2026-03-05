@@ -1,43 +1,115 @@
 # Test Acceptance Matrix
 
-## Global Requirements (All Tasks)
-- Minimum one direct unit test.
-- Minimum one integration (or golden combat) test.
-- Minimum one negative/invalidity test.
-- Existing tests remain green.
-- Deterministic behavior preserved for identical seeds unless task explicitly changes rules behavior.
+Status: canonical  
+Owner: qa-gate  
+Last updated: 2026-03-05  
+Canonical source: `docs/program/README.md`
 
-## Foundation Tasks (FND)
-- Event ordering determinism tests.
-- API/schema migration tests when public types change.
-- Cross-module integration tests for engine, rules, and strategy API.
+## Global requirements for every task
 
-## Bug Tasks (BUG)
-- Regression test that fails on pre-fix behavior.
-- Positive coverage for corrected behavior.
-- Negative coverage for illegal/edge behavior.
+- minimum one direct unit test,
+- minimum one integration or golden test,
+- minimum one negative or invalid-input test,
+- deterministic seed stability for unchanged behavior,
+- live doc updates in the same branch,
+- migration tests when schema or persistence changes,
+- runtime ownership updates when module boundaries change.
 
-## Combat Tasks (COM)
-- Initiative/timing order integration tests.
-- Geometry/range/path legality tests where relevant.
-- Reaction window and concentration lifecycle tests where relevant.
+## Documentation Control tasks
 
-## Character Tasks (CHR)
-- Progression/resource accounting tests.
-- Class feature timing/resource legality tests.
-- Multiclass and prerequisite validation tests (where relevant).
+Required coverage:
+- metadata header parser tests,
+- markdown table parser and status-reduction rule tests,
+- broken-link tests,
+- backlog/status synchronization tests,
+- archive-reference tests,
+- stale status fixture that fails with `DOC-SYNC-008`,
+- missing metadata fixture that fails with `DOC-LIVE-005`,
+- doc consistency CI dry-run.
 
-## Spell Tasks (SPL)
-- Schema validation and import tests.
-- Slot legality and upcast scaling tests.
-- Targeting/cover/line-of-effect legality tests.
+## Runtime Decomposition tasks
 
-## System Tasks (SYS)
-- Persistence round-trip tests.
-- Economy/resource invariants.
-- Time advancement and world-state lifecycle tests.
+Required coverage:
+- public facade contract tests,
+- deterministic replay comparisons before and after extraction,
+- structured legality error tests,
+- no-regression combat integration tests.
 
-## Wave-Level Test Gates
-- Full `uv run python -m pytest` pass.
-- Deterministic scenario corpus pass.
-- Any golden log diffs reviewed and approved when expected.
+Structural gates:
+- `engine.py` must shrink on every ARC task.
+- `engine.py` must end below 3500 lines by `ARC-08`.
+- no extracted runtime module may exceed 1500 lines without an explicit waiver in `docs/agent_index.yaml`.
+
+## Capability Manifest tasks
+
+Required coverage:
+- manifest schema tests,
+- coverage-generation tests,
+- unsupported-reason tests,
+- import/CI gate tests,
+- stable ordering snapshot tests.
+
+## Replay, Logging, and Observability tasks
+
+Required coverage:
+- event schema tests,
+- trace completeness tests,
+- state-delta tests,
+- RNG audit determinism tests,
+- replay round-trip tests,
+- replay diff tests,
+- golden trace gate tests.
+
+## Persistence and Query Model tasks
+
+Required coverage:
+- migration and rollback tests,
+- content lineage/hash tests,
+- query API tests,
+- campaign/world round-trip tests,
+- corruption and invalid state negative tests.
+
+## Tactical AI Hardening tasks
+
+Required coverage:
+- candidate-enumeration tests,
+- illegal-candidate exclusion tests,
+- scoring component tests,
+- rationale trace tests,
+- benchmark regression tests.
+
+AI gate:
+- the primary tactical AI must outperform `BaseStrategy` and `HighestThreatStrategy` on the benchmark corpus used by `AI-06`,
+- every benchmark turn must emit candidate and rationale traces.
+
+## Rules Closure tasks
+
+Required coverage:
+- deterministic feature-specific correctness tests,
+- illegal trigger-window tests,
+- resource-use tests,
+- reaction/concentration interaction tests,
+- hazard-aware scoring integration tests.
+
+## World Systems and Campaign Platform tasks
+
+Required coverage:
+- ability check and contest tests,
+- time and light progression tests,
+- travel/rest integration tests,
+- world hazard tests,
+- economy/downtime tests,
+- quest/faction/world-state persistence tests,
+- encounter scripting/wave tests,
+- world-scale replay and performance regression tests.
+
+## Completion Gates
+
+A completion branch is green only when:
+
+- full `uv run python -m pytest` passes,
+- capability manifest gate passes for shipped 2014 scope,
+- combat and world replay corpora pass,
+- integrated campaign/world/combat scenarios pass,
+- agent-only maintenance gate passes,
+- doc consistency gate passes.
