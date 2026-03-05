@@ -165,6 +165,7 @@ subsystems:
       - "Replay bundles preserve deterministic round-trip inputs, seeds, traces, and outcomes."
       - "Replay serialization remains stable for diff tooling across equivalent runs."
       - "Replay construction remains side-effect free with respect to live simulation state."
+      - "Trial-row envelope serialization uses deterministic JSON key ordering for nested payloads."
     safe_edit_boundaries:
       - "Safe: serializer helpers and deterministic ordering guarantees."
       - "Caution: replay schema compatibility and diff key naming."
@@ -177,6 +178,7 @@ subsystems:
       - "Reporting adapters produce deterministic summaries for equivalent replay payloads."
       - "Reporting emits derived views only and does not mutate authoritative runtime state."
       - "Summary/report output remains backward compatible with existing integration consumers."
+      - "Simulation summary aggregation remains stable regardless of trial input ordering for equivalent values."
     safe_edit_boundaries:
       - "Safe: formatting helpers and additive summary fields with defaults."
       - "Caution: report key stability consumed by downstream docs and tooling."
