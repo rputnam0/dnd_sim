@@ -1,3 +1,4 @@
+import hashlib
 import json
 import sqlite3
 from pathlib import Path
@@ -5,6 +6,7 @@ from typing import Any
 
 CONTENT_RECORDS_TABLE = "content_records"
 CONTENT_CAPABILITIES_TABLE = "content_capabilities"
+LEGACY_IMPORTED_AT = "1970-01-01T00:00:00+00:00"
 
 CONTENT_RECORDS_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS content_records (
@@ -12,14 +14,20 @@ CREATE TABLE IF NOT EXISTS content_records (
     content_type TEXT NOT NULL,
     source_book TEXT NOT NULL,
     schema_version TEXT NOT NULL,
+    source_path TEXT NOT NULL,
     source_hash TEXT NOT NULL,
+    canonicalization_hash TEXT NOT NULL,
     payload_json TEXT NOT NULL,
+    imported_at TEXT NOT NULL,
     CHECK (length(trim(content_id)) > 0),
     CHECK (length(trim(content_type)) > 0),
     CHECK (length(trim(source_book)) > 0),
     CHECK (length(trim(schema_version)) > 0),
+    CHECK (length(trim(source_path)) > 0),
     CHECK (length(trim(source_hash)) > 0),
-    CHECK (length(trim(payload_json)) > 0)
+    CHECK (length(trim(canonicalization_hash)) > 0),
+    CHECK (length(trim(payload_json)) > 0),
+    CHECK (length(trim(imported_at)) > 0)
 )
 """
 
@@ -45,6 +53,12 @@ CREATE TABLE IF NOT EXISTS content_capabilities (
 
 CONTENT_METADATA_INDEXES_SQL = (
     "CREATE INDEX IF NOT EXISTS idx_content_records_content_type ON content_records(content_type)",
+    "CREATE INDEX IF NOT EXISTS idx_content_records_source_hash ON content_records(source_hash)",
+    (
+        "CREATE INDEX IF NOT EXISTS idx_content_records_canonicalization_hash "
+        "ON content_records(canonicalization_hash)"
+    ),
+    "CREATE INDEX IF NOT EXISTS idx_content_records_imported_at ON content_records(imported_at)",
     (
         "CREATE INDEX IF NOT EXISTS idx_content_capabilities_support_state "
         "ON content_capabilities(support_state)"
@@ -68,11 +82,36 @@ def get_connection() -> sqlite3.Connection:
     return conn
 
 
+def _table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+        (table_name,),
+    ).fetchone()
+    return row is not None
+
+
+def _table_columns(conn: sqlite3.Connection, table_name: str) -> list[str]:
+    rows = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+    return [str(row[1]) for row in rows]
+
+
 def _canonical_json_text(payload: dict[str, Any] | list[Any] | str) -> str:
     if isinstance(payload, str):
         decoded = json.loads(payload)
-        return json.dumps(decoded, sort_keys=True)
-    return json.dumps(payload, sort_keys=True)
+        return json.dumps(decoded, sort_keys=True, separators=(",", ":"))
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def _stable_payload_hash(payload: dict[str, Any] | list[Any] | str) -> str:
+    if isinstance(payload, str):
+        try:
+            canonical = _canonical_json_text(payload)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            canonical = payload.strip()
+    else:
+        canonical = _canonical_json_text(payload)
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return f"sha256:{digest}"
 
 
 def _required_text(value: str, *, field_name: str) -> str:
@@ -98,9 +137,66 @@ def _normalize_unsupported_reason(
     return None
 
 
+def _add_lineage_column_if_missing(
+    conn: sqlite3.Connection,
+    *,
+    column_name: str,
+    definition: str,
+) -> None:
+    columns = set(_table_columns(conn, CONTENT_RECORDS_TABLE))
+    if column_name in columns:
+        return
+    conn.execute(f"ALTER TABLE {CONTENT_RECORDS_TABLE} ADD COLUMN {column_name} {definition}")
+
+
+def _migrate_content_record_lineage_columns(conn: sqlite3.Connection) -> None:
+    if not _table_exists(conn, CONTENT_RECORDS_TABLE):
+        return
+
+    _add_lineage_column_if_missing(
+        conn,
+        column_name="source_path",
+        definition="TEXT NOT NULL DEFAULT ''",
+    )
+    _add_lineage_column_if_missing(
+        conn,
+        column_name="canonicalization_hash",
+        definition="TEXT NOT NULL DEFAULT ''",
+    )
+    _add_lineage_column_if_missing(
+        conn,
+        column_name="imported_at",
+        definition="TEXT NOT NULL DEFAULT ''",
+    )
+
+    rows = conn.execute("""
+        SELECT content_id, source_path, source_hash, canonicalization_hash, payload_json, imported_at
+        FROM content_records
+        """).fetchall()
+    for row in rows:
+        content_id = _required_text(str(row[0]), field_name="content_id")
+        payload_json = str(row[4])
+        payload_hash = _stable_payload_hash(payload_json)
+
+        source_path = str(row[1] or "").strip() or f"legacy:{content_id}"
+        source_hash = str(row[2] or "").strip() or payload_hash
+        canonicalization_hash = str(row[3] or "").strip() or payload_hash
+        imported_at = str(row[5] or "").strip() or LEGACY_IMPORTED_AT
+
+        conn.execute(
+            """
+            UPDATE content_records
+            SET source_path = ?, source_hash = ?, canonicalization_hash = ?, imported_at = ?
+            WHERE content_id = ?
+            """,
+            (source_path, source_hash, canonicalization_hash, imported_at, content_id),
+        )
+
+
 def create_content_metadata_tables(conn: sqlite3.Connection) -> None:
     """Create canonical metadata tables for content records and support state."""
     conn.execute(CONTENT_RECORDS_SCHEMA_SQL)
+    _migrate_content_record_lineage_columns(conn)
     conn.execute(CONTENT_CAPABILITIES_SCHEMA_SQL)
     for statement in CONTENT_METADATA_INDEXES_SQL:
         conn.execute(statement)
@@ -113,29 +209,46 @@ def upsert_content_record(
     content_type: str,
     source_book: str,
     schema_version: str,
+    source_path: str,
     source_hash: str,
+    canonicalization_hash: str,
     payload_json: dict[str, Any] | list[Any] | str,
+    imported_at: str,
 ) -> None:
     """Insert or update one canonical content record row."""
     conn.execute(
         """
         INSERT INTO content_records (
-            content_id, content_type, source_book, schema_version, source_hash, payload_json
-        ) VALUES (?, ?, ?, ?, ?, ?)
+            content_id,
+            content_type,
+            source_book,
+            schema_version,
+            source_path,
+            source_hash,
+            canonicalization_hash,
+            payload_json,
+            imported_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(content_id) DO UPDATE SET
             content_type=excluded.content_type,
             source_book=excluded.source_book,
             schema_version=excluded.schema_version,
+            source_path=excluded.source_path,
             source_hash=excluded.source_hash,
-            payload_json=excluded.payload_json
+            canonicalization_hash=excluded.canonicalization_hash,
+            payload_json=excluded.payload_json,
+            imported_at=excluded.imported_at
         """,
         (
             _required_text(content_id, field_name="content_id"),
             _required_text(content_type, field_name="content_type"),
             _required_text(source_book, field_name="source_book"),
             _required_text(schema_version, field_name="schema_version"),
+            _required_text(source_path, field_name="source_path"),
             _required_text(source_hash, field_name="source_hash"),
+            _required_text(canonicalization_hash, field_name="canonicalization_hash"),
             _canonical_json_text(payload_json),
+            _required_text(imported_at, field_name="imported_at"),
         ),
     )
 
@@ -174,6 +287,61 @@ def upsert_content_capability(
             _required_text(last_verified_commit, field_name="last_verified_commit"),
         ),
     )
+
+
+def fetch_content_lineage(
+    conn: sqlite3.Connection,
+    *,
+    content_type: str | None = None,
+) -> list[dict[str, Any]]:
+    """Fetch content lineage rows in deterministic imported-at order."""
+    params: tuple[Any, ...] = ()
+    where_clause = ""
+    if content_type is not None:
+        where_clause = "WHERE content_type = ?"
+        params = (_required_text(content_type, field_name="content_type"),)
+
+    rows = conn.execute(
+        f"""
+        SELECT
+            content_id,
+            content_type,
+            source_book,
+            schema_version,
+            source_path,
+            source_hash,
+            canonicalization_hash,
+            payload_json,
+            imported_at
+        FROM content_records
+        {where_clause}
+        ORDER BY imported_at ASC, content_id ASC
+        """,
+        params,
+    ).fetchall()
+
+    lineage: list[dict[str, Any]] = []
+    for row in rows:
+        payload_raw = str(row[7])
+        try:
+            payload = json.loads(payload_raw)
+        except json.JSONDecodeError:
+            payload = payload_raw
+
+        lineage.append(
+            {
+                "content_id": str(row[0]),
+                "content_type": str(row[1]),
+                "source_book": str(row[2]),
+                "schema_version": str(row[3]),
+                "source_path": str(row[4]),
+                "source_hash": str(row[5]),
+                "canonicalization_hash": str(row[6]),
+                "payload_json": payload,
+                "imported_at": str(row[8]),
+            }
+        )
+    return lineage
 
 
 def init_db() -> None:

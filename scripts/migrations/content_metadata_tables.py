@@ -20,11 +20,24 @@ def _table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
     return row is not None
 
 
+def _table_columns(conn: sqlite3.Connection, table_name: str) -> set[str]:
+    rows = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+    return {str(row[1]) for row in rows}
+
+
+def _content_records_has_lineage_columns(conn: sqlite3.Connection) -> bool:
+    if not _table_exists(conn, CONTENT_RECORDS_TABLE):
+        return False
+    columns = _table_columns(conn, CONTENT_RECORDS_TABLE)
+    return {"source_path", "canonicalization_hash", "imported_at"}.issubset(columns)
+
+
 def migrate_add_content_metadata_tables(conn: sqlite3.Connection) -> bool:
     """Add canonical content metadata tables if they are not present."""
     has_records = _table_exists(conn, CONTENT_RECORDS_TABLE)
     has_capabilities = _table_exists(conn, CONTENT_CAPABILITIES_TABLE)
-    if has_records and has_capabilities:
+    lineage_ready = _content_records_has_lineage_columns(conn)
+    if has_records and has_capabilities and lineage_ready:
         return False
 
     conn.execute("BEGIN IMMEDIATE")
