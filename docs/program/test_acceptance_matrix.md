@@ -49,6 +49,12 @@ Required coverage:
 - import/CI gate tests,
 - stable ordering snapshot tests.
 
+CAP-01 minimum gate:
+- schema validation must require all canonical state fields (`cataloged`, `schema_valid`, `executable`, `tested`, `blocked`, `unsupported_reason`),
+- blocked-state negative tests must require `unsupported_reason` only when `blocked=true`,
+- manifest round-trip tests must preserve canonical ordering and payload shape,
+- CLI smoke test must prove deterministic JSON emission from unordered input payloads.
+
 ## Replay, Logging, and Observability tasks
 
 Required coverage:

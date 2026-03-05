@@ -24,7 +24,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 |---|---|---|---|---|
 | DOC | Documentation Control | merged | 5A-doc-control | `DOC-01` through `DOC-06` are `merged` in `backlog.csv`; Documentation Control track is complete. |
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
-| CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
+| CAP | Capability Manifest | in_progress | 5C-capability-manifest | `CAP-01` is `in_progress` in `backlog.csv`; remaining CAP tasks are `not_started`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
@@ -36,6 +36,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| CAP-01 | `codex/feat/cap-01-define-capability-manifest-schema-storage-format-a` | content_manifest_lead | in_progress | Implementing canonical schema, deterministic storage format, and manifest CLI. |
 
 ## Open PRs
 
