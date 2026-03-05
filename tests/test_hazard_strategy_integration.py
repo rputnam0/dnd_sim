@@ -149,6 +149,42 @@ def test_optimal_strategy_prefers_safe_action_over_hazardous_high_damage_option(
     assert declaration.action.action_name == "safe_shot"
 
 
+def test_evaluate_action_score_ignores_hazards_with_missing_or_invalid_position() -> None:
+    actor = _actor_view(actor_id="hero", team="party", position=(0.0, 0.0, 0.0))
+    enemy = _actor_view(actor_id="enemy", team="enemy", position=(20.0, 0.0, 0.0))
+    action = {
+        "name": "risky_strike",
+        "action_type": "attack",
+        "target_mode": "single_enemy",
+        "to_hit": 7,
+        "damage": "2d10",
+        "range_ft": 5,
+        "resource_cost": {},
+        "effects": [],
+        "mechanics": [],
+        "tags": [],
+    }
+
+    baseline_state = _single_action_state(actor=actor, others=[enemy], actions=[action])
+    invalid_hazard_state = _single_action_state(
+        actor=actor,
+        others=[enemy],
+        actions=[action],
+        metadata={
+            "active_hazards": [
+                {"id": "missing_pos", "radius_ft": 5, "severity": 8},
+                {"id": "bad_shape", "position": "not-a-position", "radius_ft": 5, "severity": 8},
+                {"id": "bad_values", "position": ("x", 0.0, 0.0), "radius_ft": 5, "severity": 8},
+            ]
+        },
+    )
+
+    baseline_score = _evaluate_action_score(action, enemy, actor, baseline_state)
+    invalid_hazard_score = _evaluate_action_score(action, enemy, actor, invalid_hazard_state)
+
+    assert invalid_hazard_score == baseline_score
+
+
 def test_optimal_strategy_prefers_line_of_effect_clear_target() -> None:
     strategy = OptimalExpectedDamageStrategy()
     actor = _actor_view(actor_id="archer", team="party", position=(0.0, 0.0, 0.0))

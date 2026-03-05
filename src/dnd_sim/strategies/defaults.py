@@ -588,8 +588,12 @@ def _hazard_exposure_penalty(
     for hazard in active_hazards:
         if not isinstance(hazard, dict):
             continue
-        center = _coerce_position(hazard.get("position"))
-        if center is None:
+        raw_position = hazard.get("position")
+        if raw_position is None:
+            continue
+        try:
+            center = _coerce_position(raw_position)
+        except (TypeError, ValueError, IndexError):
             continue
         radius_ft = _hazard_radius_ft(hazard)
         if any(distance_chebyshev(point, center) <= radius_ft for point in sampled_points):

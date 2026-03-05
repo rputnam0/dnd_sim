@@ -42,7 +42,7 @@ Current in-progress focus: `ARC-06` reactions, interrupts, and ready-action wind
 
 - [ ] FIX-01 Close Lucky attacker, defender, and saving throw correctness
 - [ ] FIX-02 Close Great Weapon Master and Sharpshooter toggle correctness (active on `codex/feat/fix-02-close-great-weapon-master-and-sharpshooter-toggle`)
-- [x] FIX-03 Close Shield Master reaction, save, and shove correctness
+- [ ] FIX-03 Close Shield Master reaction, save, and shove correctness (in review on [#115](https://github.com/rputnam0/dnd_sim/pull/115))
 - [ ] FIX-04 Close War Caster opportunity casting and concentration correctness
 - [ ] FIX-05 Close Mage Slayer and Sentinel reaction constraints (in progress on `codex/feat/fix-05-close-mage-slayer-and-sentinel-reaction-constraint`)
 - [ ] FIX-06 Close Rage damage, resistance, and illegal state edge cases
