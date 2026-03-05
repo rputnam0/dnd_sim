@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from dnd_sim.capability_manifest import (
     DEFAULT_SPELLS_DIR,
     build_spell_capability_manifest,
@@ -44,9 +46,7 @@ def test_spell_manifest_marks_executable_spells_supported() -> None:
                 "level": 1,
                 "casting_time": "1 action",
                 "description": "A bolt of force.",
-                "mechanics": [
-                    {"effect_type": "damage", "damage": "2d6", "target": "single_enemy"}
-                ],
+                "mechanics": [{"effect_type": "damage", "damage": "2d6", "target": "single_enemy"}],
             }
         ]
     )
@@ -90,7 +90,7 @@ def test_spell_manifest_uses_unsupported_effect_type_reason() -> None:
                 "level": 3,
                 "casting_time": "1 action",
                 "description": "An unsupported area spell stub.",
-                "mechanics": [{"effect_type": "aoe", "radius_ft": 20}],
+                "mechanics": [{"effect_type": "quantum_shift", "radius_ft": 20}],
             }
         ]
     )
@@ -99,6 +99,61 @@ def test_spell_manifest_uses_unsupported_effect_type_reason() -> None:
     assert record.states.blocked is True
     assert record.states.schema_valid is True
     assert record.states.unsupported_reason == "unsupported_effect_type"
+
+
+@pytest.mark.parametrize(
+    "effect_type",
+    ["aoe", "ranged_spell_attack", "melee_spell_attack", "save"],
+)
+def test_spell_manifest_marks_metadata_spell_effect_types_non_executable(effect_type: str) -> None:
+    manifest = build_spell_capability_manifest(
+        spell_payloads=[
+            {
+                "name": f"Spell Marker {effect_type}",
+                "type": "spell",
+                "level": 1,
+                "casting_time": "1 action",
+                "description": "Metadata-only spell effect marker.",
+                "mechanics": [{"effect_type": effect_type}],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.support_state == "unsupported"
+    assert record.states.executable is False
+    assert record.states.blocked is True
+    assert record.states.unsupported_reason == "non_executable_mechanics"
+
+
+@pytest.mark.parametrize(
+    "effect_type",
+    ["aoe", "ranged_spell_attack", "melee_spell_attack", "save"],
+)
+def test_spell_manifest_accepts_metadata_effect_types_when_paired_with_runtime_effect(
+    effect_type: str,
+) -> None:
+    manifest = build_spell_capability_manifest(
+        spell_payloads=[
+            {
+                "name": f"Spell Marker + Damage {effect_type}",
+                "type": "spell",
+                "level": 1,
+                "casting_time": "1 action",
+                "description": "Metadata marker with executable effect.",
+                "mechanics": [
+                    {"effect_type": effect_type},
+                    {"effect_type": "damage", "damage": "1d8", "target": "single_enemy"},
+                ],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.support_state == "supported"
+    assert record.states.executable is True
+    assert record.states.blocked is False
+    assert record.states.unsupported_reason is None
 
 
 def test_spell_manifest_uses_invalid_mechanics_schema_reason() -> None:

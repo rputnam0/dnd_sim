@@ -453,3 +453,33 @@ def test_break_concentration_preserves_unlinked_same_condition_from_same_source(
     paralyzed = [effect for effect in target.effect_instances if effect.condition == "paralyzed"]
     assert len(paralyzed) == 1
     assert paralyzed[0].effect_id == "stasis_echo_non_concentration"
+
+
+def test_spell_metadata_effect_markers_are_runtime_noops() -> None:
+    source = _actor("source", "party")
+    target = _actor("target", "enemy")
+    actors = {source.actor_id: source, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(source, target)
+
+    for effect_type in ("aoe", "ranged_spell_attack", "melee_spell_attack", "save"):
+        _apply_effect(
+            effect={"effect_type": effect_type},
+            rng=random.Random(7),
+            actor=source,
+            target=target,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            actors=actors,
+            active_hazards=[],
+        )
+
+    assert source.hp == 30
+    assert target.hp == 30
+    assert target.temp_hp == 0
+    assert target.position == (0.0, 0.0, 0.0)
+    assert target.effect_instances == []
+    assert damage_dealt == {"source": 0, "target": 0}
+    assert damage_taken == {"source": 0, "target": 0}
+    assert threat_scores == {"source": 0, "target": 0}
