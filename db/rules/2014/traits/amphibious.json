@@ -3,7 +3,7 @@
   "description": "You can breathe air and water.",
   "mechanics": [
     {
-      "effect": "breathe",
+      "effect_type": "breathe",
       "environments": [
         "air",
         "water"

@@ -3,7 +3,7 @@
   "description": "In the first round of a combat, you have advantage on attack rolls against any creature who is surprised.",
   "mechanics": [
     {
-      "effect": "advantage_on_attack_rolls",
+      "effect_type": "advantage_on_attack_rolls",
       "condition": {
         "phase": "first_round",
         "target_status": "surprised"

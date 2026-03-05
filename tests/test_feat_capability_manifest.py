@@ -8,6 +8,15 @@ from dnd_sim.capability_manifest import (
     load_feature_payloads,
 )
 
+SHARD_A_SPECIES_IDS = {
+    "species:ambusher",
+    "species:amorphous",
+    "species:amphibious",
+    "species:bestial_instincts",
+    "species:black_blood_healing",
+    "species:brave",
+}
+
 
 def test_feature_manifest_emits_feat_trait_background_species_records() -> None:
     payloads = [
@@ -108,3 +117,26 @@ def test_background_shard_a_features_have_runtime_hook_family_support() -> None:
         assert record.support_state == "supported"
         assert record.states.blocked is False
         assert record.states.unsupported_reason is None
+
+
+def test_species_hook_shard_a_records_are_supported() -> None:
+    manifest = build_feature_capability_manifest()
+    by_id = {record.content_id: record for record in manifest.records}
+
+    missing_ids = sorted(SHARD_A_SPECIES_IDS - set(by_id))
+    assert missing_ids == []
+
+    blocked_species_missing_hook = {
+        record.content_id
+        for record in manifest.records
+        if record.content_type == "species"
+        and record.states.unsupported_reason == "missing_runtime_hook_family"
+    }
+    assert blocked_species_missing_hook.isdisjoint(SHARD_A_SPECIES_IDS)
+
+    for content_id in sorted(SHARD_A_SPECIES_IDS):
+        record = by_id[content_id]
+        assert record.content_type == "species"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
+        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
