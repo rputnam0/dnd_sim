@@ -256,9 +256,6 @@ policies:
       - src/dnd_sim/*.py
     default_max_file_lines: 1500
     file_size_waivers:
-      - module: src/dnd_sim/engine_legacy.py
-        max_lines: 18000
-        reason: "Legacy implementation remains temporarily while Wave 6 hard-cut migration finalizes downstream call sites."
-      - module: src/dnd_sim/io.py
-        max_lines: 2000
-        reason: "Wave 6 io decomposition is in progress; temporary aggregation layer remains above default threshold until CUT follow-through lands."
+      - module: src/dnd_sim/engine_runtime.py
+        max_lines: 16000
+        reason: "Wave 6 hard-cut architecture keeps the canonical runtime execution orchestration centralized in engine_runtime.py while extraction tracks complete."
