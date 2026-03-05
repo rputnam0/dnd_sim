@@ -141,11 +141,44 @@ def test_condition_application_value_rewards_stronger_control_conditions() -> No
     )
 
 
-def test_enemy_action_denial_scoring_prioritizes_hard_cc_over_reaction_lock() -> None:
+def test_missing_apply_condition_payload_does_not_create_phantom_condition_value() -> None:
     actor = _actor_view(actor_id="hero", team="party")
     enemy = _actor_view(actor_id="enemy", team="enemy", position=(5.0, 0.0, 0.0))
     state = BattleStateView(
         round_number=6,
+        actors={actor.actor_id: actor, enemy.actor_id: enemy},
+        actor_order=[actor.actor_id, enemy.actor_id],
+        metadata={
+            "available_actions": {actor.actor_id: ["glitch_bind"]},
+            "action_catalog": {
+                actor.actor_id: [
+                    {
+                        "name": "glitch_bind",
+                        "action_type": "save",
+                        "target_mode": "single_enemy",
+                        "range_ft": 30,
+                        "action_cost": "action",
+                        "resource_cost": {},
+                        "mechanics": [{"effect_type": "apply_condition"}],
+                    }
+                ]
+            },
+        },
+    )
+
+    snapshots = candidate_snapshots(enumerate_legal_action_candidates(actor, state))
+    glitch = _snapshot_by_action_and_targets(snapshots, "glitch_bind", ["enemy"])
+
+    assert glitch["control"]["applied_condition_count"] == 1
+    assert glitch["control"]["condition_application_value"] == 0.0
+    assert glitch["control"]["enemy_action_denial_score"] == 0.0
+
+
+def test_enemy_action_denial_scoring_prioritizes_hard_cc_over_reaction_lock() -> None:
+    actor = _actor_view(actor_id="hero", team="party")
+    enemy = _actor_view(actor_id="enemy", team="enemy", position=(5.0, 0.0, 0.0))
+    state = BattleStateView(
+        round_number=7,
         actors={actor.actor_id: actor, enemy.actor_id: enemy},
         actor_order=[actor.actor_id, enemy.actor_id],
         metadata={
@@ -199,7 +232,7 @@ def test_control_value_score_combines_break_and_denial_components() -> None:
         concentrating=True,
     )
     state = BattleStateView(
-        round_number=7,
+        round_number=8,
         actors={actor.actor_id: actor, enemy.actor_id: enemy},
         actor_order=[actor.actor_id, enemy.actor_id],
         metadata={
@@ -254,7 +287,7 @@ def test_control_scoring_ignores_non_hostile_targets_for_denial() -> None:
     ally = _actor_view(actor_id="ally", team="party", position=(5.0, 0.0, 0.0))
     enemy = _actor_view(actor_id="enemy", team="enemy", position=(5.0, 5.0, 0.0))
     state = BattleStateView(
-        round_number=8,
+        round_number=9,
         actors={actor.actor_id: actor, ally.actor_id: ally, enemy.actor_id: enemy},
         actor_order=[actor.actor_id, ally.actor_id, enemy.actor_id],
         metadata={
