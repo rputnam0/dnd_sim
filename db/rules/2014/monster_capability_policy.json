@@ -1,0 +1,28 @@
+{
+  "supported_action_types": [
+    "attack",
+    "save",
+    "utility"
+  ],
+  "supported_action_costs": [
+    "action",
+    "bonus",
+    "reaction",
+    "legendary",
+    "lair"
+  ],
+  "unsupported_reason_codes": [
+    "missing_monster_identity",
+    "missing_monster_stat_block",
+    "malformed_action_payload",
+    "missing_action_name",
+    "missing_action_type",
+    "unsupported_action_type",
+    "missing_action_cost",
+    "unsupported_action_cost",
+    "malformed_recharge_entry",
+    "missing_innate_spell_name",
+    "malformed_innate_spellcasting_entry",
+    "unsupported_action_payload"
+  ]
+}
