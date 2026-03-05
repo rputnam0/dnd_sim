@@ -3,7 +3,7 @@
   "description": "You have advantage on saving throws against being frightened.",
   "mechanics": [
     {
-      "effect": "advantage",
+      "effect_type": "advantage",
       "target": "saving_throws",
       "condition": "frightened"
     }

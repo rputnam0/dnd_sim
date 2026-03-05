@@ -21,6 +21,15 @@ verify_capabilities = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = verify_capabilities
 spec.loader.exec_module(verify_capabilities)
 
+SHARD_A_SPECIES_IDS = {
+    "species:ambusher",
+    "species:amorphous",
+    "species:amphibious",
+    "species:bestial_instincts",
+    "species:black_blood_healing",
+    "species:brave",
+}
+
 
 def test_supported_scope_requires_schema_valid_and_tested() -> None:
     issues = validate_capability_gate_records(
@@ -73,3 +82,18 @@ def test_verify_capabilities_cli_dry_run_returns_zero_when_issues_present(
 
     assert verify_capabilities.main(["--dry-run"]) == 0
     assert verify_capabilities.main([]) == 1
+
+
+def test_species_hook_shard_a_ids_are_supported_in_canonical_capability_records() -> None:
+    io._canonical_capability_records.cache_clear()
+    by_id = {record.content_id: record for record in io._canonical_capability_records()}
+
+    missing_ids = sorted(SHARD_A_SPECIES_IDS - set(by_id))
+    assert missing_ids == []
+
+    for content_id in sorted(SHARD_A_SPECIES_IDS):
+        record = by_id[content_id]
+        assert record.content_type == "species"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
+        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}

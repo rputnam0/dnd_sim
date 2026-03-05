@@ -3,7 +3,7 @@
   "description": "Channeling the beast within, you gain proficiency in one of the following skills of your choice: Acrobatics, Athletics, Intimidation, or Survival.",
   "mechanics": [
     {
-      "effect": "gain_skill_proficiency",
+      "effect_type": "gain_skill_proficiency",
       "choices": [
         "Acrobatics",
         "Athletics",
