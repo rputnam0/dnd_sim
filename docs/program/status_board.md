@@ -25,7 +25,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | DOC | Documentation Control | merged | 5A-doc-control | `DOC-01` through `DOC-06` are `merged` in `backlog.csv`; Documentation Control track is complete. |
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
-| OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
+| OBS | Replay, Logging, and Observability | in_progress | 5D-observability | `OBS-02` is `in_progress` in `backlog.csv`; remaining OBS tasks are `not_started`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
@@ -36,6 +36,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| OBS-02 | `codex/feat/obs-02-emit-turn-declaration-and-action-resolution-traces` | observability_b | in_progress | Implementing declaration/action trace emission and deterministic trace-order coverage tests. |
 
 ## Open PRs
 

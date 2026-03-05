@@ -220,6 +220,7 @@ Emit structured traces, state deltas, replay bundles, and invariant events for e
 - Required tests: trace completeness tests; deterministic ordering tests; illegal action trace tests
 - Required docs: docs/program/completion_task_cards.md; docs/review_checklist.md
 - Exit criteria: Emit a structured trace record for declaration validation, action selection, action resolution, and final action outcome on every turn.
+- Status update (2026-03-05): Implemented structured `declaration_validation`, `action_selection`, `action_resolution`, and `action_outcome` telemetry emissions in declared-turn runtime paths with deterministic ordering checks and illegal action trace coverage in `tests/test_turn_traces.py`.
 
 ### OBS-03 Emit actor state delta and effect lifecycle traces
 

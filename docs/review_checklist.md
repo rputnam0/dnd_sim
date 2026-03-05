@@ -58,7 +58,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 ## Replay, Logging, and Observability
 
 - [ ] OBS-01 Introduce structured event schema and module-level loggers
-- [ ] OBS-02 Emit turn declaration and action resolution traces
+- [x] OBS-02 Emit turn declaration and action resolution traces
 - [ ] OBS-03 Emit actor state delta and effect lifecycle traces
 - [ ] OBS-04 Emit AI candidate scoring and rationale traces
 - [ ] OBS-05 Emit resource delta, RNG audit, and invariant violation events
