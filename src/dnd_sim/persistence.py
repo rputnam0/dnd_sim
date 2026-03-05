@@ -8,6 +8,13 @@ from dnd_sim.campaign_runtime import (
     AdventuringDayState,
     EncounterCheckpoint,
 )
+from dnd_sim.economy import (
+    EconomyState,
+    MarketItem,
+    VendorInventory,
+    VendorStock,
+    create_economy_state,
+)
 from dnd_sim.world_runtime import (
     ExplorationState,
     LightSourceState,
@@ -137,6 +144,141 @@ def deserialize_world_exploration_state(payload: Mapping[str, Any]) -> Explorati
         clock=WorldClock(day=day, minute_of_day=minute_of_day),
         light_sources=light_sources,
         location_id=location_id,
+    )
+
+
+def serialize_economy_state(state: EconomyState) -> dict[str, Any]:
+    if not isinstance(state, EconomyState):
+        raise ValueError("state must be an EconomyState")
+
+    return {
+        "day_index": state.day_index,
+        "market_price_index_bp": state.market_price_index_bp,
+        "catalog": [
+            {
+                "item_id": item.item_id,
+                "name": item.name,
+                "base_price_cp": item.base_price_cp,
+                "rarity": item.rarity,
+                "category": item.category,
+                "vendor_weight": item.vendor_weight,
+                "loot_weight": item.loot_weight,
+                "min_vendor_quantity": item.min_vendor_quantity,
+                "max_vendor_quantity": item.max_vendor_quantity,
+            }
+            for _, item in sorted(state.catalog.items())
+        ],
+        "vendors": [
+            {
+                "vendor_id": vendor.vendor_id,
+                "markup_bp": vendor.markup_bp,
+                "stock": [
+                    {
+                        "item_id": stock.item_id,
+                        "quantity": stock.quantity,
+                        "unit_price_cp": stock.unit_price_cp,
+                    }
+                    for _, stock in sorted(vendor.stock.items())
+                ],
+            }
+            for _, vendor in sorted(state.vendors.items())
+        ],
+    }
+
+
+def _deserialize_economy_catalog(raw: Any) -> dict[str, MarketItem | Mapping[str, Any]]:
+    if raw is None:
+        return {}
+    if isinstance(raw, list):
+        catalog: dict[str, MarketItem | Mapping[str, Any]] = {}
+        for row in raw:
+            if not isinstance(row, Mapping):
+                raise ValueError("catalog rows must be mappings")
+            item_id = _required_text(row.get("item_id"), field_name="item_id")
+            catalog[item_id] = row
+        return catalog
+    if isinstance(raw, Mapping):
+        catalog = {}
+        for item_id, payload in raw.items():
+            normalized_item_id = _required_text(item_id, field_name="item_id")
+            if isinstance(payload, MarketItem):
+                catalog[normalized_item_id] = payload
+                continue
+            if not isinstance(payload, Mapping):
+                raise ValueError("catalog mapping values must be mappings or MarketItem entries")
+            merged_payload = dict(payload)
+            merged_payload.setdefault("item_id", normalized_item_id)
+            catalog[normalized_item_id] = merged_payload
+        return catalog
+    raise ValueError("catalog must be a list or mapping")
+
+
+def _deserialize_vendor_stock_rows(raw: Any) -> dict[str, VendorStock | Mapping[str, Any] | int]:
+    if raw is None:
+        return {}
+    if isinstance(raw, list):
+        stock: dict[str, VendorStock | Mapping[str, Any] | int] = {}
+        for row in raw:
+            if not isinstance(row, Mapping):
+                raise ValueError("vendor stock rows must be mappings")
+            item_id = _required_text(row.get("item_id"), field_name="item_id")
+            stock[item_id] = row
+        return stock
+    if isinstance(raw, Mapping):
+        stock = {}
+        for item_id, payload in raw.items():
+            normalized_item_id = _required_text(item_id, field_name="item_id")
+            stock[normalized_item_id] = payload
+        return stock
+    raise ValueError("vendor stock must be a list or mapping")
+
+
+def _deserialize_economy_vendors(
+    raw: Any,
+) -> dict[str, VendorInventory | Mapping[str, Any]]:
+    if raw is None:
+        return {}
+    if isinstance(raw, list):
+        vendors: dict[str, VendorInventory | Mapping[str, Any]] = {}
+        for row in raw:
+            if not isinstance(row, Mapping):
+                raise ValueError("vendor rows must be mappings")
+            vendor_id = _required_text(row.get("vendor_id"), field_name="vendor_id")
+            vendor_payload = dict(row)
+            vendor_payload["stock"] = _deserialize_vendor_stock_rows(vendor_payload.get("stock"))
+            vendors[vendor_id] = vendor_payload
+        return vendors
+    if isinstance(raw, Mapping):
+        vendors = {}
+        for vendor_id, payload in raw.items():
+            normalized_vendor_id = _required_text(vendor_id, field_name="vendor_id")
+            if isinstance(payload, VendorInventory):
+                vendors[normalized_vendor_id] = payload
+                continue
+            if not isinstance(payload, Mapping):
+                raise ValueError(
+                    "vendor mapping values must be mappings or VendorInventory entries"
+                )
+            merged_payload = dict(payload)
+            merged_payload.setdefault("vendor_id", normalized_vendor_id)
+            merged_payload["stock"] = _deserialize_vendor_stock_rows(merged_payload.get("stock"))
+            vendors[normalized_vendor_id] = merged_payload
+        return vendors
+    raise ValueError("vendors must be a list or mapping")
+
+
+def deserialize_economy_state(payload: Mapping[str, Any]) -> EconomyState:
+    if not isinstance(payload, Mapping):
+        raise ValueError("payload must be a mapping")
+
+    return create_economy_state(
+        day_index=_required_int(payload.get("day_index", 1), field_name="day_index"),
+        market_price_index_bp=_required_int(
+            payload.get("market_price_index_bp", 10_000),
+            field_name="market_price_index_bp",
+        ),
+        catalog=_deserialize_economy_catalog(payload.get("catalog")),
+        vendors=_deserialize_economy_vendors(payload.get("vendors")),
     )
 
 
