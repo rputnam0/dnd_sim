@@ -61,7 +61,7 @@ Current in-progress focus: `ARC-06` reactions, interrupts, and ready-action wind
 
 - [ ] OBS-01 Introduce structured event schema and module-level loggers
 - [x] OBS-02 Emit turn declaration and action resolution traces
-- [x] OBS-03 Emit actor state delta and effect lifecycle traces
+- [ ] OBS-03 Emit actor state delta and effect lifecycle traces
 - [ ] OBS-04 Emit AI candidate scoring and rationale traces
 - [ ] OBS-05 Emit resource delta, RNG audit, and invariant violation events
 - [ ] OBS-06 Build replay bundle writer, loader, and diff harness
