@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: qa-gate  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/README.md`
 
 ## Global requirements for every task
@@ -19,9 +19,12 @@ Canonical source: `docs/program/README.md`
 
 Required coverage:
 - metadata header parser tests,
+- markdown table parser and status-reduction rule tests,
 - broken-link tests,
 - backlog/status synchronization tests,
 - archive-reference tests,
+- stale status fixture that fails with `DOC-SYNC-008`,
+- missing metadata fixture that fails with `DOC-LIVE-005`,
 - doc consistency CI dry-run.
 
 ## Runtime Decomposition tasks

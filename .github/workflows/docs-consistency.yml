@@ -1,0 +1,36 @@
+name: docs-consistency
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "scripts/docs/**"
+      - "tests/test_verify_program_docs.py"
+      - "tests/fixtures/doc_checker/**"
+      - ".github/workflows/docs-consistency.yml"
+  push:
+    paths:
+      - "docs/**"
+      - "scripts/docs/**"
+      - "tests/test_verify_program_docs.py"
+      - "tests/fixtures/doc_checker/**"
+      - ".github/workflows/docs-consistency.yml"
+
+jobs:
+  verify-program-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Run docs consistency checker
+        run: uv run python scripts/docs/verify_program_docs.py
+
+      - name: Run docs checker unit tests
+        run: uv run python -m pytest tests/test_verify_program_docs.py tests/test_program_doc_governance.py

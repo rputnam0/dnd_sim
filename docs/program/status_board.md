@@ -18,11 +18,11 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Repo cleanup program | merged/completed | Backfilled as merged baseline history. |
 | Legacy decommission program | merged/completed | Backfilled as merged baseline history. |
 
-## Active completion track rollup (from backlog.csv)
+## Active completion tracks
 
 | Track | Scope | Status | Milestone | Notes |
 |---|---|---|---|---|
-| DOC | Documentation Control | in_progress | 5A-doc-control | `DOC-01` is `in_progress`; `DOC-02`, `DOC-03`, and `DOC-04` are `pr_open`; remaining DOC tasks are `not_started` in `backlog.csv`. |
+| DOC | Documentation Control | in_progress | 5A-doc-control | `DOC-01` and `DOC-05` are `in_progress`; `DOC-02`, `DOC-03`, and `DOC-04` are `pr_open`; remaining DOC tasks are `not_started` in `backlog.csv`. |
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
@@ -32,7 +32,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
 
-## Active task branches (non-merged task statuses)
+## Active branches
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
@@ -40,6 +40,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | DOC-02 | codex/feat/doc-02-archive-stale-planning-and-historical-run-artifact | doc_control_a | pr_open | Matches `docs/program/backlog.csv`. |
 | DOC-03 | feat/doc-03-normalize-status-board-and-merged-baseline-history | doc_control_b | pr_open | Matches `docs/program/backlog.csv`. |
 | DOC-04 | feat/doc-04-add-doc-freshness-metadata-and-registry | doc_control_a | pr_open | Matches `docs/program/backlog.csv`. |
+| DOC-05 | feat/doc-05-add-doc-consistency-checker-and-ci-gate | doc_control_ci | in_progress | Matches `docs/program/backlog.csv`. |
 
 ## Open PRs
 
