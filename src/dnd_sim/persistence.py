@@ -9,9 +9,14 @@ from dnd_sim.campaign_runtime import (
     EncounterCheckpoint,
 )
 from dnd_sim.world_runtime import (
-    LightSourceState,
     ExplorationState,
+    LightSourceState,
     WorldClock,
+)
+from dnd_sim.world_state import (
+    FactionState,
+    QuestState,
+    WorldState,
 )
 
 
@@ -132,6 +137,124 @@ def deserialize_world_exploration_state(payload: Mapping[str, Any]) -> Explorati
         clock=WorldClock(day=day, minute_of_day=minute_of_day),
         light_sources=light_sources,
         location_id=location_id,
+    )
+
+
+def serialize_world_state(state: WorldState) -> dict[str, Any]:
+    if not isinstance(state, WorldState):
+        raise ValueError("state must be a WorldState")
+
+    return {
+        "turn_index": state.turn_index,
+        "world_flags": dict(sorted(state.world_flags.items())),
+        "quests": [
+            {
+                "quest_id": quest.quest_id,
+                "status": quest.status,
+                "stage_id": quest.stage_id,
+                "objective_flags": dict(sorted((quest.objective_flags or {}).items())),
+            }
+            for _, quest in sorted(state.quests.items())
+        ],
+        "factions": [
+            {
+                "faction_id": faction.faction_id,
+                "reputation": faction.reputation,
+            }
+            for _, faction in sorted(state.factions.items())
+        ],
+    }
+
+
+def _deserialize_quests(raw: Any) -> dict[str, QuestState]:
+    if raw is None:
+        return {}
+
+    if isinstance(raw, list):
+        quests: dict[str, QuestState] = {}
+        for item in raw:
+            if not isinstance(item, Mapping):
+                raise ValueError("quests list entries must be mappings")
+            quest = QuestState(
+                quest_id=item.get("quest_id"),
+                status=item.get("status", "not_started"),
+                stage_id=item.get("stage_id"),
+                objective_flags=item.get("objective_flags") or {},
+            )
+            quests[quest.quest_id] = quest
+        return quests
+
+    if isinstance(raw, Mapping):
+        quests = {}
+        for quest_id, payload in raw.items():
+            if isinstance(payload, Mapping):
+                quest = QuestState(
+                    quest_id=quest_id,
+                    status=payload.get("status", "not_started"),
+                    stage_id=payload.get("stage_id"),
+                    objective_flags=payload.get("objective_flags") or {},
+                )
+            elif isinstance(payload, str):
+                quest = QuestState(quest_id=quest_id, status=payload)
+            else:
+                raise ValueError("quests mapping values must be mappings or status strings")
+            quests[quest.quest_id] = quest
+        return quests
+
+    raise ValueError("quests must be a list or mapping")
+
+
+def _deserialize_factions(raw: Any) -> dict[str, FactionState]:
+    if raw is None:
+        return {}
+
+    if isinstance(raw, list):
+        factions: dict[str, FactionState] = {}
+        for item in raw:
+            if not isinstance(item, Mapping):
+                raise ValueError("factions list entries must be mappings")
+            faction = FactionState(
+                faction_id=item.get("faction_id"),
+                reputation=item.get("reputation", 0),
+            )
+            factions[faction.faction_id] = faction
+        return factions
+
+    if isinstance(raw, Mapping):
+        factions = {}
+        for faction_id, payload in raw.items():
+            if isinstance(payload, Mapping):
+                faction = FactionState(
+                    faction_id=faction_id,
+                    reputation=payload.get("reputation", 0),
+                )
+            elif isinstance(payload, int) and not isinstance(payload, bool):
+                faction = FactionState(faction_id=faction_id, reputation=payload)
+            else:
+                raise ValueError("factions mapping values must be mappings or integer reputations")
+            factions[faction.faction_id] = faction
+        return factions
+
+    raise ValueError("factions must be a list or mapping")
+
+
+def deserialize_world_state(payload: Mapping[str, Any]) -> WorldState:
+    if not isinstance(payload, Mapping):
+        raise ValueError("payload must be a mapping")
+
+    turn_index = _required_int(payload.get("turn_index", 0), field_name="turn_index")
+    raw_flags = payload.get("world_flags", {})
+    if not isinstance(raw_flags, Mapping):
+        raise ValueError("world_flags must be a mapping")
+    world_flags = {str(flag_id): str(status) for flag_id, status in raw_flags.items()}
+    quests = _deserialize_quests(payload.get("quests"))
+    factions = _deserialize_factions(payload.get("factions"))
+
+    return WorldState(
+        turn_index=turn_index,
+        world_flags=world_flags,
+        quests=quests,
+        factions=factions,
     )
 
 
