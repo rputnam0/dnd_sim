@@ -98,7 +98,7 @@ Current in-progress focus: `ARC-06` reactions, interrupts, and ready-action wind
 - [ ] FIN-03 Enforce deterministic replay corpus gate across combat and world scenarios
 - [ ] FIN-04 Enforce integrated campaign, world, and combat scenario gate
 - [ ] FIN-05 Enforce agent-only maintenance gate
-- [ ] FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete (in review)
+- [ ] FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete (in review on [#160](https://github.com/rputnam0/dnd_sim/pull/160))
 
 
 ## Final review gate
