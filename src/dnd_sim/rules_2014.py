@@ -9,6 +9,13 @@ from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 _DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
 _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
+_SHIELD_MASTER_INCAPACITATING_CONDITIONS = {
+    "incapacitated",
+    "paralyzed",
+    "petrified",
+    "stunned",
+    "unconscious",
+}
 _EventT = TypeVar("_EventT", bound="CombatEvent")
 
 
@@ -515,6 +522,142 @@ def druid_wild_shape_action_legal(actor: ActorRuntimeState, action: ActionDefini
         return _has_trait(actor, "combat wild shape")
 
     return action.action_cost in {"action", "none"}
+
+
+def _is_same_turn_for_actor(actor: ActorRuntimeState, turn_token: str | None) -> bool:
+    if turn_token is None:
+        return True
+    text = str(turn_token)
+    if ":" in text:
+        token_actor_id = text.split(":", 1)[1]
+        return token_actor_id == actor.actor_id
+    return text == actor.actor_id
+
+
+def _shield_master_active(actor: ActorRuntimeState) -> bool:
+    if actor.dead or actor.hp <= 0:
+        return False
+    if actor.conditions.intersection(_SHIELD_MASTER_INCAPACITATING_CONDITIONS):
+        return False
+    return True
+
+
+def _shield_bonus_from_equipped_items(actor: ActorRuntimeState) -> int:
+    bonus = 0
+    for item in actor.inventory.items.values():
+        if item.equipped_slot is None:
+            continue
+        if item.equipped_slot != "shield":
+            metadata = item.metadata if isinstance(item.metadata, dict) else {}
+            armor_type = _normalize_trait_name(str(metadata.get("armor_type", "")))
+            if armor_type != "shield" and not bool(metadata.get("is_shield")):
+                continue
+        metadata = item.metadata if isinstance(item.metadata, dict) else {}
+        raw_bonus = metadata.get("ac_bonus", 2)
+        try:
+            parsed = int(raw_bonus)
+        except (TypeError, ValueError):
+            parsed = 2
+        bonus = max(bonus, parsed if parsed > 0 else 2)
+    return bonus
+
+
+def shield_master_save_bonus(
+    actor: ActorRuntimeState,
+    *,
+    save_ability: str,
+    effect_target_ids: list[str],
+) -> int:
+    if _normalize_trait_name(save_ability) != "dex":
+        return 0
+    if not _has_trait(actor, "shield master"):
+        return 0
+    if not actor.inventory.has_equipped_shield():
+        return 0
+    if not _shield_master_active(actor):
+        return 0
+
+    targeted_ids = {
+        str(actor_id).strip() for actor_id in effect_target_ids if str(actor_id).strip()
+    }
+    if targeted_ids != {actor.actor_id}:
+        return 0
+    return _shield_bonus_from_equipped_items(actor)
+
+
+def shield_master_bonus_shove_legality(
+    actor: ActorRuntimeState,
+    *,
+    turn_token: str | None = None,
+) -> tuple[bool, str | None]:
+    if not _has_trait(actor, "shield master"):
+        return False, "missing_trait"
+    if not actor.inventory.has_equipped_shield():
+        return False, "missing_shield"
+    if not _shield_master_active(actor):
+        return False, "incapacitated"
+    if not _is_same_turn_for_actor(actor, turn_token):
+        return False, "off_turn"
+    if not actor.bonus_available:
+        return False, "bonus_unavailable"
+    if not actor.took_attack_action_this_turn:
+        return False, "attack_action_not_taken"
+    return True, None
+
+
+def consume_shield_master_bonus_shove(
+    actor: ActorRuntimeState,
+    *,
+    turn_token: str | None = None,
+) -> tuple[bool, str | None]:
+    legal, reason = shield_master_bonus_shove_legality(actor, turn_token=turn_token)
+    if not legal:
+        return False, reason
+    actor.bonus_available = False
+    return True, None
+
+
+def shield_master_reaction_negation_legality(
+    actor: ActorRuntimeState,
+    *,
+    save_ability: str,
+    half_on_save: bool,
+    save_succeeded: bool,
+) -> tuple[bool, str | None]:
+    if _normalize_trait_name(save_ability) != "dex":
+        return False, "non_dex_save"
+    if not half_on_save:
+        return False, "no_half_on_save"
+    if not save_succeeded:
+        return False, "save_failed"
+    if not _has_trait(actor, "shield master"):
+        return False, "missing_trait"
+    if not actor.inventory.has_equipped_shield():
+        return False, "missing_shield"
+    if not _shield_master_active(actor):
+        return False, "incapacitated"
+    if not actor.reaction_available:
+        return False, "reaction_unavailable"
+    return True, None
+
+
+def consume_shield_master_reaction_no_damage(
+    actor: ActorRuntimeState,
+    *,
+    save_ability: str,
+    half_on_save: bool,
+    save_succeeded: bool,
+) -> tuple[bool, str | None]:
+    legal, reason = shield_master_reaction_negation_legality(
+        actor,
+        save_ability=save_ability,
+        half_on_save=half_on_save,
+        save_succeeded=save_succeeded,
+    )
+    if not legal:
+        return False, reason
+    actor.reaction_available = False
+    return True, None
 
 
 def _remove_condition_everywhere(target: ActorRuntimeState, condition: str) -> None:
