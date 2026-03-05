@@ -157,6 +157,9 @@ Tasks:
 - AI-05 Implement recharge, legendary, reaction-bait, and limited-resource timing heuristics
 - AI-06 Build benchmark corpus, tuning thresholds, and decision-quality gates
 
+AI-04 status update (2026-03-05):
+- Implemented candidate scoring dimensions for survival thresholds, retreat timing, objective-race urgency, ally rescue, and focus-fire tradeoffs in `src/dnd_sim/ai/scoring.py` with targeted coverage in `tests/test_ai_objective_scoring.py`.
+
 ### 5G Rules Closure
 
 Purpose: close the remaining rules gaps and move the review checklist to green.

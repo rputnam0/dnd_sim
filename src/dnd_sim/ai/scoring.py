@@ -59,6 +59,18 @@ class ObjectiveScoringInputs:
 
 
 @dataclass(frozen=True, slots=True)
+class ObjectiveTradeoffScoringInputs:
+    survival_threshold_ratio: float
+    actor_hp_ratio: float
+    survival_pressure: float
+    retreat_score: float
+    objective_race_score: float
+    ally_rescue_score: float
+    focus_fire_score: float
+    focus_fire_target_id: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class ResourceScoringInputs:
     resource_cost: tuple[tuple[str, int], ...]
     total_cost: int
@@ -72,6 +84,7 @@ class CandidateScoringInputs:
     concentration: ConcentrationScoringInputs
     control: ControlScoringInputs
     objective: ObjectiveScoringInputs
+    objective_tradeoff: ObjectiveTradeoffScoringInputs
     resource: ResourceScoringInputs
 
 
@@ -226,6 +239,253 @@ def _objective_score(action: dict[str, Any], state: BattleStateView) -> float:
     return total
 
 
+def _coerce_ratio(value: Any, *, default: float) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    return max(0.0, min(1.0, parsed))
+
+
+def _survival_threshold_ratio(actor: ActorView, state: BattleStateView) -> float:
+    per_actor = state.metadata.get("survival_threshold_ratio_by_actor", {})
+    if isinstance(per_actor, dict):
+        actor_value = per_actor.get(actor.actor_id)
+        if actor_value is not None:
+            return _coerce_ratio(actor_value, default=0.35)
+    return _coerce_ratio(state.metadata.get("survival_threshold_ratio", 0.35), default=0.35)
+
+
+def _ally_rescue_threshold_ratio(actor: ActorView, state: BattleStateView) -> float:
+    per_actor = state.metadata.get("ally_rescue_threshold_ratio_by_actor", {})
+    if isinstance(per_actor, dict):
+        actor_value = per_actor.get(actor.actor_id)
+        if actor_value is not None:
+            return _coerce_ratio(actor_value, default=0.4)
+    fallback = _survival_threshold_ratio(actor, state)
+    return _coerce_ratio(
+        state.metadata.get("ally_rescue_threshold_ratio", fallback), default=fallback
+    )
+
+
+def _normalized_action_tags(action: dict[str, Any]) -> set[str]:
+    raw_tags = action.get("tags", [])
+    if not isinstance(raw_tags, list):
+        return set()
+    return {str(tag).strip().lower() for tag in raw_tags if str(tag).strip()}
+
+
+def _is_retreat_action(action: dict[str, Any]) -> bool:
+    action_name = str(action.get("name", "")).strip().lower()
+    action_type = str(action.get("action_type", "")).strip().lower()
+    tags = _normalized_action_tags(action)
+    if action_name in {"dash", "disengage", "dodge", "withdraw", "retreat"}:
+        return True
+    if action_type in {"dash", "disengage", "dodge"}:
+        return True
+    if any(tag in {"retreat", "disengage", "dash", "dodge"} for tag in tags):
+        return True
+    return any(tag.startswith("retreat:") for tag in tags)
+
+
+def _is_supportive_action(action: dict[str, Any]) -> bool:
+    action_type = str(action.get("action_type", "")).strip().lower()
+    action_name = str(action.get("name", "")).strip().lower()
+    tags = _normalized_action_tags(action)
+    if action_type in {"heal", "buff"}:
+        return True
+    if any(tag in {"ally_rescue", "rescue", "support"} for tag in tags):
+        return True
+    return any(token in action_name for token in ("heal", "aid", "rescue", "stabilize"))
+
+
+def _enemy_target_ids(
+    actor: ActorView, state: BattleStateView, *, target_ids: tuple[str, ...]
+) -> list[str]:
+    target_list: list[str] = []
+    for target_id in target_ids:
+        target = state.actors.get(target_id)
+        if target is None or target.hp <= 0:
+            continue
+        if target.team == actor.team:
+            continue
+        target_list.append(target_id)
+    return target_list
+
+
+def _focus_fire_target_id(actor: ActorView, state: BattleStateView) -> str | None:
+    per_actor = state.metadata.get("focus_fire_target_by_actor", {})
+    if isinstance(per_actor, dict):
+        candidate = str(per_actor.get(actor.actor_id, "")).strip()
+        if candidate:
+            target = state.actors.get(candidate)
+            if target is not None and target.team != actor.team and target.hp > 0:
+                return candidate
+
+    candidate = str(state.metadata.get("focus_fire_target_id", "")).strip()
+    if candidate:
+        target = state.actors.get(candidate)
+        if target is not None and target.team != actor.team and target.hp > 0:
+            return candidate
+
+    enemies = [
+        target for target in state.actors.values() if target.team != actor.team and target.hp > 0
+    ]
+    if not enemies:
+        return None
+    focus = min(
+        enemies,
+        key=lambda target: (
+            float(target.hp) / float(max(target.max_hp, 1)),
+            target.hp,
+            target.actor_id,
+        ),
+    )
+    return focus.actor_id
+
+
+def _objective_race_score(
+    action: dict[str, Any],
+    state: BattleStateView,
+    *,
+    objective_score: float,
+) -> float:
+    tags = _normalized_action_tags(action)
+    race_tagged = "objective_race" in tags
+    if objective_score <= 0.0 and not race_tagged:
+        return 0.0
+
+    try:
+        race_weight = float(state.metadata.get("objective_race_weight", 1.0))
+    except (TypeError, ValueError):
+        race_weight = 1.0
+    race_weight = max(0.0, race_weight)
+    if race_weight == 0.0:
+        return 0.0
+
+    urgency = 1.0
+    rounds_remaining = state.metadata.get("objective_rounds_remaining")
+    if rounds_remaining is not None:
+        try:
+            rounds = float(rounds_remaining)
+        except (TypeError, ValueError):
+            rounds = 5.0
+        if rounds <= 0:
+            urgency = 2.0
+        else:
+            urgency = 1.0 + max(0.0, (5.0 - rounds) / 5.0)
+
+    effective_objective_score = float(objective_score)
+    if effective_objective_score <= 0.0 and race_tagged:
+        try:
+            baseline = float(state.metadata.get("objective_race_baseline", 1.0))
+        except (TypeError, ValueError):
+            baseline = 1.0
+        effective_objective_score = max(0.0, baseline)
+    return effective_objective_score * race_weight * urgency
+
+
+def _ally_rescue_score(
+    actor: ActorView,
+    state: BattleStateView,
+    *,
+    action: dict[str, Any],
+    target_ids: tuple[str, ...],
+) -> float:
+    if not _is_supportive_action(action):
+        return 0.0
+
+    threshold = _ally_rescue_threshold_ratio(actor, state)
+    total = 0.0
+    for target_id in target_ids:
+        if target_id == actor.actor_id:
+            continue
+        target = state.actors.get(target_id)
+        if target is None or target.team != actor.team or target.hp <= 0:
+            continue
+        hp_ratio = float(target.hp) / float(max(target.max_hp, 1))
+        pressure = max(0.0, threshold - hp_ratio)
+        if pressure <= 0.0:
+            continue
+        total += 0.25 + (pressure * 2.0)
+    return total
+
+
+def _focus_fire_score(
+    actor: ActorView,
+    state: BattleStateView,
+    *,
+    target_ids: tuple[str, ...],
+) -> tuple[float, str | None]:
+    enemy_targets = _enemy_target_ids(actor, state, target_ids=target_ids)
+    if not enemy_targets:
+        return 0.0, None
+
+    focus_target_id = _focus_fire_target_id(actor, state)
+    if focus_target_id is None:
+        return 0.0, None
+
+    enemy_target_count = len(enemy_targets)
+    if focus_target_id in enemy_targets:
+        bonus = 0.5 if enemy_target_count == 1 else 0.0
+        spread_penalty = max(0, enemy_target_count - 1) * 0.15
+        return 1.0 + bonus - spread_penalty, focus_target_id
+
+    return -0.25 * float(max(1, enemy_target_count)), focus_target_id
+
+
+def _objective_tradeoff_inputs(
+    actor: ActorView,
+    state: BattleStateView,
+    *,
+    action: dict[str, Any],
+    target_ids: tuple[str, ...],
+    objective_score: float,
+) -> ObjectiveTradeoffScoringInputs:
+    actor_hp_ratio = float(actor.hp) / float(max(actor.max_hp, 1))
+    survival_threshold_ratio = _survival_threshold_ratio(actor, state)
+    survival_pressure = max(0.0, survival_threshold_ratio - actor_hp_ratio)
+    retreat_action = _is_retreat_action(action)
+    enemy_targets = _enemy_target_ids(actor, state, target_ids=target_ids)
+
+    retreat_score = 0.0
+    if survival_pressure > 0.0:
+        if retreat_action:
+            retreat_score = survival_pressure * 3.0
+        elif enemy_targets:
+            retreat_score = -survival_pressure
+    elif retreat_action:
+        retreat_score = -0.2
+
+    objective_race_score = _objective_race_score(
+        action,
+        state,
+        objective_score=objective_score,
+    )
+    ally_rescue_score = _ally_rescue_score(
+        actor,
+        state,
+        action=action,
+        target_ids=target_ids,
+    )
+    focus_fire_score, focus_fire_target_id = _focus_fire_score(
+        actor,
+        state,
+        target_ids=target_ids,
+    )
+
+    return ObjectiveTradeoffScoringInputs(
+        survival_threshold_ratio=survival_threshold_ratio,
+        actor_hp_ratio=actor_hp_ratio,
+        survival_pressure=survival_pressure,
+        retreat_score=retreat_score,
+        objective_race_score=objective_race_score,
+        ally_rescue_score=ally_rescue_score,
+        focus_fire_score=focus_fire_score,
+        focus_fire_target_id=focus_fire_target_id,
+    )
+
+
 def _resource_inputs(action: dict[str, Any]) -> ResourceScoringInputs:
     raw_cost = action.get("resource_cost") or {}
     if not isinstance(raw_cost, dict):
@@ -371,6 +631,7 @@ def _build_scoring_inputs(
     target_ids: tuple[str, ...],
 ) -> CandidateScoringInputs:
     primary_target = state.actors.get(target_ids[0]) if target_ids else None
+    objective_score = _objective_score(action, state)
     return CandidateScoringInputs(
         range=_range_inputs(actor, action=action, primary_target=primary_target),
         hazard=_hazard_inputs(
@@ -384,7 +645,14 @@ def _build_scoring_inputs(
         control=_control_inputs(action),
         objective=ObjectiveScoringInputs(
             objective_tags=_objective_tags(action),
-            objective_score=_objective_score(action, state),
+            objective_score=objective_score,
+        ),
+        objective_tradeoff=_objective_tradeoff_inputs(
+            actor,
+            state,
+            action=action,
+            target_ids=target_ids,
+            objective_score=objective_score,
         ),
         resource=_resource_inputs(action),
     )
@@ -475,6 +743,16 @@ def candidate_snapshots(candidates: list[ActionCandidate]) -> list[dict[str, Any
                 "objective": {
                     "objective_tags": list(row.scoring_inputs.objective.objective_tags),
                     "objective_score": row.scoring_inputs.objective.objective_score,
+                },
+                "objective_tradeoff": {
+                    "survival_threshold_ratio": row.scoring_inputs.objective_tradeoff.survival_threshold_ratio,
+                    "actor_hp_ratio": row.scoring_inputs.objective_tradeoff.actor_hp_ratio,
+                    "survival_pressure": row.scoring_inputs.objective_tradeoff.survival_pressure,
+                    "retreat_score": row.scoring_inputs.objective_tradeoff.retreat_score,
+                    "objective_race_score": row.scoring_inputs.objective_tradeoff.objective_race_score,
+                    "ally_rescue_score": row.scoring_inputs.objective_tradeoff.ally_rescue_score,
+                    "focus_fire_score": row.scoring_inputs.objective_tradeoff.focus_fire_score,
+                    "focus_fire_target_id": row.scoring_inputs.objective_tradeoff.focus_fire_target_id,
                 },
                 "resource": _resource_snapshot(row.scoring_inputs.resource),
             }
