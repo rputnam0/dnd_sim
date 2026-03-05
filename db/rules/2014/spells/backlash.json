@@ -11,5 +11,14 @@
   "description": "You ward yourself against destructive energy, reducing the damage taken by 4d6 plus your spellcasting ability modifier. If the triggering damage was from a creature within range, you can force the creature to make a Constitution saving throw. The creature takes 4d6 Force damage on a failed save or half as much damage on a successful one.",
   "save_ability": "con",
   "damage_type": "force",
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "single_enemy",
+      "apply_on": "save_fail",
+      "save_ability": "con",
+      "damage": "4d6",
+      "damage_type": "force"
+    }
+  ]
 }
