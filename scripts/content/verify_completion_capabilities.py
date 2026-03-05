@@ -8,11 +8,6 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 DEFAULT_MANIFEST_PATH = Path("artifacts/capabilities/manifest_2014.json")
-_SCOPE_DIR_TO_TYPE = {
-    "spells": "spell",
-    "traits": "trait",
-    "monsters": "monster",
-}
 _REASON_CODE_PATTERN = re.compile(r"^[a-z0-9_]+$")
 _STATE_BOOL_FIELDS = (
     "cataloged",
@@ -32,15 +27,24 @@ class CapabilityIssue:
 
 
 def discover_shipped_2014_content_ids(repo_root: Path) -> tuple[str, ...]:
-    shipped: list[str] = []
+    from dnd_sim.capability_manifest import (
+        build_feature_capability_manifest,
+        build_monster_capability_manifest,
+        build_spell_capability_manifest,
+    )
+
     base = repo_root / "db" / "rules" / "2014"
-    for directory_name, content_type in _SCOPE_DIR_TO_TYPE.items():
-        directory = base / directory_name
-        if not directory.exists():
-            continue
-        for path in sorted(directory.glob("*.json")):
-            shipped.append(f"{content_type}:{path.stem}")
-    return tuple(shipped)
+    manifests = (
+        build_spell_capability_manifest(spells_dir=base / "spells"),
+        build_feature_capability_manifest(features_dir=base / "traits"),
+        build_monster_capability_manifest(monsters_dir=base / "monsters"),
+    )
+
+    shipped_ids: set[str] = set()
+    for manifest in manifests:
+        for record in manifest.records:
+            shipped_ids.add(record.content_id)
+    return tuple(sorted(shipped_ids, key=str.casefold))
 
 
 def _manifest_payload_from_file(path: Path) -> Mapping[str, Any]:

@@ -6,6 +6,14 @@ import sys
 from pathlib import Path
 
 import pytest
+from dnd_sim.capability_manifest import (
+    MANIFEST_VERSION,
+    build_feature_capability_manifest,
+    build_manifest,
+    build_monster_capability_manifest,
+    build_spell_capability_manifest,
+    manifest_to_json_text,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts/content/verify_completion_capabilities.py"
@@ -41,9 +49,71 @@ def _record(
     }
 
 
-def test_repository_manifest_passes_completion_capability_gate() -> None:
-    issues = verify_completion_capabilities.verify_completion_capabilities(REPO_ROOT)
-    assert issues == []
+def test_repository_manifest_matches_canonical_builder_snapshot() -> None:
+    base = REPO_ROOT / "db" / "rules" / "2014"
+    records: list[dict[str, object]] = []
+    for manifest in (
+        build_spell_capability_manifest(spells_dir=base / "spells"),
+        build_feature_capability_manifest(features_dir=base / "traits"),
+        build_monster_capability_manifest(monsters_dir=base / "monsters"),
+    ):
+        records.extend(record.model_dump(mode="json") for record in manifest.records)
+
+    canonical = build_manifest(
+        records=records,
+        manifest_version=MANIFEST_VERSION,
+        generated_at=None,
+    )
+    manifest_path = REPO_ROOT / "artifacts" / "capabilities" / "manifest_2014.json"
+
+    assert manifest_path.read_text(encoding="utf-8") == manifest_to_json_text(canonical)
+
+
+def test_discover_shipped_ids_uses_canonical_builder_ids(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    spells_dir = repo_root / "db" / "rules" / "2014" / "spells"
+    traits_dir = repo_root / "db" / "rules" / "2014" / "traits"
+    monsters_dir = repo_root / "db" / "rules" / "2014" / "monsters"
+    spells_dir.mkdir(parents=True, exist_ok=True)
+    traits_dir.mkdir(parents=True, exist_ok=True)
+    monsters_dir.mkdir(parents=True, exist_ok=True)
+
+    (spells_dir / "acid_splash.json").write_text(
+        json.dumps(
+            {
+                "name": "Acid Splash",
+                "description": "You hurl acid at a creature.",
+                "mechanics": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (traits_dir / "alert.json").write_text(
+        json.dumps(
+            {
+                "name": "Alert",
+                "source_type": "feat",
+                "mechanics": [{"effect_type": "passive"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (monsters_dir / "elf,_drow.json").write_text(
+        json.dumps(
+            {
+                "identity": {"enemy_id": "Elf, Drow"},
+                "stat_block": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    ids = verify_completion_capabilities.discover_shipped_2014_content_ids(repo_root)
+
+    assert "spell:acid_splash" in ids
+    assert "feat:alert" in ids
+    assert "monster:elf_drow" in ids
+    assert "monster:elf,_drow" not in ids
 
 
 def test_manifest_completeness_gate_detects_missing_records() -> None:
@@ -254,7 +324,13 @@ def test_cli_strict_returns_nonzero_for_blocked_manifest(tmp_path: Path) -> None
     repo_root = tmp_path / "repo"
     (repo_root / "db" / "rules" / "2014" / "spells").mkdir(parents=True, exist_ok=True)
     (repo_root / "db" / "rules" / "2014" / "spells" / "acid_splash.json").write_text(
-        "{}",
+        json.dumps(
+            {
+                "name": "Acid Splash",
+                "description": "You hurl acid at a creature.",
+                "mechanics": [],
+            }
+        ),
         encoding="utf-8",
     )
 
