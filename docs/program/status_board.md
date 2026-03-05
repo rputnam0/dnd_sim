@@ -28,7 +28,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
-| FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
+| FIX | Rules Closure | in_progress | 5G-rules-closure | `FIX-05` is `in_progress` in `backlog.csv`; remaining FIX tasks are `not_started`. |
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
 
@@ -36,6 +36,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| FIX-05 | `codex/feat/fix-05-close-mage-slayer-and-sentinel-reaction-constraint` | rules_e | in_progress | Implementing deterministic Mage Slayer/Sentinel reaction-constraint rules and correctness tests. |
 
 ## Open PRs
 
@@ -47,4 +48,5 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
 - No active DOC blockers remain; active branch and open PR queues are cleared.
+- `FIX-05` is active and depends on `ARC-06` per `backlog.csv`.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
