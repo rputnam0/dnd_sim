@@ -78,8 +78,8 @@ Tasks:
 - ARC-07 Extract spell execution pipeline and target resolution adapters
 - ARC-08 Extract replay/reporting adapter layer and reduce engine.py to an orchestration facade
 
-Current implementation note (2026-03-05):
-- ARC-07 delegates spell declaration normalization, upcast handling, target adapters, and spell result application into `src/dnd_sim/spell_runtime.py` with dedicated `tests/test_spell_runtime.py` coverage.
+Completion-state note (2026-03-05):
+- ARC-07 runtime decomposition outcome: spell declaration normalization, upcast handling, target adapters, and spell result application are delegated into `src/dnd_sim/spell_runtime.py` with dedicated `tests/test_spell_runtime.py` coverage.
 
 Required structural outcome for 5B:
 - `src/dnd_sim/engine.py` must be reduced below 3500 lines by `ARC-08`.
@@ -149,11 +149,10 @@ Tasks:
 - DBS-05 Add world flags, objectives, factions, and encounter state persistence schema
 - DBS-06 Migrate existing JSON/blob content to the canonical metadata model
 
-Current 5E status (2026-03-05):
-- `DBS-01` and `DBS-02` are in PR review.
-- `DBS-04` is in progress on `codex/feat/dbs-04-add-campaign-state-persistence-schema-and-round-tr` with `campaign_states` and `encounter_states` deterministic snapshot persistence under implementation and test.
-- `DBS-05` is in PR review on `codex/feat/dbs-05-add-world-flags-objectives-factions-and-encounter` with `world_states` and `faction_states` deterministic world/objective/faction lifecycle persistence and tests in `tests/test_world_state_persistence.py`.
-- `DBS-06` is in PR review on `codex/feat/dbs-06-migrate-existing-json-blob-content-to-the-canonica` with legacy JSON/blob backfill, rollback, and mixed canonical/legacy compatibility-read coverage in `tests/test_persistence_migrations.py`.
+Completion-state note (2026-03-05):
+- Canonical metadata and lineage outcomes are captured through `content_records` and `content_capabilities` plus lineage fields (`schema_version`, `source_path`, `source_hash`, `canonicalization_hash`, `imported_at`) in the persistence schema contract.
+- Legacy JSON/blob migration outcomes are captured with canonical backfill, rollback coverage, and compatibility-read validation in `tests/test_persistence_migrations.py`.
+- Task lifecycle state is tracked canonically in `docs/program/backlog.csv` and surfaced in `docs/program/status_board.md`.
 
 Required schema outcome for 5E:
 - `content_records`
@@ -180,8 +179,8 @@ Tasks:
 - AI-05 Implement recharge, legendary, reaction-bait, and limited-resource timing heuristics
 - AI-06 Build benchmark corpus, tuning thresholds, and decision-quality gates
 
-AI-04 status update (2026-03-05):
-- Implemented candidate scoring dimensions for survival thresholds, retreat timing, objective-race urgency, ally rescue, and focus-fire tradeoffs in `src/dnd_sim/ai/scoring.py` with targeted coverage in `tests/test_ai_objective_scoring.py`.
+AI-04 completion note (2026-03-05):
+- Candidate scoring dimensions for survival thresholds, retreat timing, objective-race urgency, ally rescue, and focus-fire tradeoffs are implemented in `src/dnd_sim/ai/scoring.py` with targeted coverage in `tests/test_ai_objective_scoring.py`.
 
 ### 5G Rules Closure
 
@@ -214,16 +213,13 @@ Tasks:
 - WLD-11 Hard-cut schema, import, and content IDs across all content classes
 - WLD-12 Build performance harness, regression corpus, and world-scale replay diff suite
 
-Current execution note:
-- WLD-01 is in progress on `codex/feat/wld-01-build-ability-check-contest-passive-and-dc-resolut`.
-- WLD-02 is in progress on `codex/feat/wld-02-build-skill-tool-proficiency-and-specialist-data-p`.
-- WLD-03 is in PR review on `codex/feat/wld-03-build-exploration-turn-structure-time-advancement` with exploration turn, world time advancement, and light tracking runtime coverage in `tests/test_world_time_and_light.py`.
-- WLD-06 is in PR review on `codex/feat/wld-06-build-economy-loot-vendor-inventory-and-pricing-mo` with deterministic pricing, seeded loot/vendor inventory generation, and purchase transaction coverage in `tests/test_economy_and_loot.py`.
-- WLD-07 is in PR review on `codex/feat/wld-07-build-crafting-downtime-encumbrance-and-service-ac` with deterministic crafting progression, downtime/service action flow, and encumbrance coverage in `tests/test_crafting_and_downtime.py`.
-- WLD-08 is in progress on `codex/feat/wld-08-build-quest-faction-reputation-and-world-flag-life` with quest/faction/world-flag lifecycle support in `src/dnd_sim/world_state.py`.
-- WLD-09 is in PR review on `codex/feat/wld-09-build-multi-encounter-adventuring-day-persistence` with campaign runtime persistence and deterministic short/long-rest recovery coverage in `tests/test_adventuring_day_flow.py`.
-- WLD-10 is in progress on `codex/feat/wld-10-build-encounter-scripting-waves-objectives-and-map` with deterministic encounter script parsing and wave/objective/map-hook progression in `src/dnd_sim/encounter_script.py`.
-- WLD-11 is in PR review on `codex/feat/wld-11-hard-cut-schema-import-and-content-ids-across-all` with canonical global content ID hard-cut, import contract enforcement, and migration coverage in `tests/test_global_content_ids.py`.
+Completion-state note (2026-03-05):
+- Exploration turn, time advancement, and light-tracking outcomes are covered in `tests/test_world_time_and_light.py`.
+- Economy, loot, vendor inventory, and pricing outcomes are covered in `tests/test_economy_and_loot.py`.
+- Crafting, downtime, encumbrance, and service-action outcomes are covered in `tests/test_crafting_and_downtime.py`.
+- Multi-encounter adventuring-day persistence and recovery outcomes are covered in `tests/test_adventuring_day_flow.py`.
+- Global content ID/schema/import hard-cut outcomes are covered in `tests/test_global_content_ids.py`.
+- Branch/task lifecycle state remains canonical in `docs/program/backlog.csv` and `docs/program/status_board.md`.
 
 ### 5I Completion Gates
 
@@ -237,8 +233,9 @@ Tasks:
 - FIN-05 Enforce agent-only maintenance gate
 - FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete
 
-Current execution note:
-- FIN-06 is in PR review on `codex/feat/fin-06-cut-release-baseline-archive-prior-program-artifac` ([#160](https://github.com/rputnam0/dnd_sim/pull/160)) after `FIN-02`, `FIN-03`, `FIN-04`, and `FIN-05` dependency clearance.
+Completion-state note (2026-03-05):
+- The FIN track is represented as completion gates (docs sync, capability manifest, deterministic replay corpus, integrated campaign/world/combat scenarios, agent-maintenance invariants, and final release baseline cutover) rather than branch-level execution notes.
+- Gate lifecycle and dependency ordering remain canonical in `docs/program/backlog.csv` and `docs/program/status_board.md`.
 
 ## Global contract for every task
 
