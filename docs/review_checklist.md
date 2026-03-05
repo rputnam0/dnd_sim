@@ -44,9 +44,10 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] FIX-04 Close War Caster opportunity casting and concentration correctness (in review on [#124](https://github.com/rputnam0/dnd_sim/pull/124))
 - [ ] FIX-05 Close Mage Slayer and Sentinel reaction constraints (in review on [#114](https://github.com/rputnam0/dnd_sim/pull/114))
 - [ ] FIX-06 Close Rage damage, resistance, and illegal state edge cases (active on `codex/feat/fix-06-close-rage-damage-resistance-and-illegal-state-edg`)
-- [ ] FIX-07 Integrate hazard-aware strategy scoring and close the review checklist
+- [ ] FIX-07 Integrate hazard-aware strategy scoring and close the review checklist (active on `codex/feat/fix-07-integrate-hazard-aware-strategy-scoring-and-close`)
 
-Current in-progress focus: `FIX-01`, `FIX-02`, and `FIX-06` on their assigned codex feature branches for rules-closure correctness.
+Current in-progress focus: `FIX-01`, `FIX-02`, `FIX-06`, and `FIX-07` on their assigned codex feature branches for rules-closure correctness.
+Checklist closure rule: keep `FIX-07` unchecked until every `FIX-*` row in `docs/program/backlog.csv` is `merged`.
 
 ## Tactical AI Hardening
 

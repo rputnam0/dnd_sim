@@ -17,6 +17,12 @@ _EXPLICIT_TARGET_MODES = {
 }
 
 _AUTO_TARGET_MODES = {"all_enemies", "all_allies", "all_creatures"}
+_COVER_SCORE_PENALTIES = {
+    "NONE": 0.0,
+    "HALF": 0.5,
+    "THREE_QUARTERS": 1.0,
+    "TOTAL": 2.0,
+}
 
 
 def _available_actions_for_actor(actor, state) -> list[str]:
@@ -521,6 +527,127 @@ def _expected_damage_against(action: dict, target, *, save_mod: int = 0) -> floa
     return 0.0
 
 
+def _hazard_radius_ft(hazard: dict[str, Any]) -> float:
+    for key in ("radius_ft", "radius", "aoe_size_ft"):
+        parsed = _coerce_positive_distance(hazard.get(key))
+        if parsed is not None:
+            return parsed
+    return 10.0
+
+
+def _hazard_severity(hazard: dict[str, Any]) -> float:
+    for key in ("severity", "weight", "risk"):
+        parsed = _coerce_positive_distance(hazard.get(key))
+        if parsed is not None:
+            return parsed
+    return 1.0
+
+
+def _path_samples(path: list[tuple[float, float, float]]) -> list[tuple[float, float, float]]:
+    if not path:
+        return []
+    if len(path) == 1:
+        return [_coerce_position(path[0])]
+    samples: list[tuple[float, float, float]] = []
+    for idx in range(len(path) - 1):
+        start = _coerce_position(path[idx])
+        end = _coerce_position(path[idx + 1])
+        midpoint = (
+            (start[0] + end[0]) / 2.0,
+            (start[1] + end[1]) / 2.0,
+            (start[2] + end[2]) / 2.0,
+        )
+        samples.extend((start, midpoint))
+    samples.append(_coerce_position(path[-1]))
+    return samples
+
+
+def _hazard_exposure_penalty(
+    actor,
+    target,
+    *,
+    path: list[tuple[float, float, float]] | None,
+    state,
+) -> float:
+    penalty = 0.0
+    exposure_by_actor = state.metadata.get("hazard_exposure_by_actor", {})
+    if isinstance(exposure_by_actor, dict):
+        penalty += float(exposure_by_actor.get(str(actor.actor_id), 0.0))
+        penalty += float(exposure_by_actor.get(str(target.actor_id), 0.0))
+
+    active_hazards = state.metadata.get("active_hazards", [])
+    if not isinstance(active_hazards, list) or path is None:
+        return penalty
+
+    sampled_points = _path_samples(path)
+    if not sampled_points:
+        return penalty
+
+    for hazard in active_hazards:
+        if not isinstance(hazard, dict):
+            continue
+        center = _coerce_position(hazard.get("position"))
+        if center is None:
+            continue
+        radius_ft = _hazard_radius_ft(hazard)
+        if any(distance_chebyshev(point, center) <= radius_ft for point in sampled_points):
+            penalty += _hazard_severity(hazard)
+    return penalty
+
+
+def _route_penalty(
+    actor, target, action: dict[str, Any], *, path: list[tuple[float, float, float]] | None, state
+) -> float:
+    action_range = _effective_action_range_ft(action, _action_catalog_for_actor(actor, state))
+    if action_range is None:
+        return 0.0
+    distance = distance_chebyshev(actor.position, target.position)
+    if distance <= action_range:
+        return 0.0
+    if path is None:
+        return 5.0
+
+    movement_needed = max(0.0, distance - action_range)
+    movement_budget = max(1.0, float(actor.movement_remaining))
+    return min(2.5, movement_needed / movement_budget)
+
+
+def _geometry_penalty(
+    actor,
+    target,
+    action: dict[str, Any],
+    *,
+    path: list[tuple[float, float, float]] | None,
+    state,
+) -> float:
+    if path is None:
+        return 5.0 if _action_requires_line_of_effect(action) else 2.0
+    obstacles = _obstacles_from_state(state)
+    if not obstacles:
+        return 0.0
+
+    origin = actor.position if not path else path[-1]
+    cover_level = check_cover(origin, target.position, obstacles)
+    penalty = _COVER_SCORE_PENALTIES.get(cover_level, _COVER_SCORE_PENALTIES["TOTAL"])
+    if _action_requires_line_of_effect(action) and cover_level == "TOTAL":
+        penalty += 5.0
+    return penalty
+
+
+def _hazard_geometry_adjustment(action: dict[str, Any], target, actor, state) -> float:
+    movement_path = _movement_path_to_target(
+        actor,
+        target,
+        action,
+        actor_catalog=_action_catalog_for_actor(actor, state),
+        obstacles=_obstacles_from_state(state),
+    )
+    route_penalty = _route_penalty(actor, target, action, path=movement_path, state=state)
+    hazard_penalty = _hazard_exposure_penalty(actor, target, path=movement_path, state=state)
+    geometry_penalty = _geometry_penalty(actor, target, action, path=movement_path, state=state)
+    return -(route_penalty + hazard_penalty + geometry_penalty)
+
+
 def _evaluate_action_score(action: dict, target, actor, state) -> float:
     # Phase 12: Vision Penalty
     from ..spatial import can_see
@@ -558,18 +685,22 @@ def _evaluate_action_score(action: dict, target, actor, state) -> float:
                     score += expected
                 else:
                     score -= expected * 1.5
-        return score * score_multiplier
+        score *= score_multiplier
+        score += _hazard_geometry_adjustment(action, target, actor, state)
+        return score
 
     save_mod = (
         int(target.save_mods.get(action.get("save_ability", ""), 0))
         if action.get("action_type") == "save"
         else 0
     )
-    return (
+    score = (
         _expected_damage_against(action, target, save_mod=save_mod)
         * score_multiplier
         * max(1, _target_count_for_action(actor, state, action))
     )
+    score += _hazard_geometry_adjustment(action, target, actor, state)
+    return score
 
 
 def _coerce_positive_distance(value: Any) -> float | None:
