@@ -25,7 +25,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | DOC | Documentation Control | merged | 5A-doc-control | `DOC-01` through `DOC-06` are `merged` in `backlog.csv`; Documentation Control track is complete. |
 | ARC | Runtime Decomposition | in_progress | 5B-runtime-decomposition | `ARC-01`, `ARC-02`, `ARC-03`, `ARC-04`, `ARC-05`, `ARC-06`, and `ARC-08` are `in_progress`; `ARC-07` is `pr_open`; remaining ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | in_progress | 5C-capability-manifest | `CAP-03`, `CAP-04`, and `CAP-05` are `in_progress` in `backlog.csv`; remaining CAP tasks are `not_started`. |
-| OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
+| OBS | Replay, Logging, and Observability | in_progress | 5D-observability | `OBS-02` is `in_progress` in `backlog.csv`; remaining OBS tasks are `not_started`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
@@ -47,6 +47,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | CAP-03 | `codex/feat/cap-03-generate-feat-trait-background-and-species-capabil` | content_manifest_feat | in_progress | Building feat/trait/background/species capability records with runtime hook family and support-state labeling. |
 | CAP-04 | `codex/feat/cap-04-generate-monster-and-monster-action-capability-man` | content_manifest_monster | in_progress | Building monster capability records for actions, reactions, legendary/lair/recharge entries, and innate spellcasting support-state coverage. |
 | CAP-05 | `codex/feat/cap-05-enforce-capability-manifest-gates-in-import-paths` | content_manifest_gate | in_progress | Enforcing import/CI capability gates for schema-valid tested scope and explicit unsupported-reason codes for blocked scope. |
+| OBS-02 | `feat/obs-02-emit-turn-declaration-and-action-resolution-traces` | observability_b | in_progress | Emitting declaration validation, action selection, action resolution, and action outcome traces for each declared turn. |
 
 ## Open PRs
 

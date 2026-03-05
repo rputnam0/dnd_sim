@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import random
 from typing import Any
 
+import dnd_sim.engine as engine_module
 from dnd_sim.engine import (
     SimulationArtifacts,
+    TurnDeclarationValidationError,
     _action_available,
     _actor_state_snapshot,
     _build_actor_from_character,
@@ -50,6 +53,64 @@ from dnd_sim.reporting_runtime import (
     build_simulation_summary as _reporting_build_simulation_summary,
 )
 from dnd_sim.strategy_api import TurnDeclaration
+
+logger = logging.getLogger(__name__)
+
+
+def _declared_target_ids(declaration: TurnDeclaration) -> list[str]:
+    if declaration.action is None:
+        return []
+    ids: list[str] = []
+    for ref in declaration.action.targets:
+        if ref.actor_id:
+            ids.append(ref.actor_id)
+    return ids
+
+
+def _emit_turn_trace_event(
+    telemetry: list[dict[str, Any]] | None,
+    *,
+    event_type: str,
+    actor_id: str,
+    round_number: int,
+    turn_token: str,
+    action_name: str | None,
+    requested_targets: list[str],
+    resolved_targets: list[str] | None = None,
+    validation_state: str | None = None,
+    selection_state: str | None = None,
+    resolution_state: str | None = None,
+    outcome_state: str | None = None,
+    error_code: str | None = None,
+    field: str | None = None,
+) -> None:
+    payload: dict[str, Any] = {
+        "actor_id": actor_id,
+        "round": round_number,
+        "turn_token": turn_token,
+        "action_name": action_name,
+        "requested_targets": list(requested_targets),
+        "resolved_targets": list(resolved_targets or []),
+    }
+    if validation_state is not None:
+        payload["validation_state"] = validation_state
+    if selection_state is not None:
+        payload["selection_state"] = selection_state
+    if resolution_state is not None:
+        payload["resolution_state"] = resolution_state
+    if outcome_state is not None:
+        payload["outcome_state"] = outcome_state
+    if error_code is not None:
+        payload["error_code"] = error_code
+    if field is not None:
+        payload["field"] = field
+
+    engine_module._append_telemetry_event(
+        telemetry,
+        event_type=event_type,
+        payload=payload,
+        source=__name__,
+    )
 
 
 def run_simulation(
@@ -494,24 +555,91 @@ def run_simulation(
                             message="declare_turn(...) must return TurnDeclaration or None.",
                             details={"actual_type": type(turn_declaration).__name__},
                         )
-                    _execute_declared_turn_or_error(
-                        rng=rng,
-                        actor=actor,
-                        declaration=turn_declaration,
-                        strategy_name=strategy_name,
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        telemetry=trial_telemetry,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
-                        round_number=rounds,
-                        turn_token=turn_token,
-                        rule_trace=trial_rule_trace,
+                    requested_targets = _declared_target_ids(turn_declaration)
+                    action_name = (
+                        turn_declaration.action.action_name
+                        if turn_declaration.action is not None
+                        else None
                     )
+                    if turn_declaration.action is not None:
+                        _emit_turn_trace_event(
+                            trial_telemetry,
+                            event_type="declaration_validation",
+                            actor_id=actor.actor_id,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            action_name=action_name,
+                            requested_targets=requested_targets,
+                            validation_state="valid",
+                        )
+                        _emit_turn_trace_event(
+                            trial_telemetry,
+                            event_type="action_selection",
+                            actor_id=actor.actor_id,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            action_name=action_name,
+                            requested_targets=requested_targets,
+                            resolved_targets=requested_targets,
+                            selection_state="selected",
+                        )
+                    try:
+                        _execute_declared_turn_or_error(
+                            rng=rng,
+                            actor=actor,
+                            declaration=turn_declaration,
+                            strategy_name=strategy_name,
+                            actors=actors,
+                            damage_dealt=damage_dealt,
+                            damage_taken=damage_taken,
+                            threat_scores=threat_scores,
+                            resources_spent=resources_spent,
+                            active_hazards=active_hazards,
+                            telemetry=trial_telemetry,
+                            obstacles=battlefield_obstacles,
+                            light_level=light_level,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            rule_trace=trial_rule_trace,
+                        )
+                    except TurnDeclarationValidationError as exc:
+                        _emit_turn_trace_event(
+                            trial_telemetry,
+                            event_type="action_selection",
+                            actor_id=actor.actor_id,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            action_name=action_name,
+                            requested_targets=requested_targets,
+                            selection_state="illegal",
+                            error_code=exc.code,
+                            field=exc.field,
+                        )
+                        raise
+
+                    if turn_declaration.action is not None:
+                        _emit_turn_trace_event(
+                            trial_telemetry,
+                            event_type="action_resolution",
+                            actor_id=actor.actor_id,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            action_name=action_name,
+                            requested_targets=requested_targets,
+                            resolved_targets=requested_targets,
+                            resolution_state="resolved",
+                        )
+                        _emit_turn_trace_event(
+                            trial_telemetry,
+                            event_type="action_outcome",
+                            actor_id=actor.actor_id,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            action_name=action_name,
+                            requested_targets=requested_targets,
+                            resolved_targets=requested_targets,
+                            outcome_state="applied",
+                        )
                     _resolve_turn_end(actor, turn_token)
 
                 if (
