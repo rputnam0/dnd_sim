@@ -8,12 +8,10 @@
         "feature": "Arcane Shot",
         "uses_remaining": 0
       },
-      "effect": {
-        "restore_uses": {
-          "feature": "Arcane Shot",
-          "amount": 1
-        }
-      }
+      "effect_type": "resource_change",
+      "resource": "arcane_shot_uses",
+      "amount": 1,
+      "mode": "restore_if_empty"
     }
   ],
   "source_type": "subclass"

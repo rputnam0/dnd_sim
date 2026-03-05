@@ -3,6 +3,7 @@
   "description": "Starting at 9th level, if you are hidden from a creature when you cast a spell on it, the creature has disadvantage on any saving throw it makes against the spell this turn.",
   "mechanics": [
     {
+      "meta_type": "saving_throw_disadvantage",
       "effect": "disadvantage_on_saving_throw",
       "trigger": "cast_spell_while_hidden",
       "target": "creature",

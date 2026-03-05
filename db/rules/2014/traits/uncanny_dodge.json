@@ -5,6 +5,11 @@
     {
       "action": "reaction",
       "trigger": "you are hit by an attack you can see",
+      "effect_type": "reduce_damage_taken",
+      "damage_types": [
+        "all"
+      ],
+      "amount": "half",
       "effect": "damage is halved"
     }
   ],

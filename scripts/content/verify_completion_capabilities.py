@@ -14,6 +14,14 @@ _SCOPE_DIR_TO_TYPE = {
     "monsters": "monster",
 }
 _REASON_CODE_PATTERN = re.compile(r"^[a-z0-9_]+$")
+_STATE_BOOL_FIELDS = (
+    "cataloged",
+    "schema_valid",
+    "executable",
+    "tested",
+    "blocked",
+)
+_LEGACY_FLAT_STATE_FIELDS = _STATE_BOOL_FIELDS + ("unsupported_reason",)
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,19 +66,65 @@ def _as_bool(raw: Any, *, field_name: str, content_id: str, issues: list[Capabil
     return False
 
 
+def _unsupported_reason_or_issue(
+    raw_states: Mapping[str, Any], *, content_id: str, issues: list[CapabilityIssue]
+) -> str | None:
+    if "unsupported_reason" not in raw_states:
+        issues.append(
+            CapabilityIssue(
+                code="CAP-GATE-003",
+                message="states.unsupported_reason must be present (null allowed when blocked=false).",
+                content_id=content_id,
+            )
+        )
+        return None
+    raw_reason = raw_states["unsupported_reason"]
+    if raw_reason is None:
+        return None
+    if isinstance(raw_reason, str):
+        return raw_reason
+    issues.append(
+        CapabilityIssue(
+            code="CAP-GATE-003",
+            message="states.unsupported_reason must be null or a string.",
+            content_id=content_id,
+        )
+    )
+    return ""
+
+
 def verify_manifest_payload(
-    payload: Mapping[str, Any], *, expected_content_ids: Sequence[str]
+    payload: Mapping[str, Any], *, expected_content_ids: Sequence[str], strict: bool = False
 ) -> list[CapabilityIssue]:
     issues: list[CapabilityIssue] = []
 
+    manifest_version = payload.get("manifest_version")
+    if not isinstance(manifest_version, str) or not manifest_version.strip():
+        issues.append(
+            CapabilityIssue(
+                code="CAP-GATE-002",
+                message="manifest payload must declare non-empty manifest_version.",
+            )
+        )
+    if "generated_at" in payload:
+        generated_at = payload.get("generated_at")
+        if generated_at is not None and (not isinstance(generated_at, str) or not generated_at.strip()):
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-002",
+                    message="generated_at must be null or a non-empty string when provided.",
+                )
+            )
+
     raw_records = payload.get("records")
     if not isinstance(raw_records, list):
-        return [
+        issues.append(
             CapabilityIssue(
                 code="CAP-GATE-002",
                 message="manifest payload must contain a records array.",
             )
-        ]
+        )
+        return issues
 
     expected_set = set(expected_content_ids)
     seen_ids: set[str] = set()
@@ -116,37 +170,66 @@ def verify_manifest_payload(
                 )
             )
 
+        legacy_fields = sorted(name for name in _LEGACY_FLAT_STATE_FIELDS if name in raw_record)
+        if legacy_fields:
+            joined = ", ".join(legacy_fields)
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-003",
+                    message=(
+                        "legacy flat capability fields are not allowed; use record.states.* only "
+                        f"(found: {joined})."
+                    ),
+                    content_id=content_id,
+                )
+            )
+
+        raw_states = raw_record.get("states")
+        if not isinstance(raw_states, Mapping):
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-003",
+                    message="record states must be a JSON object.",
+                    content_id=content_id,
+                )
+            )
+            raw_states = {}
+
         cataloged = _as_bool(
-            raw_record.get("cataloged"),
-            field_name="cataloged",
+            raw_states.get("cataloged"),
+            field_name="states.cataloged",
             content_id=content_id,
             issues=issues,
         )
         schema_valid = _as_bool(
-            raw_record.get("schema_valid"),
-            field_name="schema_valid",
+            raw_states.get("schema_valid"),
+            field_name="states.schema_valid",
             content_id=content_id,
             issues=issues,
         )
         executable = _as_bool(
-            raw_record.get("executable"),
-            field_name="executable",
+            raw_states.get("executable"),
+            field_name="states.executable",
             content_id=content_id,
             issues=issues,
         )
         tested = _as_bool(
-            raw_record.get("tested"),
-            field_name="tested",
+            raw_states.get("tested"),
+            field_name="states.tested",
             content_id=content_id,
             issues=issues,
         )
         blocked = _as_bool(
-            raw_record.get("blocked"),
-            field_name="blocked",
+            raw_states.get("blocked"),
+            field_name="states.blocked",
             content_id=content_id,
             issues=issues,
         )
-        unsupported_reason = raw_record.get("unsupported_reason", "")
+        unsupported_reason = _unsupported_reason_or_issue(
+            raw_states,
+            content_id=content_id,
+            issues=issues,
+        )
 
         if not cataloged:
             issues.append(
@@ -206,6 +289,29 @@ def verify_manifest_payload(
                 )
             )
 
+        if strict:
+            strict_violations: list[str] = []
+            if blocked:
+                strict_violations.append("blocked=true")
+            if not executable:
+                strict_violations.append("executable=false")
+            if not tested:
+                strict_violations.append("tested=false")
+            if unsupported_reason is not None:
+                strict_violations.append("unsupported_reason must be null")
+            if strict_violations:
+                issues.append(
+                    CapabilityIssue(
+                        code="CAP-GATE-011",
+                        message=(
+                            "strict mode requires fully green shipped records "
+                            "(cataloged/schema_valid/executable/tested and unblocked): "
+                            + ", ".join(strict_violations)
+                        ),
+                        content_id=content_id,
+                    )
+                )
+
     missing_ids = sorted(expected_set - seen_ids)
     if missing_ids:
         preview = ", ".join(missing_ids[:5])
@@ -228,6 +334,7 @@ def verify_completion_capabilities(
     *,
     manifest_path: Path | None = None,
     expected_content_ids: Iterable[str] | None = None,
+    strict: bool = False,
 ) -> list[CapabilityIssue]:
     manifest = manifest_path or (repo_root / DEFAULT_MANIFEST_PATH)
     if not manifest.exists():
@@ -244,7 +351,7 @@ def verify_completion_capabilities(
         return [CapabilityIssue(code="CAP-GATE-002", message=str(exc))]
 
     expected_ids = tuple(expected_content_ids or discover_shipped_2014_content_ids(repo_root))
-    return verify_manifest_payload(payload, expected_content_ids=expected_ids)
+    return verify_manifest_payload(payload, expected_content_ids=expected_ids, strict=strict)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -266,11 +373,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="Optional explicit path to manifest JSON file.",
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help=(
+            "Enable strict FIN-02 mode: every shipped record must be executable+tested and "
+            "must not remain blocked."
+        ),
+    )
     args = parser.parse_args(argv)
 
     issues = verify_completion_capabilities(
         args.repo_root,
         manifest_path=args.manifest_path,
+        strict=args.strict,
     )
     if issues:
         for issue in issues:

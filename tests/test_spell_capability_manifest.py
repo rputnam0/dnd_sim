@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from dnd_sim.capability_manifest import (
     DEFAULT_SPELLS_DIR,
     build_spell_capability_manifest,
@@ -44,9 +46,7 @@ def test_spell_manifest_marks_executable_spells_supported() -> None:
                 "level": 1,
                 "casting_time": "1 action",
                 "description": "A bolt of force.",
-                "mechanics": [
-                    {"effect_type": "damage", "damage": "2d6", "target": "single_enemy"}
-                ],
+                "mechanics": [{"effect_type": "damage", "damage": "2d6", "target": "single_enemy"}],
             }
         ]
     )
@@ -90,7 +90,7 @@ def test_spell_manifest_uses_unsupported_effect_type_reason() -> None:
                 "level": 3,
                 "casting_time": "1 action",
                 "description": "An unsupported area spell stub.",
-                "mechanics": [{"effect_type": "aoe", "radius_ft": 20}],
+                "mechanics": [{"effect_type": "quantum_shift", "radius_ft": 20}],
             }
         ]
     )
@@ -99,6 +99,61 @@ def test_spell_manifest_uses_unsupported_effect_type_reason() -> None:
     assert record.states.blocked is True
     assert record.states.schema_valid is True
     assert record.states.unsupported_reason == "unsupported_effect_type"
+
+
+@pytest.mark.parametrize(
+    "effect_type",
+    ["aoe", "ranged_spell_attack", "melee_spell_attack", "save"],
+)
+def test_spell_manifest_marks_metadata_spell_effect_types_non_executable(effect_type: str) -> None:
+    manifest = build_spell_capability_manifest(
+        spell_payloads=[
+            {
+                "name": f"Spell Marker {effect_type}",
+                "type": "spell",
+                "level": 1,
+                "casting_time": "1 action",
+                "description": "Metadata-only spell effect marker.",
+                "mechanics": [{"effect_type": effect_type}],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.support_state == "unsupported"
+    assert record.states.executable is False
+    assert record.states.blocked is True
+    assert record.states.unsupported_reason == "non_executable_mechanics"
+
+
+@pytest.mark.parametrize(
+    "effect_type",
+    ["aoe", "ranged_spell_attack", "melee_spell_attack", "save"],
+)
+def test_spell_manifest_accepts_metadata_effect_types_when_paired_with_runtime_effect(
+    effect_type: str,
+) -> None:
+    manifest = build_spell_capability_manifest(
+        spell_payloads=[
+            {
+                "name": f"Spell Marker + Damage {effect_type}",
+                "type": "spell",
+                "level": 1,
+                "casting_time": "1 action",
+                "description": "Metadata marker with executable effect.",
+                "mechanics": [
+                    {"effect_type": effect_type},
+                    {"effect_type": "damage", "damage": "1d8", "target": "single_enemy"},
+                ],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.support_state == "supported"
+    assert record.states.executable is True
+    assert record.states.blocked is False
+    assert record.states.unsupported_reason is None
 
 
 def test_spell_manifest_uses_invalid_mechanics_schema_reason() -> None:
@@ -140,3 +195,49 @@ def test_spell_manifest_canonical_dataset_has_coverage_and_single_reason_codes()
             "invalid_mechanics_schema",
             "non_executable_mechanics",
         }
+
+
+def test_spell_manifest_shard_a_cantrip_spell_ids_are_executable() -> None:
+    manifest = build_spell_capability_manifest(spells_dir=DEFAULT_SPELLS_DIR)
+    by_id = {record.content_id: record for record in manifest.records}
+
+    shard_ids = {
+        "spell:acid_splash",
+        "spell:frostbite",
+        "spell:infestation",
+        "spell:mind_sliver",
+        "spell:sacred_flame",
+        "spell:sapping_sting",
+        "spell:sword_burst",
+        "spell:thunderclap",
+        "spell:toll_the_dead",
+        "spell:word_of_radiance",
+    }
+    for content_id in shard_ids:
+        assert by_id[content_id].support_state == "supported"
+        assert by_id[content_id].states.executable is True
+        assert by_id[content_id].states.blocked is False
+
+
+def test_spell_manifest_shard_b_spell_ids_are_executable() -> None:
+    manifest = build_spell_capability_manifest(spells_dir=DEFAULT_SPELLS_DIR)
+    by_id = {record.content_id: record for record in manifest.records}
+
+    shard_ids = {
+        "spell:abi_dalzim_s_horrid_wilting",
+        "spell:aganazzar_s_scorcher",
+        "spell:antagonize",
+        "spell:backlash",
+        "spell:befuddlement",
+        "spell:bones_of_the_earth",
+        "spell:cacophonic_shield",
+        "spell:catapult",
+        "spell:conjure_constructs",
+        "spell:dark_star",
+        "spell:dawn",
+        "spell:dirge",
+    }
+    for content_id in shard_ids:
+        assert by_id[content_id].support_state == "supported"
+        assert by_id[content_id].states.executable is True
+        assert by_id[content_id].states.blocked is False
