@@ -170,3 +170,12 @@ def test_candidate_rejection_reason_defaults_to_unknown_for_unclassified_case() 
         used_count=0,
     )
     assert reason == "unknown"
+
+
+def test_candidate_rejection_reason_flags_unsupported_action_cost() -> None:
+    reason = candidate_rejection_reason_for_action(
+        {"name": "opportunity_attack", "action_cost": "reaction"},
+        resources={},
+        used_count=0,
+    )
+    assert reason == "unsupported_action_cost"

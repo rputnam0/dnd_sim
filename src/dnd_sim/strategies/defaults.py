@@ -3,7 +3,11 @@ from __future__ import annotations
 import math
 from typing import Any
 
-from dnd_sim.ai.scoring import candidate_snapshots, enumerate_legal_action_candidates
+from dnd_sim.ai.scoring import (
+    candidate_rejection_reason_for_action,
+    candidate_snapshots,
+    enumerate_legal_action_candidates,
+)
 from dnd_sim.rules_2014 import parse_damage_expression
 from dnd_sim.spatial import check_cover, distance_chebyshev, has_clear_path, move_towards
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
@@ -25,24 +29,6 @@ _COVER_SCORE_PENALTIES = {
     "THREE_QUARTERS": 1.0,
     "TOTAL": 2.0,
 }
-
-
-def candidate_rejection_reason_for_action(
-    action: dict[str, Any],
-    *,
-    resources: dict[str, int],
-    used_count: int,
-) -> str:
-    if action.get("action_cost") in {"legendary", "lair", "reaction"}:
-        return "unsupported_action_cost"
-    max_uses = action.get("max_uses")
-    if max_uses is not None and used_count >= int(max_uses):
-        return "max_uses_exhausted"
-    if not bool(action.get("recharge_ready", True)):
-        return "recharge_not_ready"
-    if not _can_pay_with_resources(resources, action):
-        return "insufficient_resources"
-    return "unknown"
 
 
 def build_candidate_trace_rows(
@@ -887,14 +873,14 @@ def _action_viable(
     resources: dict[str, int],
     used_count: int,
 ) -> bool:
-    if action.get("action_cost") in {"legendary", "lair", "reaction"}:
-        return False
-    max_uses = action.get("max_uses")
-    if max_uses is not None and used_count >= int(max_uses):
-        return False
-    if not bool(action.get("recharge_ready", True)):
-        return False
-    return _can_pay_with_resources(resources, action)
+    return (
+        candidate_rejection_reason_for_action(
+            action,
+            resources=resources,
+            used_count=used_count,
+        )
+        == "unknown"
+    )
 
 
 def _target_count_for_action(actor, state, action: dict) -> int:
@@ -1058,6 +1044,7 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             return None, {"reason": "no_viable_actions"}
         normalized_snapshots = candidate_snapshots(normalized_candidates)
         legal_action_names = {row.action_name for row in normalized_candidates}
+        available_action_names = set(_available_actions_for_actor(actor, state))
         legal_enemy_target_ids_by_action: dict[str, set[str]] = {}
         normalized_inputs_by_action: dict[str, list[dict[str, Any]]] = {}
         for index, row in enumerate(normalized_candidates):
@@ -1155,18 +1142,21 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
         excluded_candidates: list[dict[str, Any]] = []
         for action in catalog:
             action_name = str(action.get("name", ""))
-            if action_name not in legal_action_names:
+            if available_action_names and action_name not in available_action_names:
                 continue
             used = int(action.get("used_count", 0))
-            if not _action_viable(action, resources=actor.resources, used_count=used):
+            if action_name not in legal_action_names:
+                rejection_reason = candidate_rejection_reason_for_action(
+                    action,
+                    resources=actor.resources,
+                    used_count=used,
+                )
                 excluded_candidates.append(
                     {
                         "name": action_name,
                         "cost": sum(int(v) for v in (action.get("resource_cost") or {}).values()),
-                        "rejection_reason": candidate_rejection_reason_for_action(
-                            action,
-                            resources=actor.resources,
-                            used_count=used,
+                        "rejection_reason": (
+                            rejection_reason if rejection_reason != "unknown" else "not_viable"
                         ),
                     }
                 )
