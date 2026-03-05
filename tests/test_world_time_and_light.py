@@ -118,7 +118,7 @@ def test_run_exploration_turn_rejects_non_positive_elapsed_minutes() -> None:
 def test_run_exploration_turn_rejects_none_activity() -> None:
     state = create_exploration_state(day=1, hour=8, minute=0)
 
-    with pytest.raises(ValueError, match="activity must be non-empty"):
+    with pytest.raises(ValueError, match="activity must be a string"):
         run_exploration_turn(  # type: ignore[arg-type]
             state,
             activity=None,
@@ -127,13 +127,41 @@ def test_run_exploration_turn_rejects_none_activity() -> None:
 
 
 def test_deserialize_world_exploration_state_rejects_missing_light_source_id() -> None:
-    with pytest.raises(ValueError, match="source_id must be non-empty"):
+    with pytest.raises(ValueError, match="source_id must be a string"):
         deserialize_world_exploration_state(
             {
                 "turn_index": 0,
                 "clock": {"day": 1, "minute_of_day": 10},
                 "light_sources": [
                     {
+                        "remaining_minutes": 30,
+                        "is_lit": True,
+                    }
+                ],
+            }
+        )
+
+
+def test_run_exploration_turn_rejects_blank_activity() -> None:
+    state = create_exploration_state(day=1, hour=8, minute=0)
+
+    with pytest.raises(ValueError, match="activity must be non-empty"):
+        run_exploration_turn(
+            state,
+            activity="   ",
+            elapsed_minutes=5,
+        )
+
+
+def test_deserialize_world_exploration_state_rejects_non_string_light_source_id() -> None:
+    with pytest.raises(ValueError, match="source_id must be a string"):
+        deserialize_world_exploration_state(
+            {
+                "turn_index": 0,
+                "clock": {"day": 1, "minute_of_day": 10},
+                "light_sources": [
+                    {
+                        "source_id": 123,
                         "remaining_minutes": 30,
                         "is_lit": True,
                     }

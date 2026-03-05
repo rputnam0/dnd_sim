@@ -44,7 +44,9 @@ class LightSourceState:
     is_lit: bool = True
 
     def __post_init__(self) -> None:
-        normalized = str(self.source_id).strip()
+        if not isinstance(self.source_id, str):
+            raise ValueError("source_id must be a string")
+        normalized = self.source_id.strip()
         if not normalized:
             raise ValueError("source_id must be non-empty")
         if (
@@ -77,11 +79,15 @@ class ExplorationState:
 
         location = self.location_id
         if location is not None:
-            location = str(location).strip() or None
+            if not isinstance(location, str):
+                raise ValueError("location_id must be a string when provided")
+            location = location.strip() or None
 
         normalized_lights: dict[str, LightSourceState] = {}
         for source_id, light in sorted(dict(self.light_sources).items()):
-            key = str(source_id).strip()
+            if not isinstance(source_id, str):
+                raise ValueError("light source ids must be strings")
+            key = source_id.strip()
             if not key:
                 raise ValueError("light source ids must be non-empty")
             if not isinstance(light, LightSourceState):
@@ -111,9 +117,9 @@ class ExplorationTurnResult:
 
 
 def _required_text(value: Any, *, field_name: str) -> str:
-    if value is None:
-        raise ValueError(f"{field_name} must be non-empty")
-    normalized = str(value).strip()
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    normalized = value.strip()
     if not normalized:
         raise ValueError(f"{field_name} must be non-empty")
     return normalized
