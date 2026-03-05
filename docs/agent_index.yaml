@@ -157,6 +157,7 @@ subsystems:
       - "Spell declaration normalization, slot spend, and upcast handling remain deterministic."
       - "Target-resolution adapters preserve existing target_mode semantics and negative-case behavior."
       - "Spell-result application avoids side effects when legality checks fail."
+      - "Counterspell interrupts preserve declaration ordering and deterministic slot accounting."
     safe_edit_boundaries:
       - "Safe: spell-family handler extraction and adapter hardening."
       - "Caution: slot accounting, concentration handoff, and target selection heuristics."

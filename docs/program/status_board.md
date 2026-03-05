@@ -23,7 +23,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Track | Scope | Status | Milestone | Notes |
 |---|---|---|---|---|
 | DOC | Documentation Control | merged | 5A-doc-control | `DOC-01` through `DOC-06` are `merged` in `backlog.csv`; Documentation Control track is complete. |
-| ARC | Runtime Decomposition | in_progress | 5B-runtime-decomposition | `ARC-01`, `ARC-02`, `ARC-03`, `ARC-04`, `ARC-05`, `ARC-06`, and `ARC-08` are `in_progress`; remaining ARC tasks are `not_started` in `backlog.csv`. |
+| ARC | Runtime Decomposition | in_progress | 5B-runtime-decomposition | `ARC-01`, `ARC-02`, `ARC-03`, `ARC-04`, `ARC-05`, `ARC-06`, and `ARC-08` are `in_progress`; `ARC-07` is `pr_open`; remaining ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
@@ -42,16 +42,18 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | ARC-04 | `codex/feat/arc-04-extract-action-resolution-pipeline` | runtime_d | in_progress | Extracting action dispatch/target application/hit-save handling into `src/dnd_sim/action_resolution.py` and routing `engine.py` combat execution through the new module. |
 | ARC-05 | `codex/feat/arc-05-extract-effect-lifecycle-condition-state-and-conce` | runtime_e | in_progress | Extracting effect lifecycle/condition state/concentration graph behavior into `src/dnd_sim/effects_runtime.py` and delegating condition/concentration internals from `engine.py`. |
 | ARC-06 | `codex/feat/arc-06-extract-reactions-interrupts-and-ready-action-wind` | runtime_f | in_progress | Extracting reaction windows, trigger matching, ready-action release, and interrupt ordering into `src/dnd_sim/reaction_runtime.py` with engine delegation retained. |
+| ARC-07 | `codex/feat/arc-07-extract-spell-execution-pipeline-and-target-resolu` | runtime_spell | pr_open | Extracted spell declaration normalization, upcast handling, target adapters, and spell-result application into `src/dnd_sim/spell_runtime.py` and delegated spell branches from the engine runtime path. |
 | ARC-08 | `codex/feat/arc-08-extract-replay-reporting-adapter-layer-and-reduce` | runtime_report | in_progress | Extracting replay/reporting adapters into `src/dnd_sim/replay.py` and `src/dnd_sim/reporting_runtime.py`, routing emission through them, and reducing `engine.py` to an orchestration facade. |
 
 ## Open PRs
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
+| ARC-07 | `pending` | runtime_spell | pending | PR opening from `codex/feat/arc-07-extract-spell-execution-pipeline-and-target-resolu` to `int/5b-runtime-decomposition`; update with PR link after creation. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
-- No active DOC blockers remain; ARC-01, ARC-02, ARC-03, ARC-04, ARC-05, ARC-06, and ARC-08 runtime decomposition work is currently in progress on assigned branches.
+- No active DOC blockers remain; ARC-01, ARC-02, ARC-03, ARC-04, ARC-05, ARC-06, and ARC-08 runtime decomposition work is in progress, and ARC-07 is in PR review state on its assigned branch.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
