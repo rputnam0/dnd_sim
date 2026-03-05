@@ -109,6 +109,12 @@ class DamageResolvedEvent(CombatEvent):
 
 
 @dataclass(frozen=True, slots=True)
+class ReactionWindowResult:
+    allowed: bool
+    reason: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ListenerSubscription:
     subscription_id: int
     event_type: type[CombatEvent]
@@ -351,6 +357,105 @@ def _has_monk_martial_arts_context(actor: ActorRuntimeState) -> bool:
     if monk_level > 0:
         return True
     return _has_trait(actor, "martial arts") or _has_trait(actor, "flurry of blows")
+
+
+def _evaluate_reaction_window_gate(
+    *, reactor: ActorRuntimeState, reaction_lock_active: bool
+) -> ReactionWindowResult | None:
+    if not reactor.reaction_available:
+        return ReactionWindowResult(allowed=False, reason="reaction_unavailable")
+    if reaction_lock_active:
+        return ReactionWindowResult(allowed=False, reason="reaction_lock")
+    return None
+
+
+def evaluate_mage_slayer_reaction_window(
+    *,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_action: ActionDefinition | None,
+    distance_ft: float | None,
+    reaction_lock_active: bool = False,
+) -> ReactionWindowResult:
+    gate = _evaluate_reaction_window_gate(
+        reactor=reactor,
+        reaction_lock_active=reaction_lock_active,
+    )
+    if gate is not None:
+        return gate
+    if trigger_actor is None or trigger_action is None:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
+    if trigger_actor.team == reactor.team:
+        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
+    if "spell" not in {str(tag).strip().lower() for tag in trigger_action.tags}:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_action")
+    if distance_ft is None or float(distance_ft) > 5.0 + 1e-9:
+        return ReactionWindowResult(allowed=False, reason="out_of_range")
+    return ReactionWindowResult(allowed=True, reason=None)
+
+
+def evaluate_sentinel_reaction_window(
+    *,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_target: ActorRuntimeState | None,
+    trigger_action: ActionDefinition | None,
+    distance_ft: float | None,
+    reaction_lock_active: bool = False,
+) -> ReactionWindowResult:
+    gate = _evaluate_reaction_window_gate(
+        reactor=reactor,
+        reaction_lock_active=reaction_lock_active,
+    )
+    if gate is not None:
+        return gate
+    if trigger_actor is None or trigger_target is None or trigger_action is None:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
+    if trigger_action.action_type != "attack":
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_action")
+    if trigger_actor.team == reactor.team:
+        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
+    if trigger_target.actor_id == reactor.actor_id or trigger_target.team != reactor.team:
+        return ReactionWindowResult(allowed=False, reason="invalid_target_window")
+    if distance_ft is None or float(distance_ft) > 5.0 + 1e-9:
+        return ReactionWindowResult(allowed=False, reason="out_of_range")
+    return ReactionWindowResult(allowed=True, reason=None)
+
+
+def evaluate_sentinel_opportunity_window(
+    *,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState | None,
+    trigger_distance_ft: float | None,
+    reach_ft: float,
+    mover_disengaged: bool,
+    forced_movement: bool,
+    reaction_lock_active: bool = False,
+) -> ReactionWindowResult:
+    gate = _evaluate_reaction_window_gate(
+        reactor=reactor,
+        reaction_lock_active=reaction_lock_active,
+    )
+    if gate is not None:
+        return gate
+    if trigger_actor is None:
+        return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
+    if trigger_actor.team == reactor.team:
+        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
+    if forced_movement:
+        return ReactionWindowResult(allowed=False, reason="forced_movement")
+    if trigger_distance_ft is None:
+        return ReactionWindowResult(allowed=False, reason="out_of_reach")
+    if float(trigger_distance_ft) > max(0.0, float(reach_ft)) + 1e-9:
+        return ReactionWindowResult(allowed=False, reason="out_of_reach")
+    if mover_disengaged:
+        # Sentinel explicitly bypasses Disengage for opportunity attack triggers.
+        return ReactionWindowResult(allowed=True, reason=None)
+    return ReactionWindowResult(allowed=True, reason=None)
+
+
+def sentinel_speed_reduction_applies_on_hit(*, hit: bool, opportunity_attack: bool) -> bool:
+    return bool(hit and opportunity_attack)
 
 
 def monk_bonus_action_legal(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
