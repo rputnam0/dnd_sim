@@ -26,7 +26,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
-| DBS | Persistence and Query Model | in_progress | 5E-persistence | `DBS-01` is `pr_open` and `DBS-02` is `in_progress` in `backlog.csv`; remaining DBS tasks are `not_started`. |
+| DBS | Persistence and Query Model | pr_open | 5E-persistence | `DBS-01` and `DBS-02` are `pr_open` in `backlog.csv`; remaining DBS tasks are `not_started`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
@@ -37,13 +37,14 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
 | DBS-01 | `codex/feat/dbs-01-add-canonical-metadata-tables-for-content-and-supp` | persistence_a | pr_open | Canonical metadata tables and migration/rollback coverage are in PR review. |
-| DBS-02 | `codex/feat/dbs-02-add-schema-version-source-lineage-and-content-hash` | persistence_b | in_progress | Adding lineage columns plus stable source/canonicalization hash persistence and replay ordering. |
+| DBS-02 | `codex/feat/dbs-02-add-schema-version-source-lineage-and-content-hash` | persistence_b | pr_open | Lineage columns plus stable source/canonicalization hash persistence and replay ordering are in PR review. |
 
 ## Open PRs
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
 | DBS-01 | [#98](https://github.com/rputnam0/dnd_sim/pull/98) | persistence_a | pending | DBS-01 metadata schema and migration/rollback checks are under review. |
+| DBS-02 | [#102](https://github.com/rputnam0/dnd_sim/pull/102) | persistence_b | pending | DBS-02 lineage fields and hash stability checks are under review. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
