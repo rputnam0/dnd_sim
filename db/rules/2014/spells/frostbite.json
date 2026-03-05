@@ -11,5 +11,21 @@
   "description": "You cause numbing frost to form on one creature that you can see within range. The target must make a Constitution saving throw. On a failed save, the target takes 1d6 cold damage, and it has disadvantage on the next weapon attack roll it makes before the end of its next turn. The spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6).",
   "save_ability": "con",
   "damage_type": "cold",
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "single_enemy",
+      "apply_on": "save_fail",
+      "save_ability": "con",
+      "damage": "1d6",
+      "damage_type": "cold"
+    },
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "save_fail",
+      "condition": "disadvantaged_attack",
+      "duration": 1
+    }
+  ]
 }
