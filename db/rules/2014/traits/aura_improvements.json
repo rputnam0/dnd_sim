@@ -3,7 +3,7 @@
   "description": "At 18th level, the range of your Aura of Protection increases to 30 feet.",
   "mechanics": [
     {
-      "effect": "increase_aura_range",
+      "meta_type": "increase_aura_range",
       "aura_name": "Aura of Protection",
       "new_range_feet": 30
     }
