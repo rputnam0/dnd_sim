@@ -421,6 +421,8 @@ def evaluate_mage_slayer_reaction_window(
     )
     if gate is not None:
         return gate
+    if not _has_trait(reactor, "mage slayer"):
+        return ReactionWindowResult(allowed=False, reason="missing_trait")
     if trigger_actor is None or trigger_action is None:
         return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
     if trigger_actor.team == reactor.team:
@@ -447,6 +449,8 @@ def evaluate_sentinel_reaction_window(
     )
     if gate is not None:
         return gate
+    if not _has_trait(reactor, "sentinel"):
+        return ReactionWindowResult(allowed=False, reason="missing_trait")
     if trigger_actor is None or trigger_target is None or trigger_action is None:
         return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
     if trigger_action.action_type != "attack":

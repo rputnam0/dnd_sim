@@ -9,7 +9,7 @@ from dnd_sim.rules_2014 import (
 )
 
 
-def _actor(*, actor_id: str, team: str) -> ActorRuntimeState:
+def _actor(*, actor_id: str, team: str, traits: tuple[str, ...] = ()) -> ActorRuntimeState:
     return ActorRuntimeState(
         actor_id=actor_id,
         team=team,
@@ -27,11 +27,12 @@ def _actor(*, actor_id: str, team: str) -> ActorRuntimeState:
         cha_mod=0,
         save_mods={"str": 2, "dex": 2, "con": 2, "int": 0, "wis": 0, "cha": 0},
         actions=[],
+        traits={trait: {} for trait in traits},
     )
 
 
 def test_mage_slayer_window_requires_enemy_spell_cast_within_five_feet() -> None:
-    reactor = _actor(actor_id="reactor", team="party")
+    reactor = _actor(actor_id="reactor", team="party", traits=("mage slayer",))
     enemy = _actor(actor_id="enemy", team="enemy")
     spell_action = ActionDefinition(name="fire_bolt", action_type="save", tags=["spell"])
 
@@ -54,8 +55,24 @@ def test_mage_slayer_window_requires_enemy_spell_cast_within_five_feet() -> None
     assert out_of_range.reason == "out_of_range"
 
 
+def test_mage_slayer_window_rejects_without_required_trait() -> None:
+    reactor = _actor(actor_id="reactor", team="party")
+    enemy = _actor(actor_id="enemy", team="enemy")
+    spell_action = ActionDefinition(name="fire_bolt", action_type="save", tags=["spell"])
+
+    result = evaluate_mage_slayer_reaction_window(
+        reactor=reactor,
+        trigger_actor=enemy,
+        trigger_action=spell_action,
+        distance_ft=5.0,
+    )
+
+    assert result.allowed is False
+    assert result.reason == "missing_trait"
+
+
 def test_sentinel_window_requires_enemy_attacking_ally_within_five_feet() -> None:
-    sentinel = _actor(actor_id="sentinel", team="party")
+    sentinel = _actor(actor_id="sentinel", team="party", traits=("sentinel",))
     ally = _actor(actor_id="ally", team="party")
     enemy = _actor(actor_id="enemy", team="enemy")
     attack_action = ActionDefinition(name="slash", action_type="attack")
@@ -79,6 +96,24 @@ def test_sentinel_window_requires_enemy_attacking_ally_within_five_feet() -> Non
     assert allowed.reason is None
     assert illegal_self_target.allowed is False
     assert illegal_self_target.reason == "invalid_target_window"
+
+
+def test_sentinel_window_rejects_without_required_trait() -> None:
+    reactor = _actor(actor_id="reactor", team="party")
+    ally = _actor(actor_id="ally", team="party")
+    enemy = _actor(actor_id="enemy", team="enemy")
+    attack_action = ActionDefinition(name="slash", action_type="attack")
+
+    result = evaluate_sentinel_reaction_window(
+        reactor=reactor,
+        trigger_actor=enemy,
+        trigger_target=ally,
+        trigger_action=attack_action,
+        distance_ft=5.0,
+    )
+
+    assert result.allowed is False
+    assert result.reason == "missing_trait"
 
 
 def test_sentinel_opportunity_window_obeys_reach_and_forced_movement_rules() -> None:
