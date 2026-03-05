@@ -11,6 +11,15 @@ ENCOUNTER_STATES_TABLE = "encounter_states"
 WORLD_STATES_TABLE = "world_states"
 FACTION_STATES_TABLE = "faction_states"
 LEGACY_IMPORTED_AT = "1970-01-01T00:00:00+00:00"
+LEGACY_BLOB_SCHEMA_VERSION = "legacy_blob.v1"
+LEGACY_BLOB_SUPPORT_STATE = "legacy_unverified"
+LEGACY_BLOB_LAST_VERIFIED_COMMIT = "legacy_blob_backfill"
+LEGACY_BLOB_SOURCE_PREFIX = "legacy_db"
+LEGACY_BLOB_TABLE_SPECS: tuple[tuple[str, str, str], ...] = (
+    ("traits", "id", "trait"),
+    ("enemies", "enemy_id", "enemy"),
+    ("characters", "character_id", "character"),
+)
 
 CONTENT_RECORDS_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS content_records (
@@ -251,6 +260,157 @@ def _normalize_unsupported_reason(
     return None
 
 
+def _canonical_legacy_content_id(*, content_type: str, legacy_id: str) -> str:
+    normalized_type = _required_text(content_type, field_name="content_type").lower()
+    normalized_id = _required_text(legacy_id, field_name="legacy_id")
+    if normalized_id.startswith(f"{normalized_type}:"):
+        return normalized_id
+    return f"{normalized_type}:{normalized_id}"
+
+
+def _infer_source_book(payload: Any) -> str:
+    if isinstance(payload, dict):
+        for key in ("source_book", "source", "book"):
+            candidate = payload.get(key)
+            if isinstance(candidate, str):
+                normalized = candidate.strip()
+                if normalized:
+                    return normalized
+        source_payload = payload.get("source")
+        if isinstance(source_payload, dict):
+            for key in ("book", "source_book", "id", "abbr", "code"):
+                candidate = source_payload.get(key)
+                if isinstance(candidate, str):
+                    normalized = candidate.strip()
+                    if normalized:
+                        return normalized
+    return "legacy_blob"
+
+
+def _safe_json_loads(raw_payload: str) -> Any | None:
+    try:
+        return json.loads(raw_payload)
+    except json.JSONDecodeError:
+        return None
+
+
+def _legacy_spec_for_content_type(content_type: str) -> tuple[str, str, str] | None:
+    normalized_type = _required_text(content_type, field_name="content_type").lower()
+    for table_name, id_column, legacy_type in LEGACY_BLOB_TABLE_SPECS:
+        if normalized_type == legacy_type:
+            return table_name, id_column, legacy_type
+    return None
+
+
+def _canonical_record_payload(
+    row: sqlite3.Row | tuple[Any, ...],
+) -> dict[str, Any]:
+    payload_raw = str(row[7])
+    payload_json = _safe_json_loads(payload_raw)
+    return {
+        "content_id": str(row[0]),
+        "content_type": str(row[1]),
+        "source_book": str(row[2]),
+        "schema_version": str(row[3]),
+        "source_path": str(row[4]),
+        "source_hash": str(row[5]),
+        "canonicalization_hash": str(row[6]),
+        "payload_json": payload_json if payload_json is not None else payload_raw,
+        "imported_at": str(row[8]),
+    }
+
+
+def _canonical_capability_payload(
+    row: sqlite3.Row | tuple[Any, ...] | None,
+) -> dict[str, Any]:
+    if row is None:
+        return {
+            "support_state": None,
+            "unsupported_reason": None,
+            "last_verified_commit": None,
+        }
+    return {
+        "support_state": str(row[0]),
+        "unsupported_reason": None if row[1] is None else str(row[1]),
+        "last_verified_commit": str(row[2]),
+    }
+
+
+def _legacy_blob_rows(
+    conn: sqlite3.Connection,
+    *,
+    content_type: str | None = None,
+) -> list[dict[str, Any]]:
+    normalized_filter = None if content_type is None else content_type.strip().lower()
+    rows: list[dict[str, Any]] = []
+    for table_name, id_column, legacy_type in LEGACY_BLOB_TABLE_SPECS:
+        if normalized_filter is not None and legacy_type != normalized_filter:
+            continue
+        if not _table_exists(conn, table_name):
+            continue
+        for legacy_id, raw_payload in conn.execute(f"""
+            SELECT {id_column}, data_json
+            FROM {table_name}
+            ORDER BY {id_column}
+            """).fetchall():
+            normalized_legacy_id = _required_text(
+                str(legacy_id),
+                field_name=f"{table_name}.{id_column}",
+            )
+            payload_raw = str(raw_payload)
+            payload_json = _safe_json_loads(payload_raw)
+            if payload_json is None:
+                rows.append(
+                    {
+                        "content_id": _canonical_legacy_content_id(
+                            content_type=legacy_type,
+                            legacy_id=normalized_legacy_id,
+                        ),
+                        "content_type": legacy_type,
+                        "source_book": "legacy_blob",
+                        "schema_version": LEGACY_BLOB_SCHEMA_VERSION,
+                        "source_path": (
+                            f"{LEGACY_BLOB_SOURCE_PREFIX}/{table_name}/{normalized_legacy_id}"
+                        ),
+                        "source_hash": _stable_payload_hash(payload_raw),
+                        "canonicalization_hash": _stable_payload_hash(payload_raw),
+                        "payload_json": payload_raw,
+                        "imported_at": LEGACY_IMPORTED_AT,
+                        "support_state": LEGACY_BLOB_SUPPORT_STATE,
+                        "unsupported_reason": None,
+                        "last_verified_commit": LEGACY_BLOB_LAST_VERIFIED_COMMIT,
+                        "storage_origin": "legacy_blob",
+                        "invalid_payload": True,
+                    }
+                )
+                continue
+
+            rows.append(
+                {
+                    "content_id": _canonical_legacy_content_id(
+                        content_type=legacy_type,
+                        legacy_id=normalized_legacy_id,
+                    ),
+                    "content_type": legacy_type,
+                    "source_book": _infer_source_book(payload_json),
+                    "schema_version": LEGACY_BLOB_SCHEMA_VERSION,
+                    "source_path": (
+                        f"{LEGACY_BLOB_SOURCE_PREFIX}/{table_name}/{normalized_legacy_id}"
+                    ),
+                    "source_hash": _stable_payload_hash(payload_raw),
+                    "canonicalization_hash": _stable_payload_hash(payload_json),
+                    "payload_json": payload_json,
+                    "imported_at": LEGACY_IMPORTED_AT,
+                    "support_state": LEGACY_BLOB_SUPPORT_STATE,
+                    "unsupported_reason": None,
+                    "last_verified_commit": LEGACY_BLOB_LAST_VERIFIED_COMMIT,
+                    "storage_origin": "legacy_blob",
+                    "invalid_payload": False,
+                }
+            )
+    return rows
+
+
 def _add_lineage_column_if_missing(
     conn: sqlite3.Connection,
     *,
@@ -466,6 +626,244 @@ def fetch_content_lineage(
             }
         )
     return lineage
+
+
+def backfill_legacy_blob_content(conn: sqlite3.Connection) -> dict[str, int]:
+    """Backfill legacy JSON/blob rows into canonical metadata + state tables."""
+    create_content_metadata_tables(conn)
+    create_campaign_state_tables(conn)
+
+    existing_ids: set[str] = set()
+    if _table_exists(conn, CONTENT_RECORDS_TABLE):
+        existing_ids = {
+            str(row[0])
+            for row in conn.execute(f"SELECT content_id FROM {CONTENT_RECORDS_TABLE}").fetchall()
+        }
+
+    stats = {
+        "migrated_records": 0,
+        "skipped_existing": 0,
+        "invalid_payloads": 0,
+    }
+    for row in _legacy_blob_rows(conn):
+        content_id = str(row["content_id"])
+        if content_id in existing_ids:
+            stats["skipped_existing"] += 1
+            continue
+        if bool(row.get("invalid_payload")):
+            stats["invalid_payloads"] += 1
+            continue
+
+        upsert_content_record(
+            conn,
+            content_id=content_id,
+            content_type=str(row["content_type"]),
+            source_book=str(row["source_book"]),
+            schema_version=str(row["schema_version"]),
+            source_path=str(row["source_path"]),
+            source_hash=str(row["source_hash"]),
+            canonicalization_hash=str(row["canonicalization_hash"]),
+            payload_json=row["payload_json"],
+            imported_at=str(row["imported_at"]),
+        )
+        upsert_content_capability(
+            conn,
+            content_id=content_id,
+            content_type=str(row["content_type"]),
+            support_state=str(row["support_state"]),
+            unsupported_reason=None,
+            last_verified_commit=str(row["last_verified_commit"]),
+        )
+        existing_ids.add(content_id)
+        stats["migrated_records"] += 1
+    return stats
+
+
+def rollback_legacy_blob_backfill(conn: sqlite3.Connection) -> int:
+    """Delete DBS-06 backfilled canonical rows from legacy blob source paths."""
+    if not _table_exists(conn, CONTENT_RECORDS_TABLE):
+        return 0
+
+    to_delete = int(
+        conn.execute(
+            f"""
+            SELECT COUNT(*)
+            FROM {CONTENT_RECORDS_TABLE}
+            WHERE source_path LIKE ?
+            """,
+            (f"{LEGACY_BLOB_SOURCE_PREFIX}/%",),
+        ).fetchone()[0]
+    )
+    if to_delete == 0:
+        return 0
+
+    conn.execute(
+        f"DELETE FROM {CONTENT_RECORDS_TABLE} WHERE source_path LIKE ?",
+        (f"{LEGACY_BLOB_SOURCE_PREFIX}/%",),
+    )
+    if _table_exists(conn, CONTENT_CAPABILITIES_TABLE):
+        conn.execute(f"""
+            DELETE FROM {CONTENT_CAPABILITIES_TABLE}
+            WHERE content_id NOT IN (
+                SELECT content_id FROM {CONTENT_RECORDS_TABLE}
+            )
+            """)
+    return to_delete
+
+
+def fetch_content_record_compatible(
+    conn: sqlite3.Connection,
+    *,
+    content_id: str,
+) -> dict[str, Any] | None:
+    """Fetch a content record with canonical-first and legacy-blob fallback reads."""
+    normalized_content_id = _required_text(content_id, field_name="content_id")
+
+    if _table_exists(conn, CONTENT_RECORDS_TABLE):
+        row = conn.execute(
+            f"""
+            SELECT
+                content_id,
+                content_type,
+                source_book,
+                schema_version,
+                source_path,
+                source_hash,
+                canonicalization_hash,
+                payload_json,
+                imported_at
+            FROM {CONTENT_RECORDS_TABLE}
+            WHERE content_id = ?
+            """,
+            (normalized_content_id,),
+        ).fetchone()
+        if row is not None:
+            capability_row = None
+            if _table_exists(conn, CONTENT_CAPABILITIES_TABLE):
+                capability_row = conn.execute(
+                    f"""
+                    SELECT support_state, unsupported_reason, last_verified_commit
+                    FROM {CONTENT_CAPABILITIES_TABLE}
+                    WHERE content_id = ?
+                    """,
+                    (normalized_content_id,),
+                ).fetchone()
+            payload = _canonical_record_payload(row)
+            payload.update(_canonical_capability_payload(capability_row))
+            payload["storage_origin"] = "canonical"
+            return payload
+
+    if ":" not in normalized_content_id:
+        return None
+    content_type, legacy_id = normalized_content_id.split(":", maxsplit=1)
+    spec = _legacy_spec_for_content_type(content_type)
+    if spec is None:
+        return None
+
+    table_name, id_column, legacy_type = spec
+    if not _table_exists(conn, table_name):
+        return None
+
+    row = conn.execute(
+        f"""
+        SELECT {id_column}, data_json
+        FROM {table_name}
+        WHERE {id_column} = ?
+        """,
+        (legacy_id,),
+    ).fetchone()
+    if row is None:
+        return None
+
+    payload_raw = str(row[1])
+    payload_json = _safe_json_loads(payload_raw)
+    if payload_json is None:
+        return None
+
+    source_path = f"{LEGACY_BLOB_SOURCE_PREFIX}/{table_name}/{legacy_id}"
+    return {
+        "content_id": normalized_content_id,
+        "content_type": legacy_type,
+        "source_book": _infer_source_book(payload_json),
+        "schema_version": LEGACY_BLOB_SCHEMA_VERSION,
+        "source_path": source_path,
+        "source_hash": _stable_payload_hash(payload_raw),
+        "canonicalization_hash": _stable_payload_hash(payload_json),
+        "payload_json": payload_json,
+        "imported_at": LEGACY_IMPORTED_AT,
+        "support_state": LEGACY_BLOB_SUPPORT_STATE,
+        "unsupported_reason": None,
+        "last_verified_commit": LEGACY_BLOB_LAST_VERIFIED_COMMIT,
+        "storage_origin": "legacy_blob",
+    }
+
+
+def fetch_content_records_compatible(
+    conn: sqlite3.Connection,
+    *,
+    content_type: str | None = None,
+) -> list[dict[str, Any]]:
+    """List canonical content rows plus unmigrated legacy blob rows deterministically."""
+    normalized_filter = None if content_type is None else content_type.strip().lower()
+    records_by_id: dict[str, dict[str, Any]] = {}
+
+    if _table_exists(conn, CONTENT_RECORDS_TABLE):
+        params: tuple[Any, ...] = ()
+        where_clause = ""
+        if normalized_filter is not None:
+            where_clause = "WHERE content_type = ?"
+            params = (normalized_filter,)
+        rows = conn.execute(
+            f"""
+            SELECT
+                content_id,
+                content_type,
+                source_book,
+                schema_version,
+                source_path,
+                source_hash,
+                canonicalization_hash,
+                payload_json,
+                imported_at
+            FROM {CONTENT_RECORDS_TABLE}
+            {where_clause}
+            """,
+            params,
+        ).fetchall()
+        for row in rows:
+            content_id_value = str(row[0])
+            capability_row = None
+            if _table_exists(conn, CONTENT_CAPABILITIES_TABLE):
+                capability_row = conn.execute(
+                    f"""
+                    SELECT support_state, unsupported_reason, last_verified_commit
+                    FROM {CONTENT_CAPABILITIES_TABLE}
+                    WHERE content_id = ?
+                    """,
+                    (content_id_value,),
+                ).fetchone()
+            payload = _canonical_record_payload(row)
+            payload.update(_canonical_capability_payload(capability_row))
+            payload["storage_origin"] = "canonical"
+            records_by_id[content_id_value] = payload
+
+    for row in _legacy_blob_rows(conn, content_type=normalized_filter):
+        content_id_value = str(row["content_id"])
+        if content_id_value in records_by_id:
+            continue
+        if bool(row.get("invalid_payload")):
+            continue
+        payload = dict(row)
+        payload.pop("invalid_payload", None)
+        records_by_id[content_id_value] = payload
+
+    return sorted(
+        records_by_id.values(),
+        key=lambda row: (
+            str(row.get("content_type", "")).casefold(),
+            str(row.get("content_id", "")).casefold(),
+        ),
+    )
 
 
 def init_db() -> None:
