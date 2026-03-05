@@ -551,14 +551,12 @@ def _shield_master_active(actor: ActorRuntimeState) -> bool:
 
 
 def _action_weapon_properties(action: ActionDefinition) -> set[str]:
-    props = {str(prop).strip().lower() for prop in action.weapon_properties if str(prop).strip()}
-    props.update({str(tag).strip().lower() for tag in action.tags if str(tag).strip()})
-    return props
+    return {str(prop).strip().lower() for prop in action.weapon_properties if str(prop).strip()}
 
 
 def _action_is_ranged_weapon_attack(action: ActionDefinition) -> bool:
     properties = _action_weapon_properties(action)
-    if properties.intersection({"ammunition", "thrown", "ranged"}):
+    if properties.intersection({"ammunition", "ranged"}):
         return True
     for range_value in (action.range_long_ft, action.range_normal_ft, action.range_ft):
         if range_value is None:
