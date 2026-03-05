@@ -112,37 +112,30 @@ def test_world_state_lifecycle_persists_flags_and_wave_progression() -> None:
     assert loaded["replay_bundle_id"] == "world_replay_002"
 
 
-def test_world_state_objective_legacy_shape_is_upgraded_for_compatibility() -> None:
+def test_world_snapshot_rejects_legacy_shape_under_hard_cut_policy() -> None:
     with _memory_connection() as conn:
         db_module.create_campaign_state_tables(conn)
         save_campaign_snapshot(conn, campaign_id="campaign_beta", snapshot=_campaign_snapshot())
-
-        save_world_snapshot(
-            conn,
-            campaign_id="campaign_beta",
-            snapshot={
-                "flags": {"rift_sealed": True},
-                "objective_state": {
-                    "seal_the_rift": {"status": "complete", "progress": {"sigils": 3}},
+        with pytest.raises(ValueError, match="missing required keys|unexpected keys"):
+            save_world_snapshot(
+                conn,
+                campaign_id="campaign_beta",
+                snapshot={
+                    "flags": {"rift_sealed": True},
+                    "objective_state": {
+                        "seal_the_rift": {"status": "complete", "progress": {"sigils": 3}},
+                    },
+                    "map": {
+                        "region": "sunken_temple",
+                        "checkpoints": {"altar": "claimed"},
+                    },
+                    "encounter": {
+                        "encounter_id": "sunken_temple_finale",
+                        "wave_progression": {"current": 3, "remaining": [4, 5]},
+                    },
+                    "replay": {"bundle_id": "world_replay_legacy"},
                 },
-                "map": {
-                    "region": "sunken_temple",
-                    "checkpoints": {"altar": "claimed"},
-                },
-                "encounter": {
-                    "encounter_id": "sunken_temple_finale",
-                    "wave_progression": {"current": 3, "remaining": [4, 5]},
-                },
-                "replay": {"bundle_id": "world_replay_legacy"},
-            },
-        )
-        loaded = load_world_snapshot(conn, campaign_id="campaign_beta")
-
-    assert loaded["world_flags"] == {"rift_sealed": True}
-    assert loaded["objectives"]["seal_the_rift"]["status"] == "complete"
-    assert loaded["map_state"]["region"] == "sunken_temple"
-    assert loaded["encounter_state"]["wave_progression"]["current"] == 3
-    assert loaded["replay_bundle_id"] == "world_replay_legacy"
+            )
 
 
 def test_faction_state_round_trip_preserves_reputation_and_state() -> None:
@@ -165,11 +158,11 @@ def test_faction_state_round_trip_preserves_reputation_and_state() -> None:
             campaign_id="campaign_gamma",
             faction_id="iron_council",
             snapshot={
-                "reputations": {
+                "reputation": {
                     "party_alpha": 12,
                     "party_beta": -3,
                 },
-                "state": {
+                "faction_state": {
                     "disposition": "wary",
                     "influence": {"capital": 2, "frontier": 1},
                 },
@@ -185,7 +178,7 @@ def test_faction_state_round_trip_preserves_reputation_and_state() -> None:
             campaign_id="campaign_gamma",
             faction_id="iron_council",
             snapshot={
-                "state": {
+                "faction_state": {
                     "influence": {"capital": 2, "frontier": 1},
                     "disposition": "wary",
                 },
@@ -228,6 +221,33 @@ def test_faction_state_round_trip_preserves_reputation_and_state() -> None:
     }
     assert loaded["faction_state"]["disposition"] == "allied"
     assert loaded["faction_id"] == "iron_council"
+
+
+def test_faction_snapshot_rejects_legacy_alias_keys_under_hard_cut_policy() -> None:
+    with _memory_connection() as conn:
+        db_module.create_campaign_state_tables(conn)
+        save_campaign_snapshot(conn, campaign_id="campaign_hard_cut", snapshot=_campaign_snapshot())
+        save_world_snapshot(
+            conn,
+            campaign_id="campaign_hard_cut",
+            snapshot={
+                "world_flags": {"city_alert": True},
+                "objectives": {"hold_gate": {"status": "active"}},
+                "map_state": {"district": "wall"},
+                "encounter_state": {"current_wave": 1},
+            },
+        )
+
+        with pytest.raises(ValueError, match="missing required keys|unexpected keys"):
+            save_faction_snapshot(
+                conn,
+                campaign_id="campaign_hard_cut",
+                faction_id="emerald_circle",
+                snapshot={
+                    "reputations": {"party_alpha": 4},
+                    "state": {"disposition": "neutral"},
+                },
+            )
 
 
 def test_load_world_snapshot_rejects_corrupt_json_payload() -> None:
