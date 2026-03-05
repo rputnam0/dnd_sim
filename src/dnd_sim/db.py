@@ -6,6 +6,8 @@ from typing import Any
 
 CONTENT_RECORDS_TABLE = "content_records"
 CONTENT_CAPABILITIES_TABLE = "content_capabilities"
+CAMPAIGN_STATES_TABLE = "campaign_states"
+ENCOUNTER_STATES_TABLE = "encounter_states"
 LEGACY_IMPORTED_AT = "1970-01-01T00:00:00+00:00"
 
 CONTENT_RECORDS_SCHEMA_SQL = """
@@ -62,6 +64,68 @@ CONTENT_METADATA_INDEXES_SQL = (
     (
         "CREATE INDEX IF NOT EXISTS idx_content_capabilities_support_state "
         "ON content_capabilities(support_state)"
+    ),
+)
+
+CAMPAIGN_STATES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS campaign_states (
+    campaign_id TEXT PRIMARY KEY,
+    snapshot_version TEXT NOT NULL,
+    party_state_json TEXT NOT NULL,
+    resources_json TEXT NOT NULL,
+    active_effects_json TEXT NOT NULL,
+    initiative_context_json TEXT NOT NULL,
+    replay_bundle_id TEXT,
+    snapshot_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    CHECK (length(trim(campaign_id)) > 0),
+    CHECK (length(trim(snapshot_version)) > 0),
+    CHECK (length(trim(party_state_json)) > 0),
+    CHECK (length(trim(resources_json)) > 0),
+    CHECK (length(trim(active_effects_json)) > 0),
+    CHECK (length(trim(initiative_context_json)) > 0),
+    CHECK (length(trim(snapshot_hash)) > 0),
+    CHECK (length(trim(updated_at)) > 0)
+)
+"""
+
+ENCOUNTER_STATES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS encounter_states (
+    campaign_id TEXT NOT NULL,
+    encounter_id TEXT NOT NULL,
+    snapshot_version TEXT NOT NULL,
+    party_state_json TEXT NOT NULL,
+    resources_json TEXT NOT NULL,
+    active_effects_json TEXT NOT NULL,
+    initiative_context_json TEXT NOT NULL,
+    replay_bundle_id TEXT,
+    snapshot_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (campaign_id, encounter_id),
+    FOREIGN KEY (campaign_id) REFERENCES campaign_states(campaign_id) ON DELETE CASCADE,
+    CHECK (length(trim(campaign_id)) > 0),
+    CHECK (length(trim(encounter_id)) > 0),
+    CHECK (length(trim(snapshot_version)) > 0),
+    CHECK (length(trim(party_state_json)) > 0),
+    CHECK (length(trim(resources_json)) > 0),
+    CHECK (length(trim(active_effects_json)) > 0),
+    CHECK (length(trim(initiative_context_json)) > 0),
+    CHECK (length(trim(snapshot_hash)) > 0),
+    CHECK (length(trim(updated_at)) > 0)
+)
+"""
+
+CAMPAIGN_STATE_INDEXES_SQL = (
+    "CREATE INDEX IF NOT EXISTS idx_campaign_states_updated_at ON campaign_states(updated_at)",
+    (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_states_replay_bundle_id "
+        "ON campaign_states(replay_bundle_id)"
+    ),
+    "CREATE INDEX IF NOT EXISTS idx_encounter_states_campaign_id ON encounter_states(campaign_id)",
+    "CREATE INDEX IF NOT EXISTS idx_encounter_states_updated_at ON encounter_states(updated_at)",
+    (
+        "CREATE INDEX IF NOT EXISTS idx_encounter_states_replay_bundle_id "
+        "ON encounter_states(replay_bundle_id)"
     ),
 )
 
@@ -199,6 +263,14 @@ def create_content_metadata_tables(conn: sqlite3.Connection) -> None:
     _migrate_content_record_lineage_columns(conn)
     conn.execute(CONTENT_CAPABILITIES_SCHEMA_SQL)
     for statement in CONTENT_METADATA_INDEXES_SQL:
+        conn.execute(statement)
+
+
+def create_campaign_state_tables(conn: sqlite3.Connection) -> None:
+    """Create campaign and encounter state persistence tables."""
+    conn.execute(CAMPAIGN_STATES_SCHEMA_SQL)
+    conn.execute(ENCOUNTER_STATES_SCHEMA_SQL)
+    for statement in CAMPAIGN_STATE_INDEXES_SQL:
         conn.execute(statement)
 
 
@@ -389,6 +461,7 @@ def init_db() -> None:
             """)
 
         create_content_metadata_tables(conn)
+        create_campaign_state_tables(conn)
         conn.commit()
 
 
