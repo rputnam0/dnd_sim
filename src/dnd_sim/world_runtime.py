@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -19,6 +20,8 @@ from dnd_sim.world_hazards import (
     resolve_environmental_exposure,
     serialize_world_hazard_state as _serialize_world_hazard_state,
 )
+
+logger = logging.getLogger(__name__)
 
 MINUTES_PER_DAY = 24 * 60
 TURN_PHASES = (

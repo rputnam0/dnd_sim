@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 import math
 import random
 import re
@@ -145,6 +146,8 @@ from dnd_sim.reporting_runtime import (
     build_simulation_summary as _reporting_build_simulation_summary,
 )
 from dnd_sim.telemetry import build_event_envelope
+
+logger = logging.getLogger(__name__)
 
 
 _CONTROL_BLOCKING_CONDITIONS = {"incapacitated", "stunned", "unconscious", "paralyzed"}

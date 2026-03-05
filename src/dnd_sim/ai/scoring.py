@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import combinations
+import logging
 from typing import Any, Iterable
 
 from dnd_sim.spatial import (
@@ -14,6 +15,8 @@ from dnd_sim.spatial import (
     path_prefix_for_movement,
 )
 from dnd_sim.strategy_api import ActorView, BattleStateView
+
+logger = logging.getLogger(__name__)
 
 _EXPLICIT_TARGET_MODES = {
     "single_enemy",
