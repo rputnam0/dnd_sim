@@ -260,6 +260,10 @@ def test_scoring_input_snapshot_includes_normalized_dimensions() -> None:
         "applied_condition_count": 1,
         "forced_movement_count": 1,
         "control_intensity": 2.0,
+        "concentration_break_score": 0.0,
+        "condition_application_value": 1.25,
+        "enemy_action_denial_score": 0.25,
+        "control_value_score": 3.5,
     }
     assert control_primary["objective"] == {
         "objective_tags": ["objective:altar"],
