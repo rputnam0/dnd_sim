@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from dnd_sim.ai.scoring import candidate_snapshots, enumerate_legal_action_candidates
 from dnd_sim.spatial import AABB
 from dnd_sim.strategy_api import ActorView, BattleStateView
@@ -91,6 +93,7 @@ def test_route_quality_penalizes_detours_and_difficult_terrain() -> None:
 
     clear_state = _single_action_state(actor=actor, others=[enemy], action=action)
     clear_snapshot = candidate_snapshots(enumerate_legal_action_candidates(actor, clear_state))[0]
+    assert clear_snapshot["spatial"]["route_quality_score"] == pytest.approx(1.0)
 
     detour_state = _single_action_state(
         actor=actor,
