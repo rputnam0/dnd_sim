@@ -57,7 +57,9 @@ Required coverage:
 - event serialization tests,
 - trace completeness tests,
 - state-delta tests,
+- resource-delta event tests,
 - RNG audit determinism tests,
+- invariant-violation code tests,
 - replay round-trip tests,
 - replay diff tests,
 - golden trace gate tests.
