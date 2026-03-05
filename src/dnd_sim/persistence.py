@@ -11,6 +11,8 @@ from dnd_sim.world_runtime import (
 
 
 def _required_text(value: Any, *, field_name: str) -> str:
+    if value is None:
+        raise ValueError(f"{field_name} must be non-empty")
     normalized = str(value).strip()
     if not normalized:
         raise ValueError(f"{field_name} must be non-empty")
