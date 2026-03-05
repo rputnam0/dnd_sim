@@ -54,8 +54,41 @@ def test_strategy_api_validation_routes_through_action_legality(monkeypatch) -> 
         called["strategy"] = strategy
 
     monkeypatch.setattr(action_legality, "validate_strategy_instance", fake_validate)
-    strategy = object()
+
+    class ValidStrategy:
+        def declare_turn(self, actor, state):
+            return TurnDeclaration()
+
+        def on_round_start(self, state):
+            return None
+
+    strategy = ValidStrategy()
     strategy_api.validate_strategy_instance(strategy)
+
+    assert called["strategy"] is strategy
+
+
+def test_strategy_api_validation_rejects_legacy_methods_after_delegation(monkeypatch) -> None:
+    called: dict[str, object] = {}
+
+    def fake_validate(strategy: object) -> None:
+        called["strategy"] = strategy
+
+    monkeypatch.setattr(action_legality, "validate_strategy_instance", fake_validate)
+
+    class LegacyMethodStrategy:
+        def declare_turn(self, actor, state):
+            return TurnDeclaration()
+
+        def choose_action(self, actor, state):
+            return None
+
+        def on_round_start(self, state):
+            return None
+
+    strategy = LegacyMethodStrategy()
+    with pytest.raises(ValueError, match="removed legacy methods: choose_action"):
+        strategy_api.validate_strategy_instance(strategy)
 
     assert called["strategy"] is strategy
 

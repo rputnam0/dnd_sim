@@ -267,6 +267,22 @@ def test_validate_strategy_instance_rejects_removed_legacy_methods() -> None:
         validate_strategy_instance(LegacyMethodsNotAllowedStrategy())
 
 
+def test_turn_loop_does_not_call_legacy_methods_when_declare_turn_is_present(
+    tmp_path: Path,
+) -> None:
+    scenario_path = _setup_env(tmp_path)
+    loaded = load_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+
+    registry = {
+        "party_strategy": LegacyMethodsNotAllowedStrategy(),
+        "enemy_strategy": LegacyBasicStrategy(),
+    }
+    result = run_simulation(loaded, db, {}, registry, trials=1, seed=31, run_id="legacy_ignored")
+    assert len(result.trial_results) == 1
+    assert result.trial_results[0].damage_dealt.get("hero", 0) == 0
+
+
 def test_hidden_action_surge_is_removed_for_legacy_and_explicit_turn_plans(
     tmp_path: Path,
 ) -> None:
