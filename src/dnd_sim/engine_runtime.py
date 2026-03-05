@@ -385,7 +385,9 @@ def run_simulation(
                     if actor.dead or actor.hp <= 0:
                         _resolve_turn_end(actor, turn_token)
                         continue
-                    if _party_defeated(actors) or _enemies_defeated(actors):
+                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
+                        actors, enemy_defeat_rule
+                    ):
                         break
                     if not _can_act(actor):
                         _resolve_turn_end(actor, turn_token)
