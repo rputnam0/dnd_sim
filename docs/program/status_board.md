@@ -27,7 +27,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | CAP | Capability Manifest | in_progress | 5C-capability-manifest | `CAP-03`, `CAP-04`, and `CAP-05` are `in_progress` in `backlog.csv`; remaining CAP tasks are `not_started`. |
 | OBS | Replay, Logging, and Observability | in_progress | 5D-observability | `OBS-02` is `in_progress` in `backlog.csv`; remaining OBS tasks are `not_started`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
-| AI | Tactical AI Hardening | pr_open | 5F-ai-hardening | `AI-01`, `AI-02`, and `AI-04` are `pr_open`, and remaining AI tasks are `not_started` in `backlog.csv`. |
+| AI | Tactical AI Hardening | in_progress | 5F-ai-hardening | `AI-01`, `AI-02`, and `AI-04` are `pr_open`, while `AI-03` is `in_progress` in `backlog.csv`; remaining AI tasks are `not_started`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
@@ -37,6 +37,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
 | AI-01 | `codex/feat/ai-01-normalize-candidate-action-enumeration-and-scoring` | ai_core | pr_open | Introduces `src/dnd_sim/ai/scoring.py` candidate enumeration with normalized scoring inputs and routes optimal strategy selection through legal candidate snapshots. |
+| AI-03 | `codex/feat/ai-03-implement-concentration-breaking-control-value-and` | ai_control | in_progress | Implementing concentration-break, condition-application, and enemy action-denial scoring components in the AI control heuristic layer. |
 | AI-04 | `codex/feat/ai-04-implement-retreat-survival-objective-race-and-focu` | ai_objective | pr_open | Retreat/survival, objective-race urgency, ally-rescue valuation, and focus-fire tradeoff scoring are implemented and under review. |
 | AI-02 | `codex/feat/ai-02-implement-hazard-geometry-cover-and-line-of-effect` | ai_spatial | pr_open | Implements hazard/geometry/cover/line-of-effect candidate scoring in `src/dnd_sim/ai/scoring.py` with path risk support in `src/dnd_sim/spatial.py` and dedicated tests. |
 
@@ -53,4 +54,5 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
 - No active DOC blockers remain; AI-01, AI-02, and AI-04 are in PR review while remaining queues are unchanged.
+- `AI-03` is active and depends on `AI-01` and `ARC-05` per `backlog.csv`.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.

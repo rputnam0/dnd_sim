@@ -27,6 +27,23 @@ _EXPLICIT_TARGET_MODES = {
 _AUTO_TARGET_MODES = {"all_enemies", "all_allies", "all_creatures"}
 _SUPPORTED_TARGET_MODES = _EXPLICIT_TARGET_MODES | _AUTO_TARGET_MODES | {"self"}
 
+_CONTROL_CONDITION_WEIGHTS: dict[str, float] = {
+    "stunned": 2.0,
+    "paralyzed": 2.0,
+    "incapacitated": 1.75,
+    "unconscious": 2.5,
+    "petrified": 2.5,
+    "restrained": 1.25,
+    "blinded": 1.25,
+    "frightened": 1.0,
+    "charmed": 1.0,
+    "prone": 0.75,
+    "grappled": 0.75,
+}
+_ACTION_DENIAL_CONDITIONS = {"stunned", "paralyzed", "incapacitated", "unconscious", "petrified"}
+_REACTION_DENIAL_CONDITIONS = {"no_reactions", "open_hand_no_reactions", "reaction_locked"}
+_DAMAGE_EFFECT_TYPES = {"damage", "damage_on_save", "damage_over_time"}
+
 
 @dataclass(frozen=True, slots=True)
 class RangeScoringInputs:
@@ -58,6 +75,10 @@ class ControlScoringInputs:
     applied_condition_count: int
     forced_movement_count: int
     control_intensity: float
+    concentration_break_score: float
+    condition_application_value: float
+    enemy_action_denial_score: float
+    control_value_score: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -537,20 +558,109 @@ def _resource_inputs(action: dict[str, Any]) -> ResourceScoringInputs:
     )
 
 
-def _control_inputs(action: dict[str, Any]) -> ControlScoringInputs:
+def _enemy_target_views(
+    actor: ActorView, state: BattleStateView, *, target_ids: tuple[str, ...]
+) -> list[ActorView]:
+    enemies: list[ActorView] = []
+    for target_id in target_ids:
+        target = state.actors.get(target_id)
+        if target is None or target.hp <= 0:
+            continue
+        if target.team == actor.team:
+            continue
+        enemies.append(target)
+    return enemies
+
+
+def _iter_applied_conditions(payload: dict[str, Any]) -> Iterable[str]:
+    raw = payload.get("condition")
+    if isinstance(raw, (list, tuple, set)):
+        for entry in raw:
+            normalized = str(entry).strip().lower()
+            if normalized:
+                yield normalized
+        return
+    normalized = str(raw).strip().lower()
+    if normalized:
+        yield normalized
+
+
+def _action_can_force_concentration_check(
+    action: dict[str, Any], effect_payloads: list[dict[str, Any]]
+) -> bool:
+    if str(action.get("damage", "")).strip():
+        return True
+    action_type = str(action.get("action_type", "")).strip().lower()
+    if action_type in {"attack", "save"} and bool(action.get("half_on_save", False)):
+        return True
+    return any(
+        str(payload.get("effect_type", "")).strip().lower() in _DAMAGE_EFFECT_TYPES
+        for payload in effect_payloads
+    )
+
+
+def _control_inputs(
+    actor: ActorView,
+    state: BattleStateView,
+    *,
+    action: dict[str, Any],
+    target_ids: tuple[str, ...],
+) -> ControlScoringInputs:
+    effect_payloads = list(_iter_effect_payloads(action))
     applied_condition_count = 0
     forced_movement_count = 0
-    for payload in _iter_effect_payloads(action):
+    applied_conditions: list[str] = []
+    for payload in effect_payloads:
         effect_type = str(payload.get("effect_type", "")).strip().lower()
         if effect_type == "apply_condition":
             applied_condition_count += 1
+            applied_conditions.extend(_iter_applied_conditions(payload))
         if effect_type == "forced_movement":
             forced_movement_count += 1
+
+    enemy_targets = _enemy_target_views(actor, state, target_ids=target_ids)
+    enemy_target_count = len(enemy_targets)
+
+    condition_application_value = 0.0
+    enemy_action_denial_score = 0.0
+    if enemy_target_count > 0:
+        for condition_name in applied_conditions:
+            weight = _CONTROL_CONDITION_WEIGHTS.get(condition_name, 0.5)
+            condition_application_value += weight * float(enemy_target_count)
+            if condition_name in _ACTION_DENIAL_CONDITIONS:
+                enemy_action_denial_score += 2.0 * float(enemy_target_count)
+            elif condition_name in _REACTION_DENIAL_CONDITIONS:
+                enemy_action_denial_score += 1.0 * float(enemy_target_count)
+        if forced_movement_count > 0:
+            enemy_action_denial_score += 0.25 * float(forced_movement_count * enemy_target_count)
+
+    concentration_break_score = 0.0
+    if enemy_target_count > 0:
+        concentrating_enemy_count = sum(1 for target in enemy_targets if target.concentrating)
+        if concentrating_enemy_count > 0:
+            base_break_score = 1.0
+            if _action_can_force_concentration_check(action, effect_payloads):
+                base_break_score += 0.5
+            tags = _normalized_action_tags(action)
+            if "concentration_break" in tags or "break_concentration" in tags:
+                base_break_score += 0.5
+            concentration_break_score = base_break_score * float(concentrating_enemy_count)
+
     control_intensity = float(applied_condition_count + forced_movement_count)
+    control_value_score = (
+        control_intensity
+        + concentration_break_score
+        + condition_application_value
+        + enemy_action_denial_score
+    )
     return ControlScoringInputs(
         applied_condition_count=applied_condition_count,
         forced_movement_count=forced_movement_count,
         control_intensity=control_intensity,
+        concentration_break_score=concentration_break_score,
+        condition_application_value=condition_application_value,
+        enemy_action_denial_score=enemy_action_denial_score,
+        control_value_score=control_value_score,
     )
 
 
@@ -975,7 +1085,12 @@ def _build_scoring_inputs(
             difficult_terrain_positions=difficult_terrain_positions,
         ),
         concentration=_concentration_inputs(actor, action=action),
-        control=_control_inputs(action),
+        control=_control_inputs(
+            actor,
+            state,
+            action=action,
+            target_ids=target_ids,
+        ),
         objective=ObjectiveScoringInputs(
             objective_tags=_objective_tags(action),
             objective_score=objective_score,
@@ -1081,6 +1196,10 @@ def candidate_snapshots(candidates: list[ActionCandidate]) -> list[dict[str, Any
                     "applied_condition_count": row.scoring_inputs.control.applied_condition_count,
                     "forced_movement_count": row.scoring_inputs.control.forced_movement_count,
                     "control_intensity": row.scoring_inputs.control.control_intensity,
+                    "concentration_break_score": row.scoring_inputs.control.concentration_break_score,
+                    "condition_application_value": row.scoring_inputs.control.condition_application_value,
+                    "enemy_action_denial_score": row.scoring_inputs.control.enemy_action_denial_score,
+                    "control_value_score": row.scoring_inputs.control.control_value_score,
                 },
                 "objective": {
                     "objective_tags": list(row.scoring_inputs.objective.objective_tags),
