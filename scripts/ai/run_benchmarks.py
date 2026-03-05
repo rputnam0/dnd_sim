@@ -252,7 +252,12 @@ def _objective_bonus_for_action(action: dict[str, Any], state: BattleStateView) 
 def _candidate_quality_bonus(snapshot: dict[str, Any] | None) -> float:
     if snapshot is None:
         return 0.0
-    inputs = snapshot.get("scoring_inputs", {})
+    raw_inputs = snapshot.get("scoring_inputs")
+    if isinstance(raw_inputs, dict):
+        inputs = raw_inputs
+    else:
+        # candidate_snapshots expose scoring fields at the snapshot top level.
+        inputs = snapshot
     objective_tradeoff = inputs.get("objective_tradeoff", {})
     timing = inputs.get("timing", {})
     spatial = inputs.get("spatial", {})
