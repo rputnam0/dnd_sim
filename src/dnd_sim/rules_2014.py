@@ -568,6 +568,100 @@ def attack_roll(
     return AttackRollResult(hit=hit, crit=crit, natural_roll=natural_roll, total=total)
 
 
+def _spend_luck_point_if_available(
+    actor: ActorRuntimeState,
+    *,
+    resources_spent: dict[str, dict[str, int]],
+) -> bool:
+    if not _has_trait(actor, "lucky"):
+        return False
+    current_points = int(actor.resources.get("luck_points", 0))
+    if current_points <= 0:
+        return False
+    actor.resources["luck_points"] = current_points - 1
+    actor_spend = resources_spent.setdefault(actor.actor_id, {})
+    actor_spend["luck_points"] = actor_spend.get("luck_points", 0) + 1
+    return True
+
+
+def _attack_roll_from_natural(
+    *,
+    natural_roll: int,
+    to_hit_modifier: int,
+    target_ac: int,
+) -> AttackRollResult:
+    crit = natural_roll == 20
+    total = natural_roll + to_hit_modifier
+    hit = crit or (natural_roll != 1 and total >= target_ac)
+    return AttackRollResult(hit=hit, crit=crit, natural_roll=natural_roll, total=total)
+
+
+def apply_lucky_attacker_reroll(
+    *,
+    rng: random.Random,
+    attacker: ActorRuntimeState,
+    roll: AttackRollResult,
+    to_hit_modifier: int,
+    target_ac: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    """Applies Lucky to a failed attack roll made by the actor."""
+    if roll.hit:
+        return roll
+    if not _spend_luck_point_if_available(attacker, resources_spent=resources_spent):
+        return roll
+
+    lucky_natural = rng.randint(1, 20)
+    chosen_natural = max(int(roll.natural_roll), lucky_natural)
+    return _attack_roll_from_natural(
+        natural_roll=chosen_natural,
+        to_hit_modifier=to_hit_modifier,
+        target_ac=target_ac,
+    )
+
+
+def apply_lucky_defender_reroll(
+    *,
+    rng: random.Random,
+    defender: ActorRuntimeState,
+    roll: AttackRollResult,
+    to_hit_modifier: int,
+    target_ac: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> AttackRollResult:
+    """Applies Lucky to an incoming attack roll against the actor."""
+    if not roll.hit:
+        return roll
+    if not _spend_luck_point_if_available(defender, resources_spent=resources_spent):
+        return roll
+
+    lucky_natural = rng.randint(1, 20)
+    chosen_natural = min(int(roll.natural_roll), lucky_natural)
+    return _attack_roll_from_natural(
+        natural_roll=chosen_natural,
+        to_hit_modifier=to_hit_modifier,
+        target_ac=target_ac,
+    )
+
+
+def apply_lucky_save_reroll(
+    *,
+    rng: random.Random,
+    target: ActorRuntimeState,
+    save_roll: int,
+    save_mod: int,
+    dc: int,
+    resources_spent: dict[str, dict[str, int]],
+) -> int:
+    """Applies Lucky to a failed saving throw roll and returns the chosen d20 roll."""
+    if int(save_roll) + int(save_mod) >= int(dc):
+        return int(save_roll)
+    if not _spend_luck_point_if_available(target, resources_spent=resources_spent):
+        return int(save_roll)
+    lucky_roll = rng.randint(1, 20)
+    return max(int(save_roll), lucky_roll)
+
+
 def run_contested_check(
     rng: random.Random,
     attacker_mod: int,
