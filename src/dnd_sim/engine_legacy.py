@@ -9445,6 +9445,10 @@ def _apply_effect(
             )
         return
 
+    # Spell metadata markers: runtime resolves attack/save/area semantics from the action profile.
+    if effect_type in {"aoe", "ranged_spell_attack", "melee_spell_attack", "save"}:
+        return
+
     # note is schema-valid but non-mechanical in v1/v2.
     return
 

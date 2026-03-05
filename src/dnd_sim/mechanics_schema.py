@@ -32,6 +32,10 @@ KNOWN_EFFECT_TYPES = {
     "command_allied",
     "mount",
     "dismount",
+    "aoe",
+    "ranged_spell_attack",
+    "melee_spell_attack",
+    "save",
 }
 
 EXECUTABLE_EFFECT_TYPES = {
@@ -58,6 +62,10 @@ EXECUTABLE_EFFECT_TYPES = {
     "command_allied",
     "mount",
     "dismount",
+    "aoe",
+    "ranged_spell_attack",
+    "melee_spell_attack",
+    "save",
 }
 
 _REQUIRED_FIELDS: dict[str, set[str]] = {
