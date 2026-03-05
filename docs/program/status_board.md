@@ -23,7 +23,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Track | Scope | Status | Milestone | Notes |
 |---|---|---|---|---|
 | DOC | Documentation Control | merged | 5A-doc-control | `DOC-01` through `DOC-06` are `merged` in `backlog.csv`; Documentation Control track is complete. |
-| ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
+| ARC | Runtime Decomposition | in_progress | 5B-runtime-decomposition | `ARC-01` is `in_progress`; remaining ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
