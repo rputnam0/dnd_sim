@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 MANIFEST_VERSION = "1.0"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_MONSTERS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "monsters"
+MONSTER_POLICY_PATH = REPO_ROOT / "db" / "rules" / "2014" / "monster_capability_policy.json"
 CAPABILITY_STATE_KEYS = (
     "cataloged",
     "schema_valid",
@@ -16,6 +21,7 @@ CAPABILITY_STATE_KEYS = (
     "blocked",
     "unsupported_reason",
 )
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
 class CapabilityStates(BaseModel):
@@ -103,6 +109,35 @@ class CapabilityManifest(BaseModel):
         return self
 
 
+class MonsterCapabilityPolicy(BaseModel):
+    """Rules for mapping monster payload entries to capability support states."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    supported_action_types: set[str]
+    supported_action_costs: set[str]
+    unsupported_reason_codes: set[str] = Field(default_factory=set)
+
+    @field_validator(
+        "supported_action_types",
+        "supported_action_costs",
+        "unsupported_reason_codes",
+        mode="before",
+    )
+    @classmethod
+    def normalize_string_sets(cls, value: Any) -> set[str]:
+        if value is None:
+            return set()
+        if not isinstance(value, (list, tuple, set)):
+            raise ValueError("policy entries must be an array of strings")
+        normalized: set[str] = set()
+        for item in value:
+            text = str(item).strip().lower()
+            if text:
+                normalized.add(text)
+        return normalized
+
+
 def build_manifest(
     *,
     records: list[CapabilityRecord | dict[str, Any]],
@@ -116,6 +151,271 @@ def build_manifest(
         manifest_version=manifest_version,
         generated_at=generated_at,
         records=normalized_records,
+    )
+
+
+@lru_cache(maxsize=1)
+def load_monster_capability_policy(path: Path | None = None) -> MonsterCapabilityPolicy:
+    source = (path or MONSTER_POLICY_PATH).resolve()
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    return MonsterCapabilityPolicy.model_validate(payload)
+
+
+def _slug_token(value: Any, fallback: str) -> str:
+    text = str(value).strip().lower()
+    text = _SLUG_RE.sub("_", text).strip("_")
+    return text or fallback
+
+
+def _supported_states() -> CapabilityStates:
+    return CapabilityStates(
+        cataloged=True,
+        schema_valid=True,
+        executable=True,
+        tested=True,
+        blocked=False,
+        unsupported_reason=None,
+    )
+
+
+def _blocked_states(*, reason: str, schema_valid: bool) -> CapabilityStates:
+    return CapabilityStates(
+        cataloged=True,
+        schema_valid=schema_valid,
+        executable=False,
+        tested=False,
+        blocked=True,
+        unsupported_reason=reason,
+    )
+
+
+def _monster_identifier(payload: dict[str, Any], *, index: int) -> str:
+    identity = payload.get("identity")
+    if isinstance(identity, dict):
+        candidate = identity.get("enemy_id") or identity.get("name")
+        if candidate:
+            return _slug_token(candidate, f"monster_{index}")
+
+    if payload.get("name"):
+        return _slug_token(payload.get("name"), f"monster_{index}")
+    return f"monster_{index}"
+
+
+def load_monster_payloads(monsters_dir: Path = DEFAULT_MONSTERS_DIR) -> list[dict[str, Any]]:
+    payloads: list[dict[str, Any]] = []
+    for path in sorted(monsters_dir.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(payload, dict):
+            payloads.append(payload)
+    return payloads
+
+
+def _action_entry_states(
+    *,
+    action_payload: dict[str, Any],
+    policy: MonsterCapabilityPolicy,
+    default_action_cost: str,
+) -> CapabilityStates:
+    action_name = str(action_payload.get("name", "")).strip()
+    if not action_name:
+        return _blocked_states(reason="missing_action_name", schema_valid=False)
+
+    action_type = str(action_payload.get("action_type", "")).strip().lower()
+    if not action_type:
+        return _blocked_states(reason="missing_action_type", schema_valid=False)
+    if action_type not in policy.supported_action_types:
+        return _blocked_states(reason="unsupported_action_type", schema_valid=True)
+
+    action_cost = str(action_payload.get("action_cost", default_action_cost)).strip().lower()
+    if not action_cost:
+        return _blocked_states(reason="missing_action_cost", schema_valid=False)
+    if action_cost not in policy.supported_action_costs:
+        return _blocked_states(reason="unsupported_action_cost", schema_valid=True)
+
+    return _supported_states()
+
+
+def _monster_base_states(payload: dict[str, Any]) -> CapabilityStates:
+    identity = payload.get("identity")
+    stat_block = payload.get("stat_block")
+    if not isinstance(identity, dict):
+        return _blocked_states(reason="missing_monster_identity", schema_valid=False)
+    if not str(identity.get("enemy_id", "")).strip():
+        return _blocked_states(reason="missing_monster_identity", schema_valid=False)
+    if not isinstance(stat_block, dict):
+        return _blocked_states(reason="missing_monster_stat_block", schema_valid=False)
+    return _supported_states()
+
+
+def _add_action_family_records(
+    *,
+    records: list[CapabilityRecord],
+    monster_id: str,
+    family: str,
+    entries: list[Any],
+    policy: MonsterCapabilityPolicy,
+    default_action_cost: str,
+) -> None:
+    family_slug = family.split("monster_", 1)[-1]
+    for index, entry in enumerate(entries, start=1):
+        fallback_name = f"{family_slug}_{index}"
+        if isinstance(entry, dict):
+            action_name = str(entry.get("name", "")).strip()
+            token = _slug_token(action_name, fallback_name)
+            states = _action_entry_states(
+                action_payload=entry,
+                policy=policy,
+                default_action_cost=default_action_cost,
+            )
+            has_recharge = "recharge" in entry
+            recharge_text = str(entry.get("recharge", "")).strip()
+        else:
+            token = fallback_name
+            states = _blocked_states(reason="malformed_action_payload", schema_valid=False)
+            has_recharge = False
+            recharge_text = ""
+
+        if states.blocked and states.unsupported_reason not in policy.unsupported_reason_codes:
+            states = _blocked_states(reason="unsupported_action_payload", schema_valid=False)
+
+        records.append(
+            CapabilityRecord(
+                content_id=f"{family}:{monster_id}:{token}:{index}",
+                content_type=family,
+                states=states,
+            )
+        )
+
+        if not has_recharge:
+            continue
+        if recharge_text:
+            recharge_states = states if not states.blocked else states
+        else:
+            recharge_states = _blocked_states(reason="malformed_recharge_entry", schema_valid=False)
+        if (
+            recharge_states.blocked
+            and recharge_states.unsupported_reason not in policy.unsupported_reason_codes
+        ):
+            recharge_states = _blocked_states(
+                reason="unsupported_action_payload", schema_valid=False
+            )
+        records.append(
+            CapabilityRecord(
+                content_id=f"monster_recharge:{monster_id}:{token}:{index}",
+                content_type="monster_recharge",
+                states=recharge_states,
+            )
+        )
+
+
+def _add_innate_spellcasting_records(
+    *,
+    records: list[CapabilityRecord],
+    monster_id: str,
+    entries: list[Any],
+    policy: MonsterCapabilityPolicy,
+) -> None:
+    for index, entry in enumerate(entries, start=1):
+        fallback = f"innate_spell_{index}"
+        if isinstance(entry, dict):
+            spell_name = str(entry.get("spell", "")).strip()
+            token = _slug_token(spell_name, fallback)
+            if spell_name:
+                states = _supported_states()
+            else:
+                states = _blocked_states(reason="missing_innate_spell_name", schema_valid=False)
+        else:
+            token = fallback
+            states = _blocked_states(
+                reason="malformed_innate_spellcasting_entry",
+                schema_valid=False,
+            )
+
+        if states.blocked and states.unsupported_reason not in policy.unsupported_reason_codes:
+            states = _blocked_states(reason="unsupported_action_payload", schema_valid=False)
+        records.append(
+            CapabilityRecord(
+                content_id=f"monster_innate_spellcasting:{monster_id}:{token}:{index}",
+                content_type="monster_innate_spellcasting",
+                states=states,
+            )
+        )
+
+
+def build_monster_capability_records(
+    *,
+    monster_payloads: list[dict[str, Any]],
+    policy: MonsterCapabilityPolicy | None = None,
+) -> list[CapabilityRecord]:
+    active_policy = policy or load_monster_capability_policy()
+    records: list[CapabilityRecord] = []
+
+    for index, payload in enumerate(monster_payloads, start=1):
+        monster_id = _monster_identifier(payload, index=index)
+        records.append(
+            CapabilityRecord(
+                content_id=f"monster:{monster_id}",
+                content_type="monster",
+                states=_monster_base_states(payload),
+            )
+        )
+
+        _add_action_family_records(
+            records=records,
+            monster_id=monster_id,
+            family="monster_action",
+            entries=list(payload.get("actions", [])),
+            policy=active_policy,
+            default_action_cost="action",
+        )
+        _add_action_family_records(
+            records=records,
+            monster_id=monster_id,
+            family="monster_reaction",
+            entries=list(payload.get("reactions", [])),
+            policy=active_policy,
+            default_action_cost="reaction",
+        )
+        _add_action_family_records(
+            records=records,
+            monster_id=monster_id,
+            family="monster_legendary_action",
+            entries=list(payload.get("legendary_actions", [])),
+            policy=active_policy,
+            default_action_cost="legendary",
+        )
+        _add_action_family_records(
+            records=records,
+            monster_id=monster_id,
+            family="monster_lair_action",
+            entries=list(payload.get("lair_actions", [])),
+            policy=active_policy,
+            default_action_cost="lair",
+        )
+        _add_innate_spellcasting_records(
+            records=records,
+            monster_id=monster_id,
+            entries=list(payload.get("innate_spellcasting", [])),
+            policy=active_policy,
+        )
+    return records
+
+
+def build_monster_capability_manifest(
+    *,
+    monster_payloads: list[dict[str, Any]] | None = None,
+    monsters_dir: Path = DEFAULT_MONSTERS_DIR,
+    manifest_version: str = MANIFEST_VERSION,
+    generated_at: str | None = None,
+) -> CapabilityManifest:
+    payloads = (
+        monster_payloads if monster_payloads is not None else load_monster_payloads(monsters_dir)
+    )
+    records = build_monster_capability_records(monster_payloads=payloads)
+    return build_manifest(
+        records=records,
+        manifest_version=manifest_version,
+        generated_at=generated_at,
     )
 
 
@@ -164,13 +464,28 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional generated_at string for empty-manifest emission.",
     )
+    parser.add_argument(
+        "--monster-dir",
+        type=Path,
+        default=None,
+        help="Optional directory of canonical monster payload JSON files for CAP-04 emission.",
+    )
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
 
-    if args.input is not None:
+    if args.input is not None and args.monster_dir is not None:
+        raise SystemExit("--input and --monster-dir are mutually exclusive")
+
+    if args.monster_dir is not None:
+        manifest = build_monster_capability_manifest(
+            monsters_dir=args.monster_dir,
+            manifest_version=args.manifest_version,
+            generated_at=args.generated_at,
+        )
+    elif args.input is not None:
         manifest = read_manifest(args.input)
     else:
         manifest = build_manifest(
