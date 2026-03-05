@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from dnd_sim.ai.scoring import candidate_snapshots, enumerate_legal_action_candidates
 from dnd_sim.rules_2014 import parse_damage_expression
 from dnd_sim.spatial import check_cover, distance_chebyshev, has_clear_path, move_towards
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
@@ -766,6 +767,23 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
         lookahead_discount = float(state.metadata.get("lookahead_discount", 1.0))
         tactical_branches = state.metadata.get("tactical_branches", {})
         branch_map = tactical_branches if isinstance(tactical_branches, dict) else {}
+        normalized_candidates = enumerate_legal_action_candidates(actor, state)
+        if not normalized_candidates:
+            return None, {"reason": "no_viable_actions"}
+        normalized_snapshots = candidate_snapshots(normalized_candidates)
+        legal_action_names = {row.action_name for row in normalized_candidates}
+        legal_enemy_target_ids_by_action: dict[str, set[str]] = {}
+        normalized_inputs_by_action: dict[str, list[dict[str, Any]]] = {}
+        for index, row in enumerate(normalized_candidates):
+            normalized_inputs_by_action.setdefault(row.action_name, []).append(
+                normalized_snapshots[index]
+            )
+            targets = legal_enemy_target_ids_by_action.setdefault(row.action_name, set())
+            for target_id in row.target_ids:
+                target_view = state.actors.get(target_id)
+                if target_view is None or target_view.hp <= 0 or target_view.team == actor.team:
+                    continue
+                targets.add(target_id)
 
         def _best_follow_up_score(
             resources_after: dict[str, int],
@@ -850,11 +868,14 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
         candidates: list[dict[str, Any]] = []
         for action in catalog:
             action_name = str(action.get("name", ""))
+            if action_name not in legal_action_names:
+                continue
             used = int(action.get("used_count", 0))
             if not _action_viable(action, resources=actor.resources, used_count=used):
                 continue
 
-            reachable = [target for target in enemies if _can_reach_target(actor, action, target)]
+            reachable_ids = legal_enemy_target_ids_by_action.get(action_name, set())
+            reachable = [target for target in enemies if target.actor_id in reachable_ids]
             base_score = 0.0
             if reachable:
                 base_score = max(
@@ -887,6 +908,7 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
                     "lookahead_bonus": lookahead_bonus,
                     "total_score": total,
                     "cost": sum(int(v) for v in (action.get("resource_cost") or {}).values()),
+                    "normalized_candidates": normalized_inputs_by_action.get(action_name, [])[:3],
                 }
             )
 
@@ -905,6 +927,7 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             "mode": evaluation_mode,
             "selected": best,
             "top_candidates": ranked[:3],
+            "candidate_count": len(normalized_candidates),
             "enabled_policies": enabled_policies,
         }
 
