@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 MANIFEST_VERSION = "1.0"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MONSTERS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "monsters"
+DEFAULT_FEATURES_DIR = REPO_ROOT / "db" / "rules" / "2014" / "traits"
 MONSTER_POLICY_PATH = REPO_ROOT / "db" / "rules" / "2014" / "monster_capability_policy.json"
 CAPABILITY_STATE_KEYS = (
     "cataloged",
@@ -22,6 +23,7 @@ CAPABILITY_STATE_KEYS = (
     "unsupported_reason",
 )
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
+FEATURE_SUPPORT_STATES = {"supported", "unsupported"}
 
 
 class CapabilityStates(BaseModel):
@@ -63,6 +65,8 @@ class CapabilityRecord(BaseModel):
     content_id: str
     content_type: str
     states: CapabilityStates
+    runtime_hook_family: str | None = None
+    support_state: str | None = None
 
     @field_validator("content_id", "content_type")
     @classmethod
@@ -71,6 +75,32 @@ class CapabilityRecord(BaseModel):
         if not normalized:
             raise ValueError("must be non-empty")
         return normalized
+
+    @field_validator("runtime_hook_family", "support_state")
+    @classmethod
+    def validate_optional_non_empty_string(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("must be non-empty when provided")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_support_state_consistency(self) -> CapabilityRecord:
+        if self.support_state is None:
+            return self
+        normalized = self.support_state.strip().lower()
+        if normalized not in FEATURE_SUPPORT_STATES:
+            raise ValueError(f"unsupported support_state: {self.support_state}")
+        self.support_state = normalized
+        if normalized == "supported" and self.states.blocked:
+            raise ValueError("support_state supported cannot map to blocked states")
+        if normalized == "unsupported" and not self.states.blocked:
+            raise ValueError("support_state unsupported must map to blocked states")
+        if normalized == "unsupported" and self.states.unsupported_reason is None:
+            raise ValueError("unsupported records must declare states.unsupported_reason")
+        return self
 
 
 class CapabilityManifest(BaseModel):
@@ -208,6 +238,129 @@ def load_monster_payloads(monsters_dir: Path = DEFAULT_MONSTERS_DIR) -> list[dic
         if isinstance(payload, dict):
             payloads.append(payload)
     return payloads
+
+
+def load_feature_payloads(features_dir: Path = DEFAULT_FEATURES_DIR) -> list[dict[str, Any]]:
+    payloads: list[dict[str, Any]] = []
+    for path in sorted(features_dir.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            continue
+        normalized = dict(payload)
+        normalized["_manifest_path"] = str(path)
+        payloads.append(normalized)
+    return payloads
+
+
+def _feature_content_type(payload: dict[str, Any]) -> str:
+    source_type = str(payload.get("source_type", "")).strip().lower()
+    if source_type == "feat":
+        return "feat"
+    if source_type == "background":
+        return "background"
+    if source_type == "species":
+        return "species"
+    return "trait"
+
+
+def _feature_identifier(payload: dict[str, Any], *, index: int) -> str:
+    explicit = str(payload.get("content_id", "")).strip()
+    if explicit:
+        return explicit
+
+    path_hint = str(payload.get("_manifest_path", "")).strip()
+    if path_hint:
+        stem = Path(path_hint).stem
+        token = _slug_token(stem, f"feature_{index}")
+        if token:
+            return token
+
+    if payload.get("name"):
+        return _slug_token(payload.get("name"), f"feature_{index}")
+    return f"feature_{index}"
+
+
+def _feature_hook_family_and_state(payload: dict[str, Any]) -> tuple[str, str, str | None, bool]:
+    if not str(payload.get("name", "")).strip():
+        return "invalid", "unsupported", "missing_feature_name", False
+
+    mechanics = payload.get("mechanics")
+    if mechanics is None:
+        return "narrative", "unsupported", "missing_runtime_hook_family", True
+    if not isinstance(mechanics, list):
+        return "invalid", "unsupported", "malformed_mechanics_payload", False
+    if not mechanics:
+        return "narrative", "unsupported", "missing_runtime_hook_family", True
+
+    has_effect_type = False
+    has_meta_type = False
+    for row in mechanics:
+        if not isinstance(row, dict):
+            return "invalid", "unsupported", "malformed_mechanics_payload", False
+        if str(row.get("effect_type", "")).strip():
+            has_effect_type = True
+        if str(row.get("meta_type", "")).strip():
+            has_meta_type = True
+
+    if has_effect_type and has_meta_type:
+        return "effect_meta", "supported", None, True
+    if has_effect_type:
+        return "effect", "supported", None, True
+    if has_meta_type:
+        return "meta", "supported", None, True
+    return "narrative", "unsupported", "missing_runtime_hook_family", True
+
+
+def build_feature_capability_records(
+    *,
+    feature_payloads: list[dict[str, Any]],
+) -> list[CapabilityRecord]:
+    records: list[CapabilityRecord] = []
+    for index, payload in enumerate(feature_payloads, start=1):
+        content_type = _feature_content_type(payload)
+        identifier = _feature_identifier(payload, index=index)
+        content_id = identifier if ":" in identifier else f"{content_type}:{identifier}"
+        runtime_hook_family, support_state, unsupported_reason, schema_valid = (
+            _feature_hook_family_and_state(payload)
+        )
+
+        states = (
+            _supported_states()
+            if support_state == "supported"
+            else _blocked_states(
+                reason=unsupported_reason or "unsupported_feature_payload",
+                schema_valid=schema_valid,
+            )
+        )
+
+        records.append(
+            CapabilityRecord(
+                content_id=content_id,
+                content_type=content_type,
+                runtime_hook_family=runtime_hook_family,
+                support_state=support_state,
+                states=states,
+            )
+        )
+    return records
+
+
+def build_feature_capability_manifest(
+    *,
+    feature_payloads: list[dict[str, Any]] | None = None,
+    features_dir: Path = DEFAULT_FEATURES_DIR,
+    manifest_version: str = MANIFEST_VERSION,
+    generated_at: str | None = None,
+) -> CapabilityManifest:
+    payloads = (
+        feature_payloads if feature_payloads is not None else load_feature_payloads(features_dir)
+    )
+    records = build_feature_capability_records(feature_payloads=payloads)
+    return build_manifest(
+        records=records,
+        manifest_version=manifest_version,
+        generated_at=generated_at,
+    )
 
 
 def _action_entry_states(
