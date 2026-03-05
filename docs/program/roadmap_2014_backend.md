@@ -140,7 +140,7 @@ Tasks:
 Current 5E status (2026-03-05):
 - `DBS-01` and `DBS-02` are in PR review.
 - `DBS-04` is in progress on `codex/feat/dbs-04-add-campaign-state-persistence-schema-and-round-tr` with `campaign_states` and `encounter_states` deterministic snapshot persistence under implementation and test.
-- `DBS-05` is in progress on `codex/feat/dbs-05-add-world-flags-objectives-factions-and-encounter` with `world_states` and `faction_states` deterministic world/objective/faction lifecycle persistence under implementation and test.
+- `DBS-05` is in PR review on `codex/feat/dbs-05-add-world-flags-objectives-factions-and-encounter` with `world_states` and `faction_states` deterministic world/objective/faction lifecycle persistence and tests in `tests/test_world_state_persistence.py`.
 
 Required schema outcome for 5E:
 - `content_records`
