@@ -1,0 +1,44 @@
+name: completion-capability-gate
+
+on:
+  pull_request:
+    branches:
+      - "int/5i-completion-gates"
+    paths:
+      - "artifacts/capabilities/**"
+      - "scripts/content/verify_completion_capabilities.py"
+      - "tests/test_completion_capabilities.py"
+      - "docs/program/capability_report.md"
+      - "docs/program/status_board.md"
+      - "docs/program/backlog.csv"
+      - ".github/workflows/completion-capability-gate.yml"
+  push:
+    branches:
+      - "codex/feat/fin-02-enforce-full-capability-manifest-green-gate-for-sh"
+    paths:
+      - "artifacts/capabilities/**"
+      - "scripts/content/verify_completion_capabilities.py"
+      - "tests/test_completion_capabilities.py"
+      - "docs/program/capability_report.md"
+      - "docs/program/status_board.md"
+      - "docs/program/backlog.csv"
+      - ".github/workflows/completion-capability-gate.yml"
+
+jobs:
+  verify-completion-capabilities:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Run completion capability gate
+        run: uv run python scripts/content/verify_completion_capabilities.py
+
+      - name: Run completion capability tests
+        run: uv run python -m pytest tests/test_completion_capabilities.py
