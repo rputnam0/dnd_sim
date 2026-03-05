@@ -214,6 +214,9 @@ Tasks:
 - WLD-11 Hard-cut schema, import, and content IDs across all content classes
 - WLD-12 Build performance harness, regression corpus, and world-scale replay diff suite
 
+Current execution note:
+- WLD-01 is in progress on `codex/feat/wld-01-build-ability-check-contest-passive-and-dc-resolut`.
+
 ### 5I Completion Gates
 
 Purpose: enforce the final blocking gates that decide whether the backend is complete.
