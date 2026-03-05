@@ -217,7 +217,7 @@ Tasks:
 Current execution note:
 - WLD-01 is in progress on `codex/feat/wld-01-build-ability-check-contest-passive-and-dc-resolut`.
 - WLD-02 is in progress on `codex/feat/wld-02-build-skill-tool-proficiency-and-specialist-data-p`.
-- WLD-03 is in progress on `codex/feat/wld-03-build-exploration-turn-structure-time-advancement` with exploration turn, world time advancement, and light tracking runtime coverage in `tests/test_world_time_and_light.py`.
+- WLD-03 is in PR review on `codex/feat/wld-03-build-exploration-turn-structure-time-advancement` with exploration turn, world time advancement, and light tracking runtime coverage in `tests/test_world_time_and_light.py`.
 
 ### 5I Completion Gates
 
