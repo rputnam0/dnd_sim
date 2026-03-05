@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/README.md`
 
 `docs/archive/` stores historical records only. This file is the canonical index for those records.
@@ -14,6 +14,7 @@ Canonical source: `docs/program/README.md`
 - Keep the live planning surface in `docs/program/`.
 - Prefix archived snapshots with the original filename and a date when you create new historical records.
 - Canonical docs may reference archived files only when explicitly labeled as historical.
+- FIN-01 keeps stale planning records out of the live planning surface and routed through this archive index.
 
 ## Historical Collections
 
