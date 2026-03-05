@@ -1,0 +1,141 @@
+{
+  "case_id": "encounter_wave_progression",
+  "expected_replay": {
+    "encounter": {
+      "active_wave_id": null,
+      "encounter_id": "blackgate_assault",
+      "objective_statuses": {
+        "hold_courtyard": true,
+        "seal_gate": true
+      },
+      "status": "completed",
+      "triggered_hooks": [
+        "close_portcullis",
+        "open_sluice"
+      ],
+      "wave_statuses": {
+        "wave_1": "completed",
+        "wave_2": "completed"
+      }
+    },
+    "world_state": {
+      "factions": {},
+      "quests": {
+        "defend_blackgate": {
+          "objective_flags": {
+            "seal_gate_controls": true
+          },
+          "stage_id": "briefing",
+          "status": "active"
+        }
+      },
+      "turn_index": 11,
+      "world_flags": {
+        "encounter.blackgate_assault.status": "resolved",
+        "encounter.blackgate_assault.wave.wave_1": "resolved",
+        "encounter.blackgate_assault.wave.wave_2": "resolved",
+        "map.portcullis": "resolved",
+        "map.sluice_channel": "active",
+        "objective.hold_courtyard": "active",
+        "objective.seal_gate": "active"
+      }
+    }
+  },
+  "initial_state": {
+    "script": {
+      "encounter_id": "blackgate_assault",
+      "initial_wave_id": "wave_1",
+      "map_hooks": [
+        {
+          "flag_id": "map.sluice_channel",
+          "hook_id": "open_sluice",
+          "to_status": "active",
+          "trigger": "wave_start"
+        },
+        {
+          "flag_id": "map.portcullis",
+          "hook_id": "close_portcullis",
+          "to_status": "resolved",
+          "trigger": "wave_complete"
+        }
+      ],
+      "objectives": [
+        {
+          "completion_flag": "objective.seal_gate",
+          "description": "Seal the main gate controls.",
+          "objective_id": "seal_gate",
+          "quest_id": "defend_blackgate",
+          "quest_objective_id": "seal_gate_controls"
+        },
+        {
+          "completion_flag": "objective.hold_courtyard",
+          "description": "Hold the courtyard through the second wave.",
+          "objective_id": "hold_courtyard"
+        }
+      ],
+      "waves": [
+        {
+          "next_wave_id": "wave_2",
+          "objective_ids": [
+            "seal_gate"
+          ],
+          "on_complete_hooks": [
+            "close_portcullis"
+          ],
+          "on_start_hooks": [
+            "open_sluice"
+          ],
+          "spawn_ids": [
+            "goblin_raider",
+            "hobgoblin_captain"
+          ],
+          "wave_id": "wave_1"
+        },
+        {
+          "objective_ids": [
+            "hold_courtyard"
+          ],
+          "spawn_ids": [
+            "ogre_brute"
+          ],
+          "wave_id": "wave_2"
+        }
+      ]
+    },
+    "world_state": {
+      "factions": {},
+      "quests": {
+        "defend_blackgate": {
+          "objective_flags": {},
+          "stage_id": "briefing",
+          "status": "not_started"
+        }
+      },
+      "turn_index": 0,
+      "world_flags": {}
+    }
+  },
+  "mode": "encounter",
+  "performance_baseline_ms": 60.0,
+  "steps": [
+    {
+      "kind": "create_run"
+    },
+    {
+      "completed": true,
+      "kind": "set_objective",
+      "objective_id": "seal_gate"
+    },
+    {
+      "kind": "advance_wave"
+    },
+    {
+      "completed": true,
+      "kind": "set_objective",
+      "objective_id": "hold_courtyard"
+    },
+    {
+      "kind": "advance_wave"
+    }
+  ]
+}

@@ -29,7 +29,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
-| WLD | World Systems and Campaign Platform | in_progress | 5H-world-systems | `WLD-03`, `WLD-06`, `WLD-09`, and `WLD-11` are `pr_open`; `WLD-01`, `WLD-02`, `WLD-04`, `WLD-08`, and `WLD-10` are `in_progress`; remaining WLD tasks are `not_started` in `backlog.csv`. |
+| WLD | World Systems and Campaign Platform | in_progress | 5H-world-systems | `WLD-03`, `WLD-06`, `WLD-09`, and `WLD-11` are `pr_open`; `WLD-01`, `WLD-02`, `WLD-04`, `WLD-08`, `WLD-10`, and `WLD-12` are `in_progress`; remaining WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
 
 ## Active branches
@@ -45,6 +45,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | WLD-09 | codex/feat/wld-09-build-multi-encounter-adventuring-day-persistence | world_state_b | pr_open | Multi-encounter adventuring-day persistence and deterministic recovery flow are in PR review. |
 | WLD-10 | codex/feat/wld-10-build-encounter-scripting-waves-objectives-and-map | world_script_a | in_progress | Implementing deterministic encounter scripting for waves, objective hooks, and map-triggered world flags. |
 | WLD-11 | codex/feat/wld-11-hard-cut-schema-import-and-content-ids-across-all | world_schema_a | pr_open | Canonical global content IDs, hard-cut import alias rejection, and content-record backfill migration coverage are in PR review. |
+| WLD-12 | codex/feat/wld-12-build-performance-harness-regression-corpus-and-wo | world_perf_a | in_progress | Building world regression corpus harness with replay diffs and runtime baseline gates under `scripts/perf/run_world_regressions.py`. |
 
 ## Open PRs
 
@@ -69,4 +70,5 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - `WLD-09` is in PR review and depends on `WLD-03`, `DBS-04`, and `DBS-05` per `backlog.csv`.
 - `WLD-10` is active and depends on `DBS-05`, `ARC-08`, and `WLD-08` per `backlog.csv`.
 - `WLD-11` is in PR review and depends on `CAP-05` and `DBS-06` per `backlog.csv`.
+- `WLD-12` is active and depends on `OBS-06`, `WLD-09`, `WLD-10`, and `WLD-11` per `backlog.csv`.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.

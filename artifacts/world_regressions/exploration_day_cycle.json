@@ -1,0 +1,50 @@
+{
+  "case_id": "exploration_day_cycle",
+  "expected_replay": {
+    "clock": {
+      "day": 4,
+      "hour": 0,
+      "minute": 25,
+      "minute_of_day": 25
+    },
+    "light_sources": {
+      "lantern": {
+        "is_lit": false,
+        "remaining_minutes": 120
+      },
+      "torch": {
+        "is_lit": true,
+        "remaining_minutes": 10
+      }
+    },
+    "location_id": "sunken_path",
+    "turn_index": 2
+  },
+  "initial_state": {
+    "day": 3,
+    "hour": 23,
+    "light_sources": {
+      "lantern": {
+        "is_lit": false,
+        "remaining_minutes": 120
+      },
+      "torch": 45
+    },
+    "location_id": "sunken_path",
+    "minute": 50
+  },
+  "mode": "exploration",
+  "performance_baseline_ms": 50.0,
+  "steps": [
+    {
+      "activity": "travel",
+      "elapsed_minutes": 20,
+      "kind": "exploration_turn"
+    },
+    {
+      "activity": "search",
+      "elapsed_minutes": 15,
+      "kind": "exploration_turn"
+    }
+  ]
+}
