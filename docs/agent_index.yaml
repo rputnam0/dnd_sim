@@ -89,10 +89,10 @@ subsystems:
     owner_module: src/dnd_sim/action_legality.py
     invariants:
       - "Legality checks emit structured errors with deterministic error codes."
-      - "Action economy validation is centralized and reused by engine and strategy API paths."
+      - "Action economy validation is centralized and reused by engine and strategy API validation paths."
       - "Invalid declarations fail fast before action resolution side effects occur."
     safe_edit_boundaries:
-      - "Safe: adding new legality predicates and helper decomposition."
+      - "Safe: adding new legality predicates and extracting declaration validators into dedicated helpers."
       - "Caution: error payload shape consumed by strategy and integration tests."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
   movement_runtime:

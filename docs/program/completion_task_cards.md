@@ -86,6 +86,7 @@ Decompose the engine monolith into bounded runtime modules with explicit ownersh
 - Required tests: unit legality tests; invalid declaration tests; integration tests for legal turn declaration
 - Required docs: docs/agent_index.yaml; docs/program/completion_task_cards.md
 - Exit criteria: Create src/dnd_sim/action_legality.py for declaration validation, action economy checks, and structured legality errors; route engine and strategy API validation through it.
+- Implementation note (2026-03-05): ARC-02 is in progress on `codex/feat/arc-02-extract-turn-declaration-validation-and-legal-acti`.
 
 ### ARC-03 Extract movement, routing, and spatial legality service
 
