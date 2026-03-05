@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -53,6 +54,15 @@ def _required_basis_points(
     normalized = _required_int(value, field_name=field_name, minimum=minimum)
     if maximum is not None and normalized > maximum:
         raise ValueError(f"{field_name} must be <= {maximum}")
+    return normalized
+
+
+def _required_non_negative_number(value: Any, *, field_name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise ValueError(f"{field_name} must be a number")
+    normalized = float(value)
+    if math.isnan(normalized) or math.isinf(normalized) or normalized < 0:
+        raise ValueError(f"{field_name} must be a finite number >= 0")
     return normalized
 
 
@@ -241,6 +251,131 @@ class EconomyState:
                 )
             normalized_vendors[normalized_vendor_id] = vendor
         object.__setattr__(self, "vendors", normalized_vendors)
+
+
+@dataclass(frozen=True, slots=True)
+class CraftingRecipe:
+    recipe_id: str
+    output_item_id: str
+    output_quantity: int = 1
+    days_required: int = 1
+    material_cost_cp: int = 0
+    output_weight_lb: float = 0.0
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "recipe_id", _required_text(self.recipe_id, field_name="recipe_id")
+        )
+        object.__setattr__(
+            self,
+            "output_item_id",
+            _required_text(self.output_item_id, field_name="output_item_id"),
+        )
+        object.__setattr__(
+            self,
+            "output_quantity",
+            _required_int(self.output_quantity, field_name="output_quantity", minimum=1),
+        )
+        object.__setattr__(
+            self,
+            "days_required",
+            _required_int(self.days_required, field_name="days_required", minimum=1),
+        )
+        object.__setattr__(
+            self,
+            "material_cost_cp",
+            _required_int(self.material_cost_cp, field_name="material_cost_cp", minimum=0),
+        )
+        object.__setattr__(
+            self,
+            "output_weight_lb",
+            _required_non_negative_number(self.output_weight_lb, field_name="output_weight_lb"),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class CraftingProject:
+    recipe_id: str
+    accrued_days: int = 0
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "recipe_id", _required_text(self.recipe_id, field_name="recipe_id")
+        )
+        object.__setattr__(
+            self,
+            "accrued_days",
+            _required_int(self.accrued_days, field_name="accrued_days", minimum=0),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class CraftingResolution:
+    project: CraftingProject
+    completed_batches: int
+    cost_paid_cp: int
+    inventory_delta: dict[str, int] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.project, CraftingProject):
+            raise ValueError("project must be CraftingProject")
+        object.__setattr__(
+            self,
+            "completed_batches",
+            _required_int(self.completed_batches, field_name="completed_batches", minimum=0),
+        )
+        object.__setattr__(
+            self,
+            "cost_paid_cp",
+            _required_int(self.cost_paid_cp, field_name="cost_paid_cp", minimum=0),
+        )
+        normalized_inventory_delta: dict[str, int] = {}
+        for item_id, quantity in sorted(dict(self.inventory_delta).items()):
+            normalized_item_id = _required_text(item_id, field_name="item_id")
+            normalized_quantity = _required_int(quantity, field_name="quantity", minimum=0)
+            if normalized_quantity > 0:
+                normalized_inventory_delta[normalized_item_id] = normalized_quantity
+        object.__setattr__(self, "inventory_delta", normalized_inventory_delta)
+
+
+def apply_crafting_days(
+    *,
+    recipe: CraftingRecipe,
+    project: CraftingProject,
+    days: int,
+    available_cp: int,
+) -> CraftingResolution:
+    if not isinstance(recipe, CraftingRecipe):
+        raise ValueError("recipe must be CraftingRecipe")
+    if not isinstance(project, CraftingProject):
+        raise ValueError("project must be CraftingProject")
+    if project.recipe_id != recipe.recipe_id:
+        raise ValueError("project.recipe_id must match recipe.recipe_id")
+
+    days_applied = _required_int(days, field_name="days", minimum=0)
+    available_currency_cp = _required_int(available_cp, field_name="available_cp", minimum=0)
+
+    total_days = project.accrued_days + days_applied
+    max_batches_by_time = total_days // recipe.days_required
+    if recipe.material_cost_cp == 0:
+        completed_batches = max_batches_by_time
+    else:
+        completed_batches = min(
+            max_batches_by_time, available_currency_cp // recipe.material_cost_cp
+        )
+
+    cost_paid_cp = completed_batches * recipe.material_cost_cp
+    remaining_days = total_days - (completed_batches * recipe.days_required)
+    inventory_delta: dict[str, int] = {}
+    if completed_batches > 0:
+        inventory_delta[recipe.output_item_id] = completed_batches * recipe.output_quantity
+
+    return CraftingResolution(
+        project=CraftingProject(recipe_id=recipe.recipe_id, accrued_days=remaining_days),
+        completed_batches=completed_batches,
+        cost_paid_cp=cost_paid_cp,
+        inventory_delta=inventory_delta,
+    )
 
 
 def _coerce_market_item(item_id: str, payload: MarketItem | Mapping[str, Any]) -> MarketItem:
