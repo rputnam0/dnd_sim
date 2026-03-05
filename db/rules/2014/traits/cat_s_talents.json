@@ -3,6 +3,7 @@
   "description": "You have proficiency in the Perception and Stealth skills.",
   "mechanics": [
     {
+      "meta_type": "skill_proficiency",
       "skill_proficiency": [
         "Perception",
         "Stealth"

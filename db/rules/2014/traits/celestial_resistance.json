@@ -3,6 +3,7 @@
   "description": "You have resistance to necrotic and radiant damage.",
   "mechanics": [
     {
+      "meta_type": "damage_resistance",
       "damage_resistance": [
         "necrotic",
         "radiant"

@@ -29,6 +29,14 @@ SHARD_A_SPECIES_IDS = {
     "species:black_blood_healing",
     "species:brave",
 }
+SHARD_B_SPECIES_IDS = {
+    "species:cat_s_talents",
+    "species:celestial_resistance",
+    "species:climbing",
+    "species:damage_resistance",
+    "species:dwarven_combat_training",
+    "species:emissary_of_the_sea",
+}
 
 
 def test_supported_scope_requires_schema_valid_and_tested() -> None:
@@ -92,6 +100,21 @@ def test_species_hook_shard_a_ids_are_supported_in_canonical_capability_records(
     assert missing_ids == []
 
     for content_id in sorted(SHARD_A_SPECIES_IDS):
+        record = by_id[content_id]
+        assert record.content_type == "species"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
+        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
+
+
+def test_species_hook_shard_b_ids_are_supported_in_canonical_capability_records() -> None:
+    io._canonical_capability_records.cache_clear()
+    by_id = {record.content_id: record for record in io._canonical_capability_records()}
+
+    missing_ids = sorted(SHARD_B_SPECIES_IDS - set(by_id))
+    assert missing_ids == []
+
+    for content_id in sorted(SHARD_B_SPECIES_IDS):
         record = by_id[content_id]
         assert record.content_type == "species"
         assert record.support_state == "supported"

@@ -16,6 +16,14 @@ SHARD_A_SPECIES_IDS = {
     "species:black_blood_healing",
     "species:brave",
 }
+SHARD_B_SPECIES_IDS = {
+    "species:cat_s_talents",
+    "species:celestial_resistance",
+    "species:climbing",
+    "species:damage_resistance",
+    "species:dwarven_combat_training",
+    "species:emissary_of_the_sea",
+}
 
 SHARD_B_TRAIT_IDS = {
     "trait:acrobatic_movement",
@@ -196,6 +204,28 @@ def test_species_hook_shard_a_records_are_supported() -> None:
     assert blocked_species_missing_hook.isdisjoint(SHARD_A_SPECIES_IDS)
 
     for content_id in sorted(SHARD_A_SPECIES_IDS):
+        record = by_id[content_id]
+        assert record.content_type == "species"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
+        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
+
+def test_species_hook_shard_b_records_are_supported() -> None:
+    manifest = build_feature_capability_manifest()
+    by_id = {record.content_id: record for record in manifest.records}
+
+    missing_ids = sorted(SHARD_B_SPECIES_IDS - set(by_id))
+    assert missing_ids == []
+
+    blocked_species_missing_hook = {
+        record.content_id
+        for record in manifest.records
+        if record.content_type == "species"
+        and record.states.unsupported_reason == "missing_runtime_hook_family"
+    }
+    assert blocked_species_missing_hook.isdisjoint(SHARD_B_SPECIES_IDS)
+
+    for content_id in sorted(SHARD_B_SPECIES_IDS):
         record = by_id[content_id]
         assert record.content_type == "species"
         assert record.support_state == "supported"

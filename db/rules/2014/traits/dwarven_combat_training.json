@@ -3,6 +3,7 @@
   "description": "You have proficiency with the battleaxe, handaxe, light hammer, and warhammer.",
   "mechanics": [
     {
+      "meta_type": "grant_proficiencies",
       "grant_proficiency": {
         "category": "weapon",
         "items": [

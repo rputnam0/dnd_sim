@@ -3,6 +3,7 @@
   "description": "You have resistance to the damage type associated with your draconic ancestry.",
   "mechanics": [
     {
+      "meta_type": "damage_resistance",
       "damage_resistance": "draconic ancestry"
     }
   ],

@@ -3,6 +3,7 @@
   "description": "You can communicate simple ideas to any Beast, Elemental, or Monstrosity that has a swimming speed. It can understand your words, though you have no special ability to understand it in return.",
   "mechanics": [
     {
+      "meta_type": "communication",
       "effect": "communicate_simple_ideas",
       "target": "Beast, Elemental, Monstrosity with swimming speed"
     }
