@@ -93,7 +93,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 
 - [ ] FIN-01 Enforce program doc sync gate and purge stale live planning docs
 - [ ] FIN-02 Enforce full capability manifest green gate for shipped 2014 scope
-- [ ] FIN-03 Enforce deterministic replay corpus gate across combat and world scenarios
+- [ ] FIN-03 Enforce deterministic replay corpus gate across combat and world scenarios (in progress on `codex/feat/fin-03-enforce-deterministic-replay-corpus-gate-across-co`)
 - [ ] FIN-04 Enforce integrated campaign, world, and combat scenario gate
 - [ ] FIN-05 Enforce agent-only maintenance gate
 - [ ] FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete
