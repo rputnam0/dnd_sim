@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import _break_concentration, _execute_action, has_condition
+from dnd_sim.engine_runtime import _break_concentration, _execute_action, has_condition
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 

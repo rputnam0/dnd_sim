@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import _run_event_triggered_actions
+from dnd_sim.engine_runtime import _run_event_triggered_actions
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dnd_sim.engine import _execute_action, _extract_spells_from_raw_fields
+from dnd_sim.engine_runtime import _execute_action, _extract_spells_from_raw_fields
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 
@@ -121,7 +121,7 @@ def test_cutting_words_reaction_can_turn_hit_into_miss() -> None:
 
 
 def test_extract_spells_includes_magical_secrets_even_if_unprepared(monkeypatch) -> None:
-    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 3})
+    monkeypatch.setattr("dnd_sim.engine_runtime._load_spell_definition", lambda _name: {"level": 3})
     character = {
         "class_levels": {"cleric": 5},
         "raw_fields": [

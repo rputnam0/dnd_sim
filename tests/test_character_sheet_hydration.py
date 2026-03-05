@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _extract_spellcasting_profile_from_raw_fields,
     _extract_spells_from_raw_fields,
     _load_spell_definition,
@@ -20,7 +20,7 @@ def test_load_spell_definition_accepts_sheet_ritual_suffix(tmp_path: Path, monke
         encoding="utf-8",
     )
 
-    monkeypatch.setattr("dnd_sim.engine._spell_root_dir", lambda: spells_dir)
+    monkeypatch.setattr("dnd_sim.engine_runtime._spell_root_dir", lambda: spells_dir)
 
     spell = _load_spell_definition("Detect Magic [R]")
     assert spell is not None
@@ -32,7 +32,7 @@ def test_load_spell_definition_returns_none_when_spell_directory_missing(
 ) -> None:
     missing_spells_dir = tmp_path / "missing_spells"
     clear_spell_database_cache()
-    monkeypatch.setattr("dnd_sim.engine._spell_root_dir", lambda: missing_spells_dir)
+    monkeypatch.setattr("dnd_sim.engine_runtime._spell_root_dir", lambda: missing_spells_dir)
 
     assert _load_spell_definition("Detect Magic [R]") is None
 
@@ -44,7 +44,7 @@ def test_load_spell_definition_returns_none_when_spell_database_is_malformed(
     spells_dir.mkdir(parents=True, exist_ok=True)
     (spells_dir / "detect_magic.json").write_text("{not valid json", encoding="utf-8")
     clear_spell_database_cache()
-    monkeypatch.setattr("dnd_sim.engine._spell_root_dir", lambda: spells_dir)
+    monkeypatch.setattr("dnd_sim.engine_runtime._spell_root_dir", lambda: spells_dir)
 
     assert _load_spell_definition("Detect Magic [R]") is None
 
@@ -98,7 +98,7 @@ def test_extract_spellcasting_profile_parses_spell_attack_bonus() -> None:
 
 
 def test_extract_spells_casting_time_hour_not_misclassified_as_reaction(monkeypatch) -> None:
-    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
+    monkeypatch.setattr("dnd_sim.engine_runtime._load_spell_definition", lambda _name: {"level": 1})
     character = {
         "class_levels": {"wizard": 1},
         "raw_fields": [
@@ -119,7 +119,7 @@ def test_extract_spells_casting_time_hour_not_misclassified_as_reaction(monkeypa
 
 
 def test_extract_spells_includes_unprepared_leveled_spells_for_known_casters(monkeypatch) -> None:
-    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
+    monkeypatch.setattr("dnd_sim.engine_runtime._load_spell_definition", lambda _name: {"level": 1})
     character = {
         "class_levels": {"bard": 5},
         "raw_fields": [
@@ -137,7 +137,7 @@ def test_extract_spells_includes_unprepared_leveled_spells_for_known_casters(mon
 
 
 def test_extract_spells_rejects_unprepared_leveled_for_prepared_casters(monkeypatch) -> None:
-    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
+    monkeypatch.setattr("dnd_sim.engine_runtime._load_spell_definition", lambda _name: {"level": 1})
     character = {
         "class_levels": {"cleric": 5},
         "raw_fields": [
@@ -161,7 +161,7 @@ def test_extract_spells_rejects_unprepared_leveled_for_prepared_casters(monkeypa
 
 
 def test_extract_spells_dedupe_preserves_non_concentration_false(monkeypatch) -> None:
-    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
+    monkeypatch.setattr("dnd_sim.engine_runtime._load_spell_definition", lambda _name: {"level": 1})
     character = {
         "class_levels": {"wizard": 1},
         "raw_fields": [
@@ -182,7 +182,7 @@ def test_extract_spells_dedupe_preserves_non_concentration_false(monkeypatch) ->
 
 def test_extract_spells_hydrates_duration_rounds_from_canonical_spell_db(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Detect Magic",
             "type": "spell",

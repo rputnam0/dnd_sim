@@ -4,7 +4,8 @@ import json
 import random
 from pathlib import Path
 
-from dnd_sim.engine import _build_actor_from_character, run_simulation
+from dnd_sim.engine import run_simulation
+from dnd_sim.engine_runtime import _build_actor_from_character
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.rules_2014 import run_concentration_check
 from tests.helpers import build_character, build_enemy, write_json

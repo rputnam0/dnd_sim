@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _action_available,
     _build_character_actions,
     _execute_action,

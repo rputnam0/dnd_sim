@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _action_available,
     _build_spell_actions,
     _execute_action,

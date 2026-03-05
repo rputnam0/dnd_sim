@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from pathlib import Path
 
-from dnd_sim.engine import _apply_effect, _build_actor_from_character, _execute_action
+from dnd_sim.engine_runtime import _apply_effect, _build_actor_from_character, _execute_action
 from dnd_sim.io import load_traits_db
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import can_see
@@ -66,7 +66,7 @@ def test_spell_extraction_builds_combat_actions_for_squanch() -> None:
 
 
 def test_build_actor_imports_unprepared_known_caster_spells(monkeypatch) -> None:
-    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
+    monkeypatch.setattr("dnd_sim.engine_runtime._load_spell_definition", lambda _name: {"level": 1})
     character = {
         "character_id": "bard_1",
         "name": "Bard One",

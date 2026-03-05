@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from dnd_sim.engine import _build_actor_from_character
+from dnd_sim.engine_runtime import _build_actor_from_character
 from dnd_sim.inventory import CurrencyWallet, InventoryItem, InventoryState
 from tests.helpers import with_class_levels
 

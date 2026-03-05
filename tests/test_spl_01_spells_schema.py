@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from dnd_sim.engine import _load_spell_definition
+from dnd_sim.engine_runtime import _load_spell_definition
 from dnd_sim.spells import (
     SpellDatabaseValidationError,
     canonicalize_spell_payload,
@@ -141,7 +141,7 @@ def test_engine_spell_lookup_uses_validated_canonical_records(
     )
 
     clear_spell_database_cache()
-    monkeypatch.setattr("dnd_sim.engine._spell_root_dir", lambda: spells_dir)
+    monkeypatch.setattr("dnd_sim.engine_runtime._spell_root_dir", lambda: spells_dir)
 
     spell = _load_spell_definition("Detect Magic [R]")
 

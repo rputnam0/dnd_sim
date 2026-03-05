@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import _action_available, _execute_action, _spend_action_resource_cost
+from dnd_sim.engine_runtime import _action_available, _execute_action, _spend_action_resource_cost
 from dnd_sim.models import (
     ActionDefinition,
     ActorRuntimeState,

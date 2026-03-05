@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _build_attack_action_instances,
     _create_combat_timing_engine,
     _execute_action,

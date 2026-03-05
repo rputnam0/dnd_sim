@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _apply_condition,
     _execute_action,
     _remove_condition,

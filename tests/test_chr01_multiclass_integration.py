@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dnd_sim.engine import _build_actor_from_character, short_rest
+from dnd_sim.engine_runtime import _build_actor_from_character, short_rest
 from tests.helpers import build_character
 
 

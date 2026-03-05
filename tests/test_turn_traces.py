@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-import dnd_sim.engine as engine_module
+import dnd_sim.engine_runtime as engine_module
 from dnd_sim.engine import TurnDeclarationValidationError, run_simulation
 from dnd_sim.io import load_character_db, load_scenario
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
@@ -253,19 +253,29 @@ def test_illegal_declared_action_emits_illegal_action_selection_trace(
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     captured_payloads: list[dict[str, Any]] = []
-    original_append = engine_module._append_telemetry_event
+    original_emit = engine_module._emit_turn_trace_event
 
-    def _capturing_append(
-        telemetry: list[dict[str, Any]] | None,
-        *,
-        event_type: str,
-        payload: dict[str, Any],
-        source: str = engine_module.__name__,
-    ) -> None:
-        captured_payloads.append({"telemetry_type": event_type, **payload})
-        original_append(telemetry, event_type=event_type, payload=payload, source=source)
+    def _capturing_emit(*args, **kwargs) -> None:
+        captured_payloads.append(
+            {
+                "telemetry_type": kwargs.get("event_type"),
+                "actor_id": kwargs.get("actor_id"),
+                "round": kwargs.get("round_number"),
+                "turn_token": kwargs.get("turn_token"),
+                "action_name": kwargs.get("action_name"),
+                "requested_targets": list(kwargs.get("requested_targets", [])),
+                "resolved_targets": list(kwargs.get("resolved_targets", []) or []),
+                "validation_state": kwargs.get("validation_state"),
+                "selection_state": kwargs.get("selection_state"),
+                "resolution_state": kwargs.get("resolution_state"),
+                "outcome_state": kwargs.get("outcome_state"),
+                "error_code": kwargs.get("error_code"),
+                "field": kwargs.get("field"),
+            }
+        )
+        original_emit(*args, **kwargs)
 
-    monkeypatch.setattr(engine_module, "_append_telemetry_event", _capturing_append)
+    monkeypatch.setattr(engine_module, "_emit_turn_trace_event", _capturing_emit)
 
     registry = {
         "party_strategy": IllegalActionTraceStrategy(),

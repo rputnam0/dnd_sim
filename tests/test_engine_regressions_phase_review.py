@@ -6,8 +6,9 @@ from types import SimpleNamespace
 
 import pytest
 
-import dnd_sim.engine as engine_module
-from dnd_sim.engine import (
+import dnd_sim.engine_runtime as engine_module
+from dnd_sim.engine import run_simulation
+from dnd_sim.engine_runtime import (
     _apply_effect,
     _action_available,
     _build_actor_from_character,
@@ -22,7 +23,6 @@ from dnd_sim.engine import (
     _run_legendary_actions,
     _saving_throw_succeeds,
     _tick_conditions_for_actor,
-    run_simulation,
 )
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState

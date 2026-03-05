@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from dnd_sim.engine import (
+from dnd_sim.engine import run_simulation
+from dnd_sim.engine_runtime import (
     _break_concentration,
     _execute_action,
     _resolve_targets_for_action,
-    run_simulation,
 )
 from dnd_sim.io import ActionConfig, load_character_db, load_scenario
 from dnd_sim.mechanics_schema import validate_rule_mechanics_payload

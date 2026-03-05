@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dnd_sim.engine import _run_opportunity_attacks_for_movement
+from dnd_sim.engine_runtime import _run_opportunity_attacks_for_movement
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 

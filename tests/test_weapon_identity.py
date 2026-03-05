@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dnd_sim.engine import _build_actor_from_character, _execute_action
+from dnd_sim.engine_runtime import _build_actor_from_character, _execute_action
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from tests.helpers import with_class_levels
 

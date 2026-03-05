@@ -4,7 +4,7 @@ import random
 
 import pytest
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _apply_declared_movement_or_error,
     _apply_effect,
     _process_hazard_start_turn_triggers,

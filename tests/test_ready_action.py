@@ -4,12 +4,9 @@ import random
 
 import pytest
 
-import dnd_sim.engine as engine_module
-from dnd_sim.engine import (
-    TurnDeclarationValidationError,
-    _execute_action,
-    _validate_declared_ready_or_error,
-)
+import dnd_sim.engine_runtime as engine_module
+from dnd_sim.engine import TurnDeclarationValidationError
+from dnd_sim.engine_runtime import _execute_action, _validate_declared_ready_or_error
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import DeclaredAction, ReadyDeclaration, TurnDeclaration
 

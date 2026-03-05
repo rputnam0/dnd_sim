@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import _build_feature_hook_registrations, _dispatch_combat_event
+from dnd_sim.engine_runtime import _build_feature_hook_registrations, _dispatch_combat_event
 from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
