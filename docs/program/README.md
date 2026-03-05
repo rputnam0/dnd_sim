@@ -61,9 +61,22 @@ Ownership and metadata-header requirements for this same live planning surface a
 - Historical files are reference-only and must not be used as planning entrypoints.
 - Use `docs/archive/README.md` as the only canonical index for historical artifacts in the program-runs, cleanup, and deprecation archive folders.
 
+## Doc sync gate and stale-live purge
+
+- `FIN-01` enforces the completion precondition that live planning docs stay synchronized between `docs/program/backlog.csv` and `docs/program/status_board.md`.
+- Run `uv run python scripts/docs/verify_program_docs.py` before opening completion-gate PRs.
+- Keep live planning artifacts under the canonical registry in this README and `docs/program/doc_governance.md`.
+- Archive historical planning outputs under the archive subtree and reference them only through `docs/archive/README.md`.
+
 ## Multi-agent policy
 
 - Use the native Codex multi-agent framework only.
 - One branch per task ID.
 - One PR per task ID.
 - Update docs and task status in the same PR as the code change.
+
+## Release baseline cutover
+
+- FIN-06 owns the release-baseline cutover and final completion closeout.
+- Archive superseded planning snapshots through the canonical archive index in `docs/archive/README.md`.
+- Cut the release baseline tag after FIN-06 merges and smoke checks pass on the integration branch.

@@ -30,7 +30,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | AI | Tactical AI Hardening | pr_open | 5F-ai-hardening | `AI-01`, `AI-02`, `AI-03`, `AI-04`, `AI-05`, and `AI-06` are `pr_open`; remaining AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
 | WLD | World Systems and Campaign Platform | in_progress | 5H-world-systems | `WLD-03`, `WLD-06`, `WLD-07`, `WLD-09`, and `WLD-11` are `pr_open`; `WLD-01`, `WLD-02`, `WLD-04`, `WLD-08`, `WLD-10`, and `WLD-12` are `in_progress`; remaining WLD tasks are `not_started` in `backlog.csv`. |
-| FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
+| FIN | Completion Gates | blocked | 5I-completion-gates | `FIN-06` is `blocked` in `backlog.csv` pending dependency gate completion; `FIN-01` through `FIN-05` remain `not_started`. |
 
 ## Active branches
 
@@ -65,6 +65,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | WLD-10 | codex/feat/wld-10-build-encounter-scripting-waves-objectives-and-map | world_script_a | in_progress | Implementing deterministic encounter scripting for waves, objective hooks, and map-triggered world flags. |
 | WLD-11 | codex/feat/wld-11-hard-cut-schema-import-and-content-ids-across-all | world_schema_a | pr_open | Canonical global content IDs, hard-cut import alias rejection, and content-record backfill migration coverage are in PR review. |
 | WLD-12 | codex/feat/wld-12-build-performance-harness-regression-corpus-and-wo | world_perf_a | in_progress | Building world regression corpus harness with replay diffs and runtime baseline gates under `scripts/perf/run_world_regressions.py`. |
+| FIN-06 | `codex/feat/fin-06-cut-release-baseline-archive-prior-program-artifac` | release_lead | blocked | FIN-06 release baseline cutover is blocked until FIN dependency gates clear in `backlog.csv`. |
 
 ## Open PRs
 

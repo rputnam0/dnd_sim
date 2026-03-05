@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/README.md`
 
 `docs/archive/` stores historical records only. This file is the canonical index for those records.
@@ -14,6 +14,7 @@ Canonical source: `docs/program/README.md`
 - Keep the live planning surface in `docs/program/`.
 - Prefix archived snapshots with the original filename and a date when you create new historical records.
 - Canonical docs may reference archived files only when explicitly labeled as historical.
+- FIN-01 keeps stale planning records out of the live planning surface and routed through this archive index.
 
 ## Historical Collections
 
@@ -44,3 +45,15 @@ Recovered from pre-deletion snapshot commit `3033ecc62c6b1df3bb815bf908bffda62d1
 | `docs/archive/deprecation/legacy_surface_inventory_20260304.md` | `docs/deprecation/legacy_surface_inventory_20260304.md` |
 | `docs/archive/deprecation/legacy_cutover_mappings_20260304.md` | `docs/deprecation/legacy_cutover_mappings_20260304.md` |
 | `docs/archive/deprecation/legacy_data_counts_20260304.tsv` | `docs/deprecation/legacy_data_counts_20260304.tsv` |
+
+### Release Prep Snapshots (historical)
+
+| Path | Original path |
+|---|---|
+| `docs/archive/release_prep/fin06_release_prep_20260305.md` | `docs/program/status_board.md` |
+
+### Release Cutover Snapshots (historical)
+
+| Path | Original path |
+|---|---|
+| `docs/archive/releases/pre_fin06_program_surface_20260305.md` | `docs/program/README.md` |
