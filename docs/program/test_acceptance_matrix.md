@@ -49,6 +49,11 @@ Required coverage:
 - import/CI gate tests,
 - stable ordering snapshot tests.
 
+CAP-05 gate contract:
+- import-path loads for shipped 2014 scope must fail when supported records are not both `schema_valid=true` and `tested=true`,
+- blocked records must always carry exactly one non-empty `unsupported_reason` code,
+- CI capability verifier must support dry-run reporting and enforcing modes.
+
 CAP-01 minimum gate:
 - schema validation must require all canonical state fields (`cataloged`, `schema_valid`, `executable`, `tested`, `blocked`, `unsupported_reason`),
 - blocked-state negative tests must require `unsupported_reason` only when `blocked=true`,
