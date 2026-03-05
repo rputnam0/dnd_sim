@@ -47,6 +47,18 @@ subsystems:
       - "Safe: additive dataclass fields with defaults."
       - "Caution: validate_strategy_instance error contracts consumed by tests/io."
       - "Do not require both declare_turn and legacy methods simultaneously."
+  ai_scoring:
+    owner_pool: ai_core
+    owner_task: AI-01
+    owner_module: src/dnd_sim/ai/scoring.py
+    invariants:
+      - "Candidate enumeration is deterministic for identical actor and metadata inputs."
+      - "Illegal actions are excluded before score ranking inputs are emitted."
+      - "Normalized scoring inputs always include range, hazard, concentration, control, objective, and resource dimensions."
+    safe_edit_boundaries:
+      - "Safe: additive scoring dimensions and helper decomposition."
+      - "Caution: legality filters consumed by strategy selection behavior."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
   ingest_and_validation:
     owner_pool: content_manifest_gate
     owner_task: CAP-05
