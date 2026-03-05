@@ -89,7 +89,7 @@ Current in-progress focus: `ARC-06` reactions, interrupts, and ready-action wind
 - [ ] WLD-09 Build multi-encounter adventuring-day persistence and recovery flow
 - [ ] WLD-10 Build encounter scripting, waves, objectives, and map hooks
 - [ ] WLD-11 Hard-cut schema, import, and content IDs across all content classes
-- [ ] WLD-12 Build performance harness, regression corpus, and world-scale replay diff suite
+- [ ] WLD-12 Build performance harness, regression corpus, and world-scale replay diff suite (in progress on `codex/feat/wld-12-build-performance-harness-regression-corpus-and-wo`)
 
 ## Completion Gates
 
