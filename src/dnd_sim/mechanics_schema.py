@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 KNOWN_EFFECT_TYPES = {
     "damage",
@@ -89,6 +92,7 @@ _ACTION_GROUPS = (
     "legendary_actions",
     "lair_actions",
 )
+
 
 def _canonical_effect_type(effect_type: str) -> str:
     return str(effect_type).strip().lower()

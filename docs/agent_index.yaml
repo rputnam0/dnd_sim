@@ -11,6 +11,18 @@ subsystems:
       - "Safe: decision logic internals, helper delegation, telemetry enrichment."
       - "Caution: turn order loop, action cost semantics, outcome aggregation."
       - "Do not break top-level function names consumed by tests/integration."
+  telemetry_schema:
+    owner_pool: observability_a
+    owner_task: OBS-01
+    owner_module: src/dnd_sim/telemetry.py
+    invariants:
+      - "Event envelopes remain JSON-compatible and deterministic for identical inputs."
+      - "Envelope keys include schema_version, event_type, telemetry_type, source, and payload."
+      - "telemetry_type must mirror event_type for compatibility with existing consumers."
+    safe_edit_boundaries:
+      - "Safe: adding event types and additive payload keys."
+      - "Caution: envelope key renames consumed by tests and replay tooling."
+      - "Do not add nondeterministic metadata fields by default."
   resource_inference:
     owner_pool: observability_d
     owner_task: OBS-05
