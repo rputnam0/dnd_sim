@@ -33,7 +33,7 @@ Current in-progress focus: `ARC-06` reactions, interrupts, and ready-action wind
 
 - [ ] CAP-01 Define capability manifest schema, storage format, and CLI
 - [ ] CAP-02 Generate spell capability manifest from canonical spell data
-- [ ] CAP-03 Generate feat, trait, background, and species capability manifest
+- [ ] CAP-03 Generate feat, trait, background, and species capability manifest (in progress on `codex/feat/cap-03-generate-feat-trait-background-and-species-capabil`)
 - [ ] CAP-04 Generate monster and monster-action capability manifest
 - [ ] CAP-05 Enforce capability manifest gates in import paths and CI
 - [ ] CAP-06 Publish machine-readable and markdown coverage reports
