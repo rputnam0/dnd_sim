@@ -1,5 +1,7 @@
 subsystems:
   simulation_runtime:
+    owner_pool: runtime_a
+    owner_task: ARC-01
     owner_module: src/dnd_sim/engine.py
     invariants:
       - "run_simulation entrypoint and return shape remain backward compatible."
@@ -10,6 +12,8 @@ subsystems:
       - "Caution: turn order loop, action cost semantics, outcome aggregation."
       - "Do not break top-level function names consumed by tests/integration."
   resource_inference:
+    owner_pool: observability_d
+    owner_task: OBS-05
     owner_module: src/dnd_sim/engine_resources.py
     invariants:
       - "Resource caps are non-negative and clamp current resources to max."
@@ -20,6 +24,8 @@ subsystems:
       - "Caution: fallback level parsing and trait gating conditions."
       - "Do not introduce required new runtime-state fields."
   spell_target_inference:
+    owner_pool: runtime_spell
+    owner_task: ARC-07
     owner_module: src/dnd_sim/engine_spell_inference.py
     invariants:
       - "Inference is heuristic and must be deterministic for identical inputs."
@@ -30,6 +36,8 @@ subsystems:
       - "Caution: pattern broadening that can change family tags or target_mode."
       - "Do not add randomness or stateful caches."
   strategy_interface:
+    owner_pool: runtime_b
+    owner_task: ARC-02
     owner_module: src/dnd_sim/strategy_api.py
     invariants:
       - "Strategies must implement on_round_start."
@@ -40,6 +48,8 @@ subsystems:
       - "Caution: validate_strategy_instance error contracts consumed by tests/io."
       - "Do not require both declare_turn and legacy methods simultaneously."
   ingest_and_validation:
+    owner_pool: content_manifest_gate
+    owner_task: CAP-05
     owner_module: src/dnd_sim/io.py
     invariants:
       - "Character/spell payload loading remains backward compatible."
@@ -50,6 +60,8 @@ subsystems:
       - "Caution: schema normalization paths used by fixtures and migration scripts."
       - "Do not silently drop unknown high-signal fields."
   mechanics_schema:
+    owner_pool: runtime_e
+    owner_task: ARC-05
     owner_module: src/dnd_sim/mechanics_schema.py
     invariants:
       - "Mechanic validation accepts known effect variants and rejects malformed rows."
@@ -59,3 +71,126 @@ subsystems:
       - "Safe: support matrix extension and validator tightening."
       - "Caution: changing canonical field names consumed by mechanics scripts/tests."
       - "Do not break existing coverage report keys without migration."
+  engine_runtime:
+    owner_pool: runtime_a
+    owner_task: ARC-01
+    owner_module: src/dnd_sim/engine_runtime.py
+    invariants:
+      - "Session setup, initiative ordering, and round progression stay deterministic under fixed seeds."
+      - "engine.py remains a stable facade that delegates orchestration into engine_runtime."
+      - "Round transition semantics preserve existing combat lifecycle hooks."
+    safe_edit_boundaries:
+      - "Safe: extracting helper methods and tightening orchestration-level contracts."
+      - "Caution: round start/end ordering and initiative tie-breaking behavior."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  action_legality_runtime:
+    owner_pool: runtime_b
+    owner_task: ARC-02
+    owner_module: src/dnd_sim/action_legality.py
+    invariants:
+      - "Legality checks emit structured errors with deterministic error codes."
+      - "Action economy validation is centralized and reused by engine and strategy API paths."
+      - "Invalid declarations fail fast before action resolution side effects occur."
+    safe_edit_boundaries:
+      - "Safe: adding new legality predicates and helper decomposition."
+      - "Caution: error payload shape consumed by strategy and integration tests."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  movement_runtime:
+    owner_pool: runtime_c
+    owner_task: ARC-03
+    owner_module: src/dnd_sim/movement_runtime.py
+    invariants:
+      - "Movement budget accounting never drops below zero without explicit forced-movement semantics."
+      - "Path legality reflects terrain, occupancy, and reach constraints consistently."
+      - "Forced movement semantics remain distinct from voluntary movement for trigger handling."
+    safe_edit_boundaries:
+      - "Safe: path scoring, route decomposition, and helper extraction."
+      - "Caution: opportunity-attack trigger points and difficult-terrain multipliers."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  action_resolution_runtime:
+    owner_pool: runtime_d
+    owner_task: ARC-04
+    owner_module: src/dnd_sim/action_resolution.py
+    invariants:
+      - "Action dispatch chooses one deterministic execution path for identical declarations."
+      - "Hit/save/target application semantics remain backward compatible with current engine outputs."
+      - "Invalid targets return structured failures without partial state mutation."
+    safe_edit_boundaries:
+      - "Safe: dispatch-table refactors and additive action handlers."
+      - "Caution: shared damage/save math and result-object schema."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  effects_runtime:
+    owner_pool: runtime_e
+    owner_task: ARC-05
+    owner_module: src/dnd_sim/effects_runtime.py
+    invariants:
+      - "Effect lifecycle events remain ordered as apply/tick/refresh/expire."
+      - "Concentration graph updates stay consistent with effect ownership and teardown."
+      - "Derived actor state recomputation remains deterministic and idempotent."
+    safe_edit_boundaries:
+      - "Safe: effect-family helper extraction and lifecycle instrumentation."
+      - "Caution: concentration break propagation and stacked-condition teardown."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  reaction_runtime:
+    owner_pool: runtime_f
+    owner_task: ARC-06
+    owner_module: src/dnd_sim/reaction_runtime.py
+    invariants:
+      - "Each actor consumes at most one reaction per round unless explicit rules override."
+      - "Ready-action release and interrupt ordering are deterministic under fixed seeds."
+      - "Trigger matching preserves existing legality windows for opportunity and readied actions."
+    safe_edit_boundaries:
+      - "Safe: trigger matcher decomposition and additive reaction hooks."
+      - "Caution: reaction lockout state transitions and timing edge cases."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  spell_runtime:
+    owner_pool: runtime_spell
+    owner_task: ARC-07
+    owner_module: src/dnd_sim/spell_runtime.py
+    invariants:
+      - "Spell declaration normalization, slot spend, and upcast handling remain deterministic."
+      - "Target-resolution adapters preserve existing target_mode semantics and negative-case behavior."
+      - "Spell-result application avoids side effects when legality checks fail."
+    safe_edit_boundaries:
+      - "Safe: spell-family handler extraction and adapter hardening."
+      - "Caution: slot accounting, concentration handoff, and target selection heuristics."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  replay_runtime:
+    owner_pool: runtime_report
+    owner_task: ARC-08
+    owner_module: src/dnd_sim/replay.py
+    invariants:
+      - "Replay bundles preserve deterministic round-trip inputs, seeds, traces, and outcomes."
+      - "Replay serialization remains stable for diff tooling across equivalent runs."
+      - "Replay construction remains side-effect free with respect to live simulation state."
+    safe_edit_boundaries:
+      - "Safe: serializer helpers and deterministic ordering guarantees."
+      - "Caution: replay schema compatibility and diff key naming."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  reporting_runtime:
+    owner_pool: runtime_report
+    owner_task: ARC-08
+    owner_module: src/dnd_sim/reporting_runtime.py
+    invariants:
+      - "Reporting adapters produce deterministic summaries for equivalent replay payloads."
+      - "Reporting emits derived views only and does not mutate authoritative runtime state."
+      - "Summary/report output remains backward compatible with existing integration consumers."
+    safe_edit_boundaries:
+      - "Safe: formatting helpers and additive summary fields with defaults."
+      - "Caution: report key stability consumed by downstream docs and tooling."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+policies:
+  runtime_affecting_prs:
+    applies_to_tracks:
+      - ARC
+      - CAP
+      - OBS
+      - DBS
+      - AI
+      - FIX
+      - WLD
+      - FIN
+    requirements:
+      - "Runtime-affecting PRs must update docs/agent_index.yaml in the same branch."
+      - "New, renamed, or transferred runtime boundaries must include owner_pool, owner_module, invariants, and safe_edit_boundaries."
+      - "Review is blocked when backlog target runtime modules are missing ownership coverage in this file."

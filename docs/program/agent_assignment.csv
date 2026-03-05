@@ -4,7 +4,7 @@ DOC-02,doc_control_a,explorer_doc,batch-0,doc,DOC-01,codex/feat/doc-02-archive-s
 DOC-03,doc_control_b,explorer_doc,batch-0,doc,DOC-01,feat/doc-03-normalize-status-board-and-merged-baseline-history
 DOC-04,doc_control_a,explorer_doc,batch-0,doc,DOC-01,feat/doc-04-add-doc-freshness-metadata-and-registry
 DOC-05,doc_control_ci,explorer_doc,batch-0,doc,DOC-04,feat/doc-05-add-doc-consistency-checker-and-ci-gate
-DOC-06,doc_control_lead,explorer_doc,batch-0,doc,DOC-01,feat/doc-06-expand-agent-ownership-map-for-target-runtime-boun
+DOC-06,doc_control_lead,explorer_doc,batch-0,doc,DOC-01,codex/feat/doc-06-expand-agent-ownership-map-for-target-runtime-boun
 ARC-01,runtime_a,explorer_arc,batch-1,arc,DOC-06,feat/arc-01-extract-simulation-session-and-turn-loop-orchestra
 ARC-02,runtime_b,explorer_arc,batch-1,arc,ARC-01,feat/arc-02-extract-turn-declaration-validation-and-legal-acti
 ARC-03,runtime_c,explorer_arc,batch-1,arc,ARC-01,feat/arc-03-extract-movement-routing-and-spatial-legality-serv
