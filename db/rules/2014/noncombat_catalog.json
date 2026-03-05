@@ -1,0 +1,42 @@
+{
+  "skills": {
+    "acrobatics": "dex",
+    "animal_handling": "wis",
+    "arcana": "int",
+    "athletics": "str",
+    "deception": "cha",
+    "history": "int",
+    "insight": "wis",
+    "intimidation": "cha",
+    "investigation": "int",
+    "medicine": "wis",
+    "nature": "int",
+    "perception": "wis",
+    "performance": "cha",
+    "persuasion": "cha",
+    "religion": "int",
+    "sleight_of_hand": "dex",
+    "stealth": "dex",
+    "survival": "wis"
+  },
+  "tools": {
+    "alchemists_supplies": "int",
+    "brewers_supplies": "wis",
+    "calligraphers_supplies": "dex",
+    "cartographers_tools": "wis",
+    "cobblers_tools": "dex",
+    "cooks_utensils": "wis",
+    "disguise_kit": "cha",
+    "forgery_kit": "int",
+    "herbalism_kit": "wis",
+    "jewelers_tools": "dex",
+    "leatherworkers_tools": "dex",
+    "masons_tools": "str",
+    "navigators_tools": "wis",
+    "poisoners_kit": "int",
+    "smiths_tools": "str",
+    "thieves_tools": "dex",
+    "tinkers_tools": "int",
+    "woodcarvers_tools": "dex"
+  }
+}
