@@ -33,13 +33,14 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 |---|---|---|---|---|
 | DOC-01 | feat/doc-01-establish-canonical-docs-entrypoints-and-source-of | doc_control_lead | in_progress | Canonical planning entrypoint task in flight. |
 | DOC-02 | codex/feat/doc-02-archive-stale-planning-and-historical-run-artifact | doc_control_a | pr_open | Archive backfill and canonical-link cleanup in PR #90. |
-| DOC-04 | feat/doc-04-add-doc-freshness-metadata-and-registry | doc_control_a | in_progress | Adding metadata freshness headers and governance ownership registry. |
+| DOC-04 | feat/doc-04-add-doc-freshness-metadata-and-registry | doc_control_a | pr_open | Metadata freshness headers and governance ownership registry submitted for integration review. |
 
 ## Open PRs
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
 | DOC-02 | [#90](https://github.com/rputnam0/dnd_sim/pull/90) | doc_control_a | pending review | Targets `int/5a-doc-control`. |
+| DOC-04 | [#89](https://github.com/rputnam0/dnd_sim/pull/89) | doc_control_a | pending | Targets `int/5a-doc-control`. |
 
 ## Current blockers
 
