@@ -60,10 +60,14 @@ def test_suffocation_counts_breath_then_drops_to_zero_after_tolerance() -> None:
     breath_spent = advance_suffocation(started.state, actor_id="hero", rounds=20)
     assert breath_spent.state.actors["hero"].breath_rounds_remaining == 0
     assert breath_spent.state.actors["hero"].hp == 12
+    assert breath_spent.state.minute_index == 2
+    assert breath_spent.details["elapsed_minutes"] == 2
 
     downed = advance_suffocation(breath_spent.state, actor_id="hero", rounds=2)
     assert downed.state.actors["hero"].hp == 0
     assert downed.details["suffocating_rounds"] == 2
+    assert downed.state.minute_index == 3
+    assert downed.details["elapsed_minutes"] == 1
     assert "unconscious" in downed.state.actors["hero"].conditions
 
 

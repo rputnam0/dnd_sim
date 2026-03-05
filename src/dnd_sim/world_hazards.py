@@ -6,6 +6,8 @@ from typing import Any
 
 FALL_DAMAGE_DIE_SIDES = 6
 MAX_FALL_DAMAGE_DICE = 20
+SECONDS_PER_ROUND = 6
+SECONDS_PER_MINUTE = 60
 MINUTES_PER_HOUR = 60
 DISEASE_SAVE_INTERVAL_MINUTES = 24 * MINUTES_PER_HOUR
 
@@ -400,7 +402,14 @@ def advance_suffocation(
         conditions=tuple(conditions),
         diseases=actor.diseases,
     )
-    next_state = _advance_minutes(_replace_actor(state, next_actor), elapsed_minutes=rounds)
+    elapsed_minutes = max(
+        1,
+        (rounds * SECONDS_PER_ROUND + (SECONDS_PER_MINUTE - 1)) // SECONDS_PER_MINUTE,
+    )
+    next_state = _advance_minutes(
+        _replace_actor(state, next_actor),
+        elapsed_minutes=elapsed_minutes,
+    )
 
     return HazardResolution(
         state=next_state,
@@ -409,6 +418,7 @@ def advance_suffocation(
         details={
             "reason": _required_text(reason, field_name="reason"),
             "rounds": rounds,
+            "elapsed_minutes": elapsed_minutes,
             "breath_rounds_remaining": breath,
             "suffocating_rounds": suffocating_rounds,
             "hp_after": hp,
