@@ -1,62 +1,52 @@
 graph TD
-  subgraph W1[Wave 1 Foundations]
-    FND01[FND-01 Event Timing]
-    FND02[FND-02 Effect Instances]
-    FND03[FND-03 Weapon Identity]
-    FND04[FND-04 Damage Packets]
-    FND05[FND-05 Spellcasting Core]
-    FND06[FND-06 Strategy Turn Plan]
-  end
-
-  FND01 --> FND02
-  FND03 --> FND04
-  FND01 --> FND05
-  FND02 --> FND05
-  FND01 --> FND06
-  FND03 --> FND06
-  FND05 --> FND06
-
-  subgraph W2[Wave 2 Bugs and Combat Core]
-    BUGS[BUG-01..BUG-22]
-    COMA[COM-01..COM-07]
-  end
-
-  FND01 --> BUGS
-  FND02 --> BUGS
-  FND03 --> BUGS
-  FND04 --> BUGS
-  FND05 --> BUGS
-  FND06 --> BUGS
-
-  FND01 --> COMA
-  FND02 --> COMA
-  FND03 --> COMA
-  FND05 --> COMA
-
-  subgraph W3[Wave 3 Mid-Core]
-    COMB[COM-08..COM-10]
-    CHRCORE[CHR-01..CHR-03]
-    SPL01[SPL-01]
-  end
-
-  COMA --> COMB
-  FND03 --> CHRCORE
-  FND05 --> CHRCORE
-  FND05 --> SPL01
-
-  subgraph W4[Wave 4 Classes and Spells]
-    CHRPKG[CHR-04..CHR-16]
-    SPLFAM[SPL-02..SPL-05]
-  end
-
-  CHRCORE --> CHRPKG
-  SPL01 --> SPLFAM
-  COMB --> SPLFAM
-
-  subgraph W5[Wave 5 Systems]
-    SYSALL[SYS-01..SYS-08]
-  end
-
-  CHRCORE --> SYSALL
-  COMB --> SYSALL
-  SPLFAM --> SYSALL
+    DOC[5A Documentation Control]
+    ARC[5B Runtime Decomposition]
+    CAP[5C Capability Manifest]
+    OBS[5D Observability]
+    DBS[5E Persistence]
+    AI[5F Tactical AI]
+    FIX[5G Rules Closure]
+    WLD[5H World Systems]
+    FIN[5I Completion Gates]
+    DOC --> ARC
+    DOC --> CAP
+    DOC --> OBS
+    ARC --> CAP
+    ARC --> OBS
+    ARC --> DBS
+    ARC --> AI
+    ARC --> FIX
+    CAP --> DBS
+    CAP --> FIN
+    OBS --> FIN
+    DBS --> WLD
+    DBS --> FIN
+    AI --> OBS
+    AI --> FIX
+    AI --> FIN
+    FIX --> FIN
+    WLD --> FIN
+    DOC_01[DOC-01] --> DOC_05[DOC-05]
+    DOC_01[DOC-01] --> DOC_06[DOC-06]
+    ARC_01[ARC-01] --> ARC_02[ARC-02]
+    ARC_01[ARC-01] --> ARC_03[ARC-03]
+    ARC_02[ARC-02] --> ARC_04[ARC-04]
+    ARC_03[ARC-03] --> ARC_04[ARC-04]
+    ARC_04[ARC-04] --> ARC_05[ARC-05]
+    ARC_04[ARC-04] --> ARC_06[ARC-06]
+    ARC_04[ARC-04] --> ARC_07[ARC-07]
+    ARC_04[ARC-04] --> OBS_02[OBS-02]
+    CAP_01[CAP-01] --> CAP_02[CAP-02]
+    CAP_01[CAP-01] --> CAP_03[CAP-03]
+    CAP_01[CAP-01] --> CAP_04[CAP-04]
+    CAP_05[CAP-05] --> FIN_02[FIN-02]
+    OBS_06[OBS-06] --> FIN_03[FIN-03]
+    DBS_04[DBS-04] --> WLD_03[WLD-03]
+    DBS_05[DBS-05] --> WLD_08[WLD-08]
+    WLD_09[WLD-09] --> FIN_04[FIN-04]
+    AI_01[AI-01] --> AI_02[AI-02]
+    AI_01[AI-01] --> AI_03[AI-03]
+    AI_01[AI-01] --> AI_04[AI-04]
+    AI_01[AI-01] --> AI_05[AI-05]
+    AI_02[AI-02] --> FIX_07[FIX-07]
+    FIX_07[FIX-07] --> FIN_02[FIN-02]

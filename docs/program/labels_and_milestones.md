@@ -1,23 +1,61 @@
 # Labels and Milestones
 
-## Labels
-- `wave:1` `wave:2` `wave:3` `wave:4` `wave:5`
-- `type:foundation` `type:bug` `type:combat` `type:character` `type:spell` `type:system`
-- `status:blocked` `status:ready` `status:in-progress` `status:review` `status:merged`
-- `risk:high` `risk:medium` `risk:low`
-- `determinism:required`
-- `migration:required`
+Status: canonical  
+Owner: program-control  
+Last updated: 2026-03-04  
+Canonical source: `docs/program/README.md`
 
 ## Milestones
-- `Wave 1 - Foundations`
-- `Wave 2 - Combat Defects and Core`
-- `Wave 3 - Core Expansion`
-- `Wave 4 - Class and Spell Completion`
-- `Wave 5 - Full Backend Systems`
-- `Program Complete - 5e 2014 Backend`
 
-## Issue Assignment Rules
-- Every task issue gets one `wave:*` and one `type:*` label.
-- Any task touching core engine timing or schemas gets `risk:high`.
-- All tasks include `determinism:required`.
-- Tasks with public API/schema changes include `migration:required`.
+Create these milestones:
+
+- `5A-doc-control`
+- `5B-runtime-decomposition`
+- `5C-capability-manifest`
+- `5D-observability`
+- `5E-persistence`
+- `5F-ai-hardening`
+- `5G-rules-closure`
+- `5H-world-systems`
+- `5I-completion-gates`
+
+## Labels
+
+Track labels:
+- `track:doc`
+- `track:runtime`
+- `track:capability`
+- `track:observability`
+- `track:persistence`
+- `track:ai`
+- `track:rules`
+- `track:world`
+- `track:completion`
+
+Risk and gate labels:
+- `gate:determinism`
+- `gate:docs`
+- `gate:content`
+- `gate:replay`
+- `gate:persistence`
+- `gate:ai`
+- `gate:world`
+- `gate:completion`
+
+Work type labels:
+- `type:refactor`
+- `type:schema`
+- `type:telemetry`
+- `type:rules`
+- `type:content`
+- `type:world-system`
+- `type:test`
+- `type:doc`
+
+State labels:
+- `state:blocked`
+- `state:in-review`
+- `state:ready-to-merge`
+- `state:needs-rebase`
+
+Use one track label and any relevant gate/type/state labels on every task PR.
