@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from dnd_sim.ai.scoring import candidate_rejection_reason_for_action
 from dnd_sim.strategies.defaults import OptimalExpectedDamageStrategy
 from dnd_sim.strategy_api import ActorView, BattleStateView
 from dnd_sim.telemetry import AI_TRACE_EVENT_TYPES, TELEMETRY_SCHEMA_VERSION, serialize_event
@@ -160,3 +161,12 @@ def test_ai_rationale_trace_uses_structured_telemetry_schema() -> None:
     payload = rationale_trace["payload"]
     assert payload["selected_action"] == declaration.action.action_name
     assert payload["strategy"] == "OptimalExpectedDamageStrategy"
+
+
+def test_candidate_rejection_reason_defaults_to_unknown_for_unclassified_case() -> None:
+    reason = candidate_rejection_reason_for_action(
+        {"name": "basic", "action_cost": "action"},
+        resources={},
+        used_count=0,
+    )
+    assert reason == "unknown"

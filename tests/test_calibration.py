@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+from argparse import Namespace
 from pathlib import Path
 
+import dnd_sim.calibration as calibration_module
 from dnd_sim.calibration import run_calibration_harness
 from tests.helpers import build_character, build_enemy, write_json
 
@@ -137,3 +139,31 @@ def test_calibration_harness_flags_failed_metric_bounds(tmp_path: Path) -> None:
     assert result["all_passed"] is False
     benchmark = result["benchmarks"][0]
     assert benchmark["metrics"]["party_win_rate"]["pass"] is False
+
+
+def test_calibration_main_preserves_raw_json_stdout_without_out_arg(
+    monkeypatch,
+    capsys,
+) -> None:
+    class _Parser:
+        def parse_args(self) -> Namespace:
+            return Namespace(
+                scenario=["fixtures/scenario.json"],
+                trials=3,
+                seed=7,
+                tolerance=0.05,
+                out=None,
+            )
+
+    monkeypatch.setattr(calibration_module, "build_parser", lambda: _Parser())
+    monkeypatch.setattr(
+        calibration_module,
+        "run_calibration_harness",
+        lambda *_args, **_kwargs: {"all_passed": True, "benchmarks": []},
+    )
+
+    calibration_module.main()
+    stdout = capsys.readouterr().out.strip()
+    parsed = json.loads(stdout)
+    assert parsed["all_passed"] is True
+    assert parsed["benchmarks"] == []

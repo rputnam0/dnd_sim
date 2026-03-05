@@ -213,6 +213,7 @@ def main() -> None:
             },
         )
     else:
+        print(text)
         emit_event(
             logger,
             event_type="calibration_output_emitted",

@@ -38,7 +38,7 @@ def candidate_rejection_reason_for_action(
     if not _can_pay(resources, _resource_cost(action)):
         return "insufficient_resources"
 
-    return "not_viable"
+    return "unknown"
 
 
 def _score_components(candidate: Mapping[str, Any]) -> dict[str, float]:

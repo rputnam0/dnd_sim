@@ -561,28 +561,6 @@ def run_simulation(
                         if turn_declaration.action is not None
                         else None
                     )
-                    if turn_declaration.action is not None:
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="declaration_validation",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            validation_state="valid",
-                        )
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="action_selection",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            resolved_targets=requested_targets,
-                            selection_state="selected",
-                        )
                     try:
                         _execute_declared_turn_or_error(
                             rng=rng,
@@ -618,6 +596,27 @@ def run_simulation(
                         raise
 
                     if turn_declaration.action is not None:
+                        _emit_turn_trace_event(
+                            trial_telemetry,
+                            event_type="declaration_validation",
+                            actor_id=actor.actor_id,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            action_name=action_name,
+                            requested_targets=requested_targets,
+                            validation_state="valid",
+                        )
+                        _emit_turn_trace_event(
+                            trial_telemetry,
+                            event_type="action_selection",
+                            actor_id=actor.actor_id,
+                            round_number=rounds,
+                            turn_token=turn_token,
+                            action_name=action_name,
+                            requested_targets=requested_targets,
+                            resolved_targets=requested_targets,
+                            selection_state="selected",
+                        )
                         _emit_turn_trace_event(
                             trial_telemetry,
                             event_type="action_resolution",

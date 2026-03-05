@@ -285,3 +285,11 @@ def test_illegal_declared_action_emits_illegal_action_selection_trace(
     illegal_event = illegal_selection_events[0]
     assert illegal_event.get("error_code") == "unknown_action"
     assert illegal_event.get("field") == "action.action_name"
+
+    selected_events = [
+        event
+        for event in captured_payloads
+        if event.get("telemetry_type") == "action_selection"
+        and event.get("selection_state") == "selected"
+    ]
+    assert not selected_events
