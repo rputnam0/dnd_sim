@@ -62,3 +62,47 @@ def test_run_benchmark_suite_fails_unreachable_rationale_threshold(tmp_path: Pat
 
     assert result["rationale_coverage"]["pass"] is False
     assert result["all_passed"] is False
+
+
+@pytest.mark.parametrize(
+    "snapshot",
+    [
+        {
+            "objective_tradeoff": {
+                "objective_race_score": 3.0,
+                "focus_fire_score": 1.5,
+            },
+            "timing": {
+                "recharge_timing_score": 1.0,
+                "legendary_action_window_score": 0.5,
+                "reaction_bait_score": 0.75,
+            },
+            "spatial": {
+                "friendly_fire_penalty": 2.0,
+                "line_of_effect_penalty": 1.0,
+                "cover_penalty": 1.0,
+            },
+        },
+        {
+            "scoring_inputs": {
+                "objective_tradeoff": {
+                    "objective_race_score": 3.0,
+                    "focus_fire_score": 1.5,
+                },
+                "timing": {
+                    "recharge_timing_score": 1.0,
+                    "legendary_action_window_score": 0.5,
+                    "reaction_bait_score": 0.75,
+                },
+                "spatial": {
+                    "friendly_fire_penalty": 2.0,
+                    "line_of_effect_penalty": 1.0,
+                    "cover_penalty": 1.0,
+                },
+            }
+        },
+    ],
+)
+def test_candidate_quality_bonus_uses_snapshot_scoring_fields(snapshot: dict[str, object]) -> None:
+    bonus = run_benchmarks._candidate_quality_bonus(snapshot)
+    assert bonus == pytest.approx(4.75)
