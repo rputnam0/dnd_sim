@@ -39,7 +39,7 @@ Each worker prompt must include:
 ## Execution order
 
 1. Run the full Documentation Control track first.
-2. Do not start ARC work until `DOC-01`, `DOC-03`, and `DOC-06` are merged.
+2. Do not start ARC work until `DOC-01` and `DOC-06` are merged.
 3. Run Capability Manifest and Observability as soon as their dependencies are ready.
 4. Start Persistence and AI only after the required ARC modules are extracted.
 5. Start World Systems only after Persistence is ready for campaign/world state.
