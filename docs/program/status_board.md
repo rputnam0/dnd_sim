@@ -29,7 +29,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
-| WLD | World Systems and Campaign Platform | in_progress | 5H-world-systems | `WLD-03`, `WLD-06`, and `WLD-09` are `pr_open`; `WLD-01`, `WLD-02`, `WLD-04`, `WLD-08`, and `WLD-10` are `in_progress`; remaining WLD tasks are `not_started` in `backlog.csv`. |
+| WLD | World Systems and Campaign Platform | in_progress | 5H-world-systems | `WLD-03`, `WLD-06`, `WLD-09`, and `WLD-11` are `pr_open`; `WLD-01`, `WLD-02`, `WLD-04`, `WLD-08`, and `WLD-10` are `in_progress`; remaining WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
 
 ## Active branches
@@ -44,6 +44,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | WLD-08 | codex/feat/wld-08-build-quest-faction-reputation-and-world-flag-life | world_state_a | in_progress | Implementing quest lifecycle transitions, faction reputation state, and world-flag persistence plumbing. |
 | WLD-09 | codex/feat/wld-09-build-multi-encounter-adventuring-day-persistence | world_state_b | pr_open | Multi-encounter adventuring-day persistence and deterministic recovery flow are in PR review. |
 | WLD-10 | codex/feat/wld-10-build-encounter-scripting-waves-objectives-and-map | world_script_a | in_progress | Implementing deterministic encounter scripting for waves, objective hooks, and map-triggered world flags. |
+| WLD-11 | codex/feat/wld-11-hard-cut-schema-import-and-content-ids-across-all | world_schema_a | pr_open | Canonical global content IDs, hard-cut import alias rejection, and content-record backfill migration coverage are in PR review. |
 
 ## Open PRs
 
@@ -52,6 +53,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | WLD-03 | [#127](https://github.com/rputnam0/dnd_sim/pull/127) | world_explore_a | pending | WLD-03 exploration turn structure, time advancement, and light tracking changes are in PR review. |
 | WLD-06 | [#141](https://github.com/rputnam0/dnd_sim/pull/141) | world_economy_a | pending | WLD-06 economy/loot/vendor inventory and pricing model changes are in PR review. |
 | WLD-09 | [#133](https://github.com/rputnam0/dnd_sim/pull/133) | world_state_b | pending | WLD-09 campaign runtime persistence and recovery flow changes are in PR review. |
+| WLD-11 | [#143](https://github.com/rputnam0/dnd_sim/pull/143) | world_schema_a | pending | WLD-11 global content ID hard-cut schema/import and migration updates are in PR review. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
@@ -66,4 +68,5 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - `WLD-08` is active and depends on `DBS-05` per `backlog.csv`.
 - `WLD-09` is in PR review and depends on `WLD-03`, `DBS-04`, and `DBS-05` per `backlog.csv`.
 - `WLD-10` is active and depends on `DBS-05`, `ARC-08`, and `WLD-08` per `backlog.csv`.
+- `WLD-11` is in PR review and depends on `CAP-05` and `DBS-06` per `backlog.csv`.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
