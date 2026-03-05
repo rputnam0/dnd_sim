@@ -143,9 +143,11 @@ subsystems:
       - "Each actor consumes at most one reaction per round unless explicit rules override."
       - "Ready-action release and interrupt ordering are deterministic under fixed seeds."
       - "Trigger matching preserves existing legality windows for opportunity and readied actions."
+      - "Movement interrupts resolve readied reach triggers before exit-reach opportunity attacks for the same reactor."
     safe_edit_boundaries:
       - "Safe: trigger matcher decomposition and additive reaction hooks."
       - "Caution: reaction lockout state transitions and timing edge cases."
+      - "Caution: feature-hook reaction ordering and per-round reaction lock semantics."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
   spell_runtime:
     owner_pool: runtime_spell

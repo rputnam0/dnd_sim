@@ -27,7 +27,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] ARC-07 spell execution pipeline extracted.
 - [ ] ARC-08 replay/reporting adapters extracted and `engine.py` reduced below the declared limit.
 
-Current in-progress focus: `ARC-05` effect lifecycle, condition state, and concentration graph extraction on `codex/feat/arc-05-extract-effect-lifecycle-condition-state-and-conce`.
+Current in-progress focus: `ARC-06` reactions, interrupts, and ready-action window extraction on `codex/feat/arc-06-extract-reactions-interrupts-and-ready-action-wind`.
 
 ## Capability Manifest
 

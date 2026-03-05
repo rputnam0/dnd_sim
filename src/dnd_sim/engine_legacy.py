@@ -109,6 +109,7 @@ from dnd_sim.action_resolution import (
     execute_action_pipeline as _action_resolution_execute_action_pipeline,
 )
 from dnd_sim import effects_runtime as _effects_runtime
+from dnd_sim import reaction_runtime as _reaction_runtime
 from dnd_sim.engine_resources import (
     apply_arcane_recovery as _apply_arcane_recovery_impl,
     apply_inferred_barbarian_resources as _apply_inferred_barbarian_resources_impl,
@@ -6884,10 +6885,7 @@ def _movement_reach_transitions(
 
 
 def _as_readied_reaction_action(action: ActionDefinition) -> ActionDefinition:
-    normalized_tags = {str(tag).strip().lower() for tag in action.tags}
-    if "readied_response" in normalized_tags:
-        return replace(action, action_cost="reaction")
-    return replace(action, action_cost="reaction", tags=[*action.tags, "readied_response"])
+    return _reaction_runtime.as_readied_reaction_action(action)
 
 
 def _readied_reach_entry_point(
@@ -6895,31 +6893,10 @@ def _readied_reach_entry_point(
     responder: ActorRuntimeState,
     path_points: list[tuple[float, float, float]],
 ) -> tuple[float, float, float] | None:
-    if "readying" not in responder.conditions:
-        return None
-    if not responder.readied_reaction_reserved:
-        return None
-    if not _readied_trigger_matches(responder.readied_trigger, trigger_event="enemy_enters_reach"):
-        return None
-    readied = _resolve_named_action(responder, responder.readied_action_name)
-    if readied is None or readied.name == "ready":
-        return None
-
-    reaction_action = _as_readied_reaction_action(readied)
-    if responder.readied_spell_held and "spell" in reaction_action.tags:
-        reaction_action = replace(reaction_action, resource_cost={})
-    trigger_range = _action_range_ft(reaction_action)
-    if trigger_range is None or trigger_range <= 0:
-        return None
-
-    previous = path_points[0]
-    was_in_range = distance_chebyshev(responder.position, previous) <= trigger_range
-    for point in path_points[1:]:
-        is_in_range = distance_chebyshev(responder.position, point) <= trigger_range
-        if not was_in_range and is_in_range:
-            return point
-        was_in_range = is_in_range
-    return None
+    return _reaction_runtime.readied_reach_entry_point(
+        responder=responder,
+        path_points=path_points,
+    )
 
 
 def _run_opportunity_attacks_for_movement(
@@ -6943,137 +6920,26 @@ def _run_opportunity_attacks_for_movement(
     movement_source: str = "movement",
     movement_trigger_hooks: list[Callable[[MovementReactionTrigger], None]] | None = None,
 ) -> None:
-    from .spatial import can_see
-
-    if mover.dead or mover.hp <= 0:
-        return
-    if not _movement_triggers_opportunity_attacks(
-        movement_kind=movement_kind,
-        mover_conditions=set(mover.conditions),
+    _reaction_runtime.run_opportunity_attacks_for_movement(
+        rng=rng,
+        mover=mover,
         start_pos=start_pos,
         end_pos=end_pos,
-    ):
-        return
-
-    path_points = _expand_path_points(movement_path or [start_pos, end_pos])
-    if len(path_points) < 2:
-        return
-
-    hooks = movement_trigger_hooks or []
-    for enemy in actors.values():
-        if enemy.team == mover.team or enemy.dead or enemy.hp <= 0:
-            continue
-        if not _can_take_reaction(enemy):
-            continue
-        readied_reach_entry = _readied_reach_entry_point(
-            responder=enemy,
-            path_points=path_points,
-        )
-        if readied_reach_entry is not None:
-            original_position = mover.position
-            mover.position = readied_reach_entry
-            _trigger_readied_actions(
-                rng=rng,
-                trigger_actor=mover,
-                trigger_event="enemy_enters_reach",
-                eligible_reactors={enemy.actor_id},
-                round_number=round_number,
-                turn_token=turn_token,
-                actors=actors,
-                damage_dealt=damage_dealt,
-                damage_taken=damage_taken,
-                threat_scores=threat_scores,
-                resources_spent=resources_spent,
-                active_hazards=active_hazards,
-                obstacles=obstacles,
-                light_level=light_level,
-            )
-            mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
-            if mover.dead or mover.hp <= 0:
-                break
-
-        if not _can_take_reaction(enemy):
-            continue
-        opportunity_candidates = _opportunity_attack_candidates(enemy)
-        if not opportunity_candidates:
-            continue
-        max_reach = max(reach_ft for _, reach_ft in opportunity_candidates)
-        transitions = _movement_reach_transitions(
-            reactor_position=enemy.position,
-            path_points=path_points,
-            reach_ft=max_reach,
-        )
-        if not transitions:
-            continue
-        for trigger, trigger_point, trigger_distance in transitions:
-            visible = can_see(
-                observer_pos=enemy.position,
-                target_pos=trigger_point,
-                observer_traits=enemy.traits,
-                target_conditions=mover.conditions,
-                active_hazards=active_hazards,
-                light_level=light_level,
-            )
-            if hooks:
-                movement_trigger = MovementReactionTrigger(
-                    trigger=trigger,
-                    mover_id=mover.actor_id,
-                    reactor_id=enemy.actor_id,
-                    point=trigger_point,
-                    distance_ft=float(trigger_distance),
-                    reach_ft=float(max_reach),
-                    visible=visible,
-                    movement_source=movement_source,
-                )
-                for hook in hooks:
-                    hook(movement_trigger)
-
-            if trigger != "exit_reach":
-                continue
-            if not visible:
-                continue
-
-            reaction_result = _find_opportunity_attack_action(
-                enemy,
-                required_reach_ft=float(trigger_distance),
-            )
-            if reaction_result is None:
-                continue
-            reaction_attack, _ = reaction_result
-            spell_cast_request = SpellCastRequest() if "spell" in reaction_attack.tags else None
-            if not _spend_action_resource_cost(
-                enemy,
-                reaction_attack,
-                resources_spent,
-                spell_cast_request=spell_cast_request,
-                turn_token=turn_token,
-            ):
-                continue
-
-            enemy.reaction_available = False
-            original_position = mover.position
-            mover.position = trigger_point
-            _execute_action(
-                rng=rng,
-                actor=enemy,
-                action=reaction_attack,
-                targets=[mover],
-                actors=actors,
-                damage_dealt=damage_dealt,
-                damage_taken=damage_taken,
-                threat_scores=threat_scores,
-                resources_spent=resources_spent,
-                active_hazards=active_hazards,
-                obstacles=obstacles,
-                light_level=light_level,
-                round_number=round_number,
-                turn_token=turn_token,
-                spell_cast_request=spell_cast_request,
-            )
-            mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
-            break
-        if mover.dead or mover.hp <= 0:
-            break
+        movement_path=movement_path,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        obstacles=obstacles,
+        light_level=light_level,
+        round_number=round_number,
+        turn_token=turn_token,
+        movement_kind=movement_kind,
+        movement_source=movement_source,
+        movement_trigger_hooks=movement_trigger_hooks,
+    )
 
 
 def _move_actor_for_action_range(
@@ -9776,15 +9642,7 @@ def _can_pay_resource_cost(
 
 
 def _can_take_reaction(actor: ActorRuntimeState) -> bool:
-    if not actor.reaction_available:
-        return False
-    if actor.dead or actor.hp <= 0:
-        return False
-    if actor_is_incapacitated(actor):
-        return False
-    if has_condition(actor, "open_hand_no_reactions"):
-        return False
-    return True
+    return _reaction_runtime.can_take_reaction(actor)
 
 
 def _is_same_turn_for_actor(actor: ActorRuntimeState, turn_token: str | None) -> bool:
@@ -10163,38 +10021,14 @@ def _reaction_attack_hook_matches(
     trigger_target: ActorRuntimeState | None,
     trigger_action: ActionDefinition | None,
 ) -> bool:
-    if event != "after_action" or trigger_actor is None or trigger_action is None:
-        return False
-
-    trigger = hook.trigger
-    if trigger == "creature_attacks_ally_within_5ft":
-        if trigger_action.action_type != "attack" or trigger_target is None:
-            return False
-        if trigger_actor.team == reactor.team:
-            return False
-        if reactor.team != trigger_target.team or reactor.actor_id == trigger_target.actor_id:
-            return False
-        if _trait_lookup_key(hook.feature_name) == "sentinel" and _has_trait(
-            trigger_target, "sentinel"
-        ):
-            return False
-        return True
-
-    if trigger == "spell_cast_within_5ft":
-        if trigger_actor.team == reactor.team:
-            return False
-        return "spell" in trigger_action.tags
-
-    if trigger == "hit_by_melee_attack_within_5ft":
-        if trigger_action.action_type != "attack" or trigger_target is None:
-            return False
-        if trigger_actor.team == reactor.team:
-            return False
-        if trigger_target.actor_id != reactor.actor_id:
-            return False
-        return not _is_ranged_attack_action(trigger_action)
-
-    return False
+    return _reaction_runtime.reaction_attack_hook_matches(
+        hook=hook,
+        event=event,
+        reactor=reactor,
+        trigger_actor=trigger_actor,
+        trigger_target=trigger_target,
+        trigger_action=trigger_action,
+    )
 
 
 def _run_trait_event_handlers(
@@ -10216,110 +10050,24 @@ def _run_trait_event_handlers(
     obstacles: list[AABB],
     light_level: str,
 ) -> None:
-    if event != "after_action" or trigger_actor is None or trigger_action is None:
-        return
-    lock_key = f"event_reaction_round:{round_number}"
-    reactors = sorted(actors.values(), key=lambda value: value.actor_id)
-    for reactor in reactors:
-        if reactor.dead or reactor.hp <= 0:
-            continue
-        _register_actor_feature_hooks(reactor)
-        if not reactor.feature_hooks:
-            continue
-
-        for hook in reactor.feature_hooks:
-            if hook.hook_type != "reaction_attack":
-                continue
-
-            handler_name = _feature_hook_handler_name(hook)
-            if hook.trigger not in _REACTION_ATTACK_HOOK_TRIGGERS:
-                rule_trace.append(
-                    {
-                        "event": event,
-                        "round": round_number,
-                        "turn": turn_token,
-                        "handler": "feature_hook:reaction_attack",
-                        "actor_id": reactor.actor_id,
-                        "hook_feature": hook.feature_name,
-                        "hook_source": hook.source_type,
-                        "hook_trigger": hook.trigger,
-                        "result": "skipped",
-                        "reason": "invalid_hook_trigger",
-                    }
-                )
-                continue
-
-            if not _reaction_attack_hook_matches(
-                hook=hook,
-                event=event,
-                reactor=reactor,
-                trigger_actor=trigger_actor,
-                trigger_target=trigger_target,
-                trigger_action=trigger_action,
-            ):
-                continue
-
-            if not reactor.reaction_available:
-                continue
-            if reactor.per_action_uses.get(lock_key, 0) > 0:
-                rule_trace.append(
-                    {
-                        "event": event,
-                        "round": round_number,
-                        "turn": turn_token,
-                        "handler": handler_name,
-                        "actor_id": reactor.actor_id,
-                        "hook_feature": hook.feature_name,
-                        "hook_source": hook.source_type,
-                        "hook_trigger": hook.trigger,
-                        "result": "skipped",
-                        "reason": "reaction_lock",
-                    }
-                )
-                continue
-
-            attack_action = _fallback_action(reactor)
-            if attack_action is None or attack_action.action_type != "attack":
-                continue
-
-            reactor.reaction_available = False
-            reactor.per_action_uses[lock_key] = 1
-            if hook.trigger == "creature_attacks_ally_within_5ft":
-                trigger_actor.movement_remaining = 0.0
-
-            _execute_action(
-                rng=rng,
-                actor=reactor,
-                action=attack_action,
-                targets=[trigger_actor],
-                actors=actors,
-                damage_dealt=damage_dealt,
-                damage_taken=damage_taken,
-                threat_scores=threat_scores,
-                resources_spent=resources_spent,
-                active_hazards=active_hazards,
-                obstacles=obstacles,
-                light_level=light_level,
-                round_number=round_number,
-                turn_token=turn_token,
-                rule_trace=rule_trace,
-            )
-            rule_trace.append(
-                {
-                    "event": event,
-                    "round": round_number,
-                    "turn": turn_token,
-                    "handler": handler_name,
-                    "actor_id": reactor.actor_id,
-                    "trigger_actor_id": trigger_actor.actor_id,
-                    "hook_feature": hook.feature_name,
-                    "hook_source": hook.source_type,
-                    "hook_trigger": hook.trigger,
-                    "result": "executed",
-                }
-            )
-            if trigger_actor.dead or trigger_actor.hp <= 0:
-                return
+    _reaction_runtime.run_trait_event_handlers(
+        rng=rng,
+        event=event,
+        trigger_actor=trigger_actor,
+        trigger_target=trigger_target,
+        trigger_action=trigger_action,
+        actors=actors,
+        round_number=round_number,
+        turn_token=turn_token,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        rule_trace=rule_trace,
+        obstacles=obstacles,
+        light_level=light_level,
+    )
 
 
 def _dispatch_combat_event(
@@ -10758,18 +10506,7 @@ def _normalize_event_trigger(trigger: str | None) -> str | None:
 
 
 def _readied_trigger_matches(readied_trigger: str | None, *, trigger_event: str) -> bool:
-    normalized_readied = _normalize_event_trigger(readied_trigger)
-    normalized_event = _normalize_event_trigger(trigger_event)
-    if normalized_event in {None, "enemy_turn_start", "on_enemy_turn_start"}:
-        return normalized_readied in {None, "enemy_turn_start", "on_enemy_turn_start"}
-    if normalized_event == "enemy_enters_reach":
-        return normalized_readied in {
-            "enemy_enters_reach",
-            "on_enemy_enters_reach",
-            "enters_reach",
-            "on_enters_reach",
-        }
-    return normalized_readied == normalized_event
+    return _reaction_runtime.readied_trigger_matches(readied_trigger, trigger_event=trigger_event)
 
 
 def _trigger_readied_actions(
@@ -10789,179 +10526,22 @@ def _trigger_readied_actions(
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
 ) -> None:
-    normalized_trigger_event = _normalize_event_trigger(trigger_event)
-    supports_standard_reactions = normalized_trigger_event in {
-        None,
-        "enemy_turn_start",
-        "on_enemy_turn_start",
-    }
-
-    for actor in actors.values():
-        if eligible_reactors is not None and actor.actor_id not in eligible_reactors:
-            continue
-        if actor.team == trigger_actor.team:
-            continue
-        if actor.dead or actor.hp <= 0:
-            continue
-        if not actor.reaction_available:
-            continue
-
-        if "readying" in actor.conditions and actor.readied_reaction_reserved:
-            if _readied_trigger_matches(actor.readied_trigger, trigger_event=trigger_event):
-                readied = _resolve_named_action(actor, actor.readied_action_name)
-                if readied is None:
-                    _remove_condition(actor, "readying")
-                elif readied.name != "ready":
-                    reaction_action = _as_readied_reaction_action(readied)
-                    held_readied_spell = (
-                        actor.readied_spell_held and "spell" in reaction_action.tags
-                    )
-                    spell_cast_request = (
-                        SpellCastRequest(slot_level=actor.readied_spell_slot_level)
-                        if held_readied_spell
-                        else (SpellCastRequest() if "spell" in reaction_action.tags else None)
-                    )
-                    if held_readied_spell:
-                        reaction_action = replace(reaction_action, resource_cost={})
-                    if _action_available(
-                        actor,
-                        reaction_action,
-                        spell_cast_request=spell_cast_request,
-                        turn_token=turn_token,
-                    ):
-                        targets = _resolve_targets_for_action(
-                            rng=rng,
-                            actor=actor,
-                            action=reaction_action,
-                            actors=actors,
-                            requested=[TargetRef(trigger_actor.actor_id)],
-                            obstacles=obstacles,
-                        )
-                        if reaction_action.target_mode != "self":
-                            targets = [
-                                target
-                                for target in targets
-                                if target.actor_id == trigger_actor.actor_id
-                            ]
-                        targets = _filter_targets_in_range(
-                            actor,
-                            reaction_action,
-                            targets,
-                            active_hazards=active_hazards,
-                            obstacles=obstacles,
-                            light_level=light_level,
-                        )
-                        paid_reaction_cost = held_readied_spell
-                        if targets and not paid_reaction_cost:
-                            paid_reaction_cost = _spend_action_resource_cost(
-                                actor,
-                                reaction_action,
-                                resources_spent,
-                                spell_cast_request=spell_cast_request,
-                                turn_token=turn_token,
-                            )
-                        if targets and paid_reaction_cost:
-                            actor.reaction_available = False
-                            if held_readied_spell:
-                                actor.readied_spell_held = False
-                                _break_concentration(actor, actors, active_hazards)
-                            _execute_action(
-                                rng=rng,
-                                actor=actor,
-                                action=reaction_action,
-                                targets=targets,
-                                actors=actors,
-                                damage_dealt=damage_dealt,
-                                damage_taken=damage_taken,
-                                threat_scores=threat_scores,
-                                resources_spent=resources_spent,
-                                active_hazards=active_hazards,
-                                obstacles=obstacles,
-                                light_level=light_level,
-                                round_number=round_number,
-                                turn_token=turn_token,
-                                spell_cast_request=spell_cast_request,
-                            )
-                            _remove_condition(actor, "readying")
-            if trigger_actor.dead or trigger_actor.hp <= 0:
-                break
-
-        if not supports_standard_reactions:
-            if trigger_actor.dead or trigger_actor.hp <= 0:
-                break
-            continue
-
-        if not actor.reaction_available:
-            continue
-
-        for reaction_action in actor.actions:
-            if reaction_action.action_cost != "reaction":
-                continue
-            if _action_matches_reaction_spell_id(
-                reaction_action,
-                spell_id="shield",
-            ) or _action_matches_reaction_spell_id(
-                reaction_action,
-                spell_id="counterspell",
-            ):
-                continue
-            trigger = _normalize_event_trigger(reaction_action.event_trigger)
-            if trigger not in {"enemy_turn_start", "on_enemy_turn_start"}:
-                continue
-            if not _action_available(actor, reaction_action, turn_token=turn_token):
-                continue
-
-            targets = _resolve_targets_for_action(
-                rng=rng,
-                actor=actor,
-                action=reaction_action,
-                actors=actors,
-                requested=[TargetRef(trigger_actor.actor_id)],
-                obstacles=obstacles,
-            )
-            targets = [target for target in targets if target.actor_id == trigger_actor.actor_id]
-            targets = _filter_targets_in_range(
-                actor,
-                reaction_action,
-                targets,
-                active_hazards=active_hazards,
-                obstacles=obstacles,
-                light_level=light_level,
-            )
-            if not targets:
-                continue
-            spell_cast_request = SpellCastRequest() if "spell" in reaction_action.tags else None
-            if not _spend_action_resource_cost(
-                actor,
-                reaction_action,
-                resources_spent,
-                spell_cast_request=spell_cast_request,
-                turn_token=turn_token,
-            ):
-                continue
-
-            actor.reaction_available = False
-            _execute_action(
-                rng=rng,
-                actor=actor,
-                action=reaction_action,
-                targets=targets,
-                actors=actors,
-                damage_dealt=damage_dealt,
-                damage_taken=damage_taken,
-                threat_scores=threat_scores,
-                resources_spent=resources_spent,
-                active_hazards=active_hazards,
-                obstacles=obstacles,
-                light_level=light_level,
-                round_number=round_number,
-                turn_token=turn_token,
-                spell_cast_request=spell_cast_request,
-            )
-            break
-
-        if trigger_actor.dead or trigger_actor.hp <= 0:
-            break
+    _reaction_runtime.trigger_readied_actions(
+        rng=rng,
+        trigger_actor=trigger_actor,
+        trigger_event=trigger_event,
+        eligible_reactors=eligible_reactors,
+        round_number=round_number,
+        turn_token=turn_token,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        obstacles=obstacles,
+        light_level=light_level,
+    )
 
 
 def _bardic_inspiration_die_sides(actor: ActorRuntimeState) -> int:
