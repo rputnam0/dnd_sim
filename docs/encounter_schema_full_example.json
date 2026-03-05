@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0.0",
+  "encounter_id": "blackgate_assault",
+  "metadata": {
+    "label": "Defense of Blackgate Keep",
+    "region_id": "northmarch_frontier",
+    "difficulty_tier": "deadly",
+    "notes": "Demonstrates multi-wave progression, objective-linked quest hooks, and map-state toggles."
+  },
+  "initial_wave_id": "wave_1",
+  "objectives": [
+    {
+      "objective_id": "seal_gate",
+      "description": "Seal the gate controls before reinforcements arrive.",
+      "quest_id": "defend_blackgate",
+      "quest_objective_id": "seal_gate_controls",
+      "completion_flag": "objective.blackgate.seal_gate"
+    },
+    {
+      "objective_id": "hold_courtyard",
+      "description": "Hold the courtyard through the second assault.",
+      "completion_flag": "objective.blackgate.hold_courtyard"
+    },
+    {
+      "objective_id": "defeat_warlord",
+      "description": "Defeat the warlord to end the encounter.",
+      "completion_flag": "objective.blackgate.defeat_warlord"
+    }
+  ],
+  "map_hooks": [
+    {
+      "hook_id": "open_sluice",
+      "trigger": "wave_start",
+      "flag_id": "map.blackgate.sluice_channel",
+      "to_status": "active"
+    },
+    {
+      "hook_id": "raise_portcullis",
+      "trigger": "wave_start",
+      "flag_id": "map.blackgate.portcullis",
+      "to_status": "active"
+    },
+    {
+      "hook_id": "collapse_bridge",
+      "trigger": "wave_complete",
+      "flag_id": "map.blackgate.east_bridge",
+      "to_status": "resolved"
+    },
+    {
+      "hook_id": "unlock_tunnel",
+      "trigger": "manual",
+      "flag_id": "map.blackgate.smuggler_tunnel",
+      "to_status": "active"
+    }
+  ],
+  "waves": [
+    {
+      "wave_id": "wave_1",
+      "spawn_ids": [
+        "goblin_raider",
+        "hobgoblin_captain"
+      ],
+      "objective_ids": [
+        "seal_gate"
+      ],
+      "on_start_hooks": [
+        "open_sluice"
+      ],
+      "on_complete_hooks": [
+        "collapse_bridge"
+      ],
+      "next_wave_id": "wave_2"
+    },
+    {
+      "wave_id": "wave_2",
+      "spawn_ids": [
+        "ogre_brute",
+        "orc_shock_trooper"
+      ],
+      "objective_ids": [
+        "hold_courtyard"
+      ],
+      "on_start_hooks": [
+        "raise_portcullis"
+      ],
+      "next_wave_id": "wave_3"
+    },
+    {
+      "wave_id": "wave_3",
+      "spawn_ids": [
+        "warlord_grimtooth"
+      ],
+      "objective_ids": [
+        "defeat_warlord"
+      ],
+      "on_complete_hooks": []
+    }
+  ]
+}
