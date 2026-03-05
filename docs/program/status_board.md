@@ -49,7 +49,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
-| ARC-07 | `pending` | runtime_spell | pending | PR opening from `codex/feat/arc-07-extract-spell-execution-pipeline-and-target-resolu` to `int/5b-runtime-decomposition`; update with PR link after creation. |
+| ARC-07 | [#112](https://github.com/rputnam0/dnd_sim/pull/112) | runtime_spell | pending | Extracts spell runtime pipeline and target adapters from the engine path; awaiting automated + reviewer checks. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
