@@ -115,6 +115,7 @@ subsystems:
     invariants:
       - "Action dispatch chooses one deterministic execution path for identical declarations."
       - "Hit/save/target application semantics remain backward compatible with current engine outputs."
+      - "ActionResolutionResult envelopes keep stable keys for action_name/action_type/dispatch_path/executed/skipped_reason."
       - "Invalid targets return structured failures without partial state mutation."
     safe_edit_boundaries:
       - "Safe: dispatch-table refactors and additive action handlers."
