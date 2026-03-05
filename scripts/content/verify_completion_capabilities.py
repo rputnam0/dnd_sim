@@ -14,6 +14,14 @@ _SCOPE_DIR_TO_TYPE = {
     "monsters": "monster",
 }
 _REASON_CODE_PATTERN = re.compile(r"^[a-z0-9_]+$")
+_STATE_BOOL_FIELDS = (
+    "cataloged",
+    "schema_valid",
+    "executable",
+    "tested",
+    "blocked",
+)
+_LEGACY_FLAT_STATE_FIELDS = _STATE_BOOL_FIELDS + ("unsupported_reason",)
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,19 +66,65 @@ def _as_bool(raw: Any, *, field_name: str, content_id: str, issues: list[Capabil
     return False
 
 
+def _unsupported_reason_or_issue(
+    raw_states: Mapping[str, Any], *, content_id: str, issues: list[CapabilityIssue]
+) -> str | None:
+    if "unsupported_reason" not in raw_states:
+        issues.append(
+            CapabilityIssue(
+                code="CAP-GATE-003",
+                message="states.unsupported_reason must be present (null allowed when blocked=false).",
+                content_id=content_id,
+            )
+        )
+        return None
+    raw_reason = raw_states["unsupported_reason"]
+    if raw_reason is None:
+        return None
+    if isinstance(raw_reason, str):
+        return raw_reason
+    issues.append(
+        CapabilityIssue(
+            code="CAP-GATE-003",
+            message="states.unsupported_reason must be null or a string.",
+            content_id=content_id,
+        )
+    )
+    return ""
+
+
 def verify_manifest_payload(
     payload: Mapping[str, Any], *, expected_content_ids: Sequence[str]
 ) -> list[CapabilityIssue]:
     issues: list[CapabilityIssue] = []
 
+    manifest_version = payload.get("manifest_version")
+    if not isinstance(manifest_version, str) or not manifest_version.strip():
+        issues.append(
+            CapabilityIssue(
+                code="CAP-GATE-002",
+                message="manifest payload must declare non-empty manifest_version.",
+            )
+        )
+    if "generated_at" in payload:
+        generated_at = payload.get("generated_at")
+        if generated_at is not None and (not isinstance(generated_at, str) or not generated_at.strip()):
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-002",
+                    message="generated_at must be null or a non-empty string when provided.",
+                )
+            )
+
     raw_records = payload.get("records")
     if not isinstance(raw_records, list):
-        return [
+        issues.append(
             CapabilityIssue(
                 code="CAP-GATE-002",
                 message="manifest payload must contain a records array.",
             )
-        ]
+        )
+        return issues
 
     expected_set = set(expected_content_ids)
     seen_ids: set[str] = set()
@@ -116,37 +170,66 @@ def verify_manifest_payload(
                 )
             )
 
+        legacy_fields = sorted(name for name in _LEGACY_FLAT_STATE_FIELDS if name in raw_record)
+        if legacy_fields:
+            joined = ", ".join(legacy_fields)
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-003",
+                    message=(
+                        "legacy flat capability fields are not allowed; use record.states.* only "
+                        f"(found: {joined})."
+                    ),
+                    content_id=content_id,
+                )
+            )
+
+        raw_states = raw_record.get("states")
+        if not isinstance(raw_states, Mapping):
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-003",
+                    message="record states must be a JSON object.",
+                    content_id=content_id,
+                )
+            )
+            raw_states = {}
+
         cataloged = _as_bool(
-            raw_record.get("cataloged"),
-            field_name="cataloged",
+            raw_states.get("cataloged"),
+            field_name="states.cataloged",
             content_id=content_id,
             issues=issues,
         )
         schema_valid = _as_bool(
-            raw_record.get("schema_valid"),
-            field_name="schema_valid",
+            raw_states.get("schema_valid"),
+            field_name="states.schema_valid",
             content_id=content_id,
             issues=issues,
         )
         executable = _as_bool(
-            raw_record.get("executable"),
-            field_name="executable",
+            raw_states.get("executable"),
+            field_name="states.executable",
             content_id=content_id,
             issues=issues,
         )
         tested = _as_bool(
-            raw_record.get("tested"),
-            field_name="tested",
+            raw_states.get("tested"),
+            field_name="states.tested",
             content_id=content_id,
             issues=issues,
         )
         blocked = _as_bool(
-            raw_record.get("blocked"),
-            field_name="blocked",
+            raw_states.get("blocked"),
+            field_name="states.blocked",
             content_id=content_id,
             issues=issues,
         )
-        unsupported_reason = raw_record.get("unsupported_reason", "")
+        unsupported_reason = _unsupported_reason_or_issue(
+            raw_states,
+            content_id=content_id,
+            issues=issues,
+        )
 
         if not cataloged:
             issues.append(
