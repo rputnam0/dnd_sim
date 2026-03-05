@@ -78,6 +78,17 @@ from dnd_sim.strategy_api import (
     TargetRef,
     TurnDeclaration,
 )
+from dnd_sim.action_legality import (
+    TurnDeclarationValidationError,
+    apply_declared_reaction_policy_or_error as _apply_declared_reaction_policy_or_error_impl,
+    declared_action_or_error as _declared_action_or_error_impl,
+    declared_extra_resource_cost_or_error as _declared_extra_resource_cost_or_error_impl,
+    declared_movement_path_or_error as _declared_movement_path_or_error_impl,
+    declared_spell_request_or_error as _declared_spell_request_or_error_impl,
+    declared_targets_or_error as _declared_targets_or_error_impl,
+    raise_turn_declaration_error as _raise_turn_declaration_error_impl,
+    validate_declared_ready_or_error as _validate_declared_ready_or_error_impl,
+)
 from dnd_sim.engine_resources import (
     apply_arcane_recovery as _apply_arcane_recovery_impl,
     apply_inferred_barbarian_resources as _apply_inferred_barbarian_resources_impl,
@@ -288,24 +299,6 @@ class MovementReactionTrigger:
     reach_ft: float
     visible: bool
     movement_source: str
-
-
-class TurnDeclarationValidationError(ValueError):
-    def __init__(
-        self,
-        *,
-        actor_id: str,
-        code: str,
-        field: str,
-        message: str,
-        details: dict[str, Any] | None = None,
-    ) -> None:
-        self.actor_id = actor_id
-        self.code = code
-        self.field = field
-        self.message = message
-        self.details = dict(details or {})
-        super().__init__(f"{code} [{actor_id}:{field}] {message}")
 
 
 def _metric(values: list[float]) -> SummaryMetric:
@@ -7855,8 +7848,8 @@ def _raise_turn_declaration_error(
     message: str,
     details: dict[str, Any] | None = None,
 ) -> None:
-    raise TurnDeclarationValidationError(
-        actor_id=actor.actor_id,
+    _raise_turn_declaration_error_impl(
+        actor=actor,
         code=code,
         field=field,
         message=message,
@@ -7871,41 +7864,12 @@ def _declared_action_or_error(
     field_prefix: str,
     expected_cost: str,
 ) -> ActionDefinition:
-    action_name = str(declaration.action_name or "").strip()
-    if not action_name:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="missing_action_name",
-            field=f"{field_prefix}.action_name",
-            message="Declared action is missing action_name.",
-        )
-
-    selected = next((entry for entry in actor.actions if entry.name == action_name), None)
-    if selected is None:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="unknown_action",
-            field=f"{field_prefix}.action_name",
-            message=f"Declared action '{action_name}' does not exist for actor.",
-        )
-
-    if expected_cost == "bonus" and selected.action_cost != "bonus":
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="illegal_bonus_action",
-            field=f"{field_prefix}.action_name",
-            message=f"Action '{selected.name}' is not a bonus action.",
-            details={"action_cost": selected.action_cost},
-        )
-    if expected_cost == "action" and selected.action_cost not in {"action", "none"}:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="illegal_action",
-            field=f"{field_prefix}.action_name",
-            message=f"Action '{selected.name}' cannot be used in the main action step.",
-            details={"action_cost": selected.action_cost},
-        )
-    return selected
+    return _declared_action_or_error_impl(
+        actor=actor,
+        declaration=declaration,
+        field_prefix=field_prefix,
+        expected_cost=expected_cost,
+    )
 
 
 def _declared_targets_or_error(
@@ -7914,26 +7878,11 @@ def _declared_targets_or_error(
     *,
     field_prefix: str,
 ) -> list[TargetRef]:
-    raw_targets = declaration.targets
-    if not isinstance(raw_targets, list):
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="invalid_targets",
-            field=f"{field_prefix}.targets",
-            message="Declared targets must be a list.",
-        )
-
-    out: list[TargetRef] = []
-    for idx, target in enumerate(raw_targets):
-        if not isinstance(target, TargetRef):
-            _raise_turn_declaration_error(
-                actor=actor,
-                code="invalid_target_ref",
-                field=f"{field_prefix}.targets[{idx}]",
-                message="Declared targets must contain TargetRef entries.",
-            )
-        out.append(target)
-    return out
+    return _declared_targets_or_error_impl(
+        actor=actor,
+        declaration=declaration,
+        field_prefix=field_prefix,
+    )
 
 
 def _declared_extra_resource_cost_or_error(
@@ -7942,29 +7891,11 @@ def _declared_extra_resource_cost_or_error(
     *,
     field_prefix: str,
 ) -> dict[str, int]:
-    raw = getattr(declaration.resource_spend, "amounts", {})
-    if not isinstance(raw, dict):
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="invalid_resource_spend",
-            field=f"{field_prefix}.resource_spend",
-            message="Declared resource_spend must be a mapping of resource -> amount.",
-        )
-    out: dict[str, int] = {}
-    for key, amount in raw.items():
-        try:
-            parsed = int(amount)
-        except (TypeError, ValueError):
-            _raise_turn_declaration_error(
-                actor=actor,
-                code="invalid_resource_amount",
-                field=f"{field_prefix}.resource_spend.{key}",
-                message="Declared resource spend amount must be an integer.",
-            )
-        if parsed <= 0:
-            continue
-        out[str(key)] = parsed
-    return out
+    return _declared_extra_resource_cost_or_error_impl(
+        actor=actor,
+        declaration=declaration,
+        field_prefix=field_prefix,
+    )
 
 
 def _declared_spell_request_or_error(
@@ -7974,39 +7905,12 @@ def _declared_spell_request_or_error(
     *,
     field_prefix: str,
 ) -> SpellCastRequest | None:
-    raw_slot_level = declaration.spell_slot_level
-    if "spell" not in action.tags:
-        if raw_slot_level is not None:
-            _raise_turn_declaration_error(
-                actor=actor,
-                code="illegal_spell_slot_override",
-                field=f"{field_prefix}.spell_slot_level",
-                message="spell_slot_level can only be declared for spell actions.",
-            )
-        return None
-
-    request = SpellCastRequest()
-    if raw_slot_level is None:
-        return request
-
-    try:
-        slot_level = int(raw_slot_level)
-    except (TypeError, ValueError):
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="invalid_spell_slot_level",
-            field=f"{field_prefix}.spell_slot_level",
-            message="Declared spell_slot_level must be an integer.",
-        )
-    if slot_level <= 0:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="invalid_spell_slot_level",
-            field=f"{field_prefix}.spell_slot_level",
-            message="Declared spell_slot_level must be >= 1.",
-        )
-    request.slot_level = slot_level
-    return request
+    return _declared_spell_request_or_error_impl(
+        actor=actor,
+        action=action,
+        declaration=declaration,
+        field_prefix=field_prefix,
+    )
 
 
 def _declared_bonus_smite_reservation(
@@ -8050,44 +7954,7 @@ def _declared_movement_path_or_error(
     actor: ActorRuntimeState,
     declaration: TurnDeclaration,
 ) -> list[tuple[float, float, float]]:
-    if not isinstance(declaration.movement_path, list):
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="invalid_movement_path",
-            field="movement_path",
-            message="movement_path must be a list of 3D waypoints.",
-        )
-    if not declaration.movement_path:
-        return []
-
-    normalized: list[tuple[float, float, float]] = []
-    for idx, waypoint in enumerate(declaration.movement_path):
-        if not isinstance(waypoint, (tuple, list)) or len(waypoint) != 3:
-            _raise_turn_declaration_error(
-                actor=actor,
-                code="invalid_waypoint",
-                field=f"movement_path[{idx}]",
-                message="Each movement waypoint must be a 3-value coordinate.",
-            )
-        try:
-            normalized.append((float(waypoint[0]), float(waypoint[1]), float(waypoint[2])))
-        except (TypeError, ValueError):
-            _raise_turn_declaration_error(
-                actor=actor,
-                code="invalid_waypoint",
-                field=f"movement_path[{idx}]",
-                message="Each movement waypoint value must be numeric.",
-            )
-
-    if distance_chebyshev(actor.position, normalized[0]) > 1e-6:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="movement_path_start_mismatch",
-            field="movement_path[0]",
-            message="movement_path must start at the actor's current position.",
-            details={"current_position": actor.position},
-        )
-    return normalized
+    return _declared_movement_path_or_error_impl(actor=actor, declaration=declaration)
 
 
 def _apply_declared_movement_or_error(
@@ -8206,81 +8073,18 @@ def _apply_declared_movement_or_error(
 def _validate_declared_ready_or_error(
     actor: ActorRuntimeState, declaration: TurnDeclaration
 ) -> ReadyDeclaration | None:
-    ready = declaration.ready
-    if ready is None:
-        return None
-    if not isinstance(ready, ReadyDeclaration):
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="invalid_ready_declaration",
-            field="ready",
-            message="ready must be a ReadyDeclaration object.",
-        )
-
-    action_name = declaration.action.action_name if declaration.action is not None else None
-    if str(action_name or "").strip().lower() != "ready":
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="ready_metadata_without_ready_action",
-            field="ready",
-            message="ready metadata is only legal when action.action_name is 'ready'.",
-        )
-
-    trigger = str(ready.trigger or "").strip()
-    if not trigger:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="missing_ready_trigger",
-            field="ready.trigger",
-            message="Ready declaration trigger is required.",
-        )
-    response_name = str(ready.response_action_name or "").strip()
-    if not response_name:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="missing_ready_response",
-            field="ready.response_action_name",
-            message="Ready declaration response_action_name is required.",
-        )
-
-    response_action = next((a for a in actor.actions if a.name == response_name), None)
-    if response_action is None:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="unknown_ready_response",
-            field="ready.response_action_name",
-            message=f"Ready response action '{response_name}' does not exist for actor.",
-        )
-    if response_action.name == "ready" or response_action.action_cost not in {"action", "none"}:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="illegal_ready_response",
-            field="ready.response_action_name",
-            message="Ready response must be a non-ready action that uses action or no cost.",
-            details={"action_cost": response_action.action_cost},
-        )
-    return ready
+    return _validate_declared_ready_or_error_impl(actor=actor, declaration=declaration)
 
 
 def _apply_declared_reaction_policy_or_error(
     actor: ActorRuntimeState,
     declaration: TurnDeclaration,
 ) -> str:
-    policy = declaration.reaction_policy
-    mode = "auto"
-    if policy is not None:
-        mode = str(policy.mode or "auto").strip().lower()
-    if mode not in _SUPPORTED_REACTION_POLICY_MODES:
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="invalid_reaction_policy",
-            field="reaction_policy.mode",
-            message=f"Unsupported reaction policy mode: {mode}",
-            details={"supported_modes": sorted(_SUPPORTED_REACTION_POLICY_MODES)},
-        )
-    if mode == "none":
-        actor.reaction_available = False
-    return mode
+    return _apply_declared_reaction_policy_or_error_impl(
+        actor=actor,
+        declaration=declaration,
+        supported_modes=_SUPPORTED_REACTION_POLICY_MODES,
+    )
 
 
 def _execute_declared_action_step_or_error(
