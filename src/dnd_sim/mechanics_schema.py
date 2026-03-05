@@ -38,6 +38,13 @@ KNOWN_EFFECT_TYPES = {
     "save",
 }
 
+SPELL_METADATA_EFFECT_TYPES = {
+    "aoe",
+    "ranged_spell_attack",
+    "melee_spell_attack",
+    "save",
+}
+
 EXECUTABLE_EFFECT_TYPES = {
     "damage",
     "heal",
@@ -62,10 +69,6 @@ EXECUTABLE_EFFECT_TYPES = {
     "command_allied",
     "mount",
     "dismount",
-    "aoe",
-    "ranged_spell_attack",
-    "melee_spell_attack",
-    "save",
 }
 
 _REQUIRED_FIELDS: dict[str, set[str]] = {

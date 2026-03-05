@@ -9,7 +9,11 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from dnd_sim.mechanics_schema import EXECUTABLE_EFFECT_TYPES, validate_rule_mechanics_payload
+from dnd_sim.mechanics_schema import (
+    EXECUTABLE_EFFECT_TYPES,
+    SPELL_METADATA_EFFECT_TYPES,
+    validate_rule_mechanics_payload,
+)
 from dnd_sim.spells import canonicalize_spell_payload, slugify_spell_name
 
 MANIFEST_VERSION = "1.0"
@@ -398,15 +402,19 @@ def _spell_identifier(payload: dict[str, Any], *, index: int) -> str:
 
 
 def _spell_mechanics_executable(mechanics: list[Any]) -> bool:
+    has_runtime_effect = False
     for row in mechanics:
         if not isinstance(row, dict):
             return False
         effect_type = str(row.get("effect_type", "")).strip().lower()
         if not effect_type:
             return False
+        if effect_type in SPELL_METADATA_EFFECT_TYPES:
+            continue
         if effect_type not in EXECUTABLE_EFFECT_TYPES:
             return False
-    return True
+        has_runtime_effect = True
+    return has_runtime_effect
 
 
 def _spell_hook_family_and_state(payload: dict[str, Any]) -> tuple[str, str, str | None, bool]:
