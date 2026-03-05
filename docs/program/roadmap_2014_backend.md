@@ -201,7 +201,7 @@ Tasks:
 - FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete
 
 Current execution note:
-- FIN-06 prep lane is parked on `codex/feat/fin-06-cut-release-baseline-archive-prior-program-artifac`; final cutover remains blocked until `FIN-02`, `FIN-03`, `FIN-04`, and `FIN-05` are merged.
+- FIN-06 is in PR review on `codex/feat/fin-06-cut-release-baseline-archive-prior-program-artifac` after `FIN-02`, `FIN-03`, `FIN-04`, and `FIN-05` dependency clearance.
 
 ## Global contract for every task
 

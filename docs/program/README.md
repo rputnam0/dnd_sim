@@ -67,3 +67,9 @@ Ownership and metadata-header requirements for this same live planning surface a
 - One branch per task ID.
 - One PR per task ID.
 - Update docs and task status in the same PR as the code change.
+
+## Release baseline cutover
+
+- FIN-06 owns the release-baseline cutover and final completion closeout.
+- Archive superseded planning snapshots through the canonical archive index in `docs/archive/README.md`.
+- Cut the release baseline tag after FIN-06 merges and smoke checks pass on the integration branch.
