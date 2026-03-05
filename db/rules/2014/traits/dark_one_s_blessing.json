@@ -9,11 +9,7 @@
         "state": "0_hp"
       },
       "effect_type": "temp_hp",
-      "amount": "max(1, charisma_mod + warlock_level)",
-      "effect": {
-        "type": "gain_temp_hp",
-        "amount": "max(1, charisma_mod + warlock_level)"
-      }
+      "amount": "max(1, charisma_mod + warlock_level)"
     }
   ],
   "source_type": "subclass"
