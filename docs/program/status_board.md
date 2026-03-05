@@ -26,7 +26,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
-| DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
+| DBS | Persistence and Query Model | in_progress | 5E-persistence | `DBS-01` is `in_progress` in `backlog.csv`; remaining DBS tasks are `not_started`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
@@ -36,6 +36,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| DBS-01 | `codex/feat/dbs-01-add-canonical-metadata-tables-for-content-and-supp` | persistence_a | in_progress | Adding canonical metadata tables and migration/rollback coverage. |
 
 ## Open PRs
 
