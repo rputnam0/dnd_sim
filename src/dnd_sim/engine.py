@@ -105,6 +105,10 @@ from dnd_sim.action_legality import (
     raise_turn_declaration_error as _raise_turn_declaration_error_impl,
     validate_declared_ready_or_error as _validate_declared_ready_or_error_impl,
 )
+from dnd_sim.action_resolution import (
+    ActionResolutionHandlers as _ActionResolutionHandlers,
+    execute_action_pipeline as _action_resolution_execute_action_pipeline,
+)
 from dnd_sim.engine_resources import (
     apply_arcane_recovery as _apply_arcane_recovery_impl,
     apply_inferred_barbarian_resources as _apply_inferred_barbarian_resources_impl,
@@ -12515,6 +12519,88 @@ def _build_attack_action_instances(
 
 
 def _execute_action(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    targets: list[ActorRuntimeState],
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
+    strategy_name: str | None = None,
+    timing_engine: CombatTimingEngine | None = None,
+    spell_cast_request: SpellCastRequest | None = None,
+    allow_auto_movement: bool = True,
+    ready_declaration: ReadyDeclaration | None = None,
+    attack_once_per_action_used: set[tuple[str, int]] | None = None,
+    reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
+) -> None:
+    def _run_impl(
+        resolved_action: ActionDefinition,
+        resolved_targets: list[ActorRuntimeState],
+    ) -> None:
+        _execute_action_impl(
+            rng=rng,
+            actor=actor,
+            action=resolved_action,
+            targets=resolved_targets,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
+            round_number=round_number,
+            turn_token=turn_token,
+            rule_trace=rule_trace,
+            telemetry=telemetry,
+            strategy_name=strategy_name,
+            timing_engine=timing_engine,
+            spell_cast_request=spell_cast_request,
+            allow_auto_movement=allow_auto_movement,
+            ready_declaration=ready_declaration,
+            attack_once_per_action_used=attack_once_per_action_used,
+            reserved_bonus_smite=reserved_bonus_smite,
+        )
+
+    def _run_item_action(
+        resolved_action: ActionDefinition,
+        resolved_targets: list[ActorRuntimeState],
+    ) -> None:
+        normalized_item_action = (
+            replace(resolved_action, action_type="utility")
+            if str(resolved_action.action_type).strip().lower() == "item"
+            else resolved_action
+        )
+        _run_impl(normalized_item_action, resolved_targets)
+
+    _action_resolution_execute_action_pipeline(
+        action=action,
+        targets=targets,
+        actors=actors,
+        handlers=_ActionResolutionHandlers(
+            attack=_run_impl,
+            save=_run_impl,
+            utility=_run_impl,
+            grapple_shove=_run_impl,
+            item=_run_item_action,
+            fallback=_run_impl,
+        ),
+    )
+
+
+def _execute_action_impl(
     *,
     rng: random.Random,
     actor: ActorRuntimeState,
