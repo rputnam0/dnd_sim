@@ -100,6 +100,18 @@ class ObjectiveTradeoffScoringInputs:
 
 
 @dataclass(frozen=True, slots=True)
+class TimingScoringInputs:
+    recharge_ready: bool
+    recharge_pending: bool
+    recharge_timing_score: float
+    legendary_actions_remaining: int
+    legendary_action_window_score: float
+    reaction_bait_score: float
+    limited_use_remaining_ratio: float
+    limited_resource_timing_score: float
+
+
+@dataclass(frozen=True, slots=True)
 class ResourceScoringInputs:
     resource_cost: tuple[tuple[str, int], ...]
     total_cost: int
@@ -126,6 +138,7 @@ class CandidateScoringInputs:
     control: ControlScoringInputs
     objective: ObjectiveScoringInputs
     objective_tradeoff: ObjectiveTradeoffScoringInputs
+    timing: TimingScoringInputs
     resource: ResourceScoringInputs
 
 
@@ -542,12 +555,163 @@ def _objective_tradeoff_inputs(
     )
 
 
-def _resource_inputs(action: dict[str, Any]) -> ResourceScoringInputs:
-    raw_cost = action.get("resource_cost") or {}
-    if not isinstance(raw_cost, dict):
-        raw_cost = {}
+def _coerce_nonnegative_int(value: Any, *, default: int = 0) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(0, parsed)
 
-    normalized = {str(key): int(value) for key, value in raw_cost.items() if int(value) > 0}
+
+def _resource_cost_map(action: dict[str, Any]) -> dict[str, int]:
+    raw = action.get("resource_cost") or {}
+    if not isinstance(raw, dict):
+        return {}
+    normalized: dict[str, int] = {}
+    for key, value in raw.items():
+        amount = _coerce_nonnegative_int(value)
+        if amount > 0:
+            normalized[str(key)] = amount
+    return normalized
+
+
+def _is_recharge_action(action: dict[str, Any]) -> bool:
+    if any(key in action for key in ("recharge_ready", "recharge", "recharge_range")):
+        return True
+    tags = _normalized_action_tags(action)
+    if "recharge" in tags or any(tag.startswith("recharge:") for tag in tags):
+        return True
+    for payload in _iter_effect_payloads(action):
+        effect_type = str(payload.get("effect_type", "")).strip().lower()
+        if effect_type in {"recharge", "recharge_action", "recharge_ability"}:
+            return True
+    return False
+
+
+def _legendary_actions_remaining(actor: ActorView, state: BattleStateView) -> int:
+    per_actor = state.metadata.get("legendary_actions_remaining_by_actor", {})
+    if isinstance(per_actor, dict):
+        actor_value = per_actor.get(actor.actor_id)
+        if actor_value is not None:
+            return _coerce_nonnegative_int(actor_value)
+
+    for key in ("legendary_actions_remaining", "legendary_actions"):
+        if key in actor.resources:
+            return _coerce_nonnegative_int(actor.resources.get(key))
+    return 0
+
+
+def _is_reaction_bait_action(action: dict[str, Any]) -> bool:
+    tags = _normalized_action_tags(action)
+    if "reaction_bait" in tags or "bait_reaction" in tags:
+        return True
+    for payload in _iter_effect_payloads(action):
+        effect_type = str(payload.get("effect_type", "")).strip().lower()
+        if effect_type in {"bait_reaction", "forced_movement"}:
+            return True
+    return False
+
+
+def _reaction_availability_map(state: BattleStateView) -> dict[str, int]:
+    for key in (
+        "enemy_reactions_available_by_actor",
+        "reactions_available_by_actor",
+        "reaction_available_by_actor",
+    ):
+        raw = state.metadata.get(key, {})
+        if isinstance(raw, dict):
+            return {
+                str(actor_id): _coerce_nonnegative_int(value) for actor_id, value in raw.items()
+            }
+    return {}
+
+
+def _limited_use_remaining_ratio(actor: ActorView, action: dict[str, Any]) -> float:
+    max_uses = action.get("max_uses")
+    if max_uses is not None:
+        max_uses_value = max(1, _coerce_nonnegative_int(max_uses, default=1))
+        used_count = _coerce_nonnegative_int(action.get("used_count", 0))
+        remaining_uses = max(0, max_uses_value - used_count)
+        return float(remaining_uses) / float(max_uses_value)
+
+    costs = _resource_cost_map(action)
+    if not costs:
+        return 1.0
+
+    ratios: list[float] = []
+    for key, amount in costs.items():
+        available = _coerce_nonnegative_int(actor.resources.get(key, 0))
+        if available <= 0:
+            ratios.append(0.0)
+            continue
+        ratios.append(min(1.0, float(available) / float(max(amount, 1))))
+    if not ratios:
+        return 1.0
+    return min(ratios)
+
+
+def _encounter_phase_ratio(state: BattleStateView) -> float:
+    expected_rounds = _coerce_positive_float(state.metadata.get("encounter_expected_rounds"))
+    if expected_rounds is None:
+        expected_rounds = 6.0
+    round_number = max(1.0, float(state.round_number))
+    return max(0.0, min(1.0, round_number / expected_rounds))
+
+
+def _timing_inputs(
+    actor: ActorView,
+    state: BattleStateView,
+    *,
+    action: dict[str, Any],
+    target_ids: tuple[str, ...],
+) -> TimingScoringInputs:
+    recharge_action = _is_recharge_action(action)
+    recharge_ready = recharge_action and bool(action.get("recharge_ready", True))
+    recharge_pending = recharge_action and not recharge_ready
+    recharge_timing_score = 1.0 if recharge_ready else (-1.0 if recharge_pending else 0.0)
+
+    legendary_actions_remaining = _legendary_actions_remaining(actor, state)
+    tags = _normalized_action_tags(action)
+    legendary_window_tagged = bool({"legendary_window", "legendary_setup"} & tags)
+    enemy_targets = _enemy_target_ids(actor, state, target_ids=target_ids)
+    legendary_action_window_score = 0.0
+    if legendary_actions_remaining > 0 and legendary_window_tagged:
+        legendary_action_window_score = min(1.0, float(legendary_actions_remaining) / 3.0)
+        if enemy_targets:
+            legendary_action_window_score += 0.25
+
+    reaction_bait_score = 0.0
+    if enemy_targets and _is_reaction_bait_action(action):
+        availability = _reaction_availability_map(state)
+        pressured = sum(1 for target_id in enemy_targets if availability.get(target_id, 0) > 0)
+        if pressured > 0:
+            reaction_bait_score += float(pressured) * 0.5
+        if "reaction_bait" in tags or "bait_reaction" in tags:
+            reaction_bait_score += 0.25
+
+    limited_action = action.get("max_uses") is not None or bool(_resource_cost_map(action))
+    limited_use_remaining_ratio = _limited_use_remaining_ratio(actor, action)
+    limited_resource_timing_score = 0.0
+    if limited_action:
+        phase = _encounter_phase_ratio(state)
+        spend_pressure = phase
+        conserve_pressure = (1.0 - phase) * limited_use_remaining_ratio
+        limited_resource_timing_score = spend_pressure - conserve_pressure
+
+    return TimingScoringInputs(
+        recharge_ready=recharge_ready,
+        recharge_pending=recharge_pending,
+        recharge_timing_score=recharge_timing_score,
+        legendary_actions_remaining=legendary_actions_remaining,
+        legendary_action_window_score=legendary_action_window_score,
+        reaction_bait_score=reaction_bait_score,
+        limited_use_remaining_ratio=limited_use_remaining_ratio,
+        limited_resource_timing_score=limited_resource_timing_score,
+    )
+
+
+def _resource_inputs(action: dict[str, Any]) -> ResourceScoringInputs:
+    normalized = _resource_cost_map(action)
     ordered_keys = tuple(sorted(normalized.keys()))
     ordered_cost = tuple((key, normalized[key]) for key in ordered_keys)
     total_cost = sum(value for _, value in ordered_cost)
@@ -1104,6 +1268,12 @@ def _build_scoring_inputs(
             target_ids=target_ids,
             objective_score=objective_score,
         ),
+        timing=_timing_inputs(
+            actor,
+            state,
+            action=action,
+            target_ids=target_ids,
+        ),
         resource=_resource_inputs(action),
     )
 
@@ -1216,6 +1386,16 @@ def candidate_snapshots(candidates: list[ActionCandidate]) -> list[dict[str, Any
                     "ally_rescue_score": row.scoring_inputs.objective_tradeoff.ally_rescue_score,
                     "focus_fire_score": row.scoring_inputs.objective_tradeoff.focus_fire_score,
                     "focus_fire_target_id": row.scoring_inputs.objective_tradeoff.focus_fire_target_id,
+                },
+                "timing": {
+                    "recharge_ready": row.scoring_inputs.timing.recharge_ready,
+                    "recharge_pending": row.scoring_inputs.timing.recharge_pending,
+                    "recharge_timing_score": row.scoring_inputs.timing.recharge_timing_score,
+                    "legendary_actions_remaining": row.scoring_inputs.timing.legendary_actions_remaining,
+                    "legendary_action_window_score": row.scoring_inputs.timing.legendary_action_window_score,
+                    "reaction_bait_score": row.scoring_inputs.timing.reaction_bait_score,
+                    "limited_use_remaining_ratio": row.scoring_inputs.timing.limited_use_remaining_ratio,
+                    "limited_resource_timing_score": row.scoring_inputs.timing.limited_resource_timing_score,
                 },
                 "resource": _resource_snapshot(row.scoring_inputs.resource),
             }
