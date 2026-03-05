@@ -28,6 +28,7 @@ Wave 6 remediation state:
 - Unification track `int/6b-unification` merged to `main` via [#180](https://github.com/rputnam0/dnd_sim/pull/180) after task PRs W6-UNI-01 [#166](https://github.com/rputnam0/dnd_sim/pull/166), W6-UNI-02 [#170](https://github.com/rputnam0/dnd_sim/pull/170), W6-UNI-03 [#164](https://github.com/rputnam0/dnd_sim/pull/164), and W6-UNI-04 [#163](https://github.com/rputnam0/dnd_sim/pull/163).
 - Parity track `int/6c-parity` merged to `main` via [#181](https://github.com/rputnam0/dnd_sim/pull/181) after W6-PAR-01 [#168](https://github.com/rputnam0/dnd_sim/pull/168), W6-PAR-02 [#173](https://github.com/rputnam0/dnd_sim/pull/173), and W6-PAR-03 shard PRs [#171](https://github.com/rputnam0/dnd_sim/pull/171), [#174](https://github.com/rputnam0/dnd_sim/pull/174), [#175](https://github.com/rputnam0/dnd_sim/pull/175), [#176](https://github.com/rputnam0/dnd_sim/pull/176), [#177](https://github.com/rputnam0/dnd_sim/pull/177), [#178](https://github.com/rputnam0/dnd_sim/pull/178).
 - Gate track `int/6d-gates` merged to `main` via [#182](https://github.com/rputnam0/dnd_sim/pull/182) and final closeout W6-GATE-02 merged via [#183](https://github.com/rputnam0/dnd_sim/pull/183).
+- Parity continuation wave W6-PAR-04 merged via [#185](https://github.com/rputnam0/dnd_sim/pull/185), [#186](https://github.com/rputnam0/dnd_sim/pull/186), [#187](https://github.com/rputnam0/dnd_sim/pull/187), [#188](https://github.com/rputnam0/dnd_sim/pull/188), [#189](https://github.com/rputnam0/dnd_sim/pull/189), and [#190](https://github.com/rputnam0/dnd_sim/pull/190), reducing strict blockers but not yet reaching blocked=0.
 
 ## Active completion tracks
 
@@ -44,15 +45,14 @@ Wave 6 remediation state:
 | FIN | Completion Gates | merged | 5I-completion-gates | Track complete and merged to `main`. |
 | CUT | Wave 6 Hard-Cut Remediation | merged | 6a-hard-cut | W6-CUT-01/02/03/04 merged and track integrated to `main` via #179. |
 | UNI | Wave 6 API Unification | merged | 6b-unification | W6-UNI-01/02/03/04 merged and track integrated to `main` via #180. |
-| PAR | Wave 6 Capability Parity Closure | merged | 6c-parity | W6-PAR-01, W6-PAR-02, and W6-PAR-03 shard batch merged and integrated via #181. |
+| PAR | Wave 6 Capability Parity Closure | in_progress | 6c-parity | W6-PAR-01/02/03/04 merged; W6-PAR-05 strict closure remains active (strict blockers: 1372). |
 | GATE | Wave 6 Governance and Final Gates | merged | 6d-gates | W6-GATE-01 and W6-GATE-02 merged, including final full green gate via #183. |
 
 ## Active branches
 
-No backlog tasks are currently marked `in_progress`.
-
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| W6-PAR-05 | codex/feat/w6-par-05-strict-parity-closure | remediation_parity | in_progress | Continue parity shards until strict FIN-02 gate reaches blocked=0 across shipped 2014 scope. |
 
 ## Open PRs
 
@@ -64,6 +64,7 @@ No backlog tasks are currently marked `pr_open`.
 ## Dependency and blocker notes (from backlog.csv)
 
 - Wave 5 dependencies remain fully satisfied and merged on `main`.
-- Wave 6 dependencies are fully satisfied and merged on `main` for CUT, UNI, PAR, and GATE tracks.
+- Wave 6 CUT, UNI, and GATE dependencies are satisfied and merged on `main`; PAR continuation remains active under W6-PAR-05.
+- Strict FIN-02 gate currently reports 1372 blocked shipped records (background 67, species 109, spell 546, trait 650).
 - No backlog task is currently in `blocked` state.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
