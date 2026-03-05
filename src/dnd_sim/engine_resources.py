@@ -1,22 +1,171 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping, MutableSequence
 from typing import Any, Callable
+
+from dnd_sim.telemetry import (
+    build_invariant_violation_event,
+    build_resource_delta_event,
+    build_rng_audit_event,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def ensure_resource_cap(actor: Any, resource: str, max_value: int) -> None:
-    if max_value <= 0:
+def _actor_id(actor: Any) -> str:
+    raw_actor_id = getattr(actor, "actor_id", None)
+    if raw_actor_id is None:
+        return "unknown"
+    normalized = str(raw_actor_id).strip()
+    return normalized or "unknown"
+
+
+def _append_telemetry_event(
+    telemetry_events: MutableSequence[dict[str, Any]] | None,
+    event: dict[str, Any],
+) -> None:
+    if telemetry_events is None:
         return
-    existing_max = int(actor.max_resources.get(resource, 0))
+    telemetry_events.append(event)
+
+
+def _emit_resource_delta(
+    telemetry_events: MutableSequence[dict[str, Any]] | None,
+    *,
+    actor: Any,
+    resource: str,
+    before: int,
+    after: int,
+    reason: str,
+    source: str,
+    context: str | None = None,
+) -> None:
+    if before == after:
+        return
+    event = build_resource_delta_event(
+        source=source,
+        actor_id=_actor_id(actor),
+        resource=resource,
+        before=before,
+        after=after,
+        reason=reason,
+        context=context,
+    )
+    _append_telemetry_event(telemetry_events, event)
+
+
+def emit_rng_audit_event(
+    telemetry_events: MutableSequence[dict[str, Any]] | None,
+    *,
+    seed: int | None,
+    context: str,
+    draw_index: int,
+    die_sides: int | None = None,
+    roll_value: int | None = None,
+    actor_id: str | None = None,
+    metadata: Mapping[str, Any] | None = None,
+    source: str = "dnd_sim.engine_resources",
+) -> dict[str, Any]:
+    event = build_rng_audit_event(
+        source=source,
+        seed=seed,
+        context=context,
+        draw_index=draw_index,
+        die_sides=die_sides,
+        roll_value=roll_value,
+        actor_id=actor_id,
+        metadata=metadata,
+    )
+    _append_telemetry_event(telemetry_events, event)
+    return event
+
+
+def emit_invariant_violation_event(
+    telemetry_events: MutableSequence[dict[str, Any]] | None,
+    *,
+    invariant_code: str,
+    message: str,
+    actor_id: str | None = None,
+    severity: str = "error",
+    details: Mapping[str, Any] | None = None,
+    source: str = "dnd_sim.engine_resources",
+) -> dict[str, Any]:
+    event = build_invariant_violation_event(
+        source=source,
+        invariant_code=invariant_code,
+        message=message,
+        severity=severity,
+        actor_id=actor_id,
+        details=details,
+    )
+    _append_telemetry_event(telemetry_events, event)
+    return event
+
+
+def ensure_resource_cap(
+    actor: Any,
+    resource: str,
+    max_value: int,
+    *,
+    telemetry_events: MutableSequence[dict[str, Any]] | None = None,
+    source: str = "dnd_sim.engine_resources",
+) -> None:
+    normalized_resource = str(resource)
+    if max_value <= 0:
+        emit_invariant_violation_event(
+            telemetry_events,
+            invariant_code="RESOURCE_CAP_NON_POSITIVE",
+            message="Resource cap update ignored because max value was non-positive",
+            actor_id=_actor_id(actor),
+            severity="warning",
+            details={"resource": normalized_resource, "requested_cap": int(max_value)},
+            source=source,
+        )
+        return
+    existing_max = int(actor.max_resources.get(normalized_resource, 0))
     if existing_max < max_value:
-        actor.max_resources[resource] = max_value
-    cap = int(actor.max_resources[resource])
-    if resource not in actor.resources:
-        actor.resources[resource] = cap
+        actor.max_resources[normalized_resource] = max_value
+    cap = int(actor.max_resources[normalized_resource])
+    if normalized_resource not in actor.resources:
+        actor.resources[normalized_resource] = cap
+        _emit_resource_delta(
+            telemetry_events,
+            actor=actor,
+            resource=normalized_resource,
+            before=0,
+            after=cap,
+            reason="resource_initialized",
+            source=source,
+        )
     else:
-        actor.resources[resource] = max(0, min(int(actor.resources[resource]), cap))
+        before = int(actor.resources[normalized_resource])
+        bounded = max(0, min(before, cap))
+        if bounded != before:
+            emit_invariant_violation_event(
+                telemetry_events,
+                invariant_code="RESOURCE_VALUE_OUT_OF_BOUNDS",
+                message="Resource value was outside [0, cap] bounds and was clamped",
+                actor_id=_actor_id(actor),
+                severity="warning",
+                details={
+                    "resource": normalized_resource,
+                    "before": before,
+                    "after": bounded,
+                    "cap": cap,
+                },
+                source=source,
+            )
+        actor.resources[normalized_resource] = bounded
+        _emit_resource_delta(
+            telemetry_events,
+            actor=actor,
+            resource=normalized_resource,
+            before=before,
+            after=bounded,
+            reason="resource_clamped_to_cap",
+            source=source,
+        )
 
 
 def fighter_superiority_dice_count(fighter_level: int) -> int:
@@ -71,6 +220,9 @@ def recover_spell_slots_with_budget(
     *,
     budget: int,
     max_individual_slot_level: int,
+    telemetry_events: MutableSequence[dict[str, Any]] | None = None,
+    source: str = "dnd_sim.engine_resources",
+    delta_reason: str = "spell_slot_recovery",
 ) -> int:
     if budget <= 0:
         return 0
@@ -85,7 +237,18 @@ def recover_spell_slots_with_budget(
         recoverable_slots = min(missing_slots, budget // slot_level)
         if recoverable_slots <= 0:
             continue
-        actor.resources[slot_key] = current_slots + recoverable_slots
+        before = current_slots
+        after = current_slots + recoverable_slots
+        actor.resources[slot_key] = after
+        _emit_resource_delta(
+            telemetry_events,
+            actor=actor,
+            resource=slot_key,
+            before=before,
+            after=after,
+            reason=delta_reason,
+            source=source,
+        )
         recovered_levels += recoverable_slots * slot_level
         budget -= recoverable_slots * slot_level
         if budget <= 0:
@@ -193,6 +356,8 @@ def apply_arcane_recovery(
     actor: Any,
     *,
     has_trait: Callable[[Any, str], bool],
+    telemetry_events: MutableSequence[dict[str, Any]] | None = None,
+    source: str = "dnd_sim.engine_resources",
 ) -> None:
     if not has_trait(actor, "arcane recovery"):
         return
@@ -207,7 +372,20 @@ def apply_arcane_recovery(
         actor,
         budget=recovery_budget,
         max_individual_slot_level=5,
+        telemetry_events=telemetry_events,
+        source=source,
+        delta_reason="arcane_recovery_slot_recovery",
     )
     if recovered_levels <= 0:
         return
+    before_uses = uses_remaining
     actor.resources["arcane_recovery"] = uses_remaining - 1
+    _emit_resource_delta(
+        telemetry_events,
+        actor=actor,
+        resource="arcane_recovery",
+        before=before_uses,
+        after=actor.resources["arcane_recovery"],
+        reason="arcane_recovery_use",
+        source=source,
+    )
