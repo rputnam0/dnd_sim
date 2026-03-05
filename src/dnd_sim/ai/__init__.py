@@ -1,11 +1,15 @@
-"""AI scoring helpers for strategy rationale and telemetry traces."""
+"""AI scoring and candidate-enumeration helpers."""
 
 from dnd_sim.ai.scoring import (
-    build_candidate_trace_rows,
-    candidate_rejection_reason_for_action,
+    ActionCandidate,
+    CandidateScoringInputs,
+    candidate_snapshots,
+    enumerate_legal_action_candidates,
 )
 
 __all__ = [
-    "build_candidate_trace_rows",
-    "candidate_rejection_reason_for_action",
+    "ActionCandidate",
+    "CandidateScoringInputs",
+    "candidate_snapshots",
+    "enumerate_legal_action_candidates",
 ]
