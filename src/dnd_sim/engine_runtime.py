@@ -109,6 +109,7 @@ from dnd_sim.action_resolution import (
     ActionResolutionHandlers as _ActionResolutionHandlers,
     execute_action_pipeline as _action_resolution_execute_action_pipeline,
 )
+from dnd_sim.mechanics_schema import SPELL_METADATA_EFFECT_TYPES
 from dnd_sim import effects_runtime as _effects_runtime
 from dnd_sim import reaction_runtime as _reaction_runtime
 from dnd_sim import spell_runtime as _spell_runtime
@@ -304,6 +305,7 @@ _ATTACK_ACTION_FRAMEWORK_EFFECT_TYPES = (
     | _ATTACK_ACTION_EXTRA_EFFECT_TYPES
     | _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES
 )
+_SCHEMA_METADATA_NOOP_EFFECT_TYPES = frozenset({"note", *SPELL_METADATA_EFFECT_TYPES})
 
 
 @dataclass(slots=True)
@@ -9481,8 +9483,8 @@ def _apply_effect(
             )
         return
 
-    # Schema-valid metadata markers that intentionally do not apply a direct state mutation.
-    if effect_type in {"note", "area", "aura", "audible_range"}:
+    # Schema-valid metadata markers (plus note) intentionally do not mutate runtime state.
+    if effect_type in _SCHEMA_METADATA_NOOP_EFFECT_TYPES:
         return
 
     # Fallback for unknown/no-op mechanics.
