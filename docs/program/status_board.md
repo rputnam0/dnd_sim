@@ -28,7 +28,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
-| FIX | Rules Closure | in_progress | 5G-rules-closure | `FIX-01` is `in_progress` and `FIX-05` is `pr_open` in `backlog.csv`; remaining FIX tasks are `not_started`. |
+| FIX | Rules Closure | in_progress | 5G-rules-closure | `FIX-01` and `FIX-02` are `in_progress`, while `FIX-03` and `FIX-05` are `pr_open` in `backlog.csv`; remaining FIX tasks are `not_started`. |
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
 
@@ -37,6 +37,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
 | FIX-01 | `codex/feat/fix-01-close-lucky-attacker-defender-and-saving-throw-cor` | rules_a | in_progress | Closing Lucky correctness for attacks by/against Lucky characters and failed saving throws with deterministic reroll selection and luck-point accounting. |
+| FIX-02 | `codex/feat/fix-02-close-great-weapon-master-and-sharpshooter-toggle` | rules_b | in_progress | Closing deterministic GWM/Sharpshooter toggle correctness for damage math, hit modifiers, and legality under advantage/disadvantage. |
 | FIX-05 | `codex/feat/fix-05-close-mage-slayer-and-sentinel-reaction-constraint` | rules_e | pr_open | Deterministic Mage Slayer/Sentinel reaction-constraint rules and correctness tests are in PR review. |
 | FIX-03 | `codex/feat/fix-03-close-shield-master-reaction-save-and-shove-correc` | rules_c | pr_open | Shield Master save bonus, shove sequencing, and illegal-window correctness helpers/tests are implemented and under review. |
 
@@ -51,7 +52,8 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
-- No active DOC blockers remain; FIX-01 rules-closure work is currently in progress on the assigned branch.
+- No active DOC blockers remain; FIX-01 and FIX-02 rules-closure work are currently in progress on assigned branches.
+- `FIX-02` is active and depends on `ARC-04` and `AI-01` per `backlog.csv`.
 - `FIX-03` is in PR review and depends on `ARC-06` per `backlog.csv`.
 - `FIX-05` is in PR review and depends on `ARC-06` per `backlog.csv`.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
