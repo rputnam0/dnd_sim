@@ -46,6 +46,8 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] FIX-06 Close Rage damage, resistance, and illegal state edge cases
 - [ ] FIX-07 Integrate hazard-aware strategy scoring and close the review checklist
 
+Current in-progress focus: `FIX-01` Lucky attacker/defender/save correctness on `codex/feat/fix-01-close-lucky-attacker-defender-and-saving-throw-cor`.
+
 ## Tactical AI Hardening
 
 - [ ] AI-01 Normalize candidate action enumeration and scoring inputs
