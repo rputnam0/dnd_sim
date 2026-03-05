@@ -20,10 +20,8 @@ from dnd_sim.engine import (
     _enemies_defeated,
     _execute_action,
     _execute_declared_turn_or_error,
-    _flatten_trial,
     _force_end_concentration_if_needed,
     _mark_action_cost_used,
-    _metric,
     _owner_is_incapacitated,
     _party_defeated,
     _process_hazard_start_turn_triggers,
@@ -46,7 +44,11 @@ from dnd_sim.engine import (
     short_rest,
 )
 from dnd_sim.io import EncounterConfig, LoadedScenario
-from dnd_sim.models import ActorRuntimeState, SimulationSummary, SummaryMetric, TrialResult
+from dnd_sim.models import ActorRuntimeState, TrialResult
+from dnd_sim.replay import build_trial_rows as _replay_build_trial_rows
+from dnd_sim.reporting_runtime import (
+    build_simulation_summary as _reporting_build_simulation_summary,
+)
 from dnd_sim.strategy_api import TurnDeclaration
 
 
@@ -656,65 +658,14 @@ def run_simulation(
         )
         trial_results.append(trial)
 
-    trial_rows = [_flatten_trial(trial) for trial in trial_results]
+    trial_rows = _replay_build_trial_rows(trial_results)
 
-    party_wins = sum(1 for trial in trial_results if trial.winner == "party")
-    enemy_wins = sum(1 for trial in trial_results if trial.winner == "enemy")
-
-    actor_ids = sorted(trial_results[0].damage_taken.keys()) if trial_results else []
-
-    per_actor_damage_taken = {
-        actor_id: _metric([trial.damage_taken.get(actor_id, 0) for trial in trial_results])
-        for actor_id in actor_ids
-    }
-    per_actor_damage_dealt = {
-        actor_id: _metric([trial.damage_dealt.get(actor_id, 0) for trial in trial_results])
-        for actor_id in actor_ids
-    }
-
-    resources_all: dict[str, dict[str, list[float]]] = {actor_id: {} for actor_id in actor_ids}
-    for trial in trial_results:
-        for actor_id in actor_ids:
-            for resource_name in tracked_resource_names.get(actor_id, set()):
-                resources_all[actor_id].setdefault(resource_name, [])
-            for resource_name, amount in trial.resources_spent.get(actor_id, {}).items():
-                resources_all[actor_id].setdefault(resource_name, []).append(float(amount))
-            for resource_name in resources_all[actor_id]:
-                if resource_name not in trial.resources_spent.get(actor_id, {}):
-                    resources_all[actor_id][resource_name].append(0.0)
-
-    per_actor_resources_spent: dict[str, dict[str, SummaryMetric]] = {}
-    for actor_id, resource_map in resources_all.items():
-        per_actor_resources_spent[actor_id] = {
-            resource_name: _metric(values) for resource_name, values in resource_map.items()
-        }
-
-    per_actor_downed = {
-        actor_id: _metric([trial.downed_counts.get(actor_id, 0) for trial in trial_results])
-        for actor_id in actor_ids
-    }
-    per_actor_deaths = {
-        actor_id: _metric([trial.death_counts.get(actor_id, 0) for trial in trial_results])
-        for actor_id in actor_ids
-    }
-    per_actor_remaining_hp = {
-        actor_id: _metric([trial.remaining_hp.get(actor_id, 0) for trial in trial_results])
-        for actor_id in actor_ids
-    }
-
-    summary = SimulationSummary(
+    summary = _reporting_build_simulation_summary(
         run_id=run_id,
         scenario_id=scenario.config.scenario_id,
         trials=trials,
-        party_win_rate=party_wins / trials,
-        enemy_win_rate=enemy_wins / trials,
-        rounds=_metric([trial.rounds for trial in trial_results]),
-        per_actor_damage_taken=per_actor_damage_taken,
-        per_actor_damage_dealt=per_actor_damage_dealt,
-        per_actor_resources_spent=per_actor_resources_spent,
-        per_actor_downed=per_actor_downed,
-        per_actor_deaths=per_actor_deaths,
-        per_actor_remaining_hp=per_actor_remaining_hp,
+        trial_results=trial_results,
+        tracked_resource_names=tracked_resource_names,
     )
 
     return SimulationArtifacts(
