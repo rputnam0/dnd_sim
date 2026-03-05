@@ -1,7 +1,12 @@
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Any
+
+from dnd_sim.telemetry import emit_event
+
+logger = logging.getLogger(__name__)
 
 _HEADER_LINE_RE = {
     "casting_time": re.compile(r"Casting Time:\s*(.*?)\s*Range:"),
@@ -90,18 +95,30 @@ def parse_spells(raw_text: str) -> list[dict[str, Any]]:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     root = Path(__file__).resolve().parents[2]
     raw_path = root / "db" / "rules" / "2014" / "srd_raw.txt"
     out_dir = root / "db" / "rules" / "2014" / "spells"
 
     if not raw_path.exists():
-        print(f"Missing {raw_path}")
+        emit_event(
+            logger,
+            event_type="spells_parse_input_missing",
+            source=__name__,
+            payload={"input_path": str(raw_path)},
+            level=logging.ERROR,
+        )
         return
 
     raw_text = raw_path.read_text(encoding="utf-8")
     spells = parse_spells(raw_text)
 
-    print(f"Parsed {len(spells)} spells.")
+    emit_event(
+        logger,
+        event_type="spells_parsed",
+        source=__name__,
+        payload={"count": len(spells), "input_path": str(raw_path)},
+    )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     for spell in spells:

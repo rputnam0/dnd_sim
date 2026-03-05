@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import logging
 from typing import Any, Protocol
 
 from dnd_sim.spatial import check_cover, distance_chebyshev, move_towards
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -99,7 +102,9 @@ class BaseStrategy:
             None,
         )
         if action_info is None:
-            return TurnDeclaration(rationale={"reason": "unknown_action", "action_name": action_name})
+            return TurnDeclaration(
+                rationale={"reason": "unknown_action", "action_name": action_name}
+            )
 
         mode = str(action_info.get("target_mode", "single_enemy"))
         if mode == "self":
@@ -110,7 +115,9 @@ class BaseStrategy:
                 )
             )
 
-        enemies = [view for view in state.actors.values() if view.team != actor.team and view.hp > 0]
+        enemies = [
+            view for view in state.actors.values() if view.team != actor.team and view.hp > 0
+        ]
         allies = [view for view in state.actors.values() if view.team == actor.team and view.hp > 0]
         everyone = [view for view in state.actors.values() if view.hp > 0]
 

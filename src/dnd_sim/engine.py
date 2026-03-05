@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 import math
 import random
 import re
@@ -107,6 +108,9 @@ from dnd_sim.spells import (
     slugify_spell_name as _canonical_spell_slug,
     spell_lookup_key as _canonical_spell_lookup_key,
 )
+from dnd_sim.telemetry import build_event_envelope
+
+logger = logging.getLogger(__name__)
 
 _CONTROL_BLOCKING_CONDITIONS = {"incapacitated", "stunned", "unconscious", "paralyzed"}
 _CONCENTRATION_FORCED_END_CONDITIONS = _CONTROL_BLOCKING_CONDITIONS
@@ -306,6 +310,24 @@ class TurnDeclarationValidationError(ValueError):
         self.message = message
         self.details = dict(details or {})
         super().__init__(f"{code} [{actor_id}:{field}] {message}")
+
+
+def _append_telemetry_event(
+    telemetry: list[dict[str, Any]] | None,
+    *,
+    event_type: str,
+    payload: dict[str, Any],
+    source: str = __name__,
+) -> None:
+    if telemetry is None:
+        return
+    telemetry.append(
+        build_event_envelope(
+            event_type=event_type,
+            payload=payload,
+            source=source,
+        )
+    )
 
 
 def _metric(values: list[float]) -> SummaryMetric:
@@ -8485,34 +8507,34 @@ def _execute_declared_turn_or_error(
             message="reaction_policy.mode='none' conflicts with declaring a ready response.",
         )
 
-    if telemetry is not None:
-        telemetry.append(
-            {
-                "telemetry_type": "decision",
-                "decision_mode": "turn_declaration",
-                "round": round_number,
-                "strategy": strategy_name,
-                "actor_id": actor.actor_id,
-                "team": actor.team,
-                "movement_path": [list(waypoint) for waypoint in movement_path],
-                "action_plan": (
-                    declaration.action.action_name if declaration.action is not None else None
-                ),
-                "bonus_action_plan": (
-                    declaration.bonus_action.action_name
-                    if declaration.bonus_action is not None
-                    else None
-                ),
-                "reaction_policy": reaction_mode,
-                "ready_trigger": ready_declaration.trigger if ready_declaration else None,
-                "ready_response": (
-                    ready_declaration.response_action_name if ready_declaration else None
-                ),
-                "rationale": (
-                    dict(declaration.rationale) if isinstance(declaration.rationale, dict) else {}
-                ),
-            }
-        )
+    _append_telemetry_event(
+        telemetry,
+        event_type="decision",
+        payload={
+            "decision_mode": "turn_declaration",
+            "round": round_number,
+            "strategy": strategy_name,
+            "actor_id": actor.actor_id,
+            "team": actor.team,
+            "movement_path": [list(waypoint) for waypoint in movement_path],
+            "action_plan": (
+                declaration.action.action_name if declaration.action is not None else None
+            ),
+            "bonus_action_plan": (
+                declaration.bonus_action.action_name
+                if declaration.bonus_action is not None
+                else None
+            ),
+            "reaction_policy": reaction_mode,
+            "ready_trigger": ready_declaration.trigger if ready_declaration else None,
+            "ready_response": (
+                ready_declaration.response_action_name if ready_declaration else None
+            ),
+            "rationale": (
+                dict(declaration.rationale) if isinstance(declaration.rationale, dict) else {}
+            ),
+        },
+    )
 
     reserved_bonus_smite = _declared_bonus_smite_reservation(
         actor=actor,
@@ -9628,43 +9650,43 @@ def _apply_effect(
         damage_dealt[actor.actor_id] += applied
         damage_taken[recipient.actor_id] += applied
         threat_scores[actor.actor_id] += applied
-        if telemetry is not None:
-            telemetry.append(
-                {
-                    "telemetry_type": "effect_contribution",
-                    "round": round_number,
-                    "strategy": strategy_name,
-                    "actor_id": actor.actor_id,
-                    "target_id": recipient.actor_id,
-                    "action_name": action_name or (action.name if action else None),
-                    "source_bucket": source_bucket,
-                    "trigger_event": trigger_event,
-                    "effect_type": "damage",
-                    "damage_type": damage_type,
-                    "applied_amount": applied,
-                }
-            )
+        _append_telemetry_event(
+            telemetry,
+            event_type="effect_contribution",
+            payload={
+                "round": round_number,
+                "strategy": strategy_name,
+                "actor_id": actor.actor_id,
+                "target_id": recipient.actor_id,
+                "action_name": action_name or (action.name if action else None),
+                "source_bucket": source_bucket,
+                "trigger_event": trigger_event,
+                "effect_type": "damage",
+                "damage_type": damage_type,
+                "applied_amount": applied,
+            },
+        )
         return
 
     if effect_type == "heal":
         before = recipient.hp
         amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
         _apply_healing(recipient, amount)
-        if telemetry is not None:
-            telemetry.append(
-                {
-                    "telemetry_type": "effect_contribution",
-                    "round": round_number,
-                    "strategy": strategy_name,
-                    "actor_id": actor.actor_id,
-                    "target_id": recipient.actor_id,
-                    "action_name": action_name or (action.name if action else None),
-                    "source_bucket": source_bucket,
-                    "trigger_event": trigger_event,
-                    "effect_type": "heal",
-                    "applied_amount": max(0, recipient.hp - before),
-                }
-            )
+        _append_telemetry_event(
+            telemetry,
+            event_type="effect_contribution",
+            payload={
+                "round": round_number,
+                "strategy": strategy_name,
+                "actor_id": actor.actor_id,
+                "target_id": recipient.actor_id,
+                "action_name": action_name or (action.name if action else None),
+                "source_bucket": source_bucket,
+                "trigger_event": trigger_event,
+                "effect_type": "heal",
+                "applied_amount": max(0, recipient.hp - before),
+            },
+        )
         return
 
     if effect_type == "temp_hp":
@@ -9672,21 +9694,21 @@ def _apply_effect(
         before = recipient.temp_hp
         if amount > 0:
             recipient.temp_hp = max(recipient.temp_hp, amount)
-        if telemetry is not None:
-            telemetry.append(
-                {
-                    "telemetry_type": "effect_contribution",
-                    "round": round_number,
-                    "strategy": strategy_name,
-                    "actor_id": actor.actor_id,
-                    "target_id": recipient.actor_id,
-                    "action_name": action_name or (action.name if action else None),
-                    "source_bucket": source_bucket,
-                    "trigger_event": trigger_event,
-                    "effect_type": "temp_hp",
-                    "applied_amount": max(0, recipient.temp_hp - before),
-                }
-            )
+        _append_telemetry_event(
+            telemetry,
+            event_type="effect_contribution",
+            payload={
+                "round": round_number,
+                "strategy": strategy_name,
+                "actor_id": actor.actor_id,
+                "target_id": recipient.actor_id,
+                "action_name": action_name or (action.name if action else None),
+                "source_bucket": source_bucket,
+                "trigger_event": trigger_event,
+                "effect_type": "temp_hp",
+                "applied_amount": max(0, recipient.temp_hp - before),
+            },
+        )
         return
 
     if effect_type == "apply_condition":
@@ -9765,10 +9787,11 @@ def _apply_effect(
     if effect_type == "remove_condition":
         before_conditions = set(recipient.conditions)
         _remove_condition(recipient, str(effect.get("condition", "")))
-        if telemetry is not None and recipient.conditions != before_conditions:
-            telemetry.append(
-                {
-                    "telemetry_type": "effect_contribution",
+        if recipient.conditions != before_conditions:
+            _append_telemetry_event(
+                telemetry,
+                event_type="effect_contribution",
+                payload={
                     "round": round_number,
                     "strategy": strategy_name,
                     "actor_id": actor.actor_id,
@@ -9779,7 +9802,7 @@ def _apply_effect(
                     "effect_type": "remove_condition",
                     "condition": str(effect.get("condition", "")).lower(),
                     "applied_amount": 1,
-                }
+                },
             )
         return
 
@@ -9844,22 +9867,22 @@ def _apply_effect(
         if concentration_linked:
             actor.concentrated_targets.add(recipient.actor_id)
         _sync_antimagic_suppression_for_all_actors(actors, active_hazards)
-        if telemetry is not None:
-            telemetry.append(
-                {
-                    "telemetry_type": "effect_contribution",
-                    "round": round_number,
-                    "strategy": strategy_name,
-                    "actor_id": actor.actor_id,
-                    "target_id": recipient.actor_id,
-                    "action_name": action_name or (action.name if action else None),
-                    "source_bucket": source_bucket,
-                    "trigger_event": trigger_event,
-                    "effect_type": "hazard",
-                    "hazard_type": str(zone.get("hazard_type", "generic")),
-                    "applied_amount": 1,
-                }
-            )
+        _append_telemetry_event(
+            telemetry,
+            event_type="effect_contribution",
+            payload={
+                "round": round_number,
+                "strategy": strategy_name,
+                "actor_id": actor.actor_id,
+                "target_id": recipient.actor_id,
+                "action_name": action_name or (action.name if action else None),
+                "source_bucket": source_bucket,
+                "trigger_event": trigger_event,
+                "effect_type": "hazard",
+                "hazard_type": str(zone.get("hazard_type", "generic")),
+                "applied_amount": 1,
+            },
+        )
         return
 
     if effect_type in {"summon", "conjure"}:
@@ -10012,10 +10035,11 @@ def _apply_effect(
             actor.concentration_conditions.add(transform_condition)
             actor.concentration_effect_instance_ids.update(created_effect_ids)
         _force_end_concentration_if_needed(recipient, actors=actors, active_hazards=active_hazards)
-        if telemetry is not None and recipient.conditions != before_conditions:
-            telemetry.append(
-                {
-                    "telemetry_type": "effect_contribution",
+        if recipient.conditions != before_conditions:
+            _append_telemetry_event(
+                telemetry,
+                event_type="effect_contribution",
+                payload={
                     "round": round_number,
                     "strategy": strategy_name,
                     "actor_id": actor.actor_id,
@@ -10026,7 +10050,7 @@ def _apply_effect(
                     "effect_type": "transform",
                     "condition": transform_condition,
                     "applied_amount": 1,
-                }
+                },
             )
         return
 
@@ -10041,22 +10065,22 @@ def _apply_effect(
             resources_spent[recipient.actor_id][resource] = resources_spent[recipient.actor_id].get(
                 resource, 0
             ) + (before - after)
-        if telemetry is not None:
-            telemetry.append(
-                {
-                    "telemetry_type": "effect_contribution",
-                    "round": round_number,
-                    "strategy": strategy_name,
-                    "actor_id": actor.actor_id,
-                    "target_id": recipient.actor_id,
-                    "action_name": action_name or (action.name if action else None),
-                    "source_bucket": source_bucket,
-                    "trigger_event": trigger_event,
-                    "effect_type": "resource_change",
-                    "resource": resource,
-                    "applied_amount": after - before,
-                }
-            )
+        _append_telemetry_event(
+            telemetry,
+            event_type="effect_contribution",
+            payload={
+                "round": round_number,
+                "strategy": strategy_name,
+                "actor_id": actor.actor_id,
+                "target_id": recipient.actor_id,
+                "action_name": action_name or (action.name if action else None),
+                "source_bucket": source_bucket,
+                "trigger_event": trigger_event,
+                "effect_type": "resource_change",
+                "resource": resource,
+                "applied_amount": after - before,
+            },
+        )
         return
 
     if effect_type == "command_allied":
@@ -10316,21 +10340,21 @@ def _apply_action_effects(
                     once_per_action_used.add(marker)
             recipient = _resolve_effect_target(effect, actor=actor, target=target)
 
-            if telemetry is not None:
-                telemetry.append(
-                    {
-                        "telemetry_type": "trigger_provenance",
-                        "round": round_number,
-                        "strategy": strategy_name,
-                        "actor_id": actor.actor_id,
-                        "target_id": recipient.actor_id,
-                        "action_name": action.name,
-                        "source_bucket": source_bucket,
-                        "trigger_event": event,
-                        "apply_on": str(effect.get("apply_on", "always")),
-                        "effect_type": str(effect.get("effect_type", "")),
-                    }
-                )
+            _append_telemetry_event(
+                telemetry,
+                event_type="trigger_provenance",
+                payload={
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action.name,
+                    "source_bucket": source_bucket,
+                    "trigger_event": event,
+                    "apply_on": str(effect.get("apply_on", "always")),
+                    "effect_type": str(effect.get("effect_type", "")),
+                },
+            )
 
             _apply_effect(
                 action=action,
@@ -15010,9 +15034,10 @@ def run_simulation(
                     actor_view = state_view.actors[actor.actor_id]
                     turn_declaration = strategy.declare_turn(actor_view, state_view)
                     if turn_declaration is None:
-                        trial_telemetry.append(
-                            {
-                                "telemetry_type": "decision",
+                        _append_telemetry_event(
+                            trial_telemetry,
+                            event_type="decision",
+                            payload={
                                 "round": rounds,
                                 "strategy": strategy_name,
                                 "actor_id": actor.actor_id,
@@ -15025,7 +15050,7 @@ def run_simulation(
                                 "rationale": {},
                                 "extra_resource_request": {},
                                 "resource_cost": {},
-                            }
+                            },
                         )
                         _resolve_turn_end(actor, turn_token)
                         continue

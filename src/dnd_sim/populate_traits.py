@@ -1,7 +1,14 @@
 import json
+import logging
 from pathlib import Path
 
-def main():
+from dnd_sim.telemetry import emit_event
+
+logger = logging.getLogger(__name__)
+
+
+def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     root = Path(__file__).resolve().parents[2]
     out_dir = root / "db" / "rules" / "2014" / "traits"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -16,20 +23,15 @@ def main():
                     "effect_type": "evade_damage",
                     "trigger": "dex_save_success",
                     "requires_reaction": True,
-                    "condition": "equipped_shield"
+                    "condition": "equipped_shield",
                 }
-            ]
+            ],
         },
         {
             "name": "War Caster",
             "type": "feat",
             "description": "You have advantage on Constitution saving throws that you make to maintain your concentration on a spell when you take damage.",
-            "mechanics": [
-                {
-                    "effect_type": "advantage",
-                    "trigger": "concentration_save"
-                }
-            ]
+            "mechanics": [{"effect_type": "advantage", "trigger": "concentration_save"}],
         },
         {
             "name": "Careful Spell",
@@ -41,9 +43,9 @@ def main():
                     "trigger": "spell_cast",
                     "target_mode": "all_creatures",
                     "resource_cost": {"sorcery_points": 1},
-                    "max_targets": "cha_mod"
+                    "max_targets": "cha_mod",
                 }
-            ]
+            ],
         },
         {
             "name": "Empowered Spell",
@@ -54,20 +56,15 @@ def main():
                     "effect_type": "reroll_damage_dice",
                     "trigger": "spell_damage_roll",
                     "resource_cost": {"sorcery_points": 1},
-                    "max_dice": "cha_mod"
+                    "max_dice": "cha_mod",
                 }
-            ]
+            ],
         },
         {
             "name": "Evasion",
             "type": "class_feature",
             "description": "When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail.",
-            "mechanics": [
-                {
-                    "effect_type": "evasion",
-                    "trigger": "dex_save"
-                }
-            ]
+            "mechanics": [{"effect_type": "evasion", "trigger": "dex_save"}],
         },
         {
             "name": "Savage Attacker",
@@ -77,17 +74,23 @@ def main():
                 {
                     "effect_type": "advantage_damage_roll",
                     "trigger": "melee_weapon_damage_roll",
-                    "frequency": "once_per_turn"
+                    "frequency": "once_per_turn",
                 }
-            ]
-        }
+            ],
+        },
     ]
 
     for trait in traits:
         safe_name = trait["name"].lower().replace(" ", "_")
         path = out_dir / f"{safe_name}.json"
         path.write_text(json.dumps(trait, indent=2), encoding="utf-8")
-        print(f"Wrote {path.name}")
+        emit_event(
+            logger,
+            event_type="trait_seed_written",
+            source=__name__,
+            payload={"trait_name": trait["name"], "output_path": str(path)},
+        )
+
 
 if __name__ == "__main__":
     main()

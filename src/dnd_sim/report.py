@@ -3,11 +3,15 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 from dnd_sim.models import TrialResult
 from dnd_sim.reporting import build_report_markdown, generate_plots_from_trials
+from dnd_sim.telemetry import emit_event
+
+logger = logging.getLogger(__name__)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -129,6 +133,7 @@ def _resolve_trial_rows_path(run_dir: Path, run_config: dict[str, Any]) -> Path:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     args = build_parser().parse_args()
     summary_path = args.run.resolve()
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
@@ -154,7 +159,12 @@ def main() -> None:
     out_path = args.out.resolve() / "report.md"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(report, encoding="utf-8")
-    print(f"Report written: {out_path}")
+    emit_event(
+        logger,
+        event_type="report_written",
+        source=__name__,
+        payload={"report_path": str(out_path), "run_path": str(summary_path)},
+    )
 
 
 if __name__ == "__main__":

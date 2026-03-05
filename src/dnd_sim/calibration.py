@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import math
 from pathlib import Path
 from typing import Any, Sequence
 
 from dnd_sim.engine import run_simulation
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.telemetry import emit_event
+
+logger = logging.getLogger(__name__)
 
 _METRIC_ALIASES = {
     "party_win_rate": "party_win_rate",
@@ -185,6 +189,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     args = build_parser().parse_args()
     payload = run_calibration_harness(
         args.scenario,
@@ -197,9 +202,23 @@ def main() -> None:
         out_path = args.out.resolve()
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(text + "\n", encoding="utf-8")
-        print(f"Calibration output written: {out_path}")
+        emit_event(
+            logger,
+            event_type="calibration_output_written",
+            source=__name__,
+            payload={
+                "out_path": str(out_path),
+                "all_passed": bool(payload.get("all_passed")),
+                "benchmarks": len(payload.get("benchmarks", [])),
+            },
+        )
     else:
-        print(text)
+        emit_event(
+            logger,
+            event_type="calibration_output_emitted",
+            source=__name__,
+            payload={"calibration": payload},
+        )
 
 
 if __name__ == "__main__":
