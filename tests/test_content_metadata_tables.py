@@ -70,8 +70,11 @@ def test_content_metadata_migration_adds_canonical_tables(tmp_path: Path) -> Non
             "content_type",
             "source_book",
             "schema_version",
+            "source_path",
             "source_hash",
+            "canonicalization_hash",
             "payload_json",
+            "imported_at",
         ]
         assert _columns(conn, "content_capabilities") == [
             "content_id",
@@ -96,8 +99,11 @@ def test_content_metadata_tables_round_trip_insert_and_query(tmp_path: Path) -> 
             content_type="spell",
             source_book="PHB",
             schema_version="2014.1",
+            source_path="db/rules/2014/spells/magic_missile.json",
             source_hash="sha256:abc123",
+            canonicalization_hash="sha256:def456",
             payload_json={"name": "Magic Missile", "level": 1},
+            imported_at="2026-03-05T10:00:00+00:00",
         )
         db_module.upsert_content_capability(
             conn,
@@ -115,8 +121,11 @@ def test_content_metadata_tables_round_trip_insert_and_query(tmp_path: Path) -> 
                 r.content_type,
                 r.source_book,
                 r.schema_version,
+                r.source_path,
                 r.source_hash,
+                r.canonicalization_hash,
                 r.payload_json,
+                r.imported_at,
                 c.support_state,
                 c.unsupported_reason,
                 c.last_verified_commit
@@ -128,15 +137,18 @@ def test_content_metadata_tables_round_trip_insert_and_query(tmp_path: Path) -> 
         ).fetchone()
 
         assert row is not None
-        assert row[0:5] == (
+        assert row[0:7] == (
             "spell:magic_missile|PHB",
             "spell",
             "PHB",
             "2014.1",
+            "db/rules/2014/spells/magic_missile.json",
             "sha256:abc123",
+            "sha256:def456",
         )
-        assert json.loads(row[5]) == {"level": 1, "name": "Magic Missile"}
-        assert row[6:9] == ("tested", None, "f00ba47")
+        assert json.loads(row[7]) == {"level": 1, "name": "Magic Missile"}
+        assert row[8] == "2026-03-05T10:00:00+00:00"
+        assert row[9:12] == ("tested", None, "f00ba47")
 
 
 def test_content_metadata_rollback_drops_tables(tmp_path: Path) -> None:

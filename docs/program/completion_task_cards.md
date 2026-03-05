@@ -288,6 +288,11 @@ Replace thin blob-centric persistence with canonical metadata tables, lineage, a
 - Required docs: docs/program/completion_task_cards.md; docs/program/status_board.md
 - Exit criteria: Persist schema_version, source_path, source_hash, canonicalization_hash, and imported_at for every content record and replay the lineage deterministically.
 
+DBS-02 implementation contract:
+- `content_records` must persist `schema_version`, `source_path`, `source_hash`, `canonicalization_hash`, and `imported_at` for every row.
+- Hashing must be stable for semantically equivalent payloads after canonical JSON ordering.
+- Lineage replay order must be deterministic by `imported_at` then `content_id`.
+
 ### DBS-03 Add query APIs and CLI for support coverage, schema version, and lineage
 
 - Depends on: DBS-02;CAP-05
