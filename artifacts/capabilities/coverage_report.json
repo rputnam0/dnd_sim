@@ -1,12 +1,12 @@
 {
   "content_type_coverage": [
     {
-      "blocked_records": 75,
+      "blocked_records": 67,
       "content_type": "background",
-      "executable_records": 11,
+      "executable_records": 19,
       "schema_valid_records": 86,
-      "supported_records": 11,
-      "tested_records": 11,
+      "supported_records": 19,
+      "tested_records": 19,
       "total_records": 86
     },
     {
@@ -241,16 +241,16 @@
     {
       "content_id": "background:criminal_contact",
       "content_type": "background",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "background:deep_miner",
@@ -465,16 +465,16 @@
     {
       "content_id": "background:guild_membership",
       "content_type": "background",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "background:harborfolk",
@@ -745,16 +745,16 @@
     {
       "content_id": "background:military_rank",
       "content_type": "background",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "background:name_dropping",
@@ -829,16 +829,16 @@
     {
       "content_id": "background:position_of_privilege",
       "content_type": "background",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "background:prismari_initiate",
@@ -885,16 +885,16 @@
     {
       "content_id": "background:researcher",
       "content_type": "background",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "background:respect_of_the_stout_folk",
@@ -927,16 +927,16 @@
     {
       "content_id": "background:rustic_hospitality",
       "content_type": "background",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "background:safe_haven",
@@ -1025,30 +1025,30 @@
     {
       "content_id": "background:shelter_of_the_faithful",
       "content_type": "background",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "background:ship_s_passage",
       "content_type": "background",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "background:silverquill_initiate",
@@ -35437,11 +35437,11 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 1419,
-    "executable_records": 1108,
+    "blocked_records": 1411,
+    "executable_records": 1116,
     "schema_valid_records": 2521,
-    "supported_records": 1108,
-    "tested_records": 1108,
+    "supported_records": 1116,
+    "tested_records": 1116,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
@@ -35450,7 +35450,7 @@
       "unsupported_reason": "invalid_mechanics_schema"
     },
     {
-      "count": 848,
+      "count": 840,
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {
