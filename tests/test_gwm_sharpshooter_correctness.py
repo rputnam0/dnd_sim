@@ -160,3 +160,61 @@ def test_illegal_toggles_return_explicit_reasons() -> None:
     non_attack = sharpshooter_toggle_state(actor=actor, action=utility, enabled=True)
     assert non_attack.active is False
     assert non_attack.reason == "non_attack_action"
+
+
+def test_weapon_property_checks_do_not_use_action_tags() -> None:
+    actor = _actor(actor_id="tag_check")
+    actor.traits["great weapon master"] = {}
+    action = ActionDefinition(
+        name="tagged_attack",
+        action_type="attack",
+        to_hit=6,
+        damage="1d8+2",
+        damage_type="slashing",
+        weapon_properties=[],
+        tags=["heavy"],
+        range_ft=5,
+    )
+
+    toggle = great_weapon_master_toggle_state(actor=actor, action=action, enabled=True)
+
+    assert toggle.active is False
+    assert toggle.reason == "weapon_not_heavy"
+
+
+def test_thrown_weapon_requires_range_values_to_count_as_ranged() -> None:
+    actor = _actor(actor_id="thrower")
+    actor.traits["sharpshooter"] = {}
+
+    thrown_without_range = ActionDefinition(
+        name="improvised_throw",
+        action_type="attack",
+        to_hit=6,
+        damage="1d4+2",
+        damage_type="bludgeoning",
+        weapon_properties=["thrown"],
+    )
+    blocked_toggle = sharpshooter_toggle_state(
+        actor=actor,
+        action=thrown_without_range,
+        enabled=True,
+    )
+    assert blocked_toggle.active is False
+    assert blocked_toggle.reason == "weapon_not_ranged"
+
+    thrown_with_range = ActionDefinition(
+        name="dagger_throw",
+        action_type="attack",
+        to_hit=6,
+        damage="1d4+2",
+        damage_type="piercing",
+        weapon_properties=["thrown"],
+        range_ft=20,
+    )
+    active_toggle = sharpshooter_toggle_state(
+        actor=actor,
+        action=thrown_with_range,
+        enabled=True,
+    )
+    assert active_toggle.active is True
+    assert active_toggle.reason is None
