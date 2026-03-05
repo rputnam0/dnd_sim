@@ -223,6 +223,38 @@ def _can_pay_resource_cost(actor: ActorView, action: dict[str, Any]) -> bool:
     return True
 
 
+def _can_pay_resource_cost_with_resources(
+    resources: dict[str, int],
+    action: dict[str, Any],
+) -> bool:
+    resource_cost = action.get("resource_cost") or {}
+    if not isinstance(resource_cost, dict):
+        return False
+    for key, amount in resource_cost.items():
+        if int(resources.get(str(key), 0)) < int(amount):
+            return False
+    return True
+
+
+def candidate_rejection_reason_for_action(
+    action: dict[str, Any],
+    *,
+    resources: dict[str, int],
+    used_count: int,
+) -> str:
+    action_cost = str(action.get("action_cost", "action")).strip().lower()
+    if action_cost in {"legendary", "lair", "reaction"}:
+        return "unsupported_action_cost"
+    max_uses = action.get("max_uses")
+    if max_uses is not None and used_count >= int(max_uses):
+        return "max_uses_exhausted"
+    if not bool(action.get("recharge_ready", True)):
+        return "recharge_not_ready"
+    if not _can_pay_resource_cost_with_resources(resources, action):
+        return "insufficient_resources"
+    return "unknown"
+
+
 def _is_action_legal(actor: ActorView, action: dict[str, Any]) -> bool:
     target_mode = str(action.get("target_mode", "single_enemy")).strip().lower()
     if target_mode not in _SUPPORTED_TARGET_MODES:
