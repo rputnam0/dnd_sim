@@ -7,6 +7,8 @@ Canonical source: `docs/program/status_board.md`
 
 This checklist is the program closeout gate. Do not mark the backend complete until every item is checked in the repository.
 
+Wave 5 closeout items below are historical baseline state. Wave 6 remediation items must also be complete before re-affirming final completion.
+
 ## Documentation Control
 
 - [x] DOC-01 canonical docs entrypoints are in place.
@@ -98,6 +100,16 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [x] FIN-05 Enforce agent-only maintenance gate
 - [x] FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete
 
+## Wave 6 Remediation
+
+- [x] W6-CUT-01 Hard-cut engine facade to explicit API (merged to `int/6a-hard-cut` via #167)
+- [x] W6-CUT-03 Hard-cut strategy API to declare_turn-only contract (merged to `int/6a-hard-cut` via #162)
+- [x] W6-CUT-04 Decompose io.py into focused modules (merged to `int/6a-hard-cut` via #165)
+- [x] W6-UNI-01 Restore canonical DB API surface (merged to `int/6b-unification` via #166)
+- [x] W6-UNI-03 Unify replay schema to replay.v1 (merged to `int/6b-unification` via #164)
+- [x] W6-UNI-04 Canonicalize AI rejection reason API (merged to `int/6b-unification` via #163)
+- [ ] W6-GATE-01 Sync docs/backlog/checklist truth and maintenance waivers for active remediation state
+
 
 ## Final review gate
 
@@ -106,4 +118,4 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [x] Capability manifest gate passes.
 - [x] Campaign/world/combat integration gate passes.
 - [x] Agent-only maintenance gate passes.
-- [x] `docs/program/status_board.md` and `docs/program/backlog.csv` are synchronized for the merged completion wave.
+- [ ] `docs/program/status_board.md` and `docs/program/backlog.csv` are synchronized for the active Wave 6 remediation state.
