@@ -25,7 +25,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | DOC | Documentation Control | merged | 5A-doc-control | `DOC-01` through `DOC-06` are `merged` in `backlog.csv`; Documentation Control track is complete. |
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
-| OBS | Replay, Logging, and Observability | pr_open | 5D-observability | `OBS-02`, `OBS-03`, `OBS-04`, and `OBS-05` are `pr_open` in `backlog.csv`; remaining OBS tasks are `not_started`. |
+| OBS | Replay, Logging, and Observability | in_progress | 5D-observability | `OBS-02`, `OBS-03`, `OBS-04`, and `OBS-05` are `pr_open`; `OBS-06` is `in_progress`; remaining OBS tasks are `not_started` in `backlog.csv`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
@@ -40,6 +40,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | OBS-03 | `codex/feat/obs-03-emit-actor-state-delta-and-effect-lifecycle-traces` | observability_c | pr_open | Actor before/after state-delta and effect lifecycle transition trace builders are implemented with no-op suppression coverage. |
 | OBS-04 | `codex/feat/obs-04-emit-ai-candidate-scoring-and-rationale-traces` | observability_ai | pr_open | Structured AI candidate scoring and rationale trace envelopes are implemented with deterministic coverage tests and under review. |
 | OBS-05 | `codex/feat/obs-05-emit-resource-delta-rng-audit-and-invariant-violat` | observability_d | pr_open | Structured resource delta, RNG audit, and invariant violation events are implemented with deterministic coverage tests and under review. |
+| OBS-06 | `codex/feat/obs-06-build-replay-bundle-writer-loader-and-diff-harness` | observability_replay | in_progress | Implementing replay bundle schema/writer/loader and deterministic diff harness under OBS-06. |
 
 ## Open PRs
 
@@ -54,8 +55,9 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
-- No active DOC blockers remain; OBS-02, OBS-03, OBS-04, and OBS-05 are in PR review.
+- No active DOC blockers remain; OBS-02 through OBS-05 are in PR review and OBS-06 is active.
 - `OBS-04` is in PR review and depends on `AI-01` and `OBS-02` per `backlog.csv`.
 - `OBS-03` is in PR review and depends on `OBS-01` and `ARC-05` per `backlog.csv`.
 - `OBS-05` is in PR review and depends on `OBS-01` and `ARC-05` per `backlog.csv`.
+- `OBS-06` is active and depends on `OBS-02`, `OBS-03`, `OBS-05`, and `ARC-08` per `backlog.csv`.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
