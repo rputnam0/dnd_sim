@@ -348,6 +348,7 @@ Upgrade enemy decision-making from baseline heuristics to traceable tactical pla
 - Required tests: candidate completeness tests; illegal candidate exclusion tests; scoring input snapshot tests
 - Required docs: docs/program/completion_task_cards.md; docs/agent_index.yaml
 - Exit criteria: Create src/dnd_sim/ai/scoring.py; enumerate all legal candidates for an actor turn with normalized scoring inputs for range, hazard, concentration, control, objective, and resource state.
+- Implementation note (2026-03-05): legal candidate enumeration and normalized input snapshots are implemented in `src/dnd_sim/ai/scoring.py` and integrated into `OptimalExpectedDamageStrategy` action selection.
 
 ### AI-02 Implement hazard, geometry, cover, and line-of-effect scoring
 
