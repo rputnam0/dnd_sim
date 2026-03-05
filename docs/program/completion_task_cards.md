@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/backlog.csv`
 
 This file expands the machine-readable backlog into a human-readable task reference for coding agents and reviewers.
@@ -538,10 +538,10 @@ Deliver noncombat, persistence, world-state, encounter scripting, and platform-s
 
 - Depends on: DBS-05;ARC-08;WLD-08
 - Owner pool: `world_script_a`
-- Target modules: src/dnd_sim/encounter_script.py; src/dnd_sim/world_state.py; tests/test_encounter_scripts.py; docs/encounter_schema_full_example.json (new)
+- Target modules: src/dnd_sim/encounter_script.py; src/dnd_sim/world_state.py; tests/test_encounter_scripts.py
 - Required tests: wave progression tests; objective hook tests; map hook tests; invalid script tests
-- Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
-- Exit criteria: Create src/dnd_sim/encounter_script.py; extend encounter schema for waves, objectives, scripted triggers, and map hooks; and author a new docs/encounter_schema_full_example.json reference from the implemented schema.
+- Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md; docs/encounter_schema_full_example.json
+- Exit criteria: Create src/dnd_sim/encounter_script.py and create docs/encounter_schema_full_example.json as a new encounter schema example for waves, objectives, scripted triggers, and map hooks.
 
 ### WLD-11 Hard-cut schema, import, and content IDs across all content classes
 
