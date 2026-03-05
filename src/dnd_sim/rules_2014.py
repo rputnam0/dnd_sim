@@ -942,7 +942,7 @@ def consume_shield_master_reaction_no_damage(
 
 def _remove_condition_everywhere(target: ActorRuntimeState, condition: str) -> None:
     # Local import avoids module-level circular dependency.
-    from dnd_sim.engine import _remove_condition
+    from dnd_sim.engine_runtime import _remove_condition
 
     _remove_condition(target, condition)
 

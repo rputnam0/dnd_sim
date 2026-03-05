@@ -7,7 +7,7 @@ import dnd_sim.engine as engine_module
 import dnd_sim.engine_runtime as engine_runtime
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from tests.helpers import build_character, build_enemy
-from tests.test_engine_integration import _setup_env
+from tests.runtime_test_support import _setup_env
 
 
 def test_engine_facade_delegates_to_engine_runtime(monkeypatch) -> None:

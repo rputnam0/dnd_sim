@@ -5,7 +5,7 @@ from pathlib import Path
 from dnd_sim.engine_runtime import run_simulation
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from tests.helpers import build_character, build_enemy
-from tests.test_engine_integration import _setup_env
+from tests.runtime_test_support import _setup_env
 
 
 def test_runtime_entrypoint_fixed_seed_replays_identically(tmp_path: Path) -> None:
