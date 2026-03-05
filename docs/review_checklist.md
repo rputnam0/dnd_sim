@@ -61,7 +61,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [x] OBS-02 Emit turn declaration and action resolution traces
 - [ ] OBS-03 Emit actor state delta and effect lifecycle traces
 - [ ] OBS-04 Emit AI candidate scoring and rationale traces
-- [ ] OBS-05 Emit resource delta, RNG audit, and invariant violation events
+- [ ] OBS-05 Emit resource delta, RNG audit, and invariant violation events (in review on [#130](https://github.com/rputnam0/dnd_sim/pull/130))
 - [ ] OBS-06 Build replay bundle writer, loader, and diff harness
 - [ ] OBS-07 Establish golden trace corpus and trace review gate
 
