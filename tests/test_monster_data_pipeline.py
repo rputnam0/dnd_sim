@@ -86,6 +86,50 @@ def test_validate_rule_mechanics_payload_accepts_known_effect_types() -> None:
     assert issues == []
 
 
+def test_validate_rule_mechanics_payload_accepts_apply_condition_runtime_fields() -> None:
+    issues = validate_rule_mechanics_payload(
+        kind="spell",
+        payload={
+            "name": "Stasis Net",
+            "type": "spell",
+            "mechanics": [
+                {
+                    "effect_type": "apply_condition",
+                    "condition": "restrained",
+                    "duration_timing": "turn_end",
+                    "stack_policy": "refresh",
+                    "save_ability": "dex",
+                }
+            ],
+        },
+    )
+    assert issues == []
+
+
+def test_validate_rule_mechanics_payload_rejects_invalid_apply_condition_runtime_fields() -> None:
+    issues = validate_rule_mechanics_payload(
+        kind="spell",
+        payload={
+            "name": "Broken Stasis",
+            "type": "spell",
+            "mechanics": [
+                {
+                    "effect_type": "apply_condition",
+                    "condition": "restrained",
+                    "duration_timing": "start_of_round",
+                    "stack_policy": "merge",
+                    "save_ability": "constitution",
+                }
+            ],
+        },
+    )
+    assert (
+        "mechanics[0].duration_timing 'start_of_round' is unsupported for apply_condition" in issues
+    )
+    assert "mechanics[0].stack_policy 'merge' is unsupported for apply_condition" in issues
+    assert "mechanics[0].save_ability 'constitution' is unsupported for apply_condition" in issues
+
+
 def test_build_mechanics_coverage_report_counts_executable_and_unsupported(tmp_path: Path) -> None:
     traits_dir = tmp_path / "traits"
     spells_dir = tmp_path / "spells"

@@ -21,7 +21,6 @@ from dnd_sim.models import (
     ABILITY_KEYS,
     ActionDefinition,
     ActorRuntimeState,
-    ConditionTracker,
     EffectInstance,
     FeatureHookRegistration,
     SpellCastRequest,
@@ -109,6 +108,7 @@ from dnd_sim.action_resolution import (
     ActionResolutionHandlers as _ActionResolutionHandlers,
     execute_action_pipeline as _action_resolution_execute_action_pipeline,
 )
+from dnd_sim import effects_runtime as _effects_runtime
 from dnd_sim.engine_resources import (
     apply_arcane_recovery as _apply_arcane_recovery_impl,
     apply_inferred_barbarian_resources as _apply_inferred_barbarian_resources_impl,
@@ -8611,52 +8611,15 @@ def _process_hazard_movement_triggers(
 
 
 def _effect_instance_condition_names(effect: EffectInstance) -> set[str]:
-    names = {effect.condition}
-    names.update(_IMPLIED_CONDITION_MAP.get(effect.condition, set()))
-    return names
+    return _effects_runtime.effect_instance_condition_names(effect)
 
 
 def _effect_condition_names(actor: ActorRuntimeState) -> set[str]:
-    names: set[str] = set()
-    for effect in actor.effect_instances:
-        names.update(_effect_instance_condition_names(effect))
-    return names
+    return _effects_runtime.effect_condition_names(actor)
 
 
 def _rebuild_condition_durations(actor: ActorRuntimeState) -> None:
-    trackers: dict[str, ConditionTracker] = {}
-    for effect in actor.effect_instances:
-        if effect.duration_remaining is None and effect.save_dc is None:
-            continue
-        for condition in _effect_instance_condition_names(effect):
-            previous = trackers.get(condition)
-            if previous is None:
-                trackers[condition] = ConditionTracker(
-                    remaining_rounds=effect.duration_remaining,
-                    save_dc=effect.save_dc,
-                    save_ability=effect.save_ability,
-                )
-                continue
-
-            previous_rounds = previous.remaining_rounds
-            current_rounds = effect.duration_remaining
-            if previous_rounds is None:
-                merged_rounds = None
-            elif current_rounds is None:
-                merged_rounds = None
-            else:
-                merged_rounds = max(previous_rounds, current_rounds)
-
-            trackers[condition] = ConditionTracker(
-                remaining_rounds=merged_rounds,
-                save_dc=previous.save_dc if previous.save_dc is not None else effect.save_dc,
-                save_ability=(
-                    previous.save_ability
-                    if previous.save_ability is not None
-                    else effect.save_ability
-                ),
-            )
-    actor.condition_durations = trackers
+    _effects_runtime.rebuild_condition_durations(actor)
 
 
 def _sync_condition_state(
@@ -8664,16 +8627,14 @@ def _sync_condition_state(
     *,
     previous_effect_conditions: set[str] | None = None,
 ) -> None:
-    previous = previous_effect_conditions if previous_effect_conditions is not None else set()
-    actor.intrinsic_conditions.update(set(actor.conditions) - previous)
-    effect_conditions = _effect_condition_names(actor)
-    actor.conditions = set(actor.intrinsic_conditions).union(effect_conditions)
-    _rebuild_condition_durations(actor)
+    _effects_runtime.sync_condition_state(
+        actor,
+        previous_effect_conditions=previous_effect_conditions,
+    )
 
 
 def _next_effect_instance_id(actor: ActorRuntimeState) -> str:
-    actor.effect_instance_seq += 1
-    return f"{actor.actor_id}:effect:{actor.effect_instance_seq}"
+    return _effects_runtime.next_effect_instance_id(actor)
 
 
 def has_condition(actor: ActorRuntimeState, condition: str) -> bool:
@@ -8749,24 +8710,11 @@ def _remove_effect_instance(
     *,
     source_actor_id: str | None = None,
 ) -> bool:
-    previous_effect_conditions = _effect_condition_names(actor)
-    removed = False
-    kept: list[EffectInstance] = []
-    for effect in actor.effect_instances:
-        if effect.instance_id != instance_id:
-            kept.append(effect)
-            continue
-        if source_actor_id is not None and effect.source_actor_id != source_actor_id:
-            kept.append(effect)
-            continue
-        removed = True
-    if not removed:
-        return False
-    actor.effect_instances = kept
-    _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
-    if not has_condition(actor, "readying"):
-        _clear_readied_action_state(actor, clear_held_spell=True)
-    return True
+    return _effects_runtime.remove_effect_instance(
+        actor,
+        instance_id,
+        source_actor_id=source_actor_id,
+    )
 
 
 def _remove_condition(
@@ -8777,47 +8725,13 @@ def _remove_condition(
     effect_id: str | None = None,
     instance_id: str | None = None,
 ) -> None:
-    key = _normalize_condition(condition)
-    if not key:
-        return
-    previous_effect_conditions = _effect_condition_names(actor)
-
-    removed_effect = False
-    normalized_effect_id = _normalize_condition(effect_id) if effect_id is not None else None
-    kept: list[EffectInstance] = []
-    for effect in actor.effect_instances:
-        if effect.condition != key:
-            kept.append(effect)
-            continue
-        if source_actor_id is not None and effect.source_actor_id != source_actor_id:
-            kept.append(effect)
-            continue
-        if normalized_effect_id is not None and effect.effect_id != normalized_effect_id:
-            kept.append(effect)
-            continue
-        if instance_id is not None and effect.instance_id != instance_id:
-            kept.append(effect)
-            continue
-        removed_effect = True
-    if removed_effect:
-        actor.effect_instances = kept
-
-    should_remove_manual = (
-        source_actor_id is None and normalized_effect_id is None and instance_id is None
+    _effects_runtime.remove_condition(
+        actor,
+        condition,
+        source_actor_id=source_actor_id,
+        effect_id=effect_id,
+        instance_id=instance_id,
     )
-    if should_remove_manual:
-        actor.discard_manual_condition(key)
-        for implied in _IMPLIED_CONDITION_MAP.get(key, set()):
-            actor.discard_manual_condition(implied)
-
-    if removed_effect or should_remove_manual:
-        _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
-
-    if key == "wild_shaped" and actor.wild_shape_active:
-        _revert_wild_shape(actor)
-
-    if key == "readying" and not has_condition(actor, "readying"):
-        _clear_readied_action_state(actor, clear_held_spell=True)
 
 
 def _break_concentration(
@@ -8825,65 +8739,11 @@ def _break_concentration(
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
 ) -> None:
-    if not _has_active_concentration_state(actor):
-        return
-    actor.concentrating = False
-
-    linked_ids = set(actor.concentration_effect_instance_ids)
-    for target_actor in actors.values():
-        for effect in list(target_actor.effect_instances):
-            if effect.source_actor_id != actor.actor_id:
-                continue
-            if effect.instance_id in linked_ids or effect.concentration_linked:
-                _remove_effect_instance(
-                    target_actor,
-                    effect.instance_id,
-                    source_actor_id=actor.actor_id,
-                )
-
-    summon_ids_to_remove: set[str] = set()
-    for target_id in list(actor.concentrated_targets):
-        target_actor = actors.get(target_id)
-        if target_actor is not None and "summoned" in target_actor.conditions:
-            summon_ids_to_remove.add(target_id)
-    for summon_id, summon_actor in list(actors.items()):
-        if _is_actor_linked_concentration_summon(summon_actor, owner_actor_id=actor.actor_id):
-            summon_ids_to_remove.add(summon_id)
-    for summon_id in summon_ids_to_remove:
-        if summon_id != actor.actor_id:
-            actors.pop(summon_id, None)
-
-    prior_hazard_count = len(active_hazards)
-    active_hazards[:] = [
-        hazard
-        for hazard in active_hazards
-        if not _is_hazard_linked_to_concentration_owner(hazard, owner_actor_id=actor.actor_id)
-    ]
-    if len(active_hazards) != prior_hazard_count:
-        _prune_actor_zone_memberships(actors, active_hazards)
-
-    actor.concentrated_targets.clear()
-    actor.concentration_conditions.clear()
-    actor.concentration_effect_instance_ids.clear()
-
-    actor.concentrated_spell = None
-    actor.concentrated_spell_level = None
-
-    if actor.readied_spell_held:
-        _remove_condition(actor, "readying")
-
-    _sync_antimagic_suppression_for_all_actors(actors, active_hazards)
+    _effects_runtime.break_concentration(actor, actors, active_hazards)
 
 
 def _has_active_concentration_state(actor: ActorRuntimeState) -> bool:
-    return bool(
-        actor.concentrating
-        or actor.concentrated_targets
-        or actor.concentrated_spell
-        or actor.concentrated_spell_level
-        or actor.concentration_conditions
-        or actor.concentration_effect_instance_ids
-    )
+    return _effects_runtime.has_active_concentration_state(actor)
 
 
 def _is_hazard_linked_to_concentration_owner(
@@ -8891,11 +8751,10 @@ def _is_hazard_linked_to_concentration_owner(
     *,
     owner_actor_id: str,
 ) -> bool:
-    linked_owner_id = str(hazard.get("concentration_owner_id", "")).strip()
-    if linked_owner_id:
-        return linked_owner_id == owner_actor_id and bool(hazard.get("concentration_linked", False))
-    # Backward-compatible fallback for hazards created before owner linkage metadata.
-    return hazard.get("source_id") == owner_actor_id
+    return _effects_runtime.is_hazard_linked_to_concentration_owner(
+        hazard,
+        owner_actor_id=owner_actor_id,
+    )
 
 
 def _is_actor_linked_concentration_summon(
@@ -8903,22 +8762,14 @@ def _is_actor_linked_concentration_summon(
     *,
     owner_actor_id: str,
 ) -> bool:
-    summon_trait = actor.traits.get("summoned")
-    if not isinstance(summon_trait, dict):
-        return False
-    return str(summon_trait.get("source_id", "")).strip() == owner_actor_id and bool(
-        summon_trait.get("concentration_linked", False)
+    return _effects_runtime.is_actor_linked_concentration_summon(
+        actor,
+        owner_actor_id=owner_actor_id,
     )
 
 
 def _concentration_forced_end(actor: ActorRuntimeState) -> bool:
-    if not _has_active_concentration_state(actor):
-        return False
-    if actor.dead or actor.hp <= 0:
-        return True
-    return any(
-        has_condition(actor, condition) for condition in _CONCENTRATION_FORCED_END_CONDITIONS
-    )
+    return _effects_runtime.concentration_forced_end(actor)
 
 
 def _force_end_concentration_if_needed(
@@ -8927,10 +8778,11 @@ def _force_end_concentration_if_needed(
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
 ) -> bool:
-    if not _concentration_forced_end(actor):
-        return False
-    _break_concentration(actor, actors, active_hazards)
-    return True
+    return _effects_runtime.force_end_concentration_if_needed(
+        actor,
+        actors=actors,
+        active_hazards=active_hazards,
+    )
 
 
 def _apply_condition(
@@ -8949,84 +8801,21 @@ def _apply_condition(
     save_to_end: bool = False,
     internal_tags: set[str] | None = None,
 ) -> list[str]:
-    key = _normalize_condition(condition)
-    if not key:
-        return []
-    if key in actor.condition_immunities or "all" in actor.condition_immunities:
-        return []
-    previous_effect_conditions = _effect_condition_names(actor)
-
-    normalized_source = str(source_actor_id).strip() if source_actor_id else None
-    normalized_target = str(target_actor_id).strip() if target_actor_id else actor.actor_id
-    normalized_effect_id = _normalize_condition(effect_id) if effect_id else key
-    normalized_boundary = _normalize_duration_boundary(duration_timing)
-    normalized_policy = _normalize_stack_policy(stack_policy)
-    normalized_tags = set(internal_tags or set())
-    normalized_duration = _coerce_positive_int(duration_rounds)
-    normalized_save_dc = int(save_dc) if save_dc is not None else None
-    normalized_save_ability = _normalize_condition(save_ability) if save_ability else None
-    if normalized_save_ability not in ABILITY_KEYS:
-        normalized_save_ability = None
-
-    created_ids: list[str] = []
-
-    if normalized_policy == "replace":
-        actor.effect_instances = [
-            effect for effect in actor.effect_instances if effect.condition != key
-        ]
-    elif normalized_policy == "refresh":
-        for effect in actor.effect_instances:
-            if effect.condition != key:
-                continue
-            if effect.effect_id != normalized_effect_id:
-                continue
-            if normalized_source and effect.source_actor_id != normalized_source:
-                continue
-            if normalized_duration is not None:
-                current_duration = effect.duration_remaining or 0
-                effect.duration_remaining = max(current_duration, normalized_duration)
-            effect.duration_boundary = normalized_boundary
-            effect.save_dc = normalized_save_dc
-            effect.save_ability = normalized_save_ability
-            effect.save_to_end = bool(save_to_end)
-            effect.concentration_linked = bool(concentration_linked)
-            effect.stack_policy = normalized_policy
-            effect.internal_tags.update(_normalize_internal_tags(normalized_tags))
-            effect.target_actor_id = normalized_target
-            _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
-            if (
-                key == "unconscious"
-                and "prone" not in actor.condition_immunities
-                and "all" not in actor.condition_immunities
-            ):
-                actor.add_manual_condition("prone")
-            return [effect.instance_id]
-
-    instance = EffectInstance(
-        instance_id=_next_effect_instance_id(actor),
-        effect_id=normalized_effect_id,
-        condition=key,
-        source_actor_id=normalized_source,
-        target_actor_id=normalized_target,
-        duration_remaining=normalized_duration,
-        duration_boundary=normalized_boundary,
-        save_dc=normalized_save_dc,
-        save_ability=normalized_save_ability,
-        save_to_end=bool(save_to_end),
-        concentration_linked=bool(concentration_linked),
-        stack_policy=normalized_policy,
-        internal_tags=_normalize_internal_tags(normalized_tags),
+    return _effects_runtime.apply_condition(
+        actor,
+        condition,
+        duration_rounds=duration_rounds,
+        save_dc=save_dc,
+        save_ability=save_ability,
+        source_actor_id=source_actor_id,
+        target_actor_id=target_actor_id,
+        effect_id=effect_id,
+        duration_timing=duration_timing,
+        concentration_linked=concentration_linked,
+        stack_policy=stack_policy,
+        save_to_end=save_to_end,
+        internal_tags=internal_tags,
     )
-    actor.effect_instances.append(instance)
-    created_ids.append(instance.instance_id)
-    _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
-    if (
-        key == "unconscious"
-        and "prone" not in actor.condition_immunities
-        and "all" not in actor.condition_immunities
-    ):
-        actor.add_manual_condition("prone")
-    return created_ids
 
 
 def _clone_runtime_traits(traits: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -9145,56 +8934,7 @@ def _tick_conditions_for_actor(
     *,
     boundary: str = "turn_start",
 ) -> None:
-    """Tick condition durations at the start of an actor's turn.
-
-    Conditions with a repeating save allow the actor to roll each turn.
-    """
-    tick_boundary = _normalize_duration_boundary(boundary)
-
-    if tick_boundary == "turn_start":
-        if has_condition(actor, "raging"):
-            persistent_rage_active = _has_trait(actor, "persistent rage")
-            if has_condition(actor, "unconscious") or actor.dead or actor.hp <= 0:
-                _remove_condition(actor, "raging")
-            elif not persistent_rage_active and not actor.rage_sustained_since_last_turn:
-                _remove_condition(actor, "raging")
-        actor.rage_sustained_since_last_turn = False
-        actor.colossus_slayer_used_this_turn = False
-        actor.horde_breaker_used_this_turn = False
-
-    if not actor.effect_instances:
-        return
-
-    previous_effect_conditions = _effect_condition_names(actor)
-    changed = False
-    kept: list[EffectInstance] = []
-    for effect in actor.effect_instances:
-        save_boundary = "turn_end" if effect.save_to_end else "turn_start"
-        if effect.save_dc is not None and effect.save_ability and save_boundary == tick_boundary:
-            save_key = _normalize_condition(effect.save_ability)
-            if _auto_fails_strength_or_dex_save(actor, save_key):
-                save_succeeds = False
-            else:
-                save_mod = int(actor.save_mods.get(save_key, 0))
-                save_roll = rng.randint(1, 20) + save_mod
-                save_succeeds = save_roll >= effect.save_dc
-            if save_succeeds:
-                changed = True
-                continue
-
-        if effect.duration_remaining is not None and effect.duration_boundary == tick_boundary:
-            effect.duration_remaining -= 1
-            changed = True
-            if effect.duration_remaining <= 0:
-                continue
-
-        kept.append(effect)
-
-    if changed:
-        actor.effect_instances = kept
-        _sync_condition_state(actor, previous_effect_conditions=previous_effect_conditions)
-        if not has_condition(actor, "readying"):
-            _clear_readied_action_state(actor, clear_held_spell=True)
+    _effects_runtime.tick_conditions_for_actor(rng, actor, boundary=boundary)
 
 
 def _apply_healing(target: ActorRuntimeState, amount: int) -> None:
