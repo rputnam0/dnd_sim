@@ -1,0 +1,37 @@
+name: full-campaign-integration-gate
+
+on:
+  pull_request:
+    branches:
+      - "int/5i-completion-gates"
+    paths:
+      - "tests/test_full_campaign_integration.py"
+      - "artifacts/integration_campaigns/**"
+      - "docs/program/status_board.md"
+      - "docs/program/backlog.csv"
+      - ".github/workflows/full-campaign-integration-gate.yml"
+  push:
+    branches:
+      - "codex/feat/fin-04-enforce-integrated-campaign-world-and-combat-scena"
+    paths:
+      - "tests/test_full_campaign_integration.py"
+      - "artifacts/integration_campaigns/**"
+      - "docs/program/status_board.md"
+      - "docs/program/backlog.csv"
+      - ".github/workflows/full-campaign-integration-gate.yml"
+
+jobs:
+  verify-full-campaign-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Run full campaign integration gate tests
+        run: uv run python -m pytest tests/test_full_campaign_integration.py
