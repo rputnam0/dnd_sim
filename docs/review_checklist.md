@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: integration-review  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/status_board.md`
 
 This checklist is the program closeout gate. Do not mark the backend complete until every item is checked in the repository.
@@ -59,7 +59,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 
 - [ ] OBS-01 Introduce structured event schema and module-level loggers
 - [x] OBS-02 Emit turn declaration and action resolution traces
-- [ ] OBS-03 Emit actor state delta and effect lifecycle traces
+- [x] OBS-03 Emit actor state delta and effect lifecycle traces
 - [ ] OBS-04 Emit AI candidate scoring and rationale traces
 - [ ] OBS-05 Emit resource delta, RNG audit, and invariant violation events
 - [ ] OBS-06 Build replay bundle writer, loader, and diff harness
