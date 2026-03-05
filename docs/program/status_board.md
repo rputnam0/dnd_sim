@@ -20,19 +20,13 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 ## Completion Summary
 
-Wave 5 tracks are merged to `main` and no open integration PRs remain.
+Wave 5 baseline remains merged to `main`.
 
-Merged integration PR chain:
+Wave 6 remediation state:
 
-- Documentation Control: [#92](https://github.com/rputnam0/dnd_sim/pull/92)
-- Runtime Decomposition: [#152](https://github.com/rputnam0/dnd_sim/pull/152)
-- Capability Manifest: [#154](https://github.com/rputnam0/dnd_sim/pull/154)
-- Replay, Logging, and Observability: [#155](https://github.com/rputnam0/dnd_sim/pull/155)
-- Persistence and Query Model: [#156](https://github.com/rputnam0/dnd_sim/pull/156)
-- Tactical AI Hardening: [#159](https://github.com/rputnam0/dnd_sim/pull/159)
-- World Systems and Campaign Platform: [#158](https://github.com/rputnam0/dnd_sim/pull/158)
-- Rules Closure: [#157](https://github.com/rputnam0/dnd_sim/pull/157)
-- Completion Gates: [#160](https://github.com/rputnam0/dnd_sim/pull/160)
+- Hard-cut track `int/6a-hard-cut` has merged W6-CUT-01 [#167](https://github.com/rputnam0/dnd_sim/pull/167), W6-CUT-03 [#162](https://github.com/rputnam0/dnd_sim/pull/162), and W6-CUT-04 [#165](https://github.com/rputnam0/dnd_sim/pull/165).
+- Unification track `int/6b-unification` has merged W6-UNI-01 [#166](https://github.com/rputnam0/dnd_sim/pull/166), W6-UNI-03 [#164](https://github.com/rputnam0/dnd_sim/pull/164), and W6-UNI-04 [#163](https://github.com/rputnam0/dnd_sim/pull/163).
+- Gate track `int/6d-gates` currently has W6-GATE-01 in progress for docs truth sync.
 
 ## Active completion tracks
 
@@ -47,24 +41,26 @@ Merged integration PR chain:
 | FIX | Rules Closure | merged | 5G-rules-closure | Track complete and merged to `main`. |
 | WLD | World Systems and Campaign Platform | merged | 5H-world-systems | Track complete and merged to `main`. |
 | FIN | Completion Gates | merged | 5I-completion-gates | Track complete and merged to `main`. |
+| CUT | Wave 6 Hard-Cut Remediation | merged | 6a-hard-cut | W6-CUT-01, W6-CUT-03, and W6-CUT-04 merged to `int/6a-hard-cut`. |
+| UNI | Wave 6 API Unification | merged | 6b-unification | W6-UNI-01, W6-UNI-03, and W6-UNI-04 merged to `int/6b-unification`. |
+| GATE | Wave 6 Gate Truth Sync | in_progress | 6d-gates | W6-GATE-01 is active on `codex/feat/w6-gate-01-doc-truth-sync`. |
 
 ## Active branches
 
-No active task branches remain.
-
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| W6-GATE-01 | codex/feat/w6-gate-01-doc-truth-sync | program_control | in_progress | Sync docs/backlog/checklist truth for current Wave 6 state and clean stale maintenance waivers. |
 
 ## Open PRs
 
-No open PRs remain.
+No backlog tasks are currently marked `pr_open`.
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
 
 ## Dependency and blocker notes (from backlog.csv)
 
-- `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
-- DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
-- No active blockers remain in `backlog.csv`; all Wave 5 tracks are in `merged` state.
+- Wave 5 dependencies remain fully satisfied and merged on `main`.
+- W6-GATE-01 depends on merged CUT and UNI remediation tasks (W6-CUT-01/03/04 and W6-UNI-01/03/04).
+- No backlog task is currently in `blocked` state.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
