@@ -103,12 +103,18 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 ## Wave 6 Remediation
 
 - [x] W6-CUT-01 Hard-cut engine facade to explicit API (merged to `int/6a-hard-cut` via #167)
+- [x] W6-CUT-02 Relocate legacy helpers and remove `engine_legacy.py` (merged to `int/6a-hard-cut` via #169)
 - [x] W6-CUT-03 Hard-cut strategy API to declare_turn-only contract (merged to `int/6a-hard-cut` via #162)
 - [x] W6-CUT-04 Decompose io.py into focused modules (merged to `int/6a-hard-cut` via #165)
 - [x] W6-UNI-01 Restore canonical DB API surface (merged to `int/6b-unification` via #166)
+- [x] W6-UNI-02 Implement canonical snapshot APIs (merged to `int/6b-unification` via #170)
 - [x] W6-UNI-03 Unify replay schema to replay.v1 (merged to `int/6b-unification` via #164)
 - [x] W6-UNI-04 Canonicalize AI rejection reason API (merged to `int/6b-unification` via #163)
-- [ ] W6-GATE-01 Sync docs/backlog/checklist truth and maintenance waivers for active remediation state
+- [x] W6-PAR-01 Hard-cut capability manifest schema to CAP-01 canonical shape (merged to `int/6c-parity` via #168)
+- [x] W6-PAR-02 Add strict FIN-02 enforcement mode (merged to `int/6c-parity` via #173)
+- [x] W6-PAR-03 Execute parity closure shard batch (merged to `int/6c-parity` via #171/#174/#175/#176/#177/#178)
+- [x] W6-GATE-01 Sync docs/backlog/checklist truth and maintenance waivers for remediation state (merged via #172)
+- [x] W6-GATE-02 Final green gate and closeout pass (merged via #183)
 
 
 ## Final review gate
@@ -118,4 +124,4 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] Capability manifest gate passes.
 - [x] Campaign/world/combat integration gate passes.
 - [x] Agent-only maintenance gate passes.
-- [ ] `docs/program/status_board.md` and `docs/program/backlog.csv` are synchronized for the active Wave 6 remediation state.
+- [x] `docs/program/status_board.md` and `docs/program/backlog.csv` are synchronized for the active Wave 6 remediation state.
