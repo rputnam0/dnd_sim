@@ -164,6 +164,7 @@ Generate machine-readable support manifests for spells, feats, monsters, and all
 - Required tests: spell import tests; executable coverage tests; unsupported spell reason tests
 - Required docs: docs/program/completion_task_cards.md; docs/review_checklist.md
 - Exit criteria: Generate a spell manifest for every canonical 2014 spell and mark each record executable, blocked, or unsupported with a single reason code.
+- Execution note: Active on `codex/feat/cap-02-generate-spell-capability-manifest-from-canonical`.
 
 ### CAP-03 Generate feat, trait, background, and species capability manifest
 
@@ -173,6 +174,7 @@ Generate machine-readable support manifests for spells, feats, monsters, and all
 - Required tests: feature manifest tests; duplicate content id tests; unsupported feature reason tests
 - Required docs: docs/program/completion_task_cards.md; docs/review_checklist.md
 - Exit criteria: Generate manifests for feats, traits, backgrounds, and species content; require each record to declare its runtime hook family and support state.
+- Execution note: Active on `codex/feat/cap-03-generate-feat-trait-background-and-species-capabil`.
 
 ### CAP-04 Generate monster and monster-action capability manifest
 
@@ -182,6 +184,7 @@ Generate machine-readable support manifests for spells, feats, monsters, and all
 - Required tests: monster parser integration tests; action support tests; unsupported action reason tests
 - Required docs: docs/program/completion_task_cards.md; docs/program/status_board.md
 - Exit criteria: Generate manifests for monsters, monster actions, reactions, legendary actions, lair actions, recharge features, and innate spellcasting entries.
+- Execution note: Active on `codex/feat/cap-04-generate-monster-and-monster-action-capability-man`.
 
 ### CAP-05 Enforce capability manifest gates in import paths and CI
 
