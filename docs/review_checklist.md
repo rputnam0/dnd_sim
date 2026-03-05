@@ -50,7 +50,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 
 - [ ] AI-01 Normalize candidate action enumeration and scoring inputs
 - [ ] AI-02 Implement hazard, geometry, cover, and line-of-effect scoring
-- [ ] AI-03 Implement concentration breaking, control value, and disable value scoring
+- [ ] AI-03 Implement concentration breaking, control value, and disable value scoring (in review on [#122](https://github.com/rputnam0/dnd_sim/pull/122))
 - [ ] AI-04 Implement retreat, survival, objective race, and focus-fire tradeoff scoring
 - [ ] AI-05 Implement recharge, legendary, reaction-bait, and limited-resource timing heuristics
 - [ ] AI-06 Build benchmark corpus, tuning thresholds, and decision-quality gates
