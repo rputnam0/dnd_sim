@@ -42,7 +42,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
-| FIN-06 | [#151](https://github.com/rputnam0/dnd_sim/pull/151) | release_lead | pending | FIN-06 final release-baseline cutover and completion-closeout updates are in PR review. |
+| FIN-06 | [#153](https://github.com/rputnam0/dnd_sim/pull/153) | release_lead | pending | FIN-06 final release-baseline cutover and completion-closeout updates are in PR review. |
 
 ## Dependency and blocker notes (from backlog.csv)
 

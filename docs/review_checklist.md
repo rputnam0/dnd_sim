@@ -96,7 +96,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] FIN-03 Enforce deterministic replay corpus gate across combat and world scenarios
 - [ ] FIN-04 Enforce integrated campaign, world, and combat scenario gate
 - [ ] FIN-05 Enforce agent-only maintenance gate
-- [ ] FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete (in review on [#151](https://github.com/rputnam0/dnd_sim/pull/151))
+- [ ] FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete (in review on [#153](https://github.com/rputnam0/dnd_sim/pull/153))
 
 
 ## Final review gate
