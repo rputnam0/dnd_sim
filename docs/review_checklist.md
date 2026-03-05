@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: integration-review  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/status_board.md`
 
 This checklist is the program closeout gate. Do not mark the backend complete until every item is checked in the repository.
@@ -31,7 +31,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 
 - [ ] CAP-01 Define capability manifest schema, storage format, and CLI
 - [ ] CAP-02 Generate spell capability manifest from canonical spell data
-- [ ] CAP-03 Generate feat, trait, background, and species capability manifest
+- [ ] CAP-03 Generate feat, trait, background, and species capability manifest (in review on [#111](https://github.com/rputnam0/dnd_sim/pull/111))
 - [ ] CAP-04 Generate monster and monster-action capability manifest
 - [ ] CAP-05 Enforce capability manifest gates in import paths and CI
 - [ ] CAP-06 Publish machine-readable and markdown coverage reports

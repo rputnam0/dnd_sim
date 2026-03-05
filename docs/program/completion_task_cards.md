@@ -171,6 +171,7 @@ Generate machine-readable support manifests for spells, feats, monsters, and all
 - Required tests: feature manifest tests; duplicate content id tests; unsupported feature reason tests
 - Required docs: docs/program/completion_task_cards.md; docs/review_checklist.md
 - Exit criteria: Generate manifests for feats, traits, backgrounds, and species content; require each record to declare its runtime hook family and support state.
+- Execution note: In PR review via [#111](https://github.com/rputnam0/dnd_sim/pull/111) on `codex/feat/cap-03-generate-feat-trait-background-and-species-capabil`.
 
 ### CAP-04 Generate monster and monster-action capability manifest
 
