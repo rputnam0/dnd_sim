@@ -602,15 +602,6 @@ def _normalize_damage_type(value: str) -> str:
     return normalized
 
 
-def _clear_concentration_state(actor: ActorRuntimeState) -> None:
-    actor.concentrating = False
-    actor.concentrated_spell = None
-    actor.concentrated_spell_level = None
-    actor.concentrated_targets.clear()
-    actor.concentration_conditions.clear()
-    actor.concentration_effect_instance_ids.clear()
-
-
 def _rage_benefits_active(actor: ActorRuntimeState) -> bool:
     if "raging" not in actor.conditions:
         return False
@@ -627,8 +618,6 @@ def _remove_rage_state(actor: ActorRuntimeState) -> None:
 
 
 def _sync_rage_state(actor: ActorRuntimeState) -> None:
-    if "raging" in actor.conditions and actor.concentrating:
-        _clear_concentration_state(actor)
     if not _rage_benefits_active(actor):
         _remove_rage_state(actor)
 
@@ -690,8 +679,6 @@ def activate_rage(actor: ActorRuntimeState) -> tuple[bool, str | None]:
     actor.resources["rage"] = int(actor.resources.get("rage", 0)) - 1
     actor.update_manual_conditions({"raging"})
     actor.rage_sustained_since_last_turn = bool(actor.took_attack_action_this_turn)
-    if actor.concentrating:
-        _clear_concentration_state(actor)
     return True, None
 
 
@@ -1331,7 +1318,6 @@ def run_concentration_check(
     if not target.concentrating:
         return True
     if "raging" in target.conditions:
-        _clear_concentration_state(target)
         return False
 
     dc = concentration_check_dc(damage_taken)
@@ -1355,7 +1341,7 @@ def run_concentration_check(
         target.resources["mind_sharpener_charges"] -= 1
         success = True
     if not success:
-        _clear_concentration_state(target)
+        target.concentrating = False
     return success
 
 

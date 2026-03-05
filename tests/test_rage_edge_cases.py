@@ -163,7 +163,7 @@ def test_rage_activation_legality_rejects_invalid_states() -> None:
     assert reason == "unconscious_or_dead"
 
 
-def test_activate_rage_spends_resource_and_breaks_concentration() -> None:
+def test_activate_rage_spends_resource_and_preserves_concentration_cleanup_state() -> None:
     actor = _actor(actor_id="activator")
     actor.traits["rage"] = {}
     actor.resources["rage"] = 2
@@ -182,12 +182,13 @@ def test_activate_rage_spends_resource_and_breaks_concentration() -> None:
     assert actor.resources["rage"] == 1
     assert "raging" in actor.conditions
     assert actor.rage_sustained_since_last_turn is True
-    assert actor.concentrating is False
-    assert actor.concentrated_spell is None
-    assert actor.concentrated_spell_level is None
-    assert actor.concentrated_targets == set()
-    assert actor.concentration_conditions == set()
-    assert actor.concentration_effect_instance_ids == set()
+    # Engine must run _break_concentration with full context for linked cleanup.
+    assert actor.concentrating is True
+    assert actor.concentrated_spell == "hex"
+    assert actor.concentrated_spell_level == 1
+    assert actor.concentrated_targets == {"enemy_1"}
+    assert actor.concentration_conditions == {"hexed"}
+    assert actor.concentration_effect_instance_ids == {"effect_1"}
 
 
 def test_run_concentration_check_fails_when_actor_is_raging() -> None:
@@ -202,8 +203,9 @@ def test_run_concentration_check_fails_when_actor_is_raging() -> None:
     success = run_concentration_check(rng, actor, damage_taken=1)
 
     assert success is False
-    assert actor.concentrating is False
-    assert actor.concentrated_spell is None
-    assert actor.concentration_conditions == set()
-    assert actor.concentration_effect_instance_ids == set()
+    # Engine caller should perform linked cleanup via _break_concentration.
+    assert actor.concentrating is True
+    assert actor.concentrated_spell == "bless"
+    assert actor.concentration_conditions == {"bless"}
+    assert actor.concentration_effect_instance_ids == {"bless_1"}
     assert rng.calls == 0
