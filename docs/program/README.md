@@ -42,7 +42,7 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 | `docs/program/labels_and_milestones.md` | canonical | Labeling and milestone mapping. |
 | `docs/program/status_board.md` | canonical | Human-readable status dashboard. |
 | `docs/program/completion_task_cards.md` | canonical | Human-readable task expansion of backlog. |
-| `docs/program/capability_report.md` | canonical after CAP-06 | Capability report output surface. |
+| `docs/program/capability_report.md` | canonical | Capability report output surface. |
 
 ## Capability Coverage Reports
 
