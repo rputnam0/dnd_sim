@@ -38,17 +38,20 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 |---|---|---|---|---|
 | FIX-01 | `codex/feat/fix-01-close-lucky-attacker-defender-and-saving-throw-cor` | rules_a | in_progress | Closing Lucky correctness for attacks by/against Lucky characters and failed saving throws with deterministic reroll selection and luck-point accounting. |
 | FIX-05 | `codex/feat/fix-05-close-mage-slayer-and-sentinel-reaction-constraint` | rules_e | pr_open | Deterministic Mage Slayer/Sentinel reaction-constraint rules and correctness tests are in PR review. |
+| FIX-03 | `codex/feat/fix-03-close-shield-master-reaction-save-and-shove-correc` | rules_c | pr_open | Shield Master save bonus, shove sequencing, and illegal-window correctness helpers/tests are implemented and under review. |
 
 ## Open PRs
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
 | FIX-05 | [#114](https://github.com/rputnam0/dnd_sim/pull/114) | rules_e | pending | Trigger-window, reach/opportunity, and reaction-lockout correctness updates are under review. |
+| FIX-03 | [#115](https://github.com/rputnam0/dnd_sim/pull/115) | rules_c | pending | Adds Shield Master save bonus, bonus-shove timing/sequence legality, and reaction-window correctness tests. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
 - No active DOC blockers remain; FIX-01 rules-closure work is currently in progress on the assigned branch.
+- `FIX-03` is in PR review and depends on `ARC-06` per `backlog.csv`.
 - `FIX-05` is in PR review and depends on `ARC-06` per `backlog.csv`.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
