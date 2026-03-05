@@ -25,6 +25,7 @@ EFFECT_LIFECYCLE_EVENT_TYPES: tuple[str, str, str, str, str] = (
 RESOURCE_DELTA_EVENT_TYPE = "resource_delta"
 RNG_AUDIT_EVENT_TYPE = "rng_audit"
 INVARIANT_VIOLATION_EVENT_TYPE = "invariant_violation"
+AI_TRACE_EVENT_TYPES: tuple[str, str] = ("ai_candidate_scoring", "ai_action_rationale")
 
 JSONScalar: TypeAlias = str | int | float | bool | None
 JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
@@ -88,6 +89,64 @@ def build_event_envelope(
     for key, value in normalized_payload.items():
         envelope.setdefault(key, value)
     return envelope
+
+
+def build_ai_candidate_scoring_trace(
+    *,
+    actor_id: str,
+    team: str,
+    strategy: str,
+    round_number: int | None,
+    selected_action: str | None,
+    evaluation_mode: str,
+    candidate_rows: Sequence[Mapping[str, Any]],
+    source: str,
+) -> dict[str, JSONValue]:
+    payload = {
+        "actor_id": actor_id,
+        "team": team,
+        "strategy": strategy,
+        "round": round_number,
+        "selected_action": selected_action,
+        "evaluation_mode": evaluation_mode,
+        "candidate_rows": list(candidate_rows),
+    }
+    return build_event_envelope(
+        event_type="ai_candidate_scoring",
+        payload=payload,
+        source=source,
+    )
+
+
+def build_ai_action_rationale_trace(
+    *,
+    actor_id: str,
+    team: str,
+    strategy: str,
+    round_number: int | None,
+    selected_action: str | None,
+    evaluation_mode: str,
+    enabled_policies: Sequence[str],
+    selected_candidate: Mapping[str, Any] | None,
+    source: str,
+) -> dict[str, JSONValue]:
+    payload = {
+        "actor_id": actor_id,
+        "team": team,
+        "strategy": strategy,
+        "round": round_number,
+        "selected_action": selected_action,
+        "evaluation_mode": evaluation_mode,
+        "enabled_policies": list(enabled_policies),
+        "selected_candidate": (
+            dict(selected_candidate) if selected_candidate is not None else None
+        ),
+    }
+    return build_event_envelope(
+        event_type="ai_action_rationale",
+        payload=payload,
+        source=source,
+    )
 
 
 def serialize_event(event: Mapping[str, Any]) -> str:
