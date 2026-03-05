@@ -8,6 +8,8 @@ CONTENT_RECORDS_TABLE = "content_records"
 CONTENT_CAPABILITIES_TABLE = "content_capabilities"
 CAMPAIGN_STATES_TABLE = "campaign_states"
 ENCOUNTER_STATES_TABLE = "encounter_states"
+WORLD_STATES_TABLE = "world_states"
+FACTION_STATES_TABLE = "faction_states"
 LEGACY_IMPORTED_AT = "1970-01-01T00:00:00+00:00"
 
 CONTENT_RECORDS_SCHEMA_SQL = """
@@ -115,6 +117,50 @@ CREATE TABLE IF NOT EXISTS encounter_states (
 )
 """
 
+WORLD_STATES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS world_states (
+    campaign_id TEXT PRIMARY KEY,
+    snapshot_version TEXT NOT NULL,
+    world_flags_json TEXT NOT NULL,
+    objectives_json TEXT NOT NULL,
+    map_state_json TEXT NOT NULL,
+    encounter_state_json TEXT NOT NULL,
+    replay_bundle_id TEXT,
+    snapshot_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (campaign_id) REFERENCES campaign_states(campaign_id) ON DELETE CASCADE,
+    CHECK (length(trim(campaign_id)) > 0),
+    CHECK (length(trim(snapshot_version)) > 0),
+    CHECK (length(trim(world_flags_json)) > 0),
+    CHECK (length(trim(objectives_json)) > 0),
+    CHECK (length(trim(map_state_json)) > 0),
+    CHECK (length(trim(encounter_state_json)) > 0),
+    CHECK (length(trim(snapshot_hash)) > 0),
+    CHECK (length(trim(updated_at)) > 0)
+)
+"""
+
+FACTION_STATES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS faction_states (
+    campaign_id TEXT NOT NULL,
+    faction_id TEXT NOT NULL,
+    snapshot_version TEXT NOT NULL,
+    reputation_json TEXT NOT NULL,
+    faction_state_json TEXT NOT NULL,
+    snapshot_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (campaign_id, faction_id),
+    FOREIGN KEY (campaign_id) REFERENCES world_states(campaign_id) ON DELETE CASCADE,
+    CHECK (length(trim(campaign_id)) > 0),
+    CHECK (length(trim(faction_id)) > 0),
+    CHECK (length(trim(snapshot_version)) > 0),
+    CHECK (length(trim(reputation_json)) > 0),
+    CHECK (length(trim(faction_state_json)) > 0),
+    CHECK (length(trim(snapshot_hash)) > 0),
+    CHECK (length(trim(updated_at)) > 0)
+)
+"""
+
 CAMPAIGN_STATE_INDEXES_SQL = (
     "CREATE INDEX IF NOT EXISTS idx_campaign_states_updated_at ON campaign_states(updated_at)",
     (
@@ -127,6 +173,10 @@ CAMPAIGN_STATE_INDEXES_SQL = (
         "CREATE INDEX IF NOT EXISTS idx_encounter_states_replay_bundle_id "
         "ON encounter_states(replay_bundle_id)"
     ),
+    "CREATE INDEX IF NOT EXISTS idx_world_states_updated_at ON world_states(updated_at)",
+    "CREATE INDEX IF NOT EXISTS idx_world_states_replay_bundle_id ON world_states(replay_bundle_id)",
+    "CREATE INDEX IF NOT EXISTS idx_faction_states_campaign_id ON faction_states(campaign_id)",
+    "CREATE INDEX IF NOT EXISTS idx_faction_states_updated_at ON faction_states(updated_at)",
 )
 
 
@@ -267,9 +317,11 @@ def create_content_metadata_tables(conn: sqlite3.Connection) -> None:
 
 
 def create_campaign_state_tables(conn: sqlite3.Connection) -> None:
-    """Create campaign and encounter state persistence tables."""
+    """Create campaign, encounter, world, and faction state persistence tables."""
     conn.execute(CAMPAIGN_STATES_SCHEMA_SQL)
     conn.execute(ENCOUNTER_STATES_SCHEMA_SQL)
+    conn.execute(WORLD_STATES_SCHEMA_SQL)
+    conn.execute(FACTION_STATES_SCHEMA_SQL)
     for statement in CAMPAIGN_STATE_INDEXES_SQL:
         conn.execute(statement)
 
