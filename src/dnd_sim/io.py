@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import importlib
 import importlib.util
 import json
@@ -64,6 +65,70 @@ _CAPABILITY_MONSTER_CONTENT_TYPES = frozenset(
         "monster_innate_spellcasting",
     }
 )
+
+
+def _canonical_hash_json_text(payload: Any) -> str:
+    if isinstance(payload, str):
+        try:
+            decoded = json.loads(payload)
+        except json.JSONDecodeError:
+            return payload.strip()
+        return json.dumps(decoded, sort_keys=True, separators=(",", ":"))
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def stable_content_hash(payload: Any) -> str:
+    """Return deterministic SHA-256 hash for a JSON-like payload."""
+    canonical_text = _canonical_hash_json_text(payload)
+    digest = hashlib.sha256(canonical_text.encode("utf-8")).hexdigest()
+    return f"sha256:{digest}"
+
+
+def persist_content_lineage_record(
+    conn: Any,
+    *,
+    content_id: str,
+    content_type: str,
+    source_book: str,
+    schema_version: str,
+    source_path: str,
+    source_payload: Any,
+    canonical_payload: Any,
+    imported_at: str | None = None,
+) -> dict[str, str]:
+    """Persist one content record with deterministic lineage hashes."""
+    from dnd_sim.db import upsert_content_record
+
+    imported = imported_at if isinstance(imported_at, str) and imported_at.strip() else None
+    if imported is None:
+        imported = datetime.now(UTC).isoformat()
+
+    source_hash = stable_content_hash(source_payload)
+    canonicalization_hash = stable_content_hash(canonical_payload)
+    upsert_content_record(
+        conn,
+        content_id=content_id,
+        content_type=content_type,
+        source_book=source_book,
+        schema_version=schema_version,
+        source_path=source_path,
+        source_hash=source_hash,
+        canonicalization_hash=canonicalization_hash,
+        payload_json=canonical_payload,
+        imported_at=imported,
+    )
+    return {
+        "source_hash": source_hash,
+        "canonicalization_hash": canonicalization_hash,
+        "imported_at": imported,
+    }
+
+
+def replay_content_lineage(conn: Any, *, content_type: str | None = None) -> list[dict[str, Any]]:
+    """Load persisted content lineage rows in deterministic replay order."""
+    from dnd_sim.db import fetch_content_lineage
+
+    return fetch_content_lineage(conn, content_type=content_type)
 
 
 def _non_class_raw_root_dir() -> Path:
