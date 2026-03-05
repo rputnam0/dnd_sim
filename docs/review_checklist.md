@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: integration-review  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/status_board.md`
 
 This checklist is the program closeout gate. Do not mark the backend complete until every item is checked in the repository.
@@ -26,6 +26,8 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] ARC-06 reactions and ready-action window manager extracted.
 - [ ] ARC-07 spell execution pipeline extracted.
 - [ ] ARC-08 replay/reporting adapters extracted and `engine.py` reduced below the declared limit.
+
+Current in-progress focus: `ARC-05` effect lifecycle, condition state, and concentration graph extraction on `codex/feat/arc-05-extract-effect-lifecycle-condition-state-and-conce`.
 
 ## Capability Manifest
 

@@ -128,10 +128,12 @@ subsystems:
     invariants:
       - "Effect lifecycle events remain ordered as apply/tick/refresh/expire."
       - "Concentration graph updates stay consistent with effect ownership and teardown."
+      - "Breaking concentration clears linked effects, linked hazards, and linked summons for the owner."
       - "Derived actor state recomputation remains deterministic and idempotent."
     safe_edit_boundaries:
       - "Safe: effect-family helper extraction and lifecycle instrumentation."
       - "Caution: concentration break propagation and stacked-condition teardown."
+      - "Caution: sync points between intrinsic/manual conditions and effect-derived conditions."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
   reaction_runtime:
     owner_pool: runtime_f
