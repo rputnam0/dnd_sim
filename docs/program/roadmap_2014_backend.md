@@ -145,6 +145,11 @@ Required schema outcome for 5E:
 - `world_states`
 - `faction_states`
 
+DBS-01 canonical metadata contract:
+- `content_records` must include `content_id`, `content_type`, `source_book`, `schema_version`, `source_hash`, and `payload_json`.
+- `content_capabilities` must include `content_id`, `content_type`, `support_state`, `unsupported_reason`, and `last_verified_commit`.
+- `content_capabilities.content_id` must reference `content_records.content_id` for canonical linkage between content payloads and support status.
+
 ### 5F Tactical AI Hardening
 
 Purpose: upgrade AI from baseline heuristic action selection to traceable tactical play with hazard, control, retreat, and resource timing awareness.
