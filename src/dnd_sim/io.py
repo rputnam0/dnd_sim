@@ -22,8 +22,10 @@ from dnd_sim.capability_manifest import (
 )
 from dnd_sim.spells import (
     DuplicatePolicy as SpellDuplicatePolicy,
+    canonicalize_spell_payload,
     load_spell_database as _load_spell_database,
     lookup_spell_definition as _lookup_spell_definition,
+    spell_lookup_key,
 )
 from dnd_sim.characters import (
     normalize_class_levels,
@@ -44,6 +46,30 @@ _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES = {
     "replace_attack",
     "replacement_attack",
 }
+_GLOBAL_CONTENT_ID_RE = re.compile(
+    r"^(?P<kind>[a-z_]+)\s*:\s*(?P<slug>[a-z0-9_]+)\s*\|\s*(?P<source>[a-z0-9_]+)\s*$",
+    flags=re.IGNORECASE,
+)
+_GLOBAL_CONTENT_SLUG_RE = re.compile(r"[^a-z0-9]+")
+_GLOBAL_CONTENT_KIND_ALIASES = {
+    "enemy": "monster",
+    "race": "species",
+}
+_GLOBAL_CONTENT_KINDS = frozenset(
+    {
+        "character",
+        "spell",
+        "feat",
+        "trait",
+        "monster",
+        "item",
+        "world_object",
+        "species",
+        "background",
+    }
+)
+_GLOBAL_CONTENT_SCHEMA_VERSION = "wld11.v1"
+_DEFAULT_RULES_SOURCE_BOOK = "2014"
 _NON_CLASS_CONTENT_ID_RE = re.compile(
     r"^(?P<kind>[a-z_]+)\s*:\s*(?P<name>[^|]+?)\s*\|\s*(?P<source>[a-z0-9_]+)\s*$",
     flags=re.IGNORECASE,
@@ -139,6 +165,131 @@ def _traits_root_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "db" / "rules" / "2014" / "traits"
 
 
+def _required_text(value: Any, *, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"{field_name} must be non-empty")
+    return normalized
+
+
+def _canonical_content_kind(raw_kind: str) -> str:
+    normalized = str(raw_kind).strip().lower()
+    if not normalized:
+        raise ValueError("unsupported content kind ''")
+    normalized = _GLOBAL_CONTENT_KIND_ALIASES.get(normalized, normalized)
+    if normalized not in _GLOBAL_CONTENT_KINDS:
+        raise ValueError(
+            "unsupported content kind "
+            f"'{normalized}' (supported: {', '.join(sorted(_GLOBAL_CONTENT_KINDS))})"
+        )
+    return normalized
+
+
+def _slugify_content_name(name: str) -> str:
+    return _GLOBAL_CONTENT_SLUG_RE.sub("_", str(name).strip().lower()).strip("_")
+
+
+def _normalize_source_book(source: Any, *, default: str) -> str:
+    if source is None:
+        return str(default).strip().upper()
+    if not isinstance(source, str):
+        raise ValueError("source must be a string")
+    normalized = source.strip().upper()
+    if not normalized:
+        return str(default).strip().upper()
+    normalized = _slugify_content_name(normalized).upper()
+    if not normalized:
+        raise ValueError("source must be non-empty")
+    return normalized
+
+
+def canonical_content_id(*, kind: str, name: str, source: str) -> str:
+    canonical_kind = _canonical_content_kind(kind)
+    canonical_name = _required_text(name, field_name="name")
+    if not isinstance(source, str):
+        raise ValueError("source must be a string")
+    canonical_source = _normalize_source_book(source, default="")
+    if not canonical_source:
+        raise ValueError("source must be non-empty")
+    slug = _slugify_content_name(canonical_name)
+    if not slug:
+        raise ValueError("name must be non-empty")
+    return f"{canonical_kind}:{slug}|{canonical_source}"
+
+
+def _validate_content_id_contract(
+    *,
+    raw_content_id: Any,
+    expected_content_id: str,
+    kind: str,
+) -> str:
+    if raw_content_id is None:
+        return expected_content_id
+    if not isinstance(raw_content_id, str):
+        raise ValueError("content_id must be a string when provided")
+    normalized = raw_content_id.strip()
+    if not normalized:
+        raise ValueError("content_id must be non-empty when provided")
+    if _GLOBAL_CONTENT_ID_RE.fullmatch(normalized) is None:
+        raise ValueError("content_id must match '<kind>:<slug>|<source>'")
+    if normalized != expected_content_id:
+        raise ValueError(
+            f"invalid content_id '{normalized}' for {kind}: expected '{expected_content_id}'"
+        )
+    return expected_content_id
+
+
+def _apply_content_metadata(
+    payload: dict[str, Any],
+    *,
+    kind: str,
+    name: str,
+    source_book: Any = None,
+    schema_version: Any = None,
+    source_path: Path | None = None,
+    default_source_book: str = _DEFAULT_RULES_SOURCE_BOOK,
+) -> dict[str, Any]:
+    canonical_kind = _canonical_content_kind(kind)
+    canonical_source = _normalize_source_book(source_book, default=default_source_book)
+    canonical_id = canonical_content_id(kind=canonical_kind, name=name, source=canonical_source)
+    content_id = _validate_content_id_contract(
+        raw_content_id=payload.get("content_id"),
+        expected_content_id=canonical_id,
+        kind=canonical_kind,
+    )
+
+    normalized_schema = (
+        _required_text(schema_version, field_name="schema_version")
+        if schema_version is not None
+        else _GLOBAL_CONTENT_SCHEMA_VERSION
+    )
+
+    normalized = dict(payload)
+    normalized["content_id"] = content_id
+    normalized["content_type"] = canonical_kind
+    normalized["source_book"] = canonical_source
+    normalized["schema_version"] = normalized_schema
+    if source_path is not None:
+        normalized["source_path"] = str(source_path)
+    return normalized
+
+
+def _reject_legacy_alias_fields(
+    payload: dict[str, Any],
+    *,
+    source_path: Path,
+    aliases: tuple[str, ...],
+) -> None:
+    for alias in aliases:
+        if alias in payload:
+            raise ValueError(
+                f"invalid schema in {source_path}: legacy alias field '{alias}' is not allowed; "
+                "use canonical 'content_id'"
+            )
+
+
 def _slugify_non_class_content_name(name: str) -> str:
     return _NON_CLASS_CONTENT_SLUG_RE.sub("_", str(name).strip().lower()).strip("_")
 
@@ -153,11 +304,12 @@ def _is_2014_non_class_source(*, row: dict[str, Any], source: str) -> bool:
 
 
 def _canonical_non_class_content_id(*, kind: str, name: str, source: str) -> str:
-    slug = _slugify_non_class_content_name(name)
-    source_code = str(source).strip().upper()
-    if not slug or not source_code:
-        raise ValueError("invalid content_refs: content references must include name and source")
-    return f"{kind}:{slug}|{source_code}"
+    try:
+        return canonical_content_id(kind=kind, name=name, source=source)
+    except ValueError as exc:
+        raise ValueError(
+            "invalid content_refs: content references must include name and source"
+        ) from exc
 
 
 def _load_non_class_json_rows(raw_path: Path, key: str) -> list[dict[str, Any]]:
@@ -207,6 +359,142 @@ def _load_non_class_content_catalog(raw_root: str | None = None) -> dict[str, di
         _load_non_class_json_rows(root / "backgrounds" / "backgrounds.json", "background"),
         kind="background",
     )
+    return catalog
+
+
+def build_global_content_index(
+    *,
+    rules_root: Path | None = None,
+    include_non_class_catalog: bool = True,
+) -> dict[str, dict[str, Any]]:
+    root = (
+        Path(rules_root).resolve()
+        if rules_root is not None
+        else Path(__file__).resolve().parents[2] / "db" / "rules" / "2014"
+    )
+    catalog: dict[str, dict[str, Any]] = {}
+
+    def add_record(record: dict[str, Any]) -> None:
+        content_id = str(record.get("content_id") or "").strip()
+        if not content_id:
+            raise ValueError("content_id must be non-empty")
+        if content_id in catalog:
+            first_path = str(catalog[content_id].get("source_path", "<unknown>"))
+            second_path = str(record.get("source_path", "<unknown>"))
+            raise ValueError(
+                f"duplicate content_id '{content_id}' across {first_path} and {second_path}"
+            )
+        catalog[content_id] = record
+
+    spells_dir = root / "spells"
+    if spells_dir.exists():
+        for path in sorted(spells_dir.glob("*.json")):
+            payload = _load_json(path)
+            _reject_legacy_alias_fields(
+                payload,
+                source_path=path,
+                aliases=("id", "spell_id"),
+            )
+            normalized_spell = canonicalize_spell_payload(payload, source_path=path)
+            metadata_spell = _apply_content_metadata(
+                normalized_spell,
+                kind="spell",
+                name=str(normalized_spell.get("name", "")),
+                source_book=payload.get("source_book", payload.get("source")),
+                schema_version=payload.get("schema_version"),
+                source_path=path,
+                default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
+            )
+            add_record(metadata_spell)
+
+    traits_dir = root / "traits"
+    if traits_dir.exists():
+        for path in sorted(traits_dir.glob("*.json")):
+            payload = _load_json(path)
+            _reject_legacy_alias_fields(
+                payload,
+                source_path=path,
+                aliases=("id", "trait_id"),
+            )
+            normalized_trait = _normalize_trait_payload(payload)
+            metadata_trait = _apply_content_metadata(
+                normalized_trait,
+                kind="trait",
+                name=path.stem,
+                source_book=payload.get("source_book", payload.get("source")),
+                schema_version=payload.get("schema_version"),
+                source_path=path,
+                default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
+            )
+            add_record(metadata_trait)
+
+    monsters_dir = root / "monsters"
+    if monsters_dir.exists():
+        for path in sorted(monsters_dir.glob("*.json")):
+            payload = _load_json(path)
+            _reject_legacy_alias_fields(
+                payload,
+                source_path=path,
+                aliases=("id", "monster_id"),
+            )
+            identity = payload.get("identity", {})
+            monster_name = (
+                identity.get("enemy_id")
+                if isinstance(identity, dict) and identity.get("enemy_id") is not None
+                else path.stem
+            )
+            metadata_monster = _apply_content_metadata(
+                payload,
+                kind="monster",
+                name=str(monster_name),
+                source_book=payload.get("source_book", payload.get("source")),
+                schema_version=payload.get("schema_version"),
+                source_path=path,
+                default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
+            )
+            add_record(metadata_monster)
+
+    for directory_name, kind, aliases in (
+        ("items", "item", ("id", "item_id")),
+        ("world_objects", "world_object", ("id", "world_object_id")),
+        ("characters", "character", ("id",)),
+    ):
+        directory = root / directory_name
+        if not directory.exists():
+            continue
+        for path in sorted(directory.glob("*.json")):
+            payload = _load_json(path)
+            _reject_legacy_alias_fields(
+                payload,
+                source_path=path,
+                aliases=aliases,
+            )
+            identifier = payload.get("name") or payload.get("character_id") or path.stem
+            metadata_payload = _apply_content_metadata(
+                payload,
+                kind=kind,
+                name=str(identifier),
+                source_book=payload.get("source_book", payload.get("source")),
+                schema_version=payload.get("schema_version"),
+                source_path=path,
+                default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
+            )
+            add_record(metadata_payload)
+
+    if include_non_class_catalog:
+        non_class_catalog = _load_non_class_content_catalog(str(_non_class_raw_root_dir()))
+        for _, row in sorted(non_class_catalog.items()):
+            non_class_record = _apply_content_metadata(
+                dict(row),
+                kind=str(row["kind"]),
+                name=str(row["name"]),
+                source_book=str(row["source"]),
+                schema_version=_GLOBAL_CONTENT_SCHEMA_VERSION,
+                source_path=_non_class_raw_root_dir(),
+                default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
+            )
+            add_record(non_class_record)
+
     return catalog
 
 
@@ -941,8 +1229,10 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
         path = enemy_dir / f"{enemy_id}.json"
 
         enemy_payload = None
+        source_path: Path | None = None
         if path.exists():
             enemy_payload = _load_json(path)
+            source_path = path
         else:
             # 2. Fallback to SQLite Database for built-ins
             rows = execute_query("SELECT data_json FROM enemies WHERE enemy_id = ?", (enemy_id,))
@@ -950,6 +1240,23 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
                 enemy_payload = json.loads(rows[0]["data_json"])
             else:
                 raise ValueError(f"Enemy definition not found on disk or SQLite DB: {enemy_id}")
+
+        if isinstance(enemy_payload, dict):
+            if source_path is not None:
+                _reject_legacy_alias_fields(
+                    enemy_payload,
+                    source_path=source_path,
+                    aliases=("id", "monster_id"),
+                )
+            enemy_payload = _apply_content_metadata(
+                enemy_payload,
+                kind="monster",
+                name=enemy_id,
+                source_book=enemy_payload.get("source_book", enemy_payload.get("source")),
+                schema_version=enemy_payload.get("schema_version"),
+                source_path=source_path,
+                default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
+            )
 
         try:
             enemy = EnemyConfig.model_validate(enemy_payload)
@@ -977,6 +1284,7 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
         *,
         payload: dict[str, Any],
     ) -> dict[str, Any]:
+        character_id = _required_text(payload.get("character_id"), field_name="character_id")
         class_levels_payload = payload.get("class_levels")
         if not isinstance(class_levels_payload, dict):
             raise ValueError("invalid class_levels: class_levels mapping is required")
@@ -995,6 +1303,14 @@ def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
         payload = _normalize_character_content_references(
             payload=payload,
             content_catalog=non_class_content_catalog,
+        )
+        payload = _apply_content_metadata(
+            payload,
+            kind="character",
+            name=character_id,
+            source_book=payload.get("source_book"),
+            schema_version=payload.get("schema_version"),
+            default_source_book="CUSTOM",
         )
         return payload
 
@@ -1094,9 +1410,20 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
     for row in rows:
         try:
             trait_data = json.loads(row["data_json"])
-            trait_name = trait_data.get("name", "").lower()
+            if not isinstance(trait_data, dict):
+                continue
+            trait_name = str(trait_data.get("name", "")).strip().lower()
             if trait_name:
-                out[trait_name] = _normalize_trait_payload(trait_data)
+                normalized_trait = _normalize_trait_payload(trait_data)
+                normalized_trait = _apply_content_metadata(
+                    normalized_trait,
+                    kind="trait",
+                    name=str(row["id"]),
+                    source_book=normalized_trait.get("source_book", normalized_trait.get("source")),
+                    schema_version=normalized_trait.get("schema_version"),
+                    default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
+                )
+                out[trait_name] = normalized_trait
         except json.JSONDecodeError:
             pass
 
@@ -1104,9 +1431,24 @@ def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
     if traits_dir.exists():
         for path in traits_dir.glob("*.json"):
             trait_data = _load_json(path)
-            trait_name = trait_data.get("name", "").lower()
+            _reject_legacy_alias_fields(
+                trait_data,
+                source_path=path,
+                aliases=("id", "trait_id"),
+            )
+            trait_name = str(trait_data.get("name", "")).strip().lower()
             if trait_name:
-                out[trait_name] = _normalize_trait_payload(trait_data)
+                normalized_trait = _normalize_trait_payload(trait_data)
+                normalized_trait = _apply_content_metadata(
+                    normalized_trait,
+                    kind="trait",
+                    name=path.stem,
+                    source_book=normalized_trait.get("source_book", normalized_trait.get("source")),
+                    schema_version=normalized_trait.get("schema_version"),
+                    source_path=path,
+                    default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
+                )
+                out[trait_name] = normalized_trait
 
     return out
 
@@ -1125,7 +1467,40 @@ def load_spell_db(
     if duplicate_policy != "fail_fast":
         raise ValueError("Spell duplicate policy must be 'fail_fast' for canonical loads")
     _assert_capability_gate(required_content_types={"spell"}, source="load_spell_db")
-    return _load_spell_database(canonical_dir, duplicate_policy="fail_fast")
+
+    metadata_by_key: dict[str, dict[str, Any]] = {}
+    for path in sorted(canonical_dir.glob("*.json")):
+        raw_payload = _load_json(path)
+        _reject_legacy_alias_fields(
+            raw_payload,
+            source_path=path,
+            aliases=("id", "spell_id"),
+        )
+        canonical_payload = canonicalize_spell_payload(raw_payload, source_path=path)
+        lookup_key = spell_lookup_key(str(canonical_payload["name"]))
+        if lookup_key in metadata_by_key:
+            first = metadata_by_key[lookup_key]["source_path"]
+            raise ValueError(f"duplicate spell lookup key '{lookup_key}' across {first} and {path}")
+        metadata_by_key[lookup_key] = {
+            "source_book": raw_payload.get("source_book", raw_payload.get("source")),
+            "schema_version": raw_payload.get("schema_version"),
+            "source_path": path,
+        }
+
+    records = _load_spell_database(canonical_dir, duplicate_policy="fail_fast")
+    normalized_records: dict[str, dict[str, Any]] = {}
+    for key, record in records.items():
+        metadata = metadata_by_key.get(key, {})
+        normalized_records[key] = _apply_content_metadata(
+            dict(record),
+            kind="spell",
+            name=str(record.get("name", "")),
+            source_book=metadata.get("source_book"),
+            schema_version=metadata.get("schema_version"),
+            source_path=metadata.get("source_path"),
+            default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
+        )
+    return normalized_records
 
 
 def _import_encounter_strategy(module_name: str, path: Path) -> Any:

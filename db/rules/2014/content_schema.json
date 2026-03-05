@@ -1,0 +1,16 @@
+{
+  "schema_version": "wld11.v1",
+  "default_source_book": "2014",
+  "content_kinds": [
+    "character",
+    "spell",
+    "feat",
+    "trait",
+    "monster",
+    "item",
+    "world_object",
+    "species",
+    "background"
+  ],
+  "notes": "Canonical global content ID format is '<kind>:<slug>|<source_book>'. Transitional alias ID fields are not allowed."
+}
