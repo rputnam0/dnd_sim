@@ -110,6 +110,7 @@ from dnd_sim.action_resolution import (
 )
 from dnd_sim import effects_runtime as _effects_runtime
 from dnd_sim import reaction_runtime as _reaction_runtime
+from dnd_sim import spell_runtime as _spell_runtime
 from dnd_sim.engine_resources import (
     apply_arcane_recovery as _apply_arcane_recovery_impl,
     apply_inferred_barbarian_resources as _apply_inferred_barbarian_resources_impl,
@@ -7873,27 +7874,18 @@ def _execute_declared_action_step_or_error(
             message=f"Declared action '{action.name}' is not currently legal.",
         )
 
-    resolved_targets = _resolve_targets_for_action(
+    resolved_targets = _spell_runtime.resolve_action_targets(
         rng=rng,
         actor=actor,
         action=action,
         actors=actors,
         requested=requested_targets,
         obstacles=obstacles,
-        spell_cast_request=spell_cast_request,
-    )
-    if requested_targets:
-        requested_ids = {target.actor_id for target in requested_targets}
-        resolved_targets = [
-            target for target in resolved_targets if target.actor_id in requested_ids
-        ]
-    resolved_targets = _filter_targets_in_range(
-        actor,
-        action,
-        resolved_targets,
         active_hazards=active_hazards,
-        obstacles=obstacles,
         light_level=light_level,
+        spell_cast_request=spell_cast_request,
+        resolve_targets_for_action=_resolve_targets_for_action,
+        filter_targets_in_range=_filter_targets_in_range,
     )
     if not resolved_targets:
         _raise_turn_declaration_error(
@@ -11614,14 +11606,7 @@ def _get_default_combat_timing_engine() -> CombatTimingEngine:
 
 
 def _mode_requires_explicit_targets(mode: str) -> bool:
-    return mode in {
-        "single_enemy",
-        "single_ally",
-        "n_enemies",
-        "n_allies",
-        "random_enemy",
-        "random_ally",
-    }
+    return _spell_runtime.mode_requires_explicit_targets(mode)
 
 
 def _resolve_spell_cast_request(
@@ -11631,52 +11616,22 @@ def _resolve_spell_cast_request(
     targets: list[ActorRuntimeState],
     provided: SpellCastRequest | None,
 ) -> SpellCastRequest:
-    if provided is None:
-        request = SpellCastRequest()
-    else:
-        request = SpellCastRequest(
-            slot_level=provided.slot_level,
-            mode=provided.mode,
-            target_actor_ids=list(provided.target_actor_ids),
-            origin=provided.origin,
-        )
-
-    if request.mode is None:
-        request.mode = action.target_mode
-    if not request.target_actor_ids and targets:
-        request.target_actor_ids = [target.actor_id for target in targets]
-    if request.origin is None:
-        request.origin = actor.position
-
-    required_slot_level = _required_spell_slot_level(action)
-    if required_slot_level > 0 and request.slot_level is None:
-        preferred_slot = _preferred_spell_slot_level(action)
-        request.slot_level = preferred_slot if preferred_slot is not None else required_slot_level
-
-    if request.mode is None:
-        raise ValueError("Spell cast request requires a target mode.")
-    if request.mode != action.target_mode:
-        raise ValueError("Spell cast request mode must match action target mode.")
-    if _mode_requires_explicit_targets(request.mode) and not request.target_actor_ids:
-        raise ValueError("Spell cast request requires at least one target.")
-    if action.aoe_type and request.origin is None:
-        raise ValueError("Spell cast request requires an origin for area spell templates.")
-    if required_slot_level > 0:
-        if request.slot_level is None:
-            raise ValueError("Spell cast request requires a slot for leveled spells.")
-        if int(request.slot_level) < required_slot_level:
-            raise ValueError("Spell cast request slot level is below the spell level.")
-
-    return request
+    return _spell_runtime.resolve_spell_cast_request(
+        actor=actor,
+        action=action,
+        targets=targets,
+        provided=provided,
+        required_spell_slot_level=_required_spell_slot_level,
+        preferred_spell_slot_level=_preferred_spell_slot_level,
+    )
 
 
 def _record_spell_cast_for_turn(actor: ActorRuntimeState, action: ActionDefinition) -> None:
-    if "spell" not in action.tags:
-        return
-    if not _is_action_cantrip_spell(action):
-        actor.non_action_cantrip_spell_cast_this_turn = True
-    if action.action_cost == "bonus":
-        actor.bonus_action_spell_restriction_active = True
+    _spell_runtime.record_spell_cast_for_turn(
+        actor,
+        action,
+        is_action_cantrip_spell=_is_action_cantrip_spell,
+    )
 
 
 def _attack_action_effect_type(mechanic: Any) -> str:
@@ -12058,126 +12013,68 @@ def _execute_action_impl(
 
     # Spell declaration and counterspell check
     if is_spell_action:
-        if has_condition(actor, _ANTIMAGIC_SUPPRESSION_CONDITION):
-            return
-        if not _ritual_casting_legal_for_context(action, turn_token=turn_token):
-            return
-        if not _spell_casting_legal_this_turn(actor, action, turn_token=turn_token):
-            return
-        if not _can_cast_spell_with_components(actor, action):
-            return
-
-        try:
-            resolved_spell_cast_request = _resolve_spell_cast_request(
-                actor=actor,
-                action=action,
-                targets=targets,
-                provided=spell_cast_request,
-            )
-        except ValueError:
-            return
-        if resolved_spell_cast_request.slot_level is not None:
-            spell_level = int(resolved_spell_cast_request.slot_level)
-            action = _apply_upcast_scaling_for_slot(action, slot_level=spell_level)
-
-        declaration_event = active_timing_engine.emit(
-            ActionDeclaredEvent(
-                attacker=actor,
-                target=targets[0],
-                action=action,
-                round_number=round_number,
-                turn_token=turn_token,
-            )
-        )
-        if declaration_event.cancelled:
-            return
-        spell_declared_for_resolution = True
-
-        _record_spell_cast_for_turn(actor, action)
-
-        if not subtle_spell:
-            for enemy in sorted(actors.values(), key=lambda candidate: candidate.actor_id):
-                if (
-                    enemy.team == actor.team
-                    or enemy.hp <= 0
-                    or enemy.dead
-                    or not _can_take_reaction(enemy)
-                ):
-                    continue
-                cs_action = next(
-                    (
-                        candidate
-                        for candidate in enemy.actions
-                        if (
-                            candidate.action_cost == "reaction"
-                            and _action_matches_reaction_spell_id(
-                                candidate, spell_id="counterspell"
-                            )
-                        )
-                    ),
-                    None,
-                )
-                if cs_action is None:
-                    continue
-                counter_slot = _counterspell_slot_if_legal(
-                    reactor=enemy,
-                    counterspell_action=cs_action,
-                    caster=actor,
-                    incoming_spell_level=spell_level,
-                    turn_token=turn_token,
-                    active_hazards=active_hazards,
-                    light_level=light_level,
-                )
-                if counter_slot is None:
-                    continue
-
-                counter_window = active_timing_engine.emit(
-                    ReactionWindowOpenedEvent(
-                        window="counterspell",
-                        reactor=enemy,
-                        attacker=actor,
-                        target=targets[0],
-                        action=action,
-                        round_number=round_number,
-                        turn_token=turn_token,
+        spell_runtime_result = _spell_runtime.run_spell_declaration_pipeline(
+            rng=rng,
+            actor=actor,
+            action=action,
+            targets=targets,
+            actors=actors,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            round_number=round_number,
+            turn_token=turn_token,
+            timing_engine=active_timing_engine,
+            spell_cast_request=spell_cast_request,
+            antimagic_suppression_condition=_ANTIMAGIC_SUPPRESSION_CONDITION,
+            subtle_spell=subtle_spell,
+            light_level=light_level,
+            adapters=_spell_runtime.SpellPipelineAdapters(
+                has_condition=has_condition,
+                ritual_casting_legal_for_context=(
+                    lambda spell_action, token: _ritual_casting_legal_for_context(
+                        spell_action,
+                        turn_token=token,
                     )
-                )
-                if counter_window.cancelled:
-                    continue
-
-                slot_key, counter_level = counter_slot
-                enemy.resources[slot_key] -= 1
-                enemy_spent = resources_spent.setdefault(enemy.actor_id, {})
-                enemy_spent[slot_key] = enemy_spent.get(slot_key, 0) + 1
-
-                non_slot_cost, _, _ = _split_spell_slot_cost(cs_action.resource_cost)
-                for key, amount in _spend_resources(enemy, non_slot_cost).items():
-                    enemy_spent[key] = enemy_spent.get(key, 0) + amount
-
-                enemy.per_action_uses[cs_action.name] = (
-                    enemy.per_action_uses.get(cs_action.name, 0) + 1
-                )
-                _mark_action_cost_used(enemy, cs_action)
-                _record_spell_cast_for_turn(enemy, cs_action)
-
-                if counter_level >= spell_level:
-                    return  # Spell countered automatically.
-                check_dc = 10 + spell_level
-                check_total = rng.randint(1, 20) + _spellcasting_ability_mod(enemy)
-                if check_total >= check_dc:
-                    return  # Spell countered after ability check.
-
-        if action.concentration:
-            _break_concentration(actor, actors, active_hazards)
-            actor.concentrating = True
-            actor.concentrated_spell = action.name
-            actor.concentrated_spell_level = spell_level
-            actor.concentration_conditions.clear()
-            actor.concentration_effect_instance_ids.clear()
-            if _is_smite_setup_action(action):
-                actor.concentration_conditions.clear()
-                actor.concentrated_targets.clear()
-                actor.concentration_effect_instance_ids.clear()
+                ),
+                spell_casting_legal_this_turn=(
+                    lambda caster, spell_action, token: _spell_casting_legal_this_turn(
+                        caster,
+                        spell_action,
+                        turn_token=token,
+                    )
+                ),
+                can_cast_spell_with_components=_can_cast_spell_with_components,
+                required_spell_slot_level=_required_spell_slot_level,
+                preferred_spell_slot_level=_preferred_spell_slot_level,
+                apply_upcast_scaling_for_slot=(
+                    lambda spell_action, slot_level: _apply_upcast_scaling_for_slot(
+                        spell_action,
+                        slot_level=slot_level,
+                    )
+                ),
+                can_take_reaction=_can_take_reaction,
+                action_matches_reaction_spell_id=(
+                    lambda reaction_action, spell_id: _action_matches_reaction_spell_id(
+                        reaction_action,
+                        spell_id=spell_id,
+                    )
+                ),
+                counterspell_slot_if_legal=_counterspell_slot_if_legal,
+                split_spell_slot_cost=_split_spell_slot_cost,
+                spend_resources=_spend_resources,
+                mark_action_cost_used=_mark_action_cost_used,
+                spellcasting_ability_mod=_spellcasting_ability_mod,
+                is_action_cantrip_spell=_is_action_cantrip_spell,
+                break_concentration=_break_concentration,
+                is_smite_setup_action=_is_smite_setup_action,
+            ),
+        )
+        if spell_runtime_result is None:
+            return
+        action = spell_runtime_result.action
+        spell_level = spell_runtime_result.spell_level
+        resolved_spell_cast_request = spell_runtime_result.spell_cast_request
+        spell_declared_for_resolution = spell_runtime_result.spell_declared_for_resolution
 
     if _action_uses_attack_instance_framework(action):
         if action.action_cost == "action":

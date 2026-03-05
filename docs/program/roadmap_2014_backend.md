@@ -78,6 +78,9 @@ Tasks:
 - ARC-07 Extract spell execution pipeline and target resolution adapters
 - ARC-08 Extract replay/reporting adapter layer and reduce engine.py to an orchestration facade
 
+Current implementation note (2026-03-05):
+- ARC-07 delegates spell declaration normalization, upcast handling, target adapters, and spell result application into `src/dnd_sim/spell_runtime.py` with dedicated `tests/test_spell_runtime.py` coverage.
+
 Required structural outcome for 5B:
 - `src/dnd_sim/engine.py` must be reduced below 3500 lines by `ARC-08`.
 - No extracted runtime module may exceed 1500 lines without an explicit waiver recorded in `docs/agent_index.yaml`.
