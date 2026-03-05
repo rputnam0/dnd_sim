@@ -7,10 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from dnd_sim.replay import load_replay_bundle
-from dnd_sim.replay_schema import REPLAY_BUNDLE_SCHEMA_VERSION
+from dnd_sim.replay_schema import (
+    GOLDEN_TRACE_MANIFEST_SCHEMA_VERSION,
+    REPLAY_BUNDLE_SCHEMA_VERSION,
+)
 
 MANIFEST_FILE_NAME = "manifest.json"
-MANIFEST_SCHEMA_VERSION = "golden_traces.v2"
+MANIFEST_SCHEMA_VERSION = GOLDEN_TRACE_MANIFEST_SCHEMA_VERSION
 MANIFEST_BUNDLE_SCHEMA_KEY = "bundle_schema_version"
 REQUIRED_COVERAGE_KEYWORDS: tuple[str, ...] = ("combat", "hazard", "summon", "reaction", "world")
 

@@ -10,13 +10,13 @@ from types import ModuleType
 from typing import Any
 
 from dnd_sim.replay import load_replay_bundle
-from dnd_sim.replay_schema import REPLAY_BUNDLE_SCHEMA_VERSION
+from dnd_sim.replay_schema import GOLDEN_TRACE_MANIFEST_SCHEMA_VERSION, REPLAY_BUNDLE_SCHEMA_VERSION
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 COMBAT_CORPUS_DIR = REPO_ROOT / "artifacts/golden_traces"
 WORLD_CORPUS_DIR = REPO_ROOT / "artifacts/world_regressions"
 MANIFEST_FILE_NAME = "manifest.json"
-MANIFEST_SCHEMA_VERSION = "golden_traces.v2"
+MANIFEST_SCHEMA_VERSION = GOLDEN_TRACE_MANIFEST_SCHEMA_VERSION
 
 
 def _canonical_json(value: Any) -> str:
@@ -145,8 +145,17 @@ def evaluate_replay_corpus_gate(
         issues.append(f"REPLAY-GATE-WORLD-002 corpus path is not a directory: {world_dir}")
         return issues
 
-    harness = _load_world_harness_module()
-    suite_result = harness.run_regression_suite(corpus_dir=world_dir)
+    try:
+        harness = _load_world_harness_module()
+    except Exception as error:  # noqa: BLE001
+        issues.append(f"REPLAY-GATE-WORLD-004 unable to load world harness: {error}")
+        return issues
+
+    try:
+        suite_result = harness.run_regression_suite(corpus_dir=world_dir)
+    except Exception as error:  # noqa: BLE001
+        issues.append(f"REPLAY-GATE-WORLD-005 world harness execution failed: {error}")
+        return issues
     for case_result in suite_result.case_results:
         if case_result.passed:
             continue
@@ -225,3 +234,27 @@ def test_diff_approval_path_allows_explicitly_approved_drift(tmp_path: Path) -> 
         approved_drift_ids={scenario_id},
     )
     assert issues == []
+
+
+def test_world_replay_gate_reports_structured_harness_execution_failure(
+    tmp_path: Path, monkeypatch
+) -> None:
+    combat_dir = tmp_path / "golden_traces"
+    world_dir = tmp_path / "world_regressions"
+    shutil.copytree(COMBAT_CORPUS_DIR, combat_dir)
+    shutil.copytree(WORLD_CORPUS_DIR, world_dir)
+
+    class _BrokenHarness:
+        def run_regression_suite(self, *, corpus_dir: Path) -> Any:
+            raise RuntimeError(f"broken harness for {corpus_dir.name}")
+
+    monkeypatch.setattr(
+        sys.modules[__name__],
+        "_load_world_harness_module",
+        lambda: _BrokenHarness(),
+    )
+
+    issues = evaluate_replay_corpus_gate(combat_dir, world_dir)
+    assert issues == [
+        "REPLAY-GATE-WORLD-005 world harness execution failed: broken harness for world_regressions"
+    ]
