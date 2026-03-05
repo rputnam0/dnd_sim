@@ -576,7 +576,7 @@ def _resource_cost_map(action: dict[str, Any]) -> dict[str, int]:
 
 
 def _is_recharge_action(action: dict[str, Any]) -> bool:
-    if any(key in action for key in ("recharge_ready", "recharge", "recharge_range")):
+    if any(key in action for key in ("recharge", "recharge_range")):
         return True
     tags = _normalized_action_tags(action)
     if "recharge" in tags or any(tag.startswith("recharge:") for tag in tags):
@@ -618,11 +618,13 @@ def _reaction_availability_map(state: BattleStateView) -> dict[str, int]:
         "reactions_available_by_actor",
         "reaction_available_by_actor",
     ):
-        raw = state.metadata.get(key, {})
+        raw = state.metadata.get(key)
         if isinstance(raw, dict):
-            return {
+            availability = {
                 str(actor_id): _coerce_nonnegative_int(value) for actor_id, value in raw.items()
             }
+            if availability:
+                return availability
     return {}
 
 
