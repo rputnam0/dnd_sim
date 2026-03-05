@@ -26,7 +26,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | ARC | Runtime Decomposition | not_started | 5B-runtime-decomposition | All ARC tasks are `not_started` in `backlog.csv`. |
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
-| DBS | Persistence and Query Model | in_progress | 5E-persistence | `DBS-01` and `DBS-02` are `pr_open`; `DBS-04` is `in_progress`; remaining DBS tasks are `not_started` in `backlog.csv`. |
+| DBS | Persistence and Query Model | in_progress | 5E-persistence | `DBS-01` and `DBS-02` are `pr_open`; `DBS-04` and `DBS-05` are `in_progress`; remaining DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
@@ -39,6 +39,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | DBS-01 | `codex/feat/dbs-01-add-canonical-metadata-tables-for-content-and-supp` | persistence_a | pr_open | Canonical metadata tables and migration/rollback coverage are in PR review. |
 | DBS-02 | `codex/feat/dbs-02-add-schema-version-source-lineage-and-content-hash` | persistence_b | pr_open | Lineage columns plus stable source/canonicalization hash persistence and replay ordering are in PR review. |
 | DBS-04 | `codex/feat/dbs-04-add-campaign-state-persistence-schema-and-round-tr` | persistence_campaign | in_progress | Implementing `campaign_states` and `encounter_states` deterministic persistence with round-trip/compatibility/corruption tests in `tests/test_campaign_persistence.py`. |
+| DBS-05 | `codex/feat/dbs-05-add-world-flags-objectives-factions-and-encounter` | persistence_world | in_progress | Implementing `world_states` and `faction_states` deterministic persistence with world/objective/faction lifecycle tests in `tests/test_world_state_persistence.py`. |
 
 ## Open PRs
 
@@ -51,5 +52,5 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
-- No active DOC blockers remain; DBS-01 and DBS-02 remain in PR review while DBS-04 persistence schema work is in progress on its assigned branch.
+- No active DOC blockers remain; DBS-01 and DBS-02 remain in PR review while DBS-04 and DBS-05 persistence schema work is in progress on assigned branches.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
