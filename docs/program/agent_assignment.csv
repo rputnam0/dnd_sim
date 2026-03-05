@@ -1,6 +1,6 @@
 task_id,agent_pool,reviewer_pool,batch,concurrency_group,start_condition,branch_name
 DOC-01,doc_control_lead,explorer_doc,batch-0,doc,none,feat/doc-01-establish-canonical-docs-entrypoints-and-source-of
-DOC-02,doc_control_a,explorer_doc,batch-0,doc,DOC-01,feat/doc-02-archive-stale-planning-and-historical-run-artifact
+DOC-02,doc_control_a,explorer_doc,batch-0,doc,DOC-01,codex/feat/doc-02-archive-stale-planning-and-historical-run-artifact
 DOC-03,doc_control_b,explorer_doc,batch-0,doc,DOC-01,feat/doc-03-normalize-status-board-and-merged-baseline-history
 DOC-04,doc_control_a,explorer_doc,batch-0,doc,DOC-01,feat/doc-04-add-doc-freshness-metadata-and-registry
 DOC-05,doc_control_ci,explorer_doc,batch-0,doc,DOC-04,feat/doc-05-add-doc-consistency-checker-and-ci-gate
