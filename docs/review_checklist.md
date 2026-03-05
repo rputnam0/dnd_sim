@@ -41,7 +41,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] FIX-01 Close Lucky attacker, defender, and saving throw correctness
 - [ ] FIX-02 Close Great Weapon Master and Sharpshooter toggle correctness
 - [x] FIX-03 Close Shield Master reaction, save, and shove correctness
-- [x] FIX-04 Close War Caster opportunity casting and concentration correctness
+- [x] FIX-04 Close War Caster opportunity casting and concentration correctness (in review on [#124](https://github.com/rputnam0/dnd_sim/pull/124))
 - [ ] FIX-05 Close Mage Slayer and Sentinel reaction constraints (in review on [#114](https://github.com/rputnam0/dnd_sim/pull/114))
 - [ ] FIX-06 Close Rage damage, resistance, and illegal state edge cases
 - [ ] FIX-07 Integrate hazard-aware strategy scoring and close the review checklist
