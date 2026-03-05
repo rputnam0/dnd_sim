@@ -137,6 +137,10 @@ Tasks:
 - DBS-05 Add world flags, objectives, factions, and encounter state persistence schema
 - DBS-06 Migrate existing JSON/blob content to the canonical metadata model
 
+Current 5E status (2026-03-05):
+- `DBS-01` and `DBS-02` are in PR review.
+- `DBS-04` is in progress on `codex/feat/dbs-04-add-campaign-state-persistence-schema-and-round-tr` with `campaign_states` and `encounter_states` deterministic snapshot persistence under implementation and test.
+
 Required schema outcome for 5E:
 - `content_records`
 - `content_capabilities`
