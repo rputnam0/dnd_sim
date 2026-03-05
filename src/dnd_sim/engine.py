@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from dnd_sim.action_legality import TurnDeclarationValidationError
-from dnd_sim.engine_legacy import SimulationArtifacts
+from dnd_sim.engine_runtime import SimulationArtifacts
 from dnd_sim.io import LoadedScenario
 
 
