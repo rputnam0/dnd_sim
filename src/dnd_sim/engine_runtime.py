@@ -4,8 +4,7 @@ import logging
 import random
 from typing import Any
 
-import dnd_sim.engine as engine_module
-from dnd_sim.engine import (
+from dnd_sim.engine_legacy import (
     SimulationArtifacts,
     TurnDeclarationValidationError,
     _action_available,
@@ -53,6 +52,7 @@ from dnd_sim.reporting_runtime import (
     build_simulation_summary as _reporting_build_simulation_summary,
 )
 from dnd_sim.strategy_api import TurnDeclaration
+from dnd_sim.telemetry import build_event_envelope
 
 logger = logging.getLogger(__name__)
 
@@ -105,11 +105,14 @@ def _emit_turn_trace_event(
     if field is not None:
         payload["field"] = field
 
-    engine_module._append_telemetry_event(
-        telemetry,
-        event_type=event_type,
-        payload=payload,
-        source=__name__,
+    if telemetry is None:
+        return
+    telemetry.append(
+        build_event_envelope(
+            event_type=event_type,
+            payload=payload,
+            source=__name__,
+        )
     )
 
 
