@@ -29,7 +29,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
-| WLD | World Systems and Campaign Platform | in_progress | 5H-world-systems | `WLD-03`, `WLD-06`, `WLD-09`, and `WLD-11` are `pr_open`; `WLD-01`, `WLD-02`, `WLD-04`, `WLD-08`, `WLD-10`, and `WLD-12` are `in_progress`; remaining WLD tasks are `not_started` in `backlog.csv`. |
+| WLD | World Systems and Campaign Platform | in_progress | 5H-world-systems | `WLD-03`, `WLD-06`, `WLD-07`, `WLD-09`, and `WLD-11` are `pr_open`; `WLD-01`, `WLD-02`, `WLD-04`, `WLD-08`, `WLD-10`, and `WLD-12` are `in_progress`; remaining WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
 
 ## Active branches
@@ -40,6 +40,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | WLD-02 | codex/feat/wld-02-build-skill-tool-proficiency-and-specialist-data-p | world_rules_b | in_progress | Plumbing skill/tool proficiency, expertise, and passive input data for deterministic noncombat resolution. |
 | WLD-03 | codex/feat/wld-03-build-exploration-turn-structure-time-advancement | world_explore_a | pr_open | Exploration turn/time/light runtime and persistence serialization coverage are in PR review. |
 | WLD-06 | codex/feat/wld-06-build-economy-loot-vendor-inventory-and-pricing-mo | world_economy_a | pr_open | Deterministic pricing, seeded loot/vendor inventory generation, and purchase transaction handling are in PR review. |
+| WLD-07 | codex/feat/wld-07-build-crafting-downtime-encumbrance-and-service-ac | world_economy_b | pr_open | Deterministic crafting progress, downtime action flow, encumbrance thresholds, and service action persistence are in PR review. |
 | WLD-04 | codex/feat/wld-04-build-travel-pace-navigation-foraging-resting-and | world_explore_b | in_progress | Implementing travel pace, navigation outcomes, foraging, random encounter hooks, and rest/day-cycle integration in world runtime. |
 | WLD-08 | codex/feat/wld-08-build-quest-faction-reputation-and-world-flag-life | world_state_a | in_progress | Implementing quest lifecycle transitions, faction reputation state, and world-flag persistence plumbing. |
 | WLD-09 | codex/feat/wld-09-build-multi-encounter-adventuring-day-persistence | world_state_b | pr_open | Multi-encounter adventuring-day persistence and deterministic recovery flow are in PR review. |
@@ -53,6 +54,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 |---|---|---|---|---|
 | WLD-03 | [#127](https://github.com/rputnam0/dnd_sim/pull/127) | world_explore_a | pending | WLD-03 exploration turn structure, time advancement, and light tracking changes are in PR review. |
 | WLD-06 | [#141](https://github.com/rputnam0/dnd_sim/pull/141) | world_economy_a | pending | WLD-06 economy/loot/vendor inventory and pricing model changes are in PR review. |
+| WLD-07 | [#147](https://github.com/rputnam0/dnd_sim/pull/147) | world_economy_b | pending | WLD-07 crafting, downtime, encumbrance, and service action changes are in PR review. |
 | WLD-09 | [#133](https://github.com/rputnam0/dnd_sim/pull/133) | world_state_b | pending | WLD-09 campaign runtime persistence and recovery flow changes are in PR review. |
 | WLD-11 | [#143](https://github.com/rputnam0/dnd_sim/pull/143) | world_schema_a | pending | WLD-11 global content ID hard-cut schema/import and migration updates are in PR review. |
 
@@ -65,6 +67,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 - `WLD-02` is active and depends on `WLD-01` per `backlog.csv`.
 - `WLD-03` is in PR review and depends on `DBS-04` per `backlog.csv`.
 - `WLD-06` is in PR review and depends on `DBS-04` per `backlog.csv`.
+- `WLD-07` is in PR review and depends on `WLD-06` and `WLD-02` per `backlog.csv`.
 - `WLD-04` is active and depends on `WLD-03` and `WLD-01` per `backlog.csv`.
 - `WLD-08` is active and depends on `DBS-05` per `backlog.csv`.
 - `WLD-09` is in PR review and depends on `WLD-03`, `DBS-04`, and `DBS-05` per `backlog.csv`.
