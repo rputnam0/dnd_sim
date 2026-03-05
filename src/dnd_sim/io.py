@@ -7,9 +7,9 @@ import re
 from functools import lru_cache
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Any
 
-from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
+from pydantic import ValidationError
 
 from dnd_sim.capability_manifest import (
     CapabilityRecord,
@@ -21,7 +21,6 @@ from dnd_sim.spells import (
     DuplicatePolicy as SpellDuplicatePolicy,
     canonicalize_spell_payload,
     load_spell_database as _load_spell_database,
-    lookup_spell_definition as _lookup_spell_definition,
     spell_lookup_key,
 )
 from dnd_sim.characters import (
@@ -55,6 +54,7 @@ from dnd_sim.io_models import (
     SummonEffectConfig,
     TempHPEffectConfig,
     TransformEffectConfig,
+    _spell_root_dir as _canonical_spell_root_dir,
 )
 from dnd_sim.io_runtime import (
     build_run_dir,
@@ -586,7 +586,8 @@ def _normalize_character_content_references(
 
 
 def _spell_root_dir() -> Path:
-    return Path(__file__).resolve().parents[2] / "db" / "rules" / "2014" / "spells"
+    # Canonical spell-root path lives in io_models to avoid duplicate definitions.
+    return _canonical_spell_root_dir()
 
 
 @lru_cache(maxsize=1)
@@ -979,4 +980,3 @@ def load_spell_db(
             default_source_book=_DEFAULT_RULES_SOURCE_BOOK,
         )
     return normalized_records
-
