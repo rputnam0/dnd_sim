@@ -94,7 +94,7 @@ def _unsupported_reason_or_issue(
 
 
 def verify_manifest_payload(
-    payload: Mapping[str, Any], *, expected_content_ids: Sequence[str]
+    payload: Mapping[str, Any], *, expected_content_ids: Sequence[str], strict: bool = False
 ) -> list[CapabilityIssue]:
     issues: list[CapabilityIssue] = []
 
@@ -289,6 +289,29 @@ def verify_manifest_payload(
                 )
             )
 
+        if strict:
+            strict_violations: list[str] = []
+            if blocked:
+                strict_violations.append("blocked=true")
+            if not executable:
+                strict_violations.append("executable=false")
+            if not tested:
+                strict_violations.append("tested=false")
+            if unsupported_reason is not None:
+                strict_violations.append("unsupported_reason must be null")
+            if strict_violations:
+                issues.append(
+                    CapabilityIssue(
+                        code="CAP-GATE-011",
+                        message=(
+                            "strict mode requires fully green shipped records "
+                            "(cataloged/schema_valid/executable/tested and unblocked): "
+                            + ", ".join(strict_violations)
+                        ),
+                        content_id=content_id,
+                    )
+                )
+
     missing_ids = sorted(expected_set - seen_ids)
     if missing_ids:
         preview = ", ".join(missing_ids[:5])
@@ -311,6 +334,7 @@ def verify_completion_capabilities(
     *,
     manifest_path: Path | None = None,
     expected_content_ids: Iterable[str] | None = None,
+    strict: bool = False,
 ) -> list[CapabilityIssue]:
     manifest = manifest_path or (repo_root / DEFAULT_MANIFEST_PATH)
     if not manifest.exists():
@@ -327,7 +351,7 @@ def verify_completion_capabilities(
         return [CapabilityIssue(code="CAP-GATE-002", message=str(exc))]
 
     expected_ids = tuple(expected_content_ids or discover_shipped_2014_content_ids(repo_root))
-    return verify_manifest_payload(payload, expected_content_ids=expected_ids)
+    return verify_manifest_payload(payload, expected_content_ids=expected_ids, strict=strict)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -349,11 +373,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="Optional explicit path to manifest JSON file.",
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help=(
+            "Enable strict FIN-02 mode: every shipped record must be executable+tested and "
+            "must not remain blocked."
+        ),
+    )
     args = parser.parse_args(argv)
 
     issues = verify_completion_capabilities(
         args.repo_root,
         manifest_path=args.manifest_path,
+        strict=args.strict,
     )
     if issues:
         for issue in issues:
