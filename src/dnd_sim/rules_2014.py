@@ -244,6 +244,14 @@ class DeathSaveResult:
     regained_consciousness: bool
 
 
+@dataclass(frozen=True, slots=True)
+class PowerAttackToggleState:
+    active: bool
+    to_hit_modifier: int = 0
+    damage_bonus: int = 0
+    reason: str | None = None
+
+
 @dataclass(slots=True)
 class DamageRollResult:
     rolled: int
@@ -540,6 +548,83 @@ def _shield_master_active(actor: ActorRuntimeState) -> bool:
     if actor.conditions.intersection(_SHIELD_MASTER_INCAPACITATING_CONDITIONS):
         return False
     return True
+
+
+def _action_weapon_properties(action: ActionDefinition) -> set[str]:
+    props = {str(prop).strip().lower() for prop in action.weapon_properties if str(prop).strip()}
+    props.update({str(tag).strip().lower() for tag in action.tags if str(tag).strip()})
+    return props
+
+
+def _action_is_ranged_weapon_attack(action: ActionDefinition) -> bool:
+    properties = _action_weapon_properties(action)
+    if properties.intersection({"ammunition", "thrown", "ranged"}):
+        return True
+    for range_value in (action.range_long_ft, action.range_normal_ft, action.range_ft):
+        if range_value is None:
+            continue
+        try:
+            if int(range_value) > 5:
+                return True
+        except (TypeError, ValueError):
+            continue
+    return False
+
+
+def _toggle_action_legality_reason(action: ActionDefinition) -> str | None:
+    if action.action_type != "attack":
+        return "non_attack_action"
+    if action.to_hit is None:
+        return "missing_to_hit"
+    return None
+
+
+def _inactive_power_attack_state(reason: str) -> PowerAttackToggleState:
+    return PowerAttackToggleState(
+        active=False,
+        to_hit_modifier=0,
+        damage_bonus=0,
+        reason=reason,
+    )
+
+
+def great_weapon_master_toggle_state(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    enabled: bool,
+) -> PowerAttackToggleState:
+    if not enabled:
+        return _inactive_power_attack_state("toggle_disabled")
+    if not _has_trait(actor, "great weapon master"):
+        return _inactive_power_attack_state("missing_trait")
+    legality_reason = _toggle_action_legality_reason(action)
+    if legality_reason is not None:
+        return _inactive_power_attack_state(legality_reason)
+    properties = _action_weapon_properties(action)
+    if "heavy" not in properties:
+        return _inactive_power_attack_state("weapon_not_heavy")
+    if _action_is_ranged_weapon_attack(action):
+        return _inactive_power_attack_state("weapon_not_melee")
+    return PowerAttackToggleState(active=True, to_hit_modifier=-5, damage_bonus=10, reason=None)
+
+
+def sharpshooter_toggle_state(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    enabled: bool,
+) -> PowerAttackToggleState:
+    if not enabled:
+        return _inactive_power_attack_state("toggle_disabled")
+    if not _has_trait(actor, "sharpshooter"):
+        return _inactive_power_attack_state("missing_trait")
+    legality_reason = _toggle_action_legality_reason(action)
+    if legality_reason is not None:
+        return _inactive_power_attack_state(legality_reason)
+    if not _action_is_ranged_weapon_attack(action):
+        return _inactive_power_attack_state("weapon_not_ranged")
+    return PowerAttackToggleState(active=True, to_hit_modifier=-5, damage_bonus=10, reason=None)
 
 
 def _shield_bonus_from_equipped_items(actor: ActorRuntimeState) -> int:
