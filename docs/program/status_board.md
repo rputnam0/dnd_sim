@@ -27,7 +27,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
-| AI | Tactical AI Hardening | pr_open | 5F-ai-hardening | `AI-01`, `AI-02`, `AI-03`, and `AI-04` are `pr_open` in `backlog.csv`; remaining AI tasks are `not_started`. |
+| AI | Tactical AI Hardening | pr_open | 5F-ai-hardening | `AI-01`, `AI-02`, `AI-03`, `AI-04`, and `AI-05` are `pr_open`; remaining AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
@@ -40,6 +40,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | AI-03 | `codex/feat/ai-03-implement-concentration-breaking-control-value-and` | ai_control | pr_open | Concentration-break, condition-application, and enemy action-denial scoring components are in PR review for AI-03. |
 | AI-04 | `codex/feat/ai-04-implement-retreat-survival-objective-race-and-focu` | ai_objective | pr_open | Retreat/survival, objective-race urgency, ally-rescue valuation, and focus-fire tradeoff scoring are implemented and under review. |
 | AI-02 | `codex/feat/ai-02-implement-hazard-geometry-cover-and-line-of-effect` | ai_spatial | pr_open | Implements hazard/geometry/cover/line-of-effect candidate scoring in `src/dnd_sim/ai/scoring.py` with path risk support in `src/dnd_sim/spatial.py` and dedicated tests. |
+| AI-05 | `codex/feat/ai-05-implement-recharge-legendary-reaction-bait-and-lim` | ai_timing | pr_open | Adds timing heuristics for recharge readiness, legendary windows, reaction baiting, and limited-resource spend timing in AI candidate scoring. |
 
 ## Open PRs
 
@@ -49,11 +50,11 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | AI-03 | [#122](https://github.com/rputnam0/dnd_sim/pull/122) | ai_control | pending | Adds concentration-break, control-value, condition-application, and enemy action-denial scoring with focused deterministic tests. |
 | AI-04 | [#119](https://github.com/rputnam0/dnd_sim/pull/119) | ai_objective | pending | Adds survival-threshold, retreat timing, objective-race, ally-rescue, and focus-fire tradeoff scoring snapshots for legal candidates. |
 | AI-02 | [#120](https://github.com/rputnam0/dnd_sim/pull/120) | ai_spatial | pending | Hazard/geometry/cover/line-of-effect scoring and route hazard exposure are under review for merge into `int/5f-ai-hardening`. |
+| AI-05 | [#128](https://github.com/rputnam0/dnd_sim/pull/128) | ai_timing | pending | Recharge, legendary-window, reaction-bait, and limited-resource timing heuristics are under review for merge into `int/5f-ai-hardening`. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
-- No active DOC blockers remain; AI-01, AI-02, AI-03, and AI-04 are in PR review while remaining queues are unchanged.
-- `AI-03` is in PR review and depends on `AI-01` and `ARC-05` per `backlog.csv`.
+- No active DOC blockers remain; AI-01, AI-02, AI-03, AI-04, and AI-05 are in PR review while remaining queues are unchanged.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
