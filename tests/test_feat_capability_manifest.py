@@ -86,6 +86,30 @@ def test_feature_manifest_sets_explicit_reason_for_unsupported_feature() -> None
     assert record.states.unsupported_reason == "missing_runtime_hook_family"
 
 
+def test_trait_hook_shard_a_traits_are_classified_with_canonical_hook_families() -> None:
+    covered_trait_ids = {
+        "trait:dark_one_s_blessing": "effect",
+        "trait:ever_ready_shot": "effect",
+        "trait:expertise": "meta",
+        "trait:magical_ambush": "meta",
+        "trait:precise_hunter": "meta",
+        "trait:steady_eye": "meta",
+        "trait:tool_expertise": "meta",
+        "trait:uncanny_dodge": "effect",
+    }
+
+    manifest = build_feature_capability_manifest()
+    records = {record.content_id: record for record in manifest.records}
+
+    assert covered_trait_ids.keys() <= records.keys()
+    for trait_id, expected_family in covered_trait_ids.items():
+        record = records[trait_id]
+        assert record.support_state == "supported"
+        assert record.runtime_hook_family == expected_family
+        assert record.states.blocked is False
+        assert record.states.unsupported_reason is None
+
+
 def test_background_shard_a_features_have_runtime_hook_family_support() -> None:
     manifest = build_feature_capability_manifest(feature_payloads=load_feature_payloads())
     by_content_id = {record.content_id: record for record in manifest.records}

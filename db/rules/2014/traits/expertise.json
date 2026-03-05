@@ -3,6 +3,8 @@
   "description": "At 3rd level, choose two of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies. At 10th level, you can choose another two skill proficiencies to gain this benefit.",
   "mechanics": [
     {
+      "meta_type": "skill_expertise",
+      "multiplier": 2,
       "effect": "double_proficiency_bonus",
       "target": "skill_checks",
       "condition": "uses_chosen_proficiency"
