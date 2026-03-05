@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 
 import dnd_sim.db as db_module
+import pytest
 from dnd_sim.persistence import (
     load_faction_snapshot,
     load_world_snapshot,
@@ -227,3 +228,68 @@ def test_faction_state_round_trip_preserves_reputation_and_state() -> None:
     }
     assert loaded["faction_state"]["disposition"] == "allied"
     assert loaded["faction_id"] == "iron_council"
+
+
+def test_load_world_snapshot_rejects_corrupt_json_payload() -> None:
+    with _memory_connection() as conn:
+        db_module.create_campaign_state_tables(conn)
+        save_campaign_snapshot(conn, campaign_id="campaign_delta", snapshot=_campaign_snapshot())
+        save_world_snapshot(
+            conn,
+            campaign_id="campaign_delta",
+            snapshot={
+                "world_flags": {"mist_active": True},
+                "objectives": {"escape": {"status": "active"}},
+                "map_state": {"region": "crypt"},
+                "encounter_state": {"current_wave": 1},
+            },
+        )
+        conn.execute(
+            "UPDATE world_states SET objectives_json = ? WHERE campaign_id = ?",
+            ("not-json", "campaign_delta"),
+        )
+        conn.commit()
+
+        with pytest.raises(ValueError, match="objectives_json"):
+            load_world_snapshot(conn, campaign_id="campaign_delta")
+
+
+def test_load_faction_snapshot_rejects_hash_mismatch_corruption() -> None:
+    with _memory_connection() as conn:
+        db_module.create_campaign_state_tables(conn)
+        save_campaign_snapshot(conn, campaign_id="campaign_epsilon", snapshot=_campaign_snapshot())
+        save_world_snapshot(
+            conn,
+            campaign_id="campaign_epsilon",
+            snapshot={
+                "world_flags": {"city_alert": True},
+                "objectives": {"hold_gate": {"status": "active"}},
+                "map_state": {"district": "wall"},
+                "encounter_state": {"current_wave": 2},
+            },
+        )
+        save_faction_snapshot(
+            conn,
+            campaign_id="campaign_epsilon",
+            faction_id="emerald_circle",
+            snapshot={
+                "reputation": {"party_alpha": 4},
+                "faction_state": {"disposition": "neutral"},
+            },
+        )
+        conn.execute(
+            """
+            UPDATE faction_states
+            SET snapshot_hash = ?
+            WHERE campaign_id = ? AND faction_id = ?
+            """,
+            ("sha256:deadbeef", "campaign_epsilon", "emerald_circle"),
+        )
+        conn.commit()
+
+        with pytest.raises(ValueError, match="snapshot hash mismatch"):
+            load_faction_snapshot(
+                conn,
+                campaign_id="campaign_epsilon",
+                faction_id="emerald_circle",
+            )
