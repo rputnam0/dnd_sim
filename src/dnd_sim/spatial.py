@@ -243,6 +243,28 @@ def _coerce_radius(hazard: dict[str, Any], default: float = 15.0) -> float:
         return float(default)
 
 
+def _coerce_hazard_weight(hazard: dict[str, Any], default: float = 1.0) -> float:
+    for key in ("severity", "weight", "risk", "damage_per_round", "damage"):
+        raw = hazard.get(key)
+        if raw is None:
+            continue
+        try:
+            parsed = float(raw)
+        except (TypeError, ValueError):
+            continue
+        if parsed > 0:
+            return parsed
+    return float(default)
+
+
+def _hazard_has_spatial_bounds(hazard: dict[str, Any]) -> bool:
+    has_position = isinstance(hazard.get("position"), (list, tuple))
+    has_box = isinstance(hazard.get("min_pos") or hazard.get("min"), (list, tuple)) and isinstance(
+        hazard.get("max_pos") or hazard.get("max"), (list, tuple)
+    )
+    return has_position or has_box
+
+
 def _hazard_contains_position(hazard: dict[str, Any], pos: Position) -> bool:
     min_pos = _coerce_position(hazard.get("min_pos") or hazard.get("min"), default=pos)
     max_pos = _coerce_position(hazard.get("max_pos") or hazard.get("max"), default=pos)
@@ -435,6 +457,7 @@ def check_cover(pos1: Position, pos2: Position, obstacles: list[AABB] | None = N
                 highest_cover = obs.cover_level
 
     return highest_cover
+
 
 Cell = tuple[int, int, int]
 
@@ -692,6 +715,7 @@ def find_path(
     path.append(target)
     return path
 
+
 def path_movement_cost(
     path: list[Position],
     difficult_terrain_positions: list[Position] | None = None,
@@ -749,6 +773,59 @@ def path_prefix_for_movement(
             prefix.append(waypoint)
 
     return prefix
+
+
+def path_hazard_exposure(
+    path: list[Position],
+    hazards: list[dict[str, Any]] | None = None,
+) -> float:
+    """
+    Returns a deterministic aggregate risk score for hazards intersecting `path`.
+    Each intersected hazard contributes its configured severity/weight once.
+    """
+    if not path or not hazards:
+        return 0.0
+
+    total = 0.0
+    for hazard in hazards:
+        if not isinstance(hazard, dict):
+            continue
+        if not _hazard_has_spatial_bounds(hazard):
+            continue
+        weight = _coerce_hazard_weight(hazard)
+        if weight <= 0:
+            continue
+        if _path_intersects_hazard(path, hazard):
+            total += weight
+    return total
+
+
+def _path_intersects_hazard(path: list[Position], hazard: dict[str, Any]) -> bool:
+    if len(path) == 1:
+        return _hazard_contains_position(hazard, path[0])
+
+    for start, end in zip(path, path[1:]):
+        if _segment_intersects_hazard(start, end, hazard):
+            return True
+    return False
+
+
+def _segment_intersects_hazard(start: Position, end: Position, hazard: dict[str, Any]) -> bool:
+    segment_length = distance_euclidean(start, end)
+    if segment_length <= 1e-9:
+        return _hazard_contains_position(hazard, start)
+
+    steps = max(1, int(math.ceil(segment_length / _CELL_SIZE_FT)))
+    for step in range(steps + 1):
+        ratio = float(step) / float(steps)
+        sample = (
+            start[0] + (end[0] - start[0]) * ratio,
+            start[1] + (end[1] - start[1]) * ratio,
+            start[2] + (end[2] - start[2]) * ratio,
+        )
+        if _hazard_contains_position(hazard, sample):
+            return True
+    return False
 
 
 def _cell_heuristic(cell: Cell, target_cell: Cell) -> float:

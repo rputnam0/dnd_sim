@@ -4,7 +4,15 @@ from dataclasses import dataclass
 from itertools import combinations
 from typing import Any, Iterable
 
-from dnd_sim.spatial import distance_chebyshev
+from dnd_sim.spatial import (
+    AABB,
+    check_cover,
+    distance_chebyshev,
+    find_path,
+    path_hazard_exposure,
+    path_movement_cost,
+    path_prefix_for_movement,
+)
 from dnd_sim.strategy_api import ActorView, BattleStateView
 
 _EXPLICIT_TARGET_MODES = {
@@ -78,9 +86,21 @@ class ResourceScoringInputs:
 
 
 @dataclass(frozen=True, slots=True)
+class SpatialScoringInputs:
+    route_quality_score: float
+    geometry_score: float
+    cover_level: str
+    cover_penalty: float
+    line_of_effect_clear: bool
+    line_of_effect_penalty: float
+    friendly_fire_penalty: float
+
+
+@dataclass(frozen=True, slots=True)
 class CandidateScoringInputs:
     range: RangeScoringInputs
     hazard: HazardScoringInputs
+    spatial: SpatialScoringInputs
     concentration: ConcentrationScoringInputs
     control: ControlScoringInputs
     objective: ObjectiveScoringInputs
@@ -95,6 +115,21 @@ class ActionCandidate:
     target_mode: str
     target_ids: tuple[str, ...]
     scoring_inputs: CandidateScoringInputs
+
+
+@dataclass(frozen=True, slots=True)
+class _AreaProfile:
+    affected_count: int
+    enemy_count: int
+    ally_count: int
+
+
+_COVER_PENALTIES = {
+    "NONE": 0.0,
+    "HALF": 0.5,
+    "THREE_QUARTERS": 1.0,
+    "TOTAL": 2.0,
+}
 
 
 def _action_catalog_for_actor(actor: ActorView, state: BattleStateView) -> list[dict[str, Any]]:
@@ -529,38 +564,81 @@ def _iter_effect_payloads(action: dict[str, Any]) -> Iterable[dict[str, Any]]:
                 yield entry
 
 
-def _hazard_inputs(
+def _coerce_position(value: Any) -> tuple[float, float, float] | None:
+    if not isinstance(value, (list, tuple)) or len(value) != 3:
+        return None
+    try:
+        return (float(value[0]), float(value[1]), float(value[2]))
+    except (TypeError, ValueError):
+        return None
+
+
+def _obstacles_from_state(state: BattleStateView) -> list[AABB]:
+    raw = state.metadata.get("obstacles", [])
+    if not isinstance(raw, list):
+        return []
+
+    rows: list[AABB] = []
+    for entry in raw:
+        if isinstance(entry, AABB):
+            rows.append(entry)
+            continue
+        if not isinstance(entry, dict):
+            continue
+        min_pos = _coerce_position(entry.get("min_pos") or entry.get("min"))
+        max_pos = _coerce_position(entry.get("max_pos") or entry.get("max"))
+        if min_pos is None or max_pos is None:
+            continue
+        cover_level = str(entry.get("cover_level", "TOTAL")).strip().upper()
+        if cover_level not in _COVER_PENALTIES:
+            cover_level = "TOTAL"
+        rows.append(AABB(min_pos=min_pos, max_pos=max_pos, cover_level=cover_level))
+    return rows
+
+
+def _difficult_terrain_positions(state: BattleStateView) -> list[tuple[float, float, float]]:
+    raw = state.metadata.get("difficult_terrain_positions", [])
+    if not isinstance(raw, list):
+        return []
+    rows: list[tuple[float, float, float]] = []
+    for entry in raw:
+        pos = _coerce_position(entry)
+        if pos is not None:
+            rows.append(pos)
+    return rows
+
+
+def _movement_path_to_primary(
+    actor: ActorView,
+    *,
+    primary_target: ActorView | None,
+    obstacles: list[AABB],
+    difficult_terrain_positions: list[tuple[float, float, float]],
+) -> list[tuple[float, float, float]]:
+    if primary_target is None:
+        return []
+    return find_path(
+        actor.position,
+        primary_target.position,
+        obstacles=obstacles,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+
+
+def _area_profile(
     actor: ActorView,
     state: BattleStateView,
     *,
     action: dict[str, Any],
     primary_target: ActorView | None,
     target_ids: tuple[str, ...],
-) -> HazardScoringInputs:
-    active_hazards = state.metadata.get("active_hazards", [])
-    active_hazard_count = len(active_hazards) if isinstance(active_hazards, list) else 0
-
-    exposure_map = state.metadata.get("hazard_exposure_by_actor", {})
-    if not isinstance(exposure_map, dict):
-        exposure_map = {}
-    hazard_exposure_score = float(
-        sum(float(exposure_map.get(target_id, 0.0)) for target_id in target_ids)
-    )
-
-    estimated_affected_count = len(target_ids)
-    friendly_fire_risk = any(
-        target_id != actor.actor_id
-        and target_id in state.actors
-        and state.actors[target_id].team == actor.team
-        for target_id in target_ids
-    )
-
+) -> _AreaProfile:
     aoe_radius = _coerce_positive_float(action.get("aoe_size_ft"))
     aoe_type = str(action.get("aoe_type", "")).strip().lower()
     include_self = bool(action.get("include_self", False))
+
+    affected: list[ActorView] = []
     if aoe_type and aoe_radius is not None and primary_target is not None:
-        estimated_affected_count = 0
-        friendly_fire_risk = False
         for candidate in state.actors.values():
             if candidate.hp <= 0:
                 continue
@@ -568,15 +646,195 @@ def _hazard_inputs(
                 continue
             if distance_chebyshev(primary_target.position, candidate.position) > aoe_radius:
                 continue
-            estimated_affected_count += 1
-            if candidate.actor_id != actor.actor_id and candidate.team == actor.team:
-                friendly_fire_risk = True
+            affected.append(candidate)
+    else:
+        for target_id in target_ids:
+            candidate = state.actors.get(target_id)
+            if candidate is None or candidate.hp <= 0:
+                continue
+            affected.append(candidate)
+
+    enemy_count = sum(1 for candidate in affected if candidate.team != actor.team)
+    ally_count = sum(
+        1
+        for candidate in affected
+        if candidate.team == actor.team and candidate.actor_id != actor.actor_id
+    )
+    return _AreaProfile(
+        affected_count=len(affected),
+        enemy_count=enemy_count,
+        ally_count=ally_count,
+    )
+
+
+def _action_requires_line_of_effect(action: dict[str, Any]) -> bool:
+    if str(action.get("target_mode", "single_enemy")) == "self":
+        return False
+    tags = {str(tag).strip().lower() for tag in action.get("tags", [])}
+    if "ignore_line_of_effect" in tags or "ignore_total_cover" in tags:
+        return False
+    if "ignores_line_of_effect" in tags:
+        return False
+    if "requires_line_of_effect" in tags:
+        return True
+    action_type = str(action.get("action_type", "")).strip().lower()
+    if action_type in {"attack", "save", "grapple", "shove"}:
+        return True
+    if "spell" in tags:
+        return True
+    for payload in _iter_effect_payloads(action):
+        effect_type = str(payload.get("effect_type", "")).strip().lower()
+        if effect_type in {"damage", "apply_condition", "forced_movement"}:
+            return True
+    return False
+
+
+def _route_quality_score(
+    actor: ActorView,
+    *,
+    action: dict[str, Any],
+    primary_target: ActorView | None,
+    movement_path: list[tuple[float, float, float]],
+    difficult_terrain_positions: list[tuple[float, float, float]],
+) -> float:
+    if primary_target is None:
+        return 1.0
+
+    action_range_ft = _action_range_ft(action)
+    distance_to_primary = float(distance_chebyshev(actor.position, primary_target.position))
+    if distance_to_primary <= action_range_ft:
+        return 1.0
+    if len(movement_path) < 2:
+        return 0.0
+
+    movement_needed = max(0.0, distance_to_primary - action_range_ft)
+    movement_budget = max(0.0, float(actor.movement_remaining))
+    effective_movement_cost = _movement_cost_to_get_within_range(
+        movement_path,
+        target_position=primary_target.position,
+        action_range_ft=action_range_ft,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    if effective_movement_cost <= 0.0:
+        return 0.0
+
+    budget_factor = min(1.0, movement_budget / max(movement_needed, 1.0))
+    detour_factor = min(1.0, movement_needed / max(effective_movement_cost, movement_needed))
+    return max(0.0, min(1.0, budget_factor * detour_factor))
+
+
+def _cover_penalty(cover_level: str) -> float:
+    return _COVER_PENALTIES.get(cover_level, _COVER_PENALTIES["TOTAL"])
+
+
+def _effective_origin_for_action(
+    actor: ActorView,
+    *,
+    action: dict[str, Any],
+    primary_target: ActorView | None,
+    movement_path: list[tuple[float, float, float]],
+    difficult_terrain_positions: list[tuple[float, float, float]],
+) -> tuple[float, float, float]:
+    if primary_target is None or len(movement_path) < 2:
+        return actor.position
+
+    action_range_ft = _action_range_ft(action)
+    movement_needed = max(
+        0.0,
+        float(distance_chebyshev(actor.position, primary_target.position)) - action_range_ft,
+    )
+    if movement_needed <= 0.0:
+        return actor.position
+
+    effective_cost = _movement_cost_to_get_within_range(
+        movement_path,
+        target_position=primary_target.position,
+        action_range_ft=action_range_ft,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    movement_budget_ft = min(float(actor.movement_remaining), effective_cost)
+    if movement_budget_ft <= 0.0:
+        return actor.position
+
+    movement_prefix = path_prefix_for_movement(
+        movement_path,
+        movement_budget_ft=movement_budget_ft,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    if not movement_prefix:
+        return actor.position
+    return movement_prefix[-1]
+
+
+def _movement_cost_to_get_within_range(
+    movement_path: list[tuple[float, float, float]],
+    *,
+    target_position: tuple[float, float, float],
+    action_range_ft: float,
+    difficult_terrain_positions: list[tuple[float, float, float]],
+) -> float:
+    if len(movement_path) < 2:
+        return 0.0
+
+    if distance_chebyshev(movement_path[0], target_position) <= action_range_ft:
+        return 0.0
+
+    full_path_cost = path_movement_cost(
+        movement_path,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    expanded_path = path_prefix_for_movement(
+        movement_path,
+        movement_budget_ft=full_path_cost,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+
+    spent = 0.0
+    previous = expanded_path[0]
+    for current in expanded_path[1:]:
+        spent += path_movement_cost(
+            [previous, current],
+            difficult_terrain_positions=difficult_terrain_positions,
+        )
+        if distance_chebyshev(current, target_position) <= action_range_ft:
+            return spent
+        previous = current
+
+    return full_path_cost
+
+
+def _hazard_inputs(
+    actor: ActorView,
+    state: BattleStateView,
+    *,
+    action: dict[str, Any],
+    primary_target: ActorView | None,
+    target_ids: tuple[str, ...],
+    area_profile: _AreaProfile,
+    movement_path: list[tuple[float, float, float]],
+) -> HazardScoringInputs:
+    active_hazards_raw = state.metadata.get("active_hazards", [])
+    active_hazards = (
+        [entry for entry in active_hazards_raw if isinstance(entry, dict)]
+        if isinstance(active_hazards_raw, list)
+        else []
+    )
+    active_hazard_count = len(active_hazards)
+
+    exposure_map = state.metadata.get("hazard_exposure_by_actor", {})
+    if not isinstance(exposure_map, dict):
+        exposure_map = {}
+    target_exposure = float(
+        sum(float(exposure_map.get(target_id, 0.0)) for target_id in target_ids)
+    )
+    route_exposure = path_hazard_exposure(movement_path, active_hazards)
+    hazard_exposure_score = target_exposure + route_exposure
 
     return HazardScoringInputs(
         active_hazard_count=active_hazard_count,
         hazard_exposure_score=hazard_exposure_score,
-        estimated_affected_count=estimated_affected_count,
-        friendly_fire_risk=friendly_fire_risk,
+        estimated_affected_count=area_profile.affected_count,
+        friendly_fire_risk=area_profile.ally_count > 0,
     )
 
 
@@ -623,6 +881,55 @@ def _concentration_inputs(
     )
 
 
+def _spatial_inputs(
+    actor: ActorView,
+    *,
+    action: dict[str, Any],
+    primary_target: ActorView | None,
+    area_profile: _AreaProfile,
+    movement_path: list[tuple[float, float, float]],
+    obstacles: list[AABB],
+    difficult_terrain_positions: list[tuple[float, float, float]],
+) -> SpatialScoringInputs:
+    route_quality_score = _route_quality_score(
+        actor,
+        action=action,
+        primary_target=primary_target,
+        movement_path=movement_path,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    geometry_score = float(area_profile.enemy_count - area_profile.ally_count)
+    friendly_fire_penalty = float(area_profile.ally_count * 2)
+
+    cover_level = "NONE"
+    cover_penalty = 0.0
+    line_of_effect_clear = True
+    line_of_effect_penalty = 0.0
+    effective_origin = _effective_origin_for_action(
+        actor,
+        action=action,
+        primary_target=primary_target,
+        movement_path=movement_path,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    if primary_target is not None and obstacles:
+        cover_level = check_cover(effective_origin, primary_target.position, obstacles)
+        cover_penalty = _cover_penalty(cover_level)
+        if _action_requires_line_of_effect(action) and cover_level == "TOTAL":
+            line_of_effect_clear = False
+            line_of_effect_penalty = 5.0
+
+    return SpatialScoringInputs(
+        route_quality_score=route_quality_score,
+        geometry_score=geometry_score,
+        cover_level=cover_level,
+        cover_penalty=cover_penalty,
+        line_of_effect_clear=line_of_effect_clear,
+        line_of_effect_penalty=line_of_effect_penalty,
+        friendly_fire_penalty=friendly_fire_penalty,
+    )
+
+
 def _build_scoring_inputs(
     actor: ActorView,
     state: BattleStateView,
@@ -632,6 +939,21 @@ def _build_scoring_inputs(
 ) -> CandidateScoringInputs:
     primary_target = state.actors.get(target_ids[0]) if target_ids else None
     objective_score = _objective_score(action, state)
+    obstacles = _obstacles_from_state(state)
+    difficult_terrain_positions = _difficult_terrain_positions(state)
+    movement_path = _movement_path_to_primary(
+        actor,
+        primary_target=primary_target,
+        obstacles=obstacles,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    area_profile = _area_profile(
+        actor,
+        state,
+        action=action,
+        primary_target=primary_target,
+        target_ids=target_ids,
+    )
     return CandidateScoringInputs(
         range=_range_inputs(actor, action=action, primary_target=primary_target),
         hazard=_hazard_inputs(
@@ -640,6 +962,17 @@ def _build_scoring_inputs(
             action=action,
             primary_target=primary_target,
             target_ids=target_ids,
+            area_profile=area_profile,
+            movement_path=movement_path,
+        ),
+        spatial=_spatial_inputs(
+            actor,
+            action=action,
+            primary_target=primary_target,
+            area_profile=area_profile,
+            movement_path=movement_path,
+            obstacles=obstacles,
+            difficult_terrain_positions=difficult_terrain_positions,
         ),
         concentration=_concentration_inputs(actor, action=action),
         control=_control_inputs(action),
@@ -728,6 +1061,15 @@ def candidate_snapshots(candidates: list[ActionCandidate]) -> list[dict[str, Any
                     "hazard_exposure_score": row.scoring_inputs.hazard.hazard_exposure_score,
                     "estimated_affected_count": row.scoring_inputs.hazard.estimated_affected_count,
                     "friendly_fire_risk": row.scoring_inputs.hazard.friendly_fire_risk,
+                },
+                "spatial": {
+                    "route_quality_score": row.scoring_inputs.spatial.route_quality_score,
+                    "geometry_score": row.scoring_inputs.spatial.geometry_score,
+                    "cover_level": row.scoring_inputs.spatial.cover_level,
+                    "cover_penalty": row.scoring_inputs.spatial.cover_penalty,
+                    "line_of_effect_clear": row.scoring_inputs.spatial.line_of_effect_clear,
+                    "line_of_effect_penalty": row.scoring_inputs.spatial.line_of_effect_penalty,
+                    "friendly_fire_penalty": row.scoring_inputs.spatial.friendly_fire_penalty,
                 },
                 "concentration": {
                     "actor_concentrating": row.scoring_inputs.concentration.actor_concentrating,
