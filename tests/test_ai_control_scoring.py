@@ -172,6 +172,8 @@ def test_missing_apply_condition_payload_does_not_create_phantom_condition_value
     assert glitch["control"]["applied_condition_count"] == 1
     assert glitch["control"]["condition_application_value"] == 0.0
     assert glitch["control"]["enemy_action_denial_score"] == 0.0
+    assert glitch["control"]["concentration_break_score"] == 0.0
+    assert glitch["control"]["control_value_score"] == glitch["control"]["control_intensity"]
 
 
 def test_enemy_action_denial_scoring_prioritizes_hard_cc_over_reaction_lock() -> None:
