@@ -1,0 +1,76 @@
+{
+  "case_id": "world_state_lifecycle",
+  "expected_replay": {
+    "factions": {
+      "river_guild": {
+        "reputation": 40,
+        "standing": "friendly"
+      }
+    },
+    "quests": {
+      "guild_charter": {
+        "objective_flags": {
+          "deliver_writ": true,
+          "meet_steward": true
+        },
+        "stage_id": "briefing",
+        "status": "completed"
+      }
+    },
+    "turn_index": 5,
+    "world_flags": {
+      "bridge_repaired": "resolved"
+    }
+  },
+  "initial_state": {
+    "factions": {
+      "river_guild": {
+        "reputation": 10
+      }
+    },
+    "quests": {
+      "guild_charter": {
+        "objective_flags": {},
+        "stage_id": "briefing",
+        "status": "not_started"
+      }
+    },
+    "turn_index": 0,
+    "world_flags": {}
+  },
+  "mode": "world_state",
+  "performance_baseline_ms": 50.0,
+  "steps": [
+    {
+      "flag_id": "bridge_repaired",
+      "kind": "world_flag",
+      "to_status": "active"
+    },
+    {
+      "flag_id": "bridge_repaired",
+      "kind": "world_flag",
+      "to_status": "resolved"
+    },
+    {
+      "kind": "quest",
+      "objective_updates": {
+        "meet_steward": true
+      },
+      "quest_id": "guild_charter",
+      "to_status": "active"
+    },
+    {
+      "kind": "quest",
+      "objective_updates": {
+        "deliver_writ": true
+      },
+      "quest_id": "guild_charter",
+      "to_status": "completed"
+    },
+    {
+      "delta": 30,
+      "faction_id": "river_guild",
+      "kind": "faction"
+    }
+  ]
+}
