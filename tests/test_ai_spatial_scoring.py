@@ -115,6 +115,25 @@ def test_route_quality_penalizes_detours_and_difficult_terrain() -> None:
     )
 
 
+def test_route_quality_is_one_for_small_move_into_long_range() -> None:
+    actor = _actor_view(actor_id="caster", team="party", position=(0.0, 0.0, 0.0))
+    enemy = _actor_view(actor_id="enemy", team="enemy", position=(65.0, 0.0, 0.0))
+    action = {
+        "name": "long_ray",
+        "action_type": "save",
+        "target_mode": "single_enemy",
+        "action_cost": "action",
+        "range_ft": 60,
+        "resource_cost": {},
+    }
+
+    state = _single_action_state(actor=actor, others=[enemy], action=action)
+    snapshot = candidate_snapshots(enumerate_legal_action_candidates(actor, state))[0]
+
+    assert snapshot["range"]["requires_movement"] is True
+    assert snapshot["spatial"]["route_quality_score"] == pytest.approx(1.0)
+
+
 def test_cover_and_line_of_effect_penalties_are_scored() -> None:
     actor = _actor_view(actor_id="archer", team="party", position=(0.0, 0.0, 0.0))
     enemy = _actor_view(actor_id="enemy", team="enemy", position=(30.0, 0.0, 0.0))
