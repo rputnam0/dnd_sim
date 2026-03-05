@@ -30,12 +30,13 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | AI | Tactical AI Hardening | not_started | 5F-ai-hardening | All AI tasks are `not_started` in `backlog.csv`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
-| FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
+| FIN | Completion Gates | in_progress | 5I-completion-gates | `FIN-01` is `in_progress`; the remaining FIN tasks are `not_started` in `backlog.csv`. |
 
 ## Active branches
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| FIN-01 | codex/feat/fin-01-enforce-program-doc-sync-gate-and-purge-stale-live | integration_doc_gate | in_progress | Enforcing docs sync gate and stale-live-doc purge checks before completion gates proceed. |
 
 ## Open PRs
 
@@ -46,5 +47,6 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
-- No active DOC blockers remain; active branch and open PR queues are cleared.
+- No active DOC blockers remain; Track 5A dependencies are fully merged.
+- `FIN-01` is active to enforce doc sync gating and stale-live-doc absence before downstream FIN tasks.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
