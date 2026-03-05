@@ -36,6 +36,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| ARC-01 | `codex/feat/arc-01-extract-simulation-session-and-turn-loop-orchestra` | runtime_a | in_progress | Extracting session setup, initiative loop, and round progression into `src/dnd_sim/engine_runtime.py` with `engine.py` facade retained. |
 
 ## Open PRs
 
@@ -46,5 +47,5 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
-- No active DOC blockers remain; active branch and open PR queues are cleared.
+- No active DOC blockers remain; ARC-01 runtime decomposition is currently in progress on its assigned branch.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.

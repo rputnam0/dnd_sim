@@ -2,15 +2,15 @@ subsystems:
   simulation_runtime:
     owner_pool: runtime_a
     owner_task: ARC-01
-    owner_module: src/dnd_sim/engine.py
+    owner_module: src/dnd_sim/engine_runtime.py
     invariants:
-      - "run_simulation entrypoint and return shape remain backward compatible."
+      - "run_simulation entrypoint and return shape remain backward compatible via engine.py facade delegation."
       - "Fixed-seed scenarios should remain deterministic unless explicitly changed."
       - "TurnDeclaration validation errors remain structured (code/field/actor_id)."
     safe_edit_boundaries:
-      - "Safe: decision logic internals, helper delegation, telemetry enrichment."
+      - "Safe: session setup, initiative loop orchestration, and round progression."
       - "Caution: turn order loop, action cost semantics, outcome aggregation."
-      - "Do not break top-level function names consumed by tests/integration."
+      - "Do not break top-level function names consumed by tests/integration; keep engine.py as a thin stable facade."
   resource_inference:
     owner_pool: observability_d
     owner_task: OBS-05
