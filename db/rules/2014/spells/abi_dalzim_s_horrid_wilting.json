@@ -14,7 +14,7 @@
   "mechanics": [
     {
       "effect_type": "damage",
-      "target": "single_enemy",
+      "target": "all_enemies",
       "apply_on": "save_fail",
       "save_ability": "con",
       "damage": "12d8",
