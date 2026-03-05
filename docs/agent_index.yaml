@@ -103,9 +103,10 @@ subsystems:
       - "Movement budget accounting never drops below zero without explicit forced-movement semantics."
       - "Path legality reflects terrain, occupancy, and reach constraints consistently."
       - "Forced movement semantics remain distinct from voluntary movement for trigger handling."
+      - "Declared movement path validation errors preserve deterministic code/field/details payloads."
     safe_edit_boundaries:
-      - "Safe: path scoring, route decomposition, and helper extraction."
-      - "Caution: opportunity-attack trigger points and difficult-terrain multipliers."
+      - "Safe: path scoring, route decomposition, and forced-movement vector helper extraction."
+      - "Caution: opportunity-attack trigger points, movement budget math, and declared-movement legality codes."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
   action_resolution_runtime:
     owner_pool: runtime_d
