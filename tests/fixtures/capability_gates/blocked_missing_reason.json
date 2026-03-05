@@ -1,0 +1,17 @@
+{
+  "manifest_version": "1.0",
+  "records": [
+    {
+      "content_id": "spell:broken_fixture",
+      "content_type": "spell",
+      "states": {
+        "cataloged": true,
+        "schema_valid": true,
+        "executable": false,
+        "tested": false,
+        "blocked": true,
+        "unsupported_reason": null
+      }
+    }
+  ]
+}
