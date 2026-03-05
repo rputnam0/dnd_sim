@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from dnd_sim.capability_manifest import (
     build_feature_capability_manifest,
+    load_feature_payloads,
 )
 
 
@@ -83,3 +84,27 @@ def test_feature_manifest_sets_explicit_reason_for_unsupported_feature() -> None
     assert record.support_state == "unsupported"
     assert record.states.blocked is True
     assert record.states.unsupported_reason == "missing_runtime_hook_family"
+
+
+def test_background_shard_a_features_have_runtime_hook_family_support() -> None:
+    manifest = build_feature_capability_manifest(feature_payloads=load_feature_payloads())
+    by_content_id = {record.content_id: record for record in manifest.records}
+
+    expected_ids = {
+        "background:criminal_contact",
+        "background:guild_membership",
+        "background:military_rank",
+        "background:position_of_privilege",
+        "background:researcher",
+        "background:rustic_hospitality",
+        "background:shelter_of_the_faithful",
+        "background:ship_s_passage",
+    }
+
+    for content_id in expected_ids:
+        record = by_content_id[content_id]
+        assert record.content_type == "background"
+        assert record.runtime_hook_family == "meta"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
+        assert record.states.unsupported_reason is None
