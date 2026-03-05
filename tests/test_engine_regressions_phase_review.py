@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import dnd_sim.engine as engine_module
+import dnd_sim.engine_runtime as engine_module
 from dnd_sim.engine import run_simulation
 from dnd_sim.engine_runtime import (
     _apply_effect,

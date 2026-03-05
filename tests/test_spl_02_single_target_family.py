@@ -127,7 +127,7 @@ def test_extract_single_target_family_adds_condition_and_sight_metadata(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition", lambda _name: _hold_person_spell_definition()
+        "dnd_sim.engine_runtime._load_spell_definition", lambda _name: _hold_person_spell_definition()
     )
 
     spells = _extract_spells_from_raw_fields(_hold_person_sheet_payload())
@@ -151,7 +151,7 @@ def test_single_target_hold_person_applies_condition_and_clears_on_concentration
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition", lambda _name: _hold_person_spell_definition()
+        "dnd_sim.engine_runtime._load_spell_definition", lambda _name: _hold_person_spell_definition()
     )
 
     spell_rows = _extract_spells_from_raw_fields(_hold_person_sheet_payload())
@@ -201,7 +201,7 @@ def test_single_target_hold_person_applies_condition_and_clears_on_concentration
 
 def test_negated_immunity_wording_does_not_infer_apply_condition(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Ward of Calm",
             "level": 1,
@@ -240,7 +240,7 @@ def test_multi_target_wording_does_not_get_single_target_family_tag(monkeypatch)
 
     for index, description in enumerate(descriptions):
         monkeypatch.setattr(
-            "dnd_sim.engine._load_spell_definition",
+            "dnd_sim.engine_runtime._load_spell_definition",
             lambda _name, _description=description, _index=index: {
                 "name": f"Mass Mark {_index}",
                 "level": 1,
@@ -264,7 +264,7 @@ def test_none_description_falls_back_to_description_raw_for_target_inference(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Circle of Shelter",
             "level": 3,
@@ -333,7 +333,7 @@ def test_real_spell_multi_target_wording_never_defaults_to_single_enemy(monkeypa
     }
 
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition", lambda name: spell_definitions.get(name)
+        "dnd_sim.engine_runtime._load_spell_definition", lambda name: spell_definitions.get(name)
     )
 
     cases = (
@@ -361,7 +361,7 @@ def test_single_target_spell_suppressed_by_invalid_state_and_line_of_effect(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition", lambda _name: _hold_person_spell_definition()
+        "dnd_sim.engine_runtime._load_spell_definition", lambda _name: _hold_person_spell_definition()
     )
 
     spell_rows = _extract_spells_from_raw_fields(_hold_person_sheet_payload())

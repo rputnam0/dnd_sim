@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-import dnd_sim.engine as engine_module
+import dnd_sim.engine_runtime as engine_module
 from dnd_sim.engine import run_simulation
 from dnd_sim.engine_runtime import _execute_action
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry

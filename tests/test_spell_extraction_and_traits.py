@@ -66,7 +66,7 @@ def test_spell_extraction_builds_combat_actions_for_squanch() -> None:
 
 
 def test_build_actor_imports_unprepared_known_caster_spells(monkeypatch) -> None:
-    monkeypatch.setattr("dnd_sim.engine._load_spell_definition", lambda _name: {"level": 1})
+    monkeypatch.setattr("dnd_sim.engine_runtime._load_spell_definition", lambda _name: {"level": 1})
     character = {
         "character_id": "bard_1",
         "name": "Bard One",

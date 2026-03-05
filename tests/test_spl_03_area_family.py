@@ -95,7 +95,7 @@ def _sheet_payload_for_spell(
 
 def test_extract_area_family_infers_template_and_tagging(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Fireball",
             "level": 3,
@@ -133,7 +133,7 @@ def test_extract_area_family_infers_template_and_tagging(monkeypatch) -> None:
 
 def test_area_family_pipeline_uses_template_resolution_golden(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Fireball",
             "level": 3,
@@ -185,7 +185,7 @@ def test_area_family_pipeline_uses_template_resolution_golden(monkeypatch) -> No
 
 def test_area_family_invalid_origin_line_of_effect_blocks_cast(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Fireball",
             "level": 3,
@@ -236,7 +236,7 @@ def test_area_family_invalid_origin_line_of_effect_blocks_cast(monkeypatch) -> N
 
 def test_area_family_suppressed_by_antimagic_invalid_state(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Fireball",
             "level": 3,
@@ -295,7 +295,7 @@ def test_area_family_suppressed_by_antimagic_invalid_state(monkeypatch) -> None:
 
 def test_self_range_non_inferred_area_control_spell_remains_castable(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Spirit Guardians",
             "level": 3,
@@ -388,7 +388,7 @@ def test_self_range_directional_area_spell_gets_range_override_and_casts(monkeyp
         },
     }
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda name: spell_defs.get(name),
     )
 
@@ -469,7 +469,7 @@ def test_self_range_directional_area_spell_gets_range_override_and_casts(monkeyp
 
 def test_area_point_you_choose_spell_does_not_require_sight(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Blast Marker",
             "level": 3,
@@ -534,7 +534,7 @@ def test_area_point_you_choose_spell_does_not_require_sight(monkeypatch) -> None
 
 def test_area_point_you_can_see_spell_still_requires_sight(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Focused Burst",
             "level": 3,
@@ -599,7 +599,7 @@ def test_area_point_you_can_see_spell_still_requires_sight(monkeypatch) -> None:
 
 def test_area_family_concentration_effects_clear_when_concentration_breaks(monkeypatch) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine._load_spell_definition",
+        "dnd_sim.engine_runtime._load_spell_definition",
         lambda _name: {
             "name": "Grasping Frost",
             "level": 4,
