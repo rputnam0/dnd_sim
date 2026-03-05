@@ -1,6 +1,11 @@
 {
   "name": "Legal Authority",
   "description": "You have the authority to enforce the laws of Ravnica, and that status inspires a certain amount of respect and even fear in the populace. People mind their manners in your presence and avoid drawing your attention; they assume you have the right to be wherever you are. Showing your Azorius insignia gets you an audience with anyone you want to talk to (though it might cause more problems than it solves when you're dealing with incorrigible lawbreakers). If you abuse this privilege, though, you can get in serious trouble with your superiors and even be stripped of your position.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "legal_authority_access",
+      "benefit": "audience_with_officials"
+    }
+  ],
   "source_type": "background"
 }

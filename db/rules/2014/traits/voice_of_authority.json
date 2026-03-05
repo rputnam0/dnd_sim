@@ -1,6 +1,11 @@
 {
   "name": "Voice of Authority",
   "description": "Your voice is the voice of your god, at least in theory. Your job might include training and instructing initiates, and they are required to obey you. In any circumstance, an initiate is expected to defer to your voice and obey your commands. If you abuse this authority, though, your god might personally punish you.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "clerical_command_authority",
+      "benefit": "command_initiates"
+    }
+  ],
   "source_type": "background"
 }

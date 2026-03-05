@@ -143,6 +143,30 @@ def test_background_shard_a_features_have_runtime_hook_family_support() -> None:
         assert record.states.unsupported_reason is None
 
 
+def test_background_shard_b_features_have_runtime_hook_family_support() -> None:
+    manifest = build_feature_capability_manifest(feature_payloads=load_feature_payloads())
+    by_content_id = {record.content_id: record for record in manifest.records}
+
+    expected_ids = {
+        "background:legal_authority",
+        "background:library_access",
+        "background:official_inquiry",
+        "background:safe_haven",
+        "background:secret_identity",
+        "background:secret_passage",
+        "background:secret_society",
+        "background:voice_of_authority",
+    }
+
+    for content_id in expected_ids:
+        record = by_content_id[content_id]
+        assert record.content_type == "background"
+        assert record.runtime_hook_family == "meta"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
+        assert record.states.unsupported_reason is None
+
+
 def test_species_hook_shard_a_records_are_supported() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
