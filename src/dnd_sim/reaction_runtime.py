@@ -25,7 +25,7 @@ def _normalize_event_trigger(trigger: str | None) -> str | None:
 
 
 def can_take_reaction(actor: ActorRuntimeState) -> bool:
-    from dnd_sim import engine_legacy as engine_module
+    from dnd_sim import engine_runtime as engine_module
 
     if not actor.reaction_available:
         return False
@@ -65,7 +65,7 @@ def readied_reach_entry_point(
     responder: ActorRuntimeState,
     path_points: list[tuple[float, float, float]],
 ) -> tuple[float, float, float] | None:
-    from dnd_sim import engine_legacy as engine_module
+    from dnd_sim import engine_runtime as engine_module
 
     if "readying" not in responder.conditions:
         return None
@@ -111,7 +111,7 @@ def trigger_readied_actions(
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
 ) -> None:
-    from dnd_sim import engine_legacy as engine_module
+    from dnd_sim import engine_runtime as engine_module
 
     normalized_trigger_event = _normalize_event_trigger(trigger_event)
     supports_standard_reactions = normalized_trigger_event in {
@@ -309,7 +309,7 @@ def run_opportunity_attacks_for_movement(
     movement_source: str = "movement",
     movement_trigger_hooks: list[Callable[[Any], None]] | None = None,
 ) -> None:
-    from dnd_sim import engine_legacy as engine_module
+    from dnd_sim import engine_runtime as engine_module
     from dnd_sim.spatial import can_see
 
     if mover.dead or mover.hp <= 0:
@@ -452,7 +452,7 @@ def reaction_attack_hook_matches(
     trigger_target: ActorRuntimeState | None,
     trigger_action: ActionDefinition | None,
 ) -> bool:
-    from dnd_sim import engine_legacy as engine_module
+    from dnd_sim import engine_runtime as engine_module
 
     if event != "after_action" or trigger_actor is None or trigger_action is None:
         return False
@@ -507,7 +507,7 @@ def run_trait_event_handlers(
     obstacles: list[AABB],
     light_level: str,
 ) -> None:
-    from dnd_sim import engine_legacy as engine_module
+    from dnd_sim import engine_runtime as engine_module
 
     if event != "after_action" or trigger_actor is None or trigger_action is None:
         return
