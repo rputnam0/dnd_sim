@@ -9,10 +9,14 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from dnd_sim.mechanics_schema import EXECUTABLE_EFFECT_TYPES, validate_rule_mechanics_payload
+from dnd_sim.spells import canonicalize_spell_payload, slugify_spell_name
+
 MANIFEST_VERSION = "1.0"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MONSTERS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "monsters"
 DEFAULT_FEATURES_DIR = REPO_ROOT / "db" / "rules" / "2014" / "traits"
+DEFAULT_SPELLS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "spells"
 MONSTER_POLICY_PATH = REPO_ROOT / "db" / "rules" / "2014" / "monster_capability_policy.json"
 CAPABILITY_STATE_KEYS = (
     "cataloged",
@@ -252,6 +256,18 @@ def load_feature_payloads(features_dir: Path = DEFAULT_FEATURES_DIR) -> list[dic
     return payloads
 
 
+def load_spell_payloads(spells_dir: Path = DEFAULT_SPELLS_DIR) -> list[dict[str, Any]]:
+    payloads: list[dict[str, Any]] = []
+    for path in sorted(spells_dir.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            continue
+        normalized = canonicalize_spell_payload(payload, source_path=path)
+        normalized["_manifest_path"] = str(path)
+        payloads.append(normalized)
+    return payloads
+
+
 def _feature_content_type(payload: dict[str, Any]) -> str:
     source_type = str(payload.get("source_type", "")).strip().lower()
     if source_type == "feat":
@@ -356,6 +372,109 @@ def build_feature_capability_manifest(
         feature_payloads if feature_payloads is not None else load_feature_payloads(features_dir)
     )
     records = build_feature_capability_records(feature_payloads=payloads)
+    return build_manifest(
+        records=records,
+        manifest_version=manifest_version,
+        generated_at=generated_at,
+    )
+
+
+def _spell_identifier(payload: dict[str, Any], *, index: int) -> str:
+    explicit = str(payload.get("content_id", "")).strip()
+    if explicit:
+        return explicit
+
+    path_hint = str(payload.get("_manifest_path", "")).strip()
+    if path_hint:
+        stem = Path(path_hint).stem
+        token = _slug_token(stem, f"spell_{index}")
+        if token:
+            return token
+
+    spell_name = str(payload.get("name", "")).strip()
+    if spell_name:
+        return slugify_spell_name(spell_name) or f"spell_{index}"
+    return f"spell_{index}"
+
+
+def _spell_mechanics_executable(mechanics: list[Any]) -> bool:
+    for row in mechanics:
+        if not isinstance(row, dict):
+            return False
+        effect_type = str(row.get("effect_type", "")).strip().lower()
+        if not effect_type:
+            return False
+        if effect_type not in EXECUTABLE_EFFECT_TYPES:
+            return False
+    return True
+
+
+def _spell_hook_family_and_state(payload: dict[str, Any]) -> tuple[str, str, str | None, bool]:
+    spell_name = str(payload.get("name", "")).strip()
+    if not spell_name:
+        return "invalid", "unsupported", "missing_spell_name", False
+
+    mechanics = payload.get("mechanics")
+    if mechanics is None:
+        return "narrative", "unsupported", "missing_runtime_mechanics", True
+    if not isinstance(mechanics, list):
+        return "invalid", "unsupported", "malformed_mechanics_payload", False
+    if not mechanics:
+        return "narrative", "unsupported", "missing_runtime_mechanics", True
+
+    issues = validate_rule_mechanics_payload(kind="spell", payload=payload)
+    if issues:
+        if any("unsupported" in issue for issue in issues):
+            return "effect", "unsupported", "unsupported_effect_type", True
+        return "invalid", "unsupported", "invalid_mechanics_schema", False
+
+    if not _spell_mechanics_executable(mechanics):
+        return "effect", "unsupported", "non_executable_mechanics", True
+    return "effect", "supported", None, True
+
+
+def build_spell_capability_records(
+    *,
+    spell_payloads: list[dict[str, Any]],
+) -> list[CapabilityRecord]:
+    records: list[CapabilityRecord] = []
+    for index, payload in enumerate(spell_payloads, start=1):
+        identifier = _spell_identifier(payload, index=index)
+        content_id = identifier if ":" in identifier else f"spell:{identifier}"
+        runtime_hook_family, support_state, unsupported_reason, schema_valid = (
+            _spell_hook_family_and_state(payload)
+        )
+
+        states = (
+            _supported_states()
+            if support_state == "supported"
+            else _blocked_states(
+                reason=unsupported_reason or "unsupported_spell_payload",
+                schema_valid=schema_valid,
+            )
+        )
+
+        records.append(
+            CapabilityRecord(
+                content_id=content_id,
+                content_type="spell",
+                runtime_hook_family=runtime_hook_family,
+                support_state=support_state,
+                states=states,
+            )
+        )
+    return records
+
+
+def build_spell_capability_manifest(
+    *,
+    spell_payloads: list[dict[str, Any]] | None = None,
+    spells_dir: Path = DEFAULT_SPELLS_DIR,
+    manifest_version: str = MANIFEST_VERSION,
+    generated_at: str | None = None,
+) -> CapabilityManifest:
+    payloads = spell_payloads if spell_payloads is not None else load_spell_payloads(spells_dir)
+    records = build_spell_capability_records(spell_payloads=payloads)
     return build_manifest(
         records=records,
         manifest_version=manifest_version,
@@ -629,16 +748,31 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional directory of canonical monster payload JSON files for CAP-04 emission.",
     )
+    parser.add_argument(
+        "--spell-dir",
+        type=Path,
+        default=None,
+        help="Optional directory of canonical spell payload JSON files for CAP-02 emission.",
+    )
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
 
-    if args.input is not None and args.monster_dir is not None:
-        raise SystemExit("--input and --monster-dir are mutually exclusive")
+    selected_inputs = sum(
+        option is not None for option in (args.input, args.monster_dir, args.spell_dir)
+    )
+    if selected_inputs > 1:
+        raise SystemExit("--input, --monster-dir, and --spell-dir are mutually exclusive")
 
-    if args.monster_dir is not None:
+    if args.spell_dir is not None:
+        manifest = build_spell_capability_manifest(
+            spells_dir=args.spell_dir,
+            manifest_version=args.manifest_version,
+            generated_at=args.generated_at,
+        )
+    elif args.monster_dir is not None:
         manifest = build_monster_capability_manifest(
             monsters_dir=args.monster_dir,
             manifest_version=args.manifest_version,

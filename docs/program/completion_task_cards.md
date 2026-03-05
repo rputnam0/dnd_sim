@@ -162,6 +162,7 @@ Generate machine-readable support manifests for spells, feats, monsters, and all
 - Required tests: spell import tests; executable coverage tests; unsupported spell reason tests
 - Required docs: docs/program/completion_task_cards.md; docs/review_checklist.md
 - Exit criteria: Generate a spell manifest for every canonical 2014 spell and mark each record executable, blocked, or unsupported with a single reason code.
+- Execution note: Active on `codex/feat/cap-02-generate-spell-capability-manifest-from-canonical`.
 
 ### CAP-03 Generate feat, trait, background, and species capability manifest
 
