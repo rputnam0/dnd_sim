@@ -1145,12 +1145,12 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
             if available_action_names and action_name not in available_action_names:
                 continue
             used = int(action.get("used_count", 0))
-            rejection_reason = candidate_rejection_reason_for_action(
-                action,
-                resources=actor.resources,
-                used_count=used,
-            )
             if action_name not in legal_action_names:
+                rejection_reason = candidate_rejection_reason_for_action(
+                    action,
+                    resources=actor.resources,
+                    used_count=used,
+                )
                 excluded_candidates.append(
                     {
                         "name": action_name,
@@ -1158,15 +1158,6 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
                         "rejection_reason": (
                             rejection_reason if rejection_reason != "unknown" else "not_viable"
                         ),
-                    }
-                )
-                continue
-            if not _action_viable(action, resources=actor.resources, used_count=used):
-                excluded_candidates.append(
-                    {
-                        "name": action_name,
-                        "cost": sum(int(v) for v in (action.get("resource_cost") or {}).values()),
-                        "rejection_reason": rejection_reason,
                     }
                 )
                 continue
