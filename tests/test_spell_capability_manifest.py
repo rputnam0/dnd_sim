@@ -241,3 +241,27 @@ def test_spell_manifest_shard_b_spell_ids_are_executable() -> None:
         assert by_id[content_id].support_state == "supported"
         assert by_id[content_id].states.executable is True
         assert by_id[content_id].states.blocked is False
+
+
+def test_spell_manifest_shard_c_spell_ids_are_executable() -> None:
+    manifest = build_spell_capability_manifest(spells_dir=DEFAULT_SPELLS_DIR)
+    by_id = {record.content_id: record for record in manifest.records}
+
+    shard_ids = {
+        "spell:enervation",
+        "spell:feeblemind",
+        "spell:immolation",
+        "spell:laeral_s_silver_lance",
+        "spell:lightning_lure",
+        "spell:maximilian_s_earthen_grasp",
+        "spell:mind_spike",
+        "spell:raulothim_s_psychic_lance",
+        "spell:tasha_s_mind_whip",
+        "spell:wardaway",
+        "spell:time_ravage",
+        "spell:yolande_s_regal_presence",
+    }
+    for content_id in shard_ids:
+        assert by_id[content_id].support_state == "supported"
+        assert by_id[content_id].states.executable is True
+        assert by_id[content_id].states.blocked is False
