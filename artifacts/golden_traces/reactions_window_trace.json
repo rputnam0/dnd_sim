@@ -1,0 +1,48 @@
+{
+  "schema_version": "replay.v1",
+  "run_id": "golden_reactions_window",
+  "scenario_id": "golden_reactions_window",
+  "inputs": {
+    "seed": 404,
+    "trials": 1,
+    "ruleset": "5e-2014",
+    "scenario_path": "fixtures/reactions_window.json"
+  },
+  "summary": {
+    "run_id": "golden_reactions_window",
+    "scenario_id": "golden_reactions_window",
+    "trials": 1,
+    "party_win_rate": 0.0,
+    "enemy_win_rate": 1.0,
+    "rounds": {
+      "mean": 1.0,
+      "median": 1.0,
+      "p10": 1.0,
+      "p90": 1.0,
+      "p95": 1.0
+    }
+  },
+  "trials": [
+    {
+      "trial_index": 0,
+      "rounds": 1,
+      "winner": "enemy",
+      "damage_taken": {"wizard": 16},
+      "damage_dealt": {"wizard": 3},
+      "resources_spent": {"wizard": {"reaction": 1}},
+      "downed_counts": {"wizard": 1},
+      "death_counts": {"wizard": 0},
+      "remaining_hp": {"wizard": 0},
+      "telemetry": [
+        {"telemetry_type": "action_selection", "selection_state": "selected", "round": 1, "actor_id": "wizard"},
+        {"telemetry_type": "action_outcome", "outcome_state": "resolved", "round": 1, "actor_id": "ogre"}
+      ],
+      "encounter_outcomes": [
+        {"encounter_index": 0, "winner": "enemy", "reaction_triggered": true}
+      ],
+      "state_snapshots": [
+        {"round": 1, "party": {"wizard": {"reaction_available": false, "hp": 0}}}
+      ]
+    }
+  ]
+}
