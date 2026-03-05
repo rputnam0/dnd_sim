@@ -22,9 +22,19 @@ EFFECT_LIFECYCLE_EVENT_TYPES: tuple[str, str, str, str, str] = (
     "effect_expire",
     "effect_concentration_break",
 )
+RESOURCE_DELTA_EVENT_TYPE = "resource_delta"
+RNG_AUDIT_EVENT_TYPE = "rng_audit"
+INVARIANT_VIOLATION_EVENT_TYPE = "invariant_violation"
 
 JSONScalar: TypeAlias = str | int | float | bool | None
 JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
+
+
+def _normalize_non_empty_text(value: Any, *, field_name: str) -> str:
+    normalized = str(value).strip()
+    if not normalized:
+        raise ValueError(f"{field_name} must not be empty")
+    return normalized
 
 
 def _coerce_json_value(value: Any, *, path: str) -> JSONValue:
@@ -98,3 +108,112 @@ def emit_event(
     envelope = build_event_envelope(event_type=event_type, payload=payload, source=source)
     event_logger.log(level, serialize_event(envelope))
     return envelope
+
+
+def build_resource_delta_event(
+    *,
+    source: str,
+    actor_id: str,
+    resource: str,
+    before: int,
+    after: int,
+    reason: str,
+    context: str | None = None,
+    metadata: Mapping[str, Any] | None = None,
+) -> dict[str, JSONValue]:
+    normalized_actor_id = _normalize_non_empty_text(actor_id, field_name="actor_id")
+    normalized_resource = _normalize_non_empty_text(resource, field_name="resource")
+    normalized_reason = _normalize_non_empty_text(reason, field_name="reason")
+    before_int = int(before)
+    after_int = int(after)
+    delta = after_int - before_int
+    direction = "recover" if delta > 0 else "spend" if delta < 0 else "none"
+
+    payload: dict[str, Any] = {
+        "actor_id": normalized_actor_id,
+        "resource": normalized_resource,
+        "before": before_int,
+        "after": after_int,
+        "delta": delta,
+        "direction": direction,
+        "reason": normalized_reason,
+    }
+    if context is not None:
+        payload["context"] = _normalize_non_empty_text(context, field_name="context")
+    if metadata is not None:
+        payload["metadata"] = metadata
+
+    return build_event_envelope(
+        event_type=RESOURCE_DELTA_EVENT_TYPE,
+        payload=payload,
+        source=source,
+    )
+
+
+def build_rng_audit_event(
+    *,
+    source: str,
+    seed: int | None,
+    context: str,
+    draw_index: int,
+    die_sides: int | None = None,
+    roll_value: int | None = None,
+    actor_id: str | None = None,
+    metadata: Mapping[str, Any] | None = None,
+) -> dict[str, JSONValue]:
+    draw_idx = int(draw_index)
+    if draw_idx < 0:
+        raise ValueError("draw_index must be non-negative")
+
+    payload: dict[str, Any] = {
+        "rng_seed": None if seed is None else int(seed),
+        "rng_context": _normalize_non_empty_text(context, field_name="context"),
+        "draw_index": draw_idx,
+    }
+    if die_sides is not None:
+        payload["die_sides"] = int(die_sides)
+    if roll_value is not None:
+        payload["roll_value"] = int(roll_value)
+    if actor_id is not None:
+        payload["actor_id"] = _normalize_non_empty_text(actor_id, field_name="actor_id")
+    if metadata is not None:
+        payload["metadata"] = metadata
+
+    return build_event_envelope(
+        event_type=RNG_AUDIT_EVENT_TYPE,
+        payload=payload,
+        source=source,
+    )
+
+
+def build_invariant_violation_event(
+    *,
+    source: str,
+    invariant_code: str,
+    message: str,
+    severity: str = "error",
+    actor_id: str | None = None,
+    details: Mapping[str, Any] | None = None,
+) -> dict[str, JSONValue]:
+    normalized_severity = _normalize_non_empty_text(severity, field_name="severity").lower()
+    if normalized_severity not in {"warning", "error", "critical"}:
+        raise ValueError("severity must be one of: warning, error, critical")
+
+    payload: dict[str, Any] = {
+        "invariant_code": _normalize_non_empty_text(
+            invariant_code,
+            field_name="invariant_code",
+        ).upper(),
+        "message": _normalize_non_empty_text(message, field_name="message"),
+        "severity": normalized_severity,
+    }
+    if actor_id is not None:
+        payload["actor_id"] = _normalize_non_empty_text(actor_id, field_name="actor_id")
+    if details is not None:
+        payload["details"] = details
+
+    return build_event_envelope(
+        event_type=INVARIANT_VIOLATION_EVENT_TYPE,
+        payload=payload,
+        source=source,
+    )
