@@ -216,6 +216,7 @@ Tasks:
 
 Current execution note:
 - WLD-01 is in progress on `codex/feat/wld-01-build-ability-check-contest-passive-and-dc-resolut`.
+- WLD-02 is in progress on `codex/feat/wld-02-build-skill-tool-proficiency-and-specialist-data-p`.
 
 ### 5I Completion Gates
 
