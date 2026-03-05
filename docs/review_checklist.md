@@ -53,7 +53,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] AI-03 Implement concentration breaking, control value, and disable value scoring (in review on [#122](https://github.com/rputnam0/dnd_sim/pull/122))
 - [ ] AI-04 Implement retreat, survival, objective race, and focus-fire tradeoff scoring
 - [ ] AI-05 Implement recharge, legendary, reaction-bait, and limited-resource timing heuristics
-- [ ] AI-06 Build benchmark corpus, tuning thresholds, and decision-quality gates
+- [ ] AI-06 Build benchmark corpus, tuning thresholds, and decision-quality gates (in review on [#150](https://github.com/rputnam0/dnd_sim/pull/150))
 
 ## Replay, Logging, and Observability
 
