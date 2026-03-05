@@ -93,6 +93,7 @@ def test_objective_race_scoring_increases_when_clock_is_short() -> None:
         metadata={
             "objective_rounds_remaining": 1,
             "objective_race_weight": 1.5,
+            "objective_race_baseline": 100.0,
             "objective_scores": {"secure_relic": 4.0, "relic": 2.0},
             "available_actions": {actor.actor_id: ["secure_relic", "strike"]},
             "action_catalog": {
@@ -125,6 +126,50 @@ def test_objective_race_scoring_increases_when_clock_is_short() -> None:
     strike_tradeoff = strike["objective_tradeoff"]
     assert secure_tradeoff["objective_race_score"] > 0.0
     assert secure_tradeoff["objective_race_score"] > strike_tradeoff["objective_race_score"]
+    assert secure_tradeoff["objective_race_score"] == 16.2
+
+
+def test_objective_race_tag_without_explicit_score_uses_nonzero_baseline() -> None:
+    actor = _actor_view(actor_id="hero", team="party")
+    enemy = _actor_view(actor_id="enemy", team="enemy", position=(5.0, 0.0, 0.0))
+    state = BattleStateView(
+        round_number=4,
+        actors={actor.actor_id: actor, enemy.actor_id: enemy},
+        actor_order=[actor.actor_id, enemy.actor_id],
+        metadata={
+            "objective_race_weight": 1.5,
+            "objective_race_baseline": 2.0,
+            "available_actions": {actor.actor_id: ["contest_point", "strike"]},
+            "action_catalog": {
+                actor.actor_id: [
+                    {
+                        "name": "contest_point",
+                        "action_type": "utility",
+                        "target_mode": "self",
+                        "action_cost": "action",
+                        "tags": ["objective_race"],
+                    },
+                    {
+                        "name": "strike",
+                        "action_type": "attack",
+                        "target_mode": "single_enemy",
+                        "range_ft": 5,
+                        "action_cost": "action",
+                        "resource_cost": {},
+                    },
+                ]
+            },
+        },
+    )
+
+    snapshots = candidate_snapshots(enumerate_legal_action_candidates(actor, state))
+    contest = _snapshot_by_action_and_targets(snapshots, "contest_point", ["hero"])
+    strike = _snapshot_by_action_and_targets(snapshots, "strike", ["enemy"])
+
+    contest_tradeoff = contest["objective_tradeoff"]
+    strike_tradeoff = strike["objective_tradeoff"]
+    assert contest_tradeoff["objective_race_score"] == 3.0
+    assert contest_tradeoff["objective_race_score"] > strike_tradeoff["objective_race_score"]
 
 
 def test_focus_fire_tradeoff_scores_focus_target_above_split_targeting() -> None:

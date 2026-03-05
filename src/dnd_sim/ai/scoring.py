@@ -351,7 +351,8 @@ def _objective_race_score(
     objective_score: float,
 ) -> float:
     tags = _normalized_action_tags(action)
-    if objective_score <= 0.0 and "objective_race" not in tags:
+    race_tagged = "objective_race" in tags
+    if objective_score <= 0.0 and not race_tagged:
         return 0.0
 
     try:
@@ -374,7 +375,14 @@ def _objective_race_score(
         else:
             urgency = 1.0 + max(0.0, (5.0 - rounds) / 5.0)
 
-    return float(objective_score) * race_weight * urgency
+    effective_objective_score = float(objective_score)
+    if effective_objective_score <= 0.0 and race_tagged:
+        try:
+            baseline = float(state.metadata.get("objective_race_baseline", 1.0))
+        except (TypeError, ValueError):
+            baseline = 1.0
+        effective_objective_score = max(0.0, baseline)
+    return effective_objective_score * race_weight * urgency
 
 
 def _ally_rescue_score(
