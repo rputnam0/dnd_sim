@@ -27,6 +27,15 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] ARC-07 spell execution pipeline extracted.
 - [ ] ARC-08 replay/reporting adapters extracted and `engine.py` reduced below the declared limit.
 
+## Capability Manifest
+
+- [ ] CAP-01 Define capability manifest schema, storage format, and CLI
+- [ ] CAP-02 Generate spell capability manifest from canonical spell data
+- [ ] CAP-03 Generate feat, trait, background, and species capability manifest
+- [ ] CAP-04 Generate monster and monster-action capability manifest
+- [ ] CAP-05 Enforce capability manifest gates in import paths and CI
+- [ ] CAP-06 Publish machine-readable and markdown coverage reports
+
 ## Rules Closure
 
 - [ ] FIX-01 Close Lucky attacker, defender, and saving throw correctness
