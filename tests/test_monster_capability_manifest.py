@@ -38,6 +38,12 @@ def test_monster_action_support_marks_supported_entries_executable() -> None:
         "stat_block": {"max_hp": 42, "ac": 15},
         "actions": [
             {"name": "gear_strike", "action_type": "attack", "action_cost": "action"},
+            {
+                "name": "temporal_burst",
+                "action_type": "save",
+                "action_cost": "action",
+                "recharge": "Recharge 6",
+            },
         ],
         "reactions": [
             {"name": "parry_protocol", "action_type": "utility", "action_cost": "reaction"}
@@ -61,6 +67,7 @@ def test_monster_action_support_marks_supported_entries_executable() -> None:
         by_id["monster_lair_action:clockwork_sentry:clockfield_shift:1"].states.executable is True
     )
     assert by_id["monster_innate_spellcasting:clockwork_sentry:shield:1"].states.executable is True
+    assert by_id["monster_recharge:clockwork_sentry:temporal_burst:2"].states.executable is True
 
 
 def test_monster_action_unsupported_reasons_are_explicit() -> None:
@@ -68,7 +75,12 @@ def test_monster_action_unsupported_reasons_are_explicit() -> None:
         "identity": {"enemy_id": "void_howler", "name": "Void Howler", "team": "enemy"},
         "stat_block": {"max_hp": 30, "ac": 14},
         "actions": [
-            {"name": "timeline_tear", "action_type": "timeline", "action_cost": "action"},
+            {
+                "name": "timeline_tear",
+                "action_type": "timeline",
+                "action_cost": "action",
+                "recharge": "Recharge 6",
+            },
             {"name": "", "action_type": "attack", "action_cost": "action"},
         ],
         "reactions": [],
@@ -83,6 +95,10 @@ def test_monster_action_unsupported_reasons_are_explicit() -> None:
     unsupported_type = by_id["monster_action:void_howler:timeline_tear:1"]
     assert unsupported_type.states.blocked is True
     assert unsupported_type.states.unsupported_reason == "unsupported_action_type"
+
+    blocked_recharge = by_id["monster_recharge:void_howler:timeline_tear:1"]
+    assert blocked_recharge.states.blocked is True
+    assert blocked_recharge.states.unsupported_reason == "source_action_blocked"
 
     missing_name = by_id["monster_action:void_howler:action_2:2"]
     assert missing_name.states.blocked is True
