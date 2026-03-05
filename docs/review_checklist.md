@@ -83,13 +83,13 @@ Current in-progress focus: `ARC-06` reactions, interrupts, and ready-action wind
 - [ ] WLD-03 Build exploration turn structure, time advancement, and light tracking
 - [ ] WLD-04 Build travel pace, navigation, foraging, resting, and day-cycle integration
 - [ ] WLD-05 Build environmental exposure, falling, suffocation, drowning, disease, and poison world rules
-- [ ] WLD-06 Build economy, loot, vendor inventory, and pricing model
+- [ ] WLD-06 Build economy, loot, vendor inventory, and pricing model (in review on [#141](https://github.com/rputnam0/dnd_sim/pull/141))
 - [ ] WLD-07 Build crafting, downtime, encumbrance, and service actions
 - [ ] WLD-08 Build quest, faction, reputation, and world-flag lifecycle
 - [ ] WLD-09 Build multi-encounter adventuring-day persistence and recovery flow
 - [ ] WLD-10 Build encounter scripting, waves, objectives, and map hooks
 - [ ] WLD-11 Hard-cut schema, import, and content IDs across all content classes
-- [ ] WLD-12 Build performance harness, regression corpus, and world-scale replay diff suite
+- [ ] WLD-12 Build performance harness, regression corpus, and world-scale replay diff suite (in progress on `codex/feat/wld-12-build-performance-harness-regression-corpus-and-wo`)
 
 ## Completion Gates
 

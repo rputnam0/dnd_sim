@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Callable, TypeVar
 
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.noncombat_checks import resolve_contest
 
 _DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
 _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
@@ -469,10 +470,11 @@ def run_contested_check(
     defender_mods: list[int],
 ) -> bool:
     """Evaluates a contested check. Ties go to the defender."""
-    attacker_roll = rng.randint(1, 20) + attacker_mod
-    defender_mod = max(defender_mods) if defender_mods else 0
-    defender_roll = rng.randint(1, 20) + defender_mod
-    return attacker_roll > defender_roll
+    return resolve_contest(
+        rng,
+        attacker_modifier=attacker_mod,
+        defender_modifiers=defender_mods,
+    ).success
 
 
 def roll_damage(

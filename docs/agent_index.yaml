@@ -71,6 +71,18 @@ subsystems:
       - "Safe: additive scoring dimensions and helper decomposition."
       - "Caution: legality filters consumed by strategy selection behavior."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  world_travel_runtime:
+    owner_pool: world_explore_b
+    owner_task: WLD-04
+    owner_module: src/dnd_sim/world_runtime.py
+    invariants:
+      - "Travel pace normalization and segment planning remain deterministic for identical inputs."
+      - "Navigation and foraging outcomes must produce structured results and preserve encounter-hook semantics."
+      - "Rest/day-cycle integration must advance world time consistently with short-rest and long-rest durations."
+    safe_edit_boundaries:
+      - "Safe: additive travel/rest helper decomposition and validation hardening."
+      - "Caution: WorldClock advancement, light decay side effects, and rest-resource recovery rules."
+      - "Do not introduce non-deterministic randomness into world_runtime travel services."
   ingest_and_validation:
     owner_pool: content_manifest_gate
     owner_task: CAP-05
