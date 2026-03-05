@@ -11,5 +11,14 @@
   "description": "You surround yourself with unearthly majesty in a 10-foot emanation. Whenever the emanation enters the space of a creature you can see and whenever a creature you can see enters the emanation or ends its turn there, you can force that creature to make a Wisdom saving throw. On a failed save, the target takes 4d6 Psychic damage and has the Prone condition, and you can push it up to 10 feet away. On a successful save, the target takes half as much damage only. A creature makes this save only once per turn.",
   "save_ability": "wis",
   "damage_type": "psychic",
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "all_enemies",
+      "apply_on": "save_fail",
+      "save_ability": "wis",
+      "damage": "4d6",
+      "damage_type": "psychic"
+    }
+  ]
 }
