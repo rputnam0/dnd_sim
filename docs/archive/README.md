@@ -45,3 +45,9 @@ Recovered from pre-deletion snapshot commit `3033ecc62c6b1df3bb815bf908bffda62d1
 | `docs/archive/deprecation/legacy_surface_inventory_20260304.md` | `docs/deprecation/legacy_surface_inventory_20260304.md` |
 | `docs/archive/deprecation/legacy_cutover_mappings_20260304.md` | `docs/deprecation/legacy_cutover_mappings_20260304.md` |
 | `docs/archive/deprecation/legacy_data_counts_20260304.tsv` | `docs/deprecation/legacy_data_counts_20260304.tsv` |
+
+### Release Prep Snapshots (historical)
+
+| Path | Original path |
+|---|---|
+| `docs/archive/release_prep/fin06_release_prep_20260305.md` | `docs/program/status_board.md` |

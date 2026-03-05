@@ -96,7 +96,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] FIN-03 Enforce deterministic replay corpus gate across combat and world scenarios (in progress on `codex/feat/fin-03-enforce-deterministic-replay-corpus-gate-across-co`)
 - [ ] FIN-04 Enforce integrated campaign, world, and combat scenario gate
 - [ ] FIN-05 Enforce agent-only maintenance gate
-- [ ] FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete
+- [ ] FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete (blocked pending merged FIN-02/FIN-03/FIN-04/FIN-05 dependencies)
 
 
 ## Final review gate

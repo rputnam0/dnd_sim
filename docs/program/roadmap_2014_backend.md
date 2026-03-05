@@ -200,6 +200,9 @@ Tasks:
 - FIN-05 Enforce agent-only maintenance gate
 - FIN-06 Cut release baseline, archive prior program artifacts, and mark backend complete
 
+Current execution note:
+- FIN-06 prep lane is parked on `codex/feat/fin-06-cut-release-baseline-archive-prior-program-artifac`; final cutover remains blocked until `FIN-02`, `FIN-03`, `FIN-04`, and `FIN-05` are merged.
+
 ## Global contract for every task
 
 Every task PR must include all of the following:
