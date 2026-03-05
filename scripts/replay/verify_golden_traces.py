@@ -115,13 +115,15 @@ def verify_golden_traces(
         )
 
     drifts: list[str] = []
+    current_entries = generated_manifest["bundles"]
     for path in bundles:
         expected = entries.get(path.name, {})
         if not isinstance(expected, dict):
             drifts.append(f"{path.name}: manifest entry must be an object")
             continue
         expected_hash = str(expected.get("sha256", "")).strip()
-        actual_hash = _bundle_digest(path)
+        actual = current_entries.get(path.name, {})
+        actual_hash = str(actual.get("sha256", "")).strip() if isinstance(actual, dict) else ""
         if expected_hash != actual_hash:
             drifts.append(f"{path.name}: expected {expected_hash} got {actual_hash}")
 

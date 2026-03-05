@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -19,6 +20,15 @@ def _run_verify(*, golden_dir: Path, update: bool = False) -> subprocess.Complet
     if update:
         cmd.append("--update")
     return subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+
+def _load_verify_module():
+    spec = importlib.util.spec_from_file_location("verify_golden_traces", _script_path())
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)  # type: ignore[attr-defined]
+    return module
 
 
 def test_golden_trace_corpus_covers_required_scenarios() -> None:
@@ -75,3 +85,27 @@ def test_verify_golden_traces_detects_drift_and_supports_update(tmp_path: Path) 
 
     clean_result = _run_verify(golden_dir=target)
     assert clean_result.returncode == 0, clean_result.stdout + clean_result.stderr
+
+
+def test_verify_path_hashes_each_bundle_once(tmp_path: Path) -> None:
+    source = _golden_dir()
+    target = tmp_path / "golden_traces"
+    target.mkdir(parents=True, exist_ok=True)
+
+    for path in source.glob("*.json"):
+        target.joinpath(path.name).write_bytes(path.read_bytes())
+
+    module = _load_verify_module()
+    original_digest = module._bundle_digest
+    calls = {"count": 0}
+
+    def _counting_digest(path: Path) -> str:
+        calls["count"] += 1
+        return original_digest(path)
+
+    module._bundle_digest = _counting_digest
+    ok, message = module.verify_golden_traces(golden_dir=target)
+    assert ok is True, message
+
+    bundle_count = len([path for path in target.glob("*.json") if path.name != "manifest.json"])
+    assert calls["count"] == bundle_count
