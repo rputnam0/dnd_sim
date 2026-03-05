@@ -85,7 +85,7 @@ class IllegalBonusPlanStrategy(BaseStrategy):
         )
 
 
-class TurnOnlyNoLegacyFallbackStrategy:
+class TurnOnlyNoopStrategy:
     def declare_turn(self, actor, state):
         return None
 
@@ -93,9 +93,9 @@ class TurnOnlyNoLegacyFallbackStrategy:
         return None
 
 
-class LegacyMethodsIgnoredWhenDeclareTurnNoneStrategy:
+class LegacyMethodsNotAllowedStrategy:
     def declare_turn(self, actor, state):
-        return None
+        return TurnDeclaration()
 
     def choose_action(self, actor, state):
         raise AssertionError("Engine should never call choose_action fallback")
@@ -225,7 +225,7 @@ def _setup_env(tmp_path: Path) -> Path:
 
 
 def test_validate_strategy_instance_accepts_declare_turn_without_legacy_fallback() -> None:
-    validate_strategy_instance(TurnOnlyNoLegacyFallbackStrategy())
+    validate_strategy_instance(TurnOnlyNoopStrategy())
 
 
 def test_validate_strategy_instance_rejects_missing_declare_turn() -> None:
@@ -244,7 +244,7 @@ def test_turn_only_strategy_without_legacy_methods_can_noop_turns(tmp_path: Path
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     registry = {
-        "party_strategy": TurnOnlyNoLegacyFallbackStrategy(),
+        "party_strategy": TurnOnlyNoopStrategy(),
         "enemy_strategy": LegacyBasicStrategy(),
     }
     result = run_simulation(loaded, db, {}, registry, trials=1, seed=23, run_id="noop")
@@ -262,32 +262,9 @@ def test_turn_only_strategy_without_legacy_methods_can_noop_turns(tmp_path: Path
     )
 
 
-def test_strategy_with_legacy_methods_does_not_fall_back_when_declare_turn_returns_none(
-    tmp_path: Path,
-) -> None:
-    scenario_path = _setup_env(tmp_path)
-    loaded = load_scenario(scenario_path)
-    db = load_character_db(Path(loaded.config.character_db_dir))
-
-    noop_registry = {
-        "party_strategy": TurnOnlyNoLegacyFallbackStrategy(),
-        "enemy_strategy": LegacyBasicStrategy(),
-    }
-    legacy_method_registry = {
-        "party_strategy": LegacyMethodsIgnoredWhenDeclareTurnNoneStrategy(),
-        "enemy_strategy": LegacyBasicStrategy(),
-    }
-    noop_result = run_simulation(loaded, db, {}, noop_registry, trials=8, seed=23, run_id="noop")
-    legacy_method_result = run_simulation(
-        loaded, db, {}, legacy_method_registry, trials=8, seed=23, run_id="legacy_methods"
-    )
-
-    noop_damage = sum(trial.damage_dealt.get("hero", 0) for trial in noop_result.trial_results)
-    legacy_method_damage = sum(
-        trial.damage_dealt.get("hero", 0) for trial in legacy_method_result.trial_results
-    )
-    assert noop_damage == 0
-    assert legacy_method_damage == noop_damage
+def test_validate_strategy_instance_rejects_removed_legacy_methods() -> None:
+    with pytest.raises(ValueError, match="removed legacy methods: choose_action"):
+        validate_strategy_instance(LegacyMethodsNotAllowedStrategy())
 
 
 def test_hidden_action_surge_is_removed_for_legacy_and_explicit_turn_plans(
