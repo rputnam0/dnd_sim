@@ -24,10 +24,10 @@ Collapse the repo onto one canonical planning surface, archive stale planning ar
 
 - Depends on: DOC-01
 - Owner pool: `doc_control_a`
-- Target modules: docs/archive/README.md; docs/program/wave3_gap_report.md; docs/program/wave3_run_20260303_085619.md; docs/program/wave4_run_20260303_110536.md; docs/cleanup/*; docs/deprecation/*
+- Target modules: docs/archive/README.md; docs/archive/program_runs/; docs/archive/cleanup/; docs/archive/deprecation/
 - Required tests: archive index generation; no live doc points at archived file without explicit historical label
 - Required docs: docs/archive/README.md; docs/program/README.md; docs/program/status_board.md
-- Exit criteria: Create docs/archive/README.md; move stale planning/run artifacts under docs/archive/ or relabel them as historical-only; remove archived files from canonical entrypoint links.
+- Exit criteria: Create docs/archive/README.md; reconstruct deleted Wave 3/4 run artifacts plus cleanup/deprecation records from git history into docs/archive/; remove archived files from canonical entrypoint links.
 
 ### DOC-03 Normalize status board and merged baseline history
 
@@ -538,10 +538,10 @@ Deliver noncombat, persistence, world-state, encounter scripting, and platform-s
 
 - Depends on: DBS-05;ARC-08;WLD-08
 - Owner pool: `world_script_a`
-- Target modules: src/dnd_sim/encounter_script.py; src/dnd_sim/world_state.py; tests/test_encounter_scripts.py; docs/encounter_schema_full_example.json
+- Target modules: src/dnd_sim/encounter_script.py; src/dnd_sim/world_state.py; tests/test_encounter_scripts.py; docs/encounter_schema_full_example.json (new)
 - Required tests: wave progression tests; objective hook tests; map hook tests; invalid script tests
-- Required docs: docs/encounter_schema_full_example.json; docs/program/roadmap_2014_backend.md; docs/program/status_board.md
-- Exit criteria: Create src/dnd_sim/encounter_script.py and extend encounter schema for waves, objectives, scripted triggers, and map hooks.
+- Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
+- Exit criteria: Create src/dnd_sim/encounter_script.py; extend encounter schema for waves, objectives, scripted triggers, and map hooks; and author a new docs/encounter_schema_full_example.json reference from the implemented schema.
 
 ### WLD-11 Hard-cut schema, import, and content IDs across all content classes
 

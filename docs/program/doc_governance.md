@@ -40,8 +40,8 @@ These are the only live planning files after `DOC-01` and `DOC-02` merge:
 5. Replace `docs/agent_feature_assignments.md` with a redirect-only root entrypoint that points only to `docs/program/README.md`.
 6. Convert `docs/review_checklist.md` into the active closeout checklist for this program.
 7. Create `docs/archive/README.md`.
-8. Move `docs/program/wave3_gap_report.md`, `docs/program/wave3_run_20260303_085619.md`, and `docs/program/wave4_run_20260303_110536.md` to `docs/archive/program_runs/`.
-9. Leave `docs/cleanup/*` and `docs/deprecation/*` in historical scope only. Do not link them from the canonical entrypoint except from archive references.
+8. `DOC-02` backfills `docs/archive/program_runs/` with historical copies of `docs/program/wave3_gap_report.md`, `docs/program/wave3_run_20260303_085619.md`, and `docs/program/wave4_run_20260303_110536.md` recovered from git history.
+9. `DOC-02` also backfills `docs/archive/cleanup/` and `docs/archive/deprecation/` from git history; keep those records historical-only and never link them from canonical planning entrypoints.
 10. Add metadata headers to every live planning doc with `Status`, `Owner`, `Last updated`, and `Canonical source`.
 
 ## Metadata format
