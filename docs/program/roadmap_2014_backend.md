@@ -220,6 +220,7 @@ Current execution note:
 - WLD-03 is in PR review on `codex/feat/wld-03-build-exploration-turn-structure-time-advancement` with exploration turn, world time advancement, and light tracking runtime coverage in `tests/test_world_time_and_light.py`.
 - WLD-08 is in progress on `codex/feat/wld-08-build-quest-faction-reputation-and-world-flag-life` with quest/faction/world-flag lifecycle support in `src/dnd_sim/world_state.py`.
 - WLD-09 is in PR review on `codex/feat/wld-09-build-multi-encounter-adventuring-day-persistence` with campaign runtime persistence and deterministic short/long-rest recovery coverage in `tests/test_adventuring_day_flow.py`.
+- WLD-10 is in progress on `codex/feat/wld-10-build-encounter-scripting-waves-objectives-and-map` with deterministic encounter script parsing and wave/objective/map-hook progression in `src/dnd_sim/encounter_script.py`.
 
 ### 5I Completion Gates
 
