@@ -113,6 +113,8 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-01 Hard-cut capability manifest schema to CAP-01 canonical shape (merged to `int/6c-parity` via #168)
 - [x] W6-PAR-02 Add strict FIN-02 enforcement mode (merged to `int/6c-parity` via #173)
 - [x] W6-PAR-03 Execute parity closure shard batch (merged to `int/6c-parity` via #171/#174/#175/#176/#177/#178)
+- [x] W6-PAR-04 Execute parity continuation shard batch B and strict-input manifest sync (merged via #185/#186/#187/#188/#189/#190)
+- [ ] W6-PAR-05 Drive strict parity closure to blocked=0 for shipped 2014 scope
 - [x] W6-GATE-01 Sync docs/backlog/checklist truth and maintenance waivers for remediation state (merged via #172)
 - [x] W6-GATE-02 Final green gate and closeout pass (merged via #183)
 
@@ -124,4 +126,5 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] Capability manifest gate passes.
 - [x] Campaign/world/combat integration gate passes.
 - [x] Agent-only maintenance gate passes.
+- [ ] Strict FIN-02 parity gate (`verify_completion_capabilities.py --strict`) passes with blocked=0.
 - [x] `docs/program/status_board.md` and `docs/program/backlog.csv` are synchronized for the active Wave 6 remediation state.
