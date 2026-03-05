@@ -5,6 +5,7 @@ import sqlite3
 from pathlib import Path
 
 import dnd_sim.db as db_module
+from dnd_sim.io import stable_content_hash
 from scripts.migrations.content_metadata_tables import (
     migrate_add_content_metadata_tables,
     rollback_drop_content_metadata_tables,
@@ -57,6 +58,34 @@ def _create_legacy_core_tables(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def _create_dbs01_content_metadata_tables(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE content_records (
+            content_id TEXT PRIMARY KEY,
+            content_type TEXT NOT NULL,
+            source_book TEXT NOT NULL,
+            schema_version TEXT NOT NULL,
+            source_hash TEXT NOT NULL,
+            payload_json TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE content_capabilities (
+            content_id TEXT PRIMARY KEY,
+            content_type TEXT NOT NULL,
+            support_state TEXT NOT NULL,
+            unsupported_reason TEXT,
+            last_verified_commit TEXT NOT NULL,
+            FOREIGN KEY (content_id) REFERENCES content_records(content_id) ON DELETE CASCADE
+        )
+        """
+    )
+    conn.commit()
+
+
 def test_content_metadata_migration_adds_canonical_tables(tmp_path: Path) -> None:
     db_path = tmp_path / "content_metadata.db"
     with sqlite3.connect(db_path) as conn:
@@ -83,6 +112,58 @@ def test_content_metadata_migration_adds_canonical_tables(tmp_path: Path) -> Non
             "unsupported_reason",
             "last_verified_commit",
         ]
+
+        assert migrate_add_content_metadata_tables(conn) is False
+
+
+def test_content_metadata_migration_upgrades_existing_dbs01_schema(tmp_path: Path) -> None:
+    db_path = tmp_path / "content_metadata_upgrade.db"
+    payload = {"name": "Magic Missile", "level": 1}
+
+    with sqlite3.connect(db_path) as conn:
+        _create_dbs01_content_metadata_tables(conn)
+        conn.execute(
+            """
+            INSERT INTO content_records (
+                content_id, content_type, source_book, schema_version, source_hash, payload_json
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "spell:magic_missile|PHB",
+                "spell",
+                "PHB",
+                "2014.1",
+                "sha256:legacy",
+                json.dumps(payload),
+            ),
+        )
+        conn.commit()
+
+        assert migrate_add_content_metadata_tables(conn) is True
+        assert set(_columns(conn, "content_records")) == {
+            "content_id",
+            "content_type",
+            "source_book",
+            "schema_version",
+            "source_path",
+            "source_hash",
+            "canonicalization_hash",
+            "payload_json",
+            "imported_at",
+        }
+
+        lineage_row = conn.execute(
+            """
+            SELECT source_path, canonicalization_hash, imported_at
+            FROM content_records
+            WHERE content_id = ?
+            """,
+            ("spell:magic_missile|PHB",),
+        ).fetchone()
+        assert lineage_row is not None
+        assert lineage_row[0] == "legacy:spell:magic_missile|PHB"
+        assert lineage_row[1] == stable_content_hash(payload)
+        assert lineage_row[2] == db_module.LEGACY_IMPORTED_AT
 
         assert migrate_add_content_metadata_tables(conn) is False
 
