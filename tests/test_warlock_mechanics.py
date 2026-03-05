@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _action_available,
     _build_actor_from_character,
     _execute_action,

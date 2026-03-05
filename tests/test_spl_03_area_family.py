@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import Any
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _break_concentration,
     _build_spell_actions,
     _execute_action,

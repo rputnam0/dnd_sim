@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _action_matches_reaction_spell_id,
     _action_available,
     _break_concentration,

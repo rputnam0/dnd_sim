@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import _break_concentration, _dispatch_combat_event, _execute_action
+from dnd_sim.engine_runtime import _break_concentration, _dispatch_combat_event, _execute_action
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import can_see
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from pathlib import Path
 
-from dnd_sim.engine import _apply_effect, _build_actor_from_character, _execute_action
+from dnd_sim.engine_runtime import _apply_effect, _build_actor_from_character, _execute_action
 from dnd_sim.io import load_traits_db
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import can_see

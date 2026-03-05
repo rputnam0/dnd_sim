@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from dnd_sim.engine import _create_combat_timing_engine, _execute_action
+from dnd_sim.engine_runtime import _create_combat_timing_engine, _execute_action
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.rules_2014 import (
     ActionDeclaredEvent,

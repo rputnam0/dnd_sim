@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _extract_spellcasting_profile_from_raw_fields,
     _extract_spells_from_raw_fields,
     _load_spell_definition,

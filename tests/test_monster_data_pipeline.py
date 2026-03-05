@@ -4,7 +4,7 @@ import json
 import random
 from pathlib import Path
 
-from dnd_sim.engine import (
+from dnd_sim.engine_runtime import (
     _action_available,
     _build_actor_from_enemy,
     _execute_action,

@@ -5,14 +5,13 @@ import random
 from pathlib import Path
 
 import pytest
-from dnd_sim.engine import (
+from dnd_sim.engine import TurnDeclarationValidationError, run_simulation
+from dnd_sim.engine_runtime import (
     _action_available,
     _build_actor_from_character,
     _execute_action,
     _resolve_targets_for_action,
     _run_opportunity_attacks_for_movement,
-    TurnDeclarationValidationError,
-    run_simulation,
 )
 from dnd_sim.inventory import InventoryItem
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry

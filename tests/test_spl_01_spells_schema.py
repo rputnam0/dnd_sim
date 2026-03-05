@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from dnd_sim.engine import _load_spell_definition
+from dnd_sim.engine_runtime import _load_spell_definition
 from dnd_sim.spells import (
     SpellDatabaseValidationError,
     canonicalize_spell_payload,

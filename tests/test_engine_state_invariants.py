@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from dnd_sim.engine import _break_concentration, _execute_action
+from dnd_sim.engine_runtime import _break_concentration, _execute_action
 from dnd_sim.engine import run_simulation
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState

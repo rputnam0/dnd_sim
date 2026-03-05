@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine import _resolve_targets_for_action
+from dnd_sim.engine_runtime import _resolve_targets_for_action
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import AABB
 from dnd_sim.strategy_api import TargetRef

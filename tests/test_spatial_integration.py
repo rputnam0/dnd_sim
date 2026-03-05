@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dnd_sim.engine import _execute_action
+from dnd_sim.engine_runtime import _execute_action
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import AABB
 

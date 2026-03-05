@@ -5,13 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from dnd_sim.engine import (
-    TurnDeclarationValidationError,
+from dnd_sim.engine import TurnDeclarationValidationError, run_simulation
+from dnd_sim.engine_runtime import (
     _action_available,
     _build_actor_from_character,
     _execute_action,
     _spend_resources,
-    run_simulation,
     short_rest,
 )
 from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry

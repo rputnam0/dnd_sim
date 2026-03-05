@@ -7,11 +7,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from dnd_sim.engine import (
-    _execute_action,
-    _reorder_initiative_for_construct_companions,
-    run_simulation,
-)
+from dnd_sim.engine import run_simulation
+from dnd_sim.engine_runtime import _execute_action, _reorder_initiative_for_construct_companions
 from dnd_sim.io import ActionConfig, load_character_db, load_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
