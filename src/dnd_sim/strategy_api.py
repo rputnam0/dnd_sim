@@ -7,6 +7,11 @@ from typing import Any, Protocol
 from dnd_sim.spatial import check_cover, distance_chebyshev, move_towards
 
 logger = logging.getLogger(__name__)
+_REMOVED_LEGACY_STRATEGY_METHODS = (
+    "choose_action",
+    "choose_targets",
+    "decide_resource_spend",
+)
 
 
 @dataclass(slots=True)
@@ -228,3 +233,14 @@ def validate_strategy_instance(strategy: Any) -> None:
     )
 
     _validate_strategy_instance_impl(strategy)
+    legacy_methods = sorted(
+        name
+        for name in _REMOVED_LEGACY_STRATEGY_METHODS
+        if callable(getattr(strategy, name, None))
+    )
+    if legacy_methods:
+        joined = ", ".join(legacy_methods)
+        raise ValueError(
+            "Strategy instance defines removed legacy methods: "
+            f"{joined}. Use declare_turn(actor, state) as the canonical turn interface."
+        )
