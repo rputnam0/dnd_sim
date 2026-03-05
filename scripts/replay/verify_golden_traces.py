@@ -7,9 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from dnd_sim.replay import load_replay_bundle
+from dnd_sim.replay_schema import REPLAY_BUNDLE_SCHEMA_VERSION
 
 MANIFEST_FILE_NAME = "manifest.json"
-MANIFEST_SCHEMA_VERSION = "golden_traces.v1"
+MANIFEST_SCHEMA_VERSION = "golden_traces.v2"
+MANIFEST_BUNDLE_SCHEMA_KEY = "bundle_schema_version"
 REQUIRED_COVERAGE_KEYWORDS: tuple[str, ...] = ("combat", "hazard", "summon", "reaction", "world")
 
 
@@ -44,6 +46,7 @@ def _coverage_ok(bundle_paths: list[Path]) -> tuple[bool, dict[str, bool]]:
 def _build_manifest(golden_dir: Path, bundle_paths: list[Path]) -> dict[str, Any]:
     return {
         "schema_version": MANIFEST_SCHEMA_VERSION,
+        MANIFEST_BUNDLE_SCHEMA_KEY: REPLAY_BUNDLE_SCHEMA_VERSION,
         "bundles": {path.name: {"sha256": _bundle_digest(path)} for path in bundle_paths},
     }
 
@@ -100,6 +103,14 @@ def verify_golden_traces(
             False,
             f"Unsupported golden trace manifest schema_version '{schema_version}'. "
             f"Expected '{MANIFEST_SCHEMA_VERSION}'.",
+        )
+
+    bundle_schema_version = str(raw_manifest.get(MANIFEST_BUNDLE_SCHEMA_KEY, "")).strip()
+    if bundle_schema_version != REPLAY_BUNDLE_SCHEMA_VERSION:
+        return (
+            False,
+            f"Unsupported golden trace bundle schema_version '{bundle_schema_version}'. "
+            f"Expected '{REPLAY_BUNDLE_SCHEMA_VERSION}'.",
         )
 
     entries = raw_manifest.get("bundles")
