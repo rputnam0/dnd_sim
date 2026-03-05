@@ -580,6 +580,8 @@ def _iter_applied_conditions(payload: dict[str, Any]) -> Iterable[str]:
             if normalized:
                 yield normalized
         return
+    if raw is None:
+        return
     normalized = str(raw).strip().lower()
     if normalized:
         yield normalized
