@@ -40,6 +40,12 @@ Structural gates:
 - `engine.py` must end below 3500 lines by `ARC-08`.
 - no extracted runtime module may exceed 1500 lines without an explicit waiver in `docs/agent_index.yaml`.
 
+ARC-08 required evidence:
+- replay serialization tests for stable trial-row envelopes (`tests/test_replay_serialization.py`),
+- simulation summary aggregation tests for reporting adapters (`tests/test_replay_reporting_runtime.py`),
+- deterministic replay diff tests for unchanged seeds (`tests/test_replay_serialization.py`; `tests/test_engine_runtime_seed_replay.py`),
+- adapter integration coverage through reporting paths (`tests/test_reporting.py`).
+
 ## Capability Manifest tasks
 
 Required coverage:
@@ -49,10 +55,23 @@ Required coverage:
 - import/CI gate tests,
 - stable ordering snapshot tests.
 
+CAP-05 gate contract:
+- import-path loads for shipped 2014 scope must fail when supported records are not both `schema_valid=true` and `tested=true`,
+- blocked records must always carry exactly one non-empty `unsupported_reason` code,
+- CI capability verifier must support dry-run reporting and enforcing modes.
+
+CAP-01 minimum gate:
+- schema validation must require all canonical state fields (`cataloged`, `schema_valid`, `executable`, `tested`, `blocked`, `unsupported_reason`),
+- blocked-state negative tests must require `unsupported_reason` only when `blocked=true`,
+- manifest round-trip tests must preserve canonical ordering and payload shape,
+- CLI smoke test must prove deterministic JSON emission from unordered input payloads.
+
 ## Replay, Logging, and Observability tasks
 
 Required coverage:
 - event schema tests,
+- logger presence tests,
+- event serialization tests,
 - trace completeness tests,
 - state-delta tests,
 - RNG audit determinism tests,

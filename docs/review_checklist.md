@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: integration-review  
-Last updated: 2026-03-04  
+Last updated: 2026-03-05  
 Canonical source: `docs/program/status_board.md`
 
 This checklist is the program closeout gate. Do not mark the backend complete until every item is checked in the repository.
@@ -27,11 +27,13 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 - [ ] ARC-07 spell execution pipeline extracted.
 - [ ] ARC-08 replay/reporting adapters extracted and `engine.py` reduced below the declared limit.
 
+Current in-progress focus: `ARC-06` reactions, interrupts, and ready-action window extraction on `codex/feat/arc-06-extract-reactions-interrupts-and-ready-action-wind`.
+
 ## Capability Manifest
 
 - [ ] CAP-01 Define capability manifest schema, storage format, and CLI
 - [ ] CAP-02 Generate spell capability manifest from canonical spell data
-- [ ] CAP-03 Generate feat, trait, background, and species capability manifest
+- [ ] CAP-03 Generate feat, trait, background, and species capability manifest (in progress on `codex/feat/cap-03-generate-feat-trait-background-and-species-capabil`)
 - [ ] CAP-04 Generate monster and monster-action capability manifest
 - [ ] CAP-05 Enforce capability manifest gates in import paths and CI
 - [ ] CAP-06 Publish machine-readable and markdown coverage reports
@@ -58,7 +60,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 ## Replay, Logging, and Observability
 
 - [ ] OBS-01 Introduce structured event schema and module-level loggers
-- [ ] OBS-02 Emit turn declaration and action resolution traces
+- [x] OBS-02 Emit turn declaration and action resolution traces
 - [ ] OBS-03 Emit actor state delta and effect lifecycle traces
 - [ ] OBS-04 Emit AI candidate scoring and rationale traces
 - [ ] OBS-05 Emit resource delta, RNG audit, and invariant violation events

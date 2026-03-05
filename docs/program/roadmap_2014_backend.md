@@ -78,6 +78,9 @@ Tasks:
 - ARC-07 Extract spell execution pipeline and target resolution adapters
 - ARC-08 Extract replay/reporting adapter layer and reduce engine.py to an orchestration facade
 
+Current implementation note (2026-03-05):
+- ARC-07 delegates spell declaration normalization, upcast handling, target adapters, and spell result application into `src/dnd_sim/spell_runtime.py` with dedicated `tests/test_spell_runtime.py` coverage.
+
 Required structural outcome for 5B:
 - `src/dnd_sim/engine.py` must be reduced below 3500 lines by `ARC-08`.
 - No extracted runtime module may exceed 1500 lines without an explicit waiver recorded in `docs/agent_index.yaml`.
@@ -111,6 +114,15 @@ Capability states:
 - `tested`
 - `blocked`
 - `unsupported_reason`
+
+CAP-01 canonical schema and storage contract:
+- Canonical storage format is UTF-8 JSON with deterministic key ordering (`sort_keys=true`) and a trailing newline.
+- Canonical manifest root fields are `manifest_version`, `generated_at`, and `records`.
+- Every record must include `content_id`, `content_type`, and `states`.
+- `states` must include `cataloged`, `schema_valid`, `executable`, `tested`, `blocked`, and `unsupported_reason`.
+- `blocked=true` requires a non-empty `unsupported_reason`; `blocked=false` requires `unsupported_reason=null`.
+- Canonical emission command is `uv run python -m dnd_sim.capability_manifest --input <source.json> --out artifacts/capabilities/<name>.manifest.json`.
+- CLI emission must normalize record ordering by `(content_type, content_id)`.
 
 ### 5D Replay, Logging, and Observability
 

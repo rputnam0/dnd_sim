@@ -1,0 +1,49 @@
+{
+  "schema_version": "replay.v1",
+  "run_id": "golden_world_exploration",
+  "scenario_id": "golden_world_exploration",
+  "inputs": {
+    "seed": 505,
+    "trials": 1,
+    "ruleset": "5e-2014",
+    "scenario_path": "fixtures/world_exploration.json"
+  },
+  "summary": {
+    "run_id": "golden_world_exploration",
+    "scenario_id": "golden_world_exploration",
+    "trials": 1,
+    "party_win_rate": 1.0,
+    "enemy_win_rate": 0.0,
+    "rounds": {
+      "mean": 5.0,
+      "median": 5.0,
+      "p10": 5.0,
+      "p90": 5.0,
+      "p95": 5.0
+    }
+  },
+  "trials": [
+    {
+      "trial_index": 0,
+      "rounds": 5,
+      "winner": "party",
+      "damage_taken": {"ranger": 4},
+      "damage_dealt": {"ranger": 12},
+      "resources_spent": {"ranger": {"ration": 1}},
+      "downed_counts": {"ranger": 0},
+      "death_counts": {"ranger": 0},
+      "remaining_hp": {"ranger": 21},
+      "telemetry": [
+        {"telemetry_type": "decision", "decision_mode": "travel", "round": 1, "actor_id": "ranger"},
+        {"telemetry_type": "invariant_violation", "round": 3, "invariant_code": "NONE"}
+      ],
+      "encounter_outcomes": [
+        {"encounter_index": 0, "winner": "party", "world_flags": ["bridge_repaired"]}
+      ],
+      "state_snapshots": [
+        {"round": 1, "world": {"time": "dawn", "region": "high_road"}},
+        {"round": 5, "world": {"time": "dusk", "region": "ruined_keep"}}
+      ]
+    }
+  ]
+}

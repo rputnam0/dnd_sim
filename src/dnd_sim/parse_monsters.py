@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,9 @@ from dnd_sim.monster_backfill import (
     extract_legendary_resistance_uses,
     slugify_name,
 )
+from dnd_sim.telemetry import emit_event
+
+logger = logging.getLogger(__name__)
 
 _MONSTER_BLOCK_RE = re.compile(
     r"^(?P<name>.*?)\n"
@@ -390,18 +394,30 @@ def parse_monsters(raw_text: str) -> list[dict[str, Any]]:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     root = Path(__file__).resolve().parents[2]
     raw_path = root / "db" / "rules" / "2014" / "srd_raw.txt"
     out_dir = root / "db" / "rules" / "2014" / "monsters"
 
     if not raw_path.exists():
-        print(f"Missing {raw_path}")
+        emit_event(
+            logger,
+            event_type="monsters_parse_input_missing",
+            source=__name__,
+            payload={"input_path": str(raw_path)},
+            level=logging.ERROR,
+        )
         return
 
     raw_text = raw_path.read_text(encoding="utf-8")
     monsters = parse_monsters(raw_text)
 
-    print(f"Parsed {len(monsters)} monsters.")
+    emit_event(
+        logger,
+        event_type="monsters_parsed",
+        source=__name__,
+        payload={"count": len(monsters), "input_path": str(raw_path)},
+    )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     for monster in monsters:

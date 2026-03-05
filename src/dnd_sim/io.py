@@ -5,6 +5,7 @@ import hashlib
 import importlib
 import importlib.util
 import json
+import logging
 import re
 from functools import lru_cache
 from datetime import UTC, datetime
@@ -13,6 +14,12 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
+from dnd_sim.capability_manifest import (
+    CapabilityRecord,
+    build_feature_capability_manifest,
+    build_monster_capability_manifest,
+    build_spell_capability_manifest,
+)
 from dnd_sim.spells import (
     DuplicatePolicy as SpellDuplicatePolicy,
     load_spell_database as _load_spell_database,
@@ -24,6 +31,8 @@ from dnd_sim.characters import (
     validate_multiclass_prerequisites,
 )
 from dnd_sim.strategy_api import BaseStrategy, validate_strategy_instance
+
+logger = logging.getLogger(__name__)
 
 _RECHARGE_PATTERN = re.compile(
     r"^(?:recharge\s+)?(?P<low>[1-6])(?:\s*-\s*(?P<high>[1-6]))?$",
@@ -43,6 +52,19 @@ _NON_CLASS_CONTENT_SLUG_RE = re.compile(r"[^a-z0-9]+")
 _NON_CLASS_CONTENT_KINDS = frozenset({"feat", "species", "background"})
 # 2024 core source tags should be excluded from the 2014 content catalog.
 _EDITION_ONE_SOURCE_IDS = frozenset({"XPHB", "XDMG", "XMM"})
+_CAPABILITY_REASON_CODE_RE = re.compile(r"^[a-z0-9_]+$")
+_CAPABILITY_FEATURE_CONTENT_TYPES = frozenset({"feat", "trait", "background", "species"})
+_CAPABILITY_MONSTER_CONTENT_TYPES = frozenset(
+    {
+        "monster",
+        "monster_action",
+        "monster_reaction",
+        "monster_legendary_action",
+        "monster_lair_action",
+        "monster_recharge",
+        "monster_innate_spellcasting",
+    }
+)
 
 
 def _canonical_hash_json_text(payload: Any) -> str:
@@ -111,6 +133,10 @@ def replay_content_lineage(conn: Any, *, content_type: str | None = None) -> lis
 
 def _non_class_raw_root_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "db" / "raw" / "5etools"
+
+
+def _traits_root_dir() -> Path:
+    return Path(__file__).resolve().parents[2] / "db" / "rules" / "2014" / "traits"
 
 
 def _slugify_non_class_content_name(name: str) -> str:
@@ -251,6 +277,91 @@ def _normalize_character_content_references(
 
 def _spell_root_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "db" / "rules" / "2014" / "spells"
+
+
+@lru_cache(maxsize=1)
+def _canonical_capability_records() -> tuple[CapabilityRecord, ...]:
+    records: list[CapabilityRecord] = []
+    for manifest in (
+        build_spell_capability_manifest(),
+        build_feature_capability_manifest(),
+        build_monster_capability_manifest(),
+    ):
+        records.extend(manifest.records)
+    return tuple(records)
+
+
+def validate_capability_gate_records(
+    *,
+    records: list[CapabilityRecord | dict[str, Any]],
+    required_content_types: set[str] | None = None,
+) -> list[str]:
+    normalized_types = (
+        {str(value).strip().lower() for value in required_content_types}
+        if required_content_types is not None
+        else None
+    )
+
+    issues: list[str] = []
+    for index, raw_record in enumerate(records):
+        try:
+            record = (
+                raw_record
+                if isinstance(raw_record, CapabilityRecord)
+                else CapabilityRecord.model_validate(raw_record)
+            )
+        except ValidationError as exc:
+            issues.append(f"capability record index {index} failed schema validation: {exc}")
+            continue
+
+        if normalized_types is not None and record.content_type not in normalized_types:
+            continue
+
+        states = record.states
+        if states.blocked:
+            reason = str(states.unsupported_reason or "").strip()
+            if not reason:
+                issues.append(
+                    f"{record.content_id} blocked record must declare states.unsupported_reason"
+                )
+            elif _CAPABILITY_REASON_CODE_RE.fullmatch(reason) is None:
+                issues.append(
+                    f"{record.content_id} blocked record unsupported_reason must be a single code"
+                )
+            continue
+
+        if not states.schema_valid:
+            issues.append(f"{record.content_id} supported-scope record must set schema_valid=true")
+        if not states.tested:
+            issues.append(f"{record.content_id} supported-scope record must set tested=true")
+        if states.unsupported_reason is not None:
+            issues.append(
+                f"{record.content_id} supported-scope record must not set unsupported_reason"
+            )
+    return issues
+
+
+def capability_gate_issues_for_types(
+    required_content_types: set[str] | None = None,
+) -> list[str]:
+    return validate_capability_gate_records(
+        records=list(_canonical_capability_records()),
+        required_content_types=required_content_types,
+    )
+
+
+def _assert_capability_gate(
+    *,
+    required_content_types: set[str] | None,
+    source: str,
+) -> None:
+    issues = capability_gate_issues_for_types(required_content_types=required_content_types)
+    if not issues:
+        return
+    preview = "\n".join(f"- {issue}" for issue in issues[:12])
+    raise ValueError(
+        f"Capability manifest gate failed during {source} with {len(issues)} issue(s):\n{preview}"
+    )
 
 
 def _is_known_spell_reference(name: str) -> bool:
@@ -807,6 +918,10 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
         scenario = ScenarioConfig.model_validate(raw)
     except ValidationError as exc:
         raise ValueError(f"Invalid scenario schema at {scenario_path}: {exc}") from exc
+    _assert_capability_gate(
+        required_content_types=set(_CAPABILITY_MONSTER_CONTENT_TYPES),
+        source="load_scenario",
+    )
 
     enemies: dict[str, EnemyConfig] = {}
     enemy_dir = scenario_path.parent.parent / "enemies"
@@ -964,6 +1079,14 @@ def _normalize_trait_payload(trait_data: dict[str, Any]) -> dict[str, Any]:
 def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
     from .db import execute_query
 
+    resolved_traits_dir = Path(traits_dir).resolve()
+    canonical_traits_dir = _traits_root_dir().resolve()
+    if resolved_traits_dir == canonical_traits_dir:
+        _assert_capability_gate(
+            required_content_types=set(_CAPABILITY_FEATURE_CONTENT_TYPES),
+            source="load_traits_db",
+        )
+
     out: dict[str, dict[str, Any]] = {}
 
     # 1. Base SQLite load
@@ -1001,6 +1124,7 @@ def load_spell_db(
         )
     if duplicate_policy != "fail_fast":
         raise ValueError("Spell duplicate policy must be 'fail_fast' for canonical loads")
+    _assert_capability_gate(required_content_types={"spell"}, source="load_spell_db")
     return _load_spell_database(canonical_dir, duplicate_policy="fail_fast")
 
 

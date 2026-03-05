@@ -86,6 +86,7 @@ Decompose the engine monolith into bounded runtime modules with explicit ownersh
 - Required tests: unit legality tests; invalid declaration tests; integration tests for legal turn declaration
 - Required docs: docs/agent_index.yaml; docs/program/completion_task_cards.md
 - Exit criteria: Create src/dnd_sim/action_legality.py for declaration validation, action economy checks, and structured legality errors; route engine and strategy API validation through it.
+- Implementation note (2026-03-05): ARC-02 is in progress on `codex/feat/arc-02-extract-turn-declaration-validation-and-legal-acti`.
 
 ### ARC-03 Extract movement, routing, and spatial legality service
 
@@ -95,6 +96,7 @@ Decompose the engine monolith into bounded runtime modules with explicit ownersh
 - Required tests: path legality tests; movement cost tests; forced movement and opportunity attack tests
 - Required docs: docs/agent_index.yaml; docs/program/completion_task_cards.md
 - Exit criteria: Create src/dnd_sim/movement_runtime.py to own movement budget, routing, difficult terrain, forced movement, and spatial legality; remove duplicate movement logic from engine.py.
+- Implementation checkpoint: extract movement budget math, declared path validation, difficult-terrain routing inputs, forced-movement destination resolution, and opportunity-attack reach transition helpers into `src/dnd_sim/movement_runtime.py`.
 
 ### ARC-04 Extract action resolution pipeline
 
@@ -162,6 +164,7 @@ Generate machine-readable support manifests for spells, feats, monsters, and all
 - Required tests: spell import tests; executable coverage tests; unsupported spell reason tests
 - Required docs: docs/program/completion_task_cards.md; docs/review_checklist.md
 - Exit criteria: Generate a spell manifest for every canonical 2014 spell and mark each record executable, blocked, or unsupported with a single reason code.
+- Execution note: Active on `codex/feat/cap-02-generate-spell-capability-manifest-from-canonical`.
 
 ### CAP-03 Generate feat, trait, background, and species capability manifest
 
@@ -171,6 +174,7 @@ Generate machine-readable support manifests for spells, feats, monsters, and all
 - Required tests: feature manifest tests; duplicate content id tests; unsupported feature reason tests
 - Required docs: docs/program/completion_task_cards.md; docs/review_checklist.md
 - Exit criteria: Generate manifests for feats, traits, backgrounds, and species content; require each record to declare its runtime hook family and support state.
+- Execution note: Active on `codex/feat/cap-03-generate-feat-trait-background-and-species-capabil`.
 
 ### CAP-04 Generate monster and monster-action capability manifest
 
@@ -180,6 +184,7 @@ Generate machine-readable support manifests for spells, feats, monsters, and all
 - Required tests: monster parser integration tests; action support tests; unsupported action reason tests
 - Required docs: docs/program/completion_task_cards.md; docs/program/status_board.md
 - Exit criteria: Generate manifests for monsters, monster actions, reactions, legendary actions, lair actions, recharge features, and innate spellcasting entries.
+- Execution note: Active on `codex/feat/cap-04-generate-monster-and-monster-action-capability-man`.
 
 ### CAP-05 Enforce capability manifest gates in import paths and CI
 
@@ -220,6 +225,7 @@ Emit structured traces, state deltas, replay bundles, and invariant events for e
 - Required tests: trace completeness tests; deterministic ordering tests; illegal action trace tests
 - Required docs: docs/program/completion_task_cards.md; docs/review_checklist.md
 - Exit criteria: Emit a structured trace record for declaration validation, action selection, action resolution, and final action outcome on every turn.
+- Status update (2026-03-05): Implemented structured `declaration_validation`, `action_selection`, `action_resolution`, and `action_outcome` telemetry emissions in declared-turn runtime paths with deterministic ordering checks and illegal action trace coverage in `tests/test_turn_traces.py`.
 
 ### OBS-03 Emit actor state delta and effect lifecycle traces
 
@@ -229,6 +235,7 @@ Emit structured traces, state deltas, replay bundles, and invariant events for e
 - Required tests: state delta snapshot tests; effect lifecycle trace tests; no-op delta suppression tests
 - Required docs: docs/program/completion_task_cards.md; docs/review_checklist.md
 - Exit criteria: Emit before/after actor state deltas and effect lifecycle events for apply, tick, refresh, expire, and concentration break transitions.
+- Status update (2026-03-05): Added `actor_state_delta` and effect lifecycle event-type coverage in telemetry, introduced `src/dnd_sim/effects_runtime.py` builders for deterministic state-delta and lifecycle payloads, and added `tests/test_state_delta_traces.py` for snapshot, lifecycle, and no-op suppression coverage.
 
 ### OBS-04 Emit AI candidate scoring and rationale traces
 
