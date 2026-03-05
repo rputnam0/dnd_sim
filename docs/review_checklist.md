@@ -30,7 +30,7 @@ This checklist is the program closeout gate. Do not mark the backend complete un
 ## Capability Manifest
 
 - [ ] CAP-01 Define capability manifest schema, storage format, and CLI
-- [ ] CAP-02 Generate spell capability manifest from canonical spell data
+- [ ] CAP-02 Generate spell capability manifest from canonical spell data (active on `codex/feat/cap-02-generate-spell-capability-manifest-from-canonical`)
 - [ ] CAP-03 Generate feat, trait, background, and species capability manifest (in review on [#111](https://github.com/rputnam0/dnd_sim/pull/111))
 - [ ] CAP-04 Generate monster and monster-action capability manifest
 - [ ] CAP-05 Enforce capability manifest gates in import paths and CI
