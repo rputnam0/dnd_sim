@@ -8,6 +8,12 @@ from typing import Any, TypeAlias
 logger = logging.getLogger(__name__)
 
 TELEMETRY_SCHEMA_VERSION = "obs.v1"
+TURN_TRACE_EVENT_TYPES: tuple[str, str, str, str] = (
+    "declaration_validation",
+    "action_selection",
+    "action_resolution",
+    "action_outcome",
+)
 
 JSONScalar: TypeAlias = str | int | float | bool | None
 JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
