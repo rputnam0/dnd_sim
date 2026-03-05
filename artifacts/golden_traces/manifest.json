@@ -1,4 +1,5 @@
 {
+  "bundle_schema_version": "replay.v1",
   "bundles": {
     "combat_duel_trace.json": {
       "sha256": "60a73c82546e1bec867b5fc57776a259249f44077d0c9cb8be4d14d5e2203d69"
@@ -16,5 +17,5 @@
       "sha256": "e5d4f8862f8f04c12b98258f58378ca7dece70ceae5eac8d1761ec184de7e178"
     }
   },
-  "schema_version": "golden_traces.v1"
+  "schema_version": "golden_traces.v2"
 }

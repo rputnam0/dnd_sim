@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from dnd_sim.replay_schema import REPLAY_BUNDLE_SCHEMA_VERSION
+
 
 def _script_path() -> Path:
     return Path(__file__).resolve().parents[1] / "scripts" / "replay" / "verify_golden_traces.py"
@@ -61,6 +63,12 @@ def test_golden_trace_corpus_covers_required_scenarios() -> None:
 def test_verify_golden_traces_passes_for_repo_corpus() -> None:
     result = _run_verify(golden_dir=_golden_dir())
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_golden_trace_manifest_declares_replay_bundle_schema() -> None:
+    manifest_path = _golden_dir() / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["bundle_schema_version"] == REPLAY_BUNDLE_SCHEMA_VERSION
 
 
 def test_verify_golden_traces_detects_drift_and_supports_update(tmp_path: Path) -> None:

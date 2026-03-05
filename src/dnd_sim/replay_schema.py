@@ -7,6 +7,7 @@ JSONScalar: TypeAlias = str | int | float | bool | None
 JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
 
 REPLAY_BUNDLE_SCHEMA_VERSION = "replay.v1"
+GOLDEN_TRACE_MANIFEST_SCHEMA_VERSION = "golden_traces.v2"
 REPLAY_BUNDLE_REQUIRED_KEYS: tuple[str, ...] = (
     "schema_version",
     "run_id",
