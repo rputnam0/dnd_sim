@@ -49,10 +49,10 @@ Ownership and metadata-header requirements for this same live planning surface a
 
 ## Historical planning scope
 
-- Any planning file under `docs/archive/` other than `docs/archive/README.md` is historical and must carry `Status: historical`.
+- Any planning file under the archive subtree other than `docs/archive/README.md` is historical and must carry `Status: historical`.
 - Cleanup and deprecation snapshots are historical and must carry `Status: historical`.
 - Historical files are reference-only and must not be used as planning entrypoints.
-- Use `docs/archive/README.md` as the only canonical index for historical artifacts under `docs/archive/program_runs/`, `docs/archive/cleanup/`, and `docs/archive/deprecation/`.
+- Use `docs/archive/README.md` as the only canonical index for historical artifacts in the program-runs, cleanup, and deprecation archive folders.
 
 ## Multi-agent policy
 

@@ -55,10 +55,18 @@ Structured planning files (`.csv`, `.yaml`, `.mmd`) remain source-specific and t
 
 ## CI rules
 
-`DOC-05` adds a doc consistency checker that fails when:
+`DOC-05` adds `scripts/docs/verify_program_docs.py` plus
+`.github/workflows/docs-consistency.yml`.
+The checker fails when:
 
 - a live planning markdown file with `Metadata header: required` is missing metadata,
 - `status_board.md` and `backlog.csv` disagree,
-- a historical file is linked from a canonical entrypoint without an explicit historical label,
+- a canonical entrypoint links directly to archived files other than `docs/archive/README.md`,
 - a canonical file is not registered in this document,
 - an internal doc link is broken.
+
+Local dry-run commands:
+
+- `uv sync --frozen --extra dev`
+- `uv run python scripts/docs/verify_program_docs.py`
+- `uv run python -m pytest tests/test_verify_program_docs.py tests/test_program_doc_governance.py`
