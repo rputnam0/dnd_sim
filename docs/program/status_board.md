@@ -27,7 +27,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | CAP | Capability Manifest | not_started | 5C-capability-manifest | All CAP tasks are `not_started` in `backlog.csv`. |
 | OBS | Replay, Logging, and Observability | not_started | 5D-observability | All OBS tasks are `not_started` in `backlog.csv`. |
 | DBS | Persistence and Query Model | not_started | 5E-persistence | All DBS tasks are `not_started` in `backlog.csv`. |
-| AI | Tactical AI Hardening | pr_open | 5F-ai-hardening | `AI-01` is `pr_open`; remaining AI tasks are `not_started` in `backlog.csv`. |
+| AI | Tactical AI Hardening | in_progress | 5F-ai-hardening | `AI-01` is `pr_open` and `AI-04` is `in_progress` in `backlog.csv`; remaining AI tasks are `not_started`. |
 | FIX | Rules Closure | not_started | 5G-rules-closure | All FIX tasks are `not_started` in `backlog.csv`. |
 | WLD | World Systems and Campaign Platform | not_started | 5H-world-systems | All WLD tasks are `not_started` in `backlog.csv`. |
 | FIN | Completion Gates | not_started | 5I-completion-gates | All FIN tasks are `not_started` in `backlog.csv`. |
@@ -37,6 +37,7 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
 | AI-01 | `codex/feat/ai-01-normalize-candidate-action-enumeration-and-scoring` | ai_core | pr_open | Introduces `src/dnd_sim/ai/scoring.py` candidate enumeration with normalized scoring inputs and routes optimal strategy selection through legal candidate snapshots. |
+| AI-04 | `codex/feat/ai-04-implement-retreat-survival-objective-race-and-focu` | ai_objective | in_progress | Implementing retreat/survival, objective-race urgency, ally-rescue valuation, and focus-fire tradeoff scoring for legal action candidates. |
 
 ## Open PRs
 
@@ -48,5 +49,5 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 
 - `DOC-02`, `DOC-03`, `DOC-04`, and `DOC-06` depend on `DOC-01`.
 - DOC dependencies in Track 5A are satisfied (`DOC-01` and downstream DOC tasks are merged).
-- No active DOC blockers remain; AI-01 is in PR review state and other queues remain unchanged.
+- No active DOC blockers remain; AI-01 is in PR review and AI-04 is in progress on the assigned branch.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
