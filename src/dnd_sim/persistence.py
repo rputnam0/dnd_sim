@@ -3,6 +3,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from dnd_sim.campaign_runtime import (
+    AdventuringActorState,
+    AdventuringDayState,
+    EncounterCheckpoint,
+)
 from dnd_sim.world_runtime import (
     LightSourceState,
     ExplorationState,
@@ -127,4 +132,156 @@ def deserialize_world_exploration_state(payload: Mapping[str, Any]) -> Explorati
         clock=WorldClock(day=day, minute_of_day=minute_of_day),
         light_sources=light_sources,
         location_id=location_id,
+    )
+
+
+def _serialize_adventuring_actor_state(actor: AdventuringActorState) -> dict[str, Any]:
+    return {
+        "actor_id": actor.actor_id,
+        "hit_points": actor.hit_points,
+        "max_hit_points": actor.max_hit_points,
+        "resources": dict(actor.resources),
+        "max_resources": dict(actor.max_resources),
+        "short_rest_recovery": list(actor.short_rest_recovery),
+        "conditions": list(actor.conditions),
+    }
+
+
+def _deserialize_adventuring_actor_state(payload: Mapping[str, Any]) -> AdventuringActorState:
+    if not isinstance(payload, Mapping):
+        raise ValueError("actor payload must be a mapping")
+
+    return AdventuringActorState(
+        actor_id=_required_text(payload.get("actor_id"), field_name="actor_id"),
+        hit_points=_required_int(payload.get("hit_points"), field_name="hit_points"),
+        max_hit_points=_required_int(payload.get("max_hit_points"), field_name="max_hit_points"),
+        resources=dict(payload.get("resources", {})),
+        max_resources=dict(payload.get("max_resources", {})),
+        short_rest_recovery=tuple(payload.get("short_rest_recovery", ())),
+        conditions=tuple(payload.get("conditions", ())),
+    )
+
+
+def _serialize_adventuring_party(
+    party: Mapping[str, AdventuringActorState],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for actor_id, actor in sorted(dict(party).items()):
+        if actor.actor_id != actor_id:
+            raise ValueError("party actor key must match actor_id")
+        rows.append(_serialize_adventuring_actor_state(actor))
+    return rows
+
+
+def _deserialize_adventuring_party(raw: Any) -> dict[str, AdventuringActorState]:
+    if raw is None:
+        return {}
+
+    rows: list[tuple[str, Mapping[str, Any]]] = []
+    if isinstance(raw, Mapping):
+        for actor_id, payload in sorted(raw.items()):
+            if not isinstance(payload, Mapping):
+                raise ValueError("party mapping values must be mappings")
+            merged_payload = dict(payload)
+            merged_payload.setdefault("actor_id", actor_id)
+            rows.append((str(actor_id), merged_payload))
+    elif isinstance(raw, list):
+        for payload in raw:
+            if not isinstance(payload, Mapping):
+                raise ValueError("party list entries must be mappings")
+            actor_id = _required_text(payload.get("actor_id"), field_name="actor_id")
+            rows.append((actor_id, payload))
+    else:
+        raise ValueError("party must be a list or mapping")
+
+    party: dict[str, AdventuringActorState] = {}
+    for actor_id, payload in rows:
+        actor = _deserialize_adventuring_actor_state(payload)
+        if actor.actor_id != actor_id:
+            raise ValueError("party actor key must match actor_id")
+        party[actor_id] = actor
+    return party
+
+
+def serialize_adventuring_day_state(state: AdventuringDayState) -> dict[str, Any]:
+    if not isinstance(state, AdventuringDayState):
+        raise ValueError("state must be an AdventuringDayState")
+
+    return {
+        "campaign_id": state.campaign_id,
+        "day_number": state.day_number,
+        "encounter_order": list(state.encounter_order),
+        "current_encounter_index": state.current_encounter_index,
+        "completed": state.completed,
+        "party": _serialize_adventuring_party(state.party),
+        "world_state": serialize_world_exploration_state(state.world_state),
+        "encounter_history": [
+            {
+                "encounter_id": checkpoint.encounter_id,
+                "outcome": checkpoint.outcome,
+                "rest_applied": checkpoint.rest_applied,
+                "world_day": checkpoint.world_day,
+                "world_minute_of_day": checkpoint.world_minute_of_day,
+                "party": _serialize_adventuring_party(checkpoint.party),
+            }
+            for checkpoint in state.encounter_history
+        ],
+    }
+
+
+def deserialize_adventuring_day_state(payload: Mapping[str, Any]) -> AdventuringDayState:
+    if not isinstance(payload, Mapping):
+        raise ValueError("payload must be a mapping")
+
+    encounter_order_raw = payload.get("encounter_order", [])
+    if not isinstance(encounter_order_raw, (list, tuple)):
+        raise ValueError("encounter_order must be a list or tuple")
+    encounter_order = tuple(
+        _required_text(entry, field_name="encounter_order entry") for entry in encounter_order_raw
+    )
+
+    completed_raw = payload.get("completed", False)
+    if not isinstance(completed_raw, bool):
+        raise ValueError("completed must be a bool")
+
+    history_raw = payload.get("encounter_history", [])
+    if not isinstance(history_raw, list):
+        raise ValueError("encounter_history must be a list")
+    encounter_history: list[EncounterCheckpoint] = []
+    for row in history_raw:
+        if not isinstance(row, Mapping):
+            raise ValueError("encounter_history entries must be mappings")
+        encounter_history.append(
+            EncounterCheckpoint(
+                encounter_id=_required_text(row.get("encounter_id"), field_name="encounter_id"),
+                outcome=_required_text(row.get("outcome"), field_name="outcome"),
+                rest_applied=_required_text(
+                    row.get("rest_applied", row.get("rest", "none")),
+                    field_name="rest_applied",
+                ),
+                party=_deserialize_adventuring_party(row.get("party")),
+                world_day=_required_int(row.get("world_day"), field_name="world_day"),
+                world_minute_of_day=_required_int(
+                    row.get("world_minute_of_day"),
+                    field_name="world_minute_of_day",
+                ),
+            )
+        )
+
+    world_state_payload = payload.get("world_state")
+    if not isinstance(world_state_payload, Mapping):
+        raise ValueError("world_state must be a mapping")
+
+    return AdventuringDayState(
+        campaign_id=_required_text(payload.get("campaign_id"), field_name="campaign_id"),
+        day_number=_required_int(payload.get("day_number"), field_name="day_number"),
+        encounter_order=encounter_order,
+        current_encounter_index=_required_int(
+            payload.get("current_encounter_index"),
+            field_name="current_encounter_index",
+        ),
+        party=_deserialize_adventuring_party(payload.get("party")),
+        world_state=deserialize_world_exploration_state(world_state_payload),
+        encounter_history=tuple(encounter_history),
+        completed=completed_raw,
     )
