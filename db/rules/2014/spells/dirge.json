@@ -11,5 +11,14 @@
   "description": "Deathly power fills a 60-foot emanation originating from you for the duration. When you cast this spell, you can designate creatures to be unaffected by it. Any other creature can't regain Hit Points while in the emanation. Whenever the emanation enters a creature's space and whenever a creature enters the emanation or ends its turn there, the creature makes a Constitution saving throw. On a failed save, the creature takes 3d10 necrotic damage and is prone. On a successful save, the creature takes half as much damage and its speed is halved. A creature makes this save only once per turn. Casting as a Circle Spell: Casting this as a Circle spell requires a minimum of two secondary casters. If the spell is cast as a Circle spell, its duration becomes concentration, up to 10 minutes. A creature that fails its save against the spell's effect also gains 1 exhaustion level. While the creature has exhaustion levels, finishing a long rest neither restores lost hit points nor reduces the creature's exhaustion level. When the spell is cast, each secondary caster must expend a level 4+ spell slot; otherwise, the spell fails.",
   "save_ability": "con",
   "damage_type": "necrotic",
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "all_enemies",
+      "apply_on": "save_fail",
+      "save_ability": "con",
+      "damage": "3d10",
+      "damage_type": "necrotic"
+    }
+  ]
 }
