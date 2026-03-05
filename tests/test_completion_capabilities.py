@@ -164,3 +164,107 @@ def test_invalid_records_array_preserves_header_issues() -> None:
     messages = [issue.message for issue in issues]
     assert "manifest payload must declare non-empty manifest_version." in messages
     assert "manifest payload must contain a records array." in messages
+
+
+def test_default_mode_allows_blocked_records_with_reason_code() -> None:
+    payload = {
+        "manifest_version": "1.0",
+        "generated_at": None,
+        "records": [
+            _record(
+                content_id="trait:rage",
+                executable=False,
+                tested=False,
+                blocked=True,
+                unsupported_reason="runtime_hook_missing",
+            )
+        ],
+    }
+
+    issues = verify_completion_capabilities.verify_manifest_payload(
+        payload,
+        expected_content_ids=("trait:rage",),
+    )
+    assert issues == []
+
+
+def test_strict_mode_rejects_blocked_record_even_with_reason_code() -> None:
+    payload = {
+        "manifest_version": "1.0",
+        "generated_at": None,
+        "records": [
+            _record(
+                content_id="trait:rage",
+                executable=False,
+                tested=False,
+                blocked=True,
+                unsupported_reason="runtime_hook_missing",
+            )
+        ],
+    }
+
+    issues = verify_completion_capabilities.verify_manifest_payload(
+        payload,
+        expected_content_ids=("trait:rage",),
+        strict=True,
+    )
+    assert any(issue.code == "CAP-GATE-011" for issue in issues)
+
+
+def test_strict_mode_accepts_fully_green_record() -> None:
+    payload = {
+        "manifest_version": "1.0",
+        "generated_at": None,
+        "records": [
+            _record(
+                content_id="feat:sharpshooter",
+                executable=True,
+                tested=True,
+                blocked=False,
+                unsupported_reason=None,
+            )
+        ],
+    }
+
+    issues = verify_completion_capabilities.verify_manifest_payload(
+        payload,
+        expected_content_ids=("feat:sharpshooter",),
+        strict=True,
+    )
+    assert issues == []
+
+
+def test_cli_strict_returns_nonzero_for_blocked_manifest(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest_2014.json"
+    payload = {
+        "manifest_version": "1.0",
+        "generated_at": None,
+        "records": [
+            _record(
+                content_id="spell:acid_splash",
+                executable=False,
+                tested=False,
+                blocked=True,
+                unsupported_reason="runtime_hook_missing",
+            )
+        ],
+    }
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    repo_root = tmp_path / "repo"
+    (repo_root / "db" / "rules" / "2014" / "spells").mkdir(parents=True, exist_ok=True)
+    (repo_root / "db" / "rules" / "2014" / "spells" / "acid_splash.json").write_text(
+        "{}",
+        encoding="utf-8",
+    )
+
+    exit_code = verify_completion_capabilities.main(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--manifest-path",
+            str(manifest_path),
+            "--strict",
+        ]
+    )
+    assert exit_code == 1
