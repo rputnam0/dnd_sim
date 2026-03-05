@@ -11,6 +11,7 @@ from dnd_sim.spatial import (
     find_path,
     path_hazard_exposure,
     path_movement_cost,
+    path_prefix_for_movement,
 )
 from dnd_sim.strategy_api import ActorView, BattleStateView
 
@@ -708,20 +709,59 @@ def _route_quality_score(
 
     movement_needed = max(0.0, distance_to_primary - action_range_ft)
     movement_budget = max(0.0, float(actor.movement_remaining))
-    path_cost = path_movement_cost(
+    effective_movement_cost = _movement_cost_to_get_within_range(
         movement_path,
+        target_position=primary_target.position,
+        action_range_ft=action_range_ft,
         difficult_terrain_positions=difficult_terrain_positions,
     )
-    if path_cost <= 0.0:
+    if effective_movement_cost <= 0.0:
         return 0.0
 
     budget_factor = min(1.0, movement_budget / max(movement_needed, 1.0))
-    detour_factor = min(1.0, movement_needed / max(path_cost, movement_needed))
+    detour_factor = min(1.0, movement_needed / max(effective_movement_cost, movement_needed))
     return max(0.0, min(1.0, budget_factor * detour_factor))
 
 
 def _cover_penalty(cover_level: str) -> float:
     return _COVER_PENALTIES.get(cover_level, _COVER_PENALTIES["TOTAL"])
+
+
+def _movement_cost_to_get_within_range(
+    movement_path: list[tuple[float, float, float]],
+    *,
+    target_position: tuple[float, float, float],
+    action_range_ft: float,
+    difficult_terrain_positions: list[tuple[float, float, float]],
+) -> float:
+    if len(movement_path) < 2:
+        return 0.0
+
+    if distance_chebyshev(movement_path[0], target_position) <= action_range_ft:
+        return 0.0
+
+    full_path_cost = path_movement_cost(
+        movement_path,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+    expanded_path = path_prefix_for_movement(
+        movement_path,
+        movement_budget_ft=full_path_cost,
+        difficult_terrain_positions=difficult_terrain_positions,
+    )
+
+    spent = 0.0
+    previous = expanded_path[0]
+    for current in expanded_path[1:]:
+        spent += path_movement_cost(
+            [previous, current],
+            difficult_terrain_positions=difficult_terrain_positions,
+        )
+        if distance_chebyshev(current, target_position) <= action_range_ft:
+            return spent
+        previous = current
+
+    return full_path_cost
 
 
 def _hazard_inputs(
