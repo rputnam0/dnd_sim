@@ -1,41 +1,33 @@
 from __future__ import annotations
 
-from types import ModuleType
+from typing import Any
 
-from dnd_sim import engine_legacy as _engine_legacy
-from dnd_sim.telemetry import build_event_envelope
-
-
-def _export_engine_symbols(module: ModuleType) -> None:
-    for name, value in vars(module).items():
-        if name.startswith("__"):
-            continue
-        globals()[name] = value
+from dnd_sim.action_legality import TurnDeclarationValidationError
+from dnd_sim.engine_legacy import SimulationArtifacts
+from dnd_sim.io import LoadedScenario
 
 
-_export_engine_symbols(_engine_legacy)
-
-
-def _append_telemetry_event(
-    telemetry: list[dict[str, object]] | None,
+def run_simulation(
+    scenario: LoadedScenario,
+    character_db: dict[str, dict[str, Any]],
+    traits_db: dict[str, dict[str, Any]],
+    strategy_registry: dict[str, Any],
     *,
-    event_type: str,
-    payload: dict[str, object],
-    source: str = __name__,
-) -> None:
-    if telemetry is None:
-        return
-    telemetry.append(
-        build_event_envelope(
-            event_type=event_type,
-            payload=payload,
-            source=source,
-        )
+    trials: int,
+    seed: int,
+    run_id: str,
+) -> SimulationArtifacts:
+    from dnd_sim.engine_runtime import run_simulation as _run_simulation_runtime
+
+    return _run_simulation_runtime(
+        scenario,
+        character_db,
+        traits_db,
+        strategy_registry,
+        trials=trials,
+        seed=seed,
+        run_id=run_id,
     )
 
-__all__ = [
-    name
-    for name in globals()
-    if not name.startswith("__")
-    and name not in {"ModuleType", "_engine_legacy", "_export_engine_symbols"}
-]
+
+__all__ = ["SimulationArtifacts", "TurnDeclarationValidationError", "run_simulation"]

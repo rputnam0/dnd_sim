@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def effect_instance_condition_names(effect: EffectInstance) -> set[str]:
-    from dnd_sim import engine as engine_module
+    from dnd_sim import engine_legacy as engine_module
 
     names = {effect.condition}
     names.update(engine_module._IMPLIED_CONDITION_MAP.get(effect.condition, set()))
@@ -84,7 +84,7 @@ def remove_effect_instance(
     *,
     source_actor_id: str | None = None,
 ) -> bool:
-    from dnd_sim import engine as engine_module
+    from dnd_sim import engine_legacy as engine_module
 
     previous_effect_conditions = effect_condition_names(actor)
     removed = False
@@ -114,7 +114,7 @@ def remove_condition(
     effect_id: str | None = None,
     instance_id: str | None = None,
 ) -> None:
-    from dnd_sim import engine as engine_module
+    from dnd_sim import engine_legacy as engine_module
 
     key = engine_module._normalize_condition(condition)
     if not key:
@@ -202,7 +202,7 @@ def break_concentration(
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
 ) -> None:
-    from dnd_sim import engine as engine_module
+    from dnd_sim import engine_legacy as engine_module
 
     if not has_active_concentration_state(actor):
         return
@@ -255,7 +255,7 @@ def break_concentration(
 
 
 def concentration_forced_end(actor: ActorRuntimeState) -> bool:
-    from dnd_sim import engine as engine_module
+    from dnd_sim import engine_legacy as engine_module
 
     if not has_active_concentration_state(actor):
         return False
@@ -295,7 +295,7 @@ def apply_condition(
     save_to_end: bool = False,
     internal_tags: set[str] | None = None,
 ) -> list[str]:
-    from dnd_sim import engine as engine_module
+    from dnd_sim import engine_legacy as engine_module
 
     key = engine_module._normalize_condition(condition)
     if not key:
@@ -387,7 +387,7 @@ def tick_conditions_for_actor(
 ) -> None:
     """Tick condition durations for the configured turn boundary."""
 
-    from dnd_sim import engine as engine_module
+    from dnd_sim import engine_legacy as engine_module
 
     tick_boundary = engine_module._normalize_duration_boundary(boundary)
 
