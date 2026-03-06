@@ -13,10 +13,34 @@
   "damage_type": "radiant",
   "mechanics": [
     {
-      "area": "sphere",
-      "radius_ft": 30,
-      "condition_inflicted": "exhaustion",
-      "exhaustion_levels": 1
+      "effect_type": "aoe",
+      "shape": "sphere",
+      "radius": 30
+    },
+    {
+      "effect_type": "damage",
+      "apply_on": "save_fail",
+      "damage": "4d10",
+      "damage_type": "radiant"
+    },
+    {
+      "effect_type": "apply_condition",
+      "apply_on": "save_fail",
+      "condition": "exhaustion",
+      "levels": 1,
+      "duration": 100
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "glowing",
+      "light_radius_ft": 5,
+      "duration": 100
+    },
+    {
+      "effect_type": "remove_condition",
+      "condition": "invisible",
+      "duration": 100,
+      "target_cannot_be_invisible": true
     }
   ]
 }

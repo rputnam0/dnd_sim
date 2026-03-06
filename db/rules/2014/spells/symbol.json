@@ -40,7 +40,7 @@
     {
       "effect_type": "damage",
       "damage_type": "necrotic",
-      "dice": "10d10",
+      "damage": "10d10",
       "save": "con",
       "save_effect": "half"
     }

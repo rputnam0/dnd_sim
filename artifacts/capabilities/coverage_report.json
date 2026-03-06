@@ -37,12 +37,12 @@
       "total_records": 256
     },
     {
-      "blocked_records": 529,
+      "blocked_records": 520,
       "content_type": "spell",
-      "executable_records": 65,
-      "schema_valid_records": 585,
-      "supported_records": 65,
-      "tested_records": 65,
+      "executable_records": 74,
+      "schema_valid_records": 594,
+      "supported_records": 74,
+      "tested_records": 74,
       "total_records": 594
     },
     {
@@ -10853,16 +10853,16 @@
     {
       "content_id": "spell:antipathy_sympathy",
       "content_type": "spell",
-      "runtime_hook_family": "invalid",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
-        "schema_valid": false,
-        "tested": false,
-        "unsupported_reason": "invalid_mechanics_schema"
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:arcane_eye",
@@ -11595,16 +11595,16 @@
     {
       "content_id": "spell:chill_touch",
       "content_type": "spell",
-      "runtime_hook_family": "invalid",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
-        "schema_valid": false,
-        "tested": false,
-        "unsupported_reason": "invalid_mechanics_schema"
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:chromatic_orb",
@@ -12603,16 +12603,16 @@
     {
       "content_id": "spell:dissonant_whispers",
       "content_type": "spell",
-      "runtime_hook_family": "invalid",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
-        "schema_valid": false,
-        "tested": false,
-        "unsupported_reason": "invalid_mechanics_schema"
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:distort_value",
@@ -14003,16 +14003,16 @@
     {
       "content_id": "spell:gravity_sinkhole",
       "content_type": "spell",
-      "runtime_hook_family": "invalid",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
-        "schema_valid": false,
-        "tested": false,
-        "unsupported_reason": "invalid_mechanics_schema"
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:grease",
@@ -15025,16 +15025,16 @@
     {
       "content_id": "spell:lightning_arrow",
       "content_type": "spell",
-      "runtime_hook_family": "invalid",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
-        "schema_valid": false,
-        "tested": false,
-        "unsupported_reason": "invalid_mechanics_schema"
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:lightning_bolt",
@@ -17013,16 +17013,16 @@
     {
       "content_id": "spell:shining_smite",
       "content_type": "spell",
-      "runtime_hook_family": "invalid",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
-        "schema_valid": false,
-        "tested": false,
-        "unsupported_reason": "invalid_mechanics_schema"
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:shocking_grasp",
@@ -17055,16 +17055,16 @@
     {
       "content_id": "spell:sickening_radiance",
       "content_type": "spell",
-      "runtime_hook_family": "invalid",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
-        "schema_valid": false,
-        "tested": false,
-        "unsupported_reason": "invalid_mechanics_schema"
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:silence",
@@ -17853,30 +17853,30 @@
     {
       "content_id": "spell:symbol",
       "content_type": "spell",
-      "runtime_hook_family": "invalid",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
-        "schema_valid": false,
-        "tested": false,
-        "unsupported_reason": "invalid_mechanics_schema"
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:synaptic_static",
       "content_type": "spell",
-      "runtime_hook_family": "invalid",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
-        "schema_valid": false,
-        "tested": false,
-        "unsupported_reason": "invalid_mechanics_schema"
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:tasha_s_bubbling_cauldron",
@@ -35437,18 +35437,14 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 1225,
-    "executable_records": 1302,
-    "schema_valid_records": 2518,
-    "supported_records": 1302,
-    "tested_records": 1302,
+    "blocked_records": 1216,
+    "executable_records": 1311,
+    "schema_valid_records": 2527,
+    "supported_records": 1311,
+    "tested_records": 1311,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
-    {
-      "count": 9,
-      "unsupported_reason": "invalid_mechanics_schema"
-    },
     {
       "count": 696,
       "unsupported_reason": "missing_runtime_hook_family"

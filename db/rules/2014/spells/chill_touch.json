@@ -15,19 +15,19 @@
     {
       "effect_type": "damage",
       "damage_type": "necrotic",
-      "dice": "1d8",
+      "damage": "1d8",
       "scaling": [
         {
           "level": 5,
-          "dice": "2d8"
+          "damage": "2d8"
         },
         {
           "level": 11,
-          "dice": "3d8"
+          "damage": "3d8"
         },
         {
           "level": 17,
-          "dice": "4d8"
+          "damage": "4d8"
         }
       ]
     },

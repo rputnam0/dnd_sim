@@ -15,14 +15,15 @@
     {
       "effect_type": "damage",
       "damage_type": "psychic",
-      "dice": "3d6",
+      "damage": "3d6",
       "save": "wis",
       "half_on_success": true
     },
     {
       "effect_type": "forced_movement",
       "direction": "away_from_caster",
-      "distance": "speed",
+      "distance_ft": 30,
+      "distance_ref": "speed",
       "trigger": "failed_save",
       "save": "wis"
     }
