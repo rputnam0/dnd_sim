@@ -13,17 +13,17 @@
   "damage_type": "necrotic",
   "mechanics": [
     {
-      "effect_type": "heal",
-      "target": "target",
-      "apply_on": "always",
-      "amount": "8d8"
-    },
-    {
       "effect_type": "damage",
       "target": "source",
       "apply_on": "always",
       "damage": "4d8",
       "damage_type": "necrotic"
+    },
+    {
+      "effect_type": "heal",
+      "target": "target",
+      "apply_on": "always",
+      "amount": "last_damage_applied_x2"
     }
   ]
 }

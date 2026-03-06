@@ -425,6 +425,162 @@ def test_w6_par_05i1_hold_spells_are_save_gated_paralyzed_effects() -> None:
         )
 
 
+def test_w6_par_05i1_followup_review_payloads_are_truthful() -> None:
+    life_transference = _spell_payload("life_transference")
+    life_damage = _find_effect(life_transference, "damage")
+    assert life_damage["target"] == "source"
+    assert life_damage["damage"] == "4d8"
+    life_heal = _find_effect(life_transference, "heal")
+    assert life_heal["target"] == "target"
+    assert life_heal["amount"] == "last_damage_applied_x2"
+
+    sorcerous_burst = _spell_payload("sorcerous_burst")
+    assert _find_effects(sorcerous_burst, "apply_condition") == []
+    burst_damage = _find_effect(sorcerous_burst, "damage")
+    assert burst_damage["apply_on"] == "hit"
+    assert burst_damage["damage"] == "1d8"
+    assert burst_damage["damage_type"] == "fire"
+
+    eyebite = _spell_payload("eyebite")
+    assert eyebite["save_ability"] == "wis"
+    assert eyebite["range_ft"] == 60
+    assert _find_effects(eyebite, "forced_movement") == []
+    eyebite_effect = _find_effect(eyebite, "apply_condition")
+    assert eyebite_effect["apply_on"] == "save_fail"
+    assert eyebite_effect["condition"] == "frightened"
+    assert eyebite_effect["concentration_linked"] is True
+
+
+def test_w6_par_05i1_life_transference_heals_from_actual_self_damage() -> None:
+    spell_row, action = _extract_action_from_sheet(
+        name="Life Transference",
+        level_header="=== 3rd LEVEL ===",
+        save_hit="",
+        duration_text="Instantaneous",
+        range_text="30 ft",
+        spell_level=3,
+    )
+
+    assert "healing" not in spell_row
+    assert action.damage is None
+    assert action.target_mode == "single_ally"
+    life_mechanics = [effect for effect in action.mechanics if isinstance(effect, dict)]
+    assert [effect["effect_type"] for effect in life_mechanics[:2]] == ["damage", "heal"]
+
+    caster = _actor("caster", "party", hp=30, max_hp=30)
+    ally = _actor("ally", "party", hp=5, max_hp=30)
+    actors = {caster.actor_id: caster, ally.actor_id: ally}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, ally)
+
+    _execute_action(
+        rng=FixedRng([1, 2, 3, 4]),
+        actor=caster,
+        action=action,
+        targets=[ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert caster.hp == 20
+    assert ally.hp == 25
+    assert damage_dealt[caster.actor_id] == 10
+    assert damage_taken[caster.actor_id] == 10
+
+
+def test_w6_par_05i1_sorcerous_burst_uses_primary_attack_damage_once() -> None:
+    spell_row, action = _extract_action_from_sheet(
+        name="Sorcerous Burst",
+        level_header="=== CANTRIPS ===",
+        save_hit="+11",
+        duration_text="Instantaneous",
+        range_text="120 ft",
+        spell_level=0,
+    )
+
+    assert spell_row["damage"] == "1d8"
+    assert action.damage == "4d8"
+    assert not any(
+        isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).lower() == "damage"
+        and str(effect.get("apply_on", "")).lower() == "hit"
+        for effect in action.mechanics
+    )
+
+    caster = _actor("caster", "party")
+    target = _actor("target", "enemy")
+    target.position = (10.0, 0.0, 0.0)
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+
+    _execute_action(
+        rng=FixedRng([10, 1, 2, 3, 4]),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp == 20
+    assert damage_dealt[caster.actor_id] == 10
+    assert damage_taken[target.actor_id] == 10
+
+
+def test_w6_par_05i1_eyebite_is_a_save_gated_frighten_approximation() -> None:
+    spell_row, action = _extract_action_from_sheet(
+        name="Eyebite",
+        level_header="=== 6th LEVEL ===",
+        save_hit="WIS 18",
+        duration_text="Concentration, up to 1 minute",
+        range_text="60 ft",
+        spell_level=6,
+    )
+
+    assert spell_row["save_ability"] == "wis"
+    assert action.action_type == "save"
+    assert not any(
+        isinstance(effect, dict) and str(effect.get("effect_type", "")).lower() == "forced_movement"
+        for effect in action.mechanics
+    )
+    assert any(
+        isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).lower() == "apply_condition"
+        and str(effect.get("condition", "")).lower() == "frightened"
+        and str(effect.get("apply_on", "")).lower() == "save_fail"
+        for effect in action.mechanics
+    )
+
+    caster = _actor("caster", "party")
+    target = _actor("target", "enemy")
+    target.position = (15.0, 0.0, 0.0)
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+
+    _execute_action(
+        rng=FixedRng([1]),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "frightened" in target.conditions
+    assert target.position == (15.0, 0.0, 0.0)
+
+
 def test_w6_par_05i1_acid_arrow_uses_primary_attack_damage_once() -> None:
     spell_row, action = _extract_action_from_sheet(
         name="Acid Arrow",
