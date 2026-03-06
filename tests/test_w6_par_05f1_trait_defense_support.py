@@ -102,3 +102,12 @@ def test_w6_par_05f1_superiority_die_upgrade_uses_canonical_keys() -> None:
     path = TRAITS_DIR / "improved_combat_superiority_d12.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload["mechanics"] == [{"die": "d12", "meta_type": "upgrade_superiority_die"}]
+
+
+def test_w6_par_05f1_unfettered_mind_matches_branch_ability_casing() -> None:
+    path = TRAITS_DIR / "unfettered_mind.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["mechanics"][1] == {
+        "ability": "Intelligence",
+        "meta_type": "saving_throw_proficiency",
+    }
