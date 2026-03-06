@@ -9,14 +9,16 @@
       "choice": [
         "normal",
         "radiant"
-      ]
+      ],
+      "meta_type": "transformation_option"
     },
     {
       "effect": "add_modifier_to_saving_throw",
       "source": "Increased Toughness",
       "condition": "while in Wild Shape",
       "modifier_ability": "wisdom",
-      "target_saving_throw": "constitution"
+      "target_saving_throw": "constitution",
+      "meta_type": "transformation_option"
     }
   ],
   "source_type": "subclass"

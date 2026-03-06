@@ -22,7 +22,8 @@
       "on_success": {
         "immunity": "aura",
         "duration": "24 hours"
-      }
+      },
+      "meta_type": "transformation_option"
     }
   ],
   "source_type": "subclass"

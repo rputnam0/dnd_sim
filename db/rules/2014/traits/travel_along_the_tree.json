@@ -8,7 +8,8 @@
       "effect": "teleport",
       "range": 60,
       "target": "self",
-      "conditions": "Rage must be active"
+      "conditions": "Rage must be active",
+      "meta_type": "world_linked_option"
     },
     {
       "trigger": "once per rage",
@@ -22,7 +23,8 @@
         "within": 10,
         "teleport_destination_range": 10
       },
-      "conditions": "Rage must be active"
+      "conditions": "Rage must be active",
+      "meta_type": "world_linked_option"
     }
   ],
   "source_type": "subclass"

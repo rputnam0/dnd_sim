@@ -31,7 +31,8 @@
       },
       "duration": "hours equal to proficiency bonus",
       "singleItemOnly": true,
-      "notes": "If an item already exists from this feature, it vanishes when a new one is created."
+      "notes": "If an item already exists from this feature, it vanishes when a new one is created.",
+      "meta_type": "world_linked_option"
     }
   ],
   "source_type": "subclass"
