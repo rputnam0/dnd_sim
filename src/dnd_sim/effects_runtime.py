@@ -348,6 +348,10 @@ def _apply_tick_damage(
         break_concentration(actor, actors, active_hazards)
 
 
+def _active_effect_instance_ids(actor: ActorRuntimeState) -> set[str]:
+    return {effect.instance_id for effect in actor.effect_instances}
+
+
 def apply_condition(
     actor: ActorRuntimeState,
     condition: str,
@@ -484,7 +488,13 @@ def tick_conditions_for_actor(
     previous_effect_conditions = effect_condition_names(actor)
     changed = False
     kept: list[EffectInstance] = []
-    for effect in actor.effect_instances:
+    for effect in list(actor.effect_instances):
+        active_effect_ids = _active_effect_instance_ids(actor)
+        kept = [row for row in kept if row.instance_id in active_effect_ids]
+        if effect.instance_id not in active_effect_ids:
+            changed = True
+            continue
+
         save_boundary = "turn_end" if effect.save_to_end else "turn_start"
         if effect.save_dc is not None and effect.save_ability and save_boundary == tick_boundary:
             save_key = engine_module._normalize_condition(effect.save_ability)
@@ -509,6 +519,11 @@ def tick_conditions_for_actor(
             threat_scores=threat_scores,
             active_hazards=active_hazards,
         )
+        active_effect_ids = _active_effect_instance_ids(actor)
+        kept = [row for row in kept if row.instance_id in active_effect_ids]
+        if effect.instance_id not in active_effect_ids:
+            changed = True
+            continue
 
         if effect.duration_remaining is not None and effect.duration_boundary == tick_boundary:
             effect.duration_remaining -= 1

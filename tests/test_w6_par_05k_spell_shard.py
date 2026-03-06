@@ -5,6 +5,7 @@ from pathlib import Path
 
 from dnd_sim.capability_manifest import build_spell_capability_manifest
 from dnd_sim.engine_runtime import (
+    _apply_condition,
     _apply_pending_smite_on_hit,
     _arm_pending_smite,
     _tick_conditions_for_actor,
@@ -164,3 +165,62 @@ def test_w6_par_05k_searing_smite_burn_deals_damage_on_failed_turn_start_save() 
     assert damage_dealt[paladin.actor_id] == 6
     assert damage_taken[target.actor_id] == 6
     assert "burning" in target.conditions
+
+
+def test_w6_par_05k_searing_smite_burn_breaks_target_concentration_cleanly() -> None:
+    paladin = _actor("paladin", "party")
+    target = _actor("target", "enemy")
+    target.concentrating = True
+    target.concentrated_spell = "Bless"
+    target.concentrated_spell_level = 1
+
+    bless_effect_ids = _apply_condition(
+        target,
+        "blessed",
+        duration_rounds=10,
+        source_actor_id=target.actor_id,
+        target_actor_id=target.actor_id,
+        effect_id="bless",
+        concentration_linked=True,
+        internal_tags={"spell_effect", "spell_level:1"},
+    )
+    target.concentration_effect_instance_ids.update(bless_effect_ids)
+    target.concentrated_targets.add(target.actor_id)
+
+    actors = {paladin.actor_id: paladin, target.actor_id: target}
+    damage_dealt = {paladin.actor_id: 0, target.actor_id: 0}
+    damage_taken = {paladin.actor_id: 0, target.actor_id: 0}
+    threat_scores = {paladin.actor_id: 0, target.actor_id: 0}
+    resources_spent = {paladin.actor_id: {}, target.actor_id: {}}
+
+    _arm_pending_smite(paladin, _searing_smite_action())
+    _apply_pending_smite_on_hit(
+        rng=FixedRng([4]),
+        actor=paladin,
+        target=target,
+        roll_crit=False,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        actors=actors,
+        active_hazards=[],
+    )
+
+    _tick_conditions_for_actor(
+        FixedRng([1, 6, 1]),
+        target,
+        boundary="turn_start",
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.concentrating is False
+    assert target.concentrated_spell is None
+    assert target.concentration_effect_instance_ids == set()
+    assert "blessed" not in target.conditions
+    assert all(effect.condition != "blessed" for effect in target.effect_instances)
