@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import csv
 import json
+import random
 from pathlib import Path
 
 from dnd_sim import io
 from dnd_sim.capability_manifest import build_spell_capability_manifest
+from dnd_sim.engine_runtime import _apply_effect
 from dnd_sim.mechanics_schema import KNOWN_EFFECT_TYPES, validate_rule_mechanics_payload
+from dnd_sim.models import ActorRuntimeState
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = REPO_ROOT / "docs" / "program" / "parity_leaf_registry.csv"
@@ -41,6 +44,48 @@ def _owned_spell_ids() -> set[str]:
                 ids.add(row["content_id"])
     assert len(ids) == 66
     return ids
+
+
+def _runtime_actor(
+    *,
+    actor_id: str,
+    team: str,
+    hp: int = 30,
+    max_hp: int = 30,
+    exhaustion_level: int = 0,
+) -> ActorRuntimeState:
+    actor = ActorRuntimeState(
+        actor_id=actor_id,
+        team=team,
+        name=actor_id,
+        max_hp=max_hp,
+        hp=hp,
+        temp_hp=0,
+        ac=12,
+        initiative_mod=0,
+        str_mod=0,
+        dex_mod=0,
+        con_mod=0,
+        int_mod=0,
+        wis_mod=0,
+        cha_mod=0,
+        save_mods={"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
+        actions=[],
+        exhaustion_level=exhaustion_level,
+    )
+    if exhaustion_level > 0:
+        actor.add_manual_condition("exhaustion")
+    return actor
+
+
+def _runtime_trackers(
+    *actors: ActorRuntimeState,
+) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, dict[str, int]]]:
+    damage_dealt = {actor.actor_id: 0 for actor in actors}
+    damage_taken = {actor.actor_id: 0 for actor in actors}
+    threat_scores = {actor.actor_id: 0 for actor in actors}
+    resources_spent = {actor.actor_id: {} for actor in actors}
+    return damage_dealt, damage_taken, threat_scores, resources_spent
 
 
 def test_w6_par_05k1_owned_records_are_supported_in_spell_manifest() -> None:
@@ -156,3 +201,66 @@ def test_w6_par_05k1_review_fix_spell_durations_and_exhaustion_semantics() -> No
     assert exhaustion_row["effect_type"] == "remove_condition"
     assert exhaustion_row.get("amount") == 1
     assert exhaustion_row.get("levels") == 1
+
+    power_word_heal = json.loads((SPELLS_DIR / "power_word_heal.json").read_text(encoding="utf-8"))
+    heal_row = next(
+        row
+        for row in power_word_heal["mechanics"]
+        if isinstance(row, dict) and row.get("effect_type") == "heal"
+    )
+    assert heal_row.get("amount") == "full"
+
+
+def test_w6_par_05k1_power_word_heal_restores_target_to_max_hp() -> None:
+    caster = _runtime_actor(actor_id="caster", team="party")
+    target = _runtime_actor(actor_id="target", team="party", hp=17, max_hp=120)
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _runtime_trackers(caster, target)
+    heal_effect = json.loads((SPELLS_DIR / "power_word_heal.json").read_text(encoding="utf-8"))[
+        "mechanics"
+    ][0]
+
+    _apply_effect(
+        effect=heal_effect,
+        rng=random.Random(7),
+        actor=caster,
+        target=target,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        actors=actors,
+        active_hazards=[],
+    )
+
+    assert target.hp == target.max_hp
+
+
+def test_w6_par_05k1_greater_restoration_reduces_exhaustion_by_one_level() -> None:
+    caster = _runtime_actor(actor_id="caster", team="party")
+    target = _runtime_actor(
+        actor_id="target",
+        team="party",
+        exhaustion_level=3,
+    )
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _runtime_trackers(caster, target)
+    exhaustion_effect = json.loads(
+        (SPELLS_DIR / "greater_restoration.json").read_text(encoding="utf-8")
+    )["mechanics"][0]
+
+    _apply_effect(
+        effect=exhaustion_effect,
+        rng=random.Random(7),
+        actor=caster,
+        target=target,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        actors=actors,
+        active_hazards=[],
+    )
+
+    assert target.exhaustion_level == 2
+    assert "exhaustion" in target.conditions

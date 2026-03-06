@@ -14,7 +14,7 @@
   "mechanics": [
     {
       "effect_type": "heal",
-      "amount": 999
+      "amount": "full"
     },
     {
       "effect_type": "remove_condition",

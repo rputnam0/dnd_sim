@@ -5716,7 +5716,10 @@ def _build_actor_from_character(
         inventory=InventoryState.from_character_payload(character),
         speed_ft=int(character.get("speed_ft", 30)),
         movement_modes={"walk": float(int(character.get("speed_ft", 30)))},
+        exhaustion_level=max(0, min(6, int(character.get("exhaustion_level", 0) or 0))),
     )
+    if actor.exhaustion_level > 0:
+        actor.add_manual_condition("exhaustion")
     _ensure_channel_divinity_resource(actor)
     _apply_passive_traits(actor)
     _apply_trait_attunement_limit(actor)
@@ -9043,7 +9046,11 @@ def _apply_effect(
 
     if effect_type == "heal":
         before = recipient.hp
-        amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
+        raw_amount = str(effect.get("amount", "0")).strip().lower()
+        if raw_amount == "full":
+            amount = max(0, recipient.max_hp - recipient.hp)
+        else:
+            amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
         _apply_healing(recipient, amount)
         if telemetry is not None:
             telemetry.append(
@@ -9159,8 +9166,44 @@ def _apply_effect(
         return
 
     if effect_type == "remove_condition":
+        normalized_condition = str(effect.get("condition", "")).strip().lower()
+        if normalized_condition == "exhaustion":
+            raw_levels = effect.get("levels", effect.get("amount", 1))
+            try:
+                remove_levels = max(1, int(raw_levels))
+            except (TypeError, ValueError):
+                remove_levels = 1
+
+            before_level = max(0, int(getattr(recipient, "exhaustion_level", 0)))
+            if before_level <= 0 and "exhaustion" in recipient.conditions:
+                before_level = 1
+            after_level = max(0, before_level - remove_levels)
+            recipient.exhaustion_level = after_level
+            if after_level <= 0:
+                _remove_condition(recipient, "exhaustion")
+            else:
+                recipient.add_manual_condition("exhaustion")
+
+            if telemetry is not None and before_level != after_level:
+                telemetry.append(
+                    {
+                        "telemetry_type": "effect_contribution",
+                        "round": round_number,
+                        "strategy": strategy_name,
+                        "actor_id": actor.actor_id,
+                        "target_id": recipient.actor_id,
+                        "action_name": action_name or (action.name if action else None),
+                        "source_bucket": source_bucket,
+                        "trigger_event": trigger_event,
+                        "effect_type": "remove_condition",
+                        "condition": normalized_condition,
+                        "applied_amount": before_level - after_level,
+                    }
+                )
+            return
+
         before_conditions = set(recipient.conditions)
-        _remove_condition(recipient, str(effect.get("condition", "")))
+        _remove_condition(recipient, normalized_condition)
         if telemetry is not None and recipient.conditions != before_conditions:
             telemetry.append(
                 {
