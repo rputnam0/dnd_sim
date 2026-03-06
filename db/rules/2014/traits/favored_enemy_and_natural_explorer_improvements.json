@@ -11,7 +11,7 @@
       "effect": "gain_favored_enemy",
       "quantity": 1,
       "grant_language": true,
-      "meta_type": "language_proficiency"
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "class"
