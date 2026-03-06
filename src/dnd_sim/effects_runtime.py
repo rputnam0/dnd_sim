@@ -279,6 +279,79 @@ def force_end_concentration_if_needed(
     return True
 
 
+def _tick_damage_payload(
+    effect: EffectInstance,
+    *,
+    boundary: str,
+) -> tuple[str, str] | None:
+    prefix = f"tick_damage:{boundary}:"
+    for tag in effect.internal_tags:
+        text = str(tag).strip().lower()
+        if not text.startswith(prefix):
+            continue
+        parts = text.split(":", 3)
+        if len(parts) != 4:
+            continue
+        damage_expr = parts[2].strip()
+        damage_type = parts[3].strip()
+        if damage_expr and damage_type:
+            return damage_expr, damage_type
+    return None
+
+
+def _apply_tick_damage(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    effect: EffectInstance,
+    boundary: str,
+    actors: dict[str, ActorRuntimeState] | None,
+    damage_dealt: dict[str, int] | None,
+    damage_taken: dict[str, int] | None,
+    threat_scores: dict[str, int] | None,
+    active_hazards: list[dict[str, Any]] | None,
+) -> None:
+    from dnd_sim import engine_runtime as engine_module
+
+    payload = _tick_damage_payload(effect, boundary=boundary)
+    if payload is None:
+        return
+
+    damage_expr, damage_type = payload
+    source = None if actors is None else actors.get(effect.source_actor_id or "")
+    rolled = engine_module.roll_damage(rng, damage_expr, crit=False)
+    applied = engine_module.apply_damage(
+        actor,
+        rolled,
+        damage_type,
+        is_magical="spell_effect" in effect.internal_tags,
+        source=source,
+    )
+    if applied <= 0:
+        return
+
+    if source is not None:
+        if damage_dealt is not None:
+            damage_dealt[source.actor_id] = damage_dealt.get(source.actor_id, 0) + applied
+        if threat_scores is not None:
+            threat_scores[source.actor_id] = threat_scores.get(source.actor_id, 0) + applied
+    if damage_taken is not None:
+        damage_taken[actor.actor_id] = damage_taken.get(actor.actor_id, 0) + applied
+
+    if actors is None or active_hazards is None:
+        return
+    if not force_end_concentration_if_needed(
+        actor,
+        actors=actors,
+        active_hazards=active_hazards,
+    ) and not engine_module.run_concentration_check(rng, actor, applied, source=source):
+        break_concentration(actor, actors, active_hazards)
+
+
+def _active_effect_instance_ids(actor: ActorRuntimeState) -> set[str]:
+    return {effect.instance_id for effect in actor.effect_instances}
+
+
 def apply_condition(
     actor: ActorRuntimeState,
     condition: str,
@@ -384,11 +457,18 @@ def tick_conditions_for_actor(
     actor: ActorRuntimeState,
     *,
     boundary: str = "turn_start",
+    actors: dict[str, ActorRuntimeState] | None = None,
+    damage_dealt: dict[str, int] | None = None,
+    damage_taken: dict[str, int] | None = None,
+    threat_scores: dict[str, int] | None = None,
+    resources_spent: dict[str, dict[str, int]] | None = None,
+    active_hazards: list[dict[str, Any]] | None = None,
 ) -> None:
     """Tick condition durations for the configured turn boundary."""
 
     from dnd_sim import engine_runtime as engine_module
 
+    del resources_spent
     tick_boundary = engine_module._normalize_duration_boundary(boundary)
 
     if tick_boundary == "turn_start":
@@ -408,7 +488,13 @@ def tick_conditions_for_actor(
     previous_effect_conditions = effect_condition_names(actor)
     changed = False
     kept: list[EffectInstance] = []
-    for effect in actor.effect_instances:
+    for effect in list(actor.effect_instances):
+        active_effect_ids = _active_effect_instance_ids(actor)
+        kept = [row for row in kept if row.instance_id in active_effect_ids]
+        if effect.instance_id not in active_effect_ids:
+            changed = True
+            continue
+
         save_boundary = "turn_end" if effect.save_to_end else "turn_start"
         if effect.save_dc is not None and effect.save_ability and save_boundary == tick_boundary:
             save_key = engine_module._normalize_condition(effect.save_ability)
@@ -421,6 +507,23 @@ def tick_conditions_for_actor(
             if save_succeeds:
                 changed = True
                 continue
+
+        _apply_tick_damage(
+            rng=rng,
+            actor=actor,
+            effect=effect,
+            boundary=tick_boundary,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            active_hazards=active_hazards,
+        )
+        active_effect_ids = _active_effect_instance_ids(actor)
+        kept = [row for row in kept if row.instance_id in active_effect_ids]
+        if effect.instance_id not in active_effect_ids:
+            changed = True
+            continue
 
         if effect.duration_remaining is not None and effect.duration_boundary == tick_boundary:
             effect.duration_remaining -= 1

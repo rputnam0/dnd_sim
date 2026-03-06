@@ -37,12 +37,12 @@
       "total_records": 256
     },
     {
-      "blocked_records": 530,
+      "blocked_records": 529,
       "content_type": "spell",
-      "executable_records": 64,
+      "executable_records": 65,
       "schema_valid_records": 585,
-      "supported_records": 64,
-      "tested_records": 64,
+      "supported_records": 65,
+      "tested_records": 65,
       "total_records": 594
     },
     {
@@ -16805,14 +16805,14 @@
       "content_type": "spell",
       "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "unsupported_effect_type"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:secret_chest",
@@ -35437,11 +35437,11 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 1226,
-    "executable_records": 1301,
+    "blocked_records": 1225,
+    "executable_records": 1302,
     "schema_valid_records": 2518,
-    "supported_records": 1301,
-    "tested_records": 1301,
+    "supported_records": 1302,
+    "tested_records": 1302,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
@@ -35462,7 +35462,7 @@
       "unsupported_reason": "non_executable_mechanics"
     },
     {
-      "count": 67,
+      "count": 66,
       "unsupported_reason": "unsupported_effect_type"
     }
   ]
