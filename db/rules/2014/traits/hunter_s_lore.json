@@ -3,8 +3,9 @@
   "description": "You gain proficiency with two of the following skills of your choice: Animal Handling, Nature, Perception, Stealth, and Survival.",
   "mechanics": [
     {
-      "gainProficiency": {
-        "type": "skill",
+      "meta_type": "grant_proficiencies",
+      "grant_proficiency": {
+        "category": "skill",
         "choices": [
           "Animal Handling",
           "Nature",

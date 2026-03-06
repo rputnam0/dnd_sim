@@ -3,13 +3,18 @@
   "description": "You count as one size larger when determining your carrying capacity and the weight you can push or drag. In addition, any climb that requires hands and feet is especially difficult for you because of your equine legs. When you make such a climb, each foot of movement costs you 4 extra feet, instead of the normal 1 extra foot.",
   "mechanics": [
     {
-      "effect": "size_increase",
-      "target": "carrying_capacity",
-      "increase_by": 1
+      "meta_type": "size_category_modifier",
+      "value": 1,
+      "applies_to": [
+        "carrying_capacity",
+        "push_drag"
+      ]
     },
     {
-      "effect": "climb_cost_modifier",
-      "extra_feet_per_foot_of_movement": 4
+      "meta_type": "restriction",
+      "target": "climbing",
+      "condition": "climb requires hands and feet",
+      "cost": "4 extra feet per foot of movement"
     }
   ],
   "source_type": "species"

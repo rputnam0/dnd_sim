@@ -3,14 +3,22 @@
   "description": "You gain one of the following options of your choice: (a) darkvision with a range of 60 feet or (b) proficiency in one skill of your choice.",
   "mechanics": [
     {
-      "choice": [
+      "meta_type": "choice",
+      "choice": "variable_trait",
+      "count": 1,
+      "options": [
         {
-          "effect": "grant_darkvision",
-          "range_feet": 60
+          "meta_type": "darkvision",
+          "range": 60,
+          "color": false
         },
         {
-          "effect": "grant_skill_proficiency",
-          "skill": "any"
+          "meta_type": "grant_proficiencies",
+          "grant_proficiency": {
+            "category": "skill",
+            "count": 1,
+            "choice": true
+          }
         }
       ]
     }

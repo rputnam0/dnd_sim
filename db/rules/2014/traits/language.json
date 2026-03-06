@@ -3,7 +3,9 @@
   "description": "You can speak, read, and write Auran.",
   "mechanics": [
     {
-      "grantLanguage": "Auran"
+      "meta_type": "language",
+      "language": "Auran",
+      "proficiency": "full"
     }
   ],
   "source_type": "species"

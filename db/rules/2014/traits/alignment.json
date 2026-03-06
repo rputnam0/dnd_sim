@@ -1,6 +1,18 @@
 {
   "name": "Alignment",
   "description": "Most aarakocra are good and rarely choose sides when it comes to law and chaos. Tribal leaders and warriors might be lawful, while explorers and adventurers might tend toward chaotic.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "alignment",
+      "tendencies": [
+        "usually good",
+        "rarely choose sides on law and chaos"
+      ],
+      "examples": {
+        "tribal leaders and warriors": "lawful",
+        "explorers and adventurers": "chaotic"
+      }
+    }
+  ],
   "source_type": "species"
 }

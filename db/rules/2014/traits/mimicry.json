@@ -1,6 +1,12 @@
 {
   "name": "Mimicry",
   "description": "You can mimic any sounds you have heard, including voices. A creature that hears the sounds can tell they are imitations with a successful DC 14 Wisdom (Insight) check.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "mimic_speech",
+      "targets": "any sounds you have heard, including voices",
+      "discern_check": "DC 14 Wisdom (Insight)"
+    }
+  ],
   "source_type": "species"
 }

@@ -3,9 +3,14 @@
   "description": "You can telepathically speak to any creature you can see within 30 feet of you. You don't need to share a language with the creature for it to understand your telepathy, but it must be able to understand at least one language. This process of communication is slow and limited, allowing you to transmit and receive only simple ideas and straightforward concepts.",
   "mechanics": [
     {
+      "meta_type": "communication",
       "effect": "telepathy",
-      "range_feet": 30,
-      "communication_limit": "simple ideas and straightforward concepts"
+      "range": 30,
+      "unit": "feet",
+      "requires_visibility": true,
+      "shared_language_not_required": true,
+      "target_must_understand_language": true,
+      "detail": "simple ideas and straightforward concepts only"
     }
   ],
   "source_type": "species"

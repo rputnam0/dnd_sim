@@ -3,7 +3,8 @@
   "description": "You have a swimming speed of 30 feet.",
   "mechanics": [
     {
-      "effect": "add_swim_speed",
+      "meta_type": "speed",
+      "mode": "swim",
       "value": 30,
       "unit": "feet"
     }

@@ -1,6 +1,14 @@
 {
   "name": "Sentry's Rest",
   "description": "When you take a long rest, you spend at least 6 hours in an inactive, motionless state, instead of sleeping. In this state, you appear inert, but you remain conscious.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "rest_state",
+      "applies_to": "long_rest",
+      "inactive_hours": 6,
+      "conscious": true,
+      "detail": "you appear inert while inactive and motionless instead of sleeping"
+    }
+  ],
   "source_type": "species"
 }

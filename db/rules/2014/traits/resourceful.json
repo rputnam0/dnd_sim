@@ -3,8 +3,10 @@
   "description": "You gain Heroic Inspiration whenever you finish a Long Rest.",
   "mechanics": [
     {
-      "trigger": "finish_long_rest",
-      "effect": "gain_heroic_inspiration"
+      "meta_type": "resource",
+      "resource": "Heroic Inspiration",
+      "gain": 1,
+      "trigger": "finish_long_rest"
     }
   ],
   "source_type": "species"

@@ -3,16 +3,17 @@
   "description": "Thanks to the mystical origin of your people, you gain proficiency with one of the following skills of your choice: Insight, Investigation, Sleight of Hand, Stealth, or Survival.",
   "mechanics": [
     {
+      "meta_type": "grant_proficiencies",
       "grant_proficiency": {
         "category": "skill",
-        "options": [
+        "choices": [
           "Insight",
           "Investigation",
           "Sleight of Hand",
           "Stealth",
           "Survival"
         ],
-        "choose": 1
+        "count": 1
       }
     }
   ],

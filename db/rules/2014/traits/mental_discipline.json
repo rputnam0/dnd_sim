@@ -3,13 +3,12 @@
   "description": "Your innate psychic defenses grant you advantage on saving throws you make to avoid or end the charmed and frightened conditions on yourself.",
   "mechanics": [
     {
-      "effect": "advantage_on_saving_throws",
-      "target": "self",
+      "meta_type": "saving_throw_advantage",
       "conditions": [
         "charmed",
         "frightened"
       ],
-      "purpose": "avoid_or_end"
+      "applies_to": "saving_throws_to_avoid_or_end_condition_on_self"
     }
   ],
   "source_type": "species"

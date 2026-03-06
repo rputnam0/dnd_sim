@@ -3,9 +3,14 @@
   "description": "Whenever you make an Intelligence (History) check related to the origin of stonework, you are considered proficient in the History skill and add double your proficiency bonus to the check, instead of your normal proficiency bonus.",
   "mechanics": [
     {
-      "effect": "skill_proficiency",
+      "meta_type": "skill_proficiency",
       "skill": "History",
-      "double_proficiency_bonus": true
+      "condition": "Intelligence (History) checks related to the origin of stonework"
+    },
+    {
+      "meta_type": "double_proficiency_bonus",
+      "skill": "History",
+      "condition": "Intelligence (History) checks related to the origin of stonework"
     }
   ],
   "source_type": "species"

@@ -3,8 +3,12 @@
   "description": "You gain proficiency with the poisoner's kit.",
   "mechanics": [
     {
-      "gainProficiency": {
-        "item": "poisoner's kit"
+      "meta_type": "grant_proficiencies",
+      "grant_proficiency": {
+        "category": "tool",
+        "items": [
+          "poisoner's kit"
+        ]
       }
     }
   ],
