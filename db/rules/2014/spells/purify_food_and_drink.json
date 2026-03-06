@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": true,
   "duration_rounds": 0,
-  "description": "All nonmagical food and drink within a 5-­‐‑foot-­‐‑radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease. Raise Dead 5th-­‐‑level necromancy",
+  "description": "All nonmagical food and drink within a 5-\u00ad\u2010\u2011foot-\u00ad\u2010\u2011radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease. Raise Dead 5th-\u00ad\u2010\u2011level necromancy",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "purify_food_and_drink_resolved",
+      "duration_rounds": 1,
+      "stack_policy": "refresh"
+    }
+  ]
 }

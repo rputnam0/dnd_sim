@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "Brilliant sunlight flashes in a 60-­‐‑foot radius centered on a point you choose within range. Each creature in that light must make a Constitution saving throw. On a failed save, a creature takes 12d6 radiant damage and is blinded for 1 minute. On a successful save, it takes half as much damage and isn’t blinded by this spell. Undead and oozes have disadvantage on this saving throw. A creature blinded by this spell makes another Constitution saving throw at the end of each of its turns. On a successful save, it is no longer blinded. This spell dispels any darkness in its area that was created by a spell.",
+  "description": "Brilliant sunlight flashes in a 60-\u00ad\u2010\u2011foot radius centered on a point you choose within range. Each creature in that light must make a Constitution saving throw. On a failed save, a creature takes 12d6 radiant damage and is blinded for 1 minute. On a successful save, it takes half as much damage and isn\u2019t blinded by this spell. Undead and oozes have disadvantage on this saving throw. A creature blinded by this spell makes another Constitution saving throw at the end of each of its turns. On a successful save, it is no longer blinded. This spell dispels any darkness in its area that was created by a spell.",
   "save_ability": "con",
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "target",
+      "apply_on": "save_fail",
+      "damage": "12d6",
+      "damage_type": "radiant",
+      "save_ability": "con"
+    }
+  ]
 }

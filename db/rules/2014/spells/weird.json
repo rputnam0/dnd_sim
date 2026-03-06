@@ -8,8 +8,23 @@
   "concentration": true,
   "ritual": false,
   "duration_rounds": null,
-  "description": "Drawing on the deepest fears of a group of creatures, you create illusory creatures in their minds, visible only to them. Each creature in a 30-­‐‑foot-­‐‑radius sphere centered on a point of your choice within range must make a Wisdom saving throw. On a failed save, a creature becomes frightened for the duration. The illusion calls on the creature’s deepest fears, manifesting its worst nightmares as an implacable threat. At the end of each of the frightened creature’s turns, it must succeed on a Wisdom saving throw or take 4d10 psychic damage. On a successful save, the spell ends for that creature. Wind Walk 6th-­‐‑level transmutation",
+  "description": "Drawing on the deepest fears of a group of creatures, you create illusory creatures in their minds, visible only to them. Each creature in a 30-\u00ad\u2010\u2011foot-\u00ad\u2010\u2011radius sphere centered on a point of your choice within range must make a Wisdom saving throw. On a failed save, a creature becomes frightened for the duration. The illusion calls on the creature\u2019s deepest fears, manifesting its worst nightmares as an implacable threat. At the end of each of the frightened creature\u2019s turns, it must succeed on a Wisdom saving throw or take 4d10 psychic damage. On a successful save, the spell ends for that creature. Wind Walk 6th-\u00ad\u2010\u2011level transmutation",
   "save_ability": "wis",
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "target",
+      "apply_on": "save_fail",
+      "damage": "4d10",
+      "damage_type": "psychic",
+      "save_ability": "wis"
+    },
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "save_fail",
+      "condition": "frightened"
+    }
+  ]
 }

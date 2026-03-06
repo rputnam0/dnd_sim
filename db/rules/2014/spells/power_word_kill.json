@@ -8,8 +8,15 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "You utter a word of power that can compel one creature you can see within range to die instantly. If the creature you choose has 100 hit points or fewer, it dies. Otherwise, the spell has no effect. Power Word Stun 8th-­‐‑level enchantment",
+  "description": "You utter a word of power that can compel one creature you can see within range to die instantly. If the creature you choose has 100 hit points or fewer, it dies. Otherwise, the spell has no effect. Power Word Stun 8th-\u00ad\u2010\u2011level enchantment",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "dead"
+    }
+  ]
 }

@@ -8,8 +8,15 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "At your touch, all curses affecting one creature or object end. If the object is a cursed magic item, its curse remains, but the spell breaks its owner’s attunement to the object so it can be removed or discarded.",
+  "description": "At your touch, all curses affecting one creature or object end. If the object is a cursed magic item, its curse remains, but the spell breaks its owner\u2019s attunement to the object so it can be removed or discarded.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "remove_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "cursed"
+    }
+  ]
 }

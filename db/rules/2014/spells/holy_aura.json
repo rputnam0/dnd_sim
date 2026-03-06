@@ -8,8 +8,18 @@
   "concentration": true,
   "ritual": false,
   "duration_rounds": 10,
-  "description": "Divine light washes out from you and coalesces in a soft radiance in a 30-­‐‑foot radius around you. Creatures of your choice in that radius when you cast this spell shed dim light in a 5-­‐‑foot radius and have advantage on all saving throws, and other creatures have disadvantage on attack rolls against them until the spell ends. In addition, when a fiend or an undead hits an affected creature with a melee attack, the aura flashes with brilliant light. The attacker must succeed on a Constitution saving throw or be blinded until the spell ends. Hunter’s Mark 1st-­‐‑level divination",
+  "description": "Divine light washes out from you and coalesces in a soft radiance in a 30-\u00ad\u2010\u2011foot radius around you. Creatures of your choice in that radius when you cast this spell shed dim light in a 5-\u00ad\u2010\u2011foot radius and have advantage on all saving throws, and other creatures have disadvantage on attack rolls against them until the spell ends. In addition, when a fiend or an undead hits an affected creature with a melee attack, the aura flashes with brilliant light. The attacker must succeed on a Constitution saving throw or be blinded until the spell ends. Hunter\u2019s Mark 1st-\u00ad\u2010\u2011level divination",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "holy_aura_active",
+      "duration_rounds": 10,
+      "concentration_linked": true,
+      "stack_policy": "refresh"
+    }
+  ]
 }

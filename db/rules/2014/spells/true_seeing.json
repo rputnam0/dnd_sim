@@ -11,5 +11,14 @@
   "description": "This spell gives the willing creature you touch the ability to see things as they actually are. For the duration, the creature has truesight, notices secret doors hidden by magic, and can see into the Ethereal Plane, all out to a range of 120 feet.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "true_seeing_active",
+      "duration_rounds": 600,
+      "stack_policy": "refresh"
+    }
+  ]
 }

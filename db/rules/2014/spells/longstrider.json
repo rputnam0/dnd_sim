@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 600,
-  "description": "You touch a creature. The target’s speed increases by 10 feet until the spell ends. At Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st.",
+  "description": "You touch a creature. The target\u2019s speed increases by 10 feet until the spell ends. At Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "longstrider_active",
+      "duration_rounds": 600,
+      "stack_policy": "refresh"
+    }
+  ]
 }

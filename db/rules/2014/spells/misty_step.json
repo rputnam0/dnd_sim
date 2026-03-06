@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "Briefly surrounded by silvery mist, you teleport up to 30 feet to an unoccupied space that you can see. Modify Memory 5th-­‐‑level enchantment",
+  "description": "Briefly surrounded by silvery mist, you teleport up to 30 feet to an unoccupied space that you can see. Modify Memory 5th-\u00ad\u2010\u2011level enchantment",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "misty_step_resolved",
+      "duration_rounds": 1,
+      "stack_policy": "refresh"
+    }
+  ]
 }

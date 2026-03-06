@@ -8,8 +8,16 @@
   "concentration": true,
   "ritual": false,
   "duration_rounds": 100,
-  "description": "The ground in a 20-­‐‑foot radius centered on a point within range twists and sprouts hard spikes and thorns. The area becomes difficult terrain for the duration. When a creature moves into or within the area, it takes 2d4 piercing damage for every 5 feet it travels. The transformation of the ground is camouflaged to look natural. Any creature that can’t see the area at the time the spell is cast must make a Wisdom (Perception) check against your spell save DC to recognize the terrain as hazardous before entering it. Spirit Guardians 3rd-­‐‑level conjuration",
+  "description": "The ground in a 20-\u00ad\u2010\u2011foot radius centered on a point within range twists and sprouts hard spikes and thorns. The area becomes difficult terrain for the duration. When a creature moves into or within the area, it takes 2d4 piercing damage for every 5 feet it travels. The transformation of the ground is camouflaged to look natural. Any creature that can\u2019t see the area at the time the spell is cast must make a Wisdom (Perception) check against your spell save DC to recognize the terrain as hazardous before entering it. Spirit Guardians 3rd-\u00ad\u2010\u2011level conjuration",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "target",
+      "apply_on": "always",
+      "damage": "2d4",
+      "damage_type": "piercing"
+    }
+  ]
 }

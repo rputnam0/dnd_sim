@@ -8,8 +8,16 @@
   "concentration": true,
   "ritual": false,
   "duration_rounds": 100,
-  "description": "You banish a creature that you can see within range into a labyrinthine demiplane. The target remains there for the duration or until it escapes the maze. The target can use its action to attempt to escape. When it does so, it makes a DC 20 Intelligence check. If it succeeds, it escapes, and the spell ends (a minotaur or goristro demon automatically succeeds). When the spell ends, the target reappears in the space it left or, if that space is occupied, in the nearest unoccupied space. Meld into Stone 3rd-­‐‑level transmutation (ritual)",
+  "description": "You banish a creature that you can see within range into a labyrinthine demiplane. The target remains there for the duration or until it escapes the maze. The target can use its action to attempt to escape. When it does so, it makes a DC 20 Intelligence check. If it succeeds, it escapes, and the spell ends (a minotaur or goristro demon automatically succeeds). When the spell ends, the target reappears in the space it left or, if that space is occupied, in the nearest unoccupied space. Meld into Stone 3rd-\u00ad\u2010\u2011level transmutation (ritual)",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "mazed",
+      "duration_rounds": 100
+    }
+  ]
 }

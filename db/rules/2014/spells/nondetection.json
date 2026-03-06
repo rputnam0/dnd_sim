@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 4800,
-  "description": "For the duration, you hide a target that you touch from divination magic. The target can be a willing creature or a place or an object no larger than 10 feet in any dimension. The target can’t be targeted by any divination magic or perceived through magical scrying sensors.",
+  "description": "For the duration, you hide a target that you touch from divination magic. The target can be a willing creature or a place or an object no larger than 10 feet in any dimension. The target can\u2019t be targeted by any divination magic or perceived through magical scrying sensors.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "nondetection_active",
+      "duration_rounds": 4800,
+      "stack_policy": "refresh"
+    }
+  ]
 }
