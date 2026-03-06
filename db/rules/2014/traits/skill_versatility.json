@@ -3,9 +3,10 @@
   "description": "You gain proficiency in two skills of your choice.",
   "mechanics": [
     {
-      "gainProficiency": {
+      "meta_type": "grant_proficiencies",
+      "grant_proficiency": {
         "category": "skill",
-        "quantity": 2,
+        "count": 2,
         "choice": true
       }
     }

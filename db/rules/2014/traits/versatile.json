@@ -3,7 +3,9 @@
   "description": "You gain an Origin feat of your choice.",
   "mechanics": [
     {
-      "grant_feat_category": "Origin"
+      "meta_type": "grant_feat",
+      "feat_category": "Origin",
+      "choice": true
     }
   ],
   "source_type": "species"

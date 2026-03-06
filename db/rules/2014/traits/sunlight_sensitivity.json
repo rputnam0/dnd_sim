@@ -3,12 +3,12 @@
   "description": "You have disadvantage on attack rolls and on Wisdom (Perception) checks that rely on sight when you, the target of your attack, or whatever you are trying to perceive is in direct sunlight.",
   "mechanics": [
     {
-      "effect": "disadvantage",
-      "targets": [
-        "attack rolls",
-        "Wisdom Perception checks"
+      "meta_type": "disadvantage",
+      "applies_to": [
+        "attack_rolls",
+        "Wisdom (Perception) checks that rely on sight"
       ],
-      "condition": "in direct sunlight"
+      "condition": "you, your target, or what you are trying to perceive is in direct sunlight"
     }
   ],
   "source_type": "species"

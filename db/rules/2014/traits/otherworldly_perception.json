@@ -1,6 +1,17 @@
 {
   "name": "Otherworldly Perception",
   "description": "You can sense the presence of any creature within 30 feet of you that is invisible or on the Ethereal Plane. You can pinpoint such a creature that is moving.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "sense",
+      "range": 30,
+      "unit": "feet",
+      "targets": [
+        "invisible creatures",
+        "creatures on the Ethereal Plane"
+      ],
+      "detail": "can pinpoint such a creature that is moving"
+    }
+  ],
   "source_type": "species"
 }

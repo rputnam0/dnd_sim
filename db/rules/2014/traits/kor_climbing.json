@@ -3,6 +3,7 @@
   "description": "You have proficiency in the Athletics and Acrobatics skills.",
   "mechanics": [
     {
+      "meta_type": "skill_proficiency",
       "skill_proficiency": [
         "Athletics",
         "Acrobatics"

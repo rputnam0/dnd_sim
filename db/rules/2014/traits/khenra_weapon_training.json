@@ -3,8 +3,10 @@
   "description": "You have proficiency with the khopesh (longsword), spear, and javelin.",
   "mechanics": [
     {
+      "meta_type": "grant_proficiencies",
       "grant_proficiency": {
-        "weapons": [
+        "category": "weapon",
+        "items": [
           "khopesh (longsword)",
           "spear",
           "javelin"

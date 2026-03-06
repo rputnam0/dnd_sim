@@ -3,9 +3,13 @@
   "description": "You have resistance to cold damage. You also naturally acclimate to high altitudes, even if you've never been to one. This includes elevations above 20,000 feet.",
   "mechanics": [
     {
-      "damage_resistance": [
-        "cold"
-      ]
+      "meta_type": "damage_resistance",
+      "damage_type": "cold"
+    },
+    {
+      "meta_type": "benefit",
+      "target": "high_altitude_acclimation",
+      "value": "naturally acclimated, including above 20,000 feet"
     }
   ],
   "source_type": "species"
