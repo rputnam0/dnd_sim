@@ -12,7 +12,8 @@
         "damage_reduction": {
           "formula": "5 * spell_slot_level"
         }
-      }
+      },
+      "meta_type": "damage_modifier"
     }
   ],
   "source_type": "subclass"

@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "maxDiceHealing": true,
-      "appliesTo": "spellHealing"
+      "appliesTo": "spellHealing",
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

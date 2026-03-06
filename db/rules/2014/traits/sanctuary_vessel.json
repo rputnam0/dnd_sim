@@ -6,22 +6,26 @@
       "effect": "draw_into_vessel",
       "max_targets": 5,
       "range": 30,
-      "condition": "willing"
+      "condition": "willing",
+      "meta_type": "movement"
     },
     {
       "effect": "eject_creatures",
       "action": "bonus",
-      "target": "any_number"
+      "target": "any_number",
+      "meta_type": "movement"
     },
     {
       "effect": "short_rest_bonus",
       "duration_minutes": 10,
-      "benefit": "treat_as_short_rest"
+      "benefit": "treat_as_short_rest",
+      "meta_type": "resource"
     },
     {
       "effect": "add_proficiency_to_hp_regain",
       "applies_when": "short_rest_in_vessel",
-      "value": "proficiency_bonus"
+      "value": "proficiency_bonus",
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

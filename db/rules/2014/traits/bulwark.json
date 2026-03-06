@@ -12,7 +12,8 @@
         "ally can see or hear the user",
         "user is not incapacitated"
       ],
-      "effect": "ally rerolls its saving throw and must use the new roll"
+      "effect": "ally rerolls its saving throw and must use the new roll",
+      "meta_type": "saving_throw"
     }
   ],
   "source_type": "subclass"

@@ -13,7 +13,8 @@
         "type": "damage_reduction",
         "formula": "Psionic Energy die + Intelligence modifier",
         "minimum_reduction": 1
-      }
+      },
+      "meta_type": "damage_modifier"
     }
   ],
   "source_type": "subclass"

@@ -9,7 +9,8 @@
       "trigger": "roll_healing_spell_dice",
       "target": "self_or_ally_within_5_feet",
       "restriction": "not_incapacitated",
-      "usage_limit": "once_per_turn"
+      "usage_limit": "once_per_turn",
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

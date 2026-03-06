@@ -6,7 +6,8 @@
       "trigger": "short_or_long_rest",
       "effect": "gain_temp_hp",
       "target": "self",
-      "amount": "warlock_level + charisma_modifier"
+      "amount": "warlock_level + charisma_modifier",
+      "meta_type": "temporary_hit_points"
     },
     {
       "trigger": "short_or_long_rest",
@@ -14,7 +15,8 @@
       "target": "creatures",
       "max_targets": 5,
       "condition": "visible_at_end_of_rest",
-      "amount": "floor(warlock_level / 2) + charisma_modifier"
+      "amount": "floor(warlock_level / 2) + charisma_modifier",
+      "meta_type": "temporary_hit_points"
     }
   ],
   "source_type": "subclass"

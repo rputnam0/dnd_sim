@@ -11,12 +11,14 @@
           "type": "weapon",
           "formula": "Bardic Inspiration die"
         }
-      }
+      },
+      "meta_type": "ac_bonus"
     },
     {
       "action": "apply_temporary_ac",
       "value": "Bardic Inspiration die",
-      "duration": "until start of next turn"
+      "duration": "until start of next turn",
+      "meta_type": "ac_bonus"
     }
   ],
   "source_type": "subclass"

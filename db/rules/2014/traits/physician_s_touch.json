@@ -15,13 +15,15 @@
         "paralyzed",
         "poisoned",
         "stunned"
-      ]
+      ],
+      "meta_type": "condition"
     },
     {
       "trigger": "hand of harm",
       "effect": "apply",
       "condition": "poisoned",
-      "duration": "until end of your next turn"
+      "duration": "until end of your next turn",
+      "meta_type": "condition"
     }
   ],
   "source_type": "subclass"

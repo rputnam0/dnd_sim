@@ -9,7 +9,8 @@
         "type": "gain_temp_hp",
         "amount": "wisdom_modifier + monk_level",
         "minimum": 1
-      }
+      },
+      "meta_type": "temporary_hit_points"
     }
   ],
   "source_type": "subclass"

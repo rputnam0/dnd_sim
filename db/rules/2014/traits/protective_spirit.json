@@ -11,7 +11,8 @@
       "heal": {
         "dice": "1d6",
         "modifier": "half_paladin_level"
-      }
+      },
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

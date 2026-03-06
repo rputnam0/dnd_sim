@@ -11,7 +11,8 @@
       },
       "effect": {
         "heal_self": "2 + spell_level"
-      }
+      },
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

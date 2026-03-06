@@ -4,11 +4,13 @@
   "mechanics": [
     {
       "effect": "arcane_jolt_damage_increase",
-      "dice": "4d6"
+      "dice": "4d6",
+      "meta_type": "damage_modifier"
     },
     {
       "effect": "arcane_jolt_healing_increase",
-      "dice": "4d6"
+      "dice": "4d6",
+      "meta_type": "healing"
     },
     {
       "trigger": "steel defender uses deflect attack",
@@ -16,7 +18,8 @@
         "type": "force",
         "dice": "1d4",
         "modifier": "Intelligence"
-      }
+      },
+      "meta_type": "damage_modifier"
     }
   ],
   "source_type": "subclass"
