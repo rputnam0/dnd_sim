@@ -3,11 +3,10 @@
   "description": "You gain an additional Arcane Shot option of your choice when you reach 7th level.",
   "mechanics": [
     {
-      "gain": {
-        "type": "arcane_shot_option",
-        "quantity": 1,
-        "choice": true
-      }
+      "meta_type": "choice",
+      "choice_key": "arcane_shot_option",
+      "count": 1,
+      "grant": "additional_arcane_shot_option"
     }
   ],
   "source_type": "subclass"

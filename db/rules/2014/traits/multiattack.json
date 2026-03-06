@@ -1,6 +1,16 @@
 {
   "name": "Multiattack",
   "description": "At 11th level, you gain one of the following features of your choice: Volley or Whirlwind Attack.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice",
+      "choice_key": "multiattack_option",
+      "count": 1,
+      "options": [
+        "volley",
+        "whirlwind_attack"
+      ]
+    }
+  ],
   "source_type": "subclass"
 }

@@ -3,19 +3,16 @@
   "description": "Starting at 17th level, you become a master of instant death. When you attack and hit a creature that is surprised, it must make a Constitution saving throw (DC 8 + your Dexterity modifier + your proficiency bonus). On a failed save, double the damage of your attack against the creature.",
   "mechanics": [
     {
+      "meta_type": "save",
       "trigger": "hit_surprised_creature",
-      "saving_throw": {
-        "ability": "Constitution",
-        "dc": {
-          "base": 8,
-          "add_dex_modifier": true,
-          "add_proficiency_bonus": true
-        }
-      },
-      "effect": {
-        "damage_multiplier": 2,
-        "condition": "failed_save"
-      }
+      "save_ability": "con",
+      "save_dc_formula": "8 + dexterity_modifier + proficiency_bonus"
+    },
+    {
+      "effect_type": "damage",
+      "trigger": "death_strike_save_fail",
+      "damage": "attack_damage",
+      "multiplier": 2
     }
   ],
   "source_type": "subclass"

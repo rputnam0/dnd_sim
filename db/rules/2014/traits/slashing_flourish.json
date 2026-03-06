@@ -3,18 +3,15 @@
   "description": "You can expend one use of your Bardic Inspiration to cause the weapon to deal extra damage to the target you hit and to any other creature of your choice that you can see within 5 feet of you. The damage equals the number you roll on the Bardic Inspiration die.",
   "mechanics": [
     {
-      "action": "expend_resource",
-      "resource": "Bardic Inspiration",
-      "amount": 1,
-      "effect": {
-        "damage": {
-          "dice": "Bardic Inspiration die",
-          "targets": [
-            "the creature you hit with the attack",
-            "one creature of your choice within 5 feet of you"
-          ]
-        }
-      }
+      "meta_type": "resource_spend",
+      "trigger": "hit_with_weapon_attack",
+      "resource": "bardic_inspiration"
+    },
+    {
+      "effect_type": "extra_damage",
+      "damage": "bardic_inspiration_die",
+      "damage_type": "weapon",
+      "target": "hit_target_and_one_other_creature_within_5ft"
     }
   ],
   "source_type": "subclass"

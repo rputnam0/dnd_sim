@@ -3,25 +3,16 @@
   "description": "You have developed a mystical connection to your magic items, which you can draw on for aid. You gain the following benefits. Cheat Death: If you're reduced to 0 Hit Points but not killed outright, you can disintegrate any number of Uncommon or Rare magic items created by your Replicate Magic Item feature. If you do so, your Hit Points instead change to a number equal to 20 times the number of magic items disintegrated. Magical Guidance: When you finish a Short Rest, you regain all expended uses of your Flash of Genius if you have Attunement to at least one magic item.",
   "mechanics": [
     {
-      "trigger": "reduced_to_0_hp_not_dead",
-      "action": "sacrifice_items",
-      "item_filter": {
-        "rarity": [
-          "Uncommon",
-          "Rare"
-        ],
-        "source_feature": "Replicate Magic Item"
-      },
-      "effect": {
-        "set_hp": "20 * item_count"
-      }
+      "meta_type": "resource_recovery",
+      "trigger": "finish_short_rest_with_attuned_magic_item",
+      "resource": "flash_of_genius",
+      "recovery": "all_expended_uses"
     },
     {
-      "trigger": "after_short_rest",
-      "condition": "has_attunement_to_item",
-      "effect": {
-        "restore_uses": "Flash of Genius"
-      }
+      "effect_type": "heal",
+      "trigger": "reduced_to_0_hit_points_but_not_killed_outright",
+      "amount": "20 * disintegrated_replicate_magic_items",
+      "replace": "hit_points_become_amount"
     }
   ],
   "source_type": "class"

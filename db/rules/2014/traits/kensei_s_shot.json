@@ -3,12 +3,10 @@
   "description": "You can use a bonus action on your turn to make your ranged attacks with a kensei weapon more deadly. When you do so, any target you hit with a ranged attack using a kensei weapon takes an extra 1d4 damage of the weapon's type. You retain this benefit until the end of the current turn.",
   "mechanics": [
     {
-      "action": "bonus",
-      "effect": "extra_damage",
+      "effect_type": "extra_damage",
+      "trigger": "bonus_action_activate_then_hit_with_ranged_kensei_weapon_before_end_of_turn",
       "damage": "1d4",
-      "damage_type": "weapon",
-      "condition": "ranged attack with a kensei weapon",
-      "duration": "end_of_turn"
+      "damage_type": "weapon"
     }
   ],
   "source_type": "subclass"

@@ -3,21 +3,28 @@
   "description": "You gain one of the following options of your choice. Whenever you finish a Long Rest, you can change your choice. Owl: You have Darkvision with a range of 60 feet. If you already have Darkvision, its range increases by 60 feet. Panther: You have a Climb Speed equal to your Speed. Salmon: You have a Swim Speed equal to your Speed.",
   "mechanics": [
     {
-      "option": "Owl",
-      "grant": "darkvision",
-      "range": 60,
-      "ifAlreadyHas": "darkvision",
-      "rangeIncrease": 60
-    },
-    {
-      "option": "Panther",
-      "grant": "climb_speed",
-      "value": "equal to your speed"
-    },
-    {
-      "option": "Salmon",
-      "grant": "swim_speed",
-      "value": "equal to your speed"
+      "meta_type": "choice",
+      "choice_key": "aspect_of_the_wilds",
+      "count": 1,
+      "reset": "long_rest",
+      "options": [
+        {
+          "name": "owl",
+          "grants": "darkvision",
+          "range_ft": 60,
+          "if_already_has": "increase_by_60_ft"
+        },
+        {
+          "name": "panther",
+          "grants": "climb_speed",
+          "value": "speed"
+        },
+        {
+          "name": "salmon",
+          "grants": "swim_speed",
+          "value": "speed"
+        }
+      ]
     }
   ],
   "source_type": "subclass"

@@ -3,14 +3,16 @@
   "description": "Immediately after you deal damage to a creature with your Divine Smite feature, you can use your Channel Divinity as a bonus action and distribute temporary hit points to creatures of your choice within 30 feet of you, which can include you. The total number of temporary hit points equals 2d8 + your level in this class, divided among the chosen creatures however you like.",
   "mechanics": [
     {
-      "action": "bonus",
-      "trigger": "after dealing damage with divine smite",
-      "resource": "Channel Divinity",
-      "effect": {
-        "type": "temporary_hit_points",
-        "amount": "2d8 + level",
-        "distribution": "any creatures within 30 feet, including self"
-      }
+      "meta_type": "bonus_action",
+      "trigger": "after_dealing_damage_with_divine_smite",
+      "resource": "channel_divinity",
+      "range_ft": 30,
+      "distribution": "chosen_creatures"
+    },
+    {
+      "effect_type": "temp_hp",
+      "amount": "2d8 + paladin_level",
+      "distribution": "split_among_chosen_creatures"
     }
   ],
   "source_type": "subclass"

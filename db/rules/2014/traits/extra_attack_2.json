@@ -3,9 +3,9 @@
   "description": "At 11th level, you can attack three times whenever you take the Attack action on your turn.",
   "mechanics": [
     {
-      "effect": "extra_attack",
+      "meta_type": "extra_attack",
       "attacks": 3,
-      "trigger": "attack action"
+      "trigger": "attack_action"
     }
   ],
   "source_type": "class"
