@@ -65,9 +65,8 @@ Wave 6 remediation state:
 | W6-PAR-05E | codex/feat/w6-par-05e-trait-hooks-c | remediation_parity | in_progress | Umbrella row for trait meta leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05E1 | codex/feat/w6-par-05e1-trait-meta-options | remediation_parity | in_progress | Batch 1 leaf is active in its dedicated worktree and owns the trait meta options/proficiencies records. |
 | W6-PAR-05F | codex/feat/w6-par-05f-trait-hooks-d | remediation_parity | in_progress | Umbrella row for passive combat trait leaves; execution happens through child leaf tasks only. |
-| W6-PAR-05F1 | codex/feat/w6-par-05f1-trait-defense-support | remediation_parity | in_progress | Original F1 branch now serves as a reference-only checkpoint lane; do not open the continuation PR from this already-used branch. |
-| W6-PAR-05F1A | codex/feat/w6-par-05f1a-trait-defense-support-continuation | remediation_parity | pr_open | Fresh continuation lane for the live remaining F1 blockers on current `codex/int/w6-parity-closeout`; PR #221 is now the active defense/support slice. |
-| W6-PAR-05F2A | codex/feat/w6-par-05f2a-trait-offense-mobility-continuation | remediation_parity | in_progress | Fresh continuation lane for the current live W6-PAR-05F2 remainder after the original `codex/feat/w6-par-05f2-trait-offense-mobility` branch was already used; registry ownership remains on the W6-PAR-05F2 rows. |
+| W6-PAR-05F1 | codex/feat/w6-par-05f1-trait-defense-support | remediation_parity | in_progress | The original F1 branch is now an already-used baseline lane; fresh continuation work proceeds on F1A and F1B branches instead of reopening it. |
+| W6-PAR-05F1B | codex/feat/w6-par-05f1b-trait-defense-support-finalization | remediation_parity | pr_open | Fresh continuation lane for the remaining live F1 blockers while F1A continues separately through review on its earlier checkpoint slice; PR #225 is now open from this branch. |
 | W6-PAR-05G | codex/feat/w6-par-05g-trait-hooks-e | remediation_parity | in_progress | Umbrella row for reaction/resource trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05H | codex/feat/w6-par-05h-trait-hooks-f | remediation_parity | in_progress | Umbrella row for summon/transform trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05I | codex/feat/w6-par-05i-spell-mechanics-d | remediation_parity | in_progress | Umbrella row for spell mechanics damage/support leaves; execution happens through child leaf tasks only. |
@@ -81,7 +80,7 @@ Wave 6 remediation state:
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
-| W6-PAR-05F1A | [#221](https://github.com/rputnam0/dnd_sim/pull/221) | remediation_parity | awaiting_review | Fresh continuation PR for the F1 defense/support slice after retiring the already-used F1 branch to reference-only status. |
+| W6-PAR-05F1B | [#225](https://github.com/rputnam0/dnd_sim/pull/225) | remediation_parity | awaiting_review | F1B finalization PR for the remaining live defense/support blockers on the fresh continuation lane. |
 
 ## Dependency and blocker notes (from backlog.csv)
 

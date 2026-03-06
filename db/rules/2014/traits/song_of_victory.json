@@ -3,11 +3,11 @@
   "description": "Starting at 14th level, you add your Intelligence modifier (minimum of +1) to the damage of your melee weapon attacks while your Bladesong is active.",
   "mechanics": [
     {
-      "effect": "add_intelligence_modifier_to_melee_damage",
       "modifier": "Intelligence",
       "minimum": 1,
       "condition": "Bladesong active",
-      "applies_to": "melee weapon attacks"
+      "target": "melee weapon attack damage",
+      "meta_type": "damage_modifier"
     }
   ],
   "source_type": "subclass"
