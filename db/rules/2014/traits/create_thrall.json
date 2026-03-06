@@ -3,16 +3,15 @@
   "description": "At 14th level, you gain the ability to infect a humanoid's mind with the alien magic of your patron. You can use your action to touch an incapacitated humanoid. That creature is then charmed by you until a remove curse spell is cast on it, the charmed condition is removed from it, or you use this feature again. You can communicate telepathically with the charmed creature as long as the two of you are on the same plane of existence.",
   "mechanics": [
     {
-      "action": "action",
-      "target": "incapacitated humanoid",
-      "effect": "apply condition",
-      "condition": "charmed",
-      "duration": "until remove curse spell, condition ends, or feature reused"
+      "meta_type": "thrall_creation",
+      "target": "incapacitated_humanoid",
+      "condition": "charmed_until_removed_or_reused"
     },
     {
-      "effect": "telepathic communication",
-      "condition": "target is charmed by you",
-      "range": "same plane of existence"
+      "meta_type": "communication",
+      "link": "telepathy",
+      "range": "same_plane",
+      "condition": "target_is_thrall"
     }
   ],
   "source_type": "subclass"
