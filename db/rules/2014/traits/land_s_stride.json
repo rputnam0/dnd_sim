@@ -3,20 +3,22 @@
   "description": "Starting at 8th level, moving through nonmagical difficult terrain costs you no extra movement. You can also pass through nonmagical plants without being slowed by them and without taking damage from them if they have thorns, spines, or a similar hazard. In addition, you have advantage on saving throws against plants that are magically created or manipulated to impede movement, such as those created by the entangle spell.",
   "mechanics": [
     {
-      "effect": "ignore_difficult_terrain",
-      "condition": "nonmagical"
-    },
-    {
-      "effect": "ignore_plant_hazard",
+      "allows": "ignore_difficult_terrain",
       "condition": "nonmagical",
-      "details": "no slowing, no damage from thorns/spines"
+      "meta_type": "movement"
     },
     {
-      "effect": "advantage_on_saving_throws",
+      "allows": "move_through_nonmagical_plants_without_penalty",
+      "condition": "nonmagical",
+      "details": "no slowing, no damage from thorns/spines",
+      "meta_type": "movement"
+    },
+    {
       "against": "magical plants",
       "source_examples": [
         "entangle"
-      ]
+      ],
+      "meta_type": "saving_throw_advantage"
     }
   ],
   "source_type": "class"
