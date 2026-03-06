@@ -116,7 +116,6 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-04 Execute parity continuation shard batch B and strict-input manifest sync (merged via #185/#186/#187/#188/#189/#190)
 - [x] W6-PAR-05A Umbrella row for baseline truth sync and leaf registry (merged to `codex/int/w6-parity-closeout` via #201)
 - [x] W6-PAR-05A1 Reconcile canonical parity surfaces to the 1225-blocker baseline and add `docs/program/parity_leaf_registry.csv` (merged to `codex/int/w6-parity-closeout` via #201)
-- Live remaining strict backlog at `cb9e869` is 137 blocked records: J1=39, J2=60, and G1=38. `docs/program/parity_batch_registry.csv` is the exact current batch map. Draft carryovers #220 and #222 are closed and superseded; I2 is no longer live after PR #227 merged.
 - [ ] BATCH-00 Sync batch truth and register `docs/program/parity_batch_registry.csv`
 - [x] W6-PAR-05B Umbrella row for background meta closeout leaves
 - [x] W6-PAR-05B1 Background meta closeout leaf
