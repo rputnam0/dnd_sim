@@ -13,20 +13,17 @@
   "damage_type": "radiant",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "bonus action to fire mote"
+      "effect_type": "resource_change",
+      "target": "source",
+      "resource": "crown_of_stars_motes",
+      "amount": 7
     },
     {
-      "effect_type": "note",
-      "text": "ranged spell attack"
-    },
-    {
-      "effect_type": "note",
-      "text": "damage 4d12 radiant"
-    },
-    {
-      "effect_type": "note",
-      "text": "light radius effect"
+      "effect_type": "apply_condition",
+      "target": "source",
+      "condition": "crown_of_stars_active",
+      "duration_rounds": 600,
+      "effect_id": "crown_of_stars"
     }
   ]
 }

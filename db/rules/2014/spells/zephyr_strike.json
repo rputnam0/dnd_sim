@@ -13,20 +13,15 @@
   "damage_type": "force",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "Movement does not provoke opportunity attacks"
+      "effect_type": "apply_condition",
+      "target": "source",
+      "condition": "zephyr_strike_active",
+      "duration_rounds": 10,
+      "effect_id": "zephyr_strike"
     },
     {
-      "effect_type": "note",
-      "text": "Gain advantage on one weapon attack roll before spell ends"
-    },
-    {
-      "effect_type": "note",
-      "text": "Extra 1d8 force damage on that attack"
-    },
-    {
-      "effect_type": "note",
-      "text": "Increase walking speed by 30 feet until end of turn"
+      "effect_type": "next_attack_advantage",
+      "target": "source"
     }
   ]
 }

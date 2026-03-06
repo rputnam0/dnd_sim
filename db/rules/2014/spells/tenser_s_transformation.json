@@ -13,32 +13,16 @@
   "damage_type": "force",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "Gain 50 temporary hit points"
+      "effect_type": "temp_hp",
+      "target": "source",
+      "amount": 50
     },
     {
-      "effect_type": "note",
-      "text": "Advantage on attack rolls with simple and martial weapons"
-    },
-    {
-      "effect_type": "note",
-      "text": "Extra 2d12 force damage on weapon hits"
-    },
-    {
-      "effect_type": "note",
-      "text": "Proficiency with all armor, shields, simple and martial weapons"
-    },
-    {
-      "effect_type": "note",
-      "text": "Proficiency in Strength and Constitution saving throws"
-    },
-    {
-      "effect_type": "note",
-      "text": "Can attack twice when taking the Attack action (if no other extra attack feature)"
-    },
-    {
-      "effect_type": "note",
-      "text": "On spell end, DC 15 Constitution save or suffer one level of exhaustion"
+      "effect_type": "transform",
+      "target": "source",
+      "condition": "tenser_s_transformation",
+      "duration_rounds": 100,
+      "effect_id": "tenser_s_transformation"
     }
   ]
 }

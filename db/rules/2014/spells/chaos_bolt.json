@@ -13,20 +13,14 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "ranged spell attack"
+      "effect_type": "ranged_spell_attack"
     },
     {
-      "effect_type": "note",
-      "text": "damage 2d8+1d6"
-    },
-    {
-      "effect_type": "note",
-      "text": "damage type determined by d8 roll"
-    },
-    {
-      "effect_type": "note",
-      "text": "leap to new target on matching dice"
+      "effect_type": "damage",
+      "target": "single_enemy",
+      "apply_on": "hit",
+      "damage": "2d8+1d6",
+      "damage_type": "chaotic"
     }
   ]
 }

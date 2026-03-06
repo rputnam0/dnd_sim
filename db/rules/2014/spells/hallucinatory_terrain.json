@@ -13,9 +13,10 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "aoe",
-      "shape": "cube",
-      "size": 150
+      "effect_type": "hazard",
+      "hazard_type": "hallucinatory_terrain",
+      "radius_ft": 75,
+      "duration_rounds": 14400
     }
   ]
 }

@@ -13,12 +13,14 @@
   "damage_type": "acid",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "ranged spell attack"
+      "effect_type": "ranged_spell_attack"
     },
     {
-      "effect_type": "note",
-      "text": "damage scales by 1d4 per slot level above 2nd"
+      "effect_type": "damage",
+      "target": "single_enemy",
+      "apply_on": "hit",
+      "damage": "4d4",
+      "damage_type": "acid"
     }
   ]
 }

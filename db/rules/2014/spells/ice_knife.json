@@ -13,16 +13,28 @@
   "damage_type": "piercing",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "ranged spell attack"
+      "effect_type": "ranged_spell_attack"
     },
     {
-      "effect_type": "note",
-      "text": "Dexterity saving throw"
+      "effect_type": "damage",
+      "target": "single_enemy",
+      "apply_on": "hit",
+      "damage": "1d10",
+      "damage_type": "piercing"
     },
     {
-      "effect_type": "note",
-      "text": "area of effect: 5 ft radius"
+      "effect_type": "aoe",
+      "shape": "sphere",
+      "radius": 5,
+      "center": "target"
+    },
+    {
+      "effect_type": "damage",
+      "target": "target_and_creatures_within_5_ft",
+      "damage": "2d6",
+      "damage_type": "cold",
+      "save": "dex",
+      "half_on_success": true
     }
   ]
 }

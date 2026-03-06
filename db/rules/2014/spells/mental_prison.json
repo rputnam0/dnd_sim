@@ -13,16 +13,24 @@
   "damage_type": "psychic",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "Intelligence saving throw"
+      "effect_type": "save",
+      "save_ability": "int"
     },
     {
-      "effect_type": "note",
-      "text": "psychic damage"
+      "effect_type": "damage",
+      "target": "single_enemy",
+      "apply_on": "save_fail",
+      "save_ability": "int",
+      "damage": "5d10",
+      "damage_type": "psychic"
     },
     {
-      "effect_type": "note",
-      "text": "restrained condition"
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "save_fail",
+      "condition": "mental_prisoned",
+      "duration_rounds": 10,
+      "effect_id": "mental_prison"
     }
   ]
 }

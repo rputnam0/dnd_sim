@@ -13,12 +13,32 @@
   "damage_type": "fire",
   "mechanics": [
     {
-      "levels": {
-        "5": "2d8",
-        "11": "3d8",
-        "17": "4d8"
-      },
-      "meta_type": "damage_scaling"
+      "effect_type": "hazard",
+      "hazard_type": "create_bonfire",
+      "radius_ft": 3,
+      "duration_rounds": 10
+    },
+    {
+      "effect_type": "damage",
+      "target": "all_enemies",
+      "apply_on": "save_fail",
+      "save_ability": "dex",
+      "damage": "1d8",
+      "damage_type": "fire",
+      "scaling": [
+        {
+          "level": 5,
+          "damage": "2d8"
+        },
+        {
+          "level": 11,
+          "damage": "3d8"
+        },
+        {
+          "level": 17,
+          "damage": "4d8"
+        }
+      ]
     }
   ]
 }
