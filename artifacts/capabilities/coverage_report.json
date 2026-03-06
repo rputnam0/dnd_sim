@@ -28,12 +28,12 @@
       "total_records": 191
     },
     {
-      "blocked_records": 103,
+      "blocked_records": 93,
       "content_type": "species",
-      "executable_records": 153,
+      "executable_records": 163,
       "schema_valid_records": 256,
-      "supported_records": 153,
-      "tested_records": 153,
+      "supported_records": 163,
+      "tested_records": 163,
       "total_records": 256
     },
     {
@@ -7955,16 +7955,16 @@
     {
       "content_id": "species:elf_weapon_training",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:elven_lineage",
@@ -8067,16 +8067,16 @@
     {
       "content_id": "species:feat",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:feline_agility",
@@ -8179,16 +8179,16 @@
     {
       "content_id": "species:firearms_mastery",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:flight",
@@ -8697,16 +8697,16 @@
     {
       "content_id": "species:hunter_s_instincts",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:hunter_s_lore",
@@ -8851,16 +8851,16 @@
     {
       "content_id": "species:kenku_training",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:khenra_twins",
@@ -9173,16 +9173,16 @@
     {
       "content_id": "species:martial_training",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:mechanical_nature",
@@ -9313,16 +9313,16 @@
     {
       "content_id": "species:natural_affinity",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:natural_armor",
@@ -9411,16 +9411,16 @@
     {
       "content_id": "species:nature_s_intuition",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:necrotic_resistance",
@@ -9607,16 +9607,16 @@
     {
       "content_id": "species:primal_intuition",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:psionic_fortitude",
@@ -10377,16 +10377,16 @@
     {
       "content_id": "species:tool_proficiency",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:trace_of_undeath",
@@ -35437,11 +35437,11 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 1314,
-    "executable_records": 1213,
+    "blocked_records": 1304,
+    "executable_records": 1223,
     "schema_valid_records": 2518,
-    "supported_records": 1213,
-    "tested_records": 1213,
+    "supported_records": 1223,
+    "tested_records": 1223,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
@@ -35450,7 +35450,7 @@
       "unsupported_reason": "invalid_mechanics_schema"
     },
     {
-      "count": 784,
+      "count": 774,
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {

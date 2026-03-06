@@ -3,15 +3,14 @@
   "description": "You are proficient in your choice of two of the following skills: Acrobatics, Deception, Stealth, and Sleight of Hand.",
   "mechanics": [
     {
-      "proficiency": {
-        "choose": 2,
-        "from": [
-          "Acrobatics",
-          "Deception",
-          "Stealth",
-          "Sleight of Hand"
-        ]
-      }
+      "choices": [
+        "Acrobatics",
+        "Deception",
+        "Stealth",
+        "Sleight of Hand"
+      ],
+      "count": 2,
+      "meta_type": "skill_proficiency"
     }
   ],
   "source_type": "species"

@@ -3,18 +3,16 @@
   "description": "You are proficient with two martial weapons of your choice and with light armor.",
   "mechanics": [
     {
-      "proficiency": {
-        "category": "weapon",
-        "type": "martial",
-        "count": 2,
-        "choice": true
-      }
+      "category": "weapon",
+      "detail": "martial",
+      "count": 2,
+      "choice": true,
+      "meta_type": "proficiency"
     },
     {
-      "proficiency": {
-        "category": "armor",
-        "type": "light"
-      }
+      "category": "armor",
+      "detail": "light",
+      "meta_type": "proficiency"
     }
   ],
   "source_type": "species"

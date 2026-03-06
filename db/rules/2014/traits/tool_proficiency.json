@@ -3,14 +3,14 @@
   "description": "You gain proficiency with the artisan's tools of your choice: Smith's tools, brewer's supplies, or mason's tools.",
   "mechanics": [
     {
-      "grantProficiency": {
-        "category": "tool",
-        "options": [
-          "Smith's tools",
-          "brewer's supplies",
-          "mason's tools"
-        ]
-      }
+      "category": "tool",
+      "choices": [
+        "Smith's tools",
+        "brewer's supplies",
+        "mason's tools"
+      ],
+      "count": 1,
+      "meta_type": "proficiency"
     }
   ],
   "source_type": "species"

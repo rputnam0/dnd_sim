@@ -3,16 +3,14 @@
   "description": "You have proficiency in one of the following skills of your choice: Athletics, Intimidation, Perception, or Survival.",
   "mechanics": [
     {
-      "grantProficiency": {
-        "type": "skill",
-        "choices": [
-          "Athletics",
-          "Intimidation",
-          "Perception",
-          "Survival"
-        ],
-        "count": 1
-      }
+      "choices": [
+        "Athletics",
+        "Intimidation",
+        "Perception",
+        "Survival"
+      ],
+      "count": 1,
+      "meta_type": "skill_proficiency"
     }
   ],
   "source_type": "species"
