@@ -131,7 +131,7 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [ ] W6-PAR-05F2 Trait passive offense/mobility leaf
 - [ ] W6-PAR-05G Umbrella row for reaction/resource trait leaves
 - [ ] W6-PAR-05G1 Trait reaction/retaliation leaf
-- [ ] W6-PAR-05G1D Trait survival/recovery support continuation leaf
+- [ ] W6-PAR-05G1D Trait survival/recovery support continuation leaf (PR #226 open)
 - [ ] W6-PAR-05G2 Trait resource-change/turn-gated leaf
 - [ ] W6-PAR-05H Umbrella row for summon/transform trait leaves
 - [ ] W6-PAR-05H1 Trait summon/companion/mount leaf
