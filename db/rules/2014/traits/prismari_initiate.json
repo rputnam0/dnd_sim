@@ -3,9 +3,13 @@
   "description": "You gain the Strixhaven Initiate feat and must choose Prismari within it. In addition, if you have the Spellcasting or Pact Magic feature, the spells on the Prismari Spells table are added to the spell list of your spellcasting class. (If you are a multiclass character with multiple spell lists, these spells are added to all of them.) Prismari Spells: 1st – Chromatic Orb, Thunderwave; 2nd – Flaming Sphere, Kinetic Jaunt; 3rd – Haste, Water Walk; 4th – Freedom of Movement, Wall of Fire; 5th – Cone of Cold, Conjure Elemental. Consider customizing how your spells look when you cast them. You might wield your Prismari spells with dynamic, gestural movement—as much dance as somatic component. Even a blast of fire in your hands is a sculpted work of art; elemental forces make grand designs as you hurl spells. These forces might linger on your body or in your clothes as decorative elements after your spells are dissipated, as sparks dance in your hair and your touch leaves tracings of frost on whatever you touch.",
   "mechanics": [
     {
-      "grant_feat": "Strixhaven Initiate (choose Prismari)"
+      "meta_type": "grant_feat",
+      "feat": "Strixhaven Initiate",
+      "choice_required": "Prismari"
     },
     {
+      "meta_type": "add_spells",
+      "condition": "has_spellcasting_or_pact_magic",
       "add_spells": [
         "Chromatic Orb",
         "Thunderwave",
@@ -18,7 +22,7 @@
         "Cone of Cold",
         "Conjure Elemental"
       ],
-      "condition": "if you have Spellcasting or Pact Magic"
+      "apply_to_all_spell_lists": true
     }
   ],
   "source_type": "background"

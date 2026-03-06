@@ -3,11 +3,19 @@
   "description": "You gain the Scion of the Outer Planes feat. In addition, members of your organization provide you free, modest lodging and food at any of their holdings or the homes of other faction members.",
   "mechanics": [
     {
-      "grantFeat": "Scion of the Outer Planes"
+      "meta_type": "grant_feat",
+      "feat": "Scion of the Outer Planes"
     },
     {
-      "providesFreeLodgingAndFood": true,
-      "location": "organization holdings and faction members' homes"
+      "meta_type": "faction_hospitality",
+      "benefits": [
+        "free_modest_lodging",
+        "free_food"
+      ],
+      "locations": [
+        "organization_holdings",
+        "faction_members_homes"
+      ]
     }
   ],
   "source_type": "background"

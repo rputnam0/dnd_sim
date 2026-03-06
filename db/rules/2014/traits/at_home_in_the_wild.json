@@ -1,6 +1,19 @@
 {
   "name": "At Home in the Wild",
   "description": "The wilderness is your home and you are comfortable dwelling in it. You can find a place to hide, rest, or recuperate when out in the wild. This place of rest is secure enough to conceal you from most natural threats. Threats that are supernatural, magical, or are actively seeking you out might do so with difficulty depending on the nature of the threat (as determined by the DM). However, this feature doesn't shield or conceal you from scrying, mental probing, nor from threats that don't necessarily require the five senses to find you. Note: This feature is a variant of the Folk Hero feature.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "wilderness_shelter",
+      "benefit": "safe_hide_rest",
+      "conceals_from": [
+        "most_natural_threats"
+      ],
+      "limitations": [
+        "does_not_block_scrying",
+        "does_not_block_mental_probing",
+        "active_or_supernatural_searchers_may_still_find_you"
+      ]
+    }
+  ],
   "source_type": "background"
 }

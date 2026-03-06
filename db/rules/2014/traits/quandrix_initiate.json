@@ -3,35 +3,36 @@
   "description": "You gain the Strixhaven Initiate feat and must choose Quandrix within it. In addition, if you have the Spellcasting or Pact Magic feature, the spells on the Quandrix Spells table are added to the spell list of your spellcasting class. (If you are a multiclass character with multiple spell lists, these spells are added to all of them.) Consider customizing how your spells look when you cast them. Your Quandrix spells might manifest amid kaleidoscopic swirls of fractal patterns, amplifying the tiniest movements of your somatic components. When your magic creates or alters creatures, it might briefly surround the targets with shimmering fractal designs or tessellated patterns.",
   "mechanics": [
     {
-      "grant_feat": "Strixhaven Initiate (choose Quandrix)"
+      "meta_type": "grant_feat",
+      "feat": "Strixhaven Initiate",
+      "choice_required": "Quandrix"
     },
     {
-      "add_spells_to_spell_lists": {
-        "condition": "character has Spellcasting or Pact Magic feature",
-        "spells_by_level": {
-          "1": [
-            "Entangle",
-            "Guiding Bolt"
-          ],
-          "2": [
-            "Enlarge/Reduce",
-            "Vortex Warp"
-          ],
-          "3": [
-            "Aura of Vitality",
-            "Haste"
-          ],
-          "4": [
-            "Control Water",
-            "Freedom of Movement"
-          ],
-          "5": [
-            "Circle of Power",
-            "Passwall"
-          ]
-        },
-        "applies_to_all_spell_lists": true
-      }
+      "meta_type": "add_spells",
+      "condition": "has_spellcasting_or_pact_magic",
+      "spells_by_level": {
+        "1": [
+          "Entangle",
+          "Guiding Bolt"
+        ],
+        "2": [
+          "Enlarge/Reduce",
+          "Vortex Warp"
+        ],
+        "3": [
+          "Aura of Vitality",
+          "Haste"
+        ],
+        "4": [
+          "Control Water",
+          "Freedom of Movement"
+        ],
+        "5": [
+          "Circle of Power",
+          "Passwall"
+        ]
+      },
+      "apply_to_all_spell_lists": true
     }
   ],
   "source_type": "background"
