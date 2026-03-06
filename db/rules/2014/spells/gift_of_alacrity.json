@@ -11,5 +11,11 @@
   "description": "You touch a willing creature. For the duration, the target can add 1d8 to its initiative rolls.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "gift_of_alacrity_initiative_bonus",
+      "duration_rounds": 4800
+    }
+  ]
 }
