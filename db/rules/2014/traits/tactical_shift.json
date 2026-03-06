@@ -3,10 +3,10 @@
   "description": "Whenever you activate your Second Wind with a Bonus Action, you can move up to half your Speed without provoking Opportunity Attacks.",
   "mechanics": [
     {
-      "trigger": "second wind activation (bonus action)",
-      "effect": "move",
-      "distance": "0.5*speed",
-      "noOpportunityAttack": true
+      "trigger": "activate_second_wind_as_bonus_action",
+      "distance": "half_speed",
+      "no_opportunity_attacks": true,
+      "meta_type": "movement"
     }
   ],
   "source_type": "class"

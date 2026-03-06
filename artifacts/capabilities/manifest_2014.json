@@ -27907,16 +27907,16 @@
     {
       "content_id": "trait:master_duelist",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:master_of_hexes",
@@ -29083,16 +29083,16 @@
     {
       "content_id": "trait:order_s_wrath",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:otherworldly_glamour",
@@ -31575,16 +31575,16 @@
     {
       "content_id": "trait:slayer_s_prey",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:slippery_mind",
@@ -32961,16 +32961,16 @@
     {
       "content_id": "trait:tactical_shift",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:tactical_wit",
@@ -34557,16 +34557,16 @@
     {
       "content_id": "trait:wails_from_the_grave",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:walker_in_dreams",

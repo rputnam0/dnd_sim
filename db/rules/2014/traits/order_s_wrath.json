@@ -3,15 +3,17 @@
   "description": "Starting at 17th level, enemies you designate for destruction wilt under the combined efforts of you and your allies. If you deal your Divine Strike damage to a creature on your turn, you can curse that creature until the start of your next turn. The next time one of your allies hits the cursed creature with an attack, the target also takes 2d8 psychic damage, and the curse ends. You can curse a creature in this way only once per turn.",
   "mechanics": [
     {
-      "trigger": "you deal divine strike damage to a creature on your turn",
-      "effect": "Apply a curse to the creature",
-      "duration": "until the start of your next turn",
-      "limit": "once per turn"
+      "trigger": "deal_divine_strike_damage_on_your_turn",
+      "duration": "until start of your next turn",
+      "limit": "once per turn",
+      "meta_type": "mark"
     },
     {
-      "trigger": "an ally hits a cursed creature with an attack",
-      "effect": "Target takes 2d8 psychic damage",
-      "post_effect": "Curse ends"
+      "trigger": "ally_hits_marked_creature_with_attack",
+      "damage": "2d8",
+      "damage_type": "psychic",
+      "post_effect": "mark ends",
+      "meta_type": "extra_damage"
     }
   ],
   "source_type": "subclass"

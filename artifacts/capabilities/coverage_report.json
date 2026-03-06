@@ -46,12 +46,12 @@
       "total_records": 594
     },
     {
-      "blocked_records": 43,
+      "blocked_records": 38,
       "content_type": "trait",
-      "executable_records": 1138,
+      "executable_records": 1143,
       "schema_valid_records": 1181,
-      "supported_records": 1138,
-      "tested_records": 1138,
+      "supported_records": 1143,
+      "tested_records": 1143,
       "total_records": 1181
     }
   ],
@@ -27961,16 +27961,16 @@
     {
       "content_id": "trait:master_duelist",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:master_of_hexes",
@@ -29137,16 +29137,16 @@
     {
       "content_id": "trait:order_s_wrath",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:otherworldly_glamour",
@@ -31629,16 +31629,16 @@
     {
       "content_id": "trait:slayer_s_prey",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:slippery_mind",
@@ -33015,16 +33015,16 @@
     {
       "content_id": "trait:tactical_shift",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:tactical_wit",
@@ -34611,16 +34611,16 @@
     {
       "content_id": "trait:wails_from_the_grave",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:walker_in_dreams",
@@ -35437,16 +35437,16 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 142,
-    "executable_records": 2385,
+    "blocked_records": 137,
+    "executable_records": 2390,
     "schema_valid_records": 2527,
-    "supported_records": 2385,
-    "tested_records": 2385,
+    "supported_records": 2390,
+    "tested_records": 2390,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
     {
-      "count": 43,
+      "count": 38,
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {

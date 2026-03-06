@@ -68,6 +68,7 @@ Wave 6 remediation state:
 | W6-PAR-05F1 | codex/feat/w6-par-05f1-trait-defense-support | remediation_parity | in_progress | The original F1 branch is now an already-used baseline lane; fresh continuation work proceeds on F1A and F1B branches instead of reopening it. |
 | W6-PAR-05F1B | codex/feat/w6-par-05f1b-trait-defense-support-finalization | remediation_parity | pr_open | Fresh continuation lane for the remaining live F1 blockers while F1A continues separately through review on its earlier checkpoint slice; PR #225 is now open from this branch. |
 | W6-PAR-05G | codex/feat/w6-par-05g-trait-hooks-e | remediation_parity | in_progress | Umbrella row for reaction/resource trait leaves; execution happens through child leaf tasks only. |
+| W6-PAR-05G1C | codex/feat/w6-par-05g1c-reaction-support-followup | remediation_parity | pr_open | Fresh continuation branch owns a disjoint eight-trait G1 follow-up slice, regenerates parity artifacts from the current integration base, and PR #224 is ready for review. |
 | W6-PAR-05G1D | codex/feat/w6-par-05g1d-survival-recovery-support | remediation_parity | pr_open | Fresh continuation lane for the survival/recovery G1 cluster (`chalice` through `vitality_of_the_tree`); PR #226 is open while parallel G1A/G1B/G1C ownership remains isolated. |
 | W6-PAR-05H | codex/feat/w6-par-05h-trait-hooks-f | remediation_parity | in_progress | Umbrella row for summon/transform trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05I | codex/feat/w6-par-05i-spell-mechanics-d | remediation_parity | in_progress | Umbrella row for spell mechanics damage/support leaves; execution happens through child leaf tasks only. |
@@ -83,6 +84,7 @@ Wave 6 remediation state:
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
 | W6-PAR-05F1B | [#225](https://github.com/rputnam0/dnd_sim/pull/225) | remediation_parity | awaiting_review | F1B finalization PR for the remaining live defense/support blockers on the fresh continuation lane. |
+| W6-PAR-05G1C | [#224](https://github.com/rputnam0/dnd_sim/pull/224) | remediation_parity | awaiting_review | Disjoint G1 continuation slice for eight low-risk reaction/support follow-up traits on `codex/feat/w6-par-05g1c-reaction-support-followup`; shard, completion, and docs checks are green, while strict remains blocked only by the global backlog. |
 | W6-PAR-05G1D | [#226](https://github.com/rputnam0/dnd_sim/pull/226) | remediation_parity | awaiting_review | Fresh continuation PR for the G1 survival/recovery support cluster. |
 | W6-PAR-05I2 | [#227](https://github.com/rputnam0/dnd_sim/pull/227) | remediation_parity | awaiting_review | I2 hotspot PR for the spell buff, debuff, and mark mechanics leaf on the refreshed branch tip. |
 
