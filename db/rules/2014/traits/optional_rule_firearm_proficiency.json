@@ -5,7 +5,8 @@
     {
       "grantProficiency": {
         "category": "firearms"
-      }
+      },
+      "meta_type": "grant_proficiency"
     }
   ],
   "source_type": "class"

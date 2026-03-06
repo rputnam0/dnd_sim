@@ -1,6 +1,12 @@
 {
   "name": "Eldritch Invocation Options",
   "description": "Eldritch Invocation options appear in alphabetical order. The following optional features are available: Agonizing Blast, Armor of Shadows, Ascendant Step, Devil's Sight, Devouring Blade, Eldritch Mind, Eldritch Smite, Eldritch Spear, Fiendish Vigor, Gaze of Two Minds, Gift of the Depths, Gift of the Protectors, Investment of the Chain Master, Lessons of the First Ones, Lifedrinker, Mask of Many Faces, Master of Myriad Forms, Misty Visions, One with Shadows, Otherworldly Leap, Pact of the Blade, Pact of the Chain, Pact of the Tome, Repelling Blast, Thirsting Blade, Visions of Distant Realms, Whispers of the Grave, Witch Sight.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice",
+      "target": "eldritch_invocation_option",
+      "source_feature": "Eldritch Invocations"
+    }
+  ],
   "source_type": "class"
 }

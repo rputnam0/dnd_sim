@@ -23,13 +23,15 @@
             }
           }
         }
-      }
+      },
+      "meta_type": "tool_proficiency"
     },
     {
       "effect": "halve_crafting_time",
       "item_type": "potion",
       "source": "Dungeon Master's Guide",
-      "reference": "DMG p. 6"
+      "reference": "DMG p. 6",
+      "meta_type": "crafting_time_modifier"
     }
   ],
   "source_type": "subclass"

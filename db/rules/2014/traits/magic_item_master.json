@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "effect": "increase_attunement_limit",
-      "new_limit": 6
+      "new_limit": 6,
+      "meta_type": "increase_attunement_limit"
     }
   ],
   "source_type": "class"

@@ -1,6 +1,12 @@
 {
   "name": "Metamagic Options",
   "description": "3rd-level sorcerer (optional class features). When you choose Metamagic options, you have access to the following additional options: Seeking Spell (consumes), Transmuted Spell (consumes).",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice",
+      "target": "metamagic_option",
+      "source_feature": "Metamagic"
+    }
+  ],
   "source_type": "class"
 }

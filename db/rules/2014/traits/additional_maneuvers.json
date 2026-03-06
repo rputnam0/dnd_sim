@@ -5,7 +5,8 @@
     {
       "action": "learn",
       "target": "maneuver",
-      "quantity": 2
+      "quantity": 2,
+      "meta_type": "choice"
     }
   ],
   "source_type": "subclass"
