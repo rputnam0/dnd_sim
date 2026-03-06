@@ -1,6 +1,18 @@
 {
   "name": "Court Functionary",
   "description": "Your knowledge of how bureaucracies function lets you gain access to the records and inner workings of any noble court or government you encounter. You know who the movers and shakers are, whom to go to for the favors you seek, and what the current intrigues of interest in the group are.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "bureaucratic_access",
+      "benefits": [
+        "court_records_access",
+        "court_insider_knowledge"
+      ],
+      "audiences": [
+        "noble_courts",
+        "governments"
+      ]
+    }
+  ],
   "source_type": "background"
 }

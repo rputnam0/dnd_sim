@@ -25,7 +25,8 @@
         "Wisdom",
         "Charisma"
       ],
-      "allows_using_spell_slots": true
+      "allows_using_spell_slots": true,
+      "meta_type": "grant_spells"
     }
   ],
   "source_type": "species"

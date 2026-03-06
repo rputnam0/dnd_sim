@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "effect": "telepathy",
-      "range": "10 * level feet"
+      "range": "10 * level feet",
+      "meta_type": "communication"
     },
     {
       "effect": "grant_telepathy",
@@ -12,7 +13,8 @@
       "target": "creature",
       "duration": "1 hour",
       "reversible": true,
-      "revoke_action": "Magic"
+      "revoke_action": "Magic",
+      "meta_type": "communication"
     }
   ],
   "source_type": "species"

@@ -7,14 +7,16 @@
       "spell": "disguise self",
       "available_at_level": 3,
       "uses_per_long_rest": 1,
-      "requires_material_component": false
+      "requires_material_component": false,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "spell": "nondetection",
       "available_at_level": 5,
       "uses_per_long_rest": 1,
-      "requires_material_component": false
+      "requires_material_component": false,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "spellcasting_ability_choice",
@@ -22,14 +24,16 @@
         "Intelligence",
         "Wisdom",
         "Charisma"
-      ]
+      ],
+      "meta_type": "spellcasting_ability"
     },
     {
       "effect": "allow_spell_slot_use",
       "spells": [
         "disguise self",
         "nondetection"
-      ]
+      ],
+      "meta_type": "spell_use"
     }
   ],
   "source_type": "species"

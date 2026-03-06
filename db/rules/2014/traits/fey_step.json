@@ -11,7 +11,8 @@
       "uses": {
         "per": "long rest",
         "max": "proficiency bonus"
-      }
+      },
+      "meta_type": "teleport"
     },
     {
       "level": 3,
@@ -27,7 +28,9 @@
         "ability": "Wisdom",
         "dc": "8 + proficiency bonus + ability_mod (Int/Wis/Cha)"
       },
-      "duration": "1 minute or until damage dealt"
+      "duration": "1 minute or until damage dealt",
+      "effect_type": "apply_condition",
+      "condition": "charmed"
     },
     {
       "level": 3,
@@ -43,7 +46,9 @@
         "ability": "Wisdom",
         "dc": "8 + proficiency bonus + ability_mod (Int/Wis/Cha)"
       },
-      "duration": "until end of your next turn"
+      "duration": "until end of your next turn",
+      "effect_type": "apply_condition",
+      "condition": "frightened"
     },
     {
       "level": 3,
@@ -55,7 +60,8 @@
         "choice": "one willing",
         "range": 5
       },
-      "description": "The chosen creature teleports instead of you to an unoccupied space you choose within 30 feet."
+      "description": "The chosen creature teleports instead of you to an unoccupied space you choose within 30 feet.",
+      "meta_type": "teleport"
     },
     {
       "level": 3,
@@ -68,7 +74,8 @@
         "type": "creature",
         "choice": "any number",
         "range": 5
-      }
+      },
+      "effect_type": "damage"
     }
   ],
   "source_type": "species"

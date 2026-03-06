@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "grant": "Fighting Style",
-      "quantity": 1
+      "quantity": 1,
+      "meta_type": "choice"
     }
   ],
   "source_type": "subclass"

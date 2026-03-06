@@ -1,6 +1,6 @@
 {
   "name": "Implements of Mercy",
-  "description": "You gain proficiency in the Insight and Medicine skills, and you gain proficiency with the herbalism kit. You also gain a special mask, which you often wear when using the features of this subclass. You determine its appearance, or generate it randomly by rolling on the Merciful Mask table. Merciful Mask table: 1 – Raven; 2 – Blank and white; 3 – Crying visage; 4 – Laughing visage; 5 – Skull; 6 – Butterfly.",
+  "description": "You gain proficiency in the Insight and Medicine skills, and you gain proficiency with the herbalism kit. You also gain a special mask, which you often wear when using the features of this subclass. You determine its appearance, or generate it randomly by rolling on the Merciful Mask table. Merciful Mask table: 1 \u2013 Raven; 2 \u2013 Blank and white; 3 \u2013 Crying visage; 4 \u2013 Laughing visage; 5 \u2013 Skull; 6 \u2013 Butterfly.",
   "mechanics": [
     {
       "proficiency": {
@@ -8,14 +8,16 @@
           "Insight",
           "Medicine"
         ]
-      }
+      },
+      "meta_type": "skill_proficiency"
     },
     {
       "proficiency": {
         "tools": [
           "Herbalism kit"
         ]
-      }
+      },
+      "meta_type": "tool_proficiency"
     }
   ],
   "source_type": "subclass"

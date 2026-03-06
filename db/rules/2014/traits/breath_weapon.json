@@ -27,7 +27,9 @@
           }
         ],
         "type": "determined by draconic ancestry"
-      }
+      },
+      "effect_type": "damage",
+      "meta_type": "action"
     }
   ],
   "source_type": "species"

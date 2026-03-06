@@ -6,7 +6,8 @@
       "action": "skill_check",
       "trigger": "when making a skill ability check",
       "effect": "add 1d6 to the check",
-      "uses": "proficiency bonus per long rest"
+      "uses": "proficiency bonus per long rest",
+      "meta_type": "skill_check_bonus"
     }
   ],
   "source_type": "species"

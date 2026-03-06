@@ -3,7 +3,8 @@
   "description": "As a bonus action, you can let out an especially menacing roar. Creatures of your choice within 10 feet of you that can hear you must succeed on a Wisdom saving throw or become frightened of you until the end of your next turn. The DC of the save equals 8 + your proficiency bonus + your Constitution modifier. Once you use this trait, you can't use it again until you finish a short or long rest.",
   "mechanics": [
     {
-      "activation": "bonus_action"
+      "activation": "bonus_action",
+      "meta_type": "activation"
     },
     {
       "effect": "frightened",
@@ -11,10 +12,13 @@
       "save": {
         "type": "wisdom",
         "dc": "8 + proficiency bonus + Constitution modifier"
-      }
+      },
+      "effect_type": "apply_condition",
+      "condition": "frightened"
     },
     {
-      "recharge": "short_or_long_rest"
+      "recharge": "short_or_long_rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "species"

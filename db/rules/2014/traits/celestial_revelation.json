@@ -21,7 +21,8 @@
           "amount": "proficiency bonus",
           "frequency": "once per turn when you deal damage with an attack or spell"
         }
-      ]
+      ],
+      "meta_type": "activation"
     },
     {
       "option": "Radiant Consumption",
@@ -47,7 +48,8 @@
           "amount": "proficiency bonus",
           "frequency": "once per turn when you deal damage with an attack or spell"
         }
-      ]
+      ],
+      "meta_type": "activation"
     },
     {
       "option": "Radiant Soul",
@@ -65,7 +67,8 @@
           "amount": "proficiency bonus",
           "frequency": "once per turn when you deal damage with an attack or spell"
         }
-      ]
+      ],
+      "meta_type": "activation"
     }
   ],
   "source_type": "species"

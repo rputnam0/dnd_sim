@@ -13,7 +13,8 @@
       "recharge": {
         "type": "long_rest",
         "uses": 1
-      }
+      },
+      "meta_type": "damage_immunity"
     }
   ],
   "source_type": "species"

@@ -2143,6 +2143,7 @@ def _smite_extra_damage_components(action: ActionDefinition) -> list[tuple[str, 
 
 def _smite_rider_effects(action: ActionDefinition) -> list[dict[str, Any]]:
     riders: list[dict[str, Any]] = []
+    spell_level = _spell_level_from_action(action)
     for mechanic in action.mechanics:
         if not isinstance(mechanic, dict):
             continue
@@ -2159,14 +2160,38 @@ def _smite_rider_effects(action: ActionDefinition) -> list[dict[str, Any]]:
                     parsed_duration = None
             if parsed_duration is not None and parsed_duration <= 0:
                 parsed_duration = 1
+            internal_tags = _normalize_internal_tags(mechanic.get("internal_tags"))
+            internal_tags.add("spell_effect")
+            if spell_level > 0:
+                internal_tags.add(f"spell_level:{spell_level}")
             riders.append(
                 {
                     "effect_type": "apply_condition",
                     "target": "target",
                     "condition": str(mechanic.get("condition", "")),
                     "duration_rounds": parsed_duration,
+                    "duration_timing": str(
+                        mechanic.get(
+                            "duration_timing",
+                            mechanic.get("duration_boundary", "turn_start"),
+                        )
+                    ),
+                    "save_to_end": bool(
+                        mechanic.get(
+                            "save_to_end",
+                            mechanic.get("save_to_end_policy", False),
+                        )
+                    ),
+                    "requires_smite_save": bool(mechanic.get("requires_smite_save", True)),
+                    "concentration_linked": bool(mechanic.get("concentration_linked", False)),
+                    "save_on_apply": bool(mechanic.get("save_on_apply", True)),
+                    "internal_tags": sorted(internal_tags),
                 }
             )
+            if not riders[-1]["requires_smite_save"] and mechanic.get("save_ability"):
+                riders[-1]["save_ability"] = str(mechanic.get("save_ability"))
+                if action.save_dc is not None:
+                    riders[-1]["save_dc"] = int(action.save_dc)
             continue
         if effect_type == "push":
             distance = mechanic.get("distance", 0)
@@ -2176,11 +2201,14 @@ def _smite_rider_effects(action: ActionDefinition) -> list[dict[str, Any]]:
                     "target": "target",
                     "distance_ft": int(distance) if distance else 0,
                     "direction": str(mechanic.get("direction", "away_from_source")),
+                    "requires_smite_save": bool(mechanic.get("requires_smite_save", True)),
                 }
             )
             continue
         if effect_type == "forced_movement":
-            riders.append(dict(mechanic))
+            rider = dict(mechanic)
+            rider.setdefault("requires_smite_save", True)
+            riders.append(rider)
     return riders
 
 
@@ -2241,11 +2269,18 @@ def _apply_pending_smite_on_hit(
     save_dc = pending.get("save_dc")
     save_ability = pending.get("save_ability")
     rider_saved = False
-    if rider_effects and save_dc is not None and isinstance(save_ability, str):
+    applied_concentration_linked_rider = False
+    save_gated_riders = [
+        effect for effect in rider_effects if bool(effect.get("requires_smite_save", True))
+    ]
+    always_apply_riders = [
+        effect for effect in rider_effects if not bool(effect.get("requires_smite_save", True))
+    ]
+    if save_gated_riders and save_dc is not None and isinstance(save_ability, str):
         save_mod = int(target.save_mods.get(save_ability, 0))
         rider_saved = (rng.randint(1, 20) + save_mod) >= int(save_dc)
     if not rider_saved:
-        for effect in rider_effects:
+        for effect in save_gated_riders:
             _apply_effect(
                 effect=effect,
                 rng=rng,
@@ -2258,9 +2293,32 @@ def _apply_pending_smite_on_hit(
                 actors=actors,
                 active_hazards=active_hazards,
             )
+            applied_concentration_linked_rider = applied_concentration_linked_rider or bool(
+                effect.get("concentration_linked", False)
+            )
+    for effect in always_apply_riders:
+        _apply_effect(
+            effect=effect,
+            rng=rng,
+            actor=actor,
+            target=target,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            actors=actors,
+            active_hazards=active_hazards,
+        )
+        applied_concentration_linked_rider = applied_concentration_linked_rider or bool(
+            effect.get("concentration_linked", False)
+        )
 
     actor.pending_smite = None
-    if actor.concentrating and _is_smite_spell_name(actor.concentrated_spell or ""):
+    if (
+        actor.concentrating
+        and _is_smite_spell_name(actor.concentrated_spell or "")
+        and not applied_concentration_linked_rider
+    ):
         _break_concentration(actor, actors, active_hazards)
     return bundle
 
@@ -3412,6 +3470,41 @@ def _spell_is_ritual(spell: dict[str, Any]) -> bool:
     return "ritual" in meta
 
 
+def _extract_primary_save_damage_mechanic(
+    mechanics: Any,
+    *,
+    action_type: str,
+    save_ability: str | None,
+) -> tuple[dict[str, Any] | None, list[Any]]:
+    if action_type != "save" or not isinstance(mechanics, list):
+        return None, mechanics if isinstance(mechanics, list) else []
+
+    normalized_save = str(save_ability or "").strip().lower()
+    primary_candidates: list[dict[str, Any]] = []
+    remaining: list[Any] = []
+    for row in mechanics:
+        if not isinstance(row, dict):
+            remaining.append(row)
+            continue
+        effect_type = str(row.get("effect_type", "")).strip().lower()
+        apply_on = str(row.get("apply_on", "")).strip().lower()
+        damage = str(row.get("damage", "")).strip()
+        row_save = str(row.get("save_ability", "")).strip().lower()
+        if (
+            effect_type == "damage"
+            and apply_on == "save_fail"
+            and damage
+            and (not normalized_save or not row_save or row_save == normalized_save)
+        ):
+            primary_candidates.append(dict(row))
+            continue
+        remaining.append(row)
+
+    if len(primary_candidates) != 1:
+        return None, mechanics
+    return primary_candidates[0], remaining
+
+
 def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str, Any]]:
     """Extract a minimal spell list from PDF raw_fields.
 
@@ -3609,6 +3702,17 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 hydrated["action_type"] = "attack"
             else:
                 hydrated["action_type"] = "utility"
+        primary_save_damage, remaining_mechanics = _extract_primary_save_damage_mechanic(
+            hydrated.get("mechanics"),
+            action_type=str(hydrated.get("action_type", "utility")).strip().lower(),
+            save_ability=str(hydrated.get("save_ability") or "").strip().lower() or None,
+        )
+        if primary_save_damage is not None:
+            hydrated["damage"] = str(primary_save_damage.get("damage"))
+            damage_type = str(primary_save_damage.get("damage_type") or "").strip().lower()
+            if damage_type:
+                hydrated["damage_type"] = damage_type
+            hydrated["mechanics"] = remaining_mechanics
         if (
             hydrated.get("action_type") == "save"
             and "half_on_save" not in hydrated
@@ -8802,8 +8906,24 @@ def _tick_conditions_for_actor(
     actor: ActorRuntimeState,
     *,
     boundary: str = "turn_start",
+    actors: dict[str, ActorRuntimeState] | None = None,
+    damage_dealt: dict[str, int] | None = None,
+    damage_taken: dict[str, int] | None = None,
+    threat_scores: dict[str, int] | None = None,
+    resources_spent: dict[str, dict[str, int]] | None = None,
+    active_hazards: list[dict[str, Any]] | None = None,
 ) -> None:
-    _effects_runtime.tick_conditions_for_actor(rng, actor, boundary=boundary)
+    _effects_runtime.tick_conditions_for_actor(
+        rng,
+        actor,
+        boundary=boundary,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
 
 
 def _apply_healing(target: ActorRuntimeState, amount: int) -> None:
@@ -8968,7 +9088,7 @@ def _apply_effect(
         before_conditions = set(recipient.conditions)
         save_dc = effect.get("save_dc")
         save_ability = effect.get("save_ability")
-        if save_dc is not None and save_ability:
+        if save_dc is not None and save_ability and bool(effect.get("save_on_apply", True)):
             save_key = str(save_ability).lower()
             if _auto_fails_strength_or_dex_save(recipient, save_key):
                 condition_saved = False
@@ -8996,9 +9116,10 @@ def _apply_effect(
                 condition_saved = True
             if condition_saved:
                 return
-        concentration_linked = bool(
-            action and action.concentration and effect.get("concentration_linked", True)
-        )
+        if "concentration_linked" in effect:
+            concentration_linked = bool(effect.get("concentration_linked"))
+        else:
+            concentration_linked = bool(action and action.concentration)
         internal_tags = _normalize_internal_tags(effect.get("internal_tags"))
         if action is not None and _has_tag(action, "spell"):
             internal_tags.add("spell_effect")
@@ -10305,7 +10426,17 @@ def _dispatch_combat_event(
     if event == "turn_end" and trigger_actor is not None and trigger_actor.actor_id in actors:
         end_actor = actors[trigger_actor.actor_id]
         _clear_gwm_bonus_trigger(end_actor)
-        _tick_conditions_for_actor(rng, end_actor, boundary="turn_end")
+        _tick_conditions_for_actor(
+            rng,
+            end_actor,
+            boundary="turn_end",
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+        )
         _tick_hazards_for_actor_turn(
             active_hazards=active_hazards,
             actor=end_actor,
@@ -13822,7 +13953,16 @@ def run_simulation(
                     actor.bonus_action_spell_restriction_active = False
                     actor.non_action_cantrip_spell_cast_this_turn = False
                     _roll_recharge_for_actor(rng, actor)
-                    _tick_conditions_for_actor(rng, actor)
+                    _tick_conditions_for_actor(
+                        rng,
+                        actor,
+                        actors=actors,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                    )
                     _tick_hazards_for_actor_turn(
                         active_hazards=active_hazards,
                         actor=actor,

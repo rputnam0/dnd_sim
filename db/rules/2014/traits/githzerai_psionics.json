@@ -4,29 +4,34 @@
   "mechanics": [
     {
       "grant_cantrip": "mage hand",
-      "invisible_when_cast": true
+      "invisible_when_cast": true,
+      "meta_type": "grant_cantrip"
     },
     {
       "grant_spell": "shield",
       "required_level": 3,
       "once_per_long_rest": true,
-      "can_use_spell_slots": true
+      "can_use_spell_slots": true,
+      "meta_type": "grant_spell"
     },
     {
       "grant_spell": "detect thoughts",
       "required_level": 5,
       "once_per_long_rest": true,
-      "can_use_spell_slots": true
+      "can_use_spell_slots": true,
+      "meta_type": "grant_spell"
     },
     {
       "spellcasting_ability_choice": [
         "Intelligence",
         "Wisdom",
         "Charisma"
-      ]
+      ],
+      "meta_type": "spellcasting_ability"
     },
     {
-      "requires_components": false
+      "requires_components": false,
+      "meta_type": "spell_modification"
     }
   ],
   "source_type": "species"

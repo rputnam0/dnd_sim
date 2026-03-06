@@ -8,7 +8,8 @@
       "distance_feet": "5 * proficiency_bonus",
       "no_opportunity_attack": true,
       "uses_per_long_rest": "proficiency_bonus",
-      "activation_condition": "speed > 0"
+      "activation_condition": "speed > 0",
+      "meta_type": "movement"
     }
   ],
   "source_type": "species"

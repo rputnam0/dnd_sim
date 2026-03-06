@@ -3,7 +3,10 @@
   "description": "You gain one feat of your choice for which you qualify.",
   "mechanics": [
     {
-      "grantFeat": 1
+      "count": 1,
+      "choice": true,
+      "qualification_required": true,
+      "meta_type": "grant_feat"
     }
   ],
   "source_type": "species"

@@ -3,10 +3,14 @@
   "description": "You gain the Strixhaven Initiate feat and must choose Witherbloom within it. In addition, if you have the Spellcasting or Pact Magic feature, the spells on the Witherbloom Spells table are added to the spell list of your spellcasting class. (If you are a multiclass character with multiple spell lists, these spells are added to all of them.) Witherbloom Spells: 1st level – Cure Wounds, Inflict Wounds; 2nd level – Lesser Restoration, Wither and Bloom; 3rd level – Revivify, Vampiric Touch; 4th level – Blight, Death Ward; 5th level – Antilife Shell, Greater Restoration. Consider customizing how your spells look when you cast them. Your Witherbloom spells might rely on material components or a spellcasting focus drawn from the swamp environment of Witherbloom, and your spells might take on an appearance suggesting those natural elements. Spectral shapes of swamp animals or plants might form amid your spell effects.",
   "mechanics": [
     {
-      "grantFeat": "Strixhaven Initiate"
+      "meta_type": "grant_feat",
+      "feat": "Strixhaven Initiate",
+      "choice_required": "Witherbloom"
     },
     {
-      "addSpells": [
+      "meta_type": "add_spells",
+      "condition": "has_spellcasting_or_pact_magic",
+      "spells": [
         {
           "level": 1,
           "spells": [
@@ -42,7 +46,8 @@
             "Greater Restoration"
           ]
         }
-      ]
+      ],
+      "apply_to_all_spell_lists": true
     }
   ],
   "source_type": "background"

@@ -19,6 +19,14 @@
       "save_ability": "wis",
       "damage": "3d8",
       "damage_type": "psychic"
+    },
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "save_fail",
+      "condition": "mind_spiked",
+      "duration_rounds": 600,
+      "effect_id": "mind_spike"
     }
   ]
 }

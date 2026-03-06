@@ -9,7 +9,8 @@
       "target": "unoccupied space you can see",
       "uses": {
         "max_per_long_rest": "proficiency bonus"
-      }
+      },
+      "meta_type": "teleport"
     }
   ],
   "source_type": "species"

@@ -10,7 +10,8 @@
         "damage": "1d6 + STR",
         "damage_type": "bludgeoning",
         "property": "unarmed"
-      }
+      },
+      "meta_type": "natural_weapon"
     }
   ],
   "source_type": "species"

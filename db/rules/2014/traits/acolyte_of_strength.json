@@ -6,7 +6,8 @@
       "learn_cantrip": {
         "source_class": "Druid",
         "choice": true
-      }
+      },
+      "meta_type": "learn_cantrip"
     },
     {
       "gain_skill_proficiency": {
@@ -17,7 +18,8 @@
           "Survival"
         ],
         "choice": true
-      }
+      },
+      "meta_type": "skill_proficiency"
     }
   ],
   "source_type": "subclass"

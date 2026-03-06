@@ -3,9 +3,9 @@
   "description": "Add your Wisdom modifier to the damage you deal with any Cleric cantrip.",
   "mechanics": [
     {
-      "effect": "damage_addition",
       "target": "cleric_cantrip",
-      "value": "wisdom_modifier"
+      "modifier": "Wisdom modifier",
+      "meta_type": "damage_modifier"
     }
   ],
   "source_type": "class"

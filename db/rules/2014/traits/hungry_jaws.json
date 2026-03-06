@@ -11,7 +11,8 @@
       },
       "uses": {
         "per_long_rest": "proficiency_bonus"
-      }
+      },
+      "meta_type": "bonus_action_attack"
     }
   ],
   "source_type": "species"

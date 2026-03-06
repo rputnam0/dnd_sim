@@ -3,49 +3,51 @@
   "description": "You gain the Strixhaven Initiate feat and must choose Silverquill within it. In addition, if you have the Spellcasting or Pact Magic feature, the spells on the Silverquill Spells table are added to the spell list of your spellcasting class (if you are a multiclass character with multiple spell lists, these spells are added to all of them). Silverquill Spells: 1st level – Dissonant Whispers, Silvery Barbs; 2nd level – Calm Emotions, Darkness; 3rd level – Beacon of Hope, Daylight; 4th level – Compulsion, Confusion; 5th level – Dominate Person, Rary's Telepathic Bond. Consider customizing how your spells look when you cast them. Your Silverquill spells might be accompanied by visual effects resembling splotches of ink or radiating ripples of golden light. Any auditory effects of your spells often sound like amplified echoes of your own voice speaking the spells' verbal components—even amid the crash of lightning or a fiery eruption.",
   "mechanics": [
     {
-      "grantFeat": "Strixhaven Initiate"
+      "meta_type": "grant_feat",
+      "feat": "Strixhaven Initiate",
+      "choice_required": "Silverquill"
     },
     {
-      "conditionalAddSpells": {
-        "condition": "hasSpellcastingOrPactMagic",
-        "spells": [
-          {
-            "level": 1,
-            "list": [
-              "Dissonant Whispers",
-              "Silvery Barbs"
-            ]
-          },
-          {
-            "level": 2,
-            "list": [
-              "Calm Emotions",
-              "Darkness"
-            ]
-          },
-          {
-            "level": 3,
-            "list": [
-              "Beacon of Hope",
-              "Daylight"
-            ]
-          },
-          {
-            "level": 4,
-            "list": [
-              "Compulsion",
-              "Confusion"
-            ]
-          },
-          {
-            "level": 5,
-            "list": [
-              "Dominate Person",
-              "Rary's Telepathic Bond"
-            ]
-          }
-        ]
-      }
+      "meta_type": "add_spells",
+      "condition": "has_spellcasting_or_pact_magic",
+      "spells": [
+        {
+          "level": 1,
+          "spells": [
+            "Dissonant Whispers",
+            "Silvery Barbs"
+          ]
+        },
+        {
+          "level": 2,
+          "spells": [
+            "Calm Emotions",
+            "Darkness"
+          ]
+        },
+        {
+          "level": 3,
+          "spells": [
+            "Beacon of Hope",
+            "Daylight"
+          ]
+        },
+        {
+          "level": 4,
+          "spells": [
+            "Compulsion",
+            "Confusion"
+          ]
+        },
+        {
+          "level": 5,
+          "spells": [
+            "Dominate Person",
+            "Rary's Telepathic Bond"
+          ]
+        }
+      ],
+      "apply_to_all_spell_lists": true
     }
   ],
   "source_type": "background"

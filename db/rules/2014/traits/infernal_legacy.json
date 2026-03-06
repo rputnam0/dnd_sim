@@ -5,25 +5,29 @@
     {
       "effect": "grant_cantrip",
       "spell": "thaumaturgy",
-      "spellcasting_ability": "charisma"
+      "spellcasting_ability": "charisma",
+      "meta_type": "grant_cantrip"
     },
     {
       "effect": "grant_spell",
       "spell": "hellish rebuke",
       "cast_as_level": 2,
       "required_character_level": 3,
-      "uses_per_long_rest": 1
+      "uses_per_long_rest": 1,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "spell": "darkness",
       "cast_as_level": 2,
       "required_character_level": 5,
-      "uses_per_long_rest": 1
+      "uses_per_long_rest": 1,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "spellcasting_ability",
-      "ability": "charisma"
+      "ability": "charisma",
+      "meta_type": "spellcasting_ability"
     }
   ],
   "source_type": "species"

@@ -19,6 +19,13 @@
       "save_ability": "con",
       "damage": "10d12",
       "damage_type": "necrotic"
+    },
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "save_fail",
+      "condition": "time_ravaged",
+      "effect_id": "time_ravage"
     }
   ]
 }

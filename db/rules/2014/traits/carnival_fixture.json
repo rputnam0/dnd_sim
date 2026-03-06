@@ -1,6 +1,16 @@
 {
   "name": "Carnival Fixture",
   "description": "The Witchlight Carnival provides you with free, modest lodging and food. In addition, you may wander about the carnival and partake of its many wonders at no cost to you, provided you don't disrupt its shows or cause any other trouble.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "carnival_hospitality",
+      "benefits": [
+        "free_modest_lodging",
+        "free_food",
+        "no_cost_carnival_access"
+      ],
+      "condition": "do_not_disrupt_the_shows_or_cause_trouble"
+    }
+  ],
   "source_type": "background"
 }

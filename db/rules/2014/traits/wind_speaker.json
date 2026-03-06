@@ -11,7 +11,8 @@
           "Ignan",
           "Terran"
         ]
-      }
+      },
+      "meta_type": "learn_language"
     }
   ],
   "source_type": "subclass"

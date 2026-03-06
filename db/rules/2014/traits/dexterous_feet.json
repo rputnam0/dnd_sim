@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "action_type": "bonus",
-      "effect": "use feet to manipulate an object, open/close a door or container, or pick up/set down a Tiny object"
+      "effect": "use feet to manipulate an object, open/close a door or container, or pick up/set down a Tiny object",
+      "meta_type": "additional_task"
     }
   ],
   "source_type": "species"

@@ -3,19 +3,17 @@
   "description": "You have proficiency in two of the following skills of your choice: Animal Handling, Insight, Intimidation, Medicine, Nature, Perception, and Survival.",
   "mechanics": [
     {
-      "grantProficiency": {
-        "category": "skill",
-        "options": [
-          "Animal Handling",
-          "Insight",
-          "Intimidation",
-          "Medicine",
-          "Nature",
-          "Perception",
-          "Survival"
-        ],
-        "choose": 2
-      }
+      "choices": [
+        "Animal Handling",
+        "Insight",
+        "Intimidation",
+        "Medicine",
+        "Nature",
+        "Perception",
+        "Survival"
+      ],
+      "count": 2,
+      "meta_type": "skill_proficiency"
     }
   ],
   "source_type": "species"

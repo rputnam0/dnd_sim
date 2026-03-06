@@ -9,7 +9,8 @@
           "dice": "1d6",
           "type": "extra"
         }
-      }
+      },
+      "effect_type": "extra_damage"
     }
   ],
   "source_type": "species"

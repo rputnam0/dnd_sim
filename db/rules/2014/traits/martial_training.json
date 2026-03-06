@@ -3,17 +3,19 @@
   "description": "You are proficient with two martial weapons of your choice and with light armor.",
   "mechanics": [
     {
-      "proficiency": {
+      "meta_type": "grant_proficiencies",
+      "grant_proficiency": {
         "category": "weapon",
-        "type": "martial",
+        "detail": "martial",
         "count": 2,
         "choice": true
       }
     },
     {
-      "proficiency": {
+      "meta_type": "grant_proficiencies",
+      "grant_proficiency": {
         "category": "armor",
-        "type": "light"
+        "detail": "light"
       }
     }
   ],

@@ -3,16 +3,15 @@
   "description": "Starting at 10th level, you can choose one damage type when you finish a short or long rest. You gain resistance to that damage type until you choose a different one with this feature. Damage from magical weapons or silver weapons ignores this resistance.",
   "mechanics": [
     {
-      "trigger": "rest",
+      "trigger": "finish short or long rest",
       "choice": "damage_type",
-      "grant": {
-        "resistance": "chosen_damage_type"
-      },
+      "damage_type": "chosen_damage_type",
       "duration": "until_changed",
       "exceptions": [
         "magical weapons",
         "silver weapons"
-      ]
+      ],
+      "meta_type": "grant_resistance"
     }
   ],
   "source_type": "subclass"
