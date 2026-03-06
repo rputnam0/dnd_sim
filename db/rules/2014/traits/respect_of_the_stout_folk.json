@@ -1,6 +1,16 @@
 {
   "name": "Respect of the Stout Folk",
   "description": "As well respected as clan crafters are among outsiders, no one esteems them quite so highly as dwarves do. You always have free room and board in any place where shield dwarves or gold dwarves dwell, and the individuals in such a settlement might vie among themselves to determine who can offer you (and possibly your companions) the finest accommodations and assistance.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "community_hospitality",
+      "community": "shield_dwarves_and_gold_dwarves",
+      "benefits": [
+        "free_room_and_board",
+        "accommodations_and_assistance"
+      ],
+      "priority": "hosts_might_compete_to_offer_the_best_help"
+    }
+  ],
   "source_type": "background"
 }

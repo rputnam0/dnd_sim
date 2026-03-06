@@ -3,13 +3,13 @@
   "description": "You have an excellent memory for maps and geography, and you can always recall the general layout of terrain, settlements, and other features around you. In addition, you can find food and fresh water for yourself and up to five other people each day, provided that the land offers berries, small game, water, and so forth.",
   "mechanics": [
     {
-      "effect": "recall_terrain",
-      "detail": "Excellent memory for maps and geography; can recall the general layout of surrounding terrain, settlements, and features."
-    },
-    {
-      "effect": "provide_food_water",
-      "capacity": 5,
-      "condition": "land offers berries, small game, water, etc."
+      "meta_type": "wilderness_navigation",
+      "benefits": [
+        "recall_maps_and_geography",
+        "find_food_and_fresh_water"
+      ],
+      "capacity": "self_and_up_to_five_other_people",
+      "limitation": "land_must_offer_berries_small_game_water_or_similar_resources"
     }
   ],
   "source_type": "background"

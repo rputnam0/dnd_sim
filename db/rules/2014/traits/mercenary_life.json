@@ -1,6 +1,19 @@
 {
   "name": "Mercenary Life",
   "description": "You know the mercenary life as only someone who has experienced it can. You are able to identify mercenary companies by their emblems, and you know a little about any such company, including who has hired them recently. You can find the taverns and festhalls where mercenaries abide in any area, as long as you speak the language. You can find mercenary work between adventures sufficient to maintain a comfortable lifestyle (see \"Practicing a Profession\" under \"Downtime Activities\" in chapter 8 of the Player's Handbook).",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "mercenary_connections",
+      "benefits": [
+        "identify_mercenary_companies_by_emblems",
+        "know_recent_employers",
+        "find_mercenary_taverns_and_festhalls"
+      ]
+    },
+    {
+      "meta_type": "profession_support",
+      "benefit": "find_mercenary_work_between_adventures_for_a_comfortable_lifestyle"
+    }
+  ],
   "source_type": "background"
 }

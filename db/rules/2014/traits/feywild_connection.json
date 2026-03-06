@@ -1,6 +1,12 @@
 {
   "name": "Feywild Connection",
   "description": "Your mannerisms and knowledge of fey customs are recognized by natives of the Feywild, who see you as one of their own. Because of this, friendly Fey creatures are inclined to come to your aid if you are lost or need help in the Feywild.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "fey_recognition",
+      "benefit": "friendly_fey_are_inclined_to_offer_aid",
+      "scope": "while_in_the_Feywild"
+    }
+  ],
   "source_type": "background"
 }

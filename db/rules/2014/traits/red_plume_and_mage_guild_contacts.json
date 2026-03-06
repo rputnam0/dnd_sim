@@ -1,6 +1,20 @@
 {
   "name": "Red Plume and Mage Guild Contacts",
   "description": "You made a number of friends among the Red Plumes and the Mage's Guild when you lived at the Hillsfar Gate. They remember you fondly and help you in little ways when they can. You can invoke their assistance in and around Hillsfar to obtain food, as well as simple equipment for temporary use. You can also invoke it to gain access to the low-security areas of their garrisons, halls, and encampments. Note: This feature is a variant of the Soldier feature.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "garrison_contacts",
+      "benefits": [
+        "food",
+        "temporary_simple_equipment",
+        "access_to_low_security_areas"
+      ],
+      "sources": [
+        "Red Plumes",
+        "Mage Guild"
+      ],
+      "scope": "in_and_around_Hillsfar"
+    }
+  ],
   "source_type": "background"
 }

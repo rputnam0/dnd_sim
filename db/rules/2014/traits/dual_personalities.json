@@ -1,6 +1,21 @@
 {
   "name": "Dual Personalities",
-  "description": "Most of your fellow adventurers and the world know you as your persona. Those who seek to learn more about you—your weaknesses, your origins, your purpose—find themselves stymied by your disguise. Upon donning a disguise and behaving as your persona, you are unidentifiable as your true self. By removing your disguise and revealing your true face, you are no longer identifiable as your persona. This allows you to change appearances between your two personalities as often as you wish, using one to hide the other or serve as convenient camouflage. However, should someone realize the connection between your persona and your true self, your deception might lose its effectiveness.",
-  "mechanics": [],
+  "description": "Most of your fellow adventurers and the world know you as your persona. Those who seek to learn more about you\u2014your weaknesses, your origins, your purpose\u2014find themselves stymied by your disguise. Upon donning a disguise and behaving as your persona, you are unidentifiable as your true self. By removing your disguise and revealing your true face, you are no longer identifiable as your persona. This allows you to change appearances between your two personalities as often as you wish, using one to hide the other or serve as convenient camouflage. However, should someone realize the connection between your persona and your true self, your deception might lose its effectiveness.",
+  "mechanics": [
+    {
+      "meta_type": "forged_identity",
+      "benefits": [
+        "persona_conceals_true_self",
+        "true_self_conceals_persona",
+        "switch_between_identities_at_will"
+      ],
+      "requirements": [
+        "don_disguise_and_behave_as_persona"
+      ],
+      "limitations": [
+        "effectiveness_is_reduced_if_the_connection_between_identities_is_discovered"
+      ]
+    }
+  ],
   "source_type": "background"
 }

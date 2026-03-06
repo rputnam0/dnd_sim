@@ -1,6 +1,15 @@
 {
   "name": "Watcher's Eye",
   "description": "Your experience in enforcing the law, and dealing with lawbreakers, gives you a feel for local laws and criminals. You can easily find the local outpost of the watch or a similar organization, and just as easily pick out the dens of criminal activity in a community, although you're more likely to be welcome in the former locations rather than the latter.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "watch_and_crime_sense",
+      "benefits": [
+        "find_local_watch_outpost",
+        "identify_dens_of_criminal_activity"
+      ],
+      "scope": "within_a_community"
+    }
+  ],
   "source_type": "background"
 }

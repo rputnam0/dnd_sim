@@ -1,16 +1,15 @@
 {
   "name": "Kept in Style",
-  "description": "While you are in Waterdeep or elsewhere in the North, your house sees to your everyday needs. Your name and signet are sufficient to cover most of your expenses; the inns, taverns, and festhalls you frequent are glad to record your debt and send an accounting to your family's estate in Waterdeep to settle what you owe. This advantage enables you to live a comfortable lifestyle without having to pay 2 gp a day for it, or reduces the cost of a wealthy or aristocratic lifestyle by that amount. You may not maintain a less affluent lifestyle and use the difference as income—the benefit is a line of credit, not an actual monetary reward.",
+  "description": "While you are in Waterdeep or elsewhere in the North, your house sees to your everyday needs. Your name and signet are sufficient to cover most of your expenses; the inns, taverns, and festhalls you frequent are glad to record your debt and send an accounting to your family's estate in Waterdeep to settle what you owe. This advantage enables you to live a comfortable lifestyle without having to pay 2 gp a day for it, or reduces the cost of a wealthy or aristocratic lifestyle by that amount. You may not maintain a less affluent lifestyle and use the difference as income\u2014the benefit is a line of credit, not an actual monetary reward.",
   "mechanics": [
     {
-      "effect": "lifestyle_cost_reduction",
-      "amount_gp": 2,
-      "lifestyles": [
-        "comfortable",
-        "wealthy",
-        "aristocratic"
+      "meta_type": "expense_account",
+      "scope": "Waterdeep_or_elsewhere_in_the_North",
+      "benefits": [
+        "comfortable_lifestyle_without_paying_2_gp_per_day",
+        "2_gp_daily_reduction_for_wealthy_or_aristocratic_lifestyle"
       ],
-      "restriction": "cannot maintain a less affluent lifestyle to gain income"
+      "limitation": "benefit_is_credit_not_cash_income"
     }
   ],
   "source_type": "background"

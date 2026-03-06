@@ -1,6 +1,11 @@
 {
   "name": "Choose a Feature",
   "description": "Choose a feature from any background.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "background_feature_choice",
+      "choice_source": "any_background_feature"
+    }
+  ],
   "source_type": "background"
 }

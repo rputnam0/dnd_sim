@@ -1,6 +1,21 @@
 {
   "name": "Down Low",
   "description": "You are acquainted with a network of smugglers who are willing to help you out of tight situations. While in a particular town, city, or other similarly sized community (DM's discretion), you and your companions can stay for free in safe houses. Safe houses provide a poor lifestyle. While staying at a safe house, you can choose to keep your presence (and that of your companions) a secret.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "safe_house_network",
+      "network": "smugglers",
+      "benefits": [
+        "free_safe_house",
+        "keep_presence_secret"
+      ],
+      "targets": [
+        "self",
+        "companions"
+      ],
+      "community_scope": "town_city_or_similarly_sized_community",
+      "lifestyle": "poor"
+    }
+  ],
   "source_type": "background"
 }
