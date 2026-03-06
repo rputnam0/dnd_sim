@@ -52,6 +52,11 @@ def _owned_f1_trait_ids() -> set[str]:
     return owned
 
 
+def test_w6_par_05f1_registry_still_covers_this_slice() -> None:
+    owned_ids = _owned_f1_trait_ids()
+    assert COVERED_F1_TRAIT_IDS <= owned_ids
+
+
 def test_trait_defense_support_covered_records_are_supported() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
