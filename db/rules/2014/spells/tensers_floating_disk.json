@@ -15,7 +15,7 @@
     {
       "effect_type": "hazard",
       "hazard_type": "floating_disk",
-      "duration_rounds": 100,
+      "duration_rounds": 600,
       "diameter_ft": 3,
       "thickness_in": 1,
       "capacity_lb": 500,

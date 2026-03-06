@@ -15,7 +15,7 @@
     {
       "effect_type": "transform",
       "condition": "nystuls_magic_aura",
-      "duration_rounds": 28800,
+      "duration_rounds": 14400,
       "false_aura": true,
       "mask": true
     }

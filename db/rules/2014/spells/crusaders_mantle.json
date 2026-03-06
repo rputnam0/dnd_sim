@@ -23,8 +23,7 @@
       "effect_type": "apply_condition",
       "condition": "crusaders_mantle_extra_radiant_damage",
       "duration_rounds": 10,
-      "target": "source",
-      "target_scope": "allies_in_aura",
+      "target": "friendly",
       "damage": "1d4",
       "damage_type": "radiant",
       "trigger": "weapon_attack_hit"

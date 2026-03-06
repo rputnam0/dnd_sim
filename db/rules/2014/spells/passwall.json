@@ -15,7 +15,7 @@
     {
       "effect_type": "transform",
       "condition": "passwall_opening",
-      "duration_rounds": 100,
+      "duration_rounds": 600,
       "dimensions": {
         "depth_ft": 20,
         "height_ft": 8,

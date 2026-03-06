@@ -15,7 +15,7 @@
     {
       "effect_type": "transform",
       "condition": "warding_bond_linked",
-      "duration_rounds": 3600,
+      "duration_rounds": 600,
       "ac_bonus": 1,
       "saving_throw_bonus": 1,
       "damage_resistance": "all",

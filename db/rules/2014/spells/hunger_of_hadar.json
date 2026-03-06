@@ -15,7 +15,7 @@
     {
       "effect_type": "apply_condition",
       "condition": "blinded",
-      "duration_rounds": 100
+      "duration_rounds": 10
     },
     {
       "effect_type": "aoe",
@@ -25,7 +25,7 @@
     {
       "effect_type": "hazard",
       "hazard_type": "hunger_of_hadar",
-      "duration_rounds": 100,
+      "duration_rounds": 10,
       "difficult_terrain": true,
       "on_start_turn": [
         {

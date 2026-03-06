@@ -15,7 +15,7 @@
     {
       "effect_type": "apply_condition",
       "condition": "phantasmal_force_illusion",
-      "duration_rounds": 100,
+      "duration_rounds": 10,
       "shape": "cube",
       "size_ft": 10
     },

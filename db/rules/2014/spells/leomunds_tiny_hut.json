@@ -20,7 +20,7 @@
     {
       "effect_type": "hazard",
       "hazard_type": "tiny_hut",
-      "duration_rounds": 80,
+      "duration_rounds": 4800,
       "capacity_limit": 9,
       "size_limit": "Medium",
       "climate_control": true,

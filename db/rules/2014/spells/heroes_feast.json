@@ -23,17 +23,17 @@
     {
       "effect_type": "apply_condition",
       "condition": "immune_to_poison",
-      "duration_rounds": 2400
+      "duration_rounds": 14400
     },
     {
       "effect_type": "apply_condition",
       "condition": "immune_to_frightened",
-      "duration_rounds": 2400
+      "duration_rounds": 14400
     },
     {
       "effect_type": "apply_condition",
       "condition": "advantage_on_wisdom_saves",
-      "duration_rounds": 2400
+      "duration_rounds": 14400
     },
     {
       "effect_type": "heal",
@@ -42,7 +42,7 @@
     {
       "effect_type": "apply_condition",
       "condition": "heroes_feast_max_hp_bonus",
-      "duration_rounds": 2400,
+      "duration_rounds": 14400,
       "calculation": "2d10"
     }
   ]
