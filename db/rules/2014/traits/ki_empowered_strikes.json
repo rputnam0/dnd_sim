@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "effect": "unarmed_strikes_are_magical",
-      "description": "Unarmed strikes are considered magical for overcoming resistance and immunity to nonmagical attacks and damage."
+      "description": "Unarmed strikes are considered magical for overcoming resistance and immunity to nonmagical attacks and damage.",
+      "meta_type": "ignore_resistance"
     }
   ],
   "source_type": "class"

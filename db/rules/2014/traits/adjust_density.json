@@ -25,7 +25,8 @@
           "strength_check": "advantage",
           "strength_save": "advantage"
         }
-      }
+      },
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

@@ -6,23 +6,27 @@
       "activation": {
         "type": "action",
         "cost": "action"
-      }
+      },
+      "meta_type": "activation"
     },
     {
-      "duration": "1 minute or until dismissed (action)"
+      "duration": "1 minute or until dismissed (action)",
+      "meta_type": "duration"
     },
     {
       "light": {
         "bright_radius_ft": 60,
         "dim_radius_ft": 30
-      }
+      },
+      "meta_type": "aura"
     },
     {
       "effect": {
         "target": "enemies in bright light",
         "type": "disadvantage",
         "on": "saving throws against fire or radiant damage spells"
-      }
+      },
+      "meta_type": "advantage"
     }
   ],
   "source_type": "subclass"

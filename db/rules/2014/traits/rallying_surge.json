@@ -16,7 +16,8 @@
           "name": "Move",
           "effect": "move up to half speed without provoking opportunity attacks"
         }
-      ]
+      ],
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

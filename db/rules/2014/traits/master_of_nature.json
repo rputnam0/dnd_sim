@@ -5,7 +5,8 @@
     {
       "action_type": "bonus_action",
       "condition": "creatures are charmed by the Charm Animals and Plants feature",
-      "effect": "verbally command each charmed animal or plant creature to determine its behavior on its next turn"
+      "effect": "verbally command each charmed animal or plant creature to determine its behavior on its next turn",
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

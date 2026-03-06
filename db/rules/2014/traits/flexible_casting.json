@@ -13,13 +13,15 @@
         "5": 7
       },
       "max_slot_level": 5,
-      "notes": "Created spell slots vanish at the end of a long rest."
+      "notes": "Created spell slots vanish at the end of a long rest.",
+      "meta_type": "resource_spend"
     },
     {
       "action": "bonus",
       "effect": "convert_spell_slot_to_sorcery_points",
       "gain_sorcery_points": "slot_level",
-      "notes": "Expend one spell slot to gain sorcery points equal to the slot's level."
+      "notes": "Expend one spell slot to gain sorcery points equal to the slot's level.",
+      "meta_type": "gain_resource"
     }
   ],
   "source_type": "class"

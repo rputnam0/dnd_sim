@@ -15,7 +15,8 @@
         "uses_per_long_rest": {
           "formula": "max(1, wisdom_modifier)"
         }
-      }
+      },
+      "meta_type": "spell_modification"
     }
   ],
   "source_type": "subclass"

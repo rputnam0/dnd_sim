@@ -12,7 +12,8 @@
       "ends_on": [
         "attack",
         "cast_spell"
-      ]
+      ],
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"

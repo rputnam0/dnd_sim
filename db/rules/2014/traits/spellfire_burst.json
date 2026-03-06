@@ -15,7 +15,8 @@
       "choices": [
         "Bolstering Flames",
         "Radiant Fire"
-      ]
+      ],
+      "meta_type": "resource_spend"
     }
   ],
   "source_type": "subclass"

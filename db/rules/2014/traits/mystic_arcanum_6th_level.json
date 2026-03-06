@@ -7,7 +7,8 @@
       "spell_level": 6,
       "source_class": "Warlock",
       "uses_per_long_rest": 1,
-      "slot_cost": 0
+      "slot_cost": 0,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "progressive_spell_grant",
@@ -30,12 +31,14 @@
           "uses_per_long_rest": 1,
           "slot_cost": 0
         }
-      ]
+      ],
+      "meta_type": "feature_progression"
     },
     {
       "effect": "reset_uses",
       "trigger": "long_rest",
-      "applies_to": "Mystic Arcanum"
+      "applies_to": "Mystic Arcanum",
+      "meta_type": "feature_retraining"
     }
   ],
   "source_type": "class"

@@ -4,13 +4,15 @@
   "mechanics": [
     {
       "effect": "always_prepared_spell",
-      "spell": "Hex"
+      "spell": "Hex",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_disadvantage_on_saving_throws",
       "target": "spell_target",
       "ability": "chosen_ability",
-      "duration": "spell_duration"
+      "duration": "spell_duration",
+      "meta_type": "benefit"
     }
   ],
   "source_type": "subclass"

@@ -4,32 +4,30 @@ import csv
 import json
 from pathlib import Path
 
+from dnd_sim import io
 from dnd_sim.capability_manifest import build_feature_capability_manifest
 from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = REPO_ROOT / "docs/program/parity_leaf_registry.csv"
 
-FIRST_SLICE_IDS = {
-    "trait:aberrant_sorcery",
-    "trait:bardic_inspiration",
-    "trait:bardic_inspiration_d10",
-    "trait:bardic_inspiration_d12",
-    "trait:bastion_of_law",
-    "trait:battle_magic",
-    "trait:beguiling_magic",
-    "trait:bend_luck",
-    "trait:bolstering_magic",
-    "trait:channel_divinity_charm_animals_and_plants",
-}
 REPRESENTATIVE_META_TYPES = {
     "aberrant_sorcery": {"subclass_option"},
     "bardic_inspiration": {"action", "roll_bonus", "recharge"},
     "bastion_of_law": {"resource_spend", "spend_resource"},
-    "battle_magic": {"bonus_action_attack"},
-    "beguiling_magic": {"always_prepared_spells", "save", "recharge"},
-    "bend_luck": {"resource_spend"},
     "channel_divinity_charm_animals_and_plants": {"channel_divinity"},
+    "horizon_walker_magic": {"grant_spell"},
+    "know_your_enemy": {"action"},
+    "lay_on_hands": {"resource", "healing"},
+    "metamagic": {"choice", "restriction"},
+    "psionic_power": {"resource"},
+    "steps_of_night": {"grant_flying_speed", "recharge"},
+    "telepathic_speech": {"communication"},
+    "timeless_body": {"age"},
+    "turn_undead": {"channel_divinity"},
+    "unsettling_words": {"roll_bonus"},
+    "use_magic_device": {"benefit"},
+    "vigilant_blessing": {"initiative"},
 }
 
 
@@ -40,16 +38,12 @@ def _w6_par_05g2_registry_ids() -> set[str]:
             for row in csv.DictReader(handle)
             if str(row.get("leaf_task_id", "")).strip() == "W6-PAR-05G2"
         }
-    assert len(ids) >= len(FIRST_SLICE_IDS)
+    assert len(ids) == 151
     return ids
 
 
-def test_w6_par_05g2_first_slice_belongs_to_g2_registry() -> None:
-    assert FIRST_SLICE_IDS <= _w6_par_05g2_registry_ids()
-
-
-def test_w6_par_05g2_first_slice_trait_records_are_supported() -> None:
-    owned_ids = FIRST_SLICE_IDS
+def test_w6_par_05g2_trait_records_are_supported() -> None:
+    owned_ids = _w6_par_05g2_registry_ids()
 
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
@@ -73,8 +67,25 @@ def test_w6_par_05g2_first_slice_trait_records_are_supported() -> None:
         assert record.runtime_hook_family == "meta"
 
 
-def test_w6_par_05g2_first_slice_trait_files_use_meta_rows_only() -> None:
-    owned_ids = FIRST_SLICE_IDS
+def test_w6_par_05g2_trait_records_are_supported_in_canonical_capability_records() -> None:
+    owned_ids = _w6_par_05g2_registry_ids()
+
+    io._canonical_capability_records.cache_clear()
+    by_id = {record.content_id: record for record in io._canonical_capability_records()}
+
+    missing_ids = sorted(owned_ids - set(by_id))
+    assert missing_ids == []
+
+    for content_id in sorted(owned_ids):
+        record = by_id[content_id]
+        assert record.content_type == "trait"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
+        assert record.runtime_hook_family == "meta"
+
+
+def test_w6_par_05g2_trait_files_use_meta_rows_only() -> None:
+    owned_ids = _w6_par_05g2_registry_ids()
     traits_dir = REPO_ROOT / "db" / "rules" / "2014" / "traits"
 
     for content_id in sorted(owned_ids):
@@ -93,7 +104,7 @@ def test_w6_par_05g2_first_slice_trait_files_use_meta_rows_only() -> None:
         assert issues == [], f"{content_id} has schema issues: {issues}"
 
 
-def test_w6_par_05g2_first_slice_representatives_cover_resource_and_turn_gated_families() -> None:
+def test_w6_par_05g2_representatives_cover_resource_and_turn_gated_families() -> None:
     traits_dir = REPO_ROOT / "db" / "rules" / "2014" / "traits"
 
     for slug, expected_meta_types in sorted(REPRESENTATIVE_META_TYPES.items()):

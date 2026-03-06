@@ -10,7 +10,8 @@
         "target_area": "any number of creatures within 10 feet of a point you can see within your weapon's range",
         "requires_ammunition": true,
         "separate_attack_roll_per_target": true
-      }
+      },
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

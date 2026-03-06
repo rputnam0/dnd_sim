@@ -5,14 +5,16 @@
     {
       "effect": "healing_pool",
       "size": "paladin_level * 5",
-      "recharge": "long_rest"
+      "recharge": "long_rest",
+      "meta_type": "resource"
     },
     {
       "effect": "action",
       "action_type": "heal",
       "target": "creature",
       "resource": "healing_pool",
-      "max_heal": "remaining_pool"
+      "max_heal": "remaining_pool",
+      "meta_type": "healing"
     },
     {
       "effect": "action",
@@ -23,7 +25,8 @@
       "cures": [
         "disease",
         "poison"
-      ]
+      ],
+      "meta_type": "healing"
     },
     {
       "effect": "restriction",
@@ -31,7 +34,8 @@
         "undead",
         "construct"
       ],
-      "applies": false
+      "applies": false,
+      "meta_type": "restriction"
     }
   ],
   "source_type": "class"

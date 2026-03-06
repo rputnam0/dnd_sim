@@ -10,7 +10,8 @@
       "conditions": [
         "origin must be in dim light or darkness",
         "destination must be in dim light or darkness"
-      ]
+      ],
+      "meta_type": "teleport"
     }
   ],
   "source_type": "subclass"

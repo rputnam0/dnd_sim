@@ -6,13 +6,15 @@
       "activation": {
         "action": "bonus",
         "duration": "1 minute"
-      }
+      },
+      "meta_type": "activation"
     },
     {
       "restriction": {
         "target": "incoming attack rolls",
         "cannot_have": "advantage"
-      }
+      },
+      "meta_type": "restriction"
     },
     {
       "roll_treatment": {
@@ -24,18 +26,21 @@
           "ability checks",
           "saving throws"
         ]
-      }
+      },
+      "meta_type": "benefit"
     },
     {
       "recharge": {
         "type": "long rest"
-      }
+      },
+      "meta_type": "recharge"
     },
     {
       "alternative_cost": {
         "resource": "sorcery points",
         "amount": 5
-      }
+      },
+      "meta_type": "resource_spend"
     }
   ],
   "source_type": "subclass"

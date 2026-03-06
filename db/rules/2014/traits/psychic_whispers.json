@@ -12,7 +12,8 @@
       "range": "1 mile",
       "effect": "telepathic communication (no language required)",
       "requires_language": false,
-      "ends_by": "creature may end at any time (no action required)"
+      "ends_by": "creature may end at any time (no action required)",
+      "meta_type": "communication"
     }
   ],
   "source_type": "subclass"

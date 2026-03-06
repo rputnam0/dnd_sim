@@ -32,7 +32,8 @@
           "damageDice": "4d6",
           "healingDice": "4d6"
         }
-      ]
+      ],
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

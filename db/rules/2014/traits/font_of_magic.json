@@ -5,7 +5,8 @@
     {
       "effect": "grant_resource",
       "resource": "Sorcery Points",
-      "amount": "character_level"
+      "amount": "character_level",
+      "meta_type": "resource"
     }
   ],
   "source_type": "class"

@@ -7,25 +7,29 @@
         "name": "Evard's black tentacles",
         "counts_as_warlock_spell": true,
         "does_not_count_against_spells_known": true
-      }
+      },
+      "meta_type": "learn_spell"
     },
     {
       "spell_cast": {
         "spell": "Evard's black tentacles",
         "free_casts_per_long_rest": 1
-      }
+      },
+      "meta_type": "spell_cast"
     },
     {
       "temporary_hit_points_on_cast": {
         "spell": "Evard's black tentacles",
         "amount": "warlock_level"
-      }
+      },
+      "meta_type": "temporary_hit_points"
     },
     {
       "concentration_protection": {
         "spell": "Evard's black tentacles",
         "damage_cannot_break_concentration": true
-      }
+      },
+      "meta_type": "benefit"
     }
   ],
   "source_type": "subclass"

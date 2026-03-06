@@ -20,7 +20,8 @@
       "effect": "restrained",
       "repeat_save": "end_of_turn",
       "end_condition": "successful save",
-      "end_effect": "vines vanish"
+      "end_effect": "vines vanish",
+      "meta_type": "save"
     }
   ],
   "source_type": "subclass"

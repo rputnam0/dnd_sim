@@ -5,21 +5,25 @@
     {
       "trigger": "action",
       "actionType": "action",
-      "description": "Use an action to activate Primeval Awareness."
+      "description": "Use an action to activate Primeval Awareness.",
+      "meta_type": "action"
     },
     {
       "resource": "spell_slot",
       "class": "Ranger",
       "cost": 1,
-      "description": "Expend one ranger spell slot."
+      "description": "Expend one ranger spell slot.",
+      "meta_type": "resource_spend"
     },
     {
       "duration": "1 minute per spell slot level",
-      "description": "Duration scales with the level of the expended spell slot."
+      "description": "Duration scales with the level of the expended spell slot.",
+      "meta_type": "duration"
     },
     {
       "range": "1 mile (6 miles in favored terrain)",
-      "description": "Senses creatures within this radius."
+      "description": "Senses creatures within this radius.",
+      "meta_type": "sense"
     },
     {
       "effect": "sense_creature_types",
@@ -32,7 +36,8 @@
         "fiend",
         "undead"
       ],
-      "details": "Detects presence of listed creature types, but not their number or exact location."
+      "details": "Detects presence of listed creature types, but not their number or exact location.",
+      "meta_type": "sense"
     }
   ],
   "source_type": "class"

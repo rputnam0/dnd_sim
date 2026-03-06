@@ -16,7 +16,8 @@
         "action": "bonus",
         "amount": 1,
         "recharge": "short rest"
-      }
+      },
+      "meta_type": "resource"
     }
   ],
   "source_type": "subclass"

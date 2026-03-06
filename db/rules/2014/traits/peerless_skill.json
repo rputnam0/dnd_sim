@@ -6,7 +6,8 @@
       "action": "expend_resource",
       "resource": "Bardic Inspiration",
       "trigger": "ability_check",
-      "effect": "add_bardic_inspiration_die"
+      "effect": "add_bardic_inspiration_die",
+      "meta_type": "roll_bonus"
     }
   ],
   "source_type": "subclass"

@@ -15,7 +15,8 @@
       },
       "post_move": "if_not_supported_then_fall",
       "fall_damage": "normal",
-      "prone_on_fall": true
+      "prone_on_fall": true,
+      "meta_type": "movement"
     }
   ],
   "source_type": "subclass"

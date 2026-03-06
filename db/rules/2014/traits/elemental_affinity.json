@@ -7,7 +7,8 @@
       "modifier": "Charisma",
       "applies_to": "damage_roll",
       "condition": "spell deals damage of draconic ancestry type",
-      "limit": "once per spell cast"
+      "limit": "once per spell cast",
+      "meta_type": "damage_modifier"
     },
     {
       "effect": "grant_resistance",
@@ -16,7 +17,8 @@
       "cost": {
         "resource": "Sorcery Point",
         "amount": 1
-      }
+      },
+      "meta_type": "grant_resistance"
     }
   ],
   "source_type": "subclass"

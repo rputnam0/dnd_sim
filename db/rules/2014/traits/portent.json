@@ -12,7 +12,8 @@
         "ability check"
       ],
       "target": "self or any creature you can see",
-      "description": "Replace the chosen roll with one of the stored foretelling d20 rolls."
+      "description": "Replace the chosen roll with one of the stored foretelling d20 rolls.",
+      "meta_type": "initiative"
     }
   ],
   "source_type": "subclass"

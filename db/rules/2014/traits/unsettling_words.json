@@ -11,7 +11,8 @@
       },
       "roll": "Bardic Inspiration die",
       "effect": "subtract roll from target's next saving throw",
-      "duration": "until start of your next turn"
+      "duration": "until start of your next turn",
+      "meta_type": "roll_bonus"
     }
   ],
   "source_type": "subclass"

@@ -19129,16 +19129,16 @@
     {
       "content_id": "trait:adjust_density",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:advanced_artifice",
@@ -21383,16 +21383,16 @@
     {
       "content_id": "trait:channel_divinity_cloak_of_shadows",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:channel_divinity_consuming_fervor",
@@ -21481,72 +21481,72 @@
     {
       "content_id": "trait:channel_divinity_knowledge_of_the_ages",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:channel_divinity_order_s_demand",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:channel_divinity_path_to_the_grave",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:channel_divinity_preserve_life",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:channel_divinity_radiance_of_the_dawn",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:channel_divinity_read_thoughts",
@@ -21593,16 +21593,16 @@
     {
       "content_id": "trait:channel_divinity_twilight_sanctuary",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:channel_divinity_war_god_s_blessing",
@@ -21663,16 +21663,16 @@
     {
       "content_id": "trait:chronurgy_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:circle_forms",
@@ -21943,16 +21943,16 @@
     {
       "content_id": "trait:clockwork_cavalcade",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:clockwork_magic",
@@ -21985,16 +21985,16 @@
     {
       "content_id": "trait:clockwork_soul",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:clockwork_spells",
@@ -22251,16 +22251,16 @@
     {
       "content_id": "trait:consult_the_spirits",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:contact_patron",
@@ -22321,30 +22321,30 @@
     {
       "content_id": "trait:convergent_future",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:corona_of_light",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:cosmic_omen",
@@ -22573,16 +22573,16 @@
     {
       "content_id": "trait:dark_one_s_own_luck",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:darkness",
@@ -22601,16 +22601,16 @@
     {
       "content_id": "trait:daze_cost_2d6",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:dazzling_footwork",
@@ -22853,72 +22853,72 @@
     {
       "content_id": "trait:destroy_undead_cr_1",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:destroy_undead_cr_1_2",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:destroy_undead_cr_2",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:destroy_undead_cr_3",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:destroy_undead_cr_4",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:detect_portal",
@@ -23161,16 +23161,16 @@
     {
       "content_id": "trait:divine_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:divine_order",
@@ -23357,16 +23357,16 @@
     {
       "content_id": "trait:draconic_sorcery",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:draconic_spells",
@@ -23483,16 +23483,16 @@
     {
       "content_id": "trait:dread_allegiance",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:dread_ambusher",
@@ -23693,16 +23693,16 @@
     {
       "content_id": "trait:eagle",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:ear_for_deceit",
@@ -23791,16 +23791,16 @@
     {
       "content_id": "trait:eldritch_hex",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:eldritch_invocation_options",
@@ -23847,16 +23847,16 @@
     {
       "content_id": "trait:eldritch_master",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:eldritch_strike",
@@ -23917,16 +23917,16 @@
     {
       "content_id": "trait:elemental_affinity",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:elemental_attunement",
@@ -24099,16 +24099,16 @@
     {
       "content_id": "trait:embodiment_of_the_law",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:emboldening_bond",
@@ -24127,16 +24127,16 @@
     {
       "content_id": "trait:emissary_of_peace",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:emissary_of_redemption",
@@ -24211,16 +24211,16 @@
     {
       "content_id": "trait:empty_body",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:enchantment_savant",
@@ -24351,16 +24351,16 @@
     {
       "content_id": "trait:event_horizon",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:eventide_s_splendor",
@@ -24449,30 +24449,30 @@
     {
       "content_id": "trait:expansive_bond",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:experimental_elixir",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:expert_divination",
@@ -24575,16 +24575,16 @@
     {
       "content_id": "trait:eye_for_detail",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:eye_for_weakness",
@@ -24729,16 +24729,16 @@
     {
       "content_id": "trait:fathomless_plunge",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:favored_by_the_gods",
@@ -24855,16 +24855,16 @@
     {
       "content_id": "trait:fey_presence",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:fey_reinforcements",
@@ -25065,16 +25065,16 @@
     {
       "content_id": "trait:flexible_casting",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:flurry_of_blows",
@@ -25107,16 +25107,16 @@
     {
       "content_id": "trait:focused_aim",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:focused_conjuration",
@@ -25163,16 +25163,16 @@
     {
       "content_id": "trait:font_of_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:forge_domain",
@@ -25261,16 +25261,16 @@
     {
       "content_id": "trait:frenzy",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:frigid_explorer",
@@ -25555,16 +25555,16 @@
     {
       "content_id": "trait:grasping_tentacles",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:grave_domain",
@@ -25597,16 +25597,16 @@
     {
       "content_id": "trait:graviturgy_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:gravity_well",
@@ -25667,16 +25667,16 @@
     {
       "content_id": "trait:greater_divine_intervention",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:greater_portent",
@@ -25891,16 +25891,16 @@
     {
       "content_id": "trait:heart_of_fire",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:heart_of_the_storm",
@@ -25933,30 +25933,30 @@
     {
       "content_id": "trait:heightened_focus",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:heroic_warrior",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:hex_warrior",
@@ -25975,16 +25975,16 @@
     {
       "content_id": "trait:hexblade_s_curse",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:hidden_paths",
@@ -26101,16 +26101,16 @@
     {
       "content_id": "trait:horizon_walker_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:hound_of_ill_omen",
@@ -26129,16 +26129,16 @@
     {
       "content_id": "trait:hour_of_reaping",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:hunter",
@@ -26185,16 +26185,16 @@
     {
       "content_id": "trait:hunter_s_sense",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:hurl_through_hell",
@@ -26213,16 +26213,16 @@
     {
       "content_id": "trait:hypnotic_gaze",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:illusion_savant",
@@ -26255,16 +26255,16 @@
     {
       "content_id": "trait:illusory_reality",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:illusory_self",
@@ -26493,16 +26493,16 @@
     {
       "content_id": "trait:improved_duplicity",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:improved_elemental_fury",
@@ -26591,16 +26591,16 @@
     {
       "content_id": "trait:improved_war_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:improved_warding_flare",
@@ -26633,16 +26633,16 @@
     {
       "content_id": "trait:indomitable",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:indomitable_might",
@@ -26759,16 +26759,16 @@
     {
       "content_id": "trait:infuse_item",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:infusions_known",
@@ -26899,16 +26899,16 @@
     {
       "content_id": "trait:inspiring_surge",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:instinctive_charm",
@@ -27081,16 +27081,16 @@
     {
       "content_id": "trait:ki_empowered_strikes",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:ki_fueled_attack",
@@ -27137,16 +27137,16 @@
     {
       "content_id": "trait:know_your_enemy",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:knowledge_domain",
@@ -27193,16 +27193,16 @@
     {
       "content_id": "trait:land_s_aid",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:land_s_stride",
@@ -27221,16 +27221,16 @@
     {
       "content_id": "trait:lay_on_hands",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:leading_evasion",
@@ -27375,16 +27375,16 @@
     {
       "content_id": "trait:lunar_boons",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:lunar_embodiment",
@@ -27403,16 +27403,16 @@
     {
       "content_id": "trait:lunar_empowerment",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:lunar_form",
@@ -27445,16 +27445,16 @@
     {
       "content_id": "trait:lunar_sorcery",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:mage_hand_legerdemain",
@@ -27487,16 +27487,16 @@
     {
       "content_id": "trait:magic_awareness",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:magic_item_adept",
@@ -27543,30 +27543,30 @@
     {
       "content_id": "trait:magic_item_tinker",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:magic_user_s_nemesis",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:magical_ambush",
@@ -27585,16 +27585,16 @@
     {
       "content_id": "trait:magical_cunning",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:magical_discoveries",
@@ -27683,16 +27683,16 @@
     {
       "content_id": "trait:malleable_illusions",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:maneuver_options",
@@ -27767,16 +27767,16 @@
     {
       "content_id": "trait:mantle_of_inspiration",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:mantle_of_majesty",
@@ -27949,16 +27949,16 @@
     {
       "content_id": "trait:master_of_nature",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:master_of_runes",
@@ -27977,16 +27977,16 @@
     {
       "content_id": "trait:master_of_tactics",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:master_s_flourish",
@@ -28075,16 +28075,16 @@
     {
       "content_id": "trait:metamagic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:metamagic_options",
@@ -28103,16 +28103,16 @@
     {
       "content_id": "trait:mighty_impel",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:mighty_summoner",
@@ -28159,16 +28159,16 @@
     {
       "content_id": "trait:mindless_rage",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:minor_alchemy",
@@ -28187,16 +28187,16 @@
     {
       "content_id": "trait:minor_conjuration",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:misdirection",
@@ -28257,16 +28257,16 @@
     {
       "content_id": "trait:momentary_stasis",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:monastic_tradition",
@@ -28341,16 +28341,16 @@
     {
       "content_id": "trait:monster_slayer_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:moon_fire",
@@ -28369,16 +28369,16 @@
     {
       "content_id": "trait:moon_s_inspiration",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:moonlight_step",
@@ -28453,72 +28453,72 @@
     {
       "content_id": "trait:mystic_arcanum",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:mystic_arcanum_6th_level",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:mystic_arcanum_7th_level",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:mystic_arcanum_8th_level",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:mystic_arcanum_9th_level",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:mystical_connection",
@@ -28607,16 +28607,16 @@
     {
       "content_id": "trait:nature_s_veil",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:nature_s_ward",
@@ -28635,16 +28635,16 @@
     {
       "content_id": "trait:nature_s_wrath",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:nature_speaker",
@@ -29461,30 +29461,30 @@
     {
       "content_id": "trait:peerless_skill",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:perfect_focus",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:perfect_self",
@@ -29615,30 +29615,30 @@
     {
       "content_id": "trait:poison_cost_1d6",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:portent",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:potent_cantrip",
@@ -29867,16 +29867,16 @@
     {
       "content_id": "trait:primeval_awareness",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:projected_ward",
@@ -29951,30 +29951,30 @@
     {
       "content_id": "trait:psi_bolstered_knack",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:psi_powered_leap",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:psi_warrior",
@@ -29993,16 +29993,16 @@
     {
       "content_id": "trait:psionic_power",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:psionic_sorcery",
@@ -30091,16 +30091,16 @@
     {
       "content_id": "trait:psychic_teleportation",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:psychic_veil",
@@ -30119,16 +30119,16 @@
     {
       "content_id": "trait:psychic_whispers",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:purity_of_body",
@@ -30231,16 +30231,16 @@
     {
       "content_id": "trait:radiance_of_the_dawn",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:radiant_fire",
@@ -30399,16 +30399,16 @@
     {
       "content_id": "trait:rallying_surge",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:ranger_archetype",
@@ -30567,16 +30567,16 @@
     {
       "content_id": "trait:relentless",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:relentless_avenger",
@@ -31253,16 +31253,16 @@
     {
       "content_id": "trait:searing_sunburst",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:searing_vengeance",
@@ -31295,16 +31295,16 @@
     {
       "content_id": "trait:second_wind",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:self_restoration",
@@ -31337,16 +31337,16 @@
     {
       "content_id": "trait:shadow_arts",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:shadow_lore",
@@ -31365,16 +31365,16 @@
     {
       "content_id": "trait:shadow_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:shadow_martyr",
@@ -31407,16 +31407,16 @@
     {
       "content_id": "trait:shadow_walk",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:shadowy_dodge",
@@ -31477,16 +31477,16 @@
     {
       "content_id": "trait:sharpen_the_blade",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:shielding_storm",
@@ -31841,16 +31841,16 @@
     {
       "content_id": "trait:sorcery_points",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:soul_blades",
@@ -32079,30 +32079,30 @@
     {
       "content_id": "trait:spellfire_burst",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:spellfire_sorcery",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:spellfire_spells",
@@ -32289,16 +32289,16 @@
     {
       "content_id": "trait:star_map",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:starry_form",
@@ -32317,16 +32317,16 @@
     {
       "content_id": "trait:steady_aim",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:steady_eye",
@@ -32373,30 +32373,30 @@
     {
       "content_id": "trait:step_of_the_wind",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:steps_of_night",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:steps_of_the_fey",
@@ -32471,16 +32471,16 @@
     {
       "content_id": "trait:storm_sorcery",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:storm_soul",
@@ -32765,16 +32765,16 @@
     {
       "content_id": "trait:superior_inspiration",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:superior_mobility",
@@ -33003,30 +33003,30 @@
     {
       "content_id": "trait:tamed_surge",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:tandem_footwork",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:team_tactics",
@@ -33045,44 +33045,44 @@
     {
       "content_id": "trait:telekinetic_adept",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:telekinetic_master",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:telekinetic_movement",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:telekinetic_thrust",
@@ -33101,16 +33101,16 @@
     {
       "content_id": "trait:telepathic_speech",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:tempest_domain",
@@ -33129,16 +33129,16 @@
     {
       "content_id": "trait:tempestuous_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:temporal_awareness",
@@ -33409,16 +33409,16 @@
     {
       "content_id": "trait:the_third_eye",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:the_undead",
@@ -33535,16 +33535,16 @@
     {
       "content_id": "trait:thunder_gauntlets",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:thunderbolt_strike",
@@ -33591,16 +33591,16 @@
     {
       "content_id": "trait:timeless_body",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:tinker_s_magic",
@@ -33801,30 +33801,30 @@
     {
       "content_id": "trait:trance_of_order",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:tranquility",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:transmutation_savant",
@@ -33955,16 +33955,16 @@
     {
       "content_id": "trait:turn_the_tide",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:turn_the_unholy",
@@ -33983,16 +33983,16 @@
     {
       "content_id": "trait:turn_undead",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:twilight_domain",
@@ -34193,16 +34193,16 @@
     {
       "content_id": "trait:undying_nature",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:undying_sentinel",
@@ -34249,16 +34249,16 @@
     {
       "content_id": "trait:unerring_eye",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:unfailing_inspiration",
@@ -34319,16 +34319,16 @@
     {
       "content_id": "trait:unsettling_words",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:unstable_backlash",
@@ -34375,16 +34375,16 @@
     {
       "content_id": "trait:use_magic_device",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:vanish",
@@ -34431,16 +34431,16 @@
     {
       "content_id": "trait:vigilant_blessing",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:vigilant_defender",
@@ -34529,16 +34529,16 @@
     {
       "content_id": "trait:volley",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:vow_of_enmity",
@@ -34641,30 +34641,30 @@
     {
       "content_id": "trait:war_magic",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:war_priest",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:warden",
@@ -35033,16 +35033,16 @@
     {
       "content_id": "trait:wholeness_of_body",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:wild_companion",
@@ -35145,16 +35145,16 @@
     {
       "content_id": "trait:wild_surge",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:wind_soul",
@@ -35271,16 +35271,16 @@
     {
       "content_id": "trait:wolf",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:words_of_creation",
@@ -35369,16 +35369,16 @@
     {
       "content_id": "trait:zealous_presence",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     }
   ]
 }

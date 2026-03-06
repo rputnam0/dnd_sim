@@ -9,7 +9,8 @@
       "requires_spell_slot": true,
       "choice": "any_effect_except_final_row",
       "requires_roll_if_effect_has_roll": true,
-      "uses_per_long_rest": 1
+      "uses_per_long_rest": 1,
+      "meta_type": "recharge"
     }
   ],
   "source_type": "subclass"

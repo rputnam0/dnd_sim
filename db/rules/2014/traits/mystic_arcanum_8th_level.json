@@ -5,7 +5,8 @@
     {
       "once_per_long_rest": true,
       "spell_level": 8,
-      "spell_selection_source": "Warlock"
+      "spell_selection_source": "Warlock",
+      "meta_type": "grant_spell"
     }
   ],
   "source_type": "class"

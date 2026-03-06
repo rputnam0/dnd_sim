@@ -8,7 +8,8 @@
       "resource": "Channel Divinity",
       "range": 30,
       "target_filter": "creatures that can hear you and have HP <= half of their maximum HP",
-      "healing": "1d6 + Charisma modifier (minimum 1)"
+      "healing": "1d6 + Charisma modifier (minimum 1)",
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

@@ -9,7 +9,8 @@
         "type": "grant_resource",
         "resource": "Heroic Inspiration",
         "target": "self"
-      }
+      },
+      "meta_type": "advantage"
     }
   ],
   "source_type": "subclass"

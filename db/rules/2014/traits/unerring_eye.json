@@ -9,7 +9,8 @@
         "per": "long rest",
         "max": "Wisdom modifier (minimum 1)"
       },
-      "effect": "Detects the presence of illusion magic, shapechangers not in their original form, and other magic that deceives the senses within range. The user knows an effect is attempting to trick them but gains no further detail."
+      "effect": "Detects the presence of illusion magic, shapechangers not in their original form, and other magic that deceives the senses within range. The user knows an effect is attempting to trick them but gains no further detail.",
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

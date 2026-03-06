@@ -12,7 +12,8 @@
         "incapacitated",
         "death",
         "recast"
-      ]
+      ],
+      "meta_type": "communication"
     }
   ],
   "source_type": "subclass"

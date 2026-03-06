@@ -6,31 +6,36 @@
       "effect": "grant_spell",
       "level": 3,
       "spell": "protection from evil and good",
-      "source_class": "ranger"
+      "source_class": "ranger",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "level": 5,
       "spell": "zone of truth",
-      "source_class": "ranger"
+      "source_class": "ranger",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "level": 9,
       "spell": "magic circle",
-      "source_class": "ranger"
+      "source_class": "ranger",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "level": 13,
       "spell": "banishment",
-      "source_class": "ranger"
+      "source_class": "ranger",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "level": 17,
       "spell": "hold monster",
-      "source_class": "ranger"
+      "source_class": "ranger",
+      "meta_type": "grant_spell"
     }
   ],
   "source_type": "subclass"

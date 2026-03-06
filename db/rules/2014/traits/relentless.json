@@ -7,7 +7,8 @@
       "condition": "no_superiority_dice",
       "effect": {
         "gain_superiority_dice": 1
-      }
+      },
+      "meta_type": "benefit"
     }
   ],
   "source_type": "subclass"

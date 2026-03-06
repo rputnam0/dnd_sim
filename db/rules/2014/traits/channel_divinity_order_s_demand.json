@@ -20,7 +20,8 @@
         {
           "effect": "drop_held_items"
         }
-      ]
+      ],
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"

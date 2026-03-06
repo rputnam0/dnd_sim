@@ -19,7 +19,8 @@
           "stat": "initiative",
           "value": "bardic_inspiration_die"
         }
-      }
+      },
+      "meta_type": "initiative"
     }
   ],
   "source_type": "subclass"

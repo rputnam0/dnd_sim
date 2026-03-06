@@ -11,21 +11,24 @@
         }
       },
       "effect": "recharge item",
-      "details": "The item regains a number of charges equal to the level of the spell slot expended."
+      "details": "The item regains a number of charges equal to the level of the spell slot expended.",
+      "meta_type": "resource_spend"
     },
     {
       "name": "Drain Magic Item",
       "action": "bonus action",
       "cost": null,
       "effect": "convert item to spell slot",
-      "details": "The created spell slot is level 1 if the item is Common, or level 2 if the item is Uncommon or Rare. This feature can be used once per long rest, and any slot created by it vanishes at the end of the next long rest."
+      "details": "The created spell slot is level 1 if the item is Common, or level 2 if the item is Uncommon or Rare. This feature can be used once per long rest, and any slot created by it vanishes at the end of the next long rest.",
+      "meta_type": "gain_resource"
     },
     {
       "name": "Transmute Magic Item",
       "action": "action",
       "cost": null,
       "effect": "transform item",
-      "details": "You can transform a magic item you created with Replicate Magic Item into a different magic item you know a plan for. This feature can be used once per long rest."
+      "details": "You can transform a magic item you created with Replicate Magic Item into a different magic item you know a plan for. This feature can be used once per long rest.",
+      "meta_type": "transform"
     }
   ],
   "source_type": "class"
