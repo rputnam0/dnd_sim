@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import random
 
+import pytest
+
 from dnd_sim.engine_runtime import (
     _action_available,
     _break_concentration,
@@ -295,3 +297,105 @@ def test_enervation_uses_primary_save_damage_without_double_counting() -> None:
 
     _break_concentration(caster, actors, active_hazards)
     assert "enervated" not in target.conditions
+
+
+@pytest.mark.parametrize(
+    (
+        "name",
+        "level_header",
+        "save_hit",
+        "duration_text",
+        "range_text",
+        "spell_level",
+        "damage_rolls",
+        "expected_hp",
+        "forbidden_conditions",
+    ),
+    [
+        (
+            "Mind Spike",
+            "=== 2nd LEVEL ===",
+            "WIS 18",
+            "Concentration, up to 1 hour",
+            "60 ft",
+            2,
+            [4, 5, 6],
+            23,
+            {"mind_spiked"},
+        ),
+        (
+            "Tasha's Mind Whip",
+            "=== 2nd LEVEL ===",
+            "INT 18",
+            "1 round",
+            "90 ft",
+            2,
+            [3, 4, 5],
+            24,
+            {"open_hand_no_reactions", "mind_whipped"},
+        ),
+        (
+            "Time Ravage",
+            "=== 9th LEVEL ===",
+            "CON 18",
+            "Instantaneous",
+            "90 ft",
+            9,
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            25,
+            {"time_ravaged"},
+        ),
+        (
+            "Enervation",
+            "=== 5th LEVEL ===",
+            "DEX 18",
+            "Concentration, up to 1 minute",
+            "60 ft",
+            5,
+            [1, 1, 1, 1],
+            28,
+            {"enervated"},
+        ),
+    ],
+)
+def test_hydrated_save_spells_apply_success_damage_without_fail_riders(
+    *,
+    name: str,
+    level_header: str,
+    save_hit: str,
+    duration_text: str,
+    range_text: str,
+    spell_level: int,
+    damage_rolls: list[int],
+    expected_hp: int,
+    forbidden_conditions: set[str],
+) -> None:
+    _spell_row, action = _extract_action_from_sheet(
+        name=name,
+        level_header=level_header,
+        save_hit=save_hit,
+        duration_text=duration_text,
+        range_text=range_text,
+        spell_level=spell_level,
+    )
+
+    caster = _base_actor(actor_id="caster", team="party")
+    target = _base_actor(actor_id="target", team="enemy")
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+
+    _execute_action(
+        rng=FixedRng([*damage_rolls, 20]),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp == expected_hp
+    assert forbidden_conditions.isdisjoint(target.conditions)
