@@ -10,7 +10,8 @@
         "type": "Wisdom",
         "effectOnFailure": "Attacker takes radiant damage equal to the damage it just dealt",
         "effectOnSuccess": "Attacker takes radiant damage equal to half the damage it just dealt"
-      }
+      },
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

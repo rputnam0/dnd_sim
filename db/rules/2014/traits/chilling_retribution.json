@@ -11,11 +11,13 @@
         "condition": "stunned",
         "duration": "until end of your next turn",
         "speed": 0
-      }
+      },
+      "meta_type": "reaction"
     },
     {
       "uses": "Wisdom modifier (minimum 1)",
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "subclass"

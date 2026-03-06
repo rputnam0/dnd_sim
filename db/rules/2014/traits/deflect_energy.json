@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "effect": "deflect_attacks",
-      "damageTypes": "any"
+      "damageTypes": "any",
+      "meta_type": "reaction"
     }
   ],
   "source_type": "class"

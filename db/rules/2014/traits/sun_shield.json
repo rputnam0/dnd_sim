@@ -6,7 +6,8 @@
       "effect": "light",
       "bright_radius": 30,
       "dim_radius": 30,
-      "toggle_action": "bonus"
+      "toggle_action": "bonus",
+      "meta_type": "aura"
     },
     {
       "trigger": "melee_attack_hit",
@@ -14,7 +15,8 @@
       "damage": {
         "type": "radiant",
         "formula": "5 + wisdom_mod"
-      }
+      },
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

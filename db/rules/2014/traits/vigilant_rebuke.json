@@ -10,7 +10,8 @@
         "type": "force",
         "ability_modifier": "Cha"
       },
-      "range": "30 feet"
+      "range": "30 feet",
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

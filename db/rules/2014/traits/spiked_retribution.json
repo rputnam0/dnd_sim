@@ -14,7 +14,8 @@
           "type": "piercing",
           "amount": 3
         }
-      }
+      },
+      "meta_type": "damage_modifier"
     }
   ],
   "source_type": "subclass"

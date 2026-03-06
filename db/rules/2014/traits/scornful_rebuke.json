@@ -8,7 +8,8 @@
       "damage": {
         "type": "psychic",
         "amount": "max(1, charisma_mod)"
-      }
+      },
+      "meta_type": "damage_modifier"
     }
   ],
   "source_type": "subclass"
