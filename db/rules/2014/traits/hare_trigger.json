@@ -3,7 +3,8 @@
   "description": "You can add your proficiency bonus to your initiative rolls.",
   "mechanics": [
     {
-      "add_to_initiative": "proficiency_bonus"
+      "meta_type": "initiative_bonus",
+      "value": "proficiency_bonus"
     }
   ],
   "source_type": "species"

@@ -3,21 +3,21 @@
   "description": "Immediately after you hit a creature with a melee attack as part of the Attack action on your turn, you can use a bonus action to attempt to shove that target with your horns. The target must be no more than one size larger than you and within 5 feet of you. Unless it succeeds on a Strength saving throw against a DC equal to 8 + your proficiency bonus + your Strength modifier, you push it up to 10 feet away from you.",
   "mechanics": [
     {
-      "trigger": "hit a creature with a melee attack as part of the attack action on your turn",
-      "action_type": "bonus_action",
-      "effect": "shove",
-      "target": {
-        "range": "5 feet",
-        "size_limit": "no more than one size larger than you"
-      },
-      "saving_throw": {
-        "ability": "Strength",
-        "dc_formula": "8 + proficiency bonus + Strength modifier"
-      },
-      "push": {
-        "distance": "10 feet",
-        "direction": "away from you"
+      "meta_type": "bonus_action",
+      "trigger": "after_hitting_with_melee_attack_during_attack_action",
+      "range_ft": 5,
+      "size_limit": "one_size_larger",
+      "save": {
+        "ability": "str",
+        "dc_formula": "8 + proficiency_bonus + strength_modifier"
       }
+    },
+    {
+      "effect_type": "forced_movement",
+      "target": "target",
+      "distance_ft": 10,
+      "direction": "away_from_source",
+      "apply_on": "save_fail"
     }
   ],
   "source_type": "species"

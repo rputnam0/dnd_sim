@@ -1,6 +1,34 @@
 {
   "name": "Gem Ancestry",
   "description": "You have a gem dragon ancestor, granting you a special magical affinity. Choose one kind of dragon from the Gem Ancestry table. This determines the damage type for your other traits, as shown in the table. Gem Ancestry table: Amethyst – Force; Crystal – Radiant; Emerald – Psychic; Sapphire – Thunder; Topaz – Necrotic.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice",
+      "options": [
+        {
+          "name": "Amethyst",
+          "damage_type": "force"
+        },
+        {
+          "name": "Crystal",
+          "damage_type": "radiant"
+        },
+        {
+          "name": "Emerald",
+          "damage_type": "psychic"
+        },
+        {
+          "name": "Sapphire",
+          "damage_type": "thunder"
+        },
+        {
+          "name": "Topaz",
+          "damage_type": "necrotic"
+        }
+      ],
+      "choice_key": "ancestry",
+      "grants": "associated_damage_type"
+    }
+  ],
   "source_type": "species"
 }
