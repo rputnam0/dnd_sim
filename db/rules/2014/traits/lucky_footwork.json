@@ -19,7 +19,8 @@
             "description": "Your speed is greater than 0"
           }
         ]
-      }
+      },
+      "meta_type": "roll_bonus"
     }
   ],
   "source_type": "species"

@@ -7,7 +7,8 @@
       "weapon": "hooves",
       "damage": "1d4+STR",
       "damage_type": "bludgeoning",
-      "note": "Natural melee weapon used for unarmed strikes"
+      "note": "Natural melee weapon used for unarmed strikes",
+      "meta_type": "natural_weapon"
     }
   ],
   "source_type": "species"

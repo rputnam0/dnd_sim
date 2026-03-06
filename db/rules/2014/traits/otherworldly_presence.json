@@ -3,10 +3,12 @@
   "description": "You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy Trait.",
   "mechanics": [
     {
-      "grant_cantrip": "Thaumaturgy"
+      "grant_cantrip": "Thaumaturgy",
+      "meta_type": "grant_cantrip"
     },
     {
-      "spellcasting_ability_source": "Fiendish Legacy Trait"
+      "spellcasting_ability_source": "Fiendish Legacy Trait",
+      "meta_type": "spellcasting_ability"
     }
   ],
   "source_type": "species"

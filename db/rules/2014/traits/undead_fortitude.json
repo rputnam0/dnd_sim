@@ -16,7 +16,8 @@
       ],
       "on_success": {
         "set_hp": 1
-      }
+      },
+      "meta_type": "revive"
     }
   ],
   "source_type": "species"

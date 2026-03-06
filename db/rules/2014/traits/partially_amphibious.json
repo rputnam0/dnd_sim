@@ -5,7 +5,8 @@
     {
       "effect": "breathe underwater",
       "duration": "1 hour",
-      "usage": "once per long rest"
+      "usage": "once per long rest",
+      "meta_type": "breathing"
     }
   ],
   "source_type": "species"

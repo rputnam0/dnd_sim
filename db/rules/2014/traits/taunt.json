@@ -17,7 +17,8 @@
       },
       "uses": {
         "per_long_rest": "proficiency_bonus"
-      }
+      },
+      "meta_type": "grant_disadvantage"
     }
   ],
   "source_type": "species"

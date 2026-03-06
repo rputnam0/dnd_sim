@@ -12,7 +12,8 @@
       "usage": {
         "limit": 1,
         "reset": "short_or_long_rest"
-      }
+      },
+      "meta_type": "roll_bonus"
     }
   ],
   "source_type": "species"

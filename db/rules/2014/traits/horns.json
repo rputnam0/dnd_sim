@@ -7,7 +7,8 @@
       "weapon_name": "Horns",
       "damage": "1d6+STR",
       "damage_type": "piercing",
-      "usage": "unarmed strike"
+      "usage": "unarmed strike",
+      "meta_type": "natural_weapon"
     }
   ],
   "source_type": "species"

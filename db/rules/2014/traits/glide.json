@@ -15,7 +15,8 @@
           "damage_type": "fall",
           "amount": 0
         }
-      ]
+      ],
+      "meta_type": "movement"
     }
   ],
   "source_type": "species"

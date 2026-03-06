@@ -12,7 +12,8 @@
         "allies"
       ],
       "condition": "enemies_that_hear",
-      "uses_per_long_rest": "proficiency_bonus"
+      "uses_per_long_rest": "proficiency_bonus",
+      "meta_type": "grant_advantage"
     }
   ],
   "source_type": "species"

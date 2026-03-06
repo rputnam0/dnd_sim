@@ -10,7 +10,8 @@
         "dice": "d4",
         "count": "proficiency_bonus"
       },
-      "recharge": "long_rest"
+      "recharge": "long_rest",
+      "meta_type": "healing"
     }
   ],
   "source_type": "species"

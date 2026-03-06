@@ -16,7 +16,8 @@
           "attack_type": "melee",
           "damage": null
         }
-      ]
+      ],
+      "meta_type": "bonus_action_attack"
     }
   ],
   "source_type": "species"

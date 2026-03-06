@@ -4,34 +4,40 @@
   "mechanics": [
     {
       "grant_cantrip": "mage hand",
-      "invisible": true
+      "invisible": true,
+      "meta_type": "grant_cantrip"
     },
     {
       "grant_spell": "jump",
       "required_level": 3,
-      "uses_per_long_rest": 1
+      "uses_per_long_rest": 1,
+      "meta_type": "grant_spell"
     },
     {
       "grant_spell": "misty step",
       "required_level": 5,
-      "uses_per_long_rest": 1
+      "uses_per_long_rest": 1,
+      "meta_type": "grant_spell"
     },
     {
       "spell_fallback_using_slots": true,
       "spells": [
         "jump",
         "misty step"
-      ]
+      ],
+      "meta_type": "spell_use"
     },
     {
       "spellcasting_ability_options": [
         "Intelligence",
         "Wisdom",
         "Charisma"
-      ]
+      ],
+      "meta_type": "spellcasting_ability"
     },
     {
-      "no_spell_components_required": true
+      "no_spell_components_required": true,
+      "meta_type": "spell_modification"
     }
   ],
   "source_type": "species"

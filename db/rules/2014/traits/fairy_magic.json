@@ -4,19 +4,22 @@
   "mechanics": [
     {
       "effect": "grant_cantrip",
-      "spell": "druidcraft"
+      "spell": "druidcraft",
+      "meta_type": "grant_cantrip"
     },
     {
       "effect": "grant_spell",
       "spell": "faerie fire",
       "min_level": 3,
-      "uses_per_long_rest": 1
+      "uses_per_long_rest": 1,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "spell": "enlarge/reduce",
       "min_level": 5,
-      "uses_per_long_rest": 1
+      "uses_per_long_rest": 1,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "spellcasting_ability",
@@ -24,7 +27,8 @@
         "Intelligence",
         "Wisdom",
         "Charisma"
-      ]
+      ],
+      "meta_type": "spellcasting_ability"
     }
   ],
   "source_type": "species"
