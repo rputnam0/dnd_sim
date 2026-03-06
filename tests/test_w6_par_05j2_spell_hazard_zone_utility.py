@@ -34,7 +34,10 @@ SLICE_TWO_J2_SPELL_IDS = {
 }
 
 SUPPORTED_SLICE_IDS = SLICE_ONE_J2_SPELL_IDS | SLICE_TWO_J2_SPELL_IDS
-SENSE_SLICE_IDS = SUPPORTED_SLICE_IDS - {"spell:guidance_divination"}
+PURE_SENSE_SLICE_IDS = SUPPORTED_SLICE_IDS - {
+    "spell:contact_other_plane",
+    "spell:guidance_divination",
+}
 CONCENTRATION_SENSE_SLICE_IDS = {
     "spell:arcane_eye",
     "spell:clairvoyance",
@@ -42,7 +45,18 @@ CONCENTRATION_SENSE_SLICE_IDS = {
     "spell:detect_magic",
     "spell:detect_poison_and_disease",
     "spell:detect_thoughts",
+    "spell:find_the_path",
     "spell:locate_object",
+}
+RITUAL_SLICE_IDS = {
+    "spell:augury",
+    "spell:commune",
+    "spell:commune_with_nature",
+    "spell:contact_other_plane",
+    "spell:detect_magic",
+    "spell:detect_poison_and_disease",
+    "spell:divination",
+    "spell:locate_animals_or_plants",
 }
 
 
@@ -101,29 +115,52 @@ def test_w6_par_05j2_supported_spell_files_use_canonical_rows() -> None:
         spell_id = content_id.split(":", 1)[1]
         path = SPELLS_DIR / f"{spell_id}.json"
         payload = json.loads(path.read_text(encoding="utf-8"))
+        if content_id in RITUAL_SLICE_IDS:
+            assert payload.get("ritual") is True, f"{content_id} should be ritual-castable"
         mechanics = payload.get("mechanics")
         assert isinstance(mechanics, list), f"{content_id} mechanics must be a list"
         assert mechanics, f"{content_id} mechanics must not be empty"
-        for idx, row in enumerate(mechanics):
-            assert isinstance(row, dict), f"{content_id} mechanics[{idx}] must be object"
-            if content_id in SENSE_SLICE_IDS:
-                assert row.get("effect_type") == "sense", (
-                    f"{content_id} mechanics[{idx}] must use effect_type=sense"
-                )
-                assert "range_ft" in row, f"{content_id} mechanics[{idx}] missing range_ft"
-                assert row.get("range_ft") is not None, (
-                    f"{content_id} mechanics[{idx}] range_ft must not be null"
-                )
-                assert row.get("sense"), f"{content_id} mechanics[{idx}] missing sense"
-                if content_id in CONCENTRATION_SENSE_SLICE_IDS:
-                    assert row.get("duration_rounds") == payload.get("duration_rounds")
-            else:
-                assert row.get("effect_type") == "apply_condition", (
-                    f"{content_id} mechanics[{idx}] must use effect_type=apply_condition"
-                )
-                assert row.get("condition") == "guidance_bonus_d4"
-                assert row.get("bonus") == "1d4"
-                assert row.get("applies_to") == "ability_check"
-                assert payload.get("range_ft") == 0
+        if content_id == "spell:contact_other_plane":
+            by_effect_type = {
+                str(row.get("effect_type")): row for row in mechanics if isinstance(row, dict)
+            }
+            assert payload.get("action_type") == "save"
+            assert payload.get("target_mode") == "self"
+            assert payload.get("save_ability") == "int"
+            assert payload.get("save_dc") == 15
+            assert by_effect_type["save"].get("save_ability") == "int"
+            assert by_effect_type["save"].get("save_dc") == 15
+            assert by_effect_type["sense"].get("apply_on") == "save_success"
+            assert by_effect_type["sense"].get("duration_rounds") == payload.get("duration_rounds")
+            assert by_effect_type["damage"].get("target") == "source"
+            assert by_effect_type["damage"].get("apply_on") == "save_fail"
+            assert by_effect_type["damage"].get("damage") == "6d6"
+            assert by_effect_type["damage"].get("damage_type") == "psychic"
+            assert by_effect_type["apply_condition"].get("target") == "source"
+            assert by_effect_type["apply_condition"].get("apply_on") == "save_fail"
+            assert by_effect_type["apply_condition"].get("condition") == "incapacitated"
+            assert by_effect_type["apply_condition"].get("duration_rounds") == 4800
+        else:
+            for idx, row in enumerate(mechanics):
+                assert isinstance(row, dict), f"{content_id} mechanics[{idx}] must be object"
+                if content_id in PURE_SENSE_SLICE_IDS:
+                    assert row.get("effect_type") == "sense", (
+                        f"{content_id} mechanics[{idx}] must use effect_type=sense"
+                    )
+                    assert "range_ft" in row, f"{content_id} mechanics[{idx}] missing range_ft"
+                    assert row.get("range_ft") is not None, (
+                        f"{content_id} mechanics[{idx}] range_ft must not be null"
+                    )
+                    assert row.get("sense"), f"{content_id} mechanics[{idx}] missing sense"
+                    if content_id in CONCENTRATION_SENSE_SLICE_IDS:
+                        assert row.get("duration_rounds") == payload.get("duration_rounds")
+                else:
+                    assert row.get("effect_type") == "apply_condition", (
+                        f"{content_id} mechanics[{idx}] must use effect_type=apply_condition"
+                    )
+                    assert row.get("condition") == "guidance_bonus_d4"
+                    assert row.get("bonus") == "1d4"
+                    assert row.get("applies_to") == "ability_check"
+                    assert payload.get("range_ft") == 0
         issues = validate_rule_mechanics_payload(kind="spell", payload=payload)
         assert issues == [], f"{content_id} has schema issues: {issues}"
