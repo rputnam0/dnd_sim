@@ -22,6 +22,7 @@
       "effect_type": "apply_condition",
       "condition": "burning",
       "duration": 10,
+      "concentration_linked": true,
       "save_ability": "con",
       "save_on_apply": false,
       "requires_smite_save": false,

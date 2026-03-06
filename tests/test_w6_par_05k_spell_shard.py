@@ -8,6 +8,7 @@ from dnd_sim.engine_runtime import (
     _apply_condition,
     _apply_pending_smite_on_hit,
     _arm_pending_smite,
+    _break_concentration,
     _tick_conditions_for_actor,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
@@ -224,3 +225,41 @@ def test_w6_par_05k_searing_smite_burn_breaks_target_concentration_cleanly() -> 
     assert target.concentration_effect_instance_ids == set()
     assert "blessed" not in target.conditions
     assert all(effect.condition != "blessed" for effect in target.effect_instances)
+
+
+def test_w6_par_05k_searing_smite_burn_tracks_caster_concentration() -> None:
+    paladin = _actor("paladin", "party")
+    paladin.concentrating = True
+    paladin.concentrated_spell = "Searing Smite"
+    paladin.concentrated_spell_level = 1
+    target = _actor("target", "enemy")
+    actors = {paladin.actor_id: paladin, target.actor_id: target}
+    damage_dealt = {paladin.actor_id: 0, target.actor_id: 0}
+    damage_taken = {paladin.actor_id: 0, target.actor_id: 0}
+    threat_scores = {paladin.actor_id: 0, target.actor_id: 0}
+    resources_spent = {paladin.actor_id: {}, target.actor_id: {}}
+    active_hazards: list[dict[str, object]] = []
+
+    _arm_pending_smite(paladin, _searing_smite_action())
+    _apply_pending_smite_on_hit(
+        rng=FixedRng([4]),
+        actor=paladin,
+        target=target,
+        roll_crit=False,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        actors=actors,
+        active_hazards=active_hazards,
+    )
+
+    burn = next(effect for effect in target.effect_instances if effect.condition == "burning")
+    assert paladin.concentrating is True
+    assert burn.concentration_linked is True
+    assert burn.source_actor_id == paladin.actor_id
+
+    _break_concentration(paladin, actors, active_hazards)
+
+    assert "burning" not in target.conditions
+    assert all(effect.condition != "burning" for effect in target.effect_instances)

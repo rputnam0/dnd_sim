@@ -2183,6 +2183,7 @@ def _smite_rider_effects(action: ActionDefinition) -> list[dict[str, Any]]:
                         )
                     ),
                     "requires_smite_save": bool(mechanic.get("requires_smite_save", True)),
+                    "concentration_linked": bool(mechanic.get("concentration_linked", False)),
                     "save_on_apply": bool(mechanic.get("save_on_apply", True)),
                     "internal_tags": sorted(internal_tags),
                 }
@@ -2268,6 +2269,7 @@ def _apply_pending_smite_on_hit(
     save_dc = pending.get("save_dc")
     save_ability = pending.get("save_ability")
     rider_saved = False
+    applied_concentration_linked_rider = False
     save_gated_riders = [
         effect for effect in rider_effects if bool(effect.get("requires_smite_save", True))
     ]
@@ -2291,6 +2293,9 @@ def _apply_pending_smite_on_hit(
                 actors=actors,
                 active_hazards=active_hazards,
             )
+            applied_concentration_linked_rider = applied_concentration_linked_rider or bool(
+                effect.get("concentration_linked", False)
+            )
     for effect in always_apply_riders:
         _apply_effect(
             effect=effect,
@@ -2304,9 +2309,16 @@ def _apply_pending_smite_on_hit(
             actors=actors,
             active_hazards=active_hazards,
         )
+        applied_concentration_linked_rider = applied_concentration_linked_rider or bool(
+            effect.get("concentration_linked", False)
+        )
 
     actor.pending_smite = None
-    if actor.concentrating and _is_smite_spell_name(actor.concentrated_spell or ""):
+    if (
+        actor.concentrating
+        and _is_smite_spell_name(actor.concentrated_spell or "")
+        and not applied_concentration_linked_rider
+    ):
         _break_concentration(actor, actors, active_hazards)
     return bundle
 
@@ -9058,9 +9070,10 @@ def _apply_effect(
                 condition_saved = True
             if condition_saved:
                 return
-        concentration_linked = bool(
-            action and action.concentration and effect.get("concentration_linked", True)
-        )
+        if "concentration_linked" in effect:
+            concentration_linked = bool(effect.get("concentration_linked"))
+        else:
+            concentration_linked = bool(action and action.concentration)
         internal_tags = _normalize_internal_tags(effect.get("internal_tags"))
         if action is not None and _has_tag(action, "spell"):
             internal_tags.add("spell_effect")
