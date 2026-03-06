@@ -5,14 +5,16 @@
     {
       "trigger": "rage_activation",
       "effect": "grant_temporary_hit_points",
-      "amount": "character_level"
+      "amount": "character_level",
+      "meta_type": "temporary_hp_support"
     },
     {
       "trigger": "start_of_turn_while_rage_active",
       "target": "creature_within_10_feet",
       "effect": "grant_temporary_hit_points",
       "amount": "roll_d6 * rage_damage_bonus",
-      "duration": "until_rage_ends"
+      "duration": "until_rage_ends",
+      "meta_type": "rage_aura_temp_hp_support"
     }
   ],
   "source_type": "subclass"

@@ -10,7 +10,8 @@
       },
       "effect": {
         "set_hp": 1
-      }
+      },
+      "meta_type": "self_revival_support"
     }
   ],
   "source_type": "subclass"

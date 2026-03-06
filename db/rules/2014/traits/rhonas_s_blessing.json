@@ -16,7 +16,8 @@
         ],
         "ability": "Strength"
       },
-      "resource": "Channel Divinity"
+      "resource": "Channel Divinity",
+      "meta_type": "reaction_roll_bonus_support"
     }
   ],
   "source_type": "subclass"

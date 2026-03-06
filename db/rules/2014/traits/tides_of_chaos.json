@@ -10,13 +10,15 @@
         "saving throw"
       ],
       "uses": 1,
-      "recharge": "long_rest"
+      "recharge": "long_rest",
+      "meta_type": "advantage_resource_support"
     },
     {
       "effect": "resource_regain",
       "resource": "Tides of Chaos use",
       "trigger": "wild_magic_surge",
-      "condition": "after casting a sorcerer spell of 1st level or higher"
+      "condition": "after casting a sorcerer spell of 1st level or higher",
+      "meta_type": "wild_magic_recharge_support"
     }
   ],
   "source_type": "subclass"
