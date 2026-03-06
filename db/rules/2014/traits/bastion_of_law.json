@@ -25,7 +25,7 @@
         "diceAvailable": "remaining ward dice",
         "usage": "expend any number of ward dice, roll them, and subtract the total from the damage taken"
       },
-      "meta_type": "spend_resource"
+      "meta_type": "resource_spend"
     }
   ],
   "source_type": "subclass"

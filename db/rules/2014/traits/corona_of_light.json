@@ -26,7 +26,7 @@
         "type": "disadvantage",
         "on": "saving throws against fire or radiant damage spells"
       },
-      "meta_type": "advantage"
+      "meta_type": "disadvantage"
     }
   ],
   "source_type": "subclass"

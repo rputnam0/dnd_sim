@@ -15,7 +15,7 @@ REPRESENTATIVE_META_TYPES = {
     "abjure_enemy": {"channel_divinity"},
     "aberrant_sorcery": {"subclass_option"},
     "bardic_inspiration": {"action", "roll_bonus", "recharge"},
-    "bastion_of_law": {"resource_spend", "spend_resource"},
+    "bastion_of_law": {"resource_spend"},
     "champion_challenge": {"channel_divinity"},
     "channel_divinity_charm_animals_and_plants": {"channel_divinity"},
     "conquering_presence": {"channel_divinity"},
