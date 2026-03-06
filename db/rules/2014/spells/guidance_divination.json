@@ -4,7 +4,7 @@
   "level": 0,
   "school": "Divination",
   "casting_time": "1 action",
-  "range_ft": null,
+  "range_ft": 0,
   "concentration": true,
   "ritual": false,
   "duration_rounds": 10,
@@ -13,12 +13,11 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "sense",
-      "sense": "guided_check_window",
-      "range_ft": 0,
+      "effect_type": "apply_condition",
+      "condition": "guidance_bonus_d4",
       "duration_rounds": 10,
-      "applies_to": "one ability check",
-      "bonus_die": "1d4"
+      "bonus": "1d4",
+      "applies_to": "ability_check"
     }
   ]
 }

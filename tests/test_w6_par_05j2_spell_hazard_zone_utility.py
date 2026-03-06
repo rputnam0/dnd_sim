@@ -34,6 +34,7 @@ SLICE_TWO_J2_SPELL_IDS = {
 }
 
 SUPPORTED_SLICE_IDS = SLICE_ONE_J2_SPELL_IDS | SLICE_TWO_J2_SPELL_IDS
+SENSE_SLICE_IDS = SUPPORTED_SLICE_IDS - {"spell:guidance_divination"}
 
 
 def _owned_j2_spell_ids() -> set[str]:
@@ -49,7 +50,7 @@ def _owned_j2_spell_ids() -> set[str]:
     return owned
 
 
-def test_w6_par_05j2_slice_one_spells_are_supported() -> None:
+def test_w6_par_05j2_supported_spells_are_supported() -> None:
     manifest = build_spell_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
@@ -72,7 +73,7 @@ def test_w6_par_05j2_slice_one_spells_are_supported() -> None:
         assert record.runtime_hook_family == "effect"
 
 
-def test_w6_par_05j2_owned_spell_blockers_shrink_after_slice_one() -> None:
+def test_w6_par_05j2_owned_spell_blockers_shrink_after_supported_slices() -> None:
     owned_ids = _owned_j2_spell_ids()
     manifest = build_spell_capability_manifest()
 
@@ -86,7 +87,7 @@ def test_w6_par_05j2_owned_spell_blockers_shrink_after_slice_one() -> None:
     assert 0 < len(blocked_owned) < len(owned_ids)
 
 
-def test_w6_par_05j2_slice_one_spell_files_use_canonical_sense_rows() -> None:
+def test_w6_par_05j2_supported_spell_files_use_canonical_rows() -> None:
     for content_id in sorted(SUPPORTED_SLICE_IDS):
         spell_id = content_id.split(":", 1)[1]
         path = SPELLS_DIR / f"{spell_id}.json"
@@ -96,13 +97,22 @@ def test_w6_par_05j2_slice_one_spell_files_use_canonical_sense_rows() -> None:
         assert mechanics, f"{content_id} mechanics must not be empty"
         for idx, row in enumerate(mechanics):
             assert isinstance(row, dict), f"{content_id} mechanics[{idx}] must be object"
-            assert row.get("effect_type") == "sense", (
-                f"{content_id} mechanics[{idx}] must use effect_type=sense"
-            )
-            assert "range_ft" in row, f"{content_id} mechanics[{idx}] missing range_ft"
-            assert row.get("range_ft") is not None, (
-                f"{content_id} mechanics[{idx}] range_ft must not be null"
-            )
-            assert row.get("sense"), f"{content_id} mechanics[{idx}] missing sense"
+            if content_id in SENSE_SLICE_IDS:
+                assert row.get("effect_type") == "sense", (
+                    f"{content_id} mechanics[{idx}] must use effect_type=sense"
+                )
+                assert "range_ft" in row, f"{content_id} mechanics[{idx}] missing range_ft"
+                assert row.get("range_ft") is not None, (
+                    f"{content_id} mechanics[{idx}] range_ft must not be null"
+                )
+                assert row.get("sense"), f"{content_id} mechanics[{idx}] missing sense"
+            else:
+                assert row.get("effect_type") == "apply_condition", (
+                    f"{content_id} mechanics[{idx}] must use effect_type=apply_condition"
+                )
+                assert row.get("condition") == "guidance_bonus_d4"
+                assert row.get("bonus") == "1d4"
+                assert row.get("applies_to") == "ability_check"
+                assert payload.get("range_ft") == 0
         issues = validate_rule_mechanics_payload(kind="spell", payload=payload)
         assert issues == [], f"{content_id} has schema issues: {issues}"
