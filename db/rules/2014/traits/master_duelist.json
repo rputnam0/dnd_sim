@@ -9,7 +9,7 @@
     },
     {
       "uses": 1,
-      "frequency": "short_or_long_rest",
+      "recharge": "short_or_long_rest",
       "meta_type": "recharge"
     }
   ],

@@ -11,7 +11,7 @@
     },
     {
       "uses": "proficiency_bonus",
-      "reset": "long_rest",
+      "recharge": "long_rest",
       "meta_type": "resource"
     }
   ],

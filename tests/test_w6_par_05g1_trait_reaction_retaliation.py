@@ -270,3 +270,29 @@ def test_w6_par_05g1_tides_of_chaos_preserves_structured_single_use_limit() -> N
 
     assert len(limited_rows) == 1
     assert limited_rows[0].get("recharge") == "long_rest"
+
+
+def test_w6_par_05g1_continuation_slice_uses_recharge_key_consistently() -> None:
+    master_duelist = json.loads((TRAITS_DIR / "master_duelist.json").read_text(encoding="utf-8"))
+    master_duelist_rows = [
+        row
+        for row in master_duelist.get("mechanics", [])
+        if isinstance(row, dict) and str(row.get("meta_type", "")).strip() == "recharge"
+    ]
+    assert len(master_duelist_rows) == 1
+    assert master_duelist_rows[0].get("uses") == 1
+    assert master_duelist_rows[0].get("recharge") == "short_or_long_rest"
+    assert "frequency" not in master_duelist_rows[0]
+
+    wails_from_the_grave = json.loads(
+        (TRAITS_DIR / "wails_from_the_grave.json").read_text(encoding="utf-8")
+    )
+    resource_rows = [
+        row
+        for row in wails_from_the_grave.get("mechanics", [])
+        if isinstance(row, dict) and str(row.get("meta_type", "")).strip() == "resource"
+    ]
+    assert len(resource_rows) == 1
+    assert resource_rows[0].get("uses") == "proficiency_bonus"
+    assert resource_rows[0].get("recharge") == "long_rest"
+    assert "reset" not in resource_rows[0]
