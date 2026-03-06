@@ -11,5 +11,16 @@
   "description": "Until the spell ends, when you make a Charisma check, you can replace the number you roll with a 15. Additionally, no matter what you say, magic that would determine if you are telling the truth indicates that you are being truthful.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "glibness",
+      "duration_rounds": 600
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "glibness_charisma_floor_15",
+      "duration_rounds": 600
+    }
+  ]
 }

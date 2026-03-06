@@ -11,5 +11,11 @@
   "description": "You draw on knowledge from spirits of the past. Choose one skill in which you lack proficiency. For the spell's duration, you have proficiency in the chosen skill. The spell ends early if you cast it again.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "borrowed_knowledge_skill_proficiency",
+      "duration_rounds": 600
+    }
+  ]
 }

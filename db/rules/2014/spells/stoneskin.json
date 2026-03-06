@@ -11,5 +11,11 @@
   "description": "This spell turns the flesh of a willing creature you touch as hard as stone. Until the spell ends, the target has resistance to nonmagical bludgeoning, piercing, and slashing damage. Storm of Vengeance 9th-­‐‑level conjuration",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "stoneskin_nonmagical_bps_resistance",
+      "duration_rounds": 600
+    }
+  ]
 }

@@ -11,5 +11,11 @@
   "description": "This spell allows you to move at an incredible pace. When you cast this spell, and then as a bonus action on each of your turns until the spell ends, you can take the Dash action. Eyebite 6th-­‐‑level necromancy",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "expeditious_retreat_dash_bonus_action",
+      "duration_rounds": 100
+    }
+  ]
 }

@@ -11,5 +11,12 @@
   "description": "You touch a willing creature to grant it the ability to see in the dark. For the duration, that creature has darkvision out to a range of 60 feet.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "sense",
+      "sense": "darkvision",
+      "range_ft": 60,
+      "duration_rounds": 4800
+    }
+  ]
 }
