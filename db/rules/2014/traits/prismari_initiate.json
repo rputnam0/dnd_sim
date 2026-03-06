@@ -10,17 +10,42 @@
     {
       "meta_type": "add_spells",
       "condition": "has_spellcasting_or_pact_magic",
-      "add_spells": [
-        "Chromatic Orb",
-        "Thunderwave",
-        "Flaming Sphere",
-        "Kinetic Jaunt",
-        "Haste",
-        "Water Walk",
-        "Freedom of Movement",
-        "Wall of Fire",
-        "Cone of Cold",
-        "Conjure Elemental"
+      "spells": [
+        {
+          "level": 1,
+          "spells": [
+            "Chromatic Orb",
+            "Thunderwave"
+          ]
+        },
+        {
+          "level": 2,
+          "spells": [
+            "Flaming Sphere",
+            "Kinetic Jaunt"
+          ]
+        },
+        {
+          "level": 3,
+          "spells": [
+            "Haste",
+            "Water Walk"
+          ]
+        },
+        {
+          "level": 4,
+          "spells": [
+            "Freedom of Movement",
+            "Wall of Fire"
+          ]
+        },
+        {
+          "level": 5,
+          "spells": [
+            "Cone of Cold",
+            "Conjure Elemental"
+          ]
+        }
       ],
       "apply_to_all_spell_lists": true
     }

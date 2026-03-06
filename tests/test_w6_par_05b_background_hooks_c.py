@@ -13,6 +13,7 @@ HOOKS_C_BACKGROUND_IDS = {
     "background:conviction",
     "background:court_functionary",
     "background:divine_contact",
+    "background:lorehold_initiate",
     "background:prismari_initiate",
     "background:quandrix_initiate",
     "background:silverquill_initiate",

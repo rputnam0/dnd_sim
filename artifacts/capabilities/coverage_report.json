@@ -1,12 +1,12 @@
 {
   "content_type_coverage": [
     {
-      "blocked_records": 44,
+      "blocked_records": 43,
       "content_type": "background",
-      "executable_records": 42,
+      "executable_records": 43,
       "schema_valid_records": 86,
-      "supported_records": 42,
-      "tested_records": 42,
+      "supported_records": 43,
+      "tested_records": 43,
       "total_records": 86
     },
     {
@@ -717,16 +717,16 @@
     {
       "content_id": "background:lorehold_initiate",
       "content_type": "background",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "background:mercenary_life",
@@ -35437,11 +35437,11 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 1241,
-    "executable_records": 1286,
+    "blocked_records": 1240,
+    "executable_records": 1287,
     "schema_valid_records": 2518,
-    "supported_records": 1286,
-    "tested_records": 1286,
+    "supported_records": 1287,
+    "tested_records": 1287,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
@@ -35450,7 +35450,7 @@
       "unsupported_reason": "invalid_mechanics_schema"
     },
     {
-      "count": 711,
+      "count": 710,
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {

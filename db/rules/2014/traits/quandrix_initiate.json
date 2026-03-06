@@ -10,28 +10,43 @@
     {
       "meta_type": "add_spells",
       "condition": "has_spellcasting_or_pact_magic",
-      "spells_by_level": {
-        "1": [
-          "Entangle",
-          "Guiding Bolt"
-        ],
-        "2": [
-          "Enlarge/Reduce",
-          "Vortex Warp"
-        ],
-        "3": [
-          "Aura of Vitality",
-          "Haste"
-        ],
-        "4": [
-          "Control Water",
-          "Freedom of Movement"
-        ],
-        "5": [
-          "Circle of Power",
-          "Passwall"
-        ]
-      },
+      "spells": [
+        {
+          "level": 1,
+          "spells": [
+            "Entangle",
+            "Guiding Bolt"
+          ]
+        },
+        {
+          "level": 2,
+          "spells": [
+            "Enlarge/Reduce",
+            "Vortex Warp"
+          ]
+        },
+        {
+          "level": 3,
+          "spells": [
+            "Aura of Vitality",
+            "Haste"
+          ]
+        },
+        {
+          "level": 4,
+          "spells": [
+            "Control Water",
+            "Freedom of Movement"
+          ]
+        },
+        {
+          "level": 5,
+          "spells": [
+            "Circle of Power",
+            "Passwall"
+          ]
+        }
+      ],
       "apply_to_all_spell_lists": true
     }
   ],
