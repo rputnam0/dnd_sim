@@ -5,28 +5,23 @@
     {
       "trigger": "use inspired eclipse",
       "target": "creature who received the Bardic Inspiration die",
-      "effects": [
-        {
-          "condition": "Invisible"
-        },
-        {
-          "reaction": {
-            "action": "teleport",
-            "distance": 30,
-            "description": "to an unoccupied space you can see"
-          }
-        }
-      ],
-      "duration": "until start of next turn"
+      "duration": "until start of its next turn",
+      "meta_type": "invisibility"
+    },
+    {
+      "trigger": "use inspired eclipse",
+      "target": "creature who received the Bardic Inspiration die",
+      "action": "reaction",
+      "distance": 30,
+      "destination": "unoccupied space it can see",
+      "duration": "until start of its next turn",
+      "meta_type": "teleport"
     },
     {
       "trigger": "use lunar vitality",
-      "effect": {
-        "replace": {
-          "resource": "Bardic Inspiration die",
-          "with": "1d6 roll"
-        }
-      }
+      "replace": "bardic_inspiration_die",
+      "with": "1d6",
+      "meta_type": "resource_substitution"
     }
   ],
   "source_type": "subclass"

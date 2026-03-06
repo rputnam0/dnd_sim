@@ -3,11 +3,16 @@
   "description": "Once during each of your turns when you hit with an attack roll, you can deal extra damage to the target equal to your proficiency bonus. The type of this damage is determined by your patron: bludgeoning (dao), thunder (djinni), fire (efreeti), or cold (marid).",
   "mechanics": [
     {
-      "effect": "extra_damage",
-      "trigger": "hit",
-      "frequency": "once_per_turn",
-      "damage_amount": "proficiency_bonus",
-      "damage_type": "patron_determined"
+      "trigger": "once_per_turn_when_you_hit_with_attack_roll",
+      "amount": "proficiency_bonus",
+      "damage_types": [
+        "bludgeoning",
+        "thunder",
+        "fire",
+        "cold"
+      ],
+      "damage_type_source": "genie_patron_kind",
+      "meta_type": "extra_damage"
     }
   ],
   "source_type": "subclass"

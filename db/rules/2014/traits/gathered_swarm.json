@@ -3,28 +3,27 @@
   "description": "A swarm of intangible nature spirits has bonded itself to you and can assist you in battle. While you are alive, the swarm remains in your space, crawling on you or flying and skittering around you within your space. You determine its appearance, or you generate its appearance by rolling on the Swarm Appearance table. Once on each of your turns, you can cause the swarm to assist you in one of the following ways, immediately after you hit a creature with an attack: the attack's target takes 1d6 piercing damage from the swarm; the attack's target must succeed on a Strength saving throw against your spell save DC or be moved by the swarm up to 15 feet horizontally in a direction of your choice; or you are moved by the swarm 5 feet horizontally in a direction of your choice.",
   "mechanics": [
     {
-      "trigger": "hit",
-      "usage": "once per turn",
-      "options": [
-        {
-          "type": "damage",
-          "damage": "1d6",
-          "damage_type": "piercing"
-        },
-        {
-          "type": "save",
-          "ability": "strength",
-          "dc_source": "spell_save_dc",
-          "effect": "move_target",
-          "distance": 15,
-          "direction": "chosen"
-        },
-        {
-          "type": "move_self",
-          "distance": 5,
-          "direction": "chosen"
-        }
-      ]
+      "trigger": "once_per_turn_when_you_hit_with_attack",
+      "damage": "1d6",
+      "damage_type": "piercing",
+      "choice_group": "gathered_swarm_hit_effect",
+      "meta_type": "extra_damage"
+    },
+    {
+      "trigger": "once_per_turn_when_you_hit_with_attack",
+      "save_ability": "str",
+      "save_dc": "spell_save_dc",
+      "distance_ft": 15,
+      "direction": "chosen_horizontal",
+      "choice_group": "gathered_swarm_hit_effect",
+      "meta_type": "push"
+    },
+    {
+      "trigger": "once_per_turn_when_you_hit_with_attack",
+      "distance": 5,
+      "direction": "chosen_horizontal",
+      "choice_group": "gathered_swarm_hit_effect",
+      "meta_type": "movement"
     }
   ],
   "source_type": "subclass"

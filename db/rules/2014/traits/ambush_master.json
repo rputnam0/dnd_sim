@@ -3,15 +3,16 @@
   "description": "Starting at 13th level, you excel at leading ambushes and acting first in a fight. You have advantage on initiative rolls. In addition, the first creature you hit during the first round of a combat becomes easier for you and others to strike; attack rolls against that target have advantage until the start of your next turn.",
   "mechanics": [
     {
-      "effect": "advantage",
-      "target": "self",
-      "trigger": "initiative roll"
+      "trigger": "initiative_roll",
+      "benefit": "advantage on initiative rolls",
+      "meta_type": "initiative"
     },
     {
-      "effect": "advantage",
-      "target": "attack rolls",
-      "condition": "against the first creature you hit during the first round of combat",
-      "duration": "until the start of your next turn"
+      "trigger": "first_round_hit",
+      "target": "first creature you hit during the first round of combat",
+      "benefit": "attack rolls against that creature have advantage",
+      "duration": "until start of your next turn",
+      "meta_type": "grant_advantage"
     }
   ],
   "source_type": "subclass"

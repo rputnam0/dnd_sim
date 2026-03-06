@@ -4,41 +4,41 @@
   "mechanics": [
     {
       "trigger": "start_of_turn",
-      "cost": {
-        "resource": "Focus Point",
-        "amount": 1
-      },
-      "duration": "10 minutes or until Incapacitated",
-      "effects": [
-        {
-          "type": "increase_reach",
-          "amount": 10,
-          "condition": "while_active",
-          "applies_to": "Unarmed Strike"
-        },
-        {
-          "type": "damage_type_change",
-          "allowed_types": [
-            "Acid",
-            "Cold",
-            "Fire",
-            "Lightning",
-            "Thunder"
-          ],
-          "trigger": "hit",
-          "weapon": "Unarmed Strike"
-        },
-        {
-          "type": "forced_movement",
-          "save": "Strength",
-          "save_dc": null,
-          "distance": 10,
-          "direction": "toward_or_away",
-          "condition": "when_damage_type_is_one_of_allowed",
-          "trigger": "hit",
-          "weapon": "Unarmed Strike"
-        }
-      ]
+      "resource": "Focus Point",
+      "amount": 1,
+      "meta_type": "resource_spend"
+    },
+    {
+      "duration": "10 minutes or until incapacitated",
+      "meta_type": "duration"
+    },
+    {
+      "source": "unarmed_strike",
+      "amount": 10,
+      "unit": "feet",
+      "condition": "while elemental attunement is active",
+      "meta_type": "reach_increase"
+    },
+    {
+      "source": "unarmed_strike",
+      "choices": [
+        "Acid",
+        "Cold",
+        "Fire",
+        "Lightning",
+        "Thunder"
+      ],
+      "condition": "on hit while elemental attunement is active",
+      "meta_type": "damage_type_choice"
+    },
+    {
+      "trigger": "hit_with_unarmed_strike",
+      "condition": "elemental_attunement_damage_type_chosen",
+      "save_ability": "str",
+      "save_dc": "martial_discipline_save_dc",
+      "distance_ft": 10,
+      "direction": "toward_or_away",
+      "meta_type": "push"
     }
   ],
   "source_type": "subclass"
