@@ -6,7 +6,8 @@
       "effect": "cost_reduction",
       "resource": "gold_and_time",
       "target": "copy_divination_spell",
-      "multiplier": 0.5
+      "multiplier": 0.5,
+      "meta_type": "cost_modifier"
     }
   ],
   "source_type": "subclass"

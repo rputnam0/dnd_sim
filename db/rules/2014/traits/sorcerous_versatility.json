@@ -4,11 +4,13 @@
   "mechanics": [
     {
       "effect": "replace_metamagic_option",
-      "description": "Replace a chosen Metamagic option with another Metamagic option available to the sorcerer."
+      "description": "Replace a chosen Metamagic option with another Metamagic option available to the sorcerer.",
+      "meta_type": "feature_retraining"
     },
     {
       "effect": "replace_cantrip",
-      "description": "Replace a known sorcerer cantrip with another cantrip from the sorcerer spell list."
+      "description": "Replace a known sorcerer cantrip with another cantrip from the sorcerer spell list.",
+      "meta_type": "feature_retraining"
     }
   ],
   "source_type": "class"

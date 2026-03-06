@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "trigger": "creature succeeds on saving throw against your damaging cantrip",
-      "effect": "takes half damage (if any) and no additional effect"
+      "effect": "takes half damage (if any) and no additional effect",
+      "meta_type": "cantrip_damage_modifier"
     }
   ],
   "source_type": "subclass"

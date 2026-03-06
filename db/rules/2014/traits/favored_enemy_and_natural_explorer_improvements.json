@@ -4,12 +4,14 @@
   "mechanics": [
     {
       "effect": "gain_favored_terrain",
-      "quantity": 1
+      "quantity": 1,
+      "meta_type": "feature_progression"
     },
     {
       "effect": "gain_favored_enemy",
       "quantity": 1,
-      "grant_language": true
+      "grant_language": true,
+      "meta_type": "language_proficiency"
     }
   ],
   "source_type": "class"

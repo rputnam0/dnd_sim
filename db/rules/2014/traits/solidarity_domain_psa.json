@@ -1,6 +1,10 @@
 {
   "name": "Solidarity Domain (PSA)",
   "description": "The worthy must know and respect all others whom the God-Pharaoh deems worthy, for in the afterlife, all will be united in purpose and action.\n\nOketra is charged with expounding upon this teaching of the God-Pharaoh, instilling in every initiate the virtue of solidarity. She forges each group of children into a crop of acolytes with just one purpose: to be judged worthy of a glorious afterlife. And she instills in each crop the ability to unite in a single action in pursuit of that purpose. She is fond of poetic imagery to communicate her ideals.\n\nSolidarity Domain Spells:\nCleric Level 1st: bless, guiding bolt\nCleric Level 3rd: aid, warding bond\nCleric Level 5th: beacon of hope, crusader's mantle\nCleric Level 7th: aura of life, guardian of faith\nCleric Level 9th: circle of power, mass cure wounds",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

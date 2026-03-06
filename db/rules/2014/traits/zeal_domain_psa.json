@@ -1,6 +1,6 @@
 {
   "name": "Zeith Domain (PSA)",
-  "description": "The worthy shall rush to the God-Pharaoh's side with relentless zeal, rising to overcome every obstacle in their way. The God-Pharaoh expects those he welcomes into the afterlife to desire it above all other pleasures and achievements, and for them to show their dedication, passion, and fervor through their actions. Hazoret is charged with cultivating this zeal in the initiates who come under her care, and she has undertaken the task with appropriate enthusiasm. She recognizes, however, that the best way to teach zeal is by demonstrating it. Domain Spells: 1st level – searing smite, thunderous smite; 3rd level – magic weapon, shatter; 5th level – haste, fireball; 7th level – fire shield (warm shield only), freedom of movement; 9th level – destructive wave, flame strike.",
+  "description": "The worthy shall rush to the God-Pharaoh's side with relentless zeal, rising to overcome every obstacle in their way. The God-Pharaoh expects those he welcomes into the afterlife to desire it above all other pleasures and achievements, and for them to show their dedication, passion, and fervor through their actions. Hazoret is charged with cultivating this zeal in the initiates who come under her care, and she has undertaken the task with appropriate enthusiasm. She recognizes, however, that the best way to teach zeal is by demonstrating it. Domain Spells: 1st level \u2013 searing smite, thunderous smite; 3rd level \u2013 magic weapon, shatter; 5th level \u2013 haste, fireball; 7th level \u2013 fire shield (warm shield only), freedom of movement; 9th level \u2013 destructive wave, flame strike.",
   "mechanics": [
     {
       "add_spells_prepared": {
@@ -9,7 +9,8 @@
           "searing smite",
           "thunderous smite"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     },
     {
       "add_spells_prepared": {
@@ -18,7 +19,8 @@
           "magic weapon",
           "shatter"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     },
     {
       "add_spells_prepared": {
@@ -27,7 +29,8 @@
           "haste",
           "fireball"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     },
     {
       "add_spells_prepared": {
@@ -36,7 +39,8 @@
           "fire shield (warm shield only)",
           "freedom of movement"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     },
     {
       "add_spells_prepared": {
@@ -45,7 +49,8 @@
           "destructive wave",
           "flame strike"
         ]
-      }
+      },
+      "meta_type": "always_prepared_spells"
     }
   ],
   "source_type": "subclass"

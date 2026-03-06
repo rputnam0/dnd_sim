@@ -20,7 +20,8 @@
           "forced saving throw"
         ]
       },
-      "recharge": "long rest"
+      "recharge": "long rest",
+      "meta_type": "social_control"
     }
   ],
   "source_type": "subclass"

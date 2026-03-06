@@ -1,6 +1,10 @@
 {
   "name": "Arcane Tradition",
   "description": "When you reach 2nd level, you choose an arcane tradition from the list of available traditions, shaping your practice of magic. Your choice grants you features at 2nd level and again at 6th, 10th, and 14th level.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "subclass_choice"
+    }
+  ],
   "source_type": "class"
 }

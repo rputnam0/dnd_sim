@@ -8,7 +8,8 @@
       "spells": [
         "animal friendship",
         "speak with animals"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
       "effect": "add_domain_spells",
@@ -16,7 +17,8 @@
       "spells": [
         "barkskin",
         "spike growth"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
       "effect": "add_domain_spells",
@@ -24,7 +26,8 @@
       "spells": [
         "plant growth",
         "wind wall"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
       "effect": "add_domain_spells",
@@ -32,7 +35,8 @@
       "spells": [
         "dominate beast",
         "grasping vine"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
       "effect": "add_domain_spells",
@@ -40,7 +44,8 @@
       "spells": [
         "insect plague",
         "tree stride"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     }
   ],
   "source_type": "subclass"

@@ -1,6 +1,10 @@
 {
   "name": "Artificer Specialist Feature",
   "description": "5th-level artificer feature. You gain a feature granted by your Artificer Specialist choice.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "grant_subclass_feature"
+    }
+  ],
   "source_type": "class"
 }

@@ -1,6 +1,10 @@
 {
   "name": "Subclass feature",
   "description": "You gain a feature from your Artificer Subclass.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "grant_subclass_feature"
+    }
+  ],
   "source_type": "class"
 }

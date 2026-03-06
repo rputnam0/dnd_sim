@@ -12,7 +12,8 @@
       "slot_constraints": {
         "must_be_lower_than_cast": true,
         "max_level": 5
-      }
+      },
+      "meta_type": "regain_spell_slot"
     }
   ],
   "source_type": "subclass"

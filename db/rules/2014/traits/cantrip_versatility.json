@@ -7,7 +7,8 @@
       "trigger": "ability_score_improvement",
       "source": "class_spellcasting",
       "target_spell_list": "cleric",
-      "spell_level": 0
+      "spell_level": 0,
+      "meta_type": "feature_retraining"
     }
   ],
   "source_type": "class"

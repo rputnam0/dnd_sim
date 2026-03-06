@@ -5,12 +5,14 @@
     {
       "effect": "swap_expertise_skill",
       "trigger": "ability_score_improvement",
-      "description": "Replace one skill chosen for Expertise with another skill you are proficient in that does not already have Expertise."
+      "description": "Replace one skill chosen for Expertise with another skill you are proficient in that does not already have Expertise.",
+      "meta_type": "feature_retraining"
     },
     {
       "effect": "swap_bard_cantrip",
       "trigger": "ability_score_improvement",
-      "description": "Replace one bard cantrip you know with another cantrip from the bard spell list."
+      "description": "Replace one bard cantrip you know with another cantrip from the bard spell list.",
+      "meta_type": "feature_retraining"
     }
   ],
   "source_type": "class"
