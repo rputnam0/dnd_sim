@@ -3,16 +3,17 @@
   "description": "Starting at 3rd level, you can focus your ire on one foe, increasing the harm you inflict on it. As a bonus action, you designate one creature you can see within 60 feet of you as the target of this feature. The first time each turn that you hit that target with a weapon attack, it takes an extra 1d6 damage from the weapon. This benefit lasts until you finish a short or long rest. It ends early if you designate a different creature.",
   "mechanics": [
     {
-      "action": "bonus",
-      "effect": "designate target",
-      "range": 60,
+      "activation": "bonus_action",
+      "range_ft": 60,
       "target": "creature you can see",
-      "duration": "until short or long rest or re-designated"
+      "duration": "until short or long rest or until you designate a different creature",
+      "meta_type": "mark"
     },
     {
-      "trigger": "first weapon attack hit each turn on designated target",
+      "trigger": "first weapon attack hit each turn on marked target",
       "damage": "1d6",
-      "damage_type": "weapon"
+      "damage_type": "weapon",
+      "meta_type": "extra_damage"
     }
   ],
   "source_type": "subclass"

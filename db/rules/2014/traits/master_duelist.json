@@ -3,11 +3,14 @@
   "description": "Beginning at 17th level, your mastery of the blade lets you turn failure into success in combat. If you miss with an attack roll, you can roll it again with advantage. Once you do so, you can't use this feature again until you finish a short or long rest.",
   "mechanics": [
     {
-      "effect": "reroll_attack",
-      "trigger": "miss",
-      "advantage": true,
+      "trigger": "miss_with_attack_roll",
+      "benefit": "reroll the attack roll with advantage",
+      "meta_type": "reroll"
+    },
+    {
       "uses": 1,
-      "reset": "short_or_long_rest"
+      "recharge": "short_or_long_rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "subclass"

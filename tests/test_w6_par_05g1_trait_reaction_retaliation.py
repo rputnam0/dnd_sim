@@ -37,7 +37,39 @@ G1D_SURVIVAL_CLUSTER_IDS = {
     "trait:uncanny_metabolism",
     "trait:vitality_of_the_tree",
 }
-
+CONTINUATION_SLICE_IDS = {
+    "trait:master_duelist",
+    "trait:order_s_wrath",
+    "trait:slayer_s_prey",
+    "trait:slow_fall",
+    "trait:tactical_shift",
+    "trait:tides_of_chaos",
+    "trait:tireless_spirit",
+    "trait:wails_from_the_grave",
+}
+CONTINUATION_SLICE_REGISTRY_ASSIGNMENTS = {
+    "trait:master_duelist": "W6-PAR-05G1",
+    "trait:order_s_wrath": "W6-PAR-05G1",
+    "trait:slayer_s_prey": "W6-PAR-05G1",
+    "trait:slow_fall": "W6-PAR-05G1D",
+    "trait:tactical_shift": "W6-PAR-05G1",
+    "trait:tides_of_chaos": "W6-PAR-05G1D",
+    "trait:tireless_spirit": "W6-PAR-05G1D",
+    "trait:wails_from_the_grave": "W6-PAR-05G1",
+}
+CONTINUATION_SLICE_META_TYPES = {
+    "master_duelist": {"reroll", "recharge"},
+    "order_s_wrath": {"mark", "extra_damage"},
+    "slayer_s_prey": {"mark", "extra_damage"},
+    "slow_fall": {"fall_damage_reduction_support"},
+    "tactical_shift": {"movement"},
+    "tides_of_chaos": {
+        "advantage_resource_support",
+        "wild_magic_recharge_support",
+    },
+    "tireless_spirit": {"resource_recovery_support"},
+    "wails_from_the_grave": {"extra_damage", "resource"},
+}
 
 def _owned_g1_trait_ids() -> set[str]:
     owned: set[str] = set()
@@ -92,6 +124,18 @@ def test_w6_par_05g1_registry_retargets_action_traits_to_g2() -> None:
         assert target_family == "trait_resource_turn_gated"
 
 
+def test_w6_par_05g1_continuation_slice_belongs_to_registry() -> None:
+    assignments: dict[str, str] = {}
+    with REGISTRY_PATH.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            content_id = str(row.get("content_id", "")).strip()
+            if content_id in CONTINUATION_SLICE_IDS:
+                assignments[content_id] = str(row.get("leaf_task_id", "")).strip()
+
+    assert assignments == CONTINUATION_SLICE_REGISTRY_ASSIGNMENTS
+
+
 def test_w6_par_05g1_owned_trait_records_are_supported() -> None:
     owned_ids = _owned_g1_trait_ids()
     manifest = build_feature_capability_manifest()
@@ -114,6 +158,21 @@ def test_w6_par_05g1_owned_trait_records_are_supported() -> None:
         assert record.support_state == "supported"
         assert record.states.blocked is False
         assert record.states.unsupported_reason is None
+        assert record.runtime_hook_family == "meta"
+
+
+def test_w6_par_05g1_continuation_slice_records_are_supported() -> None:
+    manifest = build_feature_capability_manifest()
+    by_id = {record.content_id: record for record in manifest.records}
+
+    missing_ids = sorted(CONTINUATION_SLICE_IDS - set(by_id))
+    assert missing_ids == []
+
+    for content_id in sorted(CONTINUATION_SLICE_IDS):
+        record = by_id[content_id]
+        assert record.content_type == "trait"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
         assert record.runtime_hook_family == "meta"
 
 
@@ -181,3 +240,59 @@ def test_w6_par_05g1d_trait_files_use_canonical_mechanics_rows() -> None:
             ), f"{content_id} mechanics[{idx}] must not define effect_type"
         issues = validate_rule_mechanics_payload(kind="trait", payload=payload)
         assert issues == [], f"{content_id} has schema issues: {issues}"
+
+
+def test_w6_par_05g1_continuation_slice_uses_expected_meta_types() -> None:
+    for trait_id, expected_meta_types in sorted(CONTINUATION_SLICE_META_TYPES.items()):
+        payload = json.loads((TRAITS_DIR / f"{trait_id}.json").read_text(encoding="utf-8"))
+        mechanics = payload.get("mechanics")
+        assert isinstance(mechanics, list), f"trait:{trait_id} mechanics must be a list"
+        assert mechanics, f"trait:{trait_id} mechanics must not be empty"
+
+        seen_meta_types = {
+            str(row.get("meta_type", "")).strip()
+            for row in mechanics
+            if isinstance(row, dict)
+        }
+        assert expected_meta_types <= seen_meta_types
+
+        issues = validate_rule_mechanics_payload(kind="trait", payload=payload)
+        assert issues == [], f"trait:{trait_id} has schema issues: {issues}"
+
+
+def test_w6_par_05g1_tides_of_chaos_preserves_structured_single_use_limit() -> None:
+    payload = json.loads((TRAITS_DIR / "tides_of_chaos.json").read_text(encoding="utf-8"))
+    limited_rows = [
+        row
+        for row in payload.get("mechanics", [])
+        if isinstance(row, dict) and row.get("uses") == 1
+    ]
+
+    assert len(limited_rows) == 1
+    assert limited_rows[0].get("recharge") == "long_rest"
+
+
+def test_w6_par_05g1_continuation_slice_uses_recharge_key_consistently() -> None:
+    master_duelist = json.loads((TRAITS_DIR / "master_duelist.json").read_text(encoding="utf-8"))
+    master_duelist_rows = [
+        row
+        for row in master_duelist.get("mechanics", [])
+        if isinstance(row, dict) and str(row.get("meta_type", "")).strip() == "recharge"
+    ]
+    assert len(master_duelist_rows) == 1
+    assert master_duelist_rows[0].get("uses") == 1
+    assert master_duelist_rows[0].get("recharge") == "short_or_long_rest"
+    assert "frequency" not in master_duelist_rows[0]
+
+    wails_from_the_grave = json.loads(
+        (TRAITS_DIR / "wails_from_the_grave.json").read_text(encoding="utf-8")
+    )
+    resource_rows = [
+        row
+        for row in wails_from_the_grave.get("mechanics", [])
+        if isinstance(row, dict) and str(row.get("meta_type", "")).strip() == "resource"
+    ]
+    assert len(resource_rows) == 1
+    assert resource_rows[0].get("uses") == "proficiency_bonus"
+    assert resource_rows[0].get("recharge") == "long_rest"
+    assert "reset" not in resource_rows[0]
