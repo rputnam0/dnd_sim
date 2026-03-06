@@ -6,7 +6,8 @@
       "effect": "jump_distance_bonus",
       "condition": "raging",
       "long_jump_extra_feet": 10,
-      "high_jump_extra_feet": 3
+      "high_jump_extra_feet": 3,
+      "meta_type": "jump_distance_modifier"
     }
   ],
   "source_type": "subclass"

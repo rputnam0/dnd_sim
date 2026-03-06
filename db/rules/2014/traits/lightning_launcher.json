@@ -11,13 +11,15 @@
           "normal": 90,
           "long": 300
         }
-      }
+      },
+      "meta_type": "benefit"
     },
     {
-      "extra_damage_on_hit": {
-        "damage": "1d6 lightning",
-        "frequency": "once per turn"
-      }
+      "effect_type": "extra_damage",
+      "trigger": "once_per_turn_when_lightning_launcher_hits",
+      "target": "hit_creature",
+      "damage": "1d6",
+      "damage_type": "lightning"
     }
   ],
   "source_type": "subclass"

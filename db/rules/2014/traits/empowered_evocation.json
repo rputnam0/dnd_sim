@@ -7,7 +7,8 @@
         "ability": "intelligence",
         "target": "one damage roll",
         "scope": "wizard evocation spells"
-      }
+      },
+      "meta_type": "damage_bonus"
     }
   ],
   "source_type": "subclass"
