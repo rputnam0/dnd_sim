@@ -8,9 +8,10 @@
       "duration": "current_turn"
     },
     {
-      "effect_type": "speed_increase",
-      "amount": 10,
-      "condition": "use_flurry_of_blows",
+      "meta_type": "speed_modifier",
+      "value": 10,
+      "unit": "feet",
+      "trigger": "use_flurry_of_blows",
       "duration": "until_end_of_turn"
     }
   ],

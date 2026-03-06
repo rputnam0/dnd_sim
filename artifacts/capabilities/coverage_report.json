@@ -23705,7 +23705,7 @@
     {
       "content_id": "trait:drunken_technique",
       "content_type": "trait",
-      "runtime_hook_family": "effect_meta",
+      "runtime_hook_family": "meta",
       "states": {
         "blocked": false,
         "cataloged": true,

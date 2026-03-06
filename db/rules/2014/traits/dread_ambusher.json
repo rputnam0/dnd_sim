@@ -7,9 +7,10 @@
       "value": "wisdom_modifier"
     },
     {
-      "effect_type": "speed_increase",
-      "amount": 10,
-      "condition": "start_of_first_turn_each_combat",
+      "meta_type": "speed_modifier",
+      "value": 10,
+      "unit": "feet",
+      "trigger": "start_of_first_turn_each_combat",
       "duration": "until_end_of_turn"
     },
     {

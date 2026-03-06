@@ -32,7 +32,7 @@ W6_PAR_05F2_TRAIT_FAMILIES = {
     "trait:divine_soul": "meta",
     "trait:divine_strike": "effect",
     "trait:dread_ambusher": "effect_meta",
-    "trait:drunken_technique": "effect_meta",
+    "trait:drunken_technique": "meta",
     "trait:eldritch_strike": "effect",
     "trait:elemental_cleaver": "effect_meta",
     "trait:extra_attack_2": "meta",
@@ -114,9 +114,20 @@ def test_w6_par_05f2_representative_offense_and_mobility_rows_use_canonical_type
         if isinstance(row, dict)
     }
     assert (None, "initiative_bonus") in dread_types
-    assert ("speed_increase", None) in dread_types
+    assert (None, "speed_modifier") in dread_types
+    assert ("speed_increase", None) not in dread_types
     assert (None, "extra_attack") in dread_types
     assert ("extra_damage", None) in dread_types
+
+    drunken_technique = _load_trait_payload("trait:drunken_technique")
+    drunken_types = {
+        (row.get("effect_type"), row.get("meta_type"))
+        for row in drunken_technique["mechanics"]
+        if isinstance(row, dict)
+    }
+    assert (None, "disengage") in drunken_types
+    assert (None, "speed_modifier") in drunken_types
+    assert ("speed_increase", None) not in drunken_types
 
     storm_s_fury = _load_trait_payload("trait:storm_s_fury")
     storm_types = {
@@ -158,6 +169,21 @@ def test_w6_par_05f2_representative_offense_and_mobility_rows_use_canonical_type
             "reset": "long_rest",
             "scales_with": "barbarian_weapon_mastery_progression",
             "weapon_categories": ["simple", "martial_melee"],
+        }
+    ]
+
+    divine_smite = _load_trait_payload("trait:divine_smite")
+    assert divine_smite["mechanics"] == [
+        {
+            "effect_type": "extra_damage",
+            "trigger": "hit_with_melee_weapon_attack",
+            "damage": "2d8 + 1d8_per_slot_level_above_1st",
+            "damage_type": "radiant",
+            "resource": "spell_slot",
+            "maximum_damage": "5d8",
+            "bonus_damage": "1d8",
+            "bonus_damage_against": ["undead", "fiend"],
+            "maximum_damage_against_bonus_targets": "6d8",
         }
     ]
 
