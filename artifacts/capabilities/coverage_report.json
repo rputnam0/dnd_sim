@@ -35437,11 +35437,11 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 484,
-    "executable_records": 2043,
+    "blocked_records": 468,
+    "executable_records": 2059,
     "schema_valid_records": 2527,
-    "supported_records": 2043,
-    "tested_records": 2043,
+    "supported_records": 2059,
+    "tested_records": 2059,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from dnd_sim.capability_manifest import build_spell_capability_manifest
 from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
+from dnd_sim.spells import canonicalize_spell_payload
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = REPO_ROOT / "docs" / "program" / "parity_leaf_registry.csv"
@@ -121,13 +122,18 @@ def test_w6_par_05j2_supported_spell_files_use_canonical_rows() -> None:
         assert isinstance(mechanics, list), f"{content_id} mechanics must be a list"
         assert mechanics, f"{content_id} mechanics must not be empty"
         if content_id == "spell:contact_other_plane":
-            by_effect_type = {
-                str(row.get("effect_type")): row for row in mechanics if isinstance(row, dict)
-            }
-            assert payload.get("action_type") == "save"
-            assert payload.get("target_mode") == "self"
-            assert payload.get("save_ability") == "int"
-            assert payload.get("save_dc") == 15
+            effect_rows = [row for row in mechanics if isinstance(row, dict)]
+            effect_types = [str(row.get("effect_type")) for row in effect_rows]
+            assert effect_types.count("save") == 1
+            assert effect_types.count("sense") == 1
+            assert effect_types.count("damage") == 1
+            assert effect_types.count("apply_condition") == 1
+            by_effect_type = {str(row.get("effect_type")): row for row in effect_rows}
+            canonical_payload = canonicalize_spell_payload(payload, source_path=path)
+            assert canonical_payload.get("action_type") == "save"
+            assert canonical_payload.get("target_mode") == "self"
+            assert canonical_payload.get("save_ability") == "int"
+            assert canonical_payload.get("save_dc") == 15
             assert by_effect_type["save"].get("save_ability") == "int"
             assert by_effect_type["save"].get("save_dc") == 15
             assert by_effect_type["sense"].get("apply_on") == "save_success"

@@ -17,11 +17,11 @@ Do not edit manually.
 | Metric | Value |
 |---|---:|
 | Total records | 2527 |
-| Supported records | 2043 |
-| Blocked records | 484 |
+| Supported records | 2059 |
+| Blocked records | 468 |
 | Schema-valid records | 2527 |
-| Executable records | 2043 |
-| Tested records | 2043 |
+| Executable records | 2059 |
+| Tested records | 2059 |
 
 ## Coverage By Content Type
 
@@ -31,30 +31,12 @@ Do not edit manually.
 | feat | 219 | 219 | 0 | 219 | 219 | 219 |
 | monster | 191 | 191 | 0 | 191 | 191 | 191 |
 | species | 256 | 256 | 0 | 256 | 256 | 256 |
-<<<<<<< HEAD
-| spell | 594 | 170 | 424 | 594 | 170 | 170 |
-<<<<<<< HEAD
-| trait | 1181 | 1121 | 60 | 1181 | 1121 | 1121 |
-=======
-| trait | 1181 | 1114 | 67 | 1181 | 1114 | 1114 |
-=======
 | spell | 594 | 186 | 408 | 594 | 186 | 186 |
-| trait | 1181 | 1098 | 83 | 1181 | 1098 | 1098 |
->>>>>>> 41f6524 (Regenerate J2 capability report after rebase)
->>>>>>> a1f2792 (Regenerate J2 capability report after rebase)
+| trait | 1181 | 1121 | 60 | 1181 | 1121 | 1121 |
 
 ## Unsupported Reason Coverage
 
 | Unsupported reason | Count |
 |---|---:|
-<<<<<<< HEAD
 | missing_runtime_hook_family | 60 |
-=======
-<<<<<<< HEAD
-| missing_runtime_hook_family | 67 |
->>>>>>> a1f2792 (Regenerate J2 capability report after rebase)
-| missing_runtime_mechanics | 424 |
-=======
-| missing_runtime_hook_family | 83 |
 | missing_runtime_mechanics | 408 |
->>>>>>> 41f6524 (Regenerate J2 capability report after rebase)
