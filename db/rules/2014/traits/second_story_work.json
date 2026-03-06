@@ -3,13 +3,15 @@
   "description": "When you choose this archetype at 3rd level, you gain the ability to climb faster than normal; climbing no longer costs you extra movement. In addition, when you make a running jump, the distance you cover increases by a number of feet equal to your Dexterity modifier.",
   "mechanics": [
     {
-      "effect": "climb",
-      "description": "Climbing no longer costs extra movement; you can climb at your normal speed."
+      "allows": "climb_without_extra_movement_cost",
+      "description": "Climbing no longer costs extra movement; you can climb at your normal speed.",
+      "meta_type": "movement"
     },
     {
-      "effect": "running_jump_distance",
       "description": "Running jump distance increased by your Dexterity modifier (in feet).",
-      "value": "dex_mod"
+      "modifier": "Dexterity modifier",
+      "applies_to": "running_jump_distance_feet",
+      "meta_type": "movement"
     }
   ],
   "source_type": "subclass"

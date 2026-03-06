@@ -3,13 +3,12 @@
   "description": "Starting at 14th level, you have advantage on saving throws against spells. Furthermore, you have resistance against the damage of spells.",
   "mechanics": [
     {
-      "effect": "advantage",
-      "target": "saving_throws",
-      "condition": "against_spells"
+      "against": "spells",
+      "meta_type": "saving_throw_advantage"
     },
     {
-      "effect": "resistance",
-      "damage_type": "spell"
+      "damage_type": "spell",
+      "meta_type": "damage_resistance"
     }
   ],
   "source_type": "subclass"

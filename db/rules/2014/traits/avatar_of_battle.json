@@ -3,14 +3,13 @@
   "description": "At 17th level, you gain resistance to bludgeoning, piercing, and slashing damage from nonmagical attacks.",
   "mechanics": [
     {
-      "resistance": {
-        "damageTypes": [
-          "bludgeoning",
-          "piercing",
-          "slashing"
-        ],
-        "source": "nonmagical attacks"
-      }
+      "damage_types": [
+        "bludgeoning",
+        "piercing",
+        "slashing"
+      ],
+      "source": "nonmagical attacks",
+      "meta_type": "damage_resistance"
     }
   ],
   "source_type": "subclass"

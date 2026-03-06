@@ -3,13 +3,10 @@
   "description": "By 11th level, you are so suffused with righteous might that all your melee weapon strikes carry divine power with them. Whenever you hit a creature with a melee weapon, the creature takes an extra 1d8 radiant damage.",
   "mechanics": [
     {
-      "effect": "extra_damage",
-      "trigger": "hit",
-      "weapon_type": "melee",
-      "damage": {
-        "dice": "1d8",
-        "type": "radiant"
-      }
+      "effect_type": "extra_damage",
+      "damage": "1d8",
+      "damage_type": "radiant",
+      "trigger": "melee_weapon_hit"
     }
   ],
   "source_type": "class"
