@@ -18891,16 +18891,16 @@
     {
       "content_id": "trait:abjure_enemy",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:abjure_foes",
@@ -21299,16 +21299,16 @@
     {
       "content_id": "trait:champion_challenge",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:channel_divinity",
@@ -22237,16 +22237,16 @@
     {
       "content_id": "trait:conquering_presence",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:consult_the_spirits",
@@ -22279,16 +22279,16 @@
     {
       "content_id": "trait:control_undead",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:controlled_chaos",
@@ -22363,16 +22363,16 @@
     {
       "content_id": "trait:countercharm",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:create_thrall",
@@ -23539,16 +23539,16 @@
     {
       "content_id": "trait:dreadful_aspect",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:dreadful_strikes",
