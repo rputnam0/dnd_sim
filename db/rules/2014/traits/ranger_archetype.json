@@ -1,6 +1,11 @@
 {
   "name": "Ranger Archetype",
   "description": "At 3rd level, you choose an archetype that you strive to emulate from the list of available archetypes. Your choice grants features at 3rd level, and again at 7th, 11th, and 15th level.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "choose_subclass",
+      "meta_type": "subclass_choice"
+    }
+  ],
   "source_type": "class"
 }

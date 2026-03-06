@@ -10,7 +10,8 @@
         "Command",
         "Scorching Ray",
         "Suggestion"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
       "effect": "always_prepared_spells",
@@ -18,7 +19,8 @@
       "spells": [
         "Fireball",
         "Stinking Cloud"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
       "effect": "always_prepared_spells",
@@ -26,7 +28,8 @@
       "spells": [
         "Fire Shield",
         "Wall of Fire"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
       "effect": "always_prepared_spells",
@@ -34,7 +37,8 @@
       "spells": [
         "Geas",
         "Insect Plague"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     }
   ],
   "source_type": "subclass"

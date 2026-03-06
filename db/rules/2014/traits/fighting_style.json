@@ -1,6 +1,11 @@
 {
   "name": "Fighting Style",
   "description": "You adopt a particular style of fighting as your specialty. Choose one of the following options. You can't take the same Fighting Style option more than once, even if you get to choose again. Options: Archery, Defense, Dueling, Great Weapon Fighting, Protection, Two-Weapon Fighting, Blind Fighting, Interception, Superior Technique, Thrown Weapon Fighting, Unarmed Fighting.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "feature_progression",
+      "meta_type": "feature_progression"
+    }
+  ],
   "source_type": "class"
 }

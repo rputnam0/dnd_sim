@@ -1,6 +1,11 @@
 {
   "name": "Illusionist",
   "description": "Weave Subtle Spells of Deception. You specialize in magic that dazzles the senses and tricks the mind, and the illusions you craft make the impossible seem real.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "subclass_scaffold",
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

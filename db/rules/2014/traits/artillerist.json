@@ -1,6 +1,11 @@
 {
   "name": "Artillerist",
   "description": "Wield Destructive Power from Afar\nAn Artillerist specializes in using magic to hurl energy, projectiles, and explosions on a battlefield.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "subclass_scaffold",
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

@@ -7,7 +7,8 @@
         "armor": [
           "light"
         ]
-      }
+      },
+      "meta_type": "proficiency"
     },
     {
       "gainProficiency": {
@@ -15,12 +16,14 @@
           "type": "one-handed melee",
           "choice": true
         }
-      }
+      },
+      "meta_type": "proficiency"
     },
     {
       "gainProficiency": {
         "skill": "Performance"
-      }
+      },
+      "meta_type": "proficiency"
     }
   ],
   "source_type": "subclass"

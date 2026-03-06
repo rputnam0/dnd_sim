@@ -18,7 +18,7 @@ def _w6_par_05e1_trait_ids() -> set[str]:
             for row in csv.DictReader(handle)
             if str(row.get("leaf_task_id", "")).strip() == "W6-PAR-05E1"
         }
-    assert len(ids) == 88
+    assert len(ids) == 201
     return ids
 
 

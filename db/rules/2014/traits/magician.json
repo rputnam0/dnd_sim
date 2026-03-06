@@ -4,12 +4,14 @@
   "mechanics": [
     {
       "effect": "extra_cantrip",
-      "spell_list": "Druid"
+      "spell_list": "Druid",
+      "meta_type": "spellcasting_option"
     },
     {
       "effect": "skill_bonus",
       "skill": "Intelligence (Arcana or Nature)",
-      "bonus": "Wisdom modifier (minimum +1)"
+      "bonus": "Wisdom modifier (minimum +1)",
+      "meta_type": "spellcasting_option"
     }
   ],
   "source_type": "class"
