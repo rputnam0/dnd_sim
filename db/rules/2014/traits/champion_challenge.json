@@ -12,7 +12,8 @@
         "type": "wisdom"
       },
       "effect": "creature cannot willingly move more than 30 feet away from you",
-      "duration": "until you become incapacitated, you die, or the creature is more than 30 feet away"
+      "duration": "until you become incapacitated, you die, or the creature is more than 30 feet away",
+      "meta_type": "saving_throw"
     }
   ],
   "source_type": "subclass"

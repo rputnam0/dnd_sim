@@ -13,7 +13,8 @@
       "damage": {
         "type": "force",
         "formula": "floor(wizard_level / 2)"
-      }
+      },
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

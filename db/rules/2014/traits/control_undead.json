@@ -11,7 +11,8 @@
         "on_failure": "target obeys paladin's commands"
       },
       "duration": "24 hours or until the paladin uses this Channel Divinity option again",
-      "immunity": "undead with challenge rating >= paladin's level"
+      "immunity": "undead with challenge rating >= paladin's level",
+      "meta_type": "saving_throw"
     }
   ],
   "source_type": "subclass"
