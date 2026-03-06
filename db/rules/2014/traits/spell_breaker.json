@@ -9,7 +9,8 @@
       },
       "action": "end_spell",
       "target": "creature",
-      "spell_level_limit": "healing_spell_slot_level"
+      "spell_level_limit": "healing_spell_slot_level",
+      "meta_type": "healing_dispel_support"
     }
   ],
   "source_type": "subclass"

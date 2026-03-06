@@ -6,13 +6,15 @@
       "effect": "regain_focus_points",
       "trigger": "initiative_roll",
       "scope": "all_expended",
-      "once_per": "long_rest"
+      "once_per": "long_rest",
+      "meta_type": "resource_recovery_support"
     },
     {
       "effect": "regain_hit_points",
       "trigger": "initiative_roll",
       "amount": "monk_level + martial_arts_die",
-      "once_per": "long_rest"
+      "once_per": "long_rest",
+      "meta_type": "self_healing_support"
     }
   ],
   "source_type": "class"

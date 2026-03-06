@@ -10,7 +10,8 @@
         "type": "heal",
         "dice": "1d8",
         "ability_modifier": "Wisdom"
-      }
+      },
+      "meta_type": "healing_trigger_support"
     }
   ],
   "source_type": "subclass"

@@ -7,7 +7,8 @@
       "effect": "Regain hit points equal to half your maximum hit points; you may stand up",
       "usage": {
         "frequency": "once per long rest"
-      }
+      },
+      "meta_type": "self_revival_support"
     },
     {
       "target": "Each creature of your choice within 30 feet",
@@ -19,7 +20,8 @@
       "condition": {
         "type": "blinded",
         "duration": "until end of turn"
-      }
+      },
+      "meta_type": "deathburst_radiant_support"
     }
   ],
   "source_type": "subclass"

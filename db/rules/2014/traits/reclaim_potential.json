@@ -14,7 +14,8 @@
       "usage": {
         "max_uses": "Constitution modifier (minimum 1)",
         "reset": "long_rest"
-      }
+      },
+      "meta_type": "temporary_hp_recovery_support"
     }
   ],
   "source_type": "subclass"

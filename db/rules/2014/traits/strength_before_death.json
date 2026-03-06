@@ -7,7 +7,8 @@
       "trigger": "damage reduces you to 0 hit points but does not kill you outright",
       "effect": "delay falling unconscious and immediately take an extra turn",
       "duration": "extra turn",
-      "usage": "once per long rest"
+      "usage": "once per long rest",
+      "meta_type": "extra_turn_survival_support"
     }
   ],
   "source_type": "subclass"

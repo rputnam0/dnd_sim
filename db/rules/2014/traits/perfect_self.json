@@ -13,7 +13,8 @@
         "type": "restore_resource",
         "resource": "ki points",
         "amount": 4
-      }
+      },
+      "meta_type": "resource_recovery_support"
     }
   ],
   "source_type": "class"
