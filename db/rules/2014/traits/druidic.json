@@ -3,7 +3,8 @@
   "description": "You know Druidic, the secret language of druids. You can speak the language and use it to leave hidden messages. You and others who know this language automatically spot such a message. Others spot the message's presence with a successful DC 15 Wisdom (Perception) check but can't decipher it without magic.",
   "mechanics": [
     {
-      "grantsLanguage": "Druidic"
+      "grantsLanguage": "Druidic",
+      "meta_type": "learn_language"
     },
     {
       "hiddenMessageDetection": {
@@ -11,7 +12,8 @@
         "ability": "wisdom",
         "skill": "perception",
         "requiresMagicToDecipher": true
-      }
+      },
+      "meta_type": "hidden_message"
     }
   ],
   "source_type": "class"

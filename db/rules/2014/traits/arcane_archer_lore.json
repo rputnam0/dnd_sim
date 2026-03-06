@@ -1,6 +1,6 @@
 {
   "name": "Arcane Archer Lore",
-  "description": "At 3rd level, you learn magical theory or some of the secrets of nature—typical for practitioners of this elven martial tradition. You choose to gain proficiency in either the Arcana or the Nature skill, and you choose to learn either the prestidigitation or the druidcraft cantrip.",
+  "description": "At 3rd level, you learn magical theory or some of the secrets of nature\u2014typical for practitioners of this elven martial tradition. You choose to gain proficiency in either the Arcana or the Nature skill, and you choose to learn either the prestidigitation or the druidcraft cantrip.",
   "mechanics": [
     {
       "grantProficiency": {
@@ -10,7 +10,8 @@
         ],
         "choice": true,
         "type": "skill"
-      }
+      },
+      "meta_type": "skill_proficiency"
     },
     {
       "grantCantrip": {
@@ -19,7 +20,8 @@
           "druidcraft"
         ],
         "choice": true
-      }
+      },
+      "meta_type": "learn_cantrip"
     }
   ],
   "source_type": "subclass"

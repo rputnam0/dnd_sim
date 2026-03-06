@@ -1,6 +1,12 @@
 {
   "name": "Additional Rune Known",
   "description": "You learn an additional Rune.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice",
+      "target": "rune",
+      "quantity": 1
+    }
+  ],
   "source_type": "subclass"
 }
