@@ -22,6 +22,19 @@ SLICE_ONE_J2_SPELL_IDS = {
     "spell:locate_object",
 }
 
+SLICE_TWO_J2_SPELL_IDS = {
+    "spell:augury",
+    "spell:commune",
+    "spell:commune_with_nature",
+    "spell:contact_other_plane",
+    "spell:divination",
+    "spell:find_the_path",
+    "spell:guidance_divination",
+    "spell:locate_animals_or_plants",
+}
+
+SUPPORTED_SLICE_IDS = SLICE_ONE_J2_SPELL_IDS | SLICE_TWO_J2_SPELL_IDS
+
 
 def _owned_j2_spell_ids() -> set[str]:
     owned: set[str] = set()
@@ -32,7 +45,7 @@ def _owned_j2_spell_ids() -> set[str]:
                 content_id = str(row.get("content_id", "")).strip()
                 if content_id:
                     owned.add(content_id)
-    assert owned.issuperset(SLICE_ONE_J2_SPELL_IDS)
+    assert owned.issuperset(SUPPORTED_SLICE_IDS)
     return owned
 
 
@@ -40,7 +53,7 @@ def test_w6_par_05j2_slice_one_spells_are_supported() -> None:
     manifest = build_spell_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
-    missing_ids = sorted(SLICE_ONE_J2_SPELL_IDS - set(by_id))
+    missing_ids = sorted(SUPPORTED_SLICE_IDS - set(by_id))
     assert missing_ids == []
 
     blocked_missing_mechanics = {
@@ -49,9 +62,9 @@ def test_w6_par_05j2_slice_one_spells_are_supported() -> None:
         if record.content_type == "spell"
         and record.states.unsupported_reason == "missing_runtime_mechanics"
     }
-    assert blocked_missing_mechanics.isdisjoint(SLICE_ONE_J2_SPELL_IDS)
+    assert blocked_missing_mechanics.isdisjoint(SUPPORTED_SLICE_IDS)
 
-    for content_id in sorted(SLICE_ONE_J2_SPELL_IDS):
+    for content_id in sorted(SUPPORTED_SLICE_IDS):
         record = by_id[content_id]
         assert record.content_type == "spell"
         assert record.support_state == "supported"
@@ -69,12 +82,12 @@ def test_w6_par_05j2_owned_spell_blockers_shrink_after_slice_one() -> None:
         if record.content_id in owned_ids and record.states.blocked
     }
 
-    assert SLICE_ONE_J2_SPELL_IDS.isdisjoint(blocked_owned)
+    assert SUPPORTED_SLICE_IDS.isdisjoint(blocked_owned)
     assert 0 < len(blocked_owned) < len(owned_ids)
 
 
 def test_w6_par_05j2_slice_one_spell_files_use_canonical_sense_rows() -> None:
-    for content_id in sorted(SLICE_ONE_J2_SPELL_IDS):
+    for content_id in sorted(SUPPORTED_SLICE_IDS):
         spell_id = content_id.split(":", 1)[1]
         path = SPELLS_DIR / f"{spell_id}.json"
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -86,7 +99,10 @@ def test_w6_par_05j2_slice_one_spell_files_use_canonical_sense_rows() -> None:
             assert row.get("effect_type") == "sense", (
                 f"{content_id} mechanics[{idx}] must use effect_type=sense"
             )
-            assert row.get("range_ft"), f"{content_id} mechanics[{idx}] missing range_ft"
+            assert "range_ft" in row, f"{content_id} mechanics[{idx}] missing range_ft"
+            assert row.get("range_ft") is not None, (
+                f"{content_id} mechanics[{idx}] range_ft must not be null"
+            )
             assert row.get("sense"), f"{content_id} mechanics[{idx}] missing sense"
         issues = validate_rule_mechanics_payload(kind="spell", payload=payload)
         assert issues == [], f"{content_id} has schema issues: {issues}"
