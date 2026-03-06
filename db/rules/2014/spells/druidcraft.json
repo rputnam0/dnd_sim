@@ -13,27 +13,23 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "weather_prediction",
-      "duration_rounds": 1
-    },
-    {
-      "effect_type": "grow_plant",
-      "duration_rounds": 0
-    },
-    {
-      "effect_type": "create_sensory_effect",
-      "shape": "cube",
-      "size_ft": 5,
-      "duration_rounds": 0
-    },
-    {
-      "effect_type": "light_control",
-      "targets": [
+      "effect_type": "transform",
+      "condition": "druidcraft_minor_nature_effect",
+      "target": "source",
+      "duration_rounds": 1,
+      "effects": [
+        "weather_prediction",
+        "plant_growth",
+        "sensory_effect",
+        "light_control"
+      ],
+      "sensory_shape": "cube",
+      "sensory_size_ft": 5,
+      "light_targets": [
         "candle",
         "torch",
         "campfire"
-      ],
-      "duration_rounds": 0
+      ]
     }
   ]
 }

@@ -8,30 +8,22 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "You create an illusion of an object, creature, or other visible phenomenon within 120 feet that remains imperceptible until a condition you specify occurs within 30 feet of the area. The illusion can be no larger than a 30‑foot cube and may include sounds. When the trigger condition occurs, the illusion springs into existence and performs as you described for up to 5 minutes, then disappears and remains dormant for 10 minutes before it can be activated again. A creature can use its action to examine the image; on a successful Intelligence (Investigation) check against your spell save DC it discerns the illusion, can see through it, and any noise it makes sounds hollow to that creature.",
+  "description": "You create an illusion of an object, creature, or other visible phenomenon within 120 feet that remains imperceptible until a condition you specify occurs within 30 feet of the area. The illusion can be no larger than a 30\u2011foot cube and may include sounds. When the trigger condition occurs, the illusion springs into existence and performs as you described for up to 5 minutes, then disappears and remains dormant for 10 minutes before it can be activated again. A creature can use its action to examine the image; on a successful Intelligence (Investigation) check against your spell save DC it discerns the illusion, can see through it, and any noise it makes sounds hollow to that creature.",
   "save_ability": null,
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "create_illusion",
+      "effect_type": "hazard",
+      "hazard_type": "programmed_illusion",
+      "duration_rounds": 28800,
       "max_size_ft": 30,
+      "trigger_condition_type": "visual_or_audible",
       "trigger_range_ft": 30,
-      "trigger_condition_type": "visual_or_audible"
-    },
-    {
-      "effect_type": "illusion_duration",
-      "duration_seconds": 300
-    },
-    {
-      "effect_type": "recharge",
-      "recharge_seconds": 600
-    },
-    {
-      "effect_type": "examination",
-      "requires_action": true,
-      "skill_check": "intelligence",
-      "skill": "investigation",
-      "outcome": "see_through_illusion"
+      "illusion_duration_seconds": 300,
+      "recharge_seconds": 600,
+      "examination_skill": "investigation",
+      "examination_ability": "intelligence",
+      "requires_action_to_examine": true
     }
   ]
 }

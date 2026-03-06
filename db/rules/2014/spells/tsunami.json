@@ -14,31 +14,31 @@
   "mechanics": [
     {
       "effect_type": "aoe",
-      "shape": "wall",
-      "length_ft": 300,
       "height_ft": 300,
+      "length_ft": 300,
+      "shape": "wall",
       "thickness_ft": 50
     },
     {
       "effect_type": "damage",
       "damage": "6d10",
       "damage_type": "bludgeoning",
-      "save": "strength",
+      "save_ability": "str",
       "timing": "on_cast"
     },
     {
       "effect_type": "damage",
       "damage": "5d10",
       "damage_type": "bludgeoning",
-      "save": "strength",
+      "save_ability": "str",
       "timing": "start_of_turn",
       "once_per_round": true
     },
     {
-      "effect_type": "ability_check",
+      "effect_type": "apply_condition",
+      "condition": "tsunami_movement_restricted",
       "ability": "strength",
       "skill": "athletics",
-      "dc_source": "spell_save_dc",
       "result": "must_succeed_to_move"
     }
   ]

@@ -14,19 +14,17 @@
   "mechanics": [
     {
       "effect_type": "area",
-      "shape": "custom",
       "area_sqft": 40000,
-      "height_ft": 30
+      "height_ft": 30,
+      "shape": "custom"
     },
     {
-      "effect_type": "prevent_teleport",
-      "duration": "spell"
-    },
-    {
-      "effect_type": "prevent_planar_travel"
-    },
-    {
-      "effect_type": "damage_on_enter",
+      "effect_type": "hazard",
+      "hazard_type": "forbiddance",
+      "duration_rounds": 14400,
+      "prevent_teleport": true,
+      "prevent_planar_travel": true,
+      "password_exemption": true,
       "creature_types": [
         "celestial",
         "elemental",
@@ -34,12 +32,13 @@
         "fiend",
         "undead"
       ],
-      "damage": "5d10",
-      "damage_type": "radiant_or_necrotic"
-    },
-    {
-      "effect_type": "password_exemption",
-      "description": "Creature speaking the designated password takes no damage when entering the area"
+      "on_enter": [
+        {
+          "effect_type": "damage",
+          "damage": "5d10",
+          "damage_type": "radiant_or_necrotic"
+        }
+      ]
     }
   ]
 }

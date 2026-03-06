@@ -13,9 +13,10 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "extra_attack",
-      "count": 2,
-      "action": "bonus"
+      "effect_type": "apply_condition",
+      "condition": "swift_quiver_bonus_attacks",
+      "duration_rounds": 10,
+      "bonus_action_attacks": 2
     }
   ]
 }

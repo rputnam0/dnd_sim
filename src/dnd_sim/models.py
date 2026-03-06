@@ -232,6 +232,7 @@ class ActorRuntimeState:
     condition_immunities: set[str] = field(default_factory=set)
     conditions: set[str] = field(default_factory=set)
     intrinsic_conditions: set[str] = field(default_factory=set)
+    exhaustion_level: int = 0
     resources: dict[str, int] = field(default_factory=dict)
     max_resources: dict[str, int] = field(default_factory=dict)
     concentrating: bool = False

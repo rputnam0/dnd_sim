@@ -14,25 +14,22 @@
   "mechanics": [
     {
       "effect_type": "summon",
+      "name": "Faithful Hound",
       "creature": "phantom_hound",
-      "duration_rounds": 4800
+      "duration_rounds": 4800,
+      "controller": "source",
+      "requires_command": false
     },
     {
       "effect_type": "apply_condition",
       "condition": "invisible",
-      "target": "hound",
       "duration_rounds": 4800
     },
     {
-      "effect_type": "trigger",
-      "trigger": "creature_within_30ft_without_password",
-      "action": "bark"
-    },
-    {
-      "effect_type": "melee_attack",
+      "effect_type": "damage",
       "damage": "4d8",
       "damage_type": "piercing",
-      "range_ft": 5
+      "trigger": "creature_within_5ft_without_password"
     }
   ]
 }

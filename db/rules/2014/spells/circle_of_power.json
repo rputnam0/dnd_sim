@@ -13,21 +13,22 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "grant_advantage",
-      "target": "friendly",
-      "against": "spells_and_magical_effects",
-      "duration": 100
+      "effect_type": "apply_condition",
+      "condition": "advantage_on_saves_vs_spells_and_magical_effects",
+      "duration_rounds": 100,
+      "target": "friendly"
     },
     {
-      "effect_type": "damage_reduction",
-      "condition": "succeeds_save_half_damage",
-      "reduction": "full",
-      "duration": 100
+      "effect_type": "apply_condition",
+      "condition": "successful_save_ignores_half_damage",
+      "duration_rounds": 100,
+      "target": "friendly"
     },
     {
       "effect_type": "aoe",
+      "radius_ft": 30,
       "shape": "sphere",
-      "radius": 30
+      "center": "self"
     }
   ]
 }

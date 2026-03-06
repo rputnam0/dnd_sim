@@ -15,22 +15,23 @@
     {
       "effect_type": "apply_condition",
       "condition": "blinded",
-      "duration": 600
+      "duration_rounds": 600
     },
     {
       "effect_type": "apply_condition",
       "condition": "incapacitated",
-      "duration": 600
+      "duration_rounds": 600
     },
     {
-      "effect_type": "set_speed",
-      "speed": 0,
-      "duration": 600
+      "effect_type": "apply_condition",
+      "condition": "speed_0",
+      "duration_rounds": 600
     },
     {
-      "effect_type": "grant_resistance",
-      "damage_type": "all_except_psychic",
-      "duration": 600
+      "effect_type": "apply_condition",
+      "condition": "resistant_to_all_except_psychic",
+      "duration_rounds": 600,
+      "damage_type": "all_except_psychic"
     }
   ]
 }

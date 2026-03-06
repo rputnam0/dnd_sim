@@ -13,24 +13,26 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "create_undead",
+      "effect_type": "summon",
+      "name": "Animated Undead",
       "creature_options": [
         "skeleton",
         "zombie"
-      ]
-    },
-    {
-      "effect_type": "control",
-      "duration_minutes": 1440
-    },
-    {
-      "effect_type": "command",
-      "action_type": "bonus_action",
-      "command_range_ft": 60
-    },
-    {
-      "effect_type": "extend_control",
+      ],
+      "duration_minutes": 1440,
+      "requires_command": true,
+      "controller": "source",
       "additional_targets_per_slot_level": 2
+    },
+    {
+      "effect_type": "command_allied",
+      "all_controlled": true,
+      "target": "source",
+      "action_type": "bonus_action",
+      "command_range_ft": 60,
+      "control_duration_minutes": 1440,
+      "reassert_control": true,
+      "command_scope": "animated_undead"
     }
   ]
 }

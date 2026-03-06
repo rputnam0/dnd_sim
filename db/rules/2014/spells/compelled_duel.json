@@ -14,14 +14,16 @@
   "mechanics": [
     {
       "effect_type": "apply_condition",
-      "condition": "disadvantage_on_attacks_against_others",
-      "duration_rounds": 10
+      "condition": "compelled_duel_disadvantage_against_others",
+      "duration_rounds": 10,
+      "save_ability": "wis"
     },
     {
-      "effect_type": "movement_restriction",
-      "max_distance_ft": 30,
-      "save": "wis",
-      "duration_rounds": 10
+      "effect_type": "apply_condition",
+      "condition": "compelled_duel_cannot_move_beyond_30ft",
+      "duration_rounds": 10,
+      "save_ability": "wis",
+      "max_distance_ft": 30
     }
   ]
 }

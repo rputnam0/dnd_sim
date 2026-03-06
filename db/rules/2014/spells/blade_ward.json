@@ -13,13 +13,15 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "apply_resistance",
+      "effect_type": "apply_condition",
+      "condition": "blade_ward_resistance",
+      "duration_rounds": 1,
+      "target": "source",
       "damage_types": [
         "bludgeoning",
         "piercing",
         "slashing"
-      ],
-      "duration": 1
+      ]
     }
   ]
 }

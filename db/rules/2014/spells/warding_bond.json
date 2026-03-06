@@ -13,34 +13,15 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "grant_bonus",
-      "target": "target",
-      "bonus_type": "ac",
-      "value": 1
-    },
-    {
-      "effect_type": "grant_bonus",
-      "target": "target",
-      "bonus_type": "saving_throw",
-      "value": 1
-    },
-    {
-      "effect_type": "grant_resistance",
-      "target": "target",
-      "damage_type": "all"
-    },
-    {
-      "effect_type": "share_damage",
-      "source": "target",
-      "receiver": "caster"
-    },
-    {
-      "effect_type": "range_limit",
-      "max_distance_ft": 60
-    },
-    {
-      "effect_type": "dismissible",
-      "action": "action"
+      "effect_type": "transform",
+      "condition": "warding_bond_linked",
+      "duration_rounds": 600,
+      "ac_bonus": 1,
+      "saving_throw_bonus": 1,
+      "damage_resistance": "all",
+      "share_damage_to": "caster",
+      "range_limit_ft": 60,
+      "dismissible": true
     }
   ]
 }

@@ -13,9 +13,10 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "reduce_condition_level",
+      "effect_type": "remove_condition",
       "condition": "exhaustion",
-      "amount": 1
+      "amount": 1,
+      "levels": 1
     },
     {
       "effect_type": "remove_condition",
@@ -26,16 +27,16 @@
       "condition": "petrified"
     },
     {
-      "effect_type": "remove_curse",
-      "target": "creature"
+      "effect_type": "remove_condition",
+      "condition": "cursed"
     },
     {
-      "effect_type": "restore_ability_score",
-      "target": "creature"
+      "effect_type": "remove_condition",
+      "condition": "ability_score_reduced"
     },
     {
-      "effect_type": "restore_hit_point_maximum",
-      "target": "creature"
+      "effect_type": "remove_condition",
+      "condition": "hp_max_reduced"
     }
   ]
 }

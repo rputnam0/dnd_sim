@@ -14,12 +14,28 @@
   "mechanics": [
     {
       "effect_type": "ranged_spell_attack",
-      "range": 30,
-      "damage": "1d8",
-      "damage_type": "fire"
+      "range_ft": 30
     },
     {
-      "effect_type": "light",
+      "effect_type": "damage",
+      "damage": "1d8",
+      "damage_type": "fire",
+      "cantrip_scale_levels": [
+        5,
+        11,
+        17
+      ],
+      "cantrip_scale_dice": [
+        "2d8",
+        "3d8",
+        "4d8"
+      ]
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "produce_flame_light",
+      "duration_rounds": 100,
+      "target": "source",
       "bright_radius": 10,
       "dim_radius": 10
     }

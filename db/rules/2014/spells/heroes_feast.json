@@ -13,34 +13,37 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "cure_condition",
-      "conditions": [
-        "disease",
-        "poison"
-      ]
+      "effect_type": "remove_condition",
+      "condition": "poisoned"
     },
     {
-      "effect_type": "grant_immunity",
-      "condition": "poison"
+      "effect_type": "remove_condition",
+      "condition": "diseased"
     },
     {
-      "effect_type": "grant_immunity",
-      "condition": "frightened"
+      "effect_type": "apply_condition",
+      "condition": "immune_to_poison",
+      "duration_rounds": 14400
     },
     {
-      "effect_type": "advantage_on_save",
-      "ability": "wis",
-      "duration": 14400
+      "effect_type": "apply_condition",
+      "condition": "immune_to_frightened",
+      "duration_rounds": 14400
     },
     {
-      "effect_type": "increase_max_hp",
-      "dice": "2d10",
-      "duration": 14400
+      "effect_type": "apply_condition",
+      "condition": "advantage_on_wisdom_saves",
+      "duration_rounds": 14400
     },
     {
-      "effect_type": "grant_hit_points",
-      "dice": "2d10",
-      "duration": 14400
+      "effect_type": "heal",
+      "amount": "2d10"
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "heroes_feast_max_hp_bonus",
+      "duration_rounds": 14400,
+      "calculation": "2d10"
     }
   ]
 }

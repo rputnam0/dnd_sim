@@ -17,11 +17,14 @@
       "condition": "poisoned"
     },
     {
-      "effect_type": "advantage_on_saves",
-      "condition": "poisoned"
+      "effect_type": "apply_condition",
+      "condition": "advantage_on_saves_against_poison",
+      "duration_rounds": 600
     },
     {
-      "effect_type": "damage_resistance",
+      "effect_type": "apply_condition",
+      "condition": "resistant_to_poison",
+      "duration_rounds": 600,
       "damage_type": "poison"
     }
   ]

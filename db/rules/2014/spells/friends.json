@@ -13,15 +13,14 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "advantage_on_checks",
-      "ability": "cha",
-      "target": "creature",
-      "duration": 10
+      "effect_type": "apply_condition",
+      "condition": "friends_advantage_on_charisma_checks",
+      "duration_rounds": 10
     },
     {
       "effect_type": "apply_condition",
       "condition": "hostile",
-      "trigger": "end"
+      "trigger": "end_of_spell"
     }
   ]
 }

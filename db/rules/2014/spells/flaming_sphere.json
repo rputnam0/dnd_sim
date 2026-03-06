@@ -13,20 +13,29 @@
   "damage_type": "fire",
   "mechanics": [
     {
-      "effect_type": "damage",
-      "damage_type": "fire",
-      "damage_dice": "2d6",
-      "save": "dex"
-    },
-    {
-      "effect_type": "move",
-      "max_distance": 30,
-      "description": "Move the sphere as a bonus action"
-    },
-    {
-      "effect_type": "light",
+      "effect_type": "hazard",
+      "hazard_type": "flaming_sphere",
+      "duration_rounds": 10,
+      "radius_ft": 5,
+      "move_distance_ft": 30,
       "bright_radius": 20,
-      "dim_radius": 20
+      "dim_radius": 20,
+      "on_enter": [
+        {
+          "effect_type": "damage",
+          "damage": "2d6",
+          "damage_type": "fire",
+          "save_ability": "dex"
+        }
+      ],
+      "on_end_turn": [
+        {
+          "effect_type": "damage",
+          "damage": "2d6",
+          "damage_type": "fire",
+          "save_ability": "dex"
+        }
+      ]
     }
   ]
 }

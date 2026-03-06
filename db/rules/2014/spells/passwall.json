@@ -13,11 +13,13 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "create_passage",
+      "effect_type": "transform",
+      "condition": "passwall_opening",
+      "duration_rounds": 600,
       "dimensions": {
-        "width_ft": 5,
+        "depth_ft": 20,
         "height_ft": 8,
-        "depth_ft": 20
+        "width_ft": 5
       },
       "material_allowed": [
         "wood",

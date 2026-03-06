@@ -13,12 +13,29 @@
   "damage_type": "piercing",
   "mechanics": [
     {
-      "effect_type": "melee_spell_attack"
+      "effect_type": "melee_spell_attack",
+      "range_ft": 30
     },
     {
-      "effect_type": "pull",
+      "effect_type": "damage",
+      "damage": "1d6",
+      "damage_type": "piercing",
+      "cantrip_scale_levels": [
+        5,
+        11,
+        17
+      ],
+      "cantrip_scale_dice": [
+        "2d6",
+        "3d6",
+        "4d6"
+      ]
+    },
+    {
+      "effect_type": "forced_movement",
       "distance_ft": 10,
-      "condition": "target_large_or_smaller"
+      "direction": "toward_source",
+      "condition": "large_or_smaller"
     }
   ]
 }

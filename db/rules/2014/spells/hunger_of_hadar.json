@@ -15,28 +15,33 @@
     {
       "effect_type": "apply_condition",
       "condition": "blinded",
-      "duration": null
+      "duration_rounds": 10
     },
     {
       "effect_type": "aoe",
-      "shape": "sphere",
-      "radius": 20
+      "radius_ft": 20,
+      "shape": "sphere"
     },
     {
-      "effect_type": "difficult_terrain"
-    },
-    {
-      "effect_type": "damage",
-      "damage_type": "cold",
-      "dice": "2d6",
-      "trigger": "start_of_turn"
-    },
-    {
-      "effect_type": "damage",
-      "damage_type": "acid",
-      "dice": "2d6",
-      "trigger": "failed_save_end_of_turn",
-      "save": "dex"
+      "effect_type": "hazard",
+      "hazard_type": "hunger_of_hadar",
+      "duration_rounds": 10,
+      "difficult_terrain": true,
+      "on_start_turn": [
+        {
+          "effect_type": "damage",
+          "damage": "2d6",
+          "damage_type": "cold"
+        }
+      ],
+      "on_end_turn": [
+        {
+          "effect_type": "damage",
+          "damage": "2d6",
+          "damage_type": "acid",
+          "save_ability": "dex"
+        }
+      ]
     }
   ]
 }

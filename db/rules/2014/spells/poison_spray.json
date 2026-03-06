@@ -14,13 +14,10 @@
   "mechanics": [
     {
       "effect_type": "damage",
+      "damage": "1d12",
       "damage_type": "poison",
-      "save": "con"
-    },
-    {
-      "effect_type": "range",
-      "range_type": "point",
-      "distance_ft": 10
+      "save_ability": "con",
+      "range_ft": 10
     }
   ]
 }
