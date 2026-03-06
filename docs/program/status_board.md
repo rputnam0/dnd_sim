@@ -71,6 +71,7 @@ Wave 6 remediation state:
 | W6-PAR-05G1D | codex/feat/w6-par-05g1d-survival-recovery-support | remediation_parity | pr_open | Fresh continuation lane for the survival/recovery G1 cluster (`chalice` through `vitality_of_the_tree`); PR #226 is open while parallel G1A/G1B/G1C ownership remains isolated. |
 | W6-PAR-05H | codex/feat/w6-par-05h-trait-hooks-f | remediation_parity | in_progress | Umbrella row for summon/transform trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05I | codex/feat/w6-par-05i-spell-mechanics-d | remediation_parity | in_progress | Umbrella row for spell mechanics damage/support leaves; execution happens through child leaf tasks only. |
+| W6-PAR-05I2 | codex/feat/w6-par-05i2-spell-buffs-debuffs | remediation_parity | in_progress | Leaf implementation is complete in branch scope with full registry ownership converted; awaiting hotspot PR lane to open before setting `pr_open`. |
 | W6-PAR-05J | codex/feat/w6-par-05j-spell-mechanics-e | remediation_parity | in_progress | Umbrella row for summon/control/utility spell leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05K | codex/feat/w6-par-05k-spell-effect-support-f | remediation_parity | in_progress | Umbrella row for spell effect-family normalization and residual support leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05L | codex/feat/w6-par-05l-spell-schema-cleanup-g | remediation_parity | in_progress | Umbrella row for spell schema repair leaves; execution happens through child leaf tasks only. |
