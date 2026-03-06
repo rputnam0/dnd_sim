@@ -46,12 +46,12 @@
       "total_records": 594
     },
     {
-      "blocked_records": 419,
+      "blocked_records": 417,
       "content_type": "trait",
-      "executable_records": 762,
+      "executable_records": 764,
       "schema_valid_records": 1181,
-      "supported_records": 762,
-      "tested_records": 762,
+      "supported_records": 764,
+      "tested_records": 764,
       "total_records": 1181
     }
   ],
@@ -20205,16 +20205,16 @@
     {
       "content_id": "trait:awakened_mind",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:awakened_spellbook",
@@ -33533,16 +33533,16 @@
     {
       "content_id": "trait:thieves_cant",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:thought_shield",
@@ -35437,16 +35437,16 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 909,
-    "executable_records": 1618,
+    "blocked_records": 907,
+    "executable_records": 1620,
     "schema_valid_records": 2527,
-    "supported_records": 1618,
-    "tested_records": 1618,
+    "supported_records": 1620,
+    "tested_records": 1620,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
     {
-      "count": 419,
+      "count": 417,
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {
