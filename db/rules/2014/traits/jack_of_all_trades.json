@@ -6,7 +6,8 @@
       "effect": "add_half_proficiency",
       "target": "ability_check",
       "condition": "not_proficient",
-      "value": "floor(proficiency_bonus / 2)"
+      "value": "floor(proficiency_bonus / 2)",
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "class"

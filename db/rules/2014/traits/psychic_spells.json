@@ -6,7 +6,8 @@
       "effect": "damage_type_change",
       "applies_to": "Warlock spell",
       "condition": "spell deals damage",
-      "new_damage_type": "Psychic"
+      "new_damage_type": "Psychic",
+      "meta_type": "spell_modification"
     },
     {
       "effect": "component_waiver",
@@ -15,7 +16,8 @@
       "waived_components": [
         "Verbal",
         "Somatic"
-      ]
+      ],
+      "meta_type": "spell_modification"
     }
   ],
   "source_type": "subclass"

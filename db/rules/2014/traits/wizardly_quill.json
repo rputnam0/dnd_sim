@@ -6,26 +6,31 @@
       "action": "bonus",
       "effect": "create_item",
       "item": "Wizardly Quill",
-      "size": "Tiny"
+      "size": "Tiny",
+      "meta_type": "feature_progression"
     },
     {
-      "effect": "no_ink_required"
+      "effect": "no_ink_required",
+      "meta_type": "feature_progression"
     },
     {
       "effect": "spell_copy_time",
-      "value": "2 minutes per spell level"
+      "value": "2 minutes per spell level",
+      "meta_type": "feature_progression"
     },
     {
       "action": "bonus",
       "effect": "erase_written_text",
-      "range": "5 feet"
+      "range": "5 feet",
+      "meta_type": "feature_progression"
     },
     {
       "effect": "disappears_on",
       "condition": [
         "create_another_quill",
         "death"
-      ]
+      ],
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "subclass"

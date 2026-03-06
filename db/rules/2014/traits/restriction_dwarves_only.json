@@ -1,6 +1,11 @@
 {
-  "name": "Restriction—Dwarves Only",
+  "name": "Restriction\u2014Dwarves Only",
   "description": "Only dwarves can follow the Path of the Battlerager. The battlerager fills a particular niche in dwarven society and culture.\nYour DM can lift this restriction to better suit the campaign. The restriction exists for the Forgotten Realms. It might not apply to your DM's setting or your DM's version of the Realms.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "feature_progression",
+      "meta_type": "feature_progression"
+    }
+  ],
   "source_type": "subclass"
 }
