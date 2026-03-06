@@ -107,9 +107,12 @@ def test_w6_par_05i2_checkpoint_spell_files_use_canonical_mechanics() -> None:
 
 def test_w6_par_05i2_checkpoint_spell_rows_capture_buff_debuff_intent() -> None:
     expected_condition_rows = {
+        "spell:bane": "baned",
         "spell:barkskin": "barkskin_ac_min_16",
         "spell:beacon_of_hope": "beacon_of_hope_max_healing",
         "spell:bestow_curse": "bestow_curse",
+        "spell:bless": "blessed",
+        "spell:blur": "blurred",
         "spell:borrowed_knowledge": "borrowed_knowledge_skill_proficiency",
         "spell:death_ward": "death_warded",
         "spell:enlarge_reduce": "enlarge_reduce_active",
@@ -159,3 +162,33 @@ def test_w6_par_05i2_checkpoint_spell_rows_capture_buff_debuff_intent() -> None:
         and row.get("amount") == "1d4+4"
         for row in false_life_mechanics
     ), "spell:false_life must contain temp_hp:1d4+4"
+
+    aid_payload = json.loads((SPELLS_DIR / "aid.json").read_text(encoding="utf-8"))
+    aid_mechanics = aid_payload.get("mechanics")
+    assert isinstance(aid_mechanics, list)
+    assert any(
+        isinstance(row, dict)
+        and row.get("effect_type") == "max_hp_increase"
+        and row.get("calculation") == "5 + 5 per slot level above 2"
+        and row.get("duration_rounds") == 4800
+        for row in aid_mechanics
+    ), "spell:aid must contain max_hp_increase with canonical scaling"
+    assert any(
+        isinstance(row, dict)
+        and row.get("effect_type") == "heal"
+        and row.get("amount") == 5
+        and row.get("upcast_bonus_per_slot") == 5
+        for row in aid_mechanics
+    ), "spell:aid must contain heal with canonical upcast bonus"
+
+    darkvision_payload = json.loads((SPELLS_DIR / "darkvision.json").read_text(encoding="utf-8"))
+    darkvision_mechanics = darkvision_payload.get("mechanics")
+    assert isinstance(darkvision_mechanics, list)
+    assert any(
+        isinstance(row, dict)
+        and row.get("effect_type") == "sense"
+        and row.get("sense") == "darkvision"
+        and row.get("range_ft") == 60
+        and row.get("duration_rounds") == 4800
+        for row in darkvision_mechanics
+    ), "spell:darkvision must contain sense:darkvision with canonical range and duration"
