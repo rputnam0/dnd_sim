@@ -3,20 +3,15 @@
   "description": "You can use a bonus action to create two echoes with your Manifest Echo feature, and these echoes can coexist. If you try to create a third echo, the previous two echoes are destroyed. Anything you can do from one echo's position can be done from the other's instead. In addition, when you roll initiative and have no uses of your Unleash Incarnation feature left, you regain one use of that feature.",
   "mechanics": [
     {
-      "action": "bonus",
-      "effect": "create_echo",
-      "quantity": 2,
+      "meta_type": "echo_manifestation",
       "max_active_echoes": 2,
-      "replace_on_excess": true,
-      "description": "Create two echoes that can coexist; creating a third destroys the previous two."
+      "activation": "bonus_action"
     },
     {
-      "trigger": "initiative_roll",
-      "condition": "unleash_incarnation_uses == 0",
-      "effect": "regain_use",
-      "feature": "Unleash Incarnation",
-      "quantity": 1,
-      "description": "Regain one use of Unleash Incarnation when you roll initiative and have none left."
+      "meta_type": "resource_regeneration",
+      "resource": "unleash_incarnation",
+      "trigger": "initiative_when_empty",
+      "amount": 1
     }
   ],
   "source_type": "subclass"

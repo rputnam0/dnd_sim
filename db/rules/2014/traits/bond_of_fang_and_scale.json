@@ -1,39 +1,21 @@
 {
   "name": "Bond of Fang and Scale",
-  "description": "7th-level Drakewarden feature. The bond you share with your drake intensifies, protecting you and stoking the drake's fury. When you summon your drake, it grows wings on its back and gains a flying speed equal to its walking speed. In addition, while your drake is summoned, you and the drake gain the following benefits: Drake Mount – The drake grows to Medium size. Reflecting your special bond, you can use the drake as a mount if your size is Medium or smaller. While you are riding your drake, it can't use the flying speed of this feature. Magic Fang – The drake's Bite attack deals an extra 1d6 damage of the type chosen for the drake's Draconic Essence. Resistance – You gain resistance to the damage type chosen for the drake's Draconic Essence.",
+  "description": "7th-level Drakewarden feature. The bond you share with your drake intensifies, protecting you and stoking the drake's fury. When you summon your drake, it grows wings on its back and gains a flying speed equal to its walking speed. In addition, while your drake is summoned, you and the drake gain the following benefits: Drake Mount \u2013 The drake grows to Medium size. Reflecting your special bond, you can use the drake as a mount if your size is Medium or smaller. While you are riding your drake, it can't use the flying speed of this feature. Magic Fang \u2013 The drake's Bite attack deals an extra 1d6 damage of the type chosen for the drake's Draconic Essence. Resistance \u2013 You gain resistance to the damage type chosen for the drake's Draconic Essence.",
   "mechanics": [
     {
-      "effect": "grant_flying_speed",
-      "target": "drake",
-      "condition": "when_summoned",
-      "speed_type": "fly",
-      "value": "equal_to_walking_speed"
+      "meta_type": "companion_upgrade",
+      "companion": "drake",
+      "benefit": "grant_flying_speed_when_summoned"
     },
     {
-      "effect": "change_size",
-      "target": "drake",
-      "new_size": "Medium",
-      "condition": "when_summoned"
+      "meta_type": "mount_permission",
+      "companion": "drake",
+      "rider_size_max": "Medium"
     },
     {
-      "effect": "mount_permission",
-      "rider": "character",
-      "mount": "drake",
-      "condition": "rider_size <= Medium",
-      "note": "while_riding_cannot_use_flying_speed"
-    },
-    {
-      "effect": "add_extra_damage",
-      "target": "drake_bite_attack",
-      "damage": "1d6",
-      "damage_type": "draconic_essence_type",
-      "condition": "when_summoned"
-    },
-    {
-      "effect": "grant_resistance",
-      "target": "character",
-      "damage_type": "draconic_essence_type",
-      "condition": "when_summoned"
+      "meta_type": "companion_benefit",
+      "companion": "drake",
+      "benefit": "bite_damage_bonus_and_shared_resistance"
     }
   ],
   "source_type": "subclass"

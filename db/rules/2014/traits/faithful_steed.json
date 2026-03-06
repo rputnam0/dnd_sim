@@ -3,14 +3,15 @@
   "description": "You can call on the aid of an otherworldly steed. You always have the Find Steed spell prepared. You can also cast the spell once without expending a spell slot, and you regain the ability to do so when you finish a Long Rest.",
   "mechanics": [
     {
-      "effect": "always_prepared_spell",
-      "spell": "Find Steed"
+      "meta_type": "spell_prepared",
+      "spell": "find steed",
+      "always_prepared": true
     },
     {
-      "effect": "free_spell_cast",
-      "spell": "Find Steed",
-      "uses_per_long_rest": 1,
-      "expends_slot": false
+      "meta_type": "free_spell_cast",
+      "spell": "find steed",
+      "uses": 1,
+      "recharge": "long_rest"
     }
   ],
   "source_type": "class"

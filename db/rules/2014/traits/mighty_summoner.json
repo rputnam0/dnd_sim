@@ -3,14 +3,20 @@
   "description": "Starting at 6th level, beasts and fey that you conjure are more resilient than normal. Any beast or fey summoned or created by a spell that you cast gains the following benefits: The creature appears with more hit points than normal: 2 extra hit points per Hit Die it has. The damage from its natural weapons is considered magical for the purpose of overcoming immunity and resistance to nonmagical attacks and damage.",
   "mechanics": [
     {
-      "effect": "increase_hit_points",
-      "per_hit_die": 2,
-      "description": "The summoned creature gains 2 extra hit points per Hit Die it has."
+      "meta_type": "summoned_creature_bonus",
+      "creature_families": [
+        "beast",
+        "fey"
+      ],
+      "benefit": "2_hp_per_hit_die"
     },
     {
-      "effect": "damage_type",
-      "damage_type": "magical",
-      "description": "The creature's natural weapon damage is considered magical."
+      "meta_type": "summoned_creature_bonus",
+      "creature_families": [
+        "beast",
+        "fey"
+      ],
+      "benefit": "natural_weapons_count_as_magical"
     }
   ],
   "source_type": "subclass"
