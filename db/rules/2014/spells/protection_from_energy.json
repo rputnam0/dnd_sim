@@ -11,5 +11,15 @@
   "description": "For the duration, the willing creature you touch has resistance to one damage type of your choice: acid, cold, fire, lightning, or thunder.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "protection_from_energy_active",
+      "duration_rounds": 600,
+      "concentration_linked": true,
+      "stack_policy": "refresh"
+    }
+  ]
 }

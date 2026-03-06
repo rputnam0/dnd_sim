@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "Heroes’ Feast 6th-­‐‑level conjuration",
+  "description": "Heroes\u2019 Feast 6th-\u00ad\u2010\u2011level conjuration",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "hellish_rebuke_resolved",
+      "duration_rounds": 1,
+      "stack_policy": "refresh"
+    }
+  ]
 }

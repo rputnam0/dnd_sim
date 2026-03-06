@@ -11,5 +11,15 @@
   "description": "For the duration, moonlight fills a 20-foot emanation originating from you with dim light. While in that area, you and your allies have half cover and resistance to cold, lightning, and radiant damage. While the spell lasts, you can use one of the following options, ending the spell immediately: Liberation: When you fail a saving throw to avoid or end the frightened, grappled, or restrained condition, you can take a reaction to succeed on the save instead. Respite: As a magic action, you or an ally within the area regains hit points equal to 4d10 plus your spellcasting ability modifier.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "alustriel_s_mooncloak_active",
+      "duration_rounds": 10,
+      "concentration_linked": true,
+      "stack_policy": "refresh"
+    }
+  ]
 }

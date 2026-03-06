@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "A blast of cold air erupts from your hands. Each creature in a 60-­‐‑foot cone must make a Constitution saving throw. A creature takes 8d8 cold damage on a failed save, or half as much damage on a successful one. A creature killed by this spell becomes a frozen statue until it thaws. At Higher Levels. When you cast this spell using a spell slot of 6th level or higher, the damage increases by 1d8 for each slot level above 5th. Confusion 4th-­‐‑level enchantment",
+  "description": "A blast of cold air erupts from your hands. Each creature in a 60-\u00ad\u2010\u2011foot cone must make a Constitution saving throw. A creature takes 8d8 cold damage on a failed save, or half as much damage on a successful one. A creature killed by this spell becomes a frozen statue until it thaws. At Higher Levels. When you cast this spell using a spell slot of 6th level or higher, the damage increases by 1d8 for each slot level above 5th. Confusion 4th-\u00ad\u2010\u2011level enchantment",
   "save_ability": "con",
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "target",
+      "apply_on": "save_fail",
+      "damage": "8d8",
+      "damage_type": "cold",
+      "save_ability": "con"
+    }
+  ]
 }

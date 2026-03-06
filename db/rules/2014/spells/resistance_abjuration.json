@@ -8,8 +8,18 @@
   "concentration": true,
   "ritual": false,
   "duration_rounds": 10,
-  "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. It can roll the die before or after making the saving throw. The spell then ends. Resurrection 7th-­‐‑level necromancy",
+  "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. It can roll the die before or after making the saving throw. The spell then ends. Resurrection 7th-\u00ad\u2010\u2011level necromancy",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "resistance_abjuration_active",
+      "duration_rounds": 10,
+      "concentration_linked": true,
+      "stack_policy": "refresh"
+    }
+  ]
 }

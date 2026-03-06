@@ -11,5 +11,12 @@
   "description": "You fortify up to six creatures you can see within range. The spell bestows 120 Temporary Hit Points, which you divide among the spell's recipients.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "temp_hp",
+      "target": "target",
+      "apply_on": "always",
+      "amount": "120"
+    }
+  ]
 }

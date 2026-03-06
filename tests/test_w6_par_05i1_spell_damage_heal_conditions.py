@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from dnd_sim.engine_runtime import (
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
+REGISTRY_PATH = Path("docs/program/parity_leaf_registry.csv")
 SPELLS_DIR = Path("db/rules/2014/spells")
 FIRST_SLICE = (
     "acid_arrow",
@@ -49,6 +51,20 @@ def _load_spell_payloads(*slugs: str) -> list[dict[str, object]]:
         assert isinstance(payload, dict)
         payloads.append(payload)
     return payloads
+
+
+def _owned_spell_slugs() -> tuple[str, ...]:
+    with REGISTRY_PATH.open(encoding="utf-8", newline="") as handle:
+        rows = csv.DictReader(handle)
+        return tuple(
+            str(row["content_id"]).split(":", 1)[1]
+            for row in rows
+            if row["leaf_task_id"] == "W6-PAR-05I1"
+        )
+
+
+def _load_owned_spell_payloads() -> list[dict[str, object]]:
+    return _load_spell_payloads(*_owned_spell_slugs())
 
 
 def _load_slice_spell_payloads() -> list[dict[str, object]]:
@@ -171,6 +187,13 @@ def _extract_action_from_sheet(
 
 def test_w6_par_05i1_first_slice_records_are_supported() -> None:
     manifest = build_spell_capability_manifest(spell_payloads=_load_slice_spell_payloads())
+    blocked = [record.content_id for record in manifest.records if record.states.blocked]
+
+    assert blocked == []
+
+
+def test_w6_par_05i1_owned_registry_records_are_supported() -> None:
+    manifest = build_spell_capability_manifest(spell_payloads=_load_owned_spell_payloads())
     blocked = [record.content_id for record in manifest.records if record.states.blocked]
 
     assert blocked == []

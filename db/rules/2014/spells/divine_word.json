@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "You utter a divine word, imbued with the power that shaped the world at the dawn of creation. Choose any number of creatures you can see within range. Each creature that can hear you must make a Charisma saving throw. On a failed save, a creature suffers an effect based on its current hit points: • 50 hit points or fewer: deafened for 1 minute • 40 hit points or fewer: deafened and blinded for 10 minutes • 30 hit points or fewer: blinded, deafened, and stunned for 1 hour • 20 hit points or fewer: killed instantly Regardless of its current hit points, a celestial, an elemental, a fey, or a fiend that fails its save is forced back to its plane of origin (if it isn’t there already) and can’t return to your current plane for 24 hours by any means short of a wish spell. Dominate Beast 4th-­‐‑level enchantment",
+  "description": "You utter a divine word, imbued with the power that shaped the world at the dawn of creation. Choose any number of creatures you can see within range. Each creature that can hear you must make a Charisma saving throw. On a failed save, a creature suffers an effect based on its current hit points: \u2022 50 hit points or fewer: deafened for 1 minute \u2022 40 hit points or fewer: deafened and blinded for 10 minutes \u2022 30 hit points or fewer: blinded, deafened, and stunned for 1 hour \u2022 20 hit points or fewer: killed instantly Regardless of its current hit points, a celestial, an elemental, a fey, or a fiend that fails its save is forced back to its plane of origin (if it isn\u2019t there already) and can\u2019t return to your current plane for 24 hours by any means short of a wish spell. Dominate Beast 4th-\u00ad\u2010\u2011level enchantment",
   "save_ability": "cha",
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "divine_word_resolved",
+      "duration_rounds": 1,
+      "stack_policy": "refresh"
+    }
+  ]
 }
