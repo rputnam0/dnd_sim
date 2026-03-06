@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dnd_sim.capability_manifest import build_feature_capability_manifest
 
-SHARD_C_BACKGROUND_IDS = {
+HOOKS_C_BACKGROUND_IDS = {
     "background:adept_linguist",
     "background:all_eyes_on_you",
     "background:at_home_in_the_wild",
@@ -21,11 +21,11 @@ SHARD_C_BACKGROUND_IDS = {
 }
 
 
-def test_background_hook_shard_c_records_are_supported() -> None:
+def test_background_hooks_c_records_are_supported() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
-    missing_ids = sorted(SHARD_C_BACKGROUND_IDS - set(by_id))
+    missing_ids = sorted(HOOKS_C_BACKGROUND_IDS - set(by_id))
     assert missing_ids == []
 
     blocked_backgrounds_missing_hook = {
@@ -34,9 +34,9 @@ def test_background_hook_shard_c_records_are_supported() -> None:
         if record.content_type == "background"
         and record.states.unsupported_reason == "missing_runtime_hook_family"
     }
-    assert blocked_backgrounds_missing_hook.isdisjoint(SHARD_C_BACKGROUND_IDS)
+    assert blocked_backgrounds_missing_hook.isdisjoint(HOOKS_C_BACKGROUND_IDS)
 
-    for content_id in sorted(SHARD_C_BACKGROUND_IDS):
+    for content_id in sorted(HOOKS_C_BACKGROUND_IDS):
         record = by_id[content_id]
         assert record.content_type == "background"
         assert record.support_state == "supported"
