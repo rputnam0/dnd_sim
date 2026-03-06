@@ -3,8 +3,10 @@
   "description": "You have proficiency with the longsword, shortsword, shortbow, and longbow.",
   "mechanics": [
     {
-      "proficiency": {
-        "weapons": [
+      "meta_type": "grant_proficiencies",
+      "grant_proficiency": {
+        "category": "weapon",
+        "items": [
           "longsword",
           "shortsword",
           "shortbow",
