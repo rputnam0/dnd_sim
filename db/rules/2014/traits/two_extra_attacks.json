@@ -3,8 +3,9 @@
   "description": "You can attack three times instead of once whenever you take the Attack action on your turn.",
   "mechanics": [
     {
-      "effect": "extra_attack",
-      "additional_attacks": 2
+      "meta_type": "extra_attack",
+      "attacks": 3,
+      "trigger": "attack_action"
     }
   ],
   "source_type": "class"

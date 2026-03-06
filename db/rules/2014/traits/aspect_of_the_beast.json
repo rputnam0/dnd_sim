@@ -1,6 +1,19 @@
 {
   "name": "Aspect of the Beast",
   "description": "At 6th level, you gain a magical benefit based on the totem animal of your choice. You can choose the same animal you selected at 3rd level or a different one. Choose one of the following: Bear, Eagle, Elk, Tiger, Wolf.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice",
+      "choice_key": "aspect_of_the_beast",
+      "count": 1,
+      "options": [
+        "bear",
+        "eagle",
+        "elk",
+        "tiger",
+        "wolf"
+      ]
+    }
+  ],
   "source_type": "subclass"
 }

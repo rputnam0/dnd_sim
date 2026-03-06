@@ -3,10 +3,8 @@
   "description": "Beginning at 10th level, you can take the Dash action as a bonus action while you are raging.",
   "mechanics": [
     {
-      "effect": "grant_action",
-      "action": "Dash",
-      "cost": "bonus_action",
-      "condition": "raging"
+      "meta_type": "bonus_action_dash",
+      "condition": "while_raging"
     }
   ],
   "source_type": "subclass"

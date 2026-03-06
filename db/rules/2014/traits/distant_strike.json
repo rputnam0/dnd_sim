@@ -3,17 +3,16 @@
   "description": "At 11th level, you gain the ability to pass between the planes in the blink of an eye. When you take the Attack action, you can teleport up to 10 feet before each attack to an unoccupied space you can see. If you attack at least two different creatures with the action, you can make one additional attack with it against a third creature.",
   "mechanics": [
     {
-      "effect": "teleport_before_attack",
-      "distance_feet": 10,
-      "trigger": "when you take the attack action",
-      "description": "You can teleport up to 10 feet to an unoccupied space you can see before each attack."
+      "meta_type": "teleport_before_attack",
+      "trigger": "before_each_attack_of_attack_action",
+      "distance_ft": 10,
+      "destination": "unoccupied_space_you_can_see"
     },
     {
-      "effect": "extra_attack",
-      "condition": "if you attack at least two different creatures with the Attack action",
+      "meta_type": "extra_attack",
+      "trigger": "attack_at_least_two_different_creatures_with_attack_action",
       "additional_attacks": 1,
-      "target": "a third creature",
-      "description": "You can make one additional attack against a third creature."
+      "target_requirement": "third_creature"
     }
   ],
   "source_type": "subclass"

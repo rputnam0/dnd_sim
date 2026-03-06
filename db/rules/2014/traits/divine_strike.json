@@ -3,11 +3,10 @@
   "description": "Once on each of your turns when you hit a creature with an attack roll using a weapon, you can cause the target to take an extra 1d8 necrotic or radiant damage (your choice).",
   "mechanics": [
     {
-      "action": "extra_damage",
-      "trigger": "weapon_attack_hit",
-      "once_per_turn": true,
+      "effect_type": "extra_damage",
+      "trigger": "once_per_turn_weapon_hit",
       "damage": "1d8",
-      "damage_type_options": [
+      "damage_type_choice": [
         "necrotic",
         "radiant"
       ]

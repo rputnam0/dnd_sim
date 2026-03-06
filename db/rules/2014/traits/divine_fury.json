@@ -3,21 +3,13 @@
   "description": "Starting when you choose this path at 3rd level, you can channel divine fury into your weapon strikes. While you're raging, the first creature you hit on each of your turns with a weapon attack takes extra damage equal to 1d6 + half your barbarian level. The extra damage is necrotic or radiant; you choose the type of damage when you gain this feature.",
   "mechanics": [
     {
-      "effect": "extra_damage",
-      "trigger": "first_weapon_attack_each_turn",
-      "requires": [
-        "raging"
-      ],
-      "damage": {
-        "dice": "1d6",
-        "modifier": "half_barbarian_level"
-      },
-      "damage_type": {
-        "choice": [
-          "necrotic",
-          "radiant"
-        ]
-      }
+      "effect_type": "extra_damage",
+      "trigger": "first_weapon_hit_each_turn_while_raging",
+      "damage": "1d6 + floor(barbarian_level / 2)",
+      "damage_type_choice": [
+        "necrotic",
+        "radiant"
+      ]
     }
   ],
   "source_type": "subclass"

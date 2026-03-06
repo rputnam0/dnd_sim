@@ -3,26 +3,25 @@
   "description": "At 3rd level, you master the art of the ambush. You can give yourself a bonus to your initiative rolls equal to your Wisdom modifier. At the start of your first turn of each combat, your walking speed increases by 10 feet, which lasts until the end of that turn. If you take the Attack action on that turn, you can make one additional weapon attack as part of that action. If that attack hits, the target takes an extra 1d8 damage of the weapon's damage type.",
   "mechanics": [
     {
-      "effect": "bonus_initiative",
+      "meta_type": "initiative_bonus",
       "value": "wisdom_modifier"
     },
     {
-      "effect": "increase_speed",
+      "effect_type": "speed_increase",
       "amount": 10,
-      "unit": "feet",
-      "duration": "until end of turn",
-      "condition": "first turn of combat"
+      "condition": "start_of_first_turn_each_combat",
+      "duration": "until_end_of_turn"
     },
     {
-      "effect": "extra_attack",
-      "action": "Attack",
-      "condition": "first turn of combat"
+      "meta_type": "extra_attack",
+      "trigger": "attack_action_on_first_turn_each_combat",
+      "additional_attacks": 1
     },
     {
-      "effect": "extra_damage",
-      "dice": "1d8",
-      "damage_type": "weapon_damage_type",
-      "condition": "extra attack hits"
+      "effect_type": "extra_damage",
+      "trigger": "dread_ambusher_bonus_attack_hit",
+      "damage": "1d8",
+      "damage_type": "weapon"
     }
   ],
   "source_type": "subclass"

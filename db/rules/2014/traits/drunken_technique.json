@@ -3,21 +3,15 @@
   "description": "At 3rd level, you learn how to twist and turn quickly as part of your Flurry of Blows. Whenever you use Flurry of Blows, you gain the benefit of the Disengage action, and your walking speed increases by 10 feet until the end of the current turn.",
   "mechanics": [
     {
-      "trigger": "use flurry of blows",
-      "effects": [
-        {
-          "type": "grant_action",
-          "action": "Disengage",
-          "description": "You can take the Disengage action without using an action."
-        },
-        {
-          "type": "speed_modifier",
-          "modifier": 10,
-          "unit": "feet",
-          "duration": "end_of_turn",
-          "description": "Your walking speed increases by 10 feet until the end of the current turn."
-        }
-      ]
+      "meta_type": "disengage",
+      "trigger": "use_flurry_of_blows",
+      "duration": "current_turn"
+    },
+    {
+      "effect_type": "speed_increase",
+      "amount": 10,
+      "condition": "use_flurry_of_blows",
+      "duration": "until_end_of_turn"
     }
   ],
   "source_type": "subclass"

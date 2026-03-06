@@ -3,34 +3,21 @@
   "description": "When you hit a creature with your natural weapons while you are raging, the beast within you can curse your target with rabid fury. The target must succeed on a Wisdom saving throw (DC = 8 + your Constitution modifier + your proficiency bonus) or suffer one of the following effects (your choice):\n- The target must use its reaction to make a melee attack against another creature of your choice that you can see.\n- The target takes 2d12 psychic damage.\nYou can use this feature a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
+      "meta_type": "limited_use",
       "trigger": "hit_with_natural_weapon_while_raging",
-      "action": "curse_target",
-      "save": {
-        "ability": "wisdom",
-        "dc": "8+Con+Prof"
-      },
-      "on_fail": {
-        "choice": [
-          "force_reaction_melee_attack",
-          "psychic_damage"
-        ]
-      },
-      "choice_details": {
-        "force_reaction_melee_attack": {
-          "type": "forced_reaction",
-          "action": "melee_attack",
-          "target": "chosen_creature"
-        },
-        "psychic_damage": {
-          "type": "damage",
-          "damage": "2d12",
-          "damage_type": "psychic"
-        }
-      },
-      "uses": {
-        "per": "proficiency_bonus",
-        "reset": "long_rest"
-      }
+      "uses": "proficiency_bonus_per_long_rest",
+      "save_ability": "wis",
+      "save_dc_formula": "8 + constitution_modifier + proficiency_bonus",
+      "options": [
+        "reaction_attack_against_another_creature",
+        "psychic_damage"
+      ]
+    },
+    {
+      "effect_type": "damage",
+      "trigger": "infectious_fury_save_fail_choose_psychic_damage",
+      "damage": "2d12",
+      "damage_type": "psychic"
     }
   ],
   "source_type": "subclass"

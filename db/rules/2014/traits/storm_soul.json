@@ -1,6 +1,17 @@
 {
   "name": "Storm Soul",
   "description": "At 6th level, the storm grants you benefits even when your aura isn't active. The benefits are based on the environment you chose for your Storm Aura. Choose one of the following environments: Desert, Sea, or Tundra.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice",
+      "choice_key": "storm_soul_environment",
+      "count": 1,
+      "options": [
+        "desert",
+        "sea",
+        "tundra"
+      ]
+    }
+  ],
   "source_type": "subclass"
 }

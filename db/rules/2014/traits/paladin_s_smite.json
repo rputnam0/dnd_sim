@@ -3,9 +3,14 @@
   "description": "You always have the Divine Smite spell prepared. In addition, you can cast it without expending a spell slot, but you must finish a Long Rest before you can cast it in this way again.",
   "mechanics": [
     {
-      "effect": "cast_without_spell_slot",
-      "spell": "Divine Smite",
-      "frequency": "once per long rest"
+      "meta_type": "spell_prepared",
+      "spell": "divine_smite",
+      "always_prepared": true
+    },
+    {
+      "meta_type": "free_spell_use",
+      "spell": "divine_smite",
+      "frequency": "once_per_long_rest"
     }
   ],
   "source_type": "class"

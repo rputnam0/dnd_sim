@@ -3,11 +3,11 @@
   "description": "At 7th level, you learn how to direct an errant arrow toward a new target. When you make an attack roll with a magic arrow and miss, you can use a bonus action to reroll the attack roll against a different target within 60 feet of the original target.",
   "mechanics": [
     {
-      "action_type": "bonus_action",
-      "effect": "reroll_attack",
+      "meta_type": "retarget_attack",
       "trigger": "miss_with_magic_arrow",
-      "new_target_range": 60,
-      "target_reference": "original_target"
+      "action": "bonus_action",
+      "new_target_range_ft": 60,
+      "reference_point": "original_target"
     }
   ],
   "source_type": "subclass"

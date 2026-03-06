@@ -3,27 +3,13 @@
   "description": "When an enemy you can see ends its turn within 5 feet of you, you can take a Reaction and expend one use of your Bardic Inspiration to move up to half your Speed. Then one ally of your choice within 30 feet of you can also move up to half their Speed using their Reaction. None of this feature's movement provokes Opportunity Attacks.",
   "mechanics": [
     {
-      "trigger": "enemy ends its turn within 5 feet of you",
-      "action": "reaction",
-      "cost": {
-        "resource": "Bardic Inspiration",
-        "amount": 1
-      },
-      "effects": [
-        {
-          "type": "move",
-          "target": "self",
-          "distance": "half speed",
-          "noOpportunityAttack": true
-        },
-        {
-          "type": "move",
-          "target": "ally",
-          "range": "30 feet",
-          "distance": "half speed",
-          "noOpportunityAttack": true
-        }
-      ]
+      "meta_type": "reaction_movement",
+      "trigger": "enemy_ends_turn_within_5ft",
+      "resource": "bardic_inspiration",
+      "self_movement": "half_speed",
+      "ally_movement": "half_speed",
+      "ally_range_ft": 30,
+      "no_opportunity_attacks": true
     }
   ],
   "source_type": "subclass"

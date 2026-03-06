@@ -1,6 +1,15 @@
 {
   "name": "Soul Blades",
   "description": "9th-level Soulknife feature. Your Psychic Blades are now an expression of your psi-suffused soul, giving you these powers that use your Psionic Energy dice: Homing Strikes, Psychic Teleportation.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "grant_features",
+      "features": [
+        "homing_strikes",
+        "psychic_teleportation"
+      ],
+      "resource": "psionic_energy_dice"
+    }
+  ],
   "source_type": "subclass"
 }

@@ -3,18 +3,12 @@
   "description": "At 6th level, you gain the ability to channel your ki into searing waves of energy. Immediately after you take the Attack action on your turn, you can spend 2 ki points to cast the burning hands spell as a bonus action. You can spend additional ki points to cast burning hands as a higher-level spell. Each additional ki point you spend increases the spell's level by 1. The maximum number of ki points (2 plus any additional points) that you can spend on the spell equals half your monk level.",
   "mechanics": [
     {
-      "trigger": "after attack action",
-      "cost": {
-        "resource": "ki",
-        "baseAmount": 2
-      },
-      "action": "bonus",
-      "spell": {
-        "name": "burning hands",
-        "baseLevel": 1,
-        "additionalLevelPerKi": 1,
-        "maxKiSpendFormula": "floor(monkLevel / 2)"
-      }
+      "meta_type": "bonus_action_spell",
+      "trigger": "after_attack_action",
+      "spell": "burning_hands",
+      "base_ki_cost": 2,
+      "additional_ki_per_level": 1,
+      "maximum_total_ki": "half_monk_level"
     }
   ],
   "source_type": "subclass"

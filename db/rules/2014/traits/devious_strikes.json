@@ -1,6 +1,25 @@
 {
   "name": "Devious Strikes",
   "description": "You've practiced new ways to use your Sneak Attack deviously. The following effects are now among your Cunning Strike options: Daze (Cost: 2d6), Knock Out (Cost: 6d6), Obscure (Cost: 3d6).",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "add_options",
+      "parent_feature": "cunning_strike",
+      "options": [
+        {
+          "name": "daze",
+          "die_cost": 2
+        },
+        {
+          "name": "knock_out",
+          "die_cost": 6
+        },
+        {
+          "name": "obscure",
+          "die_cost": 3
+        }
+      ]
+    }
+  ],
   "source_type": "class"
 }
