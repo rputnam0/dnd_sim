@@ -19,12 +19,15 @@
       "trigger": "hit"
     },
     {
-      "effect_type": "damage_over_time",
-      "damage": "1d6",
-      "damage_type": "fire",
-      "save": "con",
-      "save_effect": "ends",
-      "frequency": "start_of_turn"
+      "effect_type": "apply_condition",
+      "condition": "burning",
+      "duration": 10,
+      "save_ability": "con",
+      "save_on_apply": false,
+      "requires_smite_save": false,
+      "internal_tags": [
+        "tick_damage:turn_start:1d6:fire"
+      ]
     }
   ]
 }
