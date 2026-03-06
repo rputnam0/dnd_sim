@@ -5,12 +5,14 @@
     {
       "gain": {
         "elemental_discipline": 1
-      }
+      },
+      "meta_type": "feature_progression"
     },
     {
       "replace": {
         "elemental_discipline": true
-      }
+      },
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "subclass"

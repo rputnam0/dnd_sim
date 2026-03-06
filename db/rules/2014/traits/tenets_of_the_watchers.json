@@ -1,6 +1,11 @@
 {
   "name": "Tenets of the Watchers",
   "description": "A paladin who assumes the Oath of the Watchers swears to safeguard mortal realms from otherworldly threats. Vigilance: The threats you face are cunning, powerful, and subversive. Be ever alert for their corruption. Loyalty: Never accept gifts or favors from fiends or those who truck with them. Stay true to your order, your comrades, and your duty. Discipline: You are the shield against the endless terrors that lie beyond the stars. Your blade must be forever sharp and your mind keen to survive what lies beyond.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "feature_progression",
+      "meta_type": "feature_progression"
+    }
+  ],
   "source_type": "subclass"
 }

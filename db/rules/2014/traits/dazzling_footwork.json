@@ -1,6 +1,11 @@
 {
   "name": "Dazzling Footwork",
   "description": "While you aren't wearing armor or wielding a shield, you gain the following benefits: Dance Virtuoso, Unarmored Defense, Agile Strikes, Bardic Damage.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "subclass_scaffold",
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }
