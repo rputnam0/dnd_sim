@@ -12,10 +12,16 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = REPO_ROOT / "docs/program/parity_leaf_registry.csv"
 
 REPRESENTATIVE_META_TYPES = {
+    "abjure_enemy": {"channel_divinity"},
     "aberrant_sorcery": {"subclass_option"},
     "bardic_inspiration": {"action", "roll_bonus", "recharge"},
     "bastion_of_law": {"resource_spend", "spend_resource"},
+    "champion_challenge": {"channel_divinity"},
     "channel_divinity_charm_animals_and_plants": {"channel_divinity"},
+    "conquering_presence": {"channel_divinity"},
+    "control_undead": {"channel_divinity"},
+    "countercharm": {"action"},
+    "dreadful_aspect": {"channel_divinity"},
     "horizon_walker_magic": {"grant_spell"},
     "know_your_enemy": {"action"},
     "lay_on_hands": {"resource", "healing"},
@@ -38,7 +44,7 @@ def _w6_par_05g2_registry_ids() -> set[str]:
             for row in csv.DictReader(handle)
             if str(row.get("leaf_task_id", "")).strip() == "W6-PAR-05G2"
         }
-    assert len(ids) == 151
+    assert len(ids) == 157
     return ids
 
 
