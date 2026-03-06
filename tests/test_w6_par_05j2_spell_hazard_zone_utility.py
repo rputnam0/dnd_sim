@@ -35,6 +35,15 @@ SLICE_TWO_J2_SPELL_IDS = {
 
 SUPPORTED_SLICE_IDS = SLICE_ONE_J2_SPELL_IDS | SLICE_TWO_J2_SPELL_IDS
 SENSE_SLICE_IDS = SUPPORTED_SLICE_IDS - {"spell:guidance_divination"}
+CONCENTRATION_SENSE_SLICE_IDS = {
+    "spell:arcane_eye",
+    "spell:clairvoyance",
+    "spell:detect_evil_and_good",
+    "spell:detect_magic",
+    "spell:detect_poison_and_disease",
+    "spell:detect_thoughts",
+    "spell:locate_object",
+}
 
 
 def _owned_j2_spell_ids() -> set[str]:
@@ -106,6 +115,8 @@ def test_w6_par_05j2_supported_spell_files_use_canonical_rows() -> None:
                     f"{content_id} mechanics[{idx}] range_ft must not be null"
                 )
                 assert row.get("sense"), f"{content_id} mechanics[{idx}] missing sense"
+                if content_id in CONCENTRATION_SENSE_SLICE_IDS:
+                    assert row.get("duration_rounds") == payload.get("duration_rounds")
             else:
                 assert row.get("effect_type") == "apply_condition", (
                     f"{content_id} mechanics[{idx}] must use effect_type=apply_condition"

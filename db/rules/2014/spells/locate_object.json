@@ -16,6 +16,7 @@
       "effect_type": "sense",
       "sense": "object_direction",
       "range_ft": 1000,
+      "duration_rounds": 100,
       "track_motion_direction": true,
       "blocked_by": [
         "lead"
