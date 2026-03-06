@@ -3,8 +3,8 @@
   "description": "At 18th level, your superiority dice turn into d12s.",
   "mechanics": [
     {
-      "effect": "superiority_dice_size",
-      "size": 12
+      "newSize": "d12",
+      "meta_type": "upgrade_superiority_dice"
     }
   ],
   "source_type": "subclass"

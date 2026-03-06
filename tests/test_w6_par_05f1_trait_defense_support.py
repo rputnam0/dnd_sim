@@ -22,20 +22,17 @@ SLICE_ONE_F1_TRAIT_IDS = {
     "trait:bulwark_of_force",
 }
 
-SLICE_TWO_F1_TRAIT_IDS = {
-    "trait:aquatic_affinity",
-    "trait:armor_modifications",
-    "trait:divine_intervention_improvement",
-    "trait:greater_portent",
-    "trait:persistent_rage",
-    "trait:purity_of_body",
-    "trait:sculpt_spells",
-    "trait:song_of_rest_d12",
-    "trait:unyielding_spirit",
-    "trait:words_of_creation",
+FINALIZATION_F1_TRAIT_IDS = {
+    "trait:eye_for_weakness",
+    "trait:improved_combat_superiority_d12",
+    "trait:radiant_fire",
+    "trait:shadowy_figments",
+    "trait:song_of_victory",
+    "trait:ultimate_combat_superiority",
+    "trait:unfettered_mind",
 }
 
-COVERED_F1_TRAIT_IDS = SLICE_ONE_F1_TRAIT_IDS | SLICE_TWO_F1_TRAIT_IDS
+COVERED_F1_TRAIT_IDS = SLICE_ONE_F1_TRAIT_IDS | FINALIZATION_F1_TRAIT_IDS
 
 
 def _owned_f1_trait_ids() -> set[str]:

@@ -3,14 +3,20 @@
   "description": "You gain telepathy out to 60 feet. When you use this telepathy, you can simultaneously contact a number of creatures equal to your Wisdom modifier (minimum of one). Additionally, you gain proficiency in Intelligence saving throws. If you already have this proficiency, you instead gain saving throw proficiency with one ability in which you lack it.",
   "mechanics": [
     {
-      "effect": "grant_telepathy",
       "range_feet": 60,
-      "max_simultaneous_targets": "Wisdom modifier (minimum 1)"
+      "max_simultaneous_targets": "Wisdom modifier (minimum 1)",
+      "target": "willing creatures",
+      "meta_type": "telepathy"
     },
     {
-      "effect": "grant_saving_throw_proficiency",
-      "ability": "Intelligence",
-      "fallback": "If already proficient, grant proficiency in one other ability saving throw you lack"
+      "ability": "intelligence",
+      "meta_type": "saving_throw_proficiency"
+    },
+    {
+      "ability": "one_other_ability",
+      "choice": true,
+      "condition": "already_proficient_intelligence",
+      "meta_type": "saving_throw_proficiency"
     }
   ],
   "source_type": "subclass"
