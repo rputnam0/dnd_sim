@@ -3,10 +3,10 @@
   "description": "At 17th level, you gain the ability to make an overwhelming number of attacks against a group of enemies. When you use your Flurry of Blows, you can make up to three additional attacks with it (up to a total of five Flurry of Blows attacks), provided that each Flurry of Blows attack targets a different creature this turn.",
   "mechanics": [
     {
-      "effect": "extra_attacks",
-      "source": "Flurry of Blows",
+      "trigger": "flurry_of_blows",
       "additional_attacks": 3,
-      "condition": "each attack targets a different creature this turn"
+      "condition": "each_flurry_of_blows_attack_targets_different_creature_this_turn",
+      "meta_type": "extra_attack"
     }
   ],
   "source_type": "subclass"

@@ -10,7 +10,8 @@
           "allies"
         ],
         "condition": "while in Twilight Sanctuary sphere"
-      }
+      },
+      "meta_type": "cover"
     }
   ],
   "source_type": "subclass"

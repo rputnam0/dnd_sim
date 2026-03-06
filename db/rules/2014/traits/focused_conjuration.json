@@ -5,7 +5,8 @@
     {
       "effect": "prevent_concentration_break",
       "trigger": "damage",
-      "condition": "concentrating_on_conjuration_spell"
+      "condition": "concentrating_on_conjuration_spell",
+      "meta_type": "benefit"
     }
   ],
   "source_type": "subclass"

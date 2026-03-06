@@ -5,12 +5,13 @@
     {
       "effect": "height_increase",
       "dice": "3d4",
-      "unit": "inches"
+      "unit": "inches",
+      "meta_type": "benefit"
     },
     {
-      "effect": "damage_increase",
       "source_feature": "Giant's Might",
-      "dice": "1d8"
+      "damage_increase": "1d8",
+      "meta_type": "damage_increase"
     }
   ],
   "source_type": "subclass"

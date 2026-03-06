@@ -1,6 +1,17 @@
 {
   "name": "Raging Storm",
   "description": "At 14th level, the power of the storm you channel grows mightier, lashing out at your foes. The effect is based on the environment you chose for your Storm Aura (Desert, Sea, or Tundra).",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "source_feature": "Storm Aura",
+      "effect": "environment_specific_upgrade",
+      "environments": [
+        "desert",
+        "sea",
+        "tundra"
+      ],
+      "meta_type": "benefit"
+    }
+  ],
   "source_type": "subclass"
 }
