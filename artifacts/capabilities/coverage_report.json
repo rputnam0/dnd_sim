@@ -28493,7 +28493,7 @@
     {
       "content_id": "trait:multiattack_defense",
       "content_type": "trait",
-      "runtime_hook_family": "effect",
+      "runtime_hook_family": "meta",
       "states": {
         "blocked": false,
         "cataloged": true,
