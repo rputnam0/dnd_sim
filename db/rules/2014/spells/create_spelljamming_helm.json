@@ -11,5 +11,15 @@
   "description": "Holding the rod used in the casting of the spell, you touch a Large or smaller chair that is unoccupied. The rod disappears, and the chair is transformed into a spelljamming helm.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "transform",
+      "target": "target",
+      "condition": "spelljamming_helm",
+      "duration": "permanent",
+      "consumes_material": "spelljamming_rod",
+      "max_target_size": "large",
+      "requires_unoccupied": true
+    }
+  ]
 }

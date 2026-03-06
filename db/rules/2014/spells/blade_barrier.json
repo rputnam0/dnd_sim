@@ -10,6 +10,42 @@
   "duration_rounds": 100,
   "description": "You create a vertical wall of whirling, razor-­‐‑sharp blades made of magical energy. The wall appears within range and lasts for the duration. You can make a straight wall up to 100 feet long, 20 feet high, and 5 feet thick, or a ringed wall up to 60 feet in diameter, 20 feet high, and 5 feet thick. The wall provides three-­‐‑quarters cover to creatures behind it, and its space is difficult terrain. When a creature enters the wall’s area for the first time on a turn or starts its turn there, the creature must make a Dexterity saving throw. On a failed save, the creature takes 6d10 slashing damage. On a successful save, the creature takes half as much damage. Bless 1st-­‐‑level enchantment",
   "save_ability": "dex",
-  "damage_type": null,
-  "mechanics": []
+  "damage_type": "slashing",
+  "mechanics": [
+    {
+      "effect_type": "hazard",
+      "hazard_type": "blade_barrier",
+      "duration_rounds": 100,
+      "length_ft": 100,
+      "height_ft": 20,
+      "thickness_ft": 5,
+      "ring_diameter_ft": 60,
+      "difficult_terrain": true,
+      "cover_level": "three_quarters",
+      "save_ability": "dex",
+      "on_enter": [
+        {
+          "effect_type": "damage",
+          "damage": "6d10",
+          "damage_type": "slashing",
+          "save_ability": "dex"
+        }
+      ],
+      "on_start_turn": [
+        {
+          "effect_type": "damage",
+          "damage": "6d10",
+          "damage_type": "slashing",
+          "save_ability": "dex"
+        }
+      ]
+    },
+    {
+      "effect_type": "aoe",
+      "shape": "wall",
+      "length_ft": 100,
+      "height_ft": 20,
+      "thickness_ft": 5
+    }
+  ]
 }
