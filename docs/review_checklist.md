@@ -114,8 +114,8 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-02 Add strict FIN-02 enforcement mode (merged to `int/6c-parity` via #173)
 - [x] W6-PAR-03 Execute parity closure shard batch (merged to `int/6c-parity` via #171/#174/#175/#176/#177/#178)
 - [x] W6-PAR-04 Execute parity continuation shard batch B and strict-input manifest sync (merged via #185/#186/#187/#188/#189/#190)
-- [ ] W6-PAR-05A Umbrella row for baseline truth sync and leaf registry
-- [ ] W6-PAR-05A1 Reconcile canonical parity surfaces to the 1225-blocker baseline and add `docs/program/parity_leaf_registry.csv`
+- [x] W6-PAR-05A Umbrella row for baseline truth sync and leaf registry (merged to `codex/int/w6-parity-closeout` via #201)
+- [x] W6-PAR-05A1 Reconcile canonical parity surfaces to the 1225-blocker baseline and add `docs/program/parity_leaf_registry.csv` (merged to `codex/int/w6-parity-closeout` via #201)
 - [ ] W6-PAR-05B Umbrella row for background meta closeout leaves
 - [ ] W6-PAR-05B1 Background meta closeout leaf
 - [ ] W6-PAR-05C Umbrella row for passive species meta leaves
