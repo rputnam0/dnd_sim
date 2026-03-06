@@ -1,6 +1,17 @@
 {
   "name": "Ear to the Ground",
   "description": "You are in frequent contact with people in the segment of society that your chosen quarries move through. These people might be associated with the criminal underworld, the rough-and-tumble folk of the streets, or members of high society. This connection comes in the form of a contact in any city you visit, a person who provides information about the people and places of the local area.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "local_contact",
+      "scope": "each_city_visited",
+      "benefit": "information_about_local_people_and_places",
+      "contact_pools": [
+        "criminal_underworld",
+        "rough_streets",
+        "high_society"
+      ]
+    }
+  ],
   "source_type": "background"
 }

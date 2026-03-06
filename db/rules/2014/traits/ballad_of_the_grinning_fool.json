@@ -3,19 +3,27 @@
   "description": "Like every Grinner, you know how to find a hideout. In any city of 10,000 people or more on the Menagerie Coast or in the lands of the Dwendalian Empire, you can play the \"Ballad of the Grinning Fool\" in a major tavern or inn. A member of the Golden Grin will find you and give shelter to you and any companions you vouch for. This shelter might be discontinued if it becomes too dangerous to hide you, at the DM's discretion. This feature must be used with caution, for not all who know the ballad are your friends. Some are traitors, counterspies, or agents of tyranny.",
   "mechanics": [
     {
-      "effect": "grant_shelter",
+      "meta_type": "safe_house_network",
+      "network": "Golden Grin",
+      "benefits": [
+        "shelter"
+      ],
       "targets": [
         "self",
         "companions_vouched_for"
       ],
+      "trigger": "play_the_ballad_of_the_grinning_fool_in_a_major_tavern_or_inn",
       "conditions": {
         "city_population_min": 10000,
-        "region": [
+        "regions": [
           "Menagerie Coast",
           "Dwendalian Empire"
         ]
       },
-      "duration": "until_discontinued"
+      "limitations": [
+        "shelter_might_be_discontinued_if_it_becomes_too_dangerous",
+        "not_everyone_who_knows_the_ballad_is_an_ally"
+      ]
     }
   ],
   "source_type": "background"

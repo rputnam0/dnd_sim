@@ -1,6 +1,16 @@
 {
   "name": "Heart of Darkness",
   "description": "Those who look into your eyes can see that you have faced unimaginable horror and that you are no stranger to darkness. Though they might fear you, commoners will extend you every courtesy and do their utmost to help you. Unless you have shown yourself to be a danger to them, they will even take up arms to fight alongside you, should you find yourself facing an enemy alone.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "ominous_reputation",
+      "benefits": [
+        "commoners_extend_courtesy",
+        "commoners_offer_help",
+        "commoners_might_fight_beside_you"
+      ],
+      "limitation": "benefit_is_lost_if_you_show_yourself_to_be_a_danger_to_them"
+    }
+  ],
   "source_type": "background"
 }
