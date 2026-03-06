@@ -1,6 +1,34 @@
 {
   "name": "Metallic Ancestry",
   "description": "You have a metallic dragon ancestor, granting you a special magical affinity. Choose one kind of dragon from the Metallic Ancestry table. This determines the damage type for your other traits, as shown in the table. Metallic Ancestry table: Brass – Fire; Bronze – Lightning; Copper – Acid; Gold – Fire; Silver – Cold.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice",
+      "options": [
+        {
+          "name": "Brass",
+          "damage_type": "fire"
+        },
+        {
+          "name": "Bronze",
+          "damage_type": "lightning"
+        },
+        {
+          "name": "Copper",
+          "damage_type": "acid"
+        },
+        {
+          "name": "Gold",
+          "damage_type": "fire"
+        },
+        {
+          "name": "Silver",
+          "damage_type": "cold"
+        }
+      ],
+      "choice_key": "ancestry",
+      "grants": "associated_damage_type"
+    }
+  ],
   "source_type": "species"
 }

@@ -28,12 +28,12 @@
       "total_records": 191
     },
     {
-      "blocked_records": 45,
+      "blocked_records": 37,
       "content_type": "species",
-      "executable_records": 211,
+      "executable_records": 219,
       "schema_valid_records": 256,
-      "supported_records": 211,
-      "tested_records": 211,
+      "supported_records": 219,
+      "tested_records": 219,
       "total_records": 256
     },
     {
@@ -7549,16 +7549,16 @@
     {
       "content_id": "species:chromatic_ancestry",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:chromatic_warding",
@@ -8249,16 +8249,16 @@
     {
       "content_id": "species:gem_ancestry",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:gem_flight",
@@ -8515,30 +8515,30 @@
     {
       "content_id": "species:hammering_horns",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect_meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:hare_trigger",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:hawkeyed",
@@ -8725,16 +8725,16 @@
     {
       "content_id": "species:imposing_presence",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:infernal_legacy",
@@ -9229,16 +9229,16 @@
     {
       "content_id": "species:metallic_ancestry",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:metallic_breath_weapon",
@@ -9775,16 +9775,16 @@
     {
       "content_id": "species:secondary_arms",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:sentry_s_rest",
@@ -9859,16 +9859,16 @@
     {
       "content_id": "species:shapechanger",
       "content_type": "species",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "species:shell_defense",
@@ -35437,16 +35437,16 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 1085,
-    "executable_records": 1442,
+    "blocked_records": 1077,
+    "executable_records": 1450,
     "schema_valid_records": 2527,
-    "supported_records": 1442,
-    "tested_records": 1442,
+    "supported_records": 1450,
+    "tested_records": 1450,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
     {
-      "count": 565,
+      "count": 557,
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {

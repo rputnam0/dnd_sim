@@ -1,6 +1,19 @@
 {
   "name": "Secondary Arms",
   "description": "You have two slightly smaller secondary arms below your primary pair of arms. The secondary arms can manipulate an object, open or close a door or container, pick up or set down a Tiny object, or wield a weapon that has the light property.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "object_interaction",
+      "allowed_interactions": [
+        "manipulate_object",
+        "open_or_close_door_or_container",
+        "pick_up_or_set_down_tiny_object"
+      ]
+    },
+    {
+      "meta_type": "weapon_use",
+      "allowed_weapon_property": "light"
+    }
+  ],
   "source_type": "species"
 }
