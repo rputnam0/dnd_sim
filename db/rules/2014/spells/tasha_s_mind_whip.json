@@ -19,6 +19,22 @@
       "save_ability": "int",
       "damage": "3d6",
       "damage_type": "psychic"
+    },
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "save_fail",
+      "condition": "open_hand_no_reactions",
+      "duration_rounds": 2,
+      "effect_id": "tasha_s_mind_whip_reaction_lock"
+    },
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "save_fail",
+      "condition": "mind_whipped",
+      "duration_rounds": 2,
+      "effect_id": "tasha_s_mind_whip"
     }
   ]
 }
