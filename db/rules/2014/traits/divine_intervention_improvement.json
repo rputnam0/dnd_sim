@@ -5,7 +5,8 @@
     {
       "effect": "Divine Intervention",
       "automaticSuccess": true,
-      "requiresRoll": false
+      "requiresRoll": false,
+      "meta_type": "auto_success"
     }
   ],
   "source_type": "class"

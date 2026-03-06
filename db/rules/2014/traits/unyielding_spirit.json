@@ -5,7 +5,8 @@
     {
       "effect": "advantage",
       "target": "saving throws",
-      "restriction": "to avoid becoming paralyzed or stunned"
+      "restriction": "to avoid becoming paralyzed or stunned",
+      "meta_type": "saving_throw_advantage"
     }
   ],
   "source_type": "subclass"

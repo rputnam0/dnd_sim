@@ -4,11 +4,13 @@
   "mechanics": [
     {
       "effect": "wrath_of_the_sea_emanation_size",
-      "new_radius_feet": 10
+      "new_radius_feet": 10,
+      "meta_type": "aura"
     },
     {
       "effect": "grant_swim_speed",
-      "speed": "equal_to_walk_speed"
+      "speed": "equal_to_walk_speed",
+      "meta_type": "movement"
     }
   ],
   "source_type": "subclass"

@@ -126,7 +126,8 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [ ] W6-PAR-05E1 Trait meta options/proficiencies leaf
 - [ ] W6-PAR-05E2 Trait social/access/support meta leaf
 - [ ] W6-PAR-05F Umbrella row for passive combat trait leaves
-- [ ] W6-PAR-05F1 Trait passive defense/support leaf
+- [ ] W6-PAR-05F1 Trait passive defense/support leaf (original checkpoint lane; continuation now runs on W6-PAR-05F1A)
+- [ ] W6-PAR-05F1A Trait passive defense/support continuation leaf
 - [ ] W6-PAR-05F2 Trait passive offense/mobility leaf
 - [ ] W6-PAR-05G Umbrella row for reaction/resource trait leaves
 - [ ] W6-PAR-05G1 Trait reaction/retaliation leaf

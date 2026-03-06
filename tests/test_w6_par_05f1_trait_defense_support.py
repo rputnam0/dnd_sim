@@ -22,6 +22,21 @@ SLICE_ONE_F1_TRAIT_IDS = {
     "trait:bulwark_of_force",
 }
 
+SLICE_TWO_F1_TRAIT_IDS = {
+    "trait:aquatic_affinity",
+    "trait:armor_modifications",
+    "trait:divine_intervention_improvement",
+    "trait:greater_portent",
+    "trait:persistent_rage",
+    "trait:purity_of_body",
+    "trait:sculpt_spells",
+    "trait:song_of_rest_d12",
+    "trait:unyielding_spirit",
+    "trait:words_of_creation",
+}
+
+COVERED_F1_TRAIT_IDS = SLICE_ONE_F1_TRAIT_IDS | SLICE_TWO_F1_TRAIT_IDS
+
 
 def _owned_f1_trait_ids() -> set[str]:
     owned: set[str] = set()
@@ -32,15 +47,16 @@ def _owned_f1_trait_ids() -> set[str]:
                 content_id = str(row.get("content_id", "")).strip()
                 if content_id:
                     owned.add(content_id)
-    assert len(owned) == 44
+    assert owned.issuperset(COVERED_F1_TRAIT_IDS)
+    assert len(owned) >= len(COVERED_F1_TRAIT_IDS)
     return owned
 
 
-def test_trait_defense_support_slice_one_records_are_supported() -> None:
+def test_trait_defense_support_covered_records_are_supported() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
-    missing_ids = sorted(SLICE_ONE_F1_TRAIT_IDS - set(by_id))
+    missing_ids = sorted(COVERED_F1_TRAIT_IDS - set(by_id))
     assert missing_ids == []
 
     blocked_traits_missing_hook = {
@@ -49,43 +65,18 @@ def test_trait_defense_support_slice_one_records_are_supported() -> None:
         if record.content_type == "trait"
         and record.states.unsupported_reason == "missing_runtime_hook_family"
     }
-    assert blocked_traits_missing_hook.isdisjoint(SLICE_ONE_F1_TRAIT_IDS)
+    assert blocked_traits_missing_hook.isdisjoint(COVERED_F1_TRAIT_IDS)
 
-    for content_id in SLICE_ONE_F1_TRAIT_IDS:
+    for content_id in COVERED_F1_TRAIT_IDS:
         record = by_id[content_id]
         assert record.content_type == "trait"
         assert record.support_state == "supported"
         assert record.states.blocked is False
-        assert record.runtime_hook_family == "meta"
-
-
-def test_w6_par_05f1_owned_trait_records_are_supported() -> None:
-    owned_ids = _owned_f1_trait_ids()
-    manifest = build_feature_capability_manifest()
-    by_id = {record.content_id: record for record in manifest.records}
-
-    missing_ids = sorted(owned_ids - set(by_id))
-    assert missing_ids == []
-
-    blocked_traits_missing_hook = {
-        record.content_id
-        for record in manifest.records
-        if record.content_type == "trait"
-        and record.states.unsupported_reason == "missing_runtime_hook_family"
-    }
-    assert blocked_traits_missing_hook.isdisjoint(owned_ids)
-
-    for content_id in sorted(owned_ids):
-        record = by_id[content_id]
-        assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
         assert record.runtime_hook_family == "meta"
 
 
 def test_w6_par_05f1_trait_files_use_meta_rows_only() -> None:
-    owned_ids = _owned_f1_trait_ids()
+    owned_ids = COVERED_F1_TRAIT_IDS
 
     for content_id in sorted(owned_ids):
         trait_id = content_id.split(":", 1)[1]

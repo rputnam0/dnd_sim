@@ -6,7 +6,8 @@
       "immunity": [
         "disease",
         "poison"
-      ]
+      ],
+      "meta_type": "immunity"
     }
   ],
   "source_type": "class"

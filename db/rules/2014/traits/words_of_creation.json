@@ -6,7 +6,8 @@
       "grantPreparedSpells": [
         "Power Word Heal",
         "Power Word Kill"
-      ]
+      ],
+      "meta_type": "spell_prepared"
     },
     {
       "extraTargetOnCast": {
@@ -17,7 +18,8 @@
         "additionalTarget": true,
         "rangeFromFirstTarget": 10,
         "targetCount": 2
-      }
+      },
+      "meta_type": "spell_modification"
     }
   ],
   "source_type": "class"

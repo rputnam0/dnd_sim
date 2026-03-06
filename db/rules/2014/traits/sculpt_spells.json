@@ -9,7 +9,8 @@
       "effect": [
         "Chosen creatures automatically succeed on the spell's saving throw",
         "If the spell would deal half damage on a successful save, the chosen creatures take no damage"
-      ]
+      ],
+      "meta_type": "spell_modification"
     }
   ],
   "source_type": "subclass"
