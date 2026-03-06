@@ -5,7 +5,8 @@
     {
       "trigger": "failed saving throw or missed attack roll",
       "action": "roll 2d4 and add the result to the roll total",
-      "usage": "once per short or long rest"
+      "usage": "once per short or long rest",
+      "meta_type": "failure_roll_boost_support"
     }
   ],
   "source_type": "subclass"

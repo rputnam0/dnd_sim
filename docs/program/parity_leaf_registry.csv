@@ -178,11 +178,11 @@ W6-PAR-05E1,trait:zeal_domain_psa,missing_runtime_hook_family,trait_meta_profici
 W6-PAR-05E1,trait:aberrant_mind,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05E1,trait:abjurer,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05G2,trait:adjust_density,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
-W6-PAR-05G1,trait:ambush_master,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:ambush_master,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05F1,trait:aquatic_affinity,missing_runtime_hook_family,trait_passive_defense_support,data,retargeted from E2: passive defense or support behavior
 W6-PAR-05E1,trait:arcane_trickster,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05F1,trait:armor_modifications,missing_runtime_hook_family,trait_passive_defense_support,data,retargeted from E2: passive defense or support behavior
-W6-PAR-05G1,trait:armor_of_hexes,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:armor_of_hexes,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05E1,trait:artillerist,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05E1,trait:assassin,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05E2,trait:awakened_mind,missing_runtime_hook_family,trait_meta_social_support,data,"retained in E2: honest social, access, exploration, or non-executing support behavior"
@@ -192,7 +192,7 @@ W6-PAR-05E1,trait:battle_smith,missing_runtime_hook_family,trait_meta_proficienc
 W6-PAR-05E1,trait:bladesinger,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05E1,trait:bladesinger_styles,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05E1,trait:bladesinging,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
-W6-PAR-05G1,trait:blaze_of_glory,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:blaze_of_glory,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05H1,trait:bond_of_fang_and_scale,missing_runtime_hook_family,trait_summon_companion_mount,data,"retargeted from E2: summon, companion, familiar, or mount behavior"
 W6-PAR-05H2,trait:bottled_respite,missing_runtime_hook_family,trait_transform_world,data,"retargeted from E2: transform, form-state, or world-linked behavior"
 W6-PAR-05E1,trait:cavalier,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
@@ -201,7 +201,7 @@ W6-PAR-05G2,trait:consult_the_spirits,missing_runtime_hook_family,trait_resource
 W6-PAR-05G2,trait:corona_of_light,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05G2,trait:daze_cost_2d6,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05E1,trait:dazzling_footwork,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
-W6-PAR-05G1,trait:defy_death,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:defy_death,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05G2,trait:destroy_undead_cr_1,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05G2,trait:destroy_undead_cr_1_2,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05G2,trait:destroy_undead_cr_2,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
@@ -215,16 +215,16 @@ W6-PAR-05E1,trait:echo_knight,missing_runtime_hook_family,trait_meta_proficiency
 W6-PAR-05G2,trait:eldritch_hex,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05G2,trait:eldritch_master,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05G2,trait:elemental_affinity,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
-W6-PAR-05G1,trait:elemental_attunement,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:elemental_attunement,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05E1,trait:elemental_disciplines,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05G2,trait:embodiment_of_the_law,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
-W6-PAR-05G1,trait:emboldening_bond,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:emboldening_bond,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05G2,trait:emissary_of_peace,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
-W6-PAR-05G1,trait:emissary_of_redemption,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:emissary_of_redemption,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05G2,trait:empty_body,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05E1,trait:epic_boon,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05G2,trait:event_horizon,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
-W6-PAR-05G1,trait:eventide_s_splendor,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:eventide_s_splendor,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05E1,trait:evoker,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05G2,trait:expansive_bond,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05G2,trait:experimental_elixir,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
@@ -232,7 +232,7 @@ W6-PAR-05E1,trait:extra_elemental_discipline,missing_runtime_hook_family,trait_m
 W6-PAR-05G2,trait:eye_for_detail,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05F1,trait:eye_for_weakness,missing_runtime_hook_family,trait_passive_defense_support,data,retargeted from E2: passive defense or support behavior
 W6-PAR-05G2,trait:fathomless_plunge,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
-W6-PAR-05G1,trait:favored_by_the_gods,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:favored_by_the_gods,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05E1,trait:favored_enemy_improvement,missing_runtime_hook_family,trait_meta_proficiency_options,data,"retargeted from E2: options, proficiencies, subclass scaffolding, or class-support meta"
 W6-PAR-05G2,trait:fey_presence,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05H1,trait:fey_reinforcements,missing_runtime_hook_family,trait_summon_companion_mount,data,"retargeted from E2: summon, companion, familiar, or mount behavior"
@@ -242,7 +242,7 @@ W6-PAR-05E1,trait:fighting_style,missing_runtime_hook_family,trait_meta_proficie
 W6-PAR-05G2,trait:flexible_casting,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05G2,trait:focused_aim,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
 W6-PAR-05G2,trait:frenzy,missing_runtime_hook_family,trait_resource_turn_gated,data,"retargeted from E2: resource, activation, or turn-gated runtime behavior"
-W6-PAR-05G1,trait:gathered_swarm,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
+W6-PAR-05G1-A,trait:gathered_swarm,missing_runtime_hook_family,trait_reaction_retaliation,data,g1-a reaction-retaliation batch
 W6-PAR-05H2,trait:genie_s_vessel,missing_runtime_hook_family,trait_transform_world,data,"retargeted from E2: transform, form-state, or world-linked behavior"
 W6-PAR-05G1,trait:genie_s_wrath,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
 W6-PAR-05G1,trait:giant_s_might,missing_runtime_hook_family,trait_reaction_retaliation,data,"retargeted from E2: reaction, retaliation, or trigger-window combat behavior"
