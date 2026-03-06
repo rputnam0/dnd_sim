@@ -14,7 +14,8 @@
         "duration": "until long rest or re‑use",
         "dice": "d8",
         "diceCount": "equal to sorcery points spent"
-      }
+      },
+      "meta_type": "resource_spend"
     },
     {
       "trigger": "when warded creature takes damage",
@@ -23,7 +24,8 @@
         "dice": "d8",
         "diceAvailable": "remaining ward dice",
         "usage": "expend any number of ward dice, roll them, and subtract the total from the damage taken"
-      }
+      },
+      "meta_type": "spend_resource"
     }
   ],
   "source_type": "subclass"

@@ -26,7 +26,8 @@
           "dice": "1d3",
           "once_per_long_rest_per_target": true
         }
-      ]
+      ],
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

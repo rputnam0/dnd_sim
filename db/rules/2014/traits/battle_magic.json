@@ -11,7 +11,8 @@
         "type": "bonus_action_attack",
         "weapon_attack": true,
         "attack_count": 1
-      }
+      },
+      "meta_type": "bonus_action_attack"
     }
   ],
   "source_type": "subclass"
