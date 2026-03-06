@@ -13,15 +13,30 @@
   "damage_type": "radiant",
   "mechanics": [
     {
-      "extra_damage": "2d6 radiant"
+      "effect_type": "extra_damage",
+      "damage": "2d6",
+      "damage_type": "radiant"
     },
     {
-      "light_radius_ft": 5
+      "effect_type": "apply_condition",
+      "condition": "glowing",
+      "duration": 10
     },
     {
-      "advantage_on_attacks_against_target": true
+      "effect_type": "apply_condition",
+      "condition": "shedding_light",
+      "light_radius_ft": 5,
+      "duration": 10
     },
     {
+      "effect_type": "apply_condition",
+      "condition": "attackers_have_advantage",
+      "duration": 10
+    },
+    {
+      "effect_type": "remove_condition",
+      "condition": "invisible",
+      "duration": 10,
       "target_cannot_be_invisible": true
     }
   ]
