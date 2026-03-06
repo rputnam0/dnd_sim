@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: integration-review  
-Last updated: 2026-03-05  
+Last updated: 2026-03-06  
 Canonical source: `docs/program/status_board.md`
 
 This checklist is the program closeout gate. Do not mark the backend complete until every item is checked in the repository.
@@ -114,7 +114,19 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-02 Add strict FIN-02 enforcement mode (merged to `int/6c-parity` via #173)
 - [x] W6-PAR-03 Execute parity closure shard batch (merged to `int/6c-parity` via #171/#174/#175/#176/#177/#178)
 - [x] W6-PAR-04 Execute parity continuation shard batch B and strict-input manifest sync (merged via #185/#186/#187/#188/#189/#190)
-- [ ] W6-PAR-05 Drive strict parity closure to blocked=0 for shipped 2014 scope
+- [ ] W6-PAR-05A Sync strict parity baseline truth and expand shard registry
+- [ ] W6-PAR-05B Background hooks shard C
+- [ ] W6-PAR-05C Species hooks shard C
+- [ ] W6-PAR-05D Species hooks shard D
+- [ ] W6-PAR-05E Trait hooks shard C
+- [ ] W6-PAR-05F Trait hooks shard D
+- [ ] W6-PAR-05G Trait hooks shard E
+- [ ] W6-PAR-05H Trait hooks shard F
+- [ ] W6-PAR-05I Spell mechanics shard D
+- [ ] W6-PAR-05J Spell mechanics shard E
+- [ ] W6-PAR-05K Spell effect support shard F
+- [ ] W6-PAR-05L Spell schema cleanup shard G
+- [ ] W6-PAR-05M Final strict closeout and parity integration merge
 - [x] W6-GATE-01 Sync docs/backlog/checklist truth and maintenance waivers for remediation state (merged via #172)
 - [x] W6-GATE-02 Final green gate and closeout pass (merged via #183)
 
