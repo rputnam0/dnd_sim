@@ -3,9 +3,11 @@
   "description": "You have a mystical connection to firearms that traces back to the gods of the giff, who delighted in such weapons. You have proficiency with all firearms and ignore the loading property of any firearm. In addition, attacking at long range with a firearm doesn't impose disadvantage on your attack roll.",
   "mechanics": [
     {
-      "category": "weapon",
-      "detail": "firearms",
-      "meta_type": "proficiency"
+      "meta_type": "grant_proficiencies",
+      "grant_proficiency": {
+        "category": "weapon",
+        "detail": "firearms"
+      }
     },
     {
       "applies_to": "firearms",
