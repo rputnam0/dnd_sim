@@ -66,7 +66,7 @@ Wave 6 remediation state:
 | W6-PAR-05E1 | codex/feat/w6-par-05e1-trait-meta-options | remediation_parity | in_progress | Batch 1 leaf is active in its dedicated worktree and owns the trait meta options/proficiencies records. |
 | W6-PAR-05F | codex/feat/w6-par-05f-trait-hooks-d | remediation_parity | in_progress | Umbrella row for passive combat trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05G | codex/feat/w6-par-05g-trait-hooks-e | remediation_parity | in_progress | Umbrella row for reaction/resource trait leaves; execution happens through child leaf tasks only. |
-| W6-PAR-05G1B | codex/feat/w6-par-05g1b-reaction-support-continuation | remediation_parity | in_progress | Fresh continuation branch owns a disjoint eight-trait G1 reaction/support slice and regenerates parity artifacts from the current integration base. |
+| W6-PAR-05G1B | codex/feat/w6-par-05g1b-reaction-support-continuation | remediation_parity | pr_open | Fresh continuation branch owns a disjoint eight-trait G1 reaction/support slice, regenerates parity artifacts from the current integration base, and is now under review in PR #222. |
 | W6-PAR-05H | codex/feat/w6-par-05h-trait-hooks-f | remediation_parity | in_progress | Umbrella row for summon/transform trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05I | codex/feat/w6-par-05i-spell-mechanics-d | remediation_parity | in_progress | Umbrella row for spell mechanics damage/support leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05J | codex/feat/w6-par-05j-spell-mechanics-e | remediation_parity | in_progress | Umbrella row for summon/control/utility spell leaves; execution happens through child leaf tasks only. |
@@ -77,10 +77,9 @@ Wave 6 remediation state:
 
 ## Open PRs
 
-No backlog tasks are currently marked `pr_open`.
-
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
+| W6-PAR-05G1B | [#222](https://github.com/rputnam0/dnd_sim/pull/222) | remediation_parity | shard+completion green; strict blocked by global backlog | Disjoint G1 continuation slice for eight reaction/support traits on `codex/feat/w6-par-05g1b-reaction-support-continuation`. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
