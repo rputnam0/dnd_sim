@@ -9,6 +9,7 @@ from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = REPO_ROOT / "docs" / "program" / "parity_leaf_registry.csv"
+REVIEW_CHECKLIST_PATH = REPO_ROOT / "docs" / "review_checklist.md"
 SPELLS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "spells"
 
 CHECKPOINT_I2_SPELL_IDS = {
@@ -192,3 +193,20 @@ def test_w6_par_05i2_checkpoint_spell_rows_capture_buff_debuff_intent() -> None:
         and row.get("duration_rounds") == 4800
         for row in darkvision_mechanics
     ), "spell:darkvision must contain sense:darkvision with canonical range and duration"
+
+
+def test_w6_par_05i2_checkpoint_top_level_save_ability_matches_spell_mechanics() -> None:
+    expected_top_level_save_ability = {
+        "spell:bane": "cha",
+        "spell:slow": "wis",
+    }
+
+    for content_id, save_ability in sorted(expected_top_level_save_ability.items()):
+        slug = content_id.split(":", maxsplit=1)[1]
+        payload = json.loads((SPELLS_DIR / f"{slug}.json").read_text(encoding="utf-8"))
+        assert payload.get("save_ability") == save_ability
+
+
+def test_w6_par_05i2_review_checklist_stays_open_while_pr_is_open() -> None:
+    checklist = REVIEW_CHECKLIST_PATH.read_text(encoding="utf-8")
+    assert "- [ ] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (PR #227 open)" in checklist

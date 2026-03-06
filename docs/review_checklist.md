@@ -138,7 +138,7 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [ ] W6-PAR-05H2 Trait transform/world-linked leaf
 - [ ] W6-PAR-05I Umbrella row for spell mechanics damage/support leaves
 - [ ] W6-PAR-05I1 Spell damage/heal/condition mechanics leaf
-- [x] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (PR #227 open)
+- [ ] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (PR #227 open)
 - [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves
 - [ ] W6-PAR-05J1 Spell summon/command/control mechanics leaf
 - [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf
