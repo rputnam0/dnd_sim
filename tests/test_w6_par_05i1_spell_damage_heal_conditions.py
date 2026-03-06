@@ -395,6 +395,36 @@ def test_w6_par_05i1_red_review_fix_preserves_runtime_extraction_for_control_and
     )
 
 
+def test_w6_par_05i1_hold_spells_are_save_gated_paralyzed_effects() -> None:
+    for name, level, range_text in (
+        ("Hold Person", 2, "60 ft"),
+        ("Hold Monster", 5, "90 ft"),
+    ):
+        payload = _spell_payload(name.lower().replace(" ", "_"))
+        assert payload["save_ability"] == "wis"
+        hold_effect = _find_effect(payload, "apply_condition")
+        assert hold_effect["condition"] == "paralyzed"
+        assert hold_effect["apply_on"] == "save_fail"
+
+        spell_row, action = _extract_action_from_sheet(
+            name=name,
+            level_header=f"=== {level}th LEVEL ===",
+            save_hit="",
+            duration_text="Concentration, up to 1 minute",
+            range_text=range_text,
+            spell_level=level,
+        )
+        assert spell_row["save_ability"] == "wis"
+        assert action.action_type == "save"
+        assert any(
+            isinstance(effect, dict)
+            and str(effect.get("effect_type", "")).lower() == "apply_condition"
+            and str(effect.get("condition", "")).lower() == "paralyzed"
+            and str(effect.get("apply_on", "")).lower() == "save_fail"
+            for effect in action.mechanics
+        )
+
+
 def test_w6_par_05i1_acid_arrow_uses_primary_attack_damage_once() -> None:
     spell_row, action = _extract_action_from_sheet(
         name="Acid Arrow",

@@ -9,13 +9,13 @@
   "ritual": false,
   "duration_rounds": 10,
   "description": "Choose a humanoid that you can see within range. The target must succeed on a Wisdom saving throw or be paralyzed for the duration. At the end of each of its turns, the target can make another Wisdom saving throw. On a success, the spell ends on the target. At Higher Levels. When you cast this spell using a spell slot of 3rd level or higher, you can target one additional humanoid for each slot level above 2nd. The humanoids must be within 30 feet of each other when you target them.",
-  "save_ability": null,
+  "save_ability": "wis",
   "damage_type": null,
   "mechanics": [
     {
       "effect_type": "apply_condition",
       "target": "target",
-      "apply_on": "always",
+      "apply_on": "save_fail",
       "condition": "paralyzed",
       "duration_rounds": 10
     }
