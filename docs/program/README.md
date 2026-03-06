@@ -42,6 +42,7 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 | `docs/program/labels_and_milestones.md` | canonical | Labeling and milestone mapping. |
 | `docs/program/status_board.md` | canonical | Human-readable status dashboard. |
 | `docs/program/parity_leaf_registry.csv` | canonical | Exact record-to-leaf ownership map for remaining strict blockers. |
+| `docs/program/parity_batch_registry.csv` | canonical | Exact record-to-batch execution map for remaining strict blockers. |
 | `docs/program/completion_task_cards.md` | canonical | Human-readable task expansion of backlog. |
 | `docs/program/capability_report.md` | canonical | Capability report output surface. |
 
@@ -50,6 +51,7 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 - Markdown report: [`docs/program/capability_report.md`](capability_report.md)
 - Machine-readable JSON: [`artifacts/capabilities/coverage_report.json`](../../artifacts/capabilities/coverage_report.json)
 - Strict parity leaf registry: [`docs/program/parity_leaf_registry.csv`](parity_leaf_registry.csv)
+- Strict parity batch registry: [`docs/program/parity_batch_registry.csv`](parity_batch_registry.csv)
 - Regenerate both outputs with:
   `uv run python scripts/content/render_capability_report.py --last-updated YYYY-MM-DD`
 
@@ -73,8 +75,8 @@ Ownership and metadata-header requirements for this same live planning surface a
 ## Multi-agent policy
 
 - Use the native Codex multi-agent framework only.
-- One branch per task ID.
-- One PR per task ID.
+- One branch and one worktree per task or batch execution unit.
+- One PR per task or batch execution unit.
 - Update docs and task status in the same PR as the code change.
 
 ## Release baseline cutover

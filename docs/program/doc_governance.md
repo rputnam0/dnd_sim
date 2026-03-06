@@ -31,6 +31,7 @@ The table below is the canonical registry for every live planning file.
 | `docs/program/labels_and_milestones.md` | canonical | program-control | required | Labeling and milestone mapping. |
 | `docs/program/status_board.md` | canonical | program-control | required | Human-readable status dashboard. |
 | `docs/program/parity_leaf_registry.csv` | canonical | program-control | not_applicable | Exact record-to-leaf ownership map for remaining strict blockers. |
+| `docs/program/parity_batch_registry.csv` | canonical | program-control | not_applicable | Exact record-to-batch execution map for remaining strict blockers. |
 | `docs/program/completion_task_cards.md` | canonical | program-control | required | Human-readable task expansion of backlog. |
 | `docs/program/capability_report.md` | canonical after CAP-06 | content-manifest | required | Capability report output surface. |
 
@@ -51,6 +52,8 @@ Structured planning files (`.csv`, `.yaml`, `.mmd`) remain source-specific and t
 - Any PR that changes program state must update the touched live docs in the same branch.
 - `docs/program/backlog.csv` is the task-level source of truth.
 - `docs/program/status_board.md` is the human-readable dashboard and must summarize the same state as `backlog.csv`.
+- `docs/program/parity_leaf_registry.csv` is the exact blocker-to-leaf ownership map for remaining strict parity work.
+- `docs/program/parity_batch_registry.csv` is the exact blocker-to-batch execution map for remaining strict parity work.
 - `docs/program/README.md` must link every live planning file and no historical-only file.
 - `docs/agent_index.yaml` must be updated in every PR that adds, renames, or transfers a runtime module boundary.
 
