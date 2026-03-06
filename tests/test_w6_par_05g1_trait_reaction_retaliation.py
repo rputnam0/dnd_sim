@@ -25,7 +25,11 @@ def _owned_g1_trait_ids() -> set[str]:
     with REGISTRY_PATH.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
-            if row.get("leaf_task_id") == "W6-PAR-05G1":
+            if (
+                row.get("leaf_task_id") == "W6-PAR-05G1"
+                and row.get("target_family") == "trait_reaction_retaliation"
+                and row.get("notes") == "reaction or retaliation family"
+            ):
                 content_id = str(row.get("content_id", "")).strip()
                 if content_id:
                     owned.add(content_id)
