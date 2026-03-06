@@ -15,7 +15,7 @@
     {
       "effect_type": "apply_condition",
       "target": "target",
-      "apply_on": "always",
+      "apply_on": "save_fail",
       "condition": "confusion_active",
       "duration_rounds": 10,
       "concentration_linked": true,

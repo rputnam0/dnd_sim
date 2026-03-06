@@ -13,14 +13,6 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "damage",
-      "target": "target",
-      "apply_on": "save_fail",
-      "damage": "2d4",
-      "damage_type": "fire",
-      "save_ability": "dex"
-    },
-    {
       "effect_type": "apply_condition",
       "target": "target",
       "apply_on": "save_fail",

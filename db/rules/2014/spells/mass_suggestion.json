@@ -14,8 +14,8 @@
   "mechanics": [
     {
       "effect_type": "apply_condition",
-      "target": "source",
-      "apply_on": "always",
+      "target": "target",
+      "apply_on": "save_fail",
       "condition": "mass_suggestion_active",
       "duration_rounds": 14400,
       "stack_policy": "refresh"

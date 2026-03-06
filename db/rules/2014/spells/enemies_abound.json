@@ -14,8 +14,8 @@
   "mechanics": [
     {
       "effect_type": "apply_condition",
-      "target": "source",
-      "apply_on": "always",
+      "target": "target",
+      "apply_on": "save_fail",
       "condition": "enemies_abound_active",
       "duration_rounds": 10,
       "concentration_linked": true,

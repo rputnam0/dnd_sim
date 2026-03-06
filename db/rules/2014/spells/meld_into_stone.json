@@ -13,13 +13,6 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "damage",
-      "target": "target",
-      "apply_on": "always",
-      "damage": "6d6",
-      "damage_type": "bludgeoning"
-    },
-    {
       "effect_type": "transform",
       "target": "source",
       "condition": "meld_into_stone_transformed",

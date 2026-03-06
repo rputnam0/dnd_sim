@@ -8,7 +8,7 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "A vertical column of divine fire roars down from the heavens in a location you specify. Each creature in a 10-\u00ad\u2010\u2011foot-\u00ad\u2010\u2011radius, 40-\u00ad\u2010\u2011foot-\u00ad\u2010\u2011high cylinder centered on a point within range must make a Dexterity saving throw. A creature takes 4d6 fire damage and 4d6 radiant damage on a failed save, or half as much damage on a successful one. At Higher Levels. When you cast this spell using a spell slot of 6th level or higher, the fire damage or the radiant damage (your choice) increases by 1d6 for each slot level above 5th. Flaming Sphere 2nd-\u00ad\u2010\u2011level conjuration",
+  "description": "A vertical column of divine fire roars down from the heavens in a location you specify. Each creature in a 10-\u00ad\u2010\u2011foot-\u00ad\u2010\u2011radius, 40-\u00ad\u2010\u2011foot-\u00ad\u2010\u2011high cylinder centered on a point within range must make a Dexterity saving throw. On a failed save, a creature takes fire damage equal to 4d6 and radiant damage equal to 4d6, or half as much total damage on a successful one. At Higher Levels. When you cast this spell using a spell slot of 6th level or higher, the fire damage or the radiant damage (your choice) increases by 1d6 for each slot level above 5th. Flaming Sphere 2nd-\u00ad\u2010\u2011level conjuration",
   "save_ability": "dex",
   "damage_type": null,
   "mechanics": [
@@ -18,6 +18,14 @@
       "apply_on": "save_fail",
       "damage": "4d6",
       "damage_type": "fire",
+      "save_ability": "dex"
+    },
+    {
+      "effect_type": "damage",
+      "target": "target",
+      "apply_on": "save_fail",
+      "damage": "4d6",
+      "damage_type": "radiant",
       "save_ability": "dex"
     }
   ]

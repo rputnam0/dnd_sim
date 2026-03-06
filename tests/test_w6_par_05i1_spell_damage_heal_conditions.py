@@ -91,6 +91,14 @@ def _find_effect(payload: dict[str, object], effect_type: str) -> dict[str, obje
     raise AssertionError(f"Missing effect_type={effect_type!r} on {payload['name']}")
 
 
+def _find_effects(payload: dict[str, object], effect_type: str) -> list[dict[str, object]]:
+    mechanics = payload.get("mechanics")
+    assert isinstance(mechanics, list)
+    return [
+        row for row in mechanics if isinstance(row, dict) and row.get("effect_type") == effect_type
+    ]
+
+
 def _actor(actor_id: str, team: str, *, hp: int = 30, max_hp: int = 30) -> ActorRuntimeState:
     return ActorRuntimeState(
         actor_id=actor_id,
@@ -249,6 +257,142 @@ def test_w6_par_05i1_next_slice_uses_canonical_effect_types() -> None:
 
     arcane_sword = _spell_payload("arcane_sword")
     assert _find_effect(arcane_sword, "apply_condition")["condition"] == "arcane_sword_active"
+
+
+def test_w6_par_05i1_red_review_fix_payloads_are_truthful() -> None:
+    zone_of_truth = _spell_payload("zone_of_truth")
+    assert _find_effects(zone_of_truth, "heal") == []
+    assert _find_effects(zone_of_truth, "damage") == []
+    assert _find_effect(zone_of_truth, "apply_condition")["condition"] == "zone_of_truth"
+
+    wish = _spell_payload("wish")
+    assert _find_effects(wish, "damage") == []
+    wish_condition = _find_effect(wish, "apply_condition")
+    assert wish_condition["target"] == "source"
+    assert wish_condition["condition"] == "wish_resolved"
+    assert wish_condition["duration_rounds"] == 1
+
+    meld_into_stone = _spell_payload("meld_into_stone")
+    assert _find_effects(meld_into_stone, "damage") == []
+    assert _find_effect(meld_into_stone, "transform")["condition"] == "meld_into_stone_transformed"
+
+    enemies_abound = _spell_payload("enemies_abound")
+    enemies_abound_effect = _find_effect(enemies_abound, "apply_condition")
+    assert enemies_abound_effect["target"] == "target"
+    assert enemies_abound_effect["apply_on"] == "save_fail"
+
+    mass_suggestion = _spell_payload("mass_suggestion")
+    mass_suggestion_effect = _find_effect(mass_suggestion, "apply_condition")
+    assert mass_suggestion_effect["target"] == "target"
+    assert mass_suggestion_effect["apply_on"] == "save_fail"
+
+    flame_strike = _spell_payload("flame_strike")
+    flame_damage = sorted(
+        (str(row["damage"]), str(row["damage_type"]))
+        for row in _find_effects(flame_strike, "damage")
+    )
+    assert flame_damage == [("4d6", "fire"), ("4d6", "radiant")]
+
+    meteor_swarm = _spell_payload("meteor_swarm")
+    meteor_damage = sorted(
+        (str(row["damage"]), str(row["damage_type"]))
+        for row in _find_effects(meteor_swarm, "damage")
+    )
+    assert meteor_damage == [("20d6", "bludgeoning"), ("20d6", "fire")]
+
+    web = _spell_payload("web")
+    assert _find_effects(web, "damage") == []
+    assert _find_effect(web, "apply_condition")["condition"] == "restrained"
+
+    confusion = _spell_payload("confusion")
+    assert _find_effect(confusion, "apply_condition")["apply_on"] == "save_fail"
+
+
+def test_w6_par_05i1_red_review_fix_preserves_runtime_extraction_for_control_and_split_damage() -> (
+    None
+):
+    zone_spell_row, zone_action = _extract_action_from_sheet(
+        name="Zone of Truth",
+        level_header="=== 2nd LEVEL ===",
+        save_hit="CHA 18",
+        duration_text="10 minutes",
+        range_text="60 ft",
+        spell_level=2,
+    )
+    assert "healing" not in zone_spell_row
+    assert "damage" not in zone_spell_row
+    assert zone_action.damage is None
+    assert not any(
+        isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).lower() in {"heal", "damage"}
+        for effect in zone_action.mechanics
+    )
+
+    web_spell_row, web_action = _extract_action_from_sheet(
+        name="Web",
+        level_header="=== 2nd LEVEL ===",
+        save_hit="DEX 18",
+        duration_text="Concentration, up to 1 hour",
+        range_text="60 ft",
+        spell_level=2,
+    )
+    assert "damage" not in web_spell_row
+    assert web_action.damage is None
+    assert not any(
+        isinstance(effect, dict) and str(effect.get("effect_type", "")).lower() == "damage"
+        for effect in web_action.mechanics
+    )
+
+    flame_spell_row, flame_action = _extract_action_from_sheet(
+        name="Flame Strike",
+        level_header="=== 5th LEVEL ===",
+        save_hit="DEX 18",
+        duration_text="Instantaneous",
+        range_text="60 ft",
+        spell_level=5,
+    )
+    assert "damage" not in flame_spell_row
+    assert flame_action.damage is None
+    flame_damage_rows = [
+        effect
+        for effect in flame_action.mechanics
+        if isinstance(effect, dict) and str(effect.get("effect_type", "")).lower() == "damage"
+    ]
+    assert len(flame_damage_rows) == 2
+
+    meteor_spell_row, meteor_action = _extract_action_from_sheet(
+        name="Meteor Swarm",
+        level_header="=== 9th LEVEL ===",
+        save_hit="DEX 18",
+        duration_text="Instantaneous",
+        range_text="1 mile",
+        spell_level=9,
+    )
+    assert "damage" not in meteor_spell_row
+    assert meteor_action.damage is None
+    meteor_damage_rows = [
+        effect
+        for effect in meteor_action.mechanics
+        if isinstance(effect, dict) and str(effect.get("effect_type", "")).lower() == "damage"
+    ]
+    assert len(meteor_damage_rows) == 2
+
+    wish_spell_row, wish_action = _extract_action_from_sheet(
+        name="Wish",
+        level_header="=== 9th LEVEL ===",
+        save_hit="",
+        duration_text="Instantaneous",
+        range_text="Self",
+        spell_level=9,
+    )
+    assert "damage" not in wish_spell_row
+    assert wish_action.damage is None
+    assert any(
+        isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).lower() == "apply_condition"
+        and str(effect.get("target", "")).lower() == "source"
+        for effect in wish_action.mechanics
+    )
 
 
 def test_w6_par_05i1_acid_arrow_uses_primary_attack_damage_once() -> None:
