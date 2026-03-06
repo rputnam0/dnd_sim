@@ -13,18 +13,14 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "possession",
-      "target": "humanoid",
+      "effect_type": "transform",
+      "condition": "magic_jar_possession",
+      "target": "source",
       "range_ft": 100,
-      "save": "cha"
-    },
-    {
-      "effect_type": "soul_trap",
-      "container": true
-    },
-    {
-      "effect_type": "return_to_body",
-      "range_ft": 100
+      "save_ability": "cha",
+      "target_type": "humanoid",
+      "container_required": true,
+      "return_to_body_range_ft": 100
     }
   ]
 }

@@ -14,21 +14,24 @@
   "mechanics": [
     {
       "effect_type": "ranged_spell_attack",
-      "damage_type": "force",
       "range_ft": 120
     },
     {
-      "effect_type": "scaling_beams",
-      "levels": [
-        5,
-        11,
-        17
-      ],
-      "beams": [
-        2,
-        3,
-        4
-      ]
+      "effect_type": "damage",
+      "damage": "1d10",
+      "damage_type": "force",
+      "scaling_beams": {
+        "levels": [
+          5,
+          11,
+          17
+        ],
+        "beams": [
+          2,
+          3,
+          4
+        ]
+      }
     }
   ]
 }

@@ -14,15 +14,20 @@
   "mechanics": [
     {
       "effect_type": "aura",
-      "shape": "sphere",
-      "radius": 30,
       "center": "self",
-      "moving": true
+      "moving": true,
+      "radius_ft": 30,
+      "shape": "sphere"
     },
     {
-      "effect_type": "extra_weapon_damage",
+      "effect_type": "apply_condition",
+      "condition": "crusaders_mantle_extra_radiant_damage",
+      "duration_rounds": 10,
+      "target": "source",
+      "target_scope": "allies_in_aura",
       "damage": "1d4",
-      "damage_type": "radiant"
+      "damage_type": "radiant",
+      "trigger": "weapon_attack_hit"
     }
   ]
 }

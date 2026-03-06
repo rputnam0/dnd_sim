@@ -13,24 +13,21 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "mark_object",
+      "effect_type": "transform",
+      "condition": "drawmijs_instant_summons_marked_item",
+      "target": "source",
+      "max_dimension_ft": 6,
       "max_weight_lbs": 10,
-      "max_dimension_ft": 6
+      "requires": "sapphire"
     },
     {
-      "effect_type": "instant_summon",
-      "trigger": "action",
-      "requires": "crush_sapphire",
-      "target": "item",
-      "range": "any"
-    },
-    {
-      "effect_type": "reveal_holder",
-      "condition": "item_held_by_creature"
-    },
-    {
-      "effect_type": "ends_on_dispel",
-      "target": "sapphire"
+      "effect_type": "transform",
+      "condition": "drawmijs_instant_summons_recall",
+      "target": "source",
+      "range": "any",
+      "trigger": "crush_sapphire",
+      "reveals_holder_if_held": true,
+      "ends_on_dispel": true
     }
   ]
 }

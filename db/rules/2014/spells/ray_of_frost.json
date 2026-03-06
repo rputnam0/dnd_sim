@@ -13,12 +13,29 @@
   "damage_type": "cold",
   "mechanics": [
     {
-      "effect_type": "ranged_spell_attack"
+      "effect_type": "ranged_spell_attack",
+      "range_ft": 60
     },
     {
-      "effect_type": "modify_speed",
-      "amount": -10,
-      "duration": 1
+      "effect_type": "damage",
+      "damage": "1d8",
+      "damage_type": "cold",
+      "cantrip_scale_levels": [
+        5,
+        11,
+        17
+      ],
+      "cantrip_scale_dice": [
+        "2d8",
+        "3d8",
+        "4d8"
+      ]
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "ray_of_frost_slow",
+      "duration_rounds": 1,
+      "amount": -10
     }
   ]
 }

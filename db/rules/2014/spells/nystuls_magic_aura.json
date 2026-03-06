@@ -13,12 +13,11 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "false_aura",
-      "description": "Target appears magical, nonmagical, or as a chosen school of magic to detection spells."
-    },
-    {
-      "effect_type": "mask",
-      "description": "Target is treated as a chosen creature type or alignment by spells that detect creature types."
+      "effect_type": "transform",
+      "condition": "nystuls_magic_aura",
+      "duration_rounds": 28800,
+      "false_aura": true,
+      "mask": true
     }
   ]
 }

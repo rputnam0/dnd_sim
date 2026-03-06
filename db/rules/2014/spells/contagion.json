@@ -15,26 +15,27 @@
     {
       "effect_type": "apply_condition",
       "condition": "poisoned",
-      "duration": null
+      "duration_rounds": 100
     },
     {
-      "effect_type": "saving_throw",
-      "ability": "con",
-      "trigger": "end_of_target_turn",
-      "successes_needed": 3,
-      "failure_effect": "choose_disease"
+      "effect_type": "apply_condition",
+      "condition": "contagion_disease_progression",
+      "duration_rounds": 100,
+      "save_ability": "con",
+      "trigger": "end_of_turn",
+      "successes_needed": 3
     },
     {
       "effect_type": "apply_condition",
       "condition": "blinded",
-      "source": "Blinding Sickness",
-      "duration": null
+      "duration_rounds": 100,
+      "source": "Blinding Sickness"
     },
     {
       "effect_type": "apply_condition",
       "condition": "stunned",
-      "source": "Slimy Doom",
-      "duration": null
+      "duration_rounds": 100,
+      "source": "Slimy Doom"
     }
   ]
 }

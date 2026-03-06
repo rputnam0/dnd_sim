@@ -13,24 +13,24 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "grant_resistance",
-      "damage_type": "cold"
-    },
-    {
-      "effect_type": "grant_resistance",
-      "damage_type": "fire"
-    },
-    {
-      "effect_type": "triggered_damage",
-      "trigger": "melee_attack_within_5ft",
-      "damage": "2d8",
-      "damage_type": "fire"
-    },
-    {
-      "effect_type": "triggered_damage",
-      "trigger": "melee_attack_within_5ft",
-      "damage": "2d8",
-      "damage_type": "cold"
+      "effect_type": "apply_condition",
+      "condition": "fire_shield_active",
+      "duration_rounds": 100,
+      "target": "source",
+      "mode_options": [
+        "warm_shield",
+        "chill_shield"
+      ],
+      "resistances": [
+        "cold",
+        "fire"
+      ],
+      "retaliation_damage": "2d8",
+      "retaliation_types": [
+        "fire",
+        "cold"
+      ],
+      "trigger": "melee_attack_within_5ft"
     }
   ]
 }

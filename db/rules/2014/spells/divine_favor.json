@@ -13,7 +13,10 @@
   "damage_type": "radiant",
   "mechanics": [
     {
-      "effect_type": "add_damage",
+      "effect_type": "apply_condition",
+      "condition": "divine_favor_extra_radiant_damage",
+      "duration_rounds": 10,
+      "target": "source",
       "damage": "1d4",
       "damage_type": "radiant",
       "trigger": "weapon_attack_hit"

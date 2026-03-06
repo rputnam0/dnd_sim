@@ -13,12 +13,13 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "modify_weapon",
+      "effect_type": "transform",
+      "condition": "shillelagh_weapon_empowered",
+      "duration_rounds": 10,
       "damage_die": 8,
-      "use_spellcasting_ability_for_attack": true,
-      "use_spellcasting_ability_for_damage": true,
       "makes_weapon_magical": true,
-      "duration": 10
+      "use_spellcasting_ability_for_attack": true,
+      "use_spellcasting_ability_for_damage": true
     }
   ]
 }

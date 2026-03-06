@@ -13,12 +13,10 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "grant_save_bonus",
-      "bonus_die": "d4",
-      "once": true
-    },
-    {
-      "effect_type": "single_target"
+      "effect_type": "apply_condition",
+      "condition": "resistance_d4_to_next_save",
+      "duration_rounds": 10,
+      "bonus_die": "d4"
     }
   ]
 }

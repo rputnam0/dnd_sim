@@ -14,13 +14,17 @@
   "mechanics": [
     {
       "effect_type": "aoe",
-      "shape": "hemisphere",
-      "radius": 10
+      "radius_ft": 10,
+      "shape": "hemisphere"
     },
     {
-      "effect_type": "capacity_limit",
-      "max_creatures": 9,
-      "size_limit": "Medium"
+      "effect_type": "hazard",
+      "hazard_type": "tiny_hut",
+      "duration_rounds": 80,
+      "capacity_limit": 9,
+      "size_limit": "Medium",
+      "climate_control": true,
+      "blocks_weather": true
     }
   ]
 }

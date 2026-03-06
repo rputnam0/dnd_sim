@@ -13,19 +13,22 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "group_teleport",
+      "effect_type": "transform",
+      "condition": "plane_shift_transport",
+      "target": "source",
       "max_targets": 9,
-      "willing": true,
-      "range": "touch"
+      "range": "touch",
+      "willing": true
     },
     {
       "effect_type": "melee_spell_attack",
-      "target": "creature",
-      "save": {
-        "ability": "cha",
-        "required": "failed"
-      },
-      "teleport_on_fail": true
+      "target": "creature"
+    },
+    {
+      "effect_type": "transform",
+      "condition": "plane_shift_banished",
+      "save_ability": "cha",
+      "apply_on": "hit"
     }
   ]
 }

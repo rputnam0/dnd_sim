@@ -13,17 +13,17 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "extra_damage",
+      "effect_type": "apply_condition",
+      "condition": "hunters_marked",
+      "duration_rounds": 600,
       "damage": "1d6",
-      "trigger": "weapon_attack_hit"
-    },
-    {
-      "effect_type": "advantage",
-      "on": "wisdom_checks",
-      "skills": [
+      "damage_type": "weapon_bonus",
+      "advantage_skills": [
         "perception",
         "survival"
-      ]
+      ],
+      "advantage_context": "wisdom_checks_to_find_mark",
+      "trigger": "weapon_attack_hit"
     }
   ]
 }

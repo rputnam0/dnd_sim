@@ -13,17 +13,12 @@
   "damage_type": "force",
   "mechanics": [
     {
-      "effect_type": "teleport",
-      "max_range_ft": 500
-    },
-    {
-      "effect_type": "carry",
-      "max_weight": "carry_capacity",
-      "max_creature_size": "same"
-    },
-    {
-      "effect_type": "damage_on_occupied",
-      "damage": "4d6",
+      "effect_type": "transform",
+      "condition": "dimension_door_teleport",
+      "target": "source",
+      "range_ft": 500,
+      "carry": "one_willing_creature_or_object",
+      "occupied_destination_damage": "4d6",
       "damage_type": "force"
     }
   ]

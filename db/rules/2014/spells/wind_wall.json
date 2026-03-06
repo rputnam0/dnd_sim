@@ -13,21 +13,26 @@
   "damage_type": "bludgeoning",
   "mechanics": [
     {
-      "effect_type": "wall",
-      "length_ft": 50,
+      "effect_type": "hazard",
+      "hazard_type": "wind_wall",
+      "duration_rounds": 10,
       "height_ft": 15,
-      "thickness_ft": 1
+      "length_ft": 50,
+      "thickness_ft": 1,
+      "deflect_projectiles": true,
+      "on_enter": [
+        {
+          "effect_type": "damage",
+          "damage": "3d8",
+          "damage_type": "bludgeoning",
+          "save_ability": "str"
+        }
+      ]
     },
     {
       "effect_type": "save",
       "ability": "str",
-      "damage": "3d8",
-      "damage_type": "bludgeoning",
       "half_on_success": true
-    },
-    {
-      "effect_type": "deflect_projectiles",
-      "description": "Arrows, bolts, and other ordinary projectiles are deflected upward and automatically miss."
     }
   ]
 }

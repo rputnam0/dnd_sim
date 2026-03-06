@@ -13,8 +13,8 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "grant_advantage",
-      "duration": 1
+      "effect_type": "next_attack_advantage",
+      "target": "source"
     }
   ]
 }

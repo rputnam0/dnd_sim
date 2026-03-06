@@ -11,18 +11,6 @@ from dnd_sim.mechanics_schema import KNOWN_EFFECT_TYPES, validate_rule_mechanics
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = REPO_ROOT / "docs" / "program" / "parity_leaf_registry.csv"
 SPELLS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "spells"
-FIRST_SLICE_IDS = {
-    "spell:animate_dead",
-    "spell:arcane_gate",
-    "spell:arcane_lock",
-    "spell:armor_of_agathys",
-    "spell:aura_of_life",
-    "spell:aura_of_purity",
-    "spell:bigbys_hand",
-    "spell:blade_ward",
-    "spell:chromatic_orb",
-    "spell:circle_of_power",
-}
 REPRESENTATIVE_EFFECT_TYPES = {
     "animate_dead": {"summon", "command_allied"},
     "arcane_gate": {"hazard"},
@@ -34,6 +22,13 @@ REPRESENTATIVE_EFFECT_TYPES = {
     "blade_ward": {"apply_condition"},
     "chromatic_orb": {"damage", "ranged_spell_attack"},
     "circle_of_power": {"aoe", "apply_condition"},
+    "control_water": {"hazard"},
+    "eldritch_blast": {"damage", "ranged_spell_attack"},
+    "hex": {"apply_condition"},
+    "locate_creature": {"transform"},
+    "power_word_heal": {"heal", "remove_condition"},
+    "true_strike": {"next_attack_advantage"},
+    "wind_wall": {"hazard", "save"},
 }
 
 
@@ -48,15 +43,10 @@ def _owned_spell_ids() -> set[str]:
     return ids
 
 
-def _first_slice_ids() -> set[str]:
-    assert FIRST_SLICE_IDS <= _owned_spell_ids()
-    return set(FIRST_SLICE_IDS)
-
-
-def test_w6_par_05k1_first_slice_records_are_supported_in_spell_manifest() -> None:
+def test_w6_par_05k1_owned_records_are_supported_in_spell_manifest() -> None:
     manifest = build_spell_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
-    owned_ids = _first_slice_ids()
+    owned_ids = _owned_spell_ids()
 
     missing_ids = sorted(owned_ids - set(by_id))
     assert missing_ids == []
@@ -71,10 +61,10 @@ def test_w6_par_05k1_first_slice_records_are_supported_in_spell_manifest() -> No
         assert record.states.unsupported_reason is None
 
 
-def test_w6_par_05k1_first_slice_records_are_supported_in_canonical_capability_records() -> None:
+def test_w6_par_05k1_owned_records_are_supported_in_canonical_capability_records() -> None:
     io._canonical_capability_records.cache_clear()
     by_id = {record.content_id: record for record in io._canonical_capability_records()}
-    owned_ids = _first_slice_ids()
+    owned_ids = _owned_spell_ids()
 
     missing_ids = sorted(owned_ids - set(by_id))
     assert missing_ids == []
@@ -89,8 +79,8 @@ def test_w6_par_05k1_first_slice_records_are_supported_in_canonical_capability_r
         assert record.states.unsupported_reason is None
 
 
-def test_w6_par_05k1_first_slice_spell_effect_rows_use_known_canonical_effect_types() -> None:
-    for content_id in sorted(_first_slice_ids()):
+def test_w6_par_05k1_owned_spell_effect_rows_use_known_canonical_effect_types() -> None:
+    for content_id in sorted(_owned_spell_ids()):
         slug = content_id.split(":", maxsplit=1)[1]
         payload = json.loads((SPELLS_DIR / f"{slug}.json").read_text(encoding="utf-8"))
         mechanics = payload["mechanics"]

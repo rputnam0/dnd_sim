@@ -13,16 +13,13 @@
   "damage_type": "necrotic",
   "mechanics": [
     {
-      "effect_type": "extra_damage",
+      "effect_type": "apply_condition",
+      "condition": "hexed",
+      "duration_rounds": 600,
       "damage": "1d6",
       "damage_type": "necrotic",
-      "trigger": "hit"
-    },
-    {
-      "effect_type": "disadvantage",
-      "target": "ability_check",
-      "ability": "chosen",
-      "duration": "concentration"
+      "disadvantaged_ability": "chosen",
+      "trigger": "attack_hit"
     }
   ]
 }

@@ -8,21 +8,22 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "A thin green ray springs from your pointing finger to a target you can see within 60 feet. The target can be a creature, an object, or a creation of magical force, such as a wall of force. The target must make a Dexterity saving throw. On a failed save, it takes 10d6 + 40 force damage and is disintegrated if this damage reduces it to 0 hit points. A disintegrated creature and everything it is wearing and carrying, except magic items, become a pile of fine gray dust; the creature can be restored only by true resurrection or wish. The spell automatically disintegrates a Large or smaller nonmagical object or magical force creation; a Huge or larger object or force creation loses a 10‑foot‑cube portion. Magic items are unaffected. When cast using a spell slot of 7th level or higher, the damage increases by 3d6 for each slot level above 6th.",
+  "description": "A thin green ray springs from your pointing finger to a target you can see within 60 feet. The target can be a creature, an object, or a creation of magical force, such as a wall of force. The target must make a Dexterity saving throw. On a failed save, it takes 10d6 + 40 force damage and is disintegrated if this damage reduces it to 0 hit points. A disintegrated creature and everything it is wearing and carrying, except magic items, become a pile of fine gray dust; the creature can be restored only by true resurrection or wish. The spell automatically disintegrates a Large or smaller nonmagical object or magical force creation; a Huge or larger object or force creation loses a 10\u2011foot\u2011cube portion. Magic items are unaffected. When cast using a spell slot of 7th level or higher, the damage increases by 3d6 for each slot level above 6th.",
   "save_ability": "dex",
   "damage_type": "force",
   "mechanics": [
     {
       "effect_type": "damage",
+      "damage": "10d6+40",
       "damage_dice": "10d6+40",
       "damage_type": "force",
       "save_ability": "dex"
     },
     {
-      "effect_type": "disintegrate",
-      "target": "creature/object",
-      "size_limit": "Large",
-      "area": "single_target"
+      "effect_type": "apply_condition",
+      "condition": "disintegrated_on_zero_hp",
+      "target_kind": "creature_or_object",
+      "size_limit": "Large"
     }
   ]
 }

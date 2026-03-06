@@ -8,21 +8,22 @@
   "concentration": true,
   "ritual": false,
   "duration_rounds": 10,
-  "description": "You craft an illusion that takes root in the mind of a creature you can see within range. The target must make an Intelligence saving throw. On a failed save, you create a phantasmal object, creature, or other visible phenomenon of your choice that is no larger than a 10‑foot cube and perceivable only to the target for the duration. The spell has no effect on undead or constructs. The phantasm includes sound, temperature, and other stimuli, also evident only to the creature. The target can use its action to examine the phantasm with an Intelligence (Investigation) check against your spell save DC; on a success the target realizes the phantasm is an illusion and the spell ends. While affected, the target treats the phantasm as real, rationalizing any illogical outcomes. The target can even take damage from the illusion: a phantasmal creature can attack, or a phantasmal fire, acid, or lava can burn the target. Each round on your turn, the phantasm can deal 1d6 psychic damage to the target if it is in the phantasm’s area or within 5 feet of it, and the target perceives the damage as appropriate to the illusion.",
+  "description": "You craft an illusion that takes root in the mind of a creature you can see within range. The target must make an Intelligence saving throw. On a failed save, you create a phantasmal object, creature, or other visible phenomenon of your choice that is no larger than a 10\u2011foot cube and perceivable only to the target for the duration. The spell has no effect on undead or constructs. The phantasm includes sound, temperature, and other stimuli, also evident only to the creature. The target can use its action to examine the phantasm with an Intelligence (Investigation) check against your spell save DC; on a success the target realizes the phantasm is an illusion and the spell ends. While affected, the target treats the phantasm as real, rationalizing any illogical outcomes. The target can even take damage from the illusion: a phantasmal creature can attack, or a phantasmal fire, acid, or lava can burn the target. Each round on your turn, the phantasm can deal 1d6 psychic damage to the target if it is in the phantasm\u2019s area or within 5 feet of it, and the target perceives the damage as appropriate to the illusion.",
   "save_ability": "int",
   "damage_type": "psychic",
   "mechanics": [
     {
-      "effect_type": "aoe",
+      "effect_type": "apply_condition",
+      "condition": "phantasmal_force_illusion",
+      "duration_rounds": 100,
       "shape": "cube",
-      "size": 10
+      "size_ft": 10
     },
     {
-      "effect_type": "damage_over_time",
+      "effect_type": "damage",
       "damage": "1d6",
       "damage_type": "psychic",
-      "trigger": "each_round",
-      "range_ft": 5
+      "trigger": "each_round_within_5ft"
     }
   ]
 }
