@@ -4,12 +4,20 @@
   "level": 0,
   "school": "Divination",
   "casting_time": "1 action",
-  "range_ft": null,
+  "range_ft": 0,
   "concentration": true,
   "ritual": false,
   "duration_rounds": 10,
   "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice. It can roll the die before or after making the ability check. The spell then ends.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "guidance_bonus_d4",
+      "duration_rounds": 10,
+      "bonus": "1d4",
+      "applies_to": "ability_check"
+    }
+  ]
 }

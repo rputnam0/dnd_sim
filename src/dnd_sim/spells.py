@@ -64,11 +64,25 @@ class CanonicalSpellRecord(BaseModel):
     level: int = Field(ge=0, le=9)
     school: str | None = None
     casting_time: str
+    action_type: Literal["attack", "save", "utility"] | None = None
+    target_mode: Literal[
+        "single_enemy",
+        "single_ally",
+        "self",
+        "all_enemies",
+        "all_allies",
+        "all_creatures",
+        "n_enemies",
+        "n_allies",
+        "random_enemy",
+        "random_ally",
+    ] | None = None
     range_ft: int | None = Field(default=None, ge=0)
     concentration: bool = False
     ritual: bool = False
     duration_rounds: int | None = Field(default=None, ge=0)
     description: str
+    save_dc: int | None = Field(default=None, ge=0)
     save_ability: str | None = None
     damage_type: str | None = None
     mechanics: list[dict[str, Any]] = Field(default_factory=list)
@@ -288,6 +302,8 @@ def canonicalize_spell_payload(
         "level": int(level_raw),
         "school": school_raw,
         "casting_time": casting_time,
+        "action_type": str(payload.get("action_type", "")).strip().lower() or None,
+        "target_mode": str(payload.get("target_mode", "")).strip().lower() or None,
         "range_ft": _parse_range_ft(payload.get("range_ft", payload.get("range"))),
         "concentration": bool(concentration_raw),
         "ritual": bool(ritual_raw),
@@ -295,6 +311,7 @@ def canonicalize_spell_payload(
             payload.get("duration_rounds", payload.get("duration"))
         ),
         "description": description,
+        "save_dc": int(payload["save_dc"]) if payload.get("save_dc") is not None else None,
         "save_ability": save_ability,
         "damage_type": payload.get("damage_type"),
         "mechanics": _coerce_mechanics(payload.get("mechanics")),
