@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-05  
+Last updated: 2026-03-06
 Canonical source: `docs/program/README.md`
 
 This file defines the live planning surface, ownership, and freshness rules.
@@ -30,6 +30,7 @@ The table below is the canonical registry for every live planning file.
 | `docs/program/risk_register.md` | canonical | integration-review | required | Program risk tracking. |
 | `docs/program/labels_and_milestones.md` | canonical | program-control | required | Labeling and milestone mapping. |
 | `docs/program/status_board.md` | canonical | program-control | required | Human-readable status dashboard. |
+| `docs/program/parity_leaf_registry.csv` | canonical | program-control | not_applicable | Exact record-to-leaf ownership map for remaining strict blockers. |
 | `docs/program/completion_task_cards.md` | canonical | program-control | required | Human-readable task expansion of backlog. |
 | `docs/program/capability_report.md` | canonical after CAP-06 | content-manifest | required | Capability report output surface. |
 
