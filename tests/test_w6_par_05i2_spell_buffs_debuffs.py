@@ -24,6 +24,17 @@ CHECKPOINT_I2_SPELL_IDS = {
     "spell:death_ward",
     "spell:elemental_bane",
     "spell:enhance_ability",
+    "spell:expeditious_retreat",
+    "spell:false_life",
+    "spell:fly",
+    "spell:greater_invisibility",
+    "spell:haste",
+    "spell:heroism",
+    "spell:see_invisibility",
+    "spell:shield",
+    "spell:shield_of_faith",
+    "spell:slow",
+    "spell:stoneskin",
 }
 
 
@@ -91,6 +102,16 @@ def test_w6_par_05i2_checkpoint_spell_rows_capture_buff_debuff_intent() -> None:
         "spell:death_ward": "death_warded",
         "spell:elemental_bane": "elemental_bane",
         "spell:enhance_ability": "enhance_ability_selected_option",
+        "spell:expeditious_retreat": "expeditious_retreat_dash_bonus_action",
+        "spell:fly": "flying_speed_60",
+        "spell:greater_invisibility": "invisible",
+        "spell:haste": "hasted",
+        "spell:heroism": "heroism",
+        "spell:see_invisibility": "see_invisible",
+        "spell:shield": "shield_spell_warded",
+        "spell:shield_of_faith": "shield_of_faith_ac_bonus",
+        "spell:slow": "slowed",
+        "spell:stoneskin": "stoneskin_nonmagical_bps_resistance",
     }
 
     for content_id, condition in sorted(expected_condition_rows.items()):
@@ -104,3 +125,13 @@ def test_w6_par_05i2_checkpoint_spell_rows_capture_buff_debuff_intent() -> None:
             and row.get("condition") == condition
             for row in mechanics
         ), f"{content_id} must contain apply_condition:{condition}"
+
+    false_life_payload = json.loads((SPELLS_DIR / "false_life.json").read_text(encoding="utf-8"))
+    false_life_mechanics = false_life_payload.get("mechanics")
+    assert isinstance(false_life_mechanics, list)
+    assert any(
+        isinstance(row, dict)
+        and row.get("effect_type") == "temp_hp"
+        and row.get("amount") == "1d4+4"
+        for row in false_life_mechanics
+    ), "spell:false_life must contain temp_hp:1d4+4"
