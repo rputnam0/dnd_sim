@@ -7,18 +7,21 @@
       "actor": "self",
       "range": 30,
       "target": "unoccupied space you can see",
-      "activation": "action"
+      "activation": "action",
+      "meta_type": "world_linked_option"
     },
     {
       "effect": "swap",
       "actor": "self",
       "range": 30,
       "target": "willing Small or Medium creature",
-      "activation": "action"
+      "activation": "action",
+      "meta_type": "world_linked_option"
     },
     {
       "effect": "recharge",
-      "trigger": "long rest or casting a conjuration spell of 1st level or higher"
+      "trigger": "long rest or casting a conjuration spell of 1st level or higher",
+      "meta_type": "world_linked_option"
     }
   ],
   "source_type": "subclass"

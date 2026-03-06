@@ -7,7 +7,8 @@
       "grant": {
         "flying_speed": 30
       },
-      "duration": "until incapacitated, death, or dismissed as a bonus action"
+      "duration": "until incapacitated, death, or dismissed as a bonus action",
+      "meta_type": "transformation_option"
     }
   ],
   "source_type": "subclass"

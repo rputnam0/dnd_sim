@@ -17,11 +17,11 @@ Do not edit manually.
 | Metric | Value |
 |---|---:|
 | Total records | 2527 |
-| Supported records | 1988 |
-| Blocked records | 539 |
+| Supported records | 2010 |
+| Blocked records | 517 |
 | Schema-valid records | 2527 |
-| Executable records | 1988 |
-| Tested records | 1988 |
+| Executable records | 2010 |
+| Tested records | 2010 |
 
 ## Coverage By Content Type
 
@@ -32,11 +32,11 @@ Do not edit manually.
 | monster | 191 | 191 | 0 | 191 | 191 | 191 |
 | species | 256 | 256 | 0 | 256 | 256 | 256 |
 | spell | 594 | 170 | 424 | 594 | 170 | 170 |
-| trait | 1181 | 1066 | 115 | 1181 | 1066 | 1066 |
+| trait | 1181 | 1088 | 93 | 1181 | 1088 | 1088 |
 
 ## Unsupported Reason Coverage
 
 | Unsupported reason | Count |
 |---|---:|
-| missing_runtime_hook_family | 115 |
+| missing_runtime_hook_family | 93 |
 | missing_runtime_mechanics | 424 |

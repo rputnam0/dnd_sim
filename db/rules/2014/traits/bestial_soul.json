@@ -4,20 +4,23 @@
   "mechanics": [
     {
       "effect": "natural_weapons_magical",
-      "description": "Natural weapons of the Form of the Beast count as magical for overcoming resistance and immunity to nonmagical attacks and damage."
+      "description": "Natural weapons of the Form of the Beast count as magical for overcoming resistance and immunity to nonmagical attacks and damage.",
+      "meta_type": "transformation_option"
     },
     {
       "effect": "gain_swim_speed",
       "value": "walking_speed",
       "duration": "until next short rest",
-      "description": "Gain a swimming speed equal to your walking speed and can breathe underwater."
+      "description": "Gain a swimming speed equal to your walking speed and can breathe underwater.",
+      "meta_type": "transformation_option"
     },
     {
       "effect": "gain_climb_speed",
       "value": "walking_speed",
       "special": "can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check",
       "duration": "until next short rest",
-      "description": "Gain a climbing speed equal to your walking speed."
+      "description": "Gain a climbing speed equal to your walking speed.",
+      "meta_type": "transformation_option"
     },
     {
       "effect": "extend_jump",
@@ -25,7 +28,8 @@
       "extension": "feet equal to check total",
       "limit": "once per turn",
       "duration": "until next short rest",
-      "description": "When you jump, you can make a Strength (Athletics) check to extend your jump by a number of feet equal to the check's total."
+      "description": "When you jump, you can make a Strength (Athletics) check to extend your jump by a number of feet equal to the check's total.",
+      "meta_type": "transformation_option"
     }
   ],
   "source_type": "subclass"

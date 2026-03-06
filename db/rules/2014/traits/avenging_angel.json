@@ -5,7 +5,8 @@
     {
       "effect": "grant_flying_speed",
       "speed": 60,
-      "duration": "1 hour"
+      "duration": "1 hour",
+      "meta_type": "transformation_option"
     },
     {
       "effect": "aura",
@@ -16,17 +17,20 @@
         "dc_source": "spell save DC"
       },
       "condition_applied": "frightened",
-      "condition_duration": "1 minute or until the creature takes damage"
+      "condition_duration": "1 minute or until the creature takes damage",
+      "meta_type": "transformation_option"
     },
     {
       "effect": "advantage_on_attack",
-      "against_condition": "frightened"
+      "against_condition": "frightened",
+      "meta_type": "transformation_option"
     },
     {
       "effect": "limited_use",
       "uses_per_long_rest": 1,
       "activation": "action",
-      "duration": "1 hour"
+      "duration": "1 hour",
+      "meta_type": "transformation_option"
     }
   ],
   "source_type": "subclass"

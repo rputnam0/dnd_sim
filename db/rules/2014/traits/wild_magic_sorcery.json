@@ -3,9 +3,11 @@
   "description": "Unleash Chaotic Magic. Your innate magic stems from the forces of chaos that underlie the order of creation. You or an ancestor might have endured exposure to raw magic, perhaps through a planar portal leading to Limbo or the Elemental Planes. Perhaps you were blessed by a fey being or marked by a demon. Or your magic could be a fluke with no apparent cause. Whatever its source, this magic churns within you, waiting for any outlet. This feature grants the Wild Magic Surge and Tides of Chaos features.",
   "mechanics": [
     {
+      "meta_type": "feature_progression",
       "grantFeature": "Wild Magic Surge"
     },
     {
+      "meta_type": "feature_progression",
       "grantFeature": "Tides of Chaos"
     }
   ],

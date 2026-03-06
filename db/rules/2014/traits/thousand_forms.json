@@ -3,6 +3,7 @@
   "description": "By 14th level, you have learned to use magic to alter your physical form in more subtle ways. You can cast the alter self spell at will.",
   "mechanics": [
     {
+      "meta_type": "spellcasting_option",
       "action": "cast_spell",
       "spell": "alter self",
       "usage": "at will"

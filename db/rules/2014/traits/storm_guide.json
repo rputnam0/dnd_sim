@@ -7,14 +7,16 @@
       "condition": "raining",
       "effect": "stop rain",
       "area": "20-foot radius sphere centered on you",
-      "duration": "until you end it as a bonus action"
+      "duration": "until you end it as a bonus action",
+      "meta_type": "world_linked_option"
     },
     {
       "trigger": "bonus action each round",
       "condition": "windy",
       "effect": "set wind direction",
       "area": "100-foot radius sphere centered on you",
-      "duration": "until the end of your next turn"
+      "duration": "until the end of your next turn",
+      "meta_type": "world_linked_option"
     }
   ],
   "source_type": "subclass"

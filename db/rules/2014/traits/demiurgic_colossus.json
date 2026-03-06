@@ -6,7 +6,8 @@
       "effect": "reach_increase",
       "value": 10,
       "unit": "feet",
-      "condition": "while raging"
+      "condition": "while raging",
+      "meta_type": "transformation_option"
     },
     {
       "effect": "size_change",
@@ -14,17 +15,20 @@
         "Large",
         "Huge"
       ],
-      "condition": "while raging"
+      "condition": "while raging",
+      "meta_type": "transformation_option"
     },
     {
       "effect": "mighty_impel_extension",
       "target_max_size": "Large",
-      "condition": "while raging"
+      "condition": "while raging",
+      "meta_type": "transformation_option"
     },
     {
       "effect": "elemental_cleaver_damage_increase",
       "damage": "2d6",
-      "condition": "feature_active"
+      "condition": "feature_active",
+      "meta_type": "transformation_option"
     }
   ],
   "source_type": "subclass"
