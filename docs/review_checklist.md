@@ -116,39 +116,40 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-04 Execute parity continuation shard batch B and strict-input manifest sync (merged via #185/#186/#187/#188/#189/#190)
 - [x] W6-PAR-05A Umbrella row for baseline truth sync and leaf registry (merged to `codex/int/w6-parity-closeout` via #201)
 - [x] W6-PAR-05A1 Reconcile canonical parity surfaces to the 1225-blocker baseline and add `docs/program/parity_leaf_registry.csv` (merged to `codex/int/w6-parity-closeout` via #201)
-- [ ] W6-PAR-05B Umbrella row for background meta closeout leaves
-- [ ] W6-PAR-05B1 Background meta closeout leaf
-- [ ] W6-PAR-05C Umbrella row for passive species meta leaves
-- [ ] W6-PAR-05C1 Passive/meta species closeout leaf
-- [ ] W6-PAR-05D Umbrella row for active species effect leaves
-- [ ] W6-PAR-05D1 Active/effect species closeout leaf
-- [ ] W6-PAR-05E Umbrella row for trait meta leaves
-- [ ] W6-PAR-05E1 Trait meta options/proficiencies leaf
-- [ ] W6-PAR-05E2 Trait social/access/support meta leaf
-- [ ] W6-PAR-05F Umbrella row for passive combat trait leaves
-- [ ] W6-PAR-05F1 Trait passive defense/support leaf (base branch retired to continuation lanes)
-- [ ] W6-PAR-05F1B Trait passive defense/support finalization continuation (PR #225 open)
-- [ ] W6-PAR-05F2 Trait passive offense/mobility leaf
-- [ ] W6-PAR-05G Umbrella row for reaction/resource trait leaves
-- [ ] W6-PAR-05G1 Trait reaction/retaliation leaf
-- [ ] W6-PAR-05G1C Trait reaction/support follow-up slice (PR #224 open)
-- [ ] W6-PAR-05G1D Trait survival/recovery support continuation leaf (PR #226 open)
-- [ ] W6-PAR-05G2 Trait resource-change/turn-gated leaf
-- [ ] W6-PAR-05H Umbrella row for summon/transform trait leaves
-- [ ] W6-PAR-05H1 Trait summon/companion/mount leaf
-- [ ] W6-PAR-05H2 Trait transform/world-linked leaf
-- [ ] W6-PAR-05I Umbrella row for spell mechanics damage/support leaves
-- [ ] W6-PAR-05I1 Spell damage/heal/condition mechanics leaf
-- [ ] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (PR #227 open)
-- [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves
-- [ ] W6-PAR-05J1 Spell summon/command/control mechanics leaf
-- [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf
-- [ ] W6-PAR-05K Umbrella row for spell effect-family normalization leaves
-- [ ] W6-PAR-05K1 Normalize blocked unsupported spell effect payloads to existing canonical families
-- [ ] W6-PAR-05K2 Add residual canonical effect-family support after normalization pass
-- [ ] W6-PAR-05L Umbrella row for spell schema repair leaves
-- [ ] W6-PAR-05L1 Repair invalid mechanics schema blockers
-- [ ] W6-PAR-05L2 Convert non-executable mechanics blockers into executable canonical payloads
+- Live remaining strict backlog at `cb9e869` is 137 blocked records: J1=39, J2=60, and G1=38. `docs/program/parity_batch_registry.csv` is the exact current batch map. Draft carryovers #220 and #222 are closed and superseded; I2 is no longer live after PR #227 merged.
+- [x] W6-PAR-05B Umbrella row for background meta closeout leaves
+- [x] W6-PAR-05B1 Background meta closeout leaf
+- [x] W6-PAR-05C Umbrella row for passive species meta leaves
+- [x] W6-PAR-05C1 Passive/meta species closeout leaf
+- [x] W6-PAR-05D Umbrella row for active species effect leaves
+- [x] W6-PAR-05D1 Active/effect species closeout leaf
+- [x] W6-PAR-05E Umbrella row for trait meta leaves
+- [x] W6-PAR-05E1 Trait meta options/proficiencies leaf
+- [x] W6-PAR-05E2 Trait social/access/support meta leaf
+- [x] W6-PAR-05F Umbrella row for passive combat trait leaves
+- [x] W6-PAR-05F1 Trait passive defense/support leaf (closed via continuation PRs #221 and #225)
+- [x] W6-PAR-05F1B Trait passive defense/support finalization continuation (merged via #225)
+- [x] W6-PAR-05F2 Trait passive offense/mobility leaf
+- [ ] W6-PAR-05G Umbrella row for reaction/resource trait leaves (live batches G1-A through G1-D remain)
+- [ ] W6-PAR-05G1 Trait reaction/retaliation leaf (38 live blockers batched as G1-A through G1-D)
+- [x] W6-PAR-05G1C Trait reaction/support follow-up slice (merged via #224)
+- [x] W6-PAR-05G1D Trait survival/recovery support continuation leaf (merged via #226)
+- [x] W6-PAR-05G2 Trait resource-change/turn-gated leaf
+- [x] W6-PAR-05H Umbrella row for summon/transform trait leaves
+- [x] W6-PAR-05H1 Trait summon/companion/mount leaf
+- [x] W6-PAR-05H2 Trait transform/world-linked leaf
+- [x] W6-PAR-05I Umbrella row for spell mechanics damage/support leaves
+- [x] W6-PAR-05I1 Spell damage/heal/condition mechanics leaf
+- [x] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (merged via #227)
+- [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves (live batches J1-A through J1-D and J2-A through J2-F remain)
+- [ ] W6-PAR-05J1 Spell summon/command/control mechanics leaf (39 live blockers batched as J1-A through J1-D)
+- [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf (60 live blockers batched as J2-A through J2-F)
+- [x] W6-PAR-05K Umbrella row for spell effect-family normalization leaves
+- [x] W6-PAR-05K1 Normalize blocked unsupported spell effect payloads to existing canonical families
+- [x] W6-PAR-05K2 Add residual canonical effect-family support after normalization pass
+- [x] W6-PAR-05L Umbrella row for spell schema repair leaves
+- [x] W6-PAR-05L1 Repair invalid mechanics schema blockers
+- [x] W6-PAR-05L2 Convert non-executable mechanics blockers into executable canonical payloads
 - [ ] W6-PAR-05M Final strict closeout and parity integration merge
 - [x] W6-GATE-01 Sync docs/backlog/checklist truth and maintenance waivers for remediation state (merged via #172)
 - [x] W6-GATE-02 Final green gate and closeout pass (merged via #183)
