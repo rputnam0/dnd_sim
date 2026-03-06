@@ -13,9 +13,11 @@
   "damage_type": "piercing",
   "mechanics": [
     {
-      "effect_type": "aoe",
-      "shape": "sphere",
-      "radius": 5
+      "effect_type": "apply_condition",
+      "target": "source",
+      "condition": "hail_of_thorns_armed",
+      "duration_rounds": 10,
+      "effect_id": "hail_of_thorns"
     }
   ]
 }

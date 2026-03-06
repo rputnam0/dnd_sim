@@ -13,16 +13,22 @@
   "damage_type": "radiant",
   "mechanics": [
     {
-      "effect_type": "aoe",
-      "shape": "sphere",
-      "radius": 10
+      "effect_type": "hazard",
+      "hazard_type": "guardian_of_faith",
+      "radius_ft": 10,
+      "duration_rounds": 4800
     },
     {
       "effect_type": "save",
-      "ability": "dex",
-      "damage_type": "radiant",
+      "save_ability": "dex"
+    },
+    {
+      "effect_type": "damage",
+      "target": "all_enemies",
+      "apply_on": "save_fail",
+      "save_ability": "dex",
       "damage": 20,
-      "half_on_success": true
+      "damage_type": "radiant"
     }
   ]
 }

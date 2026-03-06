@@ -13,9 +13,10 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "aoe",
-      "shape": "square",
-      "size": 40
+      "effect_type": "hazard",
+      "hazard_type": "move_earth",
+      "difficult_terrain": true,
+      "duration_rounds": 1200
     }
   ]
 }

@@ -13,20 +13,17 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "Steal Life"
+      "effect_type": "resource_change",
+      "target": "source",
+      "resource": "soul_cage_uses",
+      "amount": 6
     },
     {
-      "effect_type": "note",
-      "text": "Query Soul"
-    },
-    {
-      "effect_type": "note",
-      "text": "Borrow Experience"
-    },
-    {
-      "effect_type": "note",
-      "text": "Eyes of the Dead"
+      "effect_type": "apply_condition",
+      "target": "source",
+      "condition": "soul_cage_active",
+      "duration_rounds": 4800,
+      "effect_id": "soul_cage"
     }
   ]
 }

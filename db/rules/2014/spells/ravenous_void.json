@@ -13,32 +13,19 @@
   "damage_type": "force",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "difficult terrain within 100 ft of sphere"
+      "effect_type": "hazard",
+      "hazard_type": "ravenous_void",
+      "radius_ft": 20,
+      "duration_rounds": 10,
+      "difficult_terrain": true
     },
     {
-      "effect_type": "note",
-      "text": "pull unsecured objects toward center each turn"
-    },
-    {
-      "effect_type": "note",
-      "text": "pull creatures on failed Strength save"
-    },
-    {
-      "effect_type": "note",
-      "text": "5d10 force damage on entry or start of turn"
-    },
-    {
-      "effect_type": "note",
-      "text": "restrained condition while in sphere"
-    },
-    {
-      "effect_type": "note",
-      "text": "Strength check to end restraint"
-    },
-    {
-      "effect_type": "note",
-      "text": "annihilation on 0 HP"
+      "effect_type": "damage",
+      "target": "all_enemies",
+      "apply_on": "save_fail",
+      "save_ability": "str",
+      "damage": "5d10",
+      "damage_type": "force"
     }
   ]
 }

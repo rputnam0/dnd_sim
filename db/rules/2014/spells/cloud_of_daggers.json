@@ -13,6 +13,28 @@
   "damage_type": "slashing",
   "mechanics": [
     {
+      "effect_type": "hazard",
+      "hazard_type": "cloud_of_daggers",
+      "radius_ft": 0,
+      "shape": "cube",
+      "size": 5,
+      "duration_rounds": 10,
+      "on_enter": [
+        {
+          "effect_type": "damage",
+          "damage": "4d4",
+          "damage_type": "slashing"
+        }
+      ],
+      "on_start_turn": [
+        {
+          "effect_type": "damage",
+          "damage": "4d4",
+          "damage_type": "slashing"
+        }
+      ]
+    },
+    {
       "effect_type": "aoe",
       "shape": "cube",
       "size": 5

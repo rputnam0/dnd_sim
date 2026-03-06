@@ -13,28 +13,10 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "Sound can't pass through the barrier at the edge of the warded area."
-    },
-    {
-      "effect_type": "note",
-      "text": "The barrier of the warded area appears dark and foggy, preventing vision (including darkvision) through it."
-    },
-    {
-      "effect_type": "note",
-      "text": "Sensors created by divination spells can't appear inside the protected area or pass through the barrier at its perimeter."
-    },
-    {
-      "effect_type": "note",
-      "text": "Creatures in the area can't be targeted by divination spells."
-    },
-    {
-      "effect_type": "note",
-      "text": "Nothing can teleport into or out of the warded area."
-    },
-    {
-      "effect_type": "note",
-      "text": "Planar travel is blocked within the warded area."
+      "effect_type": "hazard",
+      "hazard_type": "private_sanctum",
+      "radius_ft": 50,
+      "duration_rounds": 14400
     }
   ]
 }
