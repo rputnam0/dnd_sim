@@ -18,7 +18,8 @@
           "target": "self",
           "restriction": "to an unoccupied space you can see"
         }
-      ]
+      ],
+      "meta_type": "action"
     },
     {
       "name": "Lunar Vitality",
@@ -34,7 +35,8 @@
           "amount": 10,
           "duration": "until end of target's next turn"
         }
-      ]
+      ],
+      "meta_type": "resource_spend"
     }
   ],
   "source_type": "subclass"

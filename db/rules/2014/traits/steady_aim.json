@@ -17,7 +17,8 @@
       "post_effect": {
         "speed_modifier": -1,
         "duration": "end_of_current_turn"
-      }
+      },
+      "meta_type": "advantage"
     }
   ],
   "source_type": "class"

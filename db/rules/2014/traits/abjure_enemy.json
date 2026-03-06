@@ -24,7 +24,8 @@
       "onSuccess": {
         "speedMultiplier": 0.5,
         "duration": "1 minute"
-      }
+      },
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"

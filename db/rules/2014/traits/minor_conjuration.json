@@ -14,7 +14,8 @@
       "placement": [
         "in_hand",
         "on_ground_unoccupied"
-      ]
+      ],
+      "meta_type": "action"
     },
     {
       "duration": "1 hour",
@@ -22,13 +23,15 @@
         "feature_used_again",
         "object_takes_damage",
         "object_deals_damage"
-      ]
+      ],
+      "meta_type": "duration"
     },
     {
       "light": {
         "type": "dim",
         "radius_feet": 5
-      }
+      },
+      "meta_type": "light_obscuration"
     }
   ],
   "source_type": "subclass"

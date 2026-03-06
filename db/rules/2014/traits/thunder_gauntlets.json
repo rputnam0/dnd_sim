@@ -6,13 +6,15 @@
       "effect": "weapon",
       "category": "simple melee",
       "damage": "1d8 thunder",
-      "note": "gauntlet counts as a simple melee weapon when not holding anything"
+      "note": "gauntlet counts as a simple melee weapon when not holding anything",
+      "meta_type": "natural_weapon"
     },
     {
       "effect": "condition",
       "target": "creature hit by gauntlet",
       "condition": "disadvantage on attack rolls against targets other than you",
-      "duration": "until the start of your next turn"
+      "duration": "until the start of your next turn",
+      "meta_type": "condition"
     }
   ],
   "source_type": "subclass"

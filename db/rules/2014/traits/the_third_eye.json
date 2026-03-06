@@ -38,7 +38,8 @@
             "range": 10
           }
         }
-      ]
+      ],
+      "meta_type": "choice"
     }
   ],
   "source_type": "subclass"

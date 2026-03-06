@@ -5,7 +5,8 @@
     {
       "trigger": "enter_rage",
       "roll": "1d8",
-      "effect": "determine effect from Wild Magic table (see description)"
+      "effect": "determine effect from Wild Magic table (see description)",
+      "meta_type": "choice"
     }
   ],
   "source_type": "subclass"

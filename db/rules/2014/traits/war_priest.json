@@ -10,7 +10,8 @@
         "per": "long rest",
         "max": "Wisdom modifier",
         "minimum": 1
-      }
+      },
+      "meta_type": "bonus_action_attack"
     }
   ],
   "source_type": "subclass"

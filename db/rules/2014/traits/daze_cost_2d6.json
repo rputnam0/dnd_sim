@@ -15,7 +15,8 @@
           "action",
           "bonus action"
         ]
-      }
+      },
+      "meta_type": "save"
     }
   ],
   "source_type": "class"

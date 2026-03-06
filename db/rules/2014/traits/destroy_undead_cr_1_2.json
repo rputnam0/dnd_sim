@@ -9,7 +9,8 @@
         "type": "undead",
         "max_cr": 0.5
       },
-      "effect": "destroy"
+      "effect": "destroy",
+      "meta_type": "condition"
     }
   ],
   "source_type": "class"

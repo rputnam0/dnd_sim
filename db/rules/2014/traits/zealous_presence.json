@@ -22,7 +22,8 @@
           "saving_throws"
         ],
         "duration": "until start of your next turn"
-      }
+      },
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

@@ -5,7 +5,8 @@
     {
       "effect": "bardic_inspiration_die_change",
       "new_die": "d10",
-      "applies_at_level": 10
+      "applies_at_level": 10,
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "class"

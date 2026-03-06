@@ -17,7 +17,8 @@
         "condition": "frightened",
         "duration": "1 minute",
         "repeatSave": "end of each turn"
-      }
+      },
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"

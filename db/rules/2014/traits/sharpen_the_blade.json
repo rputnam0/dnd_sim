@@ -13,7 +13,8 @@
         "type": "bonus_to_attack_and_damage",
         "value": "equal to ki points spent"
       },
-      "duration": "1 minute or until you use this feature again"
+      "duration": "1 minute or until you use this feature again",
+      "meta_type": "resource_spend"
     }
   ],
   "source_type": "subclass"

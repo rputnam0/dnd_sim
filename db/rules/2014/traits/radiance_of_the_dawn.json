@@ -26,7 +26,8 @@
             "on_failure": "full"
           }
         }
-      ]
+      ],
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

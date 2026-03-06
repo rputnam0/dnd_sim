@@ -13,7 +13,8 @@
         "target": "creatures_of_choice_within_10_feet_you_can_see",
         "damage_type": "fire",
         "damage_formula": "max(floor(sorcerer_level / 2), 1)"
-      }
+      },
+      "meta_type": "damage_modifier"
     }
   ],
   "source_type": "subclass"

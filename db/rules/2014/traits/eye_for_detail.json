@@ -16,7 +16,8 @@
           "skill": "Investigation",
           "target": "clues"
         }
-      ]
+      ],
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

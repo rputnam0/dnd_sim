@@ -6,7 +6,8 @@
       "action": "action",
       "effect": "heal",
       "amount": "3 * monk level",
-      "recharge": "long rest"
+      "recharge": "long rest",
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

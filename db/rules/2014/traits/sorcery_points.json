@@ -7,7 +7,8 @@
       "starting": 2,
       "perLevelIncrease": 1,
       "maximum": 20,
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "resource"
     }
   ],
   "source_type": "class"

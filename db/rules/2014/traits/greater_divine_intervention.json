@@ -11,7 +11,8 @@
       "cooldown": {
         "type": "long_rest",
         "dice": "2d4"
-      }
+      },
+      "meta_type": "recharge"
     }
   ],
   "source_type": "class"

@@ -14,7 +14,8 @@
       "usage": {
         "reset": "short_or_long_rest",
         "uses_per_reset": 1
-      }
+      },
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

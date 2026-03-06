@@ -8,7 +8,8 @@
       "effect": "light",
       "bright_radius": 10,
       "dim_radius": 10,
-      "optional": "douse"
+      "optional": "douse",
+      "meta_type": "action"
     },
     {
       "phase": "Full Moon",
@@ -17,25 +18,29 @@
         "Intelligence (Investigation)",
         "Wisdom (Perception)"
       ],
-      "condition": "within bright light"
+      "condition": "within bright light",
+      "meta_type": "advantage"
     },
     {
       "phase": "New Moon",
       "advantage_on": [
         "Dexterity (Stealth)"
-      ]
+      ],
+      "meta_type": "advantage"
     },
     {
       "phase": "New Moon",
       "condition": "entirely in darkness",
-      "disadvantage_on": "attack rolls against you"
+      "disadvantage_on": "attack rolls against you",
+      "meta_type": "benefit"
     },
     {
       "phase": "Crescent Moon",
       "damage_resistance": [
         "necrotic",
         "radiant"
-      ]
+      ],
+      "meta_type": "grant_resistance"
     }
   ],
   "source_type": "subclass"

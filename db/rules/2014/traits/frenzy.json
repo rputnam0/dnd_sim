@@ -8,12 +8,14 @@
         "oncePerTurn": true,
         "duration": "whileRaging",
         "startsAfterTurn": true
-      }
+      },
+      "meta_type": "bonus_action_attack"
     },
     {
       "exhaustionOnRageEnd": {
         "levels": 1
-      }
+      },
+      "meta_type": "condition"
     }
   ],
   "source_type": "subclass"

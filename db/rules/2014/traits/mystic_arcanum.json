@@ -7,36 +7,42 @@
       "spell_level": 6,
       "acquired_at_level": 11,
       "uses_per_long_rest": 1,
-      "requires_slot": false
+      "requires_slot": false,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_mystic_arcanum",
       "spell_level": 7,
       "acquired_at_level": 13,
       "uses_per_long_rest": 1,
-      "requires_slot": false
+      "requires_slot": false,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_mystic_arcanum",
       "spell_level": 8,
       "acquired_at_level": 15,
       "uses_per_long_rest": 1,
-      "requires_slot": false
+      "requires_slot": false,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_mystic_arcanum",
       "spell_level": 9,
       "acquired_at_level": 17,
       "uses_per_long_rest": 1,
-      "requires_slot": false
+      "requires_slot": false,
+      "meta_type": "grant_spell"
     },
     {
       "effect": "reset_mystic_arcanum_uses",
-      "trigger": "long_rest"
+      "trigger": "long_rest",
+      "meta_type": "feature_retraining"
     },
     {
       "effect": "replace_mystic_arcanum_on_level_up",
-      "trigger": "warlock_level_gain"
+      "trigger": "warlock_level_gain",
+      "meta_type": "feature_retraining"
     }
   ],
   "source_type": "class"

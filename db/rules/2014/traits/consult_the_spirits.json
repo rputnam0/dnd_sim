@@ -11,7 +11,8 @@
       "spell_slot_cost": 0,
       "material_components": false,
       "ability_modifier": "wisdom",
-      "usage_limit": "once per short or long rest"
+      "usage_limit": "once per short or long rest",
+      "meta_type": "spell_cast"
     }
   ],
   "source_type": "subclass"

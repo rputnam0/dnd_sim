@@ -15,7 +15,8 @@
         "condition": "charmed or frightened (choice)",
         "duration": "until the end of your next turn"
       },
-      "recharge": "short or long rest"
+      "recharge": "short or long rest",
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

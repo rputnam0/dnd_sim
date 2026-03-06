@@ -21,7 +21,8 @@
           "ability": "wisdom",
           "type": "wisdom"
         }
-      }
+      },
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"

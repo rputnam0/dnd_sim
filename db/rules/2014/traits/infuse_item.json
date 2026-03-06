@@ -6,18 +6,21 @@
       "trigger": "long_rest",
       "action": "infuse_item",
       "target": "nonmagical object",
-      "description": "Touch a nonmagical object and apply one of your known artificer infusions, turning it into a magic item. If the item requires attunement, you may attune instantly."
+      "description": "Touch a nonmagical object and apply one of your known artificer infusions, turning it into a magic item. If the item requires attunement, you may attune instantly.",
+      "meta_type": "action"
     },
     {
       "condition": "death",
       "action": "remove_infusion",
       "delay": "Intelligence modifier days (minimum 1)",
-      "description": "Infusions on items vanish after a number of days equal to your Intelligence modifier when you die."
+      "description": "Infusions on items vanish after a number of days equal to your Intelligence modifier when you die.",
+      "meta_type": "restriction"
     },
     {
       "condition": "exceed_max_infused_items",
       "action": "remove_oldest_infusion",
-      "description": "If you try to exceed your maximum number of infused items, the oldest infusion ends immediately before the new one is applied."
+      "description": "If you try to exceed your maximum number of infused items, the oldest infusion ends immediately before the new one is applied.",
+      "meta_type": "restriction"
     }
   ],
   "source_type": "class"

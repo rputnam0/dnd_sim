@@ -6,12 +6,14 @@
       "action": "bonus",
       "effect": "invisible",
       "target": "self and equipment",
-      "duration": "until start of next turn"
+      "duration": "until start of next turn",
+      "meta_type": "action"
     },
     {
       "resource": "uses",
       "maxUses": "proficiency bonus",
-      "reset": "long rest"
+      "reset": "long rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "class"

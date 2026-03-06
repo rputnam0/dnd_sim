@@ -12,7 +12,8 @@
       "effect": {
         "type": "modify_attack_roll",
         "bonus_per_ki": 2
-      }
+      },
+      "meta_type": "resource_spend"
     }
   ],
   "source_type": "class"

@@ -24,7 +24,8 @@
       "usage": {
         "reset": "long rest",
         "alternative": "expend spell slot of 3rd level or higher"
-      }
+      },
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

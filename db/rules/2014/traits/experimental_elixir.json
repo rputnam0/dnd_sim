@@ -8,19 +8,22 @@
       "effect": "create_elixir",
       "quantity": 2,
       "roll_for_effect": "1d6 on Experimental Elixir table",
-      "vial_vanishes_on_use": true
+      "vial_vanishes_on_use": true,
+      "meta_type": "resource"
     },
     {
       "action": "bonus_action",
       "effect": "drink_elixir",
-      "target": "self or creature within 5 feet"
+      "target": "self or creature within 5 feet",
+      "meta_type": "action"
     },
     {
       "action": "action",
       "cost": "spell_slot",
       "condition": "holding Alchemist's Supplies",
       "effect": "create_elixir",
-      "choose_effect_from_table": true
+      "choose_effect_from_table": true,
+      "meta_type": "resource_spend"
     },
     {
       "trigger": "long_rest",
@@ -29,7 +32,8 @@
         "9": 4,
         "15": 5
       },
-      "effect": "additional_elixir_creation"
+      "effect": "additional_elixir_creation",
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "subclass"

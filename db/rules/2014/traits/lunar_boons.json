@@ -17,7 +17,8 @@
         ]
       },
       "uses": "proficiency_bonus",
-      "reset": "long_rest"
+      "reset": "long_rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "subclass"

@@ -7,7 +7,8 @@
       "effect": "heal",
       "dice": "1d10",
       "modifier": "fighter_level",
-      "recharge": "short_or_long_rest"
+      "recharge": "short_or_long_rest",
+      "meta_type": "healing"
     }
   ],
   "source_type": "class"

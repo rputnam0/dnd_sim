@@ -6,7 +6,8 @@
       "action": "grant_advantage",
       "target": "creature you touch",
       "effect": "advantage on next initiative roll",
-      "duration": "until the roll is made or the feature is used again"
+      "duration": "until the roll is made or the feature is used again",
+      "meta_type": "initiative"
     }
   ],
   "source_type": "subclass"

@@ -14,13 +14,21 @@
       },
       "duration": "10 minutes",
       "uses_per_long_rest": "max(1, charisma_modifier)",
-      "recharge": "long_rest"
+      "recharge": "long_rest",
+      "meta_type": "action"
     },
     {
       "effect": "add_inspiration_die_to_roll",
       "trigger": "ability_check | attack_roll | saving_throw",
       "condition": "inspiration die not yet used and within 10 minutes of grant",
-      "timing": "after d20 roll but before outcome is determined"
+      "timing": "after d20 roll but before outcome is determined",
+      "meta_type": "roll_bonus"
+    },
+    {
+      "resource": "Bardic Inspiration",
+      "uses": "max(1, charisma_modifier)",
+      "reset": "long_rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "class"

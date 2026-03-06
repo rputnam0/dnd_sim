@@ -5,7 +5,8 @@
     {
       "effect": "destroy_undead",
       "cr_max": 4,
-      "trigger": "failed_save_vs_turn_undead"
+      "trigger": "failed_save_vs_turn_undead",
+      "meta_type": "condition"
     }
   ],
   "source_type": "class"

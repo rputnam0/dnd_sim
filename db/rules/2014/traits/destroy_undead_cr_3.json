@@ -9,7 +9,8 @@
         "type": "undead",
         "maxChallengeRating": 3
       },
-      "effect": "destroy"
+      "effect": "destroy",
+      "meta_type": "condition"
     }
   ],
   "source_type": "class"
