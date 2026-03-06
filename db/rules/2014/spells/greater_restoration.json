@@ -14,7 +14,9 @@
   "mechanics": [
     {
       "effect_type": "remove_condition",
-      "condition": "exhaustion"
+      "condition": "exhaustion",
+      "amount": 1,
+      "levels": 1
     },
     {
       "effect_type": "remove_condition",

@@ -106,3 +106,53 @@ def test_w6_par_05k1_representative_spells_are_normalized_to_expected_families()
             if isinstance(row, dict)
         }
         assert expected_effect_types <= seen
+
+
+def test_w6_par_05k1_review_fix_spell_durations_and_exhaustion_semantics() -> None:
+    expected_durations = {
+        "leomunds_tiny_hut": ("hazard", 4800),
+        "passwall": ("transform", 600),
+        "nystuls_magic_aura": ("transform", 14400),
+        "warding_bond": ("transform", 600),
+        "tensers_floating_disk": ("hazard", 600),
+        "hunger_of_hadar": ("apply_condition", 10),
+        "phantasmal_force": ("apply_condition", 10),
+        "magic_circle": ("hazard", 600),
+    }
+
+    for slug, (effect_type, duration_rounds) in expected_durations.items():
+        payload = json.loads((SPELLS_DIR / f"{slug}.json").read_text(encoding="utf-8"))
+        matching_rows = [
+            row
+            for row in payload["mechanics"]
+            if isinstance(row, dict) and row.get("effect_type") == effect_type
+        ]
+        assert matching_rows
+        assert all(row.get("duration_rounds") == duration_rounds for row in matching_rows)
+
+    heroes_feast = json.loads((SPELLS_DIR / "heroes_feast.json").read_text(encoding="utf-8"))
+    heroes_feast_conditions = {
+        "immune_to_poison",
+        "immune_to_frightened",
+        "advantage_on_wisdom_saves",
+        "heroes_feast_max_hp_bonus",
+    }
+    heroes_feast_rows = [
+        row
+        for row in heroes_feast["mechanics"]
+        if isinstance(row, dict) and row.get("condition") in heroes_feast_conditions
+    ]
+    assert len(heroes_feast_rows) == 4
+    assert all(row.get("duration_rounds") == 14400 for row in heroes_feast_rows)
+
+    greater_restoration = json.loads(
+        (SPELLS_DIR / "greater_restoration.json").read_text(encoding="utf-8")
+    )
+    exhaustion_row = next(
+        row
+        for row in greater_restoration["mechanics"]
+        if isinstance(row, dict) and row.get("condition") == "exhaustion"
+    )
+    assert exhaustion_row["effect_type"] == "remove_condition"
+    assert exhaustion_row.get("amount") == 1
+    assert exhaustion_row.get("levels") == 1
