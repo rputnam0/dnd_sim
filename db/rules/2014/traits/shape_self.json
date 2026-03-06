@@ -10,7 +10,8 @@
         "Beast (four-legged)"
       ],
       "duration": "until you change shape again",
-      "notes": "While in Humanoid shape you can wear clothing and armor made for a Humanoid of your size."
+      "notes": "While in Humanoid shape you can wear clothing and armor made for a Humanoid of your size.",
+      "meta_type": "form"
     }
   ],
   "source_type": "species"

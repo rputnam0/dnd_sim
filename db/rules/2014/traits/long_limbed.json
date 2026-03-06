@@ -7,7 +7,8 @@
       "value": 5,
       "unit": "feet",
       "scope": "melee attacks",
-      "trigger": "when you make a melee attack on your turn"
+      "trigger": "when you make a melee attack on your turn",
+      "meta_type": "reach_increase"
     }
   ],
   "source_type": "species"

@@ -6,7 +6,8 @@
       "grant_cantrip": {
         "name": "light",
         "ability": "Charisma"
-      }
+      },
+      "meta_type": "grant_cantrip"
     }
   ],
   "source_type": "species"

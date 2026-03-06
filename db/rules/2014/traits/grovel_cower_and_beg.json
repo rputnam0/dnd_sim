@@ -1,5 +1,5 @@
 {
-  "name": "Grover, Cower, and Beg",
+  "name": "Grovel, Cower, and Beg",
   "description": "As an action on your turn, you can cower pathetically to distract nearby foes. Until the end of your next turn, your allies gain advantage on attack rolls against enemies within 10 feet of you that you can see. Once you use this trait, you can't use it again until you finish a short or long rest.",
   "mechanics": [
     {
@@ -7,10 +7,12 @@
       "effect": "grant_advantage",
       "target": "allies",
       "condition": "enemies within 10 feet that you can see",
-      "duration": "until end of next turn"
+      "duration": "until end of next turn",
+      "meta_type": "grant_advantage"
     },
     {
-      "recharge": "short_or_long_rest"
+      "recharge": "short_or_long_rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "species"

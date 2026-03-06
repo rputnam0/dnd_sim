@@ -13,7 +13,8 @@
         "Intelligence",
         "Wisdom",
         "Charisma"
-      ]
+      ],
+      "meta_type": "spell_cast"
     }
   ],
   "source_type": "species"

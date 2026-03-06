@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "trigger": "after dash action and moving at least 20 feet",
-      "action": "bonus action melee attack with horns (1 attack)"
+      "action": "bonus action melee attack with horns (1 attack)",
+      "meta_type": "bonus_action_attack"
     }
   ],
   "source_type": "species"

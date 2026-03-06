@@ -6,7 +6,8 @@
       "trigger": "first turn surprise hit",
       "action": "extra_damage",
       "damage": "2d6",
-      "usage_limit": "once per combat"
+      "usage_limit": "once per combat",
+      "effect_type": "extra_damage"
     }
   ],
   "source_type": "species"

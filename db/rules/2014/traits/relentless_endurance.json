@@ -10,7 +10,8 @@
       "usage": {
         "limit": 1,
         "reset": "long_rest"
-      }
+      },
+      "meta_type": "revive"
     }
   ],
   "source_type": "species"

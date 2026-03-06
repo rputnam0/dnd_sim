@@ -22,7 +22,8 @@
         "javelin",
         "1d4 darts",
         "blowgun needles"
-      ]
+      ],
+      "meta_type": "item_creation"
     }
   ],
   "source_type": "species"

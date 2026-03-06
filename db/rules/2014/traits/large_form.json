@@ -11,7 +11,8 @@
         "advantage_on": "Strength checks",
         "speed_increase_feet": 10
       },
-      "recharge": "long_rest"
+      "recharge": "long_rest",
+      "meta_type": "size_change"
     }
   ],
   "source_type": "species"

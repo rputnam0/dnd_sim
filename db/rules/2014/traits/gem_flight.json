@@ -3,16 +3,20 @@
   "description": "Starting at 5th level, you can use a bonus action to manifest spectral wings on your body. These wings last for 1 minute. For the duration, you gain a flying speed equal to your walking speed and can hover. Once you use this trait, you can't do so again until you finish a long rest.",
   "mechanics": [
     {
-      "activation": "bonus action"
+      "activation": "bonus action",
+      "meta_type": "activation"
     },
     {
-      "duration": "1 minute"
+      "duration": "1 minute",
+      "meta_type": "duration"
     },
     {
-      "effect": "fly speed equal to walking speed, can hover"
+      "effect": "fly speed equal to walking speed, can hover",
+      "meta_type": "grant_flying_speed"
     },
     {
-      "recharge": "long rest"
+      "recharge": "long rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "species"

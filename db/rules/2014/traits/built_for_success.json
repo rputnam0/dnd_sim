@@ -14,7 +14,8 @@
       "usage": {
         "max": "proficiency_bonus",
         "reset": "long_rest"
-      }
+      },
+      "meta_type": "roll_bonus"
     }
   ],
   "source_type": "species"

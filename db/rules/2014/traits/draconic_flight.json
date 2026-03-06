@@ -15,7 +15,8 @@
       "recharge": {
         "type": "long_rest",
         "uses_per_long_rest": 1
-      }
+      },
+      "meta_type": "grant_flying_speed"
     }
   ],
   "source_type": "species"

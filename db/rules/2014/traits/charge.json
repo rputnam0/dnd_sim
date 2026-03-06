@@ -9,7 +9,8 @@
         "weapon": "hooves",
         "type": "melee"
       },
-      "timing": "same turn"
+      "timing": "same turn",
+      "meta_type": "bonus_action_attack"
     }
   ],
   "source_type": "species"
