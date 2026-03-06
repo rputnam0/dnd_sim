@@ -18,11 +18,9 @@
     },
     {
       "effect_type": "damage",
+      "damage": "3d8",
       "damage_dice": "3d8",
-      "damage_type": "variable"
-    },
-    {
-      "effect_type": "scale_damage",
+      "damage_type": "variable",
       "increment_dice": "1d8",
       "per_slot_level_above": 1
     }

@@ -14,19 +14,28 @@
   "mechanics": [
     {
       "effect_type": "aura",
+      "radius_ft": 30,
       "shape": "sphere",
-      "radius": 30
+      "center": "self"
     },
     {
-      "effect_type": "grant_resistance",
+      "effect_type": "apply_condition",
+      "condition": "resistant_to_poison",
+      "duration_rounds": 100,
+      "target": "friendly",
       "damage_type": "poison"
     },
     {
-      "effect_type": "immunity",
-      "condition": "diseased"
+      "effect_type": "apply_condition",
+      "condition": "immune_to_disease",
+      "duration_rounds": 100,
+      "target": "friendly"
     },
     {
-      "effect_type": "advantage_on_save",
+      "effect_type": "apply_condition",
+      "condition": "advantage_on_saves_against_blinded_charmed_deafened_frightened_paralyzed_poisoned_stunned",
+      "duration_rounds": 100,
+      "target": "friendly",
       "conditions": [
         "blinded",
         "charmed",
