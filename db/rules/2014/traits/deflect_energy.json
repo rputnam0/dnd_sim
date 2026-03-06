@@ -5,7 +5,7 @@
     {
       "effect": "deflect_attacks",
       "damageTypes": "any",
-      "meta_type": "damage_resistance"
+      "meta_type": "reaction"
     }
   ],
   "source_type": "class"

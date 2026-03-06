@@ -10,6 +10,14 @@ from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = REPO_ROOT / "docs" / "program" / "parity_leaf_registry.csv"
 TRAITS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "traits"
+RETARGETED_ACTION_IDS = {
+    "trait:abjure_enemy",
+    "trait:champion_challenge",
+    "trait:conquering_presence",
+    "trait:control_undead",
+    "trait:countercharm",
+    "trait:dreadful_aspect",
+}
 
 
 def _owned_g1_trait_ids() -> set[str]:
@@ -21,8 +29,26 @@ def _owned_g1_trait_ids() -> set[str]:
                 content_id = str(row.get("content_id", "")).strip()
                 if content_id:
                     owned.add(content_id)
-    assert len(owned) == 19
+    assert len(owned) == 13
+    assert owned.isdisjoint(RETARGETED_ACTION_IDS)
     return owned
+
+
+def test_w6_par_05g1_registry_retargets_action_traits_to_g2() -> None:
+    by_id: dict[str, tuple[str, str]] = {}
+    with REGISTRY_PATH.open(encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            content_id = str(row.get("content_id", "")).strip()
+            if content_id:
+                by_id[content_id] = (
+                    str(row.get("leaf_task_id", "")).strip(),
+                    str(row.get("target_family", "")).strip(),
+                )
+
+    for content_id in sorted(RETARGETED_ACTION_IDS):
+        leaf_task_id, target_family = by_id[content_id]
+        assert leaf_task_id == "W6-PAR-05G2"
+        assert target_family == "trait_resource_turn_gated"
 
 
 def test_w6_par_05g1_owned_trait_records_are_supported() -> None:

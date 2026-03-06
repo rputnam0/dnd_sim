@@ -17,8 +17,7 @@
         "condition": "frightened",
         "duration": "1 minute",
         "repeatSave": "end of each turn"
-      },
-      "meta_type": "saving_throw"
+      }
     }
   ],
   "source_type": "subclass"

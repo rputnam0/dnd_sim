@@ -21,8 +21,7 @@
           "ability": "wisdom",
           "type": "wisdom"
         }
-      },
-      "meta_type": "saving_throw"
+      }
     }
   ],
   "source_type": "subclass"

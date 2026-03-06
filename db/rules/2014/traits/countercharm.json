@@ -17,8 +17,7 @@
         "incapacitated",
         "silenced",
         "voluntary end (no action)"
-      ],
-      "meta_type": "condition"
+      ]
     }
   ],
   "source_type": "class"

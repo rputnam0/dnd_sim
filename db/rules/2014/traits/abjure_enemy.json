@@ -24,8 +24,7 @@
       "onSuccess": {
         "speedMultiplier": 0.5,
         "duration": "1 minute"
-      },
-      "meta_type": "saving_throw"
+      }
     }
   ],
   "source_type": "subclass"

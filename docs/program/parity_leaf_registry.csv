@@ -593,17 +593,17 @@ W6-PAR-05F2,trait:two_extra_attacks,missing_runtime_hook_family,trait_passive_of
 W6-PAR-05F2,trait:way_of_the_sun_soul,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
 W6-PAR-05F2,trait:weapon_mastery,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
 W6-PAR-05F2,trait:whirlwind_attack,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
-W6-PAR-05G1,trait:abjure_enemy,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
-W6-PAR-05G1,trait:champion_challenge,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G2,trait:abjure_enemy,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:champion_challenge,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
 W6-PAR-05G1,trait:chilling_retribution,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
-W6-PAR-05G1,trait:conquering_presence,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
-W6-PAR-05G1,trait:control_undead,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
-W6-PAR-05G1,trait:countercharm,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G2,trait:conquering_presence,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:control_undead,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:countercharm,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
 W6-PAR-05G1,trait:deflect_attacks,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
 W6-PAR-05G1,trait:deflect_energy,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
 W6-PAR-05G1,trait:deflecting_shroud,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
 W6-PAR-05G1,trait:divine_allegiance,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
-W6-PAR-05G1,trait:dreadful_aspect,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G2,trait:dreadful_aspect,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
 W6-PAR-05G1,trait:improved_flare,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
 W6-PAR-05G1,trait:rebuke_the_violent,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
 W6-PAR-05G1,trait:scornful_rebuke,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
