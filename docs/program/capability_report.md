@@ -17,17 +17,17 @@ Do not edit manually.
 | Metric | Value |
 |---|---:|
 | Total records | 2527 |
-| Supported records | 1271 |
-| Blocked records | 1256 |
+| Supported records | 1287 |
+| Blocked records | 1240 |
 | Schema-valid records | 2518 |
-| Executable records | 1271 |
-| Tested records | 1271 |
+| Executable records | 1287 |
+| Tested records | 1287 |
 
 ## Coverage By Content Type
 
 | Content type | Total | Supported | Blocked | Schema valid | Executable | Tested |
 |---|---:|---:|---:|---:|---:|---:|
-| background | 86 | 27 | 59 | 86 | 27 | 27 |
+| background | 86 | 43 | 43 | 86 | 43 | 43 |
 | feat | 219 | 219 | 0 | 219 | 219 | 219 |
 | monster | 191 | 191 | 0 | 191 | 191 | 191 |
 | species | 256 | 211 | 45 | 256 | 211 | 211 |
@@ -39,7 +39,7 @@ Do not edit manually.
 | Unsupported reason | Count |
 |---|---:|
 | invalid_mechanics_schema | 9 |
-| missing_runtime_hook_family | 726 |
+| missing_runtime_hook_family | 710 |
 | missing_runtime_mechanics | 424 |
 | non_executable_mechanics | 30 |
 | unsupported_effect_type | 67 |

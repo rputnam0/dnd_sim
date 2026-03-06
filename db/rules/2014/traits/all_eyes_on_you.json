@@ -1,6 +1,21 @@
 {
   "name": "All Eyes on You",
   "description": "Your accent, mannerisms, figures of speech, and perhaps even your appearance all mark you as foreign. Curious glances are directed your way wherever you go, which can be a nuisance, but you also gain the friendly interest of scholars and others intrigued by far-off lands, to say nothing of everyday folk who are eager to hear stories of your homeland. You can parley this attention into access to people and places you might not otherwise have, for you and your traveling companions. Noble lords, scholars, and merchant princes, to name a few, might be interested in hearing about your distant homeland and people.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "social_access",
+      "benefits": [
+        "friendly_interest",
+        "audience_access"
+      ],
+      "audiences": [
+        "scholars",
+        "merchant_princes",
+        "nobles",
+        "curious_locals"
+      ],
+      "scope": "self_and_traveling_companions"
+    }
+  ],
   "source_type": "background"
 }
