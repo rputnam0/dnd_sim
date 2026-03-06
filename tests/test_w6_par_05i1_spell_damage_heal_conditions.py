@@ -19,6 +19,15 @@ FIRST_SLICE = (
     "alter_self",
     "antilife_shell",
 )
+NEXT_SLICE = (
+    "arcane_hand",
+    "arcane_sword",
+    "burning_hands",
+    "cure_wounds",
+    "lesser_restoration",
+    "spiritual_weapon",
+    "thunderwave",
+)
 
 
 class FixedRng:
@@ -33,13 +42,21 @@ class FixedRng:
         return value
 
 
-def _load_slice_spell_payloads() -> list[dict[str, object]]:
+def _load_spell_payloads(*slugs: str) -> list[dict[str, object]]:
     payloads: list[dict[str, object]] = []
-    for slug in FIRST_SLICE:
+    for slug in slugs:
         payload = json.loads((SPELLS_DIR / f"{slug}.json").read_text(encoding="utf-8"))
         assert isinstance(payload, dict)
         payloads.append(payload)
     return payloads
+
+
+def _load_slice_spell_payloads() -> list[dict[str, object]]:
+    return _load_spell_payloads(*FIRST_SLICE)
+
+
+def _load_next_slice_spell_payloads() -> list[dict[str, object]]:
+    return _load_spell_payloads(*NEXT_SLICE)
 
 
 def _spell_payload(slug: str) -> dict[str, object]:
@@ -176,6 +193,41 @@ def test_w6_par_05i1_first_slice_uses_canonical_effect_types() -> None:
     assert _find_effect(antilife_shell, "hazard")["hazard_type"] == "antilife_shell"
 
 
+def test_w6_par_05i1_next_slice_records_are_supported() -> None:
+    manifest = build_spell_capability_manifest(spell_payloads=_load_next_slice_spell_payloads())
+    blocked = [record.content_id for record in manifest.records if record.states.blocked]
+
+    assert blocked == []
+
+
+def test_w6_par_05i1_next_slice_uses_canonical_effect_types() -> None:
+    burning_hands = _spell_payload("burning_hands")
+    assert _find_effect(burning_hands, "damage")["damage"] == "3d6"
+
+    cure_wounds = _spell_payload("cure_wounds")
+    assert _find_effect(cure_wounds, "heal")["amount"] == "1d8+spellcasting_mod"
+
+    lesser_restoration = _spell_payload("lesser_restoration")
+    assert any(
+        isinstance(row, dict)
+        and row.get("effect_type") == "remove_condition"
+        and row.get("condition") == "poisoned"
+        for row in lesser_restoration["mechanics"]
+    )
+
+    spiritual_weapon = _spell_payload("spiritual_weapon")
+    assert _find_effect(spiritual_weapon, "damage")["damage"] == "1d8+spellcasting_mod"
+
+    thunderwave = _spell_payload("thunderwave")
+    assert _find_effect(thunderwave, "forced_movement")["distance_ft"] == 10
+
+    arcane_hand = _spell_payload("arcane_hand")
+    assert _find_effect(arcane_hand, "apply_condition")["condition"] == "arcane_hand_active"
+
+    arcane_sword = _spell_payload("arcane_sword")
+    assert _find_effect(arcane_sword, "apply_condition")["condition"] == "arcane_sword_active"
+
+
 def test_w6_par_05i1_acid_arrow_uses_primary_attack_damage_once() -> None:
     spell_row, action = _extract_action_from_sheet(
         name="Acid Arrow",
@@ -257,3 +309,150 @@ def test_w6_par_05i1_acid_splash_uses_primary_save_damage_once() -> None:
     assert target.hp == 26
     assert damage_dealt[caster.actor_id] == 4
     assert damage_taken[target.actor_id] == 4
+
+
+def test_w6_par_05i1_cure_wounds_uses_primary_heal_once() -> None:
+    spell_row, action = _extract_action_from_sheet(
+        name="Cure Wounds",
+        level_header="=== 1st LEVEL ===",
+        save_hit="",
+        duration_text="Instantaneous",
+        range_text="Touch",
+        spell_level=1,
+    )
+
+    assert spell_row["healing"] == "1d8+spellcasting_mod"
+    assert not any(
+        isinstance(effect, dict) and str(effect.get("effect_type", "")).lower() == "heal"
+        for effect in action.mechanics
+    )
+
+    caster = _actor("caster", "party")
+    caster.int_mod = 5
+    ally = _actor("ally", "party", hp=20, max_hp=30)
+    actors = {caster.actor_id: caster, ally.actor_id: ally}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, ally)
+
+    _execute_action(
+        rng=FixedRng([4]),
+        actor=caster,
+        action=action,
+        targets=[ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert ally.hp == 29
+
+
+def test_w6_par_05i1_lesser_restoration_removes_condition() -> None:
+    _spell_row, action = _extract_action_from_sheet(
+        name="Lesser Restoration",
+        level_header="=== 2nd LEVEL ===",
+        save_hit="",
+        duration_text="Instantaneous",
+        range_text="Touch",
+        spell_level=2,
+    )
+
+    poisoned_ally = _actor("ally", "party")
+    poisoned_ally.add_manual_condition("poisoned")
+    caster = _actor("caster", "party")
+    actors = {caster.actor_id: caster, poisoned_ally.actor_id: poisoned_ally}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, poisoned_ally)
+
+    _execute_action(
+        rng=FixedRng([1]),
+        actor=caster,
+        action=action,
+        targets=[poisoned_ally],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert "poisoned" not in poisoned_ally.conditions
+
+
+def test_w6_par_05i1_thunderwave_damage_and_push_share_canonical_runtime() -> None:
+    spell_row, action = _extract_action_from_sheet(
+        name="Thunderwave",
+        level_header="=== 1st LEVEL ===",
+        save_hit="CON 18",
+        duration_text="Instantaneous",
+        range_text="Self (15-foot cube)",
+        spell_level=1,
+    )
+
+    assert spell_row["damage"] == "2d8"
+    assert action.damage == "2d8"
+
+    caster = _actor("caster", "party")
+    target = _actor("target", "enemy")
+    target.position = (10.0, 0.0, 0.0)
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+
+    _execute_action(
+        rng=FixedRng([4, 4, 1]),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp == 22
+    assert target.position == (20.0, 0.0, 0.0)
+
+
+def test_w6_par_05i1_spiritual_weapon_uses_spellcasting_mod_damage_once() -> None:
+    spell_row, action = _extract_action_from_sheet(
+        name="Spiritual Weapon",
+        level_header="=== 2nd LEVEL ===",
+        save_hit="+11",
+        duration_text="1 minute",
+        range_text="60 ft",
+        spell_level=2,
+    )
+
+    assert spell_row["damage"] == "1d8+spellcasting_mod"
+    assert action.damage == "1d8+spellcasting_mod"
+    assert not any(
+        isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).lower() == "damage"
+        and str(effect.get("apply_on", "")).lower() == "hit"
+        for effect in action.mechanics
+    )
+
+    caster = _actor("caster", "party")
+    caster.int_mod = 5
+    target = _actor("target", "enemy")
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+
+    _execute_action(
+        rng=FixedRng([10, 10, 4]),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert target.hp == 21

@@ -8,8 +8,33 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "You touch a creature and can end either one disease or one condition afflicting it. The condition can be blinded, deafened, paralyzed, or poisoned. Levitate 2nd-­‐‑level transmutation",
+  "description": "You touch a creature and can end either one disease or one condition afflicting it. The condition can be blinded, deafened, paralyzed, or poisoned. Levitate 2nd-\u00ad\u2010\u2011level transmutation",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "remove_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "blinded"
+    },
+    {
+      "effect_type": "remove_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "deafened"
+    },
+    {
+      "effect_type": "remove_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "paralyzed"
+    },
+    {
+      "effect_type": "remove_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "poisoned"
+    }
+  ]
 }

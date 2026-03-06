@@ -10841,16 +10841,16 @@
     {
       "content_id": "spell:arcane_hand",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:arcane_lock",
@@ -10869,16 +10869,16 @@
     {
       "content_id": "spell:arcane_sword",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:arcane_vigor",
@@ -11373,16 +11373,16 @@
     {
       "content_id": "spell:burning_hands",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:cacophonic_shield",
@@ -12199,16 +12199,16 @@
     {
       "content_id": "spell:cure_wounds",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:dancing_lights",
@@ -14901,16 +14901,16 @@
     {
       "content_id": "spell:lesser_restoration",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:levitate",
@@ -17393,16 +17393,16 @@
     {
       "content_id": "spell:spiritual_weapon",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:spray_of_cards",
@@ -18107,16 +18107,16 @@
     {
       "content_id": "spell:thunderwave",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:tidal_wave",

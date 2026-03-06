@@ -1110,13 +1110,14 @@ def _roll_damage_with_channel_divinity_hooks(
     crit: bool = False,
     empowered_rerolls: int = 0,
 ) -> int:
+    resolved_expr = _resolve_runtime_roll_expression(actor=actor, expr=expr)
     normalized_type = str(damage_type).lower()
     if normalized_type in {"lightning", "thunder"} and _has_destructive_wrath(actor):
         if _spend_channel_divinity(actor, resources_spent):
-            return _max_damage_expression(expr, crit=crit)
+            return _max_damage_expression(resolved_expr, crit=crit)
     return roll_damage(
         rng,
-        expr,
+        resolved_expr,
         crit=crit,
         empowered_rerolls=empowered_rerolls,
         source=actor,
@@ -3532,6 +3533,34 @@ def _extract_primary_attack_damage_mechanic(
     return primary_candidates[0], remaining
 
 
+def _extract_primary_heal_mechanic(
+    mechanics: Any,
+    *,
+    action_type: str,
+) -> tuple[dict[str, Any] | None, list[Any]]:
+    del action_type
+    if not isinstance(mechanics, list):
+        return None, mechanics if isinstance(mechanics, list) else []
+
+    primary_candidates: list[dict[str, Any]] = []
+    remaining: list[Any] = []
+    for row in mechanics:
+        if not isinstance(row, dict):
+            remaining.append(row)
+            continue
+        effect_type = str(row.get("effect_type", "")).strip().lower()
+        apply_on = str(row.get("apply_on", "always")).strip().lower()
+        amount = str(row.get("amount", "")).strip()
+        if effect_type == "heal" and apply_on in {"", "always"} and amount:
+            primary_candidates.append(dict(row))
+            continue
+        remaining.append(row)
+
+    if len(primary_candidates) != 1:
+        return None, mechanics
+    return primary_candidates[0], remaining
+
+
 def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str, Any]]:
     """Extract a minimal spell list from PDF raw_fields.
 
@@ -3750,6 +3779,16 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             if damage_type:
                 hydrated["damage_type"] = damage_type
             hydrated["mechanics"] = remaining_mechanics
+        primary_heal, remaining_mechanics = _extract_primary_heal_mechanic(
+            hydrated.get("mechanics"),
+            action_type=str(hydrated.get("action_type", "utility")).strip().lower(),
+        )
+        if primary_heal is not None:
+            hydrated["healing"] = str(primary_heal.get("amount"))
+            hydrated["mechanics"] = remaining_mechanics
+            if not hydrated.get("damage"):
+                hydrated["action_type"] = "utility"
+                hydrated["to_hit"] = None
         if (
             hydrated.get("action_type") == "save"
             and "half_on_save" not in hydrated
@@ -9087,7 +9126,13 @@ def _apply_effect(
         if raw_amount == "full":
             amount = max(0, recipient.max_hp - recipient.hp)
         else:
-            amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
+            amount = roll_damage(
+                rng,
+                _resolve_runtime_roll_expression(
+                    actor=actor, expr=effect.get("amount", "0")
+                ),
+                crit=False,
+            )
         _apply_healing(recipient, amount)
         if telemetry is not None:
             telemetry.append(
@@ -9107,7 +9152,11 @@ def _apply_effect(
         return
 
     if effect_type == "temp_hp":
-        amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
+        amount = roll_damage(
+            rng,
+            _resolve_runtime_roll_expression(actor=actor, expr=effect.get("amount", "0")),
+            crit=False,
+        )
         before = recipient.temp_hp
         if amount > 0:
             recipient.temp_hp = max(recipient.temp_hp, amount)
@@ -11262,6 +11311,20 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
 
 def _spellcasting_ability_mod(actor: ActorRuntimeState) -> int:
     return max(actor.int_mod, actor.wis_mod, actor.cha_mod)
+
+
+_RUNTIME_EXPR_TOKEN_RE = re.compile(r"\bspellcasting(?:_ability)?_mod\b", re.IGNORECASE)
+
+
+def _resolve_runtime_roll_expression(*, actor: ActorRuntimeState, expr: Any) -> str:
+    text = str(expr or "0").strip()
+    if not text:
+        return "0"
+    if not _RUNTIME_EXPR_TOKEN_RE.search(text):
+        return text
+
+    resolved = _RUNTIME_EXPR_TOKEN_RE.sub(str(_spellcasting_ability_mod(actor)), text)
+    return resolved.replace("+-", "-").replace("--", "+")
 
 
 def _effect_internal_tag_int(effect: EffectInstance, *, prefix: str) -> int | None:
