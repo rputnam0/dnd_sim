@@ -3505,6 +3505,33 @@ def _extract_primary_save_damage_mechanic(
     return primary_candidates[0], remaining
 
 
+def _extract_primary_attack_damage_mechanic(
+    mechanics: Any,
+    *,
+    action_type: str,
+) -> tuple[dict[str, Any] | None, list[Any]]:
+    if action_type != "attack" or not isinstance(mechanics, list):
+        return None, mechanics if isinstance(mechanics, list) else []
+
+    primary_candidates: list[dict[str, Any]] = []
+    remaining: list[Any] = []
+    for row in mechanics:
+        if not isinstance(row, dict):
+            remaining.append(row)
+            continue
+        effect_type = str(row.get("effect_type", "")).strip().lower()
+        apply_on = str(row.get("apply_on", "")).strip().lower()
+        damage = str(row.get("damage", "")).strip()
+        if effect_type == "damage" and apply_on == "hit" and damage:
+            primary_candidates.append(dict(row))
+            continue
+        remaining.append(row)
+
+    if len(primary_candidates) != 1:
+        return None, mechanics
+    return primary_candidates[0], remaining
+
+
 def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str, Any]]:
     """Extract a minimal spell list from PDF raw_fields.
 
@@ -3710,6 +3737,16 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
         if primary_save_damage is not None:
             hydrated["damage"] = str(primary_save_damage.get("damage"))
             damage_type = str(primary_save_damage.get("damage_type") or "").strip().lower()
+            if damage_type:
+                hydrated["damage_type"] = damage_type
+            hydrated["mechanics"] = remaining_mechanics
+        primary_attack_damage, remaining_mechanics = _extract_primary_attack_damage_mechanic(
+            hydrated.get("mechanics"),
+            action_type=str(hydrated.get("action_type", "utility")).strip().lower(),
+        )
+        if primary_attack_damage is not None:
+            hydrated["damage"] = hydrated.get("damage") or str(primary_attack_damage.get("damage"))
+            damage_type = str(primary_attack_damage.get("damage_type") or "").strip().lower()
             if damage_type:
                 hydrated["damage_type"] = damage_type
             hydrated["mechanics"] = remaining_mechanics
