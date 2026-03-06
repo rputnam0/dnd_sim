@@ -15,7 +15,7 @@
     {
       "effect_type": "apply_condition",
       "target": "target",
-      "apply_on": "save_fail",
+      "apply_on": "always",
       "condition": "stunned"
     }
   ]

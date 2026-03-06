@@ -22,8 +22,10 @@
     {
       "effect_type": "apply_condition",
       "target": "target",
-      "apply_on": "always",
-      "condition": "ray_of_frost_slowed"
+      "apply_on": "hit",
+      "condition": "ray_of_frost_slow",
+      "duration_rounds": 1,
+      "amount": -10
     }
   ]
 }

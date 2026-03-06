@@ -451,6 +451,198 @@ def test_w6_par_05i1_followup_review_payloads_are_truthful() -> None:
     assert eyebite_effect["concentration_linked"] is True
 
 
+def test_w6_par_05i1_latest_review_payloads_are_truthful() -> None:
+    ray_of_frost = _spell_payload("ray_of_frost_evocation")
+    ray_slow = _find_effect(ray_of_frost, "apply_condition")
+    assert ray_slow["apply_on"] == "hit"
+    assert ray_slow["condition"] == "ray_of_frost_slow"
+    assert ray_slow["duration_rounds"] == 1
+    assert ray_slow["amount"] == -10
+
+    faerie_fire = _spell_payload("faerie_fire")
+    assert faerie_fire["save_ability"] == "dex"
+    faerie_fire_effect = _find_effect(faerie_fire, "apply_condition")
+    assert faerie_fire_effect["apply_on"] == "save_fail"
+    assert faerie_fire_effect["concentration_linked"] is True
+
+    entangle = _spell_payload("entangle")
+    assert entangle["save_ability"] == "str"
+    entangle_effect = _find_effect(entangle, "apply_condition")
+    assert entangle_effect["apply_on"] == "save_fail"
+    assert entangle_effect["condition"] == "restrained"
+
+    compulsion = _spell_payload("compulsion")
+    assert compulsion["save_ability"] == "wis"
+    compulsion_move = _find_effect(compulsion, "forced_movement")
+    assert compulsion_move["apply_on"] == "save_fail"
+    compulsion_effect = _find_effect(compulsion, "apply_condition")
+    assert compulsion_effect["apply_on"] == "save_fail"
+    assert compulsion_effect["concentration_linked"] is True
+
+    fear = _spell_payload("fear")
+    fear_effect = _find_effect(fear, "apply_condition")
+    assert fear_effect["condition"] == "frightened"
+    assert fear_effect["apply_on"] == "save_fail"
+    assert fear_effect["concentration_linked"] is True
+
+    divine_word = _spell_payload("divine_word")
+    divine_word_effect = _find_effect(divine_word, "apply_condition")
+    assert divine_word_effect["target"] == "target"
+    assert divine_word_effect["apply_on"] == "save_fail"
+    assert divine_word_effect["condition"] == "deafened"
+    assert divine_word_effect["duration_rounds"] == 10
+
+    hellish_rebuke = _spell_payload("hellish_rebuke")
+    assert hellish_rebuke["save_ability"] == "dex"
+    assert _find_effects(hellish_rebuke, "apply_condition") == []
+    hellish_rebuke_damage = _find_effect(hellish_rebuke, "damage")
+    assert hellish_rebuke_damage["target"] == "target"
+    assert hellish_rebuke_damage["apply_on"] == "save_fail"
+    assert hellish_rebuke_damage["damage"] == "2d10"
+    assert hellish_rebuke_damage["damage_type"] == "fire"
+
+    imprisonment = _spell_payload("imprisonment")
+    assert imprisonment["save_ability"] == "wis"
+    imprisonment_effect = _find_effect(imprisonment, "apply_condition")
+    assert imprisonment_effect["target"] == "target"
+    assert imprisonment_effect["apply_on"] == "save_fail"
+    assert imprisonment_effect["condition"] == "restrained"
+
+    illusory_dragon = _spell_payload("illusory_dragon")
+    dragon_effect = _find_effect(illusory_dragon, "apply_condition")
+    assert dragon_effect["apply_on"] == "save_fail"
+    assert dragon_effect["condition"] == "frightened"
+    assert dragon_effect["concentration_linked"] is True
+
+    power_word_pain = _spell_payload("power_word_pain")
+    assert _find_effect(power_word_pain, "apply_condition")["apply_on"] == "always"
+
+    power_word_stun = _spell_payload("power_word_stun")
+    assert _find_effect(power_word_stun, "apply_condition")["apply_on"] == "always"
+
+
+def test_w6_par_05i1_latest_review_fixes_extract_and_execute_with_truthful_gates() -> None:
+    _ray_row, ray_action = _extract_action_from_sheet(
+        name="Ray of Frost Evocation",
+        level_header="=== CANTRIPS ===",
+        save_hit="+11",
+        duration_text="Instantaneous",
+        range_text="60 ft",
+        spell_level=0,
+    )
+    assert ray_action.action_type == "attack"
+    assert any(
+        isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).lower() == "apply_condition"
+        and str(effect.get("apply_on", "")).lower() == "hit"
+        for effect in ray_action.mechanics
+    )
+
+    caster = _actor("caster", "party")
+    target = _actor("target", "enemy")
+    target.ac = 25
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
+    _execute_action(
+        rng=FixedRng([2, 2]),
+        actor=caster,
+        action=ray_action,
+        targets=[target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert target.hp == 30
+    assert "ray_of_frost_slow" not in target.conditions
+
+    _fear_row, fear_action = _extract_action_from_sheet(
+        name="Fear",
+        level_header="=== 3rd LEVEL ===",
+        save_hit="WIS 18",
+        duration_text="Concentration, up to 1 minute",
+        range_text="Self (30-foot cone)",
+        spell_level=3,
+    )
+    fear_target = _actor("fear_target", "enemy")
+    fear_target.position = (10.0, 0.0, 0.0)
+    actors = {caster.actor_id: caster, fear_target.actor_id: fear_target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, fear_target)
+    _execute_action(
+        rng=FixedRng([1]),
+        actor=caster,
+        action=fear_action,
+        targets=[fear_target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert "frightened" in fear_target.conditions
+    assert fear_target.position == (40.0, 0.0, 0.0)
+
+    _rebuke_row, rebuke_action = _extract_action_from_sheet(
+        name="Hellish Rebuke",
+        level_header="=== 1st LEVEL ===",
+        save_hit="DEX 18",
+        duration_text="Instantaneous",
+        range_text="60 ft",
+        spell_level=1,
+    )
+    rebuke_target = _actor("rebuke_target", "enemy")
+    actors = {caster.actor_id: caster, rebuke_target.actor_id: rebuke_target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, rebuke_target)
+    _execute_action(
+        rng=FixedRng([1, 3, 4]),
+        actor=caster,
+        action=rebuke_action,
+        targets=[rebuke_target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert rebuke_target.hp < 30
+    assert damage_dealt[caster.actor_id] > 0
+
+    _stun_row, stun_action = _extract_action_from_sheet(
+        name="Power Word Stun",
+        level_header="=== 8th LEVEL ===",
+        save_hit="",
+        duration_text="Instantaneous",
+        range_text="60 ft",
+        spell_level=8,
+    )
+    assert any(
+        isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).lower() == "apply_condition"
+        and str(effect.get("apply_on", "")).lower() == "always"
+        for effect in stun_action.mechanics
+    )
+    stun_target = _actor("stun_target", "enemy")
+    actors = {caster.actor_id: caster, stun_target.actor_id: stun_target}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, stun_target)
+    _execute_action(
+        rng=FixedRng([20]),
+        actor=caster,
+        action=stun_action,
+        targets=[stun_target],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+    assert "stunned" in stun_target.conditions
+
+
 def test_w6_par_05i1_life_transference_heals_from_actual_self_damage() -> None:
     spell_row, action = _extract_action_from_sheet(
         name="Life Transference",

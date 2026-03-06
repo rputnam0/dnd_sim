@@ -13,6 +13,14 @@
   "damage_type": null,
   "mechanics": [
     {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "save_fail",
+      "condition": "frightened",
+      "duration_rounds": 10,
+      "concentration_linked": true
+    },
+    {
       "effect_type": "forced_movement",
       "target": "target",
       "apply_on": "save_fail",
