@@ -1,6 +1,10 @@
 {
   "name": "Alchemist",
   "description": "Craft Magic Elixirs and Potions. An Alchemist is an expert at combining reagents to produce magical effects. Alchemists use their creations to give life and to leech it away.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

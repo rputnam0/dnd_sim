@@ -1,6 +1,10 @@
 {
   "name": "Armorer",
   "description": "Craft Magic Armor to Enhance Your Abilities. An Armorer modifies armor to function almost like a second skin. The armor is enhanced to hone the Armorer's magic, unleash potent attacks, and generate a formidable defense.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

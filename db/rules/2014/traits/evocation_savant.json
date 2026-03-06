@@ -6,7 +6,8 @@
       "effect": "copy_spell_cost_modifier",
       "spell_school": "evocation",
       "gold_multiplier": 0.5,
-      "time_multiplier": 0.5
+      "time_multiplier": 0.5,
+      "meta_type": "cost_modifier"
     }
   ],
   "source_type": "subclass"

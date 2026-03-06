@@ -6,7 +6,8 @@
       "effect": "increase_speed",
       "walk_increment": 5,
       "climb_speed": "equal_to_walk",
-      "swim_speed": "equal_to_walk"
+      "swim_speed": "equal_to_walk",
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "class"

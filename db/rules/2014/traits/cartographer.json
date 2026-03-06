@@ -1,6 +1,10 @@
 {
   "name": "Cartographer",
   "description": "Chart Advantageous Courses through Turmoil. Cartographers are the premier navigators and reconnaissance agents. Using their creations, Cartographers can highlight threats, safeguard allies, and carve portals to distant locations.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

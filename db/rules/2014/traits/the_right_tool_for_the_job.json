@@ -16,7 +16,8 @@
         "long rest"
       ],
       "temporary": true,
-      "expires_on_use": true
+      "expires_on_use": true,
+      "meta_type": "tool_proficiency"
     }
   ],
   "source_type": "class"

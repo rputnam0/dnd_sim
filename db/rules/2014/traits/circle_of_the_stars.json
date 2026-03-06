@@ -1,6 +1,10 @@
 {
   "name": "Circle of the Stars",
   "description": "Harness Secrets Hidden in Constellations. The Circle of the Stars has tracked heavenly patterns since time immemorial, discovering secrets hidden amid the constellations. By understanding these secrets, the Druids of this circle seek to harness the powers of the cosmos.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

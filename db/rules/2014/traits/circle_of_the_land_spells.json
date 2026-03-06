@@ -1,6 +1,6 @@
 {
   "name": "Circle of the Land Spells",
-  "description": "Whenever you finish a long rest, choose one type of land—arid, polar, temperate, or tropical. Consult the corresponding table; you have the spells listed for your druid level and lower prepared.",
+  "description": "Whenever you finish a long rest, choose one type of land\u2014arid, polar, temperate, or tropical. Consult the corresponding table; you have the spells listed for your druid level and lower prepared.",
   "mechanics": [
     {
       "action": "choose_land_type",
@@ -30,7 +30,8 @@
           "7": "Polymorph",
           "9": "Insect Plague"
         }
-      }
+      },
+      "meta_type": "always_prepared_spells"
     }
   ],
   "source_type": "subclass"

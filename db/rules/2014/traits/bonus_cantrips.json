@@ -7,7 +7,8 @@
         "sacred flame",
         "light"
       ],
-      "counts_against_cantrips_known": false
+      "counts_against_cantrips_known": false,
+      "meta_type": "grant_cantrips"
     }
   ],
   "source_type": "subclass"

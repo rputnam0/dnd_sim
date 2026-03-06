@@ -1,6 +1,10 @@
 {
   "name": "Roguish Archetype feature",
   "description": "At 9th level, you gain a feature granted by your Roguish Archetype.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "grant_subclass_feature"
+    }
+  ],
   "source_type": "class"
 }

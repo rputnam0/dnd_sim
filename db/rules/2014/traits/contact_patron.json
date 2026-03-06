@@ -7,7 +7,8 @@
       "spell": "Contact Other Plane",
       "spell_slot_cost": 0,
       "auto_success_saving_throw": true,
-      "usage": "once_per_long_rest"
+      "usage": "once_per_long_rest",
+      "meta_type": "spellcasting_option"
     }
   ],
   "source_type": "class"

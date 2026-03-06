@@ -1,6 +1,6 @@
 {
   "name": "Infiltration Expertise",
-  "description": "Starting at 9th level, you can unfailingly create false identities for yourself. You must spend seven days and 25 gp to establish the history, profession, and affiliations for an identity. You can't establish an identity that belongs to someone else. For example, you might acquire appropriate clothing, letters of introduction, and official‑looking certification to establish yourself as a member of a trading house from a remote city so you can insinuate yourself into the company of other wealthy merchants. Thereafter, if you adopt the new identity as a disguise, other creatures believe you to be that person until given an obvious reason not to.",
+  "description": "Starting at 9th level, you can unfailingly create false identities for yourself. You must spend seven days and 25 gp to establish the history, profession, and affiliations for an identity. You can't establish an identity that belongs to someone else. For example, you might acquire appropriate clothing, letters of introduction, and official\u2011looking certification to establish yourself as a member of a trading house from a remote city so you can insinuate yourself into the company of other wealthy merchants. Thereafter, if you adopt the new identity as a disguise, other creatures believe you to be that person until given an obvious reason not to.",
   "mechanics": [
     {
       "action": "create_false_identity",
@@ -8,12 +8,14 @@
       "cost": {
         "gp": 25
       },
-      "restriction": "cannot copy an existing person's identity"
+      "restriction": "cannot copy an existing person's identity",
+      "meta_type": "social_access"
     },
     {
       "action": "adopt_identity",
       "effect": "creatures believe you are the assumed person",
-      "duration": "until given an obvious reason not to"
+      "duration": "until given an obvious reason not to",
+      "meta_type": "social_access"
     }
   ],
   "source_type": "subclass"

@@ -1,6 +1,10 @@
 {
   "name": "Sacred Oath feature",
   "description": "At 7th level, you gain a feature granted to you by your Sacred Oath.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "grant_subclass_feature"
+    }
+  ],
   "source_type": "class"
 }

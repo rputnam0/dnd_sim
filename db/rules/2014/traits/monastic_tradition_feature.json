@@ -1,6 +1,10 @@
 {
   "name": "Monastic Tradition feature",
   "description": "At 6th level, you gain one feature granted by your Monastic Tradition.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "grant_subclass_feature"
+    }
+  ],
   "source_type": "class"
 }
