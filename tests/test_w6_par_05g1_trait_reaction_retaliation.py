@@ -18,6 +18,35 @@ RETARGETED_ACTION_IDS = {
     "trait:countercharm",
     "trait:dreadful_aspect",
 }
+CONTINUATION_SLICE_IDS = {
+    "trait:armor_of_hexes",
+    "trait:defy_death",
+    "trait:favored_by_the_gods",
+    "trait:instinctive_charm",
+    "trait:misty_escape",
+    "trait:shadowy_dodge",
+}
+CONTINUATION_SLICE_META_TYPES = {
+    "armor_of_hexes": {"reaction"},
+    "defy_death": {"healing"},
+    "favored_by_the_gods": {"roll_bonus"},
+    "instinctive_charm": {"reaction"},
+    "misty_escape": {"reaction"},
+    "shadowy_dodge": {"reaction"},
+}
+
+
+def _all_g1_trait_ids() -> set[str]:
+    owned: set[str] = set()
+    with REGISTRY_PATH.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            if row.get("leaf_task_id") == "W6-PAR-05G1":
+                content_id = str(row.get("content_id", "")).strip()
+                if content_id:
+                    owned.add(content_id)
+    assert len(owned) == 73
+    return owned
 
 
 def _owned_g1_trait_ids() -> set[str]:
@@ -55,6 +84,10 @@ def test_w6_par_05g1_registry_retargets_action_traits_to_g2() -> None:
         assert target_family == "trait_resource_turn_gated"
 
 
+def test_w6_par_05g1_continuation_slice_belongs_to_registry() -> None:
+    assert CONTINUATION_SLICE_IDS <= _all_g1_trait_ids()
+
+
 def test_w6_par_05g1_owned_trait_records_are_supported() -> None:
     owned_ids = _owned_g1_trait_ids()
     manifest = build_feature_capability_manifest()
@@ -80,6 +113,21 @@ def test_w6_par_05g1_owned_trait_records_are_supported() -> None:
         assert record.runtime_hook_family == "meta"
 
 
+def test_w6_par_05g1_continuation_slice_records_are_supported() -> None:
+    manifest = build_feature_capability_manifest()
+    by_id = {record.content_id: record for record in manifest.records}
+
+    missing_ids = sorted(CONTINUATION_SLICE_IDS - set(by_id))
+    assert missing_ids == []
+
+    for content_id in sorted(CONTINUATION_SLICE_IDS):
+        record = by_id[content_id]
+        assert record.content_type == "trait"
+        assert record.support_state == "supported"
+        assert record.states.blocked is False
+        assert record.runtime_hook_family == "meta"
+
+
 def test_w6_par_05g1_trait_files_use_canonical_mechanics_rows() -> None:
     owned_ids = _owned_g1_trait_ids()
 
@@ -97,3 +145,14 @@ def test_w6_par_05g1_trait_files_use_canonical_mechanics_rows() -> None:
             )
         issues = validate_rule_mechanics_payload(kind="trait", payload=payload)
         assert issues == [], f"{content_id} has schema issues: {issues}"
+
+
+def test_w6_par_05g1_continuation_slice_uses_expected_meta_types() -> None:
+    for trait_id, expected_meta_types in sorted(CONTINUATION_SLICE_META_TYPES.items()):
+        payload = json.loads((TRAITS_DIR / f"{trait_id}.json").read_text(encoding="utf-8"))
+        seen_meta_types = {
+            str(row.get("meta_type", "")).strip()
+            for row in payload["mechanics"]
+            if isinstance(row, dict)
+        }
+        assert expected_meta_types <= seen_meta_types

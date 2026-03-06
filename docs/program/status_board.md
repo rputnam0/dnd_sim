@@ -66,6 +66,7 @@ Wave 6 remediation state:
 | W6-PAR-05E1 | codex/feat/w6-par-05e1-trait-meta-options | remediation_parity | in_progress | Batch 1 leaf is active in its dedicated worktree and owns the trait meta options/proficiencies records. |
 | W6-PAR-05F | codex/feat/w6-par-05f-trait-hooks-d | remediation_parity | in_progress | Umbrella row for passive combat trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05G | codex/feat/w6-par-05g-trait-hooks-e | remediation_parity | in_progress | Umbrella row for reaction/resource trait leaves; execution happens through child leaf tasks only. |
+| W6-PAR-05G1A | codex/feat/w6-par-05g1a-reaction-defense-continuation | remediation_parity | in_progress | Fresh continuation branch packages the isolated six-trait G1 slice from current integration with regenerated parity artifacts and no stale generated-file merges. |
 | W6-PAR-05H | codex/feat/w6-par-05h-trait-hooks-f | remediation_parity | in_progress | Umbrella row for summon/transform trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05I | codex/feat/w6-par-05i-spell-mechanics-d | remediation_parity | in_progress | Umbrella row for spell mechanics damage/support leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05J | codex/feat/w6-par-05j-spell-mechanics-e | remediation_parity | in_progress | Umbrella row for summon/control/utility spell leaves; execution happens through child leaf tasks only. |

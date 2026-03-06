@@ -11,7 +11,8 @@
         "saveDC": "your wizard spell save DC",
         "onFail": "Attacker must target the nearest creature to it, excluding you and itself (attacker chooses if tie)",
         "onSuccess": "Feature cannot be used on that attacker again until you finish a long rest"
-      }
+      },
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

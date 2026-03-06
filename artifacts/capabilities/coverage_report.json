@@ -46,12 +46,12 @@
       "total_records": 594
     },
     {
-      "blocked_records": 93,
+      "blocked_records": 87,
       "content_type": "trait",
-      "executable_records": 1088,
+      "executable_records": 1094,
       "schema_valid_records": 1181,
-      "supported_records": 1088,
-      "tested_records": 1088,
+      "supported_records": 1094,
+      "tested_records": 1094,
       "total_records": 1181
     }
   ],
@@ -19757,16 +19757,16 @@
     {
       "content_id": "trait:armor_of_hexes",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:armorer",
@@ -22865,16 +22865,16 @@
     {
       "content_id": "trait:defy_death",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:demiurgic_colossus",
@@ -24797,16 +24797,16 @@
     {
       "content_id": "trait:favored_by_the_gods",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:favored_enemy",
@@ -26967,16 +26967,16 @@
     {
       "content_id": "trait:instinctive_charm",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:instinctive_pounce",
@@ -28269,16 +28269,16 @@
     {
       "content_id": "trait:misty_escape",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:misty_wanderer",
@@ -31475,16 +31475,16 @@
     {
       "content_id": "trait:shadowy_dodge",
       "content_type": "trait",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "meta",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_hook_family"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "trait:shadowy_figments",
@@ -35437,16 +35437,16 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 517,
-    "executable_records": 2010,
+    "blocked_records": 511,
+    "executable_records": 2016,
     "schema_valid_records": 2527,
-    "supported_records": 2010,
-    "tested_records": 2010,
+    "supported_records": 2016,
+    "tested_records": 2016,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
     {
-      "count": 93,
+      "count": 87,
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {

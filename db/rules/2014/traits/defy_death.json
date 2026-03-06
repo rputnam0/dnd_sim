@@ -9,7 +9,8 @@
       ],
       "action": "heal",
       "amount": "1d8 + Constitution modifier (minimum 1)",
-      "usage": "once per long rest"
+      "usage": "once per long rest",
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

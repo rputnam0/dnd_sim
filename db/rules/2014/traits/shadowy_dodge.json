@@ -6,7 +6,8 @@
       "action": "reaction",
       "trigger": "a creature makes an attack roll against you and does not have advantage",
       "effect": "impose disadvantage on the attack roll",
-      "condition": "must be used before you know the outcome of the attack roll"
+      "condition": "must be used before you know the outcome of the attack roll",
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"
