@@ -83,11 +83,8 @@ Wave 6 remediation state:
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
 | W6-PAR-05F1B | [#225](https://github.com/rputnam0/dnd_sim/pull/225) | remediation_parity | awaiting_review | F1B finalization PR for the remaining live defense/support blockers on the fresh continuation lane. |
-<<<<<<< HEAD
 | W6-PAR-05G1D | [#226](https://github.com/rputnam0/dnd_sim/pull/226) | remediation_parity | awaiting_review | Fresh continuation PR for the G1 survival/recovery support cluster. |
-=======
 | W6-PAR-05I2 | [#227](https://github.com/rputnam0/dnd_sim/pull/227) | remediation_parity | awaiting_review | I2 hotspot PR for the spell buff, debuff, and mark mechanics leaf on the refreshed branch tip. |
->>>>>>> e09efcd (Refresh I2 hotspot PR docs state)
 
 ## Dependency and blocker notes (from backlog.csv)
 
