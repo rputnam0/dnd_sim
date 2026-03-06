@@ -14,9 +14,16 @@ SPELLS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "spells"
 CHECKPOINT_I2_SPELL_IDS = {
     "spell:aid",
     "spell:bane",
+    "spell:barkskin",
+    "spell:beacon_of_hope",
+    "spell:bestow_curse",
     "spell:bless",
     "spell:blur",
+    "spell:borrowed_knowledge",
     "spell:darkvision",
+    "spell:death_ward",
+    "spell:elemental_bane",
+    "spell:enhance_ability",
 }
 
 
@@ -73,3 +80,27 @@ def test_w6_par_05i2_checkpoint_spell_files_use_canonical_mechanics() -> None:
 
         issues = validate_rule_mechanics_payload(kind="spell", payload=payload)
         assert issues == [], f"{content_id} has schema issues: {issues}"
+
+
+def test_w6_par_05i2_checkpoint_spell_rows_capture_buff_debuff_intent() -> None:
+    expected_condition_rows = {
+        "spell:barkskin": "barkskin_ac_min_16",
+        "spell:beacon_of_hope": "beacon_of_hope_max_healing",
+        "spell:bestow_curse": "bestow_curse",
+        "spell:borrowed_knowledge": "borrowed_knowledge_skill_proficiency",
+        "spell:death_ward": "death_warded",
+        "spell:elemental_bane": "elemental_bane",
+        "spell:enhance_ability": "enhance_ability_selected_option",
+    }
+
+    for content_id, condition in sorted(expected_condition_rows.items()):
+        slug = content_id.split(":", maxsplit=1)[1]
+        payload = json.loads((SPELLS_DIR / f"{slug}.json").read_text(encoding="utf-8"))
+        mechanics = payload.get("mechanics")
+        assert isinstance(mechanics, list)
+        assert any(
+            isinstance(row, dict)
+            and row.get("effect_type") == "apply_condition"
+            and row.get("condition") == condition
+            for row in mechanics
+        ), f"{content_id} must contain apply_condition:{condition}"
