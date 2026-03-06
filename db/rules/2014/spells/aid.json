@@ -11,5 +11,16 @@
   "description": "Your spell bolsters your allies with toughness and resolve. Choose up to three creatures within range. Each target’s hit point maximum and current hit points increase by 5 for the duration. At Higher Levels. When you cast this spell using a spell slot of 3rd level or higher, a target’s hit points increase by an additional 5 for each slot level above 2nd.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "max_hp_increase",
+      "calculation": "5 + 5 per slot level above 2",
+      "duration_rounds": 4800
+    },
+    {
+      "effect_type": "heal",
+      "amount": 5,
+      "upcast_bonus_per_slot": 5
+    }
+  ]
 }

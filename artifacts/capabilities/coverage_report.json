@@ -37,12 +37,12 @@
       "total_records": 256
     },
     {
-      "blocked_records": 134,
+      "blocked_records": 129,
       "content_type": "spell",
-      "executable_records": 460,
+      "executable_records": 465,
       "schema_valid_records": 594,
-      "supported_records": 460,
-      "tested_records": 460,
+      "supported_records": 465,
+      "tested_records": 465,
       "total_records": 594
     },
     {
@@ -10671,16 +10671,16 @@
     {
       "content_id": "spell:aid",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:air_bubble",
@@ -11105,16 +11105,16 @@
     {
       "content_id": "spell:bane",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:banishing_smite",
@@ -11287,16 +11287,16 @@
     {
       "content_id": "spell:bless",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:blight",
@@ -11357,16 +11357,16 @@
     {
       "content_id": "spell:blur",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:bones_of_the_earth",
@@ -12337,16 +12337,16 @@
     {
       "content_id": "spell:darkvision",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:dawn",
@@ -35437,11 +35437,11 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 177,
-    "executable_records": 2350,
+    "blocked_records": 172,
+    "executable_records": 2355,
     "schema_valid_records": 2527,
-    "supported_records": 2350,
-    "tested_records": 2350,
+    "supported_records": 2355,
+    "tested_records": 2355,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
@@ -35450,7 +35450,7 @@
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {
-      "count": 134,
+      "count": 129,
       "unsupported_reason": "missing_runtime_mechanics"
     }
   ]
