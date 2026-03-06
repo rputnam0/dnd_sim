@@ -66,7 +66,7 @@ Wave 6 remediation state:
 | W6-PAR-05E1 | codex/feat/w6-par-05e1-trait-meta-options | remediation_parity | in_progress | Batch 1 leaf is active in its dedicated worktree and owns the trait meta options/proficiencies records. |
 | W6-PAR-05F | codex/feat/w6-par-05f-trait-hooks-d | remediation_parity | in_progress | Umbrella row for passive combat trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05F1 | codex/feat/w6-par-05f1-trait-defense-support | remediation_parity | in_progress | Original F1 branch now serves as a reference-only checkpoint lane; do not open the continuation PR from this already-used branch. |
-| W6-PAR-05F1A | codex/feat/w6-par-05f1a-trait-defense-support-continuation | remediation_parity | in_progress | Fresh continuation lane for the live remaining F1 blockers on current `codex/int/w6-parity-closeout`; this branch owns the next PR for the defense/support slice. |
+| W6-PAR-05F1A | codex/feat/w6-par-05f1a-trait-defense-support-continuation | remediation_parity | pr_open | Fresh continuation lane for the live remaining F1 blockers on current `codex/int/w6-parity-closeout`; PR #221 is now the active defense/support slice. |
 | W6-PAR-05G | codex/feat/w6-par-05g-trait-hooks-e | remediation_parity | in_progress | Umbrella row for reaction/resource trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05H | codex/feat/w6-par-05h-trait-hooks-f | remediation_parity | in_progress | Umbrella row for summon/transform trait leaves; execution happens through child leaf tasks only. |
 | W6-PAR-05I | codex/feat/w6-par-05i-spell-mechanics-d | remediation_parity | in_progress | Umbrella row for spell mechanics damage/support leaves; execution happens through child leaf tasks only. |
@@ -78,10 +78,9 @@ Wave 6 remediation state:
 
 ## Open PRs
 
-No backlog tasks are currently marked `pr_open`.
-
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
+| W6-PAR-05F1A | [#221](https://github.com/rputnam0/dnd_sim/pull/221) | remediation_parity | awaiting_review | Fresh continuation PR for the F1 defense/support slice after retiring the already-used F1 branch to reference-only status. |
 
 ## Dependency and blocker notes (from backlog.csv)
 
