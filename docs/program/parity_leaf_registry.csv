@@ -1,0 +1,1226 @@
+leaf_task_id,content_id,unsupported_reason,target_family,hotspot_lane,notes
+W6-PAR-05B1,background:ballad_of_the_grinning_fool,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:choose_a_feature,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:discovery,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:double_agent,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:down_low,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:dual_personalities,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:ear_to_the_ground,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:ex_convict,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:factor,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:false_identity,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:fearsome_reputation,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:feywild_connection,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:guerrilla,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:harborfolk,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:heart_of_darkness,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:highborn,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:historical_knowledge,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:house_connections,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:i_ll_patch_it,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:inheritance,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:inside_informant,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:investigative_services,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:kept_in_style,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:knightly_regard,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:legalese,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:legion_station,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:leverage,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:mercenary_life,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:name_dropping,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:never_tell_me_the_odds,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:phlan_survivor,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:red_plume_and_mage_guild_contacts,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:respect_of_the_stout_folk,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:shelter_of_the_elven_clergy,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:steady,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:still_standing,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:supply_chain,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:trade_contact,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:trials_of_the_five_gods,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:urban_infrastructure,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:wagonmaster,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:wanderer,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05B1,background:watcher_s_eye,missing_runtime_hook_family,background_meta,data,remaining narrative background support promoted to canonical meta
+W6-PAR-05C1,species:age,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:alignment,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:astral_knowledge,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:brittle_bones,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:creature_type,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:dwarven_resilience,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:dwarven_toughness,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:elf_culture,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:equine_build,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:expert_duplication,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:hunter_s_lore,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:kender_curiosity,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:kenku_recall,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:khenra_weapon_training,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:kor_climbing,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:language,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:languages,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:limited_amphibiousness,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:limited_telepathy,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:magic_resistance,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:mental_discipline,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:mimicry,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:mountain_born,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:observant_athletic,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:otherworldly_perception,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:poison_affinity,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:resourceful,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:sentry_s_rest,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:size,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:skill_versatility,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:specialized_design,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:stonecunning,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:sunlight_sensitivity,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:swim_speed,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:variable_trait,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:versatile,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05C1,species:water_dependency,missing_runtime_hook_family,species_passive_meta,data,passive or meta species feature
+W6-PAR-05D1,species:chromatic_ancestry,missing_runtime_hook_family,species_active_effects,data,active or effect-bearing species feature
+W6-PAR-05D1,species:gem_ancestry,missing_runtime_hook_family,species_active_effects,data,active or effect-bearing species feature
+W6-PAR-05D1,species:hammering_horns,missing_runtime_hook_family,species_active_effects,data,active or effect-bearing species feature
+W6-PAR-05D1,species:hare_trigger,missing_runtime_hook_family,species_active_effects,data,active or effect-bearing species feature
+W6-PAR-05D1,species:imposing_presence,missing_runtime_hook_family,species_active_effects,data,active or effect-bearing species feature
+W6-PAR-05D1,species:metallic_ancestry,missing_runtime_hook_family,species_active_effects,data,active or effect-bearing species feature
+W6-PAR-05D1,species:secondary_arms,missing_runtime_hook_family,species_active_effects,data,active or effect-bearing species feature
+W6-PAR-05D1,species:shapechanger,missing_runtime_hook_family,species_active_effects,data,active or effect-bearing species feature
+W6-PAR-05E1,trait:alchemist,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:arcane_archer,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:arcane_tradition,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:arcane_tradition_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:archfey_patron,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:armorer,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:artificer_specialist,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:artificer_specialist_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:artificer_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:barbarian_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:bard_college,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:bard_college_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:bard_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:bardic_versatility,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:bonus_cantrips,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:cantrip_versatility,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:cartographer,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:celestial_patron,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_of_dreams,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_of_spores,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_of_stars,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_of_the_land,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_of_the_land_spells,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_of_the_moon,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_of_the_sea,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_of_the_stars,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_of_wildfire,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:circle_spells,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:cleric_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_creation,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_dance,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_eloquence,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_glamour,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_lore,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_spirits,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_swords,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_the_moon,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_valor,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:college_of_whispers,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:contact_patron,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:deft_explorer_improvement,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:divination_savant,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:divine_domain_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:draconic_bloodline,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:druid_circle,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:druid_circle_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:druid_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:enchantment_savant,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:evocation_savant,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:expert_divination,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:favored_enemy_and_natural_explorer_improvements,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:fiend_patron,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:fighter_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:grave_domain,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:great_old_one_patron,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:illusion_savant,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:infiltration_expertise,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:knowledge_domain_psa,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:light_domain,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:martial_archetype_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:monastic_tradition,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:monastic_tradition_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:monk_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:natural_explorer_improvement,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:nature_domain,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:necromancy_savant,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:otherworldly_patron,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:otherworldly_patron_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:paladin_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:path_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:potent_cantrip,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:ranger_archetype_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:ranger_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:rogue_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:roguish_archetype_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:sacred_oath_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:shadow_lore,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:solidarity_domain_psa,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:sorcerer_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:sorcerous_origin_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:sorcerous_versatility,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:subclass_feature,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:tempest_domain,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:the_right_tool_for_the_job,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:transmutation_savant,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:warlock_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:wizard_subclass,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E1,trait:zeal_domain_psa,missing_runtime_hook_family,trait_meta_proficiency_options,data,"meta trait with proficiencies, options, or class support"
+W6-PAR-05E2,trait:aberrant_mind,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:abjurer,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:adjust_density,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:ambush_master,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:aquatic_affinity,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:arcane_trickster,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:armor_modifications,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:armor_of_hexes,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:artillerist,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:assassin,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:awakened_mind,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:banneret,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:battle_master,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:battle_smith,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:bladesinger,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:bladesinger_styles,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:bladesinging,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:blaze_of_glory,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:bond_of_fang_and_scale,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:bottled_respite,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:cavalier,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:chalice,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:consult_the_spirits,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:corona_of_light,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:daze_cost_2d6,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:dazzling_footwork,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:defy_death,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:destroy_undead_cr_1,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:destroy_undead_cr_1_2,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:destroy_undead_cr_2,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:destroy_undead_cr_3,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:destroy_undead_cr_4,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:divine_intervention_improvement,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:diviner,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:dread_allegiance,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:eagle,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:echo_knight,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:eldritch_hex,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:eldritch_master,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:elemental_affinity,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:elemental_attunement,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:elemental_disciplines,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:embodiment_of_the_law,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:emboldening_bond,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:emissary_of_peace,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:emissary_of_redemption,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:empowered_evocation,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:empty_body,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:epic_boon,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:event_horizon,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:eventide_s_splendor,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:evoker,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:expansive_bond,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:experimental_elixir,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:extra_elemental_discipline,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:eye_for_detail,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:eye_for_weakness,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:fathomless_plunge,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:favored_by_the_gods,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:favored_enemy_improvement,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:fey_presence,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:fey_reinforcements,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:fey_wanderer,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:fiend_spells,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:fighting_style,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:flexible_casting,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:focused_aim,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:focused_conjuration,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:frenzy,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:gathered_swarm,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:genie_s_vessel,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:genie_s_wrath,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:giant_s_might,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:gloom_stalker,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:gloom_stalker_spells,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:grasping_tentacles,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:gravity_well,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:great_stature,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:greater_divine_intervention,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:greater_portent,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:guardian_spirit,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:hand_of_harm,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:heart_of_fire,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:heightened_focus,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:heroic_warrior,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:hexblade_s_curse,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:horizon_walker,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:hour_of_reaping,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:hunter,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:hunter_s_rime,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:hunter_s_sense,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:hurl_through_hell,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:hypnotic_gaze,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:illusionist,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:illusory_reality,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:improved_combat_superiority_d12,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:improved_duplicity,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:indomitable,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:infiltrator,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:infuse_item,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:inquisitive,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:instinctive_charm,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:intoxicated_frenzy,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:invincible_conqueror,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:jack_of_all_trades,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:knightly_envoy,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:know_your_enemy,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:land_s_aid,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:lay_on_hands,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:legion_of_one,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:lightning_launcher,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:lunar_boons,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:lunar_empowerment,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:magical_cunning,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:magical_discoveries,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:magical_secrets,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:magician,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:malleable_illusions,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:martial_archetype,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:master_duelist,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:master_of_hexes,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:master_of_nature,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:master_of_tactics,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:master_scrivener,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:master_transmuter,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mastermind,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mastery_of_death,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mighty_impel,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mindless_rage,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:minor_conjuration,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:misty_escape,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:momentary_stasis,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:monster_slayer,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:moon_fire,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mystic_arcanum,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mystic_arcanum_6th_level,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mystic_arcanum_7th_level,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mystic_arcanum_8th_level,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mystic_arcanum_9th_level,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:mystical_connection,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:nature_s_veil,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:nature_s_wrath,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:nature_speaker,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oath_of_devotion,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oath_of_glory,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oath_of_redemption,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oath_of_the_ancients,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oath_of_the_crown,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oath_of_the_noble_genies,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oath_of_the_watchers,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oath_of_vengeance,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oath_spells,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oathbreaker,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:oketra_s_blessing,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:opportunist,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:order_of_scribes,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:order_s_wrath,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:otherworldly_wings,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_ancestral_guardian,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_battlerager,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_beast,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_berserker,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_giant,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_storm_herald,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_totem_warrior,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_wild_heart,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_world_tree,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:path_of_the_zealot,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:perfect_focus,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:perfect_self,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:perfected_bond,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:persistent_rage,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:phantom,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:planar_warrior,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:poison_cost_1d6,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:portent,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:power_of_the_wilds,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:primal_path,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:primeval_awareness,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:psi_bolstered_knack,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:psi_powered_leap,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:psi_warrior,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:psionic_power,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:psychic_blades,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:psychic_spells,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:psychic_teleportation,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:psychic_whispers,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:purity_of_body,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:purple_dragon_knight_banneret,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:pyromancer_psk,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:radiance_of_the_dawn,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:radiant_fire,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:raging_storm,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:rallying_cry,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:ranger_archetype,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:reclaim_potential,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:relentless,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:relentless_avenger,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:relentless_rage,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:rend_mind,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:restriction_dwarves_only,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:restriction_knighthood,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:rhonas_s_blessing,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:ritual_adept,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:roguish_archetype,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:rune_knight,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:sacred_oath,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:samurai,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:school_of_abjuration,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:school_of_conjuration,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:school_of_divination,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:school_of_enchantment,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:school_of_evocation,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:school_of_illusion,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:school_of_necromancy,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:school_of_transmutation,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:scion_of_the_three,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:scout,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:sculpt_spells,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:searing_sunburst,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:searing_vengeance,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:second_wind,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:shadow_arts,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:shadow_walk,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:shadowy_dodge,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:shadowy_figments,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:sharpen_the_blade,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:slayer_s_prey,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:slow_fall,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:song_of_rest_d10,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:song_of_rest_d12,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:song_of_victory,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:sorcerous_origin,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:spell_breaker,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:spellcasting_focus,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:spellfire_burst,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:spreading_spores,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:stalker_s_flurry,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:star_map,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:steady_aim,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:step_of_the_wind,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:steps_of_night,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:storm_guide,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:strength_before_death,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:strength_of_the_grave,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:superior_hunter_s_prey,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:swarming_dispersal,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:swarmkeeper,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:swashbuckler,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tactical_master,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tactical_shift,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tandem_footwork,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:telepathic_speech,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tenets_of_devotion,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tenets_of_glory,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tenets_of_redemption,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tenets_of_the_ancients,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tenets_of_the_crown,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tenets_of_the_watchers,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tenets_of_vengeance,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tentacle_of_the_deeps,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:thaumaturge,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:the_archfey,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:the_third_eye,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:thief,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:thieves_cant,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:thunder_gauntlets,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tides_of_chaos,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tiger,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:timeless_body,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tireless_spirit,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:totem_spirit,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:training_in_war_and_song_bladesinging,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:trance_of_order,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:tranquility,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:travel_along_the_tree,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:turn_the_tide,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:turn_undead,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:twilight_shroud,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:twinkling_constellations,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:ultimate_combat_superiority,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:unbreakable_majesty,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:uncanny_metabolism,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:undying_nature,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:unerring_eye,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:unfettered_mind,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:unsettling_words,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:unyielding_spirit,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:vengeful_ancestors,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:vigilant_blessing,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:violent_attraction,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:vitality_of_the_tree,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:volley,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:wails_from_the_grave,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:war_god_s_blessing,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:war_priest,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:warrior_of_mercy,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:warrior_of_shadow,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:warrior_of_the_elements,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:warrior_of_the_open_hand,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:way_of_mercy,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:way_of_shadow,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:way_of_the_ascendant_dragon,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:way_of_the_astral_self,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:way_of_the_drunken_master,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:way_of_the_four_elements,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:way_of_the_kensei,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:way_of_the_long_death,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:way_of_the_open_hand,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:wholeness_of_body,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:winter_walker,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:withdraw_cost_1d6,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:wizardly_quill,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:wolf,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:words_of_creation,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:wrath_of_the_sea,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05E2,trait:zealous_presence,missing_runtime_hook_family,trait_meta_social_support,data,"meta trait with social, access, exploration, or support behavior"
+W6-PAR-05F1,trait:aura_of_conquest,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:aura_of_hate,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:aura_of_malevolence,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:blazing_revival,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:blessed_healer,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:blessed_strikes,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:bulwark,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:bulwark_of_force,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:celestial_resilience,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:cleansing_touch,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:dampen_elements,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:dampening_field,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:defensive_field,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:defensive_flourish,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:defensive_tactics,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:disciple_of_life,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:divine_foreknowledge,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:empowered_healing,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:entropic_ward,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:flurry_of_healing_and_harm,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:group_recovery,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:hand_of_healing,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:improved_defender,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:indestructible_life,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:life_domain,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:natural_recovery,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:oath_of_conquest,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:patient_defense,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:physician_s_touch,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:preserve_life,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:protective_field,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:protective_spirit,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:restoring_touch,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:sanctuary_vessel,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:shared_resilience,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:smite_of_protection,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:song_of_defense,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:spectral_defense,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:supernatural_resistance,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:supreme_healing,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:tenets_of_conquest,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:touch_of_death,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:touch_of_the_long_death,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F1,trait:unearthly_recovery,missing_runtime_hook_family,trait_passive_defense_support,data,passive defense or support family
+W6-PAR-05F2,trait:additional_arcane_shot_option,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:agile_strikes,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:aspect_of_the_beast,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:aspect_of_the_wilds,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:aspect_of_the_wyrm,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:bardic_damage,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:battlerager_charge,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:bonus_unarmed_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:born_to_the_saddle,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:brutal_critical_1_die,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:brutal_critical_2_dice,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:brutal_critical_3_dice,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:cunning_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:curving_shot,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:death_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:devious_strikes,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:dexterous_attacks,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:distant_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:divine_fury,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:divine_smite,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:divine_soul,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:divine_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:dread_ambusher,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:drunken_technique,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:eldritch_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:elemental_cleaver,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:extra_attack_2,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:guided_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:homing_strikes,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:improved_brutal_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:improved_cunning_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:infectious_fury,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:inspiring_movement,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:inspiring_smite,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:keeper_of_souls,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:kensei_s_shot,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:master_s_flourish,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:multiattack,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:paladin_s_smite,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:psionic_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:pyromancer_s_fury,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:reckless_attack,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:redirect_attack,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:searing_arc_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:slashing_flourish,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:soul_blades,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:soul_of_artifice,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:soul_of_vengeance,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:soulknife,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:storm_s_fury,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:storm_soul,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:three_extra_attacks,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:thunderbolt_strike,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:two_extra_attacks,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:way_of_the_sun_soul,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:weapon_mastery,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05F2,trait:whirlwind_attack,missing_runtime_hook_family,trait_passive_offense_mobility,data,passive offense or mobility family
+W6-PAR-05G1,trait:abjure_enemy,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:champion_challenge,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:chilling_retribution,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:conquering_presence,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:control_undead,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:countercharm,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:deflect_attacks,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:deflect_energy,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:deflecting_shroud,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:divine_allegiance,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:dreadful_aspect,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:improved_flare,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:rebuke_the_violent,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:scornful_rebuke,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:spiked_retribution,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:spirit_shield,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:sun_shield,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:vigilant_rebuke,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G1,trait:warding_flare,missing_runtime_hook_family,trait_reaction_retaliation,hotspot,reaction or retaliation family
+W6-PAR-05G2,trait:aberrant_sorcery,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:bardic_inspiration,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:bardic_inspiration_d10,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:bardic_inspiration_d12,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:bastion_of_law,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:battle_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:beguiling_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:bend_luck,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:bolstering_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:channel_divinity_charm_animals_and_plants,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:channel_divinity_cloak_of_shadows,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:channel_divinity_knowledge_of_the_ages,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:channel_divinity_order_s_demand,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:channel_divinity_path_to_the_grave,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:channel_divinity_preserve_life,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:channel_divinity_radiance_of_the_dawn,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:channel_divinity_twilight_sanctuary,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:chronurgy_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:clockwork_cavalcade,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:clockwork_soul,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:convergent_future,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:dark_one_s_own_luck,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:divine_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:draconic_sorcery,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:font_of_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:graviturgy_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:horizon_walker_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:improved_war_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:inspiring_surge,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:ki_empowered_strikes,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:lunar_sorcery,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:magic_awareness,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:magic_item_tinker,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:magic_user_s_nemesis,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:mantle_of_inspiration,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:metamagic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:monster_slayer_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:moon_s_inspiration,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:peerless_skill,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:rallying_surge,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:shadow_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:sorcery_points,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:spellfire_sorcery,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:storm_sorcery,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:superior_inspiration,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:tamed_surge,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:telekinetic_adept,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:telekinetic_master,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:telekinetic_movement,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:tempestuous_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:use_magic_device,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:war_magic,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05G2,trait:wild_surge,missing_runtime_hook_family,trait_resource_turn_gated,hotspot,"resource-change, initiative, or turn-gated family"
+W6-PAR-05H1,trait:beast_master,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:circle_of_the_shepherd,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:create_thrall,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:drake_s_breath,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:drakewarden,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:durable_summons,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:enthralling_performance,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:faithful_steed,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:faithful_summons,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:mighty_summoner,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:summon_wildfire_spirit,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:undead_thralls,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H1,trait:wild_companion,missing_runtime_hook_family,trait_summon_companion_mount,hotspot,"summon, companion, familiar, or mount family"
+W6-PAR-05H2,trait:avenging_angel,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:beast_spells,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:benign_transposition,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:bestial_fury,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:bestial_soul,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:demiurgic_colossus,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:draconic_presence,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:elemental_wild_shape,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:forms_of_your_astral_self,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:improved_circle_forms,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:path_of_wild_magic,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:performance_of_creation,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:starry_form,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:thousand_forms,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:wild_magic,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:wild_magic_sorcery,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05H2,trait:wild_shape_improvement,missing_runtime_hook_family,trait_transform_world,hotspot,"transform, form-state, or world-linked family"
+W6-PAR-05I1,spell:absorb_elements,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:acid_arrow,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:acid_splash_conjuration,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:air_bubble,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:alter_self,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:alustriel_s_mooncloak,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:animal_messenger,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:antilife_shell,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:arcane_hand,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:arcane_sword,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:arcane_vigor,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:ashardalon_s_stride,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:blade_of_disaster,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:blindness_deafness,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:blink,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:booming_blade,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:branding_smite,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:burning_hands,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:call_lightning,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:calm_emotions,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:catnap,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:cause_fear,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:ceremony,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:chain_lightning,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:charm_monster,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:charm_person,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:clone,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:comprehend_languages,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:compulsion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:cone_of_cold,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:confusion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:contingency,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:counterspell,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:creation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:cure_wounds,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:dancing_lights_evocation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:danse_macabre,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:deryan_s_helpful_homunculi,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:disguise_self,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:dispel_evil_and_good,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:dispel_magic,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:distort_value,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:divine_smite,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:divine_word,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:doomtide,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:dragon_s_breath,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:druid_grove,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:druidcraft_transmutation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:dust_devil,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:earth_tremor,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:earthbind,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:eldritch_blast_evocation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:elemental_weapon,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:elementalism,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:elminster_s_elusion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:encode_thoughts,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:enemies_abound,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:entangle,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:etherealness,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:eyebite,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:faerie_fire,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:faithful_hound,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:far_step,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:fast_friends,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:fear,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:finger_of_death,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:fire_bolt_evocation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:fireball,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:flame_arrows,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:flame_blade,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:flame_strike,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:flock_of_familiars,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:forcecage,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:frost_fingers,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:gentle_repose,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:giant_insect,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:grasping_vine,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:gravity_fissure,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:green_flame_blade,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:guardian_of_nature,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:guiding_bolt,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:gust,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:hallow,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:harm,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:heal,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:healing_spirit,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:healing_word,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:heat_metal,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:hellish_rebuke,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:hold_monster,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:hold_person,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:holy_aura,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:holy_star_of_mystra,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:holy_weapon,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:homunculus_servant,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:identify,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:illusory_dragon,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:illusory_script,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:imprisonment,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:incite_greed,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:infernal_calling,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:inflict_wounds,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:insect_plague,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:intellect_fortress,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:investiture_of_flame,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:investiture_of_ice,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:investiture_of_stone,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:invulnerability,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:irresistible_dance,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:jim_s_glowing_coin,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:jim_s_magic_missile,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:jump,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:kinetic_jaunt,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:knock,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:legend_lore,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:leomund_s_secret_chest,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:lesser_restoration,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:levitate,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:life_transference,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:light_evocation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:lightning_bolt,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:longstrider,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:maelstrom,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mage_armor,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mage_hand,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mage_hand_conjuration,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:magic_missile,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:magic_mouth,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:magic_stone,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:magic_weapon,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:magnificent_mansion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:magnify_gravity,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:major_image,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mass_cure_wounds,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mass_heal,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mass_healing_word,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mass_polymorph,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mass_suggestion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:maze,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:meld_into_stone,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:melf_s_minute_meteors,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mending,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mending_transmutation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:message,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:message_transmutation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:meteor_swarm,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mighty_fortress,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mind_blank,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:minor_illusion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:minor_illusion_illusion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mirage_arcane,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mirror_image,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mislead,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:misty_step,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:modify_memory,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mold_earth,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mordenkainen_s_magnificent_mansion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:mordenkainen_s_sword,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:motivational_speech,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:nathair_s_mischief,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:nondetection,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:ottos_irresistible_dance,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:pass_without_trace,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:phantasmal_killer,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:planar_ally,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:planar_binding,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:plant_growth,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:poison_spray_conjuration,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:polymorph,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:power_word_fortify,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:power_word_kill,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:power_word_pain,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:power_word_stun,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:prayer_of_healing,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:prestidigitation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:prestidigitation_transmutation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:primal_savagery,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:prismatic_spray,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:produce_flame_conjuration,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:protection_from_energy,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:protection_from_evil_and_good,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:psychic_scream,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:pulse_wave,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:purify_food_and_drink,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:pyrotechnics,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:rary_s_telepathic_bond,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:ray_of_enfeeblement,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:ray_of_frost_evocation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:reality_break,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:regenerate,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:reincarnate,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:remove_curse,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:resistance_abjuration,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:resurrection,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:reverse_gravity,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:revivify,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:rime_s_binding_ice,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:rope_trick,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:sacred_flame_evocation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:scatter,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:scorching_ray,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:secret_chest,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:seeming,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:sending,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:sequester,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:shadow_blade,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:shadow_of_moil,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:shapechange,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:shatter,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:shillelagh_transmutation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:shocking_grasp_evocation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:silence,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:silent_image,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:silvery_barbs,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:simbul_s_synostodweomer,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:simulacrum,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:skill_empowerment,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:skywrite,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:snare,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:snilloc_s_snowball_swarm,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:songal_s_elemental_suffusion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:sorcerous_burst,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spare_the_dying,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spare_the_dying_necromancy,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:speak_with_animals,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:speak_with_dead,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:speak_with_plants,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spellfire_flare,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spider_climb,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spike_growth,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spirit_guardians,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spirit_of_death,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spirit_shroud,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spiritual_weapon,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:spray_of_cards,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:starry_wisp,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:stone_shape,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:suggestion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:sunbeam,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:sunburst,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:sylun_s_viper,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:tasha_s_bubbling_cauldron,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:tasha_s_caustic_brew,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:tasha_s_otherworldly_guise,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:telekinesis,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:telepathy,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:temple_of_the_gods,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:temporal_shunt,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:tether_essence,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:thaumaturgy,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:thaumaturgy_transmutation,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:thunder_step,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:thunderwave,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:tidal_wave,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:time_stop,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:tiny_servant,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:tongues,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:transmute_rock,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:transport_via_plants,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:tree_stride,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:true_polymorph,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:true_resurrection,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:true_seeing,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:vampiric_touch,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:vortex_warp,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:warp_sense,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:web,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:weird,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:wish,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:wither_and_bloom,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:word_of_recall,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:wrath_of_nature,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:wristpocket,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I1,spell:zone_of_truth,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
+W6-PAR-05I2,spell:aid,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:bane,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:barkskin,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:beacon_of_hope,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:bestow_curse,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:bless,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:blur,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:borrowed_knowledge,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:darkvision,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:death_ward,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:elemental_bane,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:enhance_ability,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:enlarge_reduce,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:expeditious_retreat,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:false_life,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:fizban_s_platinum_shield,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:fly,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:foresight,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:fortune_s_favor,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:gaseous_form,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:gift_of_alacrity,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:gift_of_gab,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:glibness,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:goodberry,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:greater_invisibility,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:guards_and_wards,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:haste,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:heroism,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:primordial_ward,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:sanctuary,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:see_invisibility,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:shield,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:shield_of_faith,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:slow,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05I2,spell:stoneskin,missing_runtime_mechanics,spell_buffs_debuffs_marks,hotspot,"buff, debuff, mark, advantage, or resistance mechanics"
+W6-PAR-05J1,spell:animal_friendship,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:animal_shapes,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:animate_objects,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:beast_bond,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:command,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:conjure_animals,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:conjure_celestial,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:conjure_elemental,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:conjure_fey,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:conjure_minor_elementals,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:conjure_woodland_beings,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:control_flames,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:control_weather,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:control_winds,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:create_homunculus,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:create_magen,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:create_undead,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:dominate_beast,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:dominate_monster,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:dominate_person,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:enthrall,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:find_familiar,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:find_greater_steed,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:geas,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:instant_summons,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:phantom_steed,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_aberration,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_beast,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_celestial,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_construct,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_draconic_spirit,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_dragon,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_elemental,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_fey,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_fiend,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_greater_demon,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_lesser_demons,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_shadowspawn,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J1,spell:summon_undead,missing_runtime_mechanics,spell_summon_command_control,hotspot,"summon, conjure, command, or mount/control mechanics"
+W6-PAR-05J2,spell:antimagic_field,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:arcane_eye,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:arcanist_s_magic_aura,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:augury,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:blade_barrier,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:blight,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:clairvoyance,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:cloudkill,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:commune,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:commune_with_nature,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:contact_other_plane,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:continual_flame,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:create_food_and_water,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:create_or_destroy_water,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:create_spelljamming_helm,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:darkness,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:daylight,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:demiplane,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:detect_evil_and_good,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:detect_magic,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:detect_poison_and_disease,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:detect_thoughts,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:divination,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:dream,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:dream_of_the_blue_veil,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:earthquake,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:elminster_s_effulgent_spheres,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:fabricate,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:find_the_path,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:find_traps,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:fire_storm,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:floating_disk,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:fog_cloud,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:fount_of_moonlight,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:freezing_sphere,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:galder_s_speedy_courier,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:galder_s_tower,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:gate,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:gate_seal,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:grease,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:guidance_divination,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:gust_of_wind,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:incendiary_cloud,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:investiture_of_wind,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:jallarzi_s_storm_of_radiance,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:linked_glyphs,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:locate_animals_or_plants,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:locate_object,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:maddening_darkness,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:nystul_s_magic_aura,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:otiluke_s_resilient_sphere,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:prismatic_wall,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:resilient_sphere,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:shape_water,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:spellfire_storm,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:steel_wind_strike,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:storm_of_vengeance,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:storm_sphere,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:teleport,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:teleportation_circle,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:tiny_hut,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:true_strike_divination,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:vitriolic_sphere,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:wall_of_fire,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:wall_of_force,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:wall_of_ice,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:wall_of_light,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:wall_of_sand,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:wall_of_stone,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:wall_of_thorns,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:wall_of_water,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:warding_wind,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:water_breathing,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:watery_sphere,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:whirlwind,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05J2,spell:wind_walk,missing_runtime_mechanics,spell_hazard_zone_utility,hotspot,"hazard, zone, teleport, sensor, object, or world utility mechanics"
+W6-PAR-05K1,spell:animate_dead,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:arcane_gate,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:arcane_lock,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:armor_of_agathys,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:aura_of_life,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:aura_of_purity,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:bigbys_hand,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:blade_ward,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:chromatic_orb,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:circle_of_power,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:compelled_duel,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:contagion,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:control_water,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:cordon_of_arrows,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:crusaders_mantle,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:dancing_lights,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:dimension_door,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:disintegrate,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:divine_favor,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:drawmijs_instant_summons,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:druidcraft,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:eldritch_blast,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:ensnaring_strike,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:feather_fall,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:feign_death,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:find_steed,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:fire_shield,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:flaming_sphere,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:forbiddance,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:freedom_of_movement,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:friends,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:glyph_of_warding,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:greater_restoration,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:guidance,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:heroes_feast,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:hex,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:hunger_of_hadar,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:hunters_mark,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:leomunds_tiny_hut,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:locate_creature,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:magic_circle,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:magic_jar,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:mordenkainens_faithful_hound,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:nystuls_magic_aura,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:passwall,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:phantasmal_force,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:plane_shift,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:poison_spray,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:power_word_heal,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:produce_flame,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:programmed_illusion,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:protection_from_poison,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:raise_dead,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:ray_of_frost,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:resistance,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:scrying,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:shillelagh,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:swift_quiver,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:tensers_floating_disk,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:thorn_whip,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:true_strike,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:tsunami,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:warding_bond,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:water_walk,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:wind_wall,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:witch_bolt,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05L1,spell:antipathy_sympathy,invalid_mechanics_schema,spell_schema_repair,hotspot,repair invalid mechanics payload shape
+W6-PAR-05L1,spell:chill_touch,invalid_mechanics_schema,spell_schema_repair,hotspot,repair invalid mechanics payload shape
+W6-PAR-05L1,spell:dissonant_whispers,invalid_mechanics_schema,spell_schema_repair,hotspot,repair invalid mechanics payload shape
+W6-PAR-05L1,spell:gravity_sinkhole,invalid_mechanics_schema,spell_schema_repair,hotspot,repair invalid mechanics payload shape
+W6-PAR-05L1,spell:lightning_arrow,invalid_mechanics_schema,spell_schema_repair,hotspot,repair invalid mechanics payload shape
+W6-PAR-05L1,spell:shining_smite,invalid_mechanics_schema,spell_schema_repair,hotspot,repair invalid mechanics payload shape
+W6-PAR-05L1,spell:sickening_radiance,invalid_mechanics_schema,spell_schema_repair,hotspot,repair invalid mechanics payload shape
+W6-PAR-05L1,spell:symbol,invalid_mechanics_schema,spell_schema_repair,hotspot,repair invalid mechanics payload shape
+W6-PAR-05L1,spell:synaptic_static,invalid_mechanics_schema,spell_schema_repair,hotspot,repair invalid mechanics payload shape
+W6-PAR-05L2,spell:alarm,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:chaos_bolt,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:circle_of_death,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:cloud_of_daggers,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:conjure_barrage,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:create_bonfire,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:crown_of_stars,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:death_armor,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:delayed_blast_fireball,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:draconic_transformation,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:erupting_earth,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:evard_s_black_tentacles,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:fire_bolt,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:globe_of_invulnerability,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:guardian_of_faith,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:hail_of_thorns,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:hallucinatory_terrain,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:ice_knife,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:immovable_object,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:light,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:melf_s_acid_arrow,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:mental_prison,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:mordenkainen_s_private_sanctum,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:move_earth,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:negative_energy_flood,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:ravenous_void,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:soul_cage,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:stinking_cloud,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:tenser_s_transformation,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows
+W6-PAR-05L2,spell:zephyr_strike,non_executable_mechanics,spell_executable_conversion,hotspot,convert non-executable mechanics into canonical executable rows

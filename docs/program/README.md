@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-05  
+Last updated: 2026-03-06
 Canonical source: `docs/program/README.md`
 
 This file is the single canonical planning entrypoint for the DnD Sim completion program.
@@ -41,6 +41,7 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 | `docs/program/risk_register.md` | canonical | Program risk tracking. |
 | `docs/program/labels_and_milestones.md` | canonical | Labeling and milestone mapping. |
 | `docs/program/status_board.md` | canonical | Human-readable status dashboard. |
+| `docs/program/parity_leaf_registry.csv` | canonical | Exact record-to-leaf ownership map for remaining strict blockers. |
 | `docs/program/completion_task_cards.md` | canonical | Human-readable task expansion of backlog. |
 | `docs/program/capability_report.md` | canonical | Capability report output surface. |
 
@@ -48,6 +49,7 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 
 - Markdown report: [`docs/program/capability_report.md`](capability_report.md)
 - Machine-readable JSON: [`artifacts/capabilities/coverage_report.json`](../../artifacts/capabilities/coverage_report.json)
+- Strict parity leaf registry: [`docs/program/parity_leaf_registry.csv`](parity_leaf_registry.csv)
 - Regenerate both outputs with:
   `uv run python scripts/content/render_capability_report.py --last-updated YYYY-MM-DD`
 
