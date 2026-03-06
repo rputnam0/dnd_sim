@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+from collections.abc import Callable
 from pathlib import Path
 
 from dnd_sim.capability_manifest import build_spell_capability_manifest
@@ -13,7 +14,7 @@ from dnd_sim.spatial import can_see
 SPELLS_DIR = Path("db/rules/2014/spells")
 OWNED_SPELL_PATHS = {
     "spell:antimagic_field": SPELLS_DIR / "antimagic_field.json",
-    "spell:arcanist_s_magic_aura": SPELLS_DIR / "arcanist’s_magic_aura.json",
+    "spell:arcanist_s_magic_aura": SPELLS_DIR / "arcanist_s_magic_aura.json",
     "spell:blade_barrier": SPELLS_DIR / "blade_barrier.json",
     "spell:blight": SPELLS_DIR / "blight.json",
     "spell:cloudkill": SPELLS_DIR / "cloudkill.json",
@@ -39,7 +40,7 @@ def _find_effect(
     payload: dict[str, object],
     effect_type: str,
     *,
-    predicate: object | None = None,
+    predicate: Callable[[dict[str, object]], bool] | None = None,
 ) -> dict[str, object]:
     mechanics = payload.get("mechanics", [])
     assert isinstance(mechanics, list)
