@@ -13,7 +13,7 @@
       ],
       "target": "self or any creature you can see",
       "description": "Replace the chosen roll with one of the stored foretelling d20 rolls.",
-      "meta_type": "initiative"
+      "meta_type": "roll_bonus"
     }
   ],
   "source_type": "subclass"

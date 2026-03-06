@@ -13,7 +13,7 @@
         "ability": "Charisma",
         "bonus": 5
       },
-      "meta_type": "action"
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"
