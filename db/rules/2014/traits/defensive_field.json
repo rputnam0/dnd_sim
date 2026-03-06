@@ -8,7 +8,8 @@
       "amount": "class_level",
       "replace_existing_temp_hp": true,
       "uses_per_long_rest": "proficiency_bonus",
-      "lost_if": "armor_doffed"
+      "lost_if": "armor_doffed",
+      "meta_type": "temporary_hit_points"
     }
   ],
   "source_type": "subclass"

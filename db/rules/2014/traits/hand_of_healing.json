@@ -11,7 +11,8 @@
       },
       "target": "creature",
       "amount": "MartialArtsDie + WisdomModifier",
-      "description": "Spend 1 ki point to heal a creature for Martial Arts die + Wisdom modifier."
+      "description": "Spend 1 ki point to heal a creature for Martial Arts die + Wisdom modifier.",
+      "meta_type": "healing"
     },
     {
       "effect": "heal",
@@ -22,7 +23,8 @@
       },
       "target": "creature",
       "amount": "MartialArtsDie + WisdomModifier",
-      "description": "When using Flurry of Blows, replace one unarmed strike with this healing without spending ki."
+      "description": "When using Flurry of Blows, replace one unarmed strike with this healing without spending ki.",
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

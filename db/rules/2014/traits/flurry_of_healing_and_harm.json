@@ -6,13 +6,15 @@
       "effect": "replace_unarmed_strike",
       "replacement": "Hand of Healing",
       "trigger": "flurry of blows",
-      "ki_cost": 0
+      "ki_cost": 0,
+      "meta_type": "healing"
     },
     {
       "effect": "add_hand_of_harm",
       "trigger": "flurry of blows unarmed strike",
       "ki_cost": 0,
-      "usage_limit": "once per turn"
+      "usage_limit": "once per turn",
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "subclass"

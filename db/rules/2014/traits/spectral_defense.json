@@ -5,7 +5,8 @@
     {
       "trigger": "when you take damage from an attack",
       "reaction": true,
-      "effect": "gain resistance to the damage type of that attack until the end of the turn"
+      "effect": "gain resistance to the damage type of that attack until the end of the turn",
+      "meta_type": "damage_resistance"
     }
   ],
   "source_type": "subclass"

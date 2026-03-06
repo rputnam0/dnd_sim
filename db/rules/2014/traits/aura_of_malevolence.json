@@ -10,7 +10,8 @@
         "amount": "Intelligence modifier",
         "type": "choice from Dread Allegiance feature",
         "ignore_resistance": true
-      }
+      },
+      "meta_type": "aura"
     }
   ],
   "source_type": "subclass"

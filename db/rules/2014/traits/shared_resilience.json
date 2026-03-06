@@ -11,7 +11,8 @@
         "type": "saving throw reroll",
         "bonus": "fighter level",
         "mandatory": true
-      }
+      },
+      "meta_type": "saving_throw"
     }
   ],
   "source_type": "subclass"

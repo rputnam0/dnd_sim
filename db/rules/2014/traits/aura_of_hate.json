@@ -19,7 +19,8 @@
           "minimum": 1
         }
       },
-      "stacking": "no"
+      "stacking": "no",
+      "meta_type": "aura"
     }
   ],
   "source_type": "subclass"

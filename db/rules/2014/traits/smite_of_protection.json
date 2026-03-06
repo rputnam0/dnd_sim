@@ -8,7 +8,8 @@
       "effect": "grant_cover",
       "cover_type": "half",
       "target": "self_and_allies_in_aura_of_protection",
-      "duration": "until_start_of_next_turn"
+      "duration": "until_start_of_next_turn",
+      "meta_type": "ac_bonus"
     }
   ],
   "source_type": "subclass"

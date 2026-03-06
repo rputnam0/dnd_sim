@@ -14,7 +14,8 @@
         "total_amount_formula": "5 * cleric_level",
         "distribution": "any among chosen targets",
         "per_target_maximum": "0.5 * target_max_hp"
-      }
+      },
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

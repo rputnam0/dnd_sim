@@ -18,7 +18,8 @@
           "type": "stand_up"
         }
       ],
-      "usage": "once_per_long_rest"
+      "usage": "once_per_long_rest",
+      "meta_type": "revive"
     }
   ],
   "source_type": "subclass"

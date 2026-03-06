@@ -5,15 +5,18 @@
     {
       "action": "bonus_action",
       "effect": "heal",
-      "amount": "1d8 + warlock level"
+      "amount": "1d8 + warlock level",
+      "meta_type": "healing"
     },
     {
       "recharge": "short_or_long_rest",
-      "usage": "once per recharge"
+      "usage": "once per recharge",
+      "meta_type": "recharge"
     },
     {
       "effect": "reattach_body_part",
-      "trigger": "when using feature and a severed body part is placed back"
+      "trigger": "when using feature and a severed body part is placed back",
+      "meta_type": "condition"
     }
   ],
   "source_type": "subclass"

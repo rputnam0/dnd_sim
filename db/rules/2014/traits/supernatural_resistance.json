@@ -9,7 +9,8 @@
         "piercing",
         "slashing"
       ],
-      "condition": "damage from nonmagical weapons"
+      "condition": "damage from nonmagical weapons",
+      "meta_type": "damage_resistance"
     }
   ],
   "source_type": "subclass"

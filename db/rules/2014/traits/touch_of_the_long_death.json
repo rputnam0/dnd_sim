@@ -19,7 +19,8 @@
         "type": "necrotic",
         "per_resource_point": true
       },
-      "damage_on_success": "half"
+      "damage_on_success": "half",
+      "meta_type": "saving_throw"
     }
   ],
   "source_type": "subclass"

@@ -13,7 +13,8 @@
         "Stunned"
       ],
       "cost_per_condition": 5,
-      "resource": "Lay On Hands hit points"
+      "resource": "Lay On Hands hit points",
+      "meta_type": "condition"
     }
   ],
   "source_type": "class"

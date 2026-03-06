@@ -5,14 +5,16 @@
     {
       "activation": "bonus_action",
       "duration": "1 hour",
-      "effect": "advantage_on_all_d20_rolls"
+      "effect": "advantage_on_all_d20_rolls",
+      "meta_type": "advantage"
     },
     {
       "recharge": "long_rest",
       "restore_by": {
         "spell_slot_level": "6+",
         "action_required": false
-      }
+      },
+      "meta_type": "recharge"
     }
   ],
   "source_type": "subclass"

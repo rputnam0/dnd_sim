@@ -6,7 +6,8 @@
       "effect": "advantage",
       "target": "skill",
       "skill": "Stealth",
-      "ability": "Dexterity"
+      "ability": "Dexterity",
+      "meta_type": "advantage"
     }
   ],
   "source_type": "subclass"
