@@ -3,7 +3,16 @@
   "description": "You can use your Channel Divinity to augment your presence with divine power. As a bonus action, you grant yourself a +5 bonus to Charisma (Persuasion) checks for the next 10 minutes.",
   "mechanics": [
     {
-      "meta_type": "trait_meta_social_support"
+      "action": "bonus_action",
+      "resource": "Channel Divinity",
+      "target": "self",
+      "duration": "10 minutes",
+      "effect": {
+        "type": "skill_bonus",
+        "skill": "Persuasion",
+        "ability": "Charisma",
+        "bonus": 5
+      }
     }
   ],
   "source_type": "subclass"

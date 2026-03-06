@@ -46,12 +46,12 @@
       "total_records": 594
     },
     {
-      "blocked_records": 406,
+      "blocked_records": 417,
       "content_type": "trait",
-      "executable_records": 775,
+      "executable_records": 764,
       "schema_valid_records": 1181,
-      "supported_records": 775,
-      "tested_records": 775,
+      "supported_records": 764,
+      "tested_records": 764,
       "total_records": 1181
     }
   ],
@@ -22305,16 +22305,16 @@
     {
       "content_id": "trait:consult_the_spirits",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:contact_patron",
@@ -24181,16 +24181,16 @@
     {
       "content_id": "trait:emissary_of_peace",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:emissary_of_redemption",
@@ -27163,16 +27163,16 @@
     {
       "content_id": "trait:knightly_envoy",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:knock_out_cost_6d6",
@@ -27191,16 +27191,16 @@
     {
       "content_id": "trait:know_your_enemy",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:knowledge_domain",
@@ -28703,16 +28703,16 @@
     {
       "content_id": "trait:nature_speaker",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:necromancy_savant",
@@ -29921,16 +29921,16 @@
     {
       "content_id": "trait:primeval_awareness",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:projected_ward",
@@ -30173,16 +30173,16 @@
     {
       "content_id": "trait:psychic_whispers",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:purity_of_body",
@@ -32497,16 +32497,16 @@
     {
       "content_id": "trait:storm_guide",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:storm_s_fury",
@@ -33155,16 +33155,16 @@
     {
       "content_id": "trait:telepathic_speech",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:tempest_domain",
@@ -33463,16 +33463,16 @@
     {
       "content_id": "trait:the_third_eye",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:the_undead",
@@ -34303,16 +34303,16 @@
     {
       "content_id": "trait:unerring_eye",
       "content_type": "trait",
-      "runtime_hook_family": "meta",
+      "runtime_hook_family": "narrative",
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_runtime_hook_family"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "trait:unfailing_inspiration",
@@ -35437,16 +35437,16 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 896,
-    "executable_records": 1631,
+    "blocked_records": 907,
+    "executable_records": 1620,
     "schema_valid_records": 2527,
-    "supported_records": 1631,
-    "tested_records": 1631,
+    "supported_records": 1620,
+    "tested_records": 1620,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
     {
-      "count": 406,
+      "count": 417,
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {

@@ -3,7 +3,10 @@
   "description": "You can cast the Commune with Nature spell but only as a Ritual. Wisdom is your spellcasting ability for it.",
   "mechanics": [
     {
-      "meta_type": "trait_meta_social_support"
+      "action": "cast_spell",
+      "spell": "Commune with Nature",
+      "ritual": true,
+      "ability": "wisdom"
     }
   ],
   "source_type": "subclass"

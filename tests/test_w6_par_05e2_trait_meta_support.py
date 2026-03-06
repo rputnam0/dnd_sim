@@ -24,7 +24,22 @@ def _owned_trait_families() -> dict[str, str]:
 
 
 OWNED_TRAIT_FAMILIES = _owned_trait_families()
-OUT_OF_SCOPE_COMBAT_TRAIT_IDS = {
+EXPECTED_E2_TRAIT_IDS = {
+    "trait:awakened_mind",
+    "trait:thieves_cant",
+}
+OUT_OF_SCOPE_RUNTIME_TRAIT_IDS = {
+    "trait:consult_the_spirits",
+    "trait:emissary_of_peace",
+    "trait:knightly_envoy",
+    "trait:know_your_enemy",
+    "trait:nature_speaker",
+    "trait:primeval_awareness",
+    "trait:psychic_whispers",
+    "trait:storm_guide",
+    "trait:telepathic_speech",
+    "trait:the_third_eye",
+    "trait:unerring_eye",
     "trait:ambush_master",
     "trait:destroy_undead_cr_1",
     "trait:destroy_undead_cr_1_2",
@@ -37,6 +52,10 @@ OUT_OF_SCOPE_COMBAT_TRAIT_IDS = {
     "trait:lay_on_hands",
     "trait:second_wind",
 }
+
+
+def test_w6_par_05e2_registry_scope_matches_truthful_leaf_contract() -> None:
+    assert set(OWNED_TRAIT_FAMILIES) == EXPECTED_E2_TRAIT_IDS
 
 
 def test_w6_par_05e2_registry_owned_trait_records_are_supported() -> None:
@@ -81,13 +100,13 @@ def test_w6_par_05e2_owned_trait_files_use_canonical_meta_rows() -> None:
             assert not str(row.get("effect_type", "")).strip()
 
 
-def test_w6_par_05e2_leaves_combat_runtime_traits_out_of_scope() -> None:
+def test_w6_par_05e2_leaves_runtime_traits_out_of_scope() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
-    assert OUT_OF_SCOPE_COMBAT_TRAIT_IDS.isdisjoint(OWNED_TRAIT_FAMILIES)
+    assert OUT_OF_SCOPE_RUNTIME_TRAIT_IDS.isdisjoint(OWNED_TRAIT_FAMILIES)
 
-    for content_id in sorted(OUT_OF_SCOPE_COMBAT_TRAIT_IDS):
+    for content_id in sorted(OUT_OF_SCOPE_RUNTIME_TRAIT_IDS):
         record = by_id[content_id]
         assert record.content_type == "trait"
         assert record.states.blocked is True
