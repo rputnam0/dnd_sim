@@ -47,6 +47,16 @@ CONTINUATION_SLICE_IDS = {
     "trait:tireless_spirit",
     "trait:wails_from_the_grave",
 }
+CONTINUATION_SLICE_REGISTRY_ASSIGNMENTS = {
+    "trait:master_duelist": "W6-PAR-05G1",
+    "trait:order_s_wrath": "W6-PAR-05G1",
+    "trait:slayer_s_prey": "W6-PAR-05G1",
+    "trait:slow_fall": "W6-PAR-05G1D",
+    "trait:tactical_shift": "W6-PAR-05G1",
+    "trait:tides_of_chaos": "W6-PAR-05G1D",
+    "trait:tireless_spirit": "W6-PAR-05G1D",
+    "trait:wails_from_the_grave": "W6-PAR-05G1",
+}
 CONTINUATION_SLICE_META_TYPES = {
     "master_duelist": {"reroll", "recharge"},
     "order_s_wrath": {"mark", "extra_damage"},
@@ -60,20 +70,6 @@ CONTINUATION_SLICE_META_TYPES = {
     "tireless_spirit": {"resource_recovery_support"},
     "wails_from_the_grave": {"extra_damage", "resource"},
 }
-
-
-def _all_g1_trait_ids() -> set[str]:
-    owned: set[str] = set()
-    with REGISTRY_PATH.open(encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle)
-        for row in reader:
-            if row.get("leaf_task_id") == "W6-PAR-05G1":
-                content_id = str(row.get("content_id", "")).strip()
-                if content_id:
-                    owned.add(content_id)
-    assert len(owned) == 73
-    return owned
-
 
 def _owned_g1_trait_ids() -> set[str]:
     owned: set[str] = set()
@@ -129,7 +125,15 @@ def test_w6_par_05g1_registry_retargets_action_traits_to_g2() -> None:
 
 
 def test_w6_par_05g1_continuation_slice_belongs_to_registry() -> None:
-    assert CONTINUATION_SLICE_IDS <= _all_g1_trait_ids()
+    assignments: dict[str, str] = {}
+    with REGISTRY_PATH.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            content_id = str(row.get("content_id", "")).strip()
+            if content_id in CONTINUATION_SLICE_IDS:
+                assignments[content_id] = str(row.get("leaf_task_id", "")).strip()
+
+    assert assignments == CONTINUATION_SLICE_REGISTRY_ASSIGNMENTS
 
 
 def test_w6_par_05g1_owned_trait_records_are_supported() -> None:
