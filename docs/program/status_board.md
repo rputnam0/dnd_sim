@@ -66,7 +66,7 @@ Wave 6 remediation state:
 | W6-PAR-05J1 | codex/feat/w6-par-05j1-spell-summon-command-control | remediation_parity | in_progress | Current live J1 backlog is 39 blocked summon, conjure, command, and control spells, split into batches J1-A through J1-D. |
 | W6-PAR-05J2 | codex/feat/w6-par-05j2-spell-hazard-zone-utility | remediation_parity | in_progress | Current live J2 backlog is 60 blocked hazard, zone, darkness, and utility spells, split into batches J2-A through J2-F. |
 | G1-A | codex/feat/g1-a-trait-reaction-retaliation | remediation_parity | in_progress | Active 10-item trait batch owning the first remaining G1 slice from `docs/program/parity_batch_registry.csv`. |
-| G1-B | codex/feat/g1-b-trait-reaction-retaliation | remediation_parity | in_progress | Active 10-item trait batch owning the second remaining G1 slice from `docs/program/parity_batch_registry.csv`. |
+| G1-B | codex/feat/g1-b-trait-reaction-retaliation | remediation_parity | pr_open | Open PR for the second remaining G1 10-item slice from `docs/program/parity_batch_registry.csv`. |
 | J1-A | codex/feat/j1-a-summon-conjure-command-control | remediation_parity | in_progress | Active 10-item summon, conjure, command, and control spell batch owning the first remaining J1 slice. |
 | J2-A | codex/feat/j2-a-utility-hazard-darkness | remediation_parity | in_progress | Active 10-item hazard, zone, darkness, and utility spell batch owning the first remaining J2 slice. |
 
@@ -89,8 +89,9 @@ Wave 6 remediation state:
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
+| G1-B | [#231](https://github.com/rputnam0/dnd_sim/pull/231) | remediation_parity | leaf tests green; strict red globally | Batch-scoped review lane for the second remaining G1 10-item slice. |
 
-No open PRs currently target `codex/int/w6-parity-closeout` at `cb9e869`. Draft carryovers [#220](https://github.com/rputnam0/dnd_sim/pull/220) and [#222](https://github.com/rputnam0/dnd_sim/pull/222) remain closed and excluded from live execution.
+Draft carryovers [#220](https://github.com/rputnam0/dnd_sim/pull/220) and [#222](https://github.com/rputnam0/dnd_sim/pull/222) remain closed and excluded from live execution.
 
 ## Dependency and blocker notes (from backlog.csv)
 
