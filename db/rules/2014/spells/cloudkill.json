@@ -27,7 +27,8 @@
           "effect_type": "damage",
           "damage": "5d8",
           "damage_type": "poison",
-          "save_ability": "con"
+          "save_ability": "con",
+          "half_on_success": true
         }
       ],
       "on_start_turn": [
@@ -35,7 +36,8 @@
           "effect_type": "damage",
           "damage": "5d8",
           "damage_type": "poison",
-          "save_ability": "con"
+          "save_ability": "con",
+          "half_on_success": true
         }
       ]
     },

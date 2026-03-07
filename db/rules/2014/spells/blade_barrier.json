@@ -28,7 +28,8 @@
           "effect_type": "damage",
           "damage": "6d10",
           "damage_type": "slashing",
-          "save_ability": "dex"
+          "save_ability": "dex",
+          "half_on_success": true
         }
       ],
       "on_start_turn": [
@@ -36,7 +37,8 @@
           "effect_type": "damage",
           "damage": "6d10",
           "damage_type": "slashing",
-          "save_ability": "dex"
+          "save_ability": "dex",
+          "half_on_success": true
         }
       ]
     },

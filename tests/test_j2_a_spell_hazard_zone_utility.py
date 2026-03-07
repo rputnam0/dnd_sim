@@ -6,9 +6,9 @@ from collections.abc import Callable
 from pathlib import Path
 
 from dnd_sim.capability_manifest import build_spell_capability_manifest
-from dnd_sim.engine_runtime import _apply_effect
+from dnd_sim.engine_runtime import _apply_effect, _process_hazard_start_turn_triggers
 from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
-from dnd_sim.models import ActorRuntimeState
+from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import can_see
 
 SPELLS_DIR = Path("db/rules/2014/spells")
@@ -153,13 +153,16 @@ def test_j2_a_reviewed_spell_rows_match_expected_canonical_shapes() -> None:
     assert barrier_hazard["difficult_terrain"] is True
     assert barrier_hazard["save_ability"] == "dex"
     assert barrier_hazard["on_enter"][0]["damage"] == "6d10"
+    assert barrier_hazard["on_enter"][0]["half_on_success"] is True
     assert barrier_hazard["on_start_turn"][0]["damage_type"] == "slashing"
+    assert barrier_hazard["on_start_turn"][0]["half_on_success"] is True
 
     blight = _load_payload(OWNED_SPELL_PATHS["spell:blight"])
     blight_damage = _find_effect(blight, "damage")
     assert blight_damage["damage"] == "8d8"
     assert blight_damage["damage_type"] == "necrotic"
     assert blight_damage["save_ability"] == "con"
+    assert blight_damage["half_on_success"] is True
     assert blight_damage["plant_targets_take_max_damage"] is True
 
     cloudkill = _load_payload(OWNED_SPELL_PATHS["spell:cloudkill"])
@@ -167,7 +170,9 @@ def test_j2_a_reviewed_spell_rows_match_expected_canonical_shapes() -> None:
     assert cloudkill_hazard["obscures_vision"] is True
     assert cloudkill_hazard["moves_away_from_source_ft"] == 10
     assert cloudkill_hazard["on_enter"][0]["damage"] == "5d8"
+    assert cloudkill_hazard["on_enter"][0]["half_on_success"] is True
     assert cloudkill_hazard["on_start_turn"][0]["save_ability"] == "con"
+    assert cloudkill_hazard["on_start_turn"][0]["half_on_success"] is True
 
     create_or_destroy_water = _load_payload(OWNED_SPELL_PATHS["spell:create_or_destroy_water"])
     create_water = _find_effect(
@@ -251,3 +256,67 @@ def test_j2_a_darkness_and_antimagic_use_existing_runtime_shapes() -> None:
         target_conditions=set(caster.conditions),
         active_hazards=[darkness_hazard],
     ) is False
+
+
+def test_j2_a_spell_hazards_preserve_save_for_half_on_trigger_damage() -> None:
+    caster = _runtime_actor(actor_id="caster", team="party")
+    resilient_target = _runtime_actor(actor_id="resilient", team="enemy", hp=40, max_hp=40)
+    failing_target = _runtime_actor(actor_id="failing", team="enemy", hp=40, max_hp=40)
+    caster.position = (0.0, 0.0, 0.0)
+    resilient_target.position = (0.0, 0.0, 0.0)
+    failing_target.position = (0.0, 0.0, 0.0)
+    resilient_target.save_mods["con"] = 20
+    failing_target.save_mods["con"] = -5
+
+    spell_action = ActionDefinition(
+        name="cloudkill",
+        action_type="save",
+        save_dc=15,
+        save_ability="con",
+        half_on_save=True,
+        concentration=True,
+        tags=["spell"],
+    )
+
+    success_damage = 0
+    failed_damage = 0
+    for actor, seed in ((resilient_target, 19), (failing_target, 19)):
+        actors = {entry.actor_id: entry for entry in (caster, actor)}
+        damage_dealt, damage_taken, threat_scores, resources_spent = _runtime_trackers(
+            caster, actor
+        )
+        active_hazards: list[dict[str, object]] = []
+        cloudkill_effect = dict(_find_effect(_load_payload(OWNED_SPELL_PATHS["spell:cloudkill"]), "hazard"))
+        cloudkill_effect["position"] = actor.position
+
+        _apply_effect(
+            action=spell_action,
+            effect=cloudkill_effect,
+            rng=random.Random(seed),
+            actor=caster,
+            target=actor,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            actors=actors,
+            active_hazards=active_hazards,
+        )
+        _process_hazard_start_turn_triggers(
+            rng=random.Random(seed),
+            actor=actor,
+            actors=actors,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+        )
+        if actor.actor_id == "resilient":
+            success_damage = damage_taken[actor.actor_id]
+        else:
+            failed_damage = damage_taken[actor.actor_id]
+
+    assert success_damage > 0
+    assert failed_damage > 0
+    assert success_damage == failed_damage // 2
