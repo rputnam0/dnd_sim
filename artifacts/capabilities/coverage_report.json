@@ -37,12 +37,12 @@
       "total_records": 256
     },
     {
-      "blocked_records": 49,
+      "blocked_records": 40,
       "content_type": "spell",
-      "executable_records": 545,
+      "executable_records": 554,
       "schema_valid_records": 594,
-      "supported_records": 545,
-      "tested_records": 545,
+      "supported_records": 554,
+      "tested_records": 554,
       "total_records": 594
     },
     {
@@ -17657,128 +17657,128 @@
     {
       "content_id": "spell:summon_draconic_spirit",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:summon_dragon",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:summon_elemental",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:summon_fey",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:summon_fiend",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:summon_greater_demon",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:summon_lesser_demons",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:summon_shadowspawn",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:summon_undead",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:sunbeam",
@@ -35437,16 +35437,16 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 49,
-    "executable_records": 2478,
+    "blocked_records": 40,
+    "executable_records": 2487,
     "schema_valid_records": 2527,
-    "supported_records": 2478,
-    "tested_records": 2478,
+    "supported_records": 2487,
+    "tested_records": 2487,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
     {
-      "count": 49,
+      "count": 40,
       "unsupported_reason": "missing_runtime_mechanics"
     }
   ]

@@ -9678,9 +9678,20 @@ def _apply_effect(
             summon_speed = actor.speed_ft
         is_mount = bool(effect.get("mount", False))
 
+        summon_team = actor.team
+        explicit_team = str(effect.get("team", "")).strip().lower()
+        if explicit_team in {"enemy", "hostile"}:
+            summon_team = "enemy" if actor.team != "enemy" else "party"
+        elif explicit_team in {"source", "self", "ally", "allies", "party"}:
+            summon_team = actor.team
+        elif explicit_team == "target":
+            summon_team = recipient.team
+        elif explicit_team:
+            summon_team = explicit_team
+
         summoned_actor = ActorRuntimeState(
             actor_id=summon_id,
-            team=actor.team,
+            team=summon_team,
             name=summon_name,
             max_hp=summon_hp,
             hp=summon_hp,

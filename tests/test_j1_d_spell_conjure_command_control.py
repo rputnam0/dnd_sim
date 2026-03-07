@@ -23,7 +23,6 @@ BATCH_SLUGS = (
     "summon_undead",
 )
 HOSTILE_SUMMON_SLUGS = (
-    "summon_greater_demon",
     "summon_lesser_demons",
 )
 
