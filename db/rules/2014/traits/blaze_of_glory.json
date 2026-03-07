@@ -25,7 +25,8 @@
         ]
       },
       "after_effect": "You fall unconscious and begin making death saving throws as normal (or die if the damage would have killed you outright).",
-      "usage": "once per long rest"
+      "usage": "once per long rest",
+      "meta_type": "last_stand_reaction_attack_support"
     }
   ],
   "source_type": "subclass"

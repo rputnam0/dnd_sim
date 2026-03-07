@@ -10,13 +10,15 @@
       "uses": {
         "max": "proficiency bonus",
         "reset": "long rest"
-      }
+      },
+      "meta_type": "bond_creation_support"
     },
     {
       "effect": "add_d4_bonus",
       "trigger": "when a bonded creature is within 30 feet of another bonded creature",
       "application": "once per turn",
-      "benefit": "add a d4 roll to an attack roll, ability check, or saving throw"
+      "benefit": "add a d4 roll to an attack roll, ability check, or saving throw",
+      "meta_type": "bonded_d4_bonus_support"
     }
   ],
   "source_type": "subclass"

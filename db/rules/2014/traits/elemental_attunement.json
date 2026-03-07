@@ -38,7 +38,8 @@
           "trigger": "hit",
           "weapon": "Unarmed Strike"
         }
-      ]
+      ],
+      "meta_type": "elemental_unarmed_attunement_support"
     }
   ],
   "source_type": "subclass"
