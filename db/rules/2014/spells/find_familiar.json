@@ -8,8 +8,37 @@
   "concentration": false,
   "ritual": true,
   "duration_rounds": 0,
-  "description": "Find Steed 2nd-­‐‑level conjuration",
+  "description": "You gain the service of a familiar, a spirit that takes an animal form you choose and acts independently of you while remaining bonded to your magic.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "summon",
+      "actor_id": "familiar_spirit",
+      "name": "Familiar",
+      "controller": "source",
+      "duration": "indefinite",
+      "forms": [
+        "bat",
+        "cat",
+        "crab",
+        "frog",
+        "hawk",
+        "lizard",
+        "octopus",
+        "owl",
+        "poisonous snake",
+        "fish",
+        "rat",
+        "raven",
+        "sea horse",
+        "spider",
+        "weasel"
+      ],
+      "telepathic_range_ft": 100,
+      "max_hp": 1,
+      "ac": 11,
+      "speed_ft": 30
+    }
+  ]
 }
