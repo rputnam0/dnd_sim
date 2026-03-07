@@ -55,6 +55,15 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 - Regenerate both outputs with:
   `uv run python scripts/content/render_capability_report.py --last-updated YYYY-MM-DD`
 
+## Current Strict Parity Snapshot
+
+- Live baseline on `codex/int/w6-parity-closeout`: `107` blocked shipped-2014 records
+- Remaining blocker families: `79` spell `missing_runtime_mechanics`, `28` trait `missing_runtime_hook_family`
+- Active implementation lanes at this sync point: `G1-A`, `G1-C`, `G1-D`, `J1-B`, and `J2-B`
+- Recently cleared lanes now absent from the live blocked set: `J1-A`, `J2-A`, and `G1-B`
+- No open PRs targeted `codex/int/w6-parity-closeout` when this snapshot was recorded
+- Use `docs/program/status_board.md` and `docs/program/parity_batch_registry.csv` for the current lane-by-lane execution picture
+
 Ownership and metadata-header requirements for this same live planning surface are defined in
 `docs/program/doc_governance.md`.
 

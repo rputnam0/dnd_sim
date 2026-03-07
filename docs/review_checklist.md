@@ -116,7 +116,7 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-04 Execute parity continuation shard batch B and strict-input manifest sync (merged via #185/#186/#187/#188/#189/#190)
 - [x] W6-PAR-05A Umbrella row for baseline truth sync and leaf registry (merged to `codex/int/w6-parity-closeout` via #201)
 - [x] W6-PAR-05A1 Reconcile canonical parity surfaces to the 1225-blocker baseline and add `docs/program/parity_leaf_registry.csv` (merged to `codex/int/w6-parity-closeout` via #201)
-- [ ] BATCH-00 Sync batch truth and register `docs/program/parity_batch_registry.csv`
+- [x] BATCH-00 Sync batch truth and register `docs/program/parity_batch_registry.csv` (merged via #228)
 - [x] W6-PAR-05B Umbrella row for background meta closeout leaves
 - [x] W6-PAR-05B1 Background meta closeout leaf
 - [x] W6-PAR-05C Umbrella row for passive species meta leaves
@@ -130,13 +130,13 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-05F1 Trait passive defense/support leaf (closed via continuation PRs #221 and #225)
 - [x] W6-PAR-05F1B Trait passive defense/support finalization continuation (merged via #225)
 - [x] W6-PAR-05F2 Trait passive offense/mobility leaf
-- [ ] W6-PAR-05G Umbrella row for reaction/resource trait leaves (live batches G1-A through G1-D remain)
-- [ ] W6-PAR-05G1 Trait reaction/retaliation leaf (38 live blockers batched as G1-A through G1-D)
+- [ ] W6-PAR-05G Umbrella row for reaction/resource trait leaves (live batches G1-A, G1-C, and G1-D remain)
+- [ ] W6-PAR-05G1 Trait reaction/retaliation leaf (28 live blockers batched as G1-A, G1-C, and G1-D)
 - [x] W6-PAR-05G1C Trait reaction/support follow-up slice (merged via #224)
 - [x] W6-PAR-05G1D Trait survival/recovery support continuation leaf (merged via #226)
 - [x] W6-PAR-05G2 Trait resource-change/turn-gated leaf
 - [ ] G1-A First 10-item trait reaction/retaliation batch
-- [ ] G1-B Second 10-item trait reaction/retaliation batch (PR #231)
+- [x] G1-B Second 10-item trait reaction/retaliation batch (merged via #231)
 - [ ] G1-C Third 10-item trait reaction/retaliation batch
 - [ ] G1-D Final 8-item trait reaction/retaliation batch
 - [x] W6-PAR-05H Umbrella row for summon/transform trait leaves
@@ -145,14 +145,14 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-05I Umbrella row for spell mechanics damage/support leaves
 - [x] W6-PAR-05I1 Spell damage/heal/condition mechanics leaf
 - [x] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (merged via #227)
-- [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves (live batches J1-A through J1-D and J2-A through J2-F remain)
-- [ ] W6-PAR-05J1 Spell summon/command/control mechanics leaf (39 live blockers batched as J1-A through J1-D)
-- [ ] J1-A First 10-item summon/command/control spell batch
+- [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves (live batches J1-B through J1-D and J2-B through J2-F remain)
+- [ ] W6-PAR-05J1 Spell summon/command/control mechanics leaf (29 live blockers batched as J1-B through J1-D)
+- [x] J1-A First 10-item summon/command/control spell batch (merged)
 - [ ] J1-B Second 10-item summon/command/control spell batch
 - [ ] J1-C Third 10-item summon/command/control spell batch
 - [ ] J1-D Final 9-item summon/command/control spell batch
-- [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf (60 live blockers batched as J2-A through J2-F)
-- [ ] J2-A First 10-item hazard/zone/utility spell batch
+- [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf (50 live blockers batched as J2-B through J2-F)
+- [x] J2-A First 10-item hazard/zone/utility spell batch (merged)
 - [ ] J2-B Second 10-item hazard/zone/utility spell batch
 - [ ] J2-C Third 10-item hazard/zone/utility spell batch
 - [ ] J2-D Fourth 10-item hazard/zone/utility spell batch
