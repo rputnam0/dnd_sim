@@ -3,15 +3,18 @@
   "description": "Beginning at 6th level, when a creature you can see within 30 feet of you makes an attack roll against you, you can use your reaction to divert the attack, provided that another creature is within the attack's range. The attacker must make a Wisdom saving throw against your wizard spell save DC. On a failed save, the attacker must target the creature that is closest to it, not including you or itself. If multiple creatures are closest, the attacker chooses which one to target. On a successful save, you can't use this feature on the attacker again until you finish a long rest. You must choose to use this feature before knowing whether the attack hits or misses. Creatures that can't be charmed are immune to this effect.",
   "mechanics": [
     {
-      "action": "reaction",
-      "trigger": "a creature you can see within 30 feet makes an attack roll against you",
-      "condition": "Another creature is within the attack's range and the target can be charmed",
-      "effect": {
-        "save": "Wisdom",
-        "saveDC": "your wizard spell save DC",
-        "onFail": "Attacker must target the nearest creature to it, excluding you and itself (attacker chooses if tie)",
-        "onSuccess": "Feature cannot be used on that attacker again until you finish a long rest"
-      }
+      "action_type": "reaction",
+      "trigger": "creature_within_30_feet_makes_attack_roll_against_you",
+      "range_ft": 30,
+      "condition": "another_creature_is_within_attack_range_and_target_can_be_charmed",
+      "save": {
+        "ability": "wis",
+        "dc_source": "wizard_spell_save_dc"
+      },
+      "effect": "attacker_targets_nearest_creature_excluding_you_and_itself",
+      "success_restriction": "cannot_use_again_on_same_attacker_until_long_rest",
+      "timing": "before_known_hit_or_miss",
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

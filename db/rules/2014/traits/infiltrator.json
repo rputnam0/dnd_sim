@@ -4,32 +4,32 @@
   "mechanics": [
     {
       "weapon": {
-        "name": "Lightning Launcher",
         "category": "simple",
         "type": "ranged",
+        "damage": "1d6 lightning",
         "range": {
           "normal": 90,
           "long": 300
-        },
-        "damage": "1d6 lightning"
-      }
+        }
+      },
+      "meta_type": "benefit"
     },
     {
-      "extra_damage_on_hit": {
-        "source": "Lightning Launcher",
-        "damage": "1d6 lightning",
-        "once_per_turn": true,
-        "trigger": "hit"
-      }
+      "effect_type": "extra_damage",
+      "trigger": "once_per_turn_when_lightning_launcher_hits",
+      "target": "hit_creature",
+      "damage": "1d6",
+      "damage_type": "lightning"
     },
     {
-      "speed_increase": 5
+      "effect_type": "speed_increase",
+      "amount": 5
     },
     {
-      "advantage_on_skill_check": {
-        "skill": "Stealth",
-        "ability": "Dexterity"
-      }
+      "scope": [
+        "dexterity_stealth_checks"
+      ],
+      "meta_type": "grant_advantage"
     }
   ],
   "source_type": "subclass"
