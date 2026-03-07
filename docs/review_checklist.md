@@ -135,28 +135,28 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-05G1C Trait reaction/support follow-up slice (merged via #224)
 - [x] W6-PAR-05G1D Trait survival/recovery support continuation leaf (merged via #226)
 - [x] W6-PAR-05G2 Trait resource-change/turn-gated leaf
-- [x] G1-A First 10-item trait reaction/retaliation batch (merged via #234)
+- [ ] G1-A First 10-item trait reaction/retaliation batch
 - [x] G1-B Second 10-item trait reaction/retaliation batch (merged via #231)
-- [ ] G1-C Third 10-item trait reaction/retaliation batch (PR #237)
-- [x] G1-D Final 8-item trait reaction/retaliation batch (merged via #233)
+- [ ] G1-C Third 10-item trait reaction/retaliation batch
+- [ ] G1-D Final 8-item trait reaction/retaliation batch (PR #233)
 - [x] W6-PAR-05H Umbrella row for summon/transform trait leaves
 - [x] W6-PAR-05H1 Trait summon/companion/mount leaf
 - [x] W6-PAR-05H2 Trait transform/world-linked leaf
 - [x] W6-PAR-05I Umbrella row for spell mechanics damage/support leaves
 - [x] W6-PAR-05I1 Spell damage/heal/condition mechanics leaf
 - [x] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (merged via #227)
-- [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves (live batches J1-C through J1-D and J2-C through J2-F remain)
-- [ ] W6-PAR-05J1 Spell summon/command/control mechanics leaf (19 live blockers batched as J1-C through J1-D)
+- [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves (live batches J1-B through J1-D and J2-B through J2-F remain)
+- [ ] W6-PAR-05J1 Spell summon/command/control mechanics leaf (29 live blockers batched as J1-B through J1-D)
 - [x] J1-A First 10-item summon/command/control spell batch (merged)
-- [x] J1-B Second 10-item summon/command/control spell batch (merged via #235)
-- [ ] J1-C Third 10-item summon/command/control spell batch (PR #238)
-- [ ] J1-D Final 9-item summon/command/control spell batch (PR #239)
-- [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf (active and remaining batches J2-C through J2-F)
+- [ ] J1-B Second 10-item summon/command/control spell batch
+- [ ] J1-C Third 10-item summon/command/control spell batch
+- [ ] J1-D Final 9-item summon/command/control spell batch
+- [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf (50 live blockers batched as J2-B through J2-F)
 - [x] J2-A First 10-item hazard/zone/utility spell batch (merged)
-- [x] J2-B Second 10-item hazard/zone/utility spell batch (merged via #236)
-- [ ] J2-C Third 10-item hazard/zone/utility spell batch (PR #240)
-- [ ] J2-D Fourth 10-item hazard/zone/utility spell batch (PR #242)
-- [ ] J2-E Fifth 10-item hazard/zone/utility spell batch (PR #241)
+- [ ] J2-B Second 10-item hazard/zone/utility spell batch
+- [ ] J2-C Third 10-item hazard/zone/utility spell batch
+- [ ] J2-D Fourth 10-item hazard/zone/utility spell batch (in progress)
+- [ ] J2-E Fifth 10-item hazard/zone/utility spell batch
 - [ ] J2-F Final 10-item hazard/zone/utility spell batch
 - [x] W6-PAR-05K Umbrella row for spell effect-family normalization leaves
 - [x] W6-PAR-05K1 Normalize blocked unsupported spell effect payloads to existing canonical families
