@@ -1,6 +1,10 @@
 {
   "name": "Tempest Domain",
-  "description": "Gods whose portfolios include the Tempest domain—including Talos, Umberlee, Kord, Zeboim, the Devourer, Zeus, and Thor—govern storms, sea, and sky. They include gods of lightning and thunder, gods of earthquakes, some fire gods, and certain gods of violence, physical strength, and courage. In some pantheons, a god of this domain rules over other deities and is known for swift justice delivered by thunderbolts. In the pantheons of seafaring people, gods of this domain are ocean deities and the patrons of sailors. Tempest gods send their clerics to inspire fear in the common folk, either to keep those folk on the path of righteousness or to encourage them to offer sacrifices of propitiation to ward off divine wrath. At each indicated cleric level, you add the listed spells to your spells prepared. Tempest Domain Spells: Cleric Level 1st – fog cloud, thunderwave; 3rd – gust of wind, shatter; 5th – call lightning, sleet storm; 7th – control water, ice storm; 9th – destructive wave, insect plague.",
-  "mechanics": [],
+  "description": "Gods whose portfolios include the Tempest domain\u2014including Talos, Umberlee, Kord, Zeboim, the Devourer, Zeus, and Thor\u2014govern storms, sea, and sky. They include gods of lightning and thunder, gods of earthquakes, some fire gods, and certain gods of violence, physical strength, and courage. In some pantheons, a god of this domain rules over other deities and is known for swift justice delivered by thunderbolts. In the pantheons of seafaring people, gods of this domain are ocean deities and the patrons of sailors. Tempest gods send their clerics to inspire fear in the common folk, either to keep those folk on the path of righteousness or to encourage them to offer sacrifices of propitiation to ward off divine wrath. At each indicated cleric level, you add the listed spells to your spells prepared. Tempest Domain Spells: Cleric Level 1st \u2013 fog cloud, thunderwave; 3rd \u2013 gust of wind, shatter; 5th \u2013 call lightning, sleet storm; 7th \u2013 control water, ice storm; 9th \u2013 destructive wave, insect plague.",
+  "mechanics": [
+    {
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

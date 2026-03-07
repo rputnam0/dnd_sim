@@ -5,13 +5,15 @@
     {
       "effect": "advantage",
       "target": "self",
-      "trigger": "initiative roll"
+      "trigger": "initiative roll",
+      "meta_type": "initiative_advantage_support"
     },
     {
       "effect": "advantage",
       "target": "attack rolls",
       "condition": "against the first creature you hit during the first round of combat",
-      "duration": "until the start of your next turn"
+      "duration": "until the start of your next turn",
+      "meta_type": "opening_round_target_advantage_support"
     }
   ],
   "source_type": "subclass"

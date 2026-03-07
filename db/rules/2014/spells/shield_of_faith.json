@@ -11,5 +11,11 @@
   "description": "A shimmering field appears and surrounds a creature of your choice within range, granting it a +2 bonus to AC for the duration.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "shield_of_faith_ac_bonus",
+      "duration_rounds": 100
+    }
+  ]
 }

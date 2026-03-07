@@ -14,7 +14,8 @@
           "level": 17,
           "uses_per_long_rest": 3
         }
-      ]
+      ],
+      "meta_type": "recharge"
     }
   ],
   "source_type": "class"

@@ -13,13 +13,11 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "target_limit",
-      "max_targets": 5
-    },
-    {
-      "effect_type": "modify_fall_speed",
-      "new_speed_ft_per_round": 60,
-      "duration_rounds": 10
+      "effect_type": "apply_condition",
+      "condition": "feather_fall",
+      "duration_rounds": 10,
+      "max_targets": 5,
+      "new_speed_ft_per_round": 60
     }
   ]
 }

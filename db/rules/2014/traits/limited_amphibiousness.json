@@ -1,6 +1,19 @@
 {
   "name": "Limited Amphibiousness",
   "description": "You can breathe air and water, but you need to be submerged at least once every 4 hours to avoid suffocating.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "breathing",
+      "environments": [
+        "air",
+        "water"
+      ]
+    },
+    {
+      "meta_type": "restriction",
+      "target": "breathing",
+      "condition": "must be submerged at least once every 4 hours to avoid suffocating"
+    }
+  ],
   "source_type": "species"
 }

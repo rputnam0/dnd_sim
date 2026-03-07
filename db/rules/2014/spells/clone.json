@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "This spell grows an inert duplicate of a living creature as a safeguard against death. This clone forms inside a sealed vessel and grows to full size and maturity after 120 days; you can also choose to have the clone be a younger version of the same creature. It remains inert and endures indefinitely, as long as its vessel remains undisturbed. At any time after the clone matures, if the original creature dies, its soul transfers to the clone, provided that the soul is free and willing to return. The clone is physically identical to the original and has the same personality, memories, and abilities, but none of the original’s equipment. The original creature’s physical remains, if they still exist, become inert and can’t thereafter be restored to life, since the creature’s soul is elsewhere. Cloudkill 5th-­‐‑level conjuration",
+  "description": "This spell grows an inert duplicate of a living creature as a safeguard against death. This clone forms inside a sealed vessel and grows to full size and maturity after 120 days; you can also choose to have the clone be a younger version of the same creature. It remains inert and endures indefinitely, as long as its vessel remains undisturbed. At any time after the clone matures, if the original creature dies, its soul transfers to the clone, provided that the soul is free and willing to return. The clone is physically identical to the original and has the same personality, memories, and abilities, but none of the original\u2019s equipment. The original creature\u2019s physical remains, if they still exist, become inert and can\u2019t thereafter be restored to life, since the creature\u2019s soul is elsewhere. Cloudkill 5th-\u00ad\u2010\u2011level conjuration",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "clone_resolved",
+      "duration_rounds": 1,
+      "stack_policy": "refresh"
+    }
+  ]
 }

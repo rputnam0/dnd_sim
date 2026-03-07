@@ -1,6 +1,10 @@
 {
   "name": "Druid Circle feature",
   "description": "At 6th level, you gain a feature granted by your Druid Circle.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "grant_subclass_feature"
+    }
+  ],
   "source_type": "class"
 }

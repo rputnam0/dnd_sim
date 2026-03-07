@@ -3,10 +3,11 @@
   "description": "You can use your action to make a melee attack against any number of creatures within 5 feet of you, with a separate attack roll for each target.",
   "mechanics": [
     {
+      "meta_type": "action_attack",
       "action": "action",
       "attack_type": "melee",
-      "range": "5 ft",
-      "targets": "any number of creatures",
+      "range_ft": 5,
+      "targets": "any_number_of_creatures_within_range",
       "separate_attack_roll": true
     }
   ],

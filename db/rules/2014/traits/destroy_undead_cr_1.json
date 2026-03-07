@@ -12,7 +12,8 @@
       "effect": {
         "type": "destroy",
         "target": "creature"
-      }
+      },
+      "meta_type": "condition"
     }
   ],
   "source_type": "class"

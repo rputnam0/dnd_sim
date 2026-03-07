@@ -9,7 +9,8 @@
         "type": "regain_resource",
         "resource": "Bardic Inspiration",
         "amount": 1
-      }
+      },
+      "meta_type": "initiative"
     }
   ],
   "source_type": "class"

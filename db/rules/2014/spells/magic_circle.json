@@ -14,52 +14,37 @@
   "mechanics": [
     {
       "effect_type": "aoe",
-      "shape": "cylinder",
-      "radius": 10,
-      "height": 20
+      "height_ft": 20,
+      "radius_ft": 10,
+      "shape": "cylinder"
     },
     {
-      "effect_type": "prevent_entry",
-      "method": "nonmagical_means",
-      "save_required": true,
-      "save_ability": "cha"
-    },
-    {
-      "effect_type": "disadvantage_attack",
-      "target": "creature",
-      "against": "targets_within_cylinder"
-    },
-    {
-      "effect_type": "apply_condition",
-      "condition": "charmed",
-      "target": "creature",
-      "within_cylinder": true,
-      "allowed": false
-    },
-    {
-      "effect_type": "apply_condition",
-      "condition": "frightened",
-      "target": "creature",
-      "within_cylinder": true,
-      "allowed": false
-    },
-    {
-      "effect_type": "apply_condition",
-      "condition": "possessed",
-      "target": "creature",
-      "within_cylinder": true,
-      "allowed": false
-    },
-    {
-      "effect_type": "prevent_exit",
-      "direction": "reverse",
-      "target_type": [
+      "effect_type": "hazard",
+      "hazard_type": "magic_circle",
+      "duration_rounds": 600,
+      "prevent_entry": true,
+      "prevent_exit": true,
+      "target_types": [
         "celestial",
         "elemental",
         "fey",
         "fiend",
         "undead"
-      ]
+      ],
+      "save_ability": "cha",
+      "attack_disadvantage_against_targets_within": true
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "cannot_be_charmed_by_circle_target"
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "cannot_be_frightened_by_circle_target"
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "cannot_be_possessed_by_circle_target"
     }
   ]
 }

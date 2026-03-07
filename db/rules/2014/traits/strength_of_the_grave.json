@@ -19,7 +19,8 @@
       "usage": {
         "reset": "long rest",
         "oncePerRest": true
-      }
+      },
+      "meta_type": "survival_saving_throw_support"
     }
   ],
   "source_type": "subclass"

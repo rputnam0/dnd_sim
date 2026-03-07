@@ -24,7 +24,8 @@
           "duration": "until start of target's next turn"
         }
       ],
-      "usage": "choose one"
+      "usage": "choose one",
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "subclass"

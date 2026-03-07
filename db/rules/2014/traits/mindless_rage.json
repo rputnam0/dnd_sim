@@ -5,12 +5,14 @@
     {
       "effect": "grant_immunity",
       "condition": "charmed",
-      "source": "raging"
+      "source": "raging",
+      "meta_type": "condition_immunity"
     },
     {
       "effect": "grant_immunity",
       "condition": "frightened",
-      "source": "raging"
+      "source": "raging",
+      "meta_type": "condition_immunity"
     },
     {
       "effect": "suspend_condition",
@@ -19,7 +21,8 @@
         "frightened"
       ],
       "trigger": "enter_rage",
-      "duration": "rage"
+      "duration": "rage",
+      "meta_type": "condition"
     }
   ],
   "source_type": "subclass"

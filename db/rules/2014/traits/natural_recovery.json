@@ -9,7 +9,8 @@
         "combined_slot_level": "ceil(druid_level / 2)",
         "max_individual_slot_level": 5
       },
-      "usage": "once_per_long_rest"
+      "usage": "once_per_long_rest",
+      "meta_type": "resource"
     }
   ],
   "source_type": "subclass"

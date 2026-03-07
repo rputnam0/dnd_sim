@@ -5,17 +5,20 @@
     {
       "action": "reaction",
       "trigger": "creature makes an attack roll against you",
-      "effect": "impose disadvantage on that roll"
+      "effect": "impose disadvantage on that roll",
+      "meta_type": "advantage"
     },
     {
       "action": "advantage",
       "trigger": "your next attack roll against that creature before the end of your next turn",
-      "condition": "the creature's attack missed you"
+      "condition": "the creature's attack missed you",
+      "meta_type": "grant_advantage"
     },
     {
       "resource": "uses",
       "max": 1,
-      "reset": "short or long rest"
+      "reset": "short or long rest",
+      "meta_type": "resource"
     }
   ],
   "source_type": "subclass"

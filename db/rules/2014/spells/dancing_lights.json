@@ -13,20 +13,18 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "create_light",
+      "effect_type": "hazard",
+      "hazard_type": "dancing_lights",
+      "duration_rounds": 10,
       "quantity": 4,
       "radius_ft": 10,
-      "duration_rounds": 10
-    },
-    {
-      "effect_type": "combine_lights",
-      "result_form": "humanoid",
-      "size": "Medium"
-    },
-    {
-      "effect_type": "move_light",
-      "action": "bonus_action",
-      "distance_ft": 60
+      "forms": [
+        "torch",
+        "lantern",
+        "glowing_orb",
+        "humanoid"
+      ],
+      "bonus_action_move_ft": 60
     }
   ]
 }

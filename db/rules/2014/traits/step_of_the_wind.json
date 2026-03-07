@@ -6,7 +6,8 @@
       "cost": {
         "resource": "ki",
         "amount": 1
-      }
+      },
+      "meta_type": "resource_spend"
     },
     {
       "grantAction": {
@@ -15,13 +16,15 @@
           "Dash"
         ],
         "asBonusAction": true
-      }
+      },
+      "meta_type": "bonus_action"
     },
     {
       "effect": {
         "jumpDistanceMultiplier": 2,
         "duration": "turn"
-      }
+      },
+      "meta_type": "movement"
     }
   ],
   "source_type": "class"

@@ -1,6 +1,18 @@
 {
   "name": "Historical Knowledge",
   "description": "When you enter a ruin or dungeon, you can correctly ascertain its original purpose and determine its builders, whether those were dwarves, elves, humans, yuan-ti, or some other known race. In addition, you can determine the monetary value of art objects more than a century old.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "historical_appraisal",
+      "benefits": [
+        "identify_original_purpose_of_ruins_or_dungeons",
+        "identify_builders_of_ruins_or_dungeons"
+      ]
+    },
+    {
+      "meta_type": "artifact_appraisal",
+      "benefit": "determine_monetary_value_of_art_objects_more_than_a_century_old"
+    }
+  ],
   "source_type": "background"
 }

@@ -19,7 +19,8 @@
       },
       "uses": {
         "perLongRest": "Intelligence modifier (minimum 1)"
-      }
+      },
+      "meta_type": "save"
     }
   ],
   "source_type": "subclass"

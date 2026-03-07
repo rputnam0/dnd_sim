@@ -1,6 +1,15 @@
 {
   "name": "Inside Informant",
   "description": "You have connections to your previous employer or other groups you dealt with during your previous employment. You can communicate with your contacts, gaining information at the DM's discretion.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "informant_network",
+      "contacts": [
+        "previous_employer",
+        "groups_from_previous_employment"
+      ],
+      "benefit": "communicate_with_contacts_for_information"
+    }
+  ],
   "source_type": "background"
 }

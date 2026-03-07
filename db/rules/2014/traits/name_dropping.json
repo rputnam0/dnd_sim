@@ -1,6 +1,15 @@
 {
   "name": "Name Dropping",
-  "description": "You know and have met any number of powerful people across the land—and some of them might even remember you. You might be able to wrangle minor assistance from a major figure in the campaign, at the DM's discretion. Additionally, the common folk treat you with deference, and your heritage and the stories you tell might be good for a free meal or a place to sleep.",
-  "mechanics": [],
+  "description": "You know and have met any number of powerful people across the land\u2014and some of them might even remember you. You might be able to wrangle minor assistance from a major figure in the campaign, at the DM's discretion. Additionally, the common folk treat you with deference, and your heritage and the stories you tell might be good for a free meal or a place to sleep.",
+  "mechanics": [
+    {
+      "meta_type": "social_access",
+      "benefits": [
+        "minor_assistance_from_major_figures",
+        "deference_from_common_folk",
+        "possible_free_meal_or_shelter"
+      ]
+    }
+  ],
   "source_type": "background"
 }

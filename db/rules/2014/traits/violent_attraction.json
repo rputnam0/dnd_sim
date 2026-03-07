@@ -3,29 +3,29 @@
   "description": "When another creature that you can see within 60 feet of you hits with a weapon attack, you can use your reaction to increase the attack's velocity, causing the attack's target to take an extra 1d10 damage of the weapon's type. Alternatively, if a creature within 60 feet of you takes damage from a fall, you can use your reaction to increase the fall's damage by 2d10. You can use this feature a number of times equal to your Intelligence modifier (a minimum of once). You regain all expended uses when you finish a long rest.",
   "mechanics": [
     {
-      "trigger": "a creature you can see within 60 feet hits with a weapon attack",
-      "action": "reaction",
-      "effect": {
-        "damage": {
-          "dice": "1d10",
-          "type": "weapon"
-        }
-      }
+      "effect_type": "extra_damage",
+      "meta_type": "reaction",
+      "trigger": "ally_weapon_attack_hit_within_60ft",
+      "damage": "1d10",
+      "damage_type": "weapon",
+      "target": "attack_target",
+      "range_ft": 60
     },
     {
-      "trigger": "a creature within 60 feet takes damage from a fall",
-      "action": "reaction",
-      "effect": {
-        "damage": {
-          "dice": "2d10",
-          "type": "bludgeoning"
-        }
-      }
+      "effect_type": "damage",
+      "meta_type": "reaction",
+      "trigger": "creature_fall_damage_within_60ft",
+      "damage": "2d10",
+      "damage_type": "bludgeoning",
+      "target": "falling_creature",
+      "range_ft": 60
     },
     {
-      "usage": {
-        "perLongRest": "Intelligence modifier (minimum 1)"
-      }
+      "meta_type": "resource",
+      "resource": "violent_attraction_uses",
+      "uses": "intelligence_modifier",
+      "minimum_uses": 1,
+      "reset": "long_rest"
     }
   ],
   "source_type": "subclass"

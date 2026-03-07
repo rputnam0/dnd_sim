@@ -9,7 +9,8 @@
         "resource": "Focus Points",
         "target_amount": 4,
         "max_current": 3
-      }
+      },
+      "meta_type": "gain_resource"
     }
   ],
   "source_type": "class"

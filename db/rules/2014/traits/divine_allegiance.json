@@ -7,7 +7,8 @@
       "trigger": "a creature within 5 feet of you takes damage",
       "effect": "you take the damage instead of the creature; the creature takes no damage",
       "damage_prevention": false,
-      "damage_reduction_allowed": false
+      "damage_reduction_allowed": false,
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

@@ -13,9 +13,20 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "aoe",
-      "shape": "sphere",
-      "radius": 20
+      "effect_type": "hazard",
+      "hazard_type": "stinking_cloud",
+      "radius_ft": 20,
+      "duration_rounds": 10,
+      "obscures_vision": true
+    },
+    {
+      "effect_type": "apply_condition",
+      "target": "all_enemies",
+      "apply_on": "save_fail",
+      "save_ability": "con",
+      "condition": "poisoned",
+      "duration_rounds": 1,
+      "effect_id": "stinking_cloud_poisoned"
     }
   ]
 }

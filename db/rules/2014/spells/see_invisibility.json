@@ -11,5 +11,16 @@
   "description": "For the duration, you see invisible creatures and objects as if they were visible, and you can see into the Ethereal Plane. Ethereal creatures and objects appear ghostly and translucent. Seeming 5th-­‐‑level illusion",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "see_invisible",
+      "duration_rounds": 600
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "see_ethereal",
+      "duration_rounds": 600
+    }
+  ]
 }

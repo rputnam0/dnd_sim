@@ -18,7 +18,8 @@
       "effect": [
         "reveal location",
         "reveal spell school"
-      ]
+      ],
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

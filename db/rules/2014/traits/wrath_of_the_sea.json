@@ -3,33 +3,37 @@
   "description": "As a bonus action, you can expend a use of your Wild Shape to manifest a 5‑foot emanation that takes the form of ocean spray surrounding you for 10 minutes. It ends early if you dismiss it (no action required), manifest it again, or become incapacitated. While the emanation is present, you can use a bonus action on subsequent turns to choose another creature you can see within the emanation. The target must succeed on a Constitution saving throw against your spell save DC or take cold damage and, if the creature is Large or smaller, be pushed up to 15 feet away from you. The damage is 1d6 per your Wisdom modifier (minimum 1d6).",
   "mechanics": [
     {
-      "action": "bonus",
-      "cost": "use of Wild Shape",
-      "effect": "create emanation",
-      "area": "5 ft radius around you",
-      "duration": "10 minutes",
-      "conditions": "ends early if dismissed, manifested again, or you are incapacitated"
+      "meta_type": "aura",
+      "activation": "bonus_action",
+      "resource": "wild_shape_use",
+      "radius_ft": 5,
+      "duration_rounds": 100,
+      "ends_early": [
+        "dismissed",
+        "manifest_again",
+        "incapacitated"
+      ]
     },
     {
-      "action": "bonus",
-      "trigger": "while emanation active",
-      "target": "creature you can see within emanation",
-      "save": {
-        "type": "Constitution",
-        "dcSource": "spell save DC"
-      },
-      "onFail": {
-        "damage": {
-          "type": "cold",
-          "dice": "1d6",
-          "count": "Wisdom modifier",
-          "minimumDice": 1
-        },
-        "push": {
-          "distance": "15 ft",
-          "condition": "target is Large or smaller"
-        }
-      }
+      "effect_type": "damage",
+      "meta_type": "aura_pulse",
+      "trigger": "bonus_action_target_in_emanation",
+      "target": "creature_you_can_see_within_emanation",
+      "damage": "max(1,wisdom_modifier)d6",
+      "damage_type": "cold",
+      "save_ability": "con",
+      "save_dc": "spell_save_dc"
+    },
+    {
+      "effect_type": "push",
+      "meta_type": "aura_pulse",
+      "trigger": "bonus_action_target_in_emanation",
+      "target": "creature_you_can_see_within_emanation",
+      "distance_ft": 15,
+      "size_max": "large",
+      "save_ability": "con",
+      "save_dc": "spell_save_dc",
+      "apply_on": "save_fail"
     }
   ],
   "source_type": "subclass"

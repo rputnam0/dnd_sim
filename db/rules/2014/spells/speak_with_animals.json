@@ -8,8 +8,17 @@
   "concentration": false,
   "ritual": true,
   "duration_rounds": 100,
-  "description": "You gain the ability to comprehend and verbally communicate with beasts for the duration. The knowledge and awareness of many beasts is limited by their intelligence, but at minimum, beasts can give you information about nearby locations and monsters, including whatever they can perceive or have perceived within the past day. You might be able to persuade a beast to perform a small favor for you, at the GM’s discretion. Speak with Dead 3rd-­‐‑level necromancy",
+  "description": "You gain the ability to comprehend and verbally communicate with beasts for the duration. The knowledge and awareness of many beasts is limited by their intelligence, but at minimum, beasts can give you information about nearby locations and monsters, including whatever they can perceive or have perceived within the past day. You might be able to persuade a beast to perform a small favor for you, at the GM\u2019s discretion. Speak with Dead 3rd-\u00ad\u2010\u2011level necromancy",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "speak_with_animals_active",
+      "duration_rounds": 100,
+      "stack_policy": "refresh"
+    }
+  ]
 }

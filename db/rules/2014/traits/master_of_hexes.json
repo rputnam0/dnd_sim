@@ -4,11 +4,12 @@
   "mechanics": [
     {
       "trigger": "cursed_creature_death",
-      "condition": "not incapacitated",
-      "range": 30,
-      "target": "creature you can see",
-      "effect": "apply Hexblade's Curse to target",
-      "note": "no hit point regain from previous cursed creature's death"
+      "range_ft": 30,
+      "target": "creature_you_can_see",
+      "condition": "you_are_not_incapacitated",
+      "effect": "transfer_hexblades_curse",
+      "additional_effect": "no_hit_point_regain_from_previous_cursed_creature",
+      "meta_type": "mark"
     }
   ],
   "source_type": "subclass"

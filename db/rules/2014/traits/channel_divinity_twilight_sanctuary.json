@@ -12,7 +12,8 @@
         "incapacitated",
         "dead"
       ],
-      "moves_with_caster": true
+      "moves_with_caster": true,
+      "meta_type": "channel_divinity"
     },
     {
       "trigger": "creature_ends_turn_in_sphere",
@@ -28,7 +29,8 @@
             "frightened"
           ]
         }
-      ]
+      ],
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

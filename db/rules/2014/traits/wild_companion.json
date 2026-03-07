@@ -3,21 +3,17 @@
   "description": "You gain the ability to summon a spirit that assumes an animal form: as an action, you can expend a use of your Wild Shape feature to cast the find familiar spell, without material components. When you cast the spell in this way, the familiar is a fey instead of a beast, and the familiar disappears after a number of hours equal to half your druid level.",
   "mechanics": [
     {
-      "action": "Cast Find Familiar",
-      "cost": {
-        "type": "resource",
-        "name": "Wild Shape",
-        "amount": 1
-      },
+      "meta_type": "summon_familiar",
       "spell": "find familiar",
-      "components": {
-        "material": false
-      },
-      "familiarType": "fey",
-      "duration": {
-        "type": "hours",
-        "value": "half druid level"
-      }
+      "activation": "action",
+      "resource": "wild_shape",
+      "material_components": false
+    },
+    {
+      "meta_type": "summoned_creature_bonus",
+      "companion": "familiar",
+      "creature_type": "fey",
+      "duration": "half_druid_level_hours"
     }
   ],
   "source_type": "class"

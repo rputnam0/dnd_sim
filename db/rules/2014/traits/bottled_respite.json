@@ -6,15 +6,18 @@
       "action": "action",
       "effect": "enter_extradimensional_vessel",
       "duration": "2*proficiency_bonus hours",
-      "once_per": "long_rest"
+      "once_per": "long_rest",
+      "meta_type": "world_linked_option"
     },
     {
       "action": "bonus action",
-      "effect": "exit_extradimensional_vessel"
+      "effect": "exit_extradimensional_vessel",
+      "meta_type": "world_linked_option"
     },
     {
       "condition": "cannot_enter_again",
-      "duration": "until_long_rest"
+      "duration": "until_long_rest",
+      "meta_type": "world_linked_option"
     }
   ],
   "source_type": "subclass"

@@ -34,7 +34,8 @@
           "target": "creature_or_object",
           "area": "cube"
         }
-      ]
+      ],
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

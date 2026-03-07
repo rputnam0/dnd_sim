@@ -5,7 +5,8 @@
     {
       "trigger": "failed saving throw against turn undead",
       "target": "undead of CR 2 or lower",
-      "effect": "instant destroy"
+      "effect": "instant destroy",
+      "meta_type": "condition"
     }
   ],
   "source_type": "class"

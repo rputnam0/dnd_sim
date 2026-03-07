@@ -18,7 +18,8 @@
         "effect_on_success": "none",
         "effect_on_failure": "full damage"
       },
-      "cover_exemption": "total cover (opaque)"
+      "cover_exemption": "total cover (opaque)",
+      "meta_type": "save"
     },
     {
       "resource": "ki",
@@ -26,7 +27,8 @@
       "damage_increase_per_point": {
         "dice": "2d6",
         "damage_type": "radiant"
-      }
+      },
+      "meta_type": "resource_spend"
     }
   ],
   "source_type": "subclass"

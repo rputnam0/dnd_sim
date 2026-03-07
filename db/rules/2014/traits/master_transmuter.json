@@ -5,28 +5,33 @@
     {
       "trigger": "action",
       "actionName": "Consume Transmuter's Stone",
-      "effect": "Destroy stone; cannot be remade until after a long rest"
+      "effect": "Destroy stone; cannot be remade until after a long rest",
+      "meta_type": "consume_transmuter_stone_support"
     },
     {
       "option": "Major Transformation",
       "effect": "Transmute one nonmagical object (max 5‑foot cube) into another nonmagical object of similar size, mass, and equal or lesser value",
       "duration": "10 minutes",
-      "resource": "transmuter's stone"
+      "resource": "transmuter's stone",
+      "meta_type": "major_transformation_support"
     },
     {
       "option": "Panacea",
       "effect": "Remove all curses, diseases, and poisons from a touched creature and restore it to full hit points",
-      "resource": "transmuter's stone"
+      "resource": "transmuter's stone",
+      "meta_type": "panacea_restoration_support"
     },
     {
       "option": "Restore Life",
       "effect": "Cast raise dead on a touched creature without expending a spell slot or needing the spell in your spellbook",
-      "resource": "transmuter's stone"
+      "resource": "transmuter's stone",
+      "meta_type": "restore_life_support"
     },
     {
       "option": "Restore Youth",
       "effect": "Reduce a willing creature's apparent age by 3d10 years (minimum age 13); does not extend lifespan",
-      "resource": "transmuter's stone"
+      "resource": "transmuter's stone",
+      "meta_type": "restore_youth_support"
     }
   ],
   "source_type": "subclass"

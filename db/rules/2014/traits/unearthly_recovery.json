@@ -8,7 +8,8 @@
       "condition": "current_hp < (max_hp / 2)",
       "amount": "max_hp / 2",
       "recharge": "long_rest",
-      "uses_per_long_rest": 1
+      "uses_per_long_rest": 1,
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

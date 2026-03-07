@@ -13,7 +13,8 @@
       "invalid_targets": [
         "undead",
         "construct"
-      ]
+      ],
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"

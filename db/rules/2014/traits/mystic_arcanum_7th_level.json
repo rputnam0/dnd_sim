@@ -8,7 +8,8 @@
       "spell_level": 7,
       "spell_list": "Warlock",
       "slot_cost": 0,
-      "description": "Cast the chosen 7th‑level warlock spell without expending a spell slot."
+      "description": "Cast the chosen 7th‑level warlock spell without expending a spell slot.",
+      "meta_type": "grant_spell"
     }
   ],
   "source_type": "class"

@@ -24,6 +24,7 @@
     },
     {
       "effect_type": "forced_movement",
+      "distance_ft": 60,
       "direction": "toward_target",
       "condition": "sympathy",
       "restriction": "cannot willingly move away once within reach"

@@ -11,5 +11,16 @@
   "description": "Grease 1st-­‐‑level conjuration",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "goodberries_created",
+      "duration_rounds": 14400
+    },
+    {
+      "effect_type": "apply_condition",
+      "condition": "goodberry_nourishment",
+      "duration_rounds": 14400
+    }
+  ]
 }

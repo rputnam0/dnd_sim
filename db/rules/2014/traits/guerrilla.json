@@ -1,6 +1,30 @@
 {
   "name": "Guerrilla",
-  "description": "You've come to know the surrounding forests, streams, caves, and other natural features in which you can take refuge—or set up ambushes. You can quickly survey your environment for advantageous features. Additionally, you can scavenge around your natural surroundings to cobble together simple supplies (such as improvised torches, rope, patches of fabric, etc.) that are consumed after use. Note: This feature is a variant of the Outlander feature.",
-  "mechanics": [],
+  "description": "You've come to know the surrounding forests, streams, caves, and other natural features in which you can take refuge\u2014or set up ambushes. You can quickly survey your environment for advantageous features. Additionally, you can scavenge around your natural surroundings to cobble together simple supplies (such as improvised torches, rope, patches of fabric, etc.) that are consumed after use. Note: This feature is a variant of the Outlander feature.",
+  "mechanics": [
+    {
+      "meta_type": "terrain_survey",
+      "benefits": [
+        "identify_refuges",
+        "identify_ambush_sites"
+      ],
+      "terrains": [
+        "forests",
+        "streams",
+        "caves",
+        "other_natural_features"
+      ]
+    },
+    {
+      "meta_type": "field_scavenging",
+      "benefits": [
+        "improvised_torches",
+        "rope",
+        "fabric_patches",
+        "similar_simple_supplies"
+      ],
+      "limitation": "supplies_are_consumed_after_use"
+    }
+  ],
   "source_type": "background"
 }

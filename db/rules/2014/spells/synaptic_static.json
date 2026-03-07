@@ -13,19 +13,20 @@
   "damage_type": "psychic",
   "mechanics": [
     {
+      "effect_type": "aoe",
       "shape": "sphere",
-      "radius_ft": 20,
-      "meta_type": "area"
+      "radius": 20
     },
     {
-      "dice": "8d6",
+      "damage": "8d6",
       "damage_type": "psychic",
       "effect_type": "damage"
     },
     {
-      "duration_minutes": 1,
-      "effect": "subtract d6 from attack rolls, ability checks, and Constitution saving throws",
-      "meta_type": "debuff"
+      "effect_type": "apply_condition",
+      "condition": "muddled_thoughts",
+      "duration": 10,
+      "effect": "subtract d6 from attack rolls, ability checks, and Constitution saving throws"
     }
   ]
 }

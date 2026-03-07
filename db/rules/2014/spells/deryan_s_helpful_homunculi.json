@@ -11,5 +11,14 @@
   "description": "You summon a group of helpful spirits, which lasts for the duration. The spirits appear as homunculi or as another Construct of your choice but are intangible and invulnerable, and they are considered to have proficiency in the Arcana skill and with the set of Artisan's Tools used in the spell's casting. If you are crafting an item, the spirits function as a single assistant for your crafting, halving the crafting time.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "deryan_s_helpful_homunculi_active",
+      "duration_rounds": 4800,
+      "stack_policy": "refresh"
+    }
+  ]
 }

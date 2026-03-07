@@ -13,12 +13,16 @@
   "damage_type": "necrotic",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "Target undead does not make a saving throw and gains temporary hit points equal to half the rolled damage."
+      "effect_type": "save",
+      "save_ability": "con"
     },
     {
-      "effect_type": "note",
-      "text": "If the spell kills a non‑undead creature, it rises as a zombie at the start of the caster's next turn."
+      "effect_type": "damage",
+      "target": "single_enemy",
+      "apply_on": "save_fail",
+      "save_ability": "con",
+      "damage": "5d12",
+      "damage_type": "necrotic"
     }
   ]
 }

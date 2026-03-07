@@ -3,16 +3,11 @@
   "description": "When a creature misses you with a melee attack roll, you can spend 1 ki point as a reaction to cause that attack to hit one creature of your choice, other than the attacker, that you can see within 5 feet of you.",
   "mechanics": [
     {
-      "trigger": "creature misses you with a melee attack roll",
+      "meta_type": "redirect_attack",
+      "trigger": "creature_misses_you_with_melee_attack",
       "action": "reaction",
-      "cost": {
-        "resource": "ki",
-        "amount": 1
-      },
-      "effect": {
-        "type": "redirect_attack",
-        "target": "creature you can see within 5 feet, not the attacker"
-      }
+      "resource_cost": "1_ki",
+      "new_target": "creature_within_5ft_other_than_attacker"
     }
   ],
   "source_type": "subclass"

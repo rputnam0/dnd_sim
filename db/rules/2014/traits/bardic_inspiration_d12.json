@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "effect": "set_bardic_inspiration_die",
-      "value": "d12"
+      "value": "d12",
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "class"

@@ -1,6 +1,11 @@
 {
   "name": "Wild Shape Improvement",
   "description": "At 4th level, your Wild Shape improves as shown on the Beast Shapes table.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "feature_progression",
+      "feature": "Wild Shape Improvement"
+    }
+  ],
   "source_type": "class"
 }

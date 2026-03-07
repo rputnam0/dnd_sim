@@ -17,21 +17,25 @@
         "speed": 0,
         "incapacitated": true,
         "dazed": true
-      }
+      },
+      "meta_type": "save"
     },
     {
       "maintenance": "action",
-      "effect_extension": "until end of next turn"
+      "effect_extension": "until end of next turn",
+      "meta_type": "duration"
     },
     {
       "termination_conditions": [
         "you move more than 5 ft away from the creature",
         "creature cannot see or hear you",
         "creature takes damage"
-      ]
+      ],
+      "meta_type": "restriction"
     },
     {
-      "recharge": "long rest per creature"
+      "recharge": "long rest per creature",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "subclass"

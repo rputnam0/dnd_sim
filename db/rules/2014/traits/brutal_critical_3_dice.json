@@ -3,10 +3,15 @@
   "description": "At 17th level, you can roll three additional weapon damage dice when determining the extra damage for a critical hit with a melee attack.",
   "mechanics": [
     {
-      "effect": "add_damage_dice",
-      "count": 3,
-      "dice_source": "weapon",
-      "trigger": "critical_hit_melee"
+      "meta_type": "critical_damage",
+      "trigger": "critical_hit_with_melee_attack",
+      "damage_source": "weapon_damage_dice",
+      "dice_by_level": [
+        {
+          "level": 17,
+          "additional_dice": 3
+        }
+      ]
     }
   ],
   "source_type": "class"

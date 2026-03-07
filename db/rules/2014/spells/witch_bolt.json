@@ -14,14 +14,19 @@
   "mechanics": [
     {
       "effect_type": "ranged_spell_attack",
-      "damage": "1d12",
-      "damage_type": "lightning"
+      "range_ft": 30
     },
     {
-      "effect_type": "sustain_damage",
+      "effect_type": "damage",
       "damage": "1d12",
       "damage_type": "lightning",
-      "trigger": "action_each_turn"
+      "trigger": "on_hit"
+    },
+    {
+      "effect_type": "damage",
+      "damage": "1d12",
+      "damage_type": "lightning",
+      "trigger": "action_each_turn_while_concentrating"
     }
   ]
 }

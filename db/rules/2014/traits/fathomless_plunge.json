@@ -8,7 +8,8 @@
       "targets": "self and up to 5 willing creatures within 30 ft",
       "max_distance": "1 mile",
       "destination_condition": "body of water you have seen (pond size or larger) or within 30 ft of such water",
-      "recharge": "short or long rest"
+      "recharge": "short or long rest",
+      "meta_type": "teleport"
     }
   ],
   "source_type": "subclass"

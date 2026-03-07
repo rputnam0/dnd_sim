@@ -5,7 +5,8 @@
     {
       "effect": "roll_twice_choose_one",
       "table": "Spirit Tales",
-      "duplicate_any": true
+      "duplicate_any": true,
+      "meta_type": "feature_progression"
     }
   ],
   "source_type": "subclass"

@@ -1,6 +1,10 @@
 {
   "name": "Telekinetic Adept",
   "description": "7th-level Psi Warrior feature. You have mastered new ways to use your telekinetic abilities, detailed below. Options: Psi-Powered Leap, Telekinetic Thrust.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice"
+    }
+  ],
   "source_type": "subclass"
 }

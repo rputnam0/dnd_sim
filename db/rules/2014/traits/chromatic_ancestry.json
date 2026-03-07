@@ -1,6 +1,34 @@
 {
   "name": "Chromatic Ancestry",
   "description": "You have a chromatic dragon ancestor, granting you a special magical affinity. Choose one kind of dragon from the Chromatic Ancestry table. This determines the damage type for your other traits, as shown in the table. Chromatic Ancestry table: Black – Acid; Blue – Lightning; Green – Poison; Red – Fire; White – Cold.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "choice",
+      "options": [
+        {
+          "name": "Black",
+          "damage_type": "acid"
+        },
+        {
+          "name": "Blue",
+          "damage_type": "lightning"
+        },
+        {
+          "name": "Green",
+          "damage_type": "poison"
+        },
+        {
+          "name": "Red",
+          "damage_type": "fire"
+        },
+        {
+          "name": "White",
+          "damage_type": "cold"
+        }
+      ],
+      "choice_key": "ancestry",
+      "grants": "associated_damage_type"
+    }
+  ],
   "source_type": "species"
 }

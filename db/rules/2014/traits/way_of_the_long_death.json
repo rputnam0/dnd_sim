@@ -1,6 +1,11 @@
 {
   "name": "Way of the Long Death",
   "description": "Monks of the Way of the Long Death are obsessed with the meaning and mechanics of dying. They capture creatures and prepare elaborate experiments to capture, record, and understand the moments of their demise. They use this knowledge to guide their understanding of martial arts, yielding a deadly fighting style. (See Touch of Death.)",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "subclass_scaffold",
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

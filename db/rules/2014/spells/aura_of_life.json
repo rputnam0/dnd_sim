@@ -14,21 +14,29 @@
   "mechanics": [
     {
       "effect_type": "aoe",
+      "radius_ft": 30,
       "shape": "sphere",
-      "radius": 30
+      "center": "self"
     },
     {
-      "effect_type": "grant_resistance",
+      "effect_type": "apply_condition",
+      "condition": "resistant_to_necrotic",
+      "duration_rounds": 100,
+      "target": "friendly",
       "damage_type": "necrotic"
     },
     {
-      "effect_type": "prevent_hp_max_reduction"
+      "effect_type": "apply_condition",
+      "condition": "prevent_hp_max_reduction",
+      "duration_rounds": 100,
+      "target": "friendly"
     },
     {
-      "effect_type": "regain_hp",
+      "effect_type": "heal",
       "amount": 1,
-      "trigger": "start_of_turn",
-      "condition": "hp_equals_0"
+      "duration_rounds": 100,
+      "target": "friendly",
+      "trigger": "start_of_turn_when_hp_is_0"
     }
   ]
 }

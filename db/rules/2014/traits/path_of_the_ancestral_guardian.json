@@ -1,6 +1,11 @@
 {
   "name": "Ancestral Protectors",
   "description": "",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "subclass_scaffold",
+      "meta_type": "subclass_option"
+    }
+  ],
   "source_type": "subclass"
 }

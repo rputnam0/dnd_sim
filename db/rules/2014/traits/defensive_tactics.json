@@ -1,6 +1,11 @@
 {
   "name": "Defensive Tactics",
   "description": "At 7th level, you gain one of the following features of your choice: Escape the Horde, Multiattack Defense, Steel Will.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "effect": "choose_defensive_tactic_option",
+      "meta_type": "feature_progression"
+    }
+  ],
   "source_type": "subclass"
 }

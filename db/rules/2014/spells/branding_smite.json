@@ -8,8 +8,18 @@
   "concentration": true,
   "ritual": false,
   "duration_rounds": 10,
-  "description": "Branding Smite 2nd-­‐‑level evocation",
+  "description": "Branding Smite 2nd-\u00ad\u2010\u2011level evocation",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "branding_smite_active",
+      "duration_rounds": 10,
+      "concentration_linked": true,
+      "stack_policy": "refresh"
+    }
+  ]
 }

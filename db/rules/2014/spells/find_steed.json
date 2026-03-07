@@ -14,6 +14,8 @@
   "mechanics": [
     {
       "effect_type": "summon",
+      "name": "Steed",
+      "duration": "indefinite",
       "forms": [
         "warhorse",
         "pony",
@@ -26,11 +28,9 @@
         "fey",
         "fiend"
       ],
-      "duration": "indefinite"
-    },
-    {
-      "effect_type": "telepathic_communication",
-      "range_ft": 5280
+      "controller": "source",
+      "mount": true,
+      "telepathic_range_ft": 5280
     },
     {
       "effect_type": "mount"

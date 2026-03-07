@@ -3,12 +3,14 @@
   "description": "You have proficiency in one of the following skills of your choice: Intimidation or Persuasion.",
   "mechanics": [
     {
-      "grantProficiency": {
+      "meta_type": "grant_proficiencies",
+      "grant_proficiency": {
         "category": "skill",
-        "options": [
+        "choices": [
           "Intimidation",
           "Persuasion"
-        ]
+        ],
+        "count": 1
       }
     }
   ],

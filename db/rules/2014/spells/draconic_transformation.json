@@ -13,16 +13,11 @@
   "damage_type": "force",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "Blindsight 30 ft"
-    },
-    {
-      "effect_type": "note",
-      "text": "Breath Weapon 60-ft cone, 6d8 force damage, Dex save"
-    },
-    {
-      "effect_type": "note",
-      "text": "Wings grant flying speed 60 ft"
+      "effect_type": "transform",
+      "target": "source",
+      "condition": "draconic_transformation",
+      "duration_rounds": 10,
+      "effect_id": "draconic_transformation"
     }
   ]
 }

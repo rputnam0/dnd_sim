@@ -6,7 +6,8 @@
       "action": "action",
       "effect": "change_illusion",
       "trigger": "cast illusion spell with duration >= 1 minute",
-      "condition": "you can see the illusion"
+      "condition": "you can see the illusion",
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

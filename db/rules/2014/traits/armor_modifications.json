@@ -9,12 +9,14 @@
         "boots",
         "helmet",
         "armor's special weapon"
-      ]
+      ],
+      "meta_type": "equipment_configuration"
     },
     {
       "mechanic": "infuse_items_max_increase",
       "increase": 2,
-      "restriction": "items must be part of Arcane Armor"
+      "restriction": "items must be part of Arcane Armor",
+      "meta_type": "resource"
     }
   ],
   "source_type": "subclass"

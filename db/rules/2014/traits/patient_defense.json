@@ -10,7 +10,8 @@
       "grantAction": {
         "name": "Dodge",
         "type": "bonus"
-      }
+      },
+      "meta_type": "action"
     }
   ],
   "source_type": "class"

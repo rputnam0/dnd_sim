@@ -3,11 +3,13 @@
   "description": "At 14th level, your ancestral spirits grow powerful enough to retaliate. When you use your Spirit Shield to reduce the damage of an attack, the attacker takes an amount of force damage equal to the damage that your Spirit Shield prevents.",
   "mechanics": [
     {
-      "trigger": "when spirit shield reduces damage",
-      "action": "deal_damage",
+      "effect_type": "damage",
+      "meta_type": "retaliation_damage",
+      "trigger": "spirit_shield_reduces_attack_damage",
       "target": "attacker",
+      "damage": "spirit_shield_prevented_damage",
       "damage_type": "force",
-      "amount": "equal to the amount of damage prevented by Spirit Shield"
+      "amount": "spirit_shield_prevented_damage"
     }
   ],
   "source_type": "subclass"

@@ -10,7 +10,8 @@
         "saving_throw"
       ],
       "timing": "after_roll_before_effect",
-      "usage": "once_per_short_or_long_rest"
+      "usage": "once_per_short_or_long_rest",
+      "meta_type": "roll_bonus"
     }
   ],
   "source_type": "subclass"

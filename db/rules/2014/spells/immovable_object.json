@@ -13,8 +13,10 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "strength check"
+      "effect_type": "hazard",
+      "hazard_type": "immovable_object",
+      "blocks_movement": true,
+      "duration_rounds": 600
     }
   ]
 }

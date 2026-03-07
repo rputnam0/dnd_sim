@@ -15,16 +15,19 @@
       "scroll_vanish_conditions": [
         "cast",
         "next_long_rest"
-      ]
+      ],
+      "meta_type": "spellcasting_option"
     },
     {
       "effect": "scroll_cost_modifier",
       "modifier": 0.5,
-      "condition": "using_Wizardly_Quill"
+      "condition": "using_Wizardly_Quill",
+      "meta_type": "spellcasting_option"
     },
     {
       "effect": "scroll_intelligibility",
-      "value": "unintelligible_to_others"
+      "value": "unintelligible_to_others",
+      "meta_type": "spellcasting_option"
     }
   ],
   "source_type": "subclass"

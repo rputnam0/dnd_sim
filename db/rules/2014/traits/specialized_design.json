@@ -3,10 +3,12 @@
   "description": "You gain two tool proficiencies of your choice, selected from the Player's Handbook.",
   "mechanics": [
     {
-      "gainProficiencies": {
+      "meta_type": "grant_proficiencies",
+      "grant_proficiency": {
         "category": "tool",
         "count": 2,
-        "choice": true
+        "choice": true,
+        "source": "Player's Handbook"
       }
     }
   ],

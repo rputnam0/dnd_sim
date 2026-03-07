@@ -10,7 +10,8 @@
         "per_long_rest": true,
         "max_uses": "wisdom_modifier",
         "minimum": 1
-      }
+      },
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

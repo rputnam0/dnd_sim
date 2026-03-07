@@ -3,18 +3,19 @@
   "description": "You can use Dexterity instead of Strength for the attack rolls of your Unarmed Strikes. When you deal damage with an Unarmed Strike, you can deal Bludgeoning damage equal to a roll of your Bardic Inspiration die plus your Dexterity modifier, instead of the strike's normal damage. This roll doesn't expend the die.",
   "mechanics": [
     {
-      "effect": "ability_score_substitution",
-      "target": "unarmed_strike_attack_roll",
-      "new_ability": "Dexterity",
-      "original_ability": "Strength"
+      "meta_type": "attack_ability_substitution",
+      "applies_to": "unarmed_strikes",
+      "roll": "attack_roll",
+      "from": "str",
+      "to": "dex"
     },
     {
-      "effect": "damage_override",
-      "weapon": "unarmed_strike",
+      "effect_type": "extra_damage",
+      "trigger": "deal_damage_with_unarmed_strike",
+      "damage": "bardic_inspiration_die + dexterity_modifier",
       "damage_type": "bludgeoning",
-      "damage_formula": "bardic_inspiration_die + ability_modifier(Dexterity)",
-      "consume_die": false,
-      "condition": "when dealing damage with an Unarmed Strike"
+      "replaces": "normal_unarmed_damage",
+      "consume_bardic_inspiration_die": false
     }
   ],
   "source_type": "subclass"

@@ -19,7 +19,8 @@
             "dice": "2d8"
           }
         }
-      }
+      },
+      "meta_type": "planar_warrior_mark_support"
     }
   ],
   "source_type": "subclass"

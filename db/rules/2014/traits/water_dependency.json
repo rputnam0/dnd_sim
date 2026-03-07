@@ -3,22 +3,17 @@
   "description": "If you fail to immerse yourself in water for at least 1 hour during a day, you suffer one level of exhaustion at the end of that day. You can only recover from this exhaustion through magic or by immersing yourself in water for at least 1 hour.",
   "mechanics": [
     {
-      "trigger": "end_of_day",
-      "condition": "no_water_immersion_1h",
-      "effect": {
-        "type": "gain_exhaustion",
-        "levels": 1
-      }
+      "meta_type": "restriction",
+      "condition": "no water immersion for at least 1 hour during a day",
+      "effect": "gain 1 level of exhaustion at the end of the day"
     },
     {
-      "recovery": {
-        "type": "exhaustion",
-        "methods": [
-          "magic",
-          "water_immersion"
-        ],
-        "required_duration": "1h"
-      }
+      "meta_type": "restriction",
+      "target": "recover_exhaustion_from_this_trait",
+      "allowed_methods": [
+        "magic",
+        "immerse in water for at least 1 hour"
+      ]
     }
   ],
   "source_type": "species"

@@ -13,10 +13,11 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "grant_bonus",
+      "effect_type": "apply_condition",
+      "condition": "guidance_bonus_d4",
+      "duration_rounds": 10,
       "bonus": "1d4",
-      "target": "ability_check",
-      "duration": 10
+      "applies_to": "ability_check"
     }
   ]
 }

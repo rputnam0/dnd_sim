@@ -11,7 +11,8 @@
       "alternative_cost": {
         "resource": "Psionic Energy die",
         "type": "expend"
-      }
+      },
+      "meta_type": "movement"
     }
   ],
   "source_type": "subclass"

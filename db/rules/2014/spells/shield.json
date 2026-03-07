@@ -11,5 +11,14 @@
   "description": "An invisible barrier of magical force appears and protects you. Until the start of your next turn, you have a +5 bonus to AC, including against the triggering attack, and you take no damage from magic missile.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "condition": "shield_spell_warded",
+      "duration_rounds": 1,
+      "duration_timing": "turn_start",
+      "stack_policy": "refresh",
+      "effect_id": "shield_spell_ward"
+    }
+  ]
 }

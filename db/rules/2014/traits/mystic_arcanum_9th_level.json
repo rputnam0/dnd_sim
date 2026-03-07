@@ -8,7 +8,8 @@
       "spell_list": "Warlock",
       "uses_per_long_rest": 1,
       "requires_long_rest": true,
-      "description": "Cast the chosen 9th‑level warlock spell once without using a spell slot, then must finish a long rest to use again."
+      "description": "Cast the chosen 9th‑level warlock spell once without using a spell slot, then must finish a long rest to use again.",
+      "meta_type": "grant_spell"
     }
   ],
   "source_type": "class"

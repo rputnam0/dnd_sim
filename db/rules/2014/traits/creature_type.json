@@ -3,10 +3,13 @@
   "description": "You are a Humanoid. You are also considered an elf for any prerequisite or effect that requires you to be an elf.",
   "mechanics": [
     {
+      "meta_type": "creature_type",
       "creature_type": "Humanoid"
     },
     {
-      "elf_considered_for_prerequisites": true
+      "meta_type": "creature_type",
+      "counts_as": "elf",
+      "applies_to": "prerequisite_or_effect"
     }
   ],
   "source_type": "species"

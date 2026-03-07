@@ -8,12 +8,14 @@
         "components": "none",
         "ability": "Intelligence",
         "usage": "once per long rest or expend Psionic Energy die"
-      }
+      },
+      "meta_type": "spell_cast"
     },
     {
       "bonusActionAttackWhileConcentrating": {
         "allowedAttack": "weapon attack"
-      }
+      },
+      "meta_type": "bonus_action_attack"
     }
   ],
   "source_type": "subclass"

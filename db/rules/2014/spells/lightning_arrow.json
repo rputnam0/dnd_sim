@@ -15,16 +15,23 @@
     {
       "effect_type": "damage",
       "target": "primary",
-      "damage_dice": "4d8",
-      "damage_type": "lightning"
+      "damage": "4d8",
+      "damage_type": "lightning",
+      "half_on_miss": true
     },
     {
       "effect_type": "aoe",
       "shape": "sphere",
       "radius": 10,
-      "damage_dice": "2d8",
+      "center": "target"
+    },
+    {
+      "effect_type": "damage",
+      "target": "creatures_within_10_ft_of_target",
+      "damage": "2d8",
       "damage_type": "lightning",
-      "save": "dex"
+      "save": "dex",
+      "half_on_success": true
     }
   ]
 }

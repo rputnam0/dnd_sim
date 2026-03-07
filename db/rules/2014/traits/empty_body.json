@@ -18,7 +18,8 @@
           "type": "damage_resistance",
           "except": "force"
         }
-      ]
+      ],
+      "meta_type": "resource_spend"
     },
     {
       "action": "use",
@@ -30,7 +31,8 @@
       "spell_options": {
         "material_components": false,
         "solo": true
-      }
+      },
+      "meta_type": "spell_cast"
     }
   ],
   "source_type": "class"

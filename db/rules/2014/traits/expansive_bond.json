@@ -9,13 +9,15 @@
         "Protective Bond"
       ],
       "range_feet": 60,
-      "condition": "creatures are within 60 feet of each other"
+      "condition": "creatures are within 60 feet of each other",
+      "meta_type": "benefit"
     },
     {
       "effect": "damage_resistance",
       "source_feature": "Protective Bond",
       "trigger": "when the creature uses protective bond to take another creature's damage",
-      "benefit": "the creature gains resistance to that damage"
+      "benefit": "the creature gains resistance to that damage",
+      "meta_type": "benefit"
     }
   ],
   "source_type": "subclass"

@@ -1,6 +1,28 @@
 {
   "name": "Factor",
   "description": "Although you've left the day-to-day life of a merchant behind, your family has assigned you the services of a loyal retainer from the business, a factor, husbanding agent, seafarer, caravan guard, or clerk. This individual is a commoner who can perform mundane tasks for you such as making purchases, delivering messages, and running errands. He or she will not fight for you and will not follow you into obviously dangerous areas (such as dungeons), and will leave if frequently endangered or abused. If he or she is killed, the family assigns you another within a few days. Note: This feature is a variant of the Noble Knight's Retainers feature.",
-  "mechanics": [],
+  "mechanics": [
+    {
+      "meta_type": "retainer_service",
+      "retainer_options": [
+        "factor",
+        "husbanding_agent",
+        "seafarer",
+        "caravan_guard",
+        "clerk"
+      ],
+      "benefits": [
+        "make_purchases",
+        "deliver_messages",
+        "run_errands"
+      ],
+      "limitations": [
+        "retainer_will_not_fight",
+        "retainer_will_not_enter_obviously_dangerous_areas",
+        "retainer_leaves_if_frequently_endangered_or_abused"
+      ],
+      "replacement": "family_assigns_another_retainer_within_a_few_days_if_killed"
+    }
+  ],
   "source_type": "background"
 }

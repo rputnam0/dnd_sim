@@ -15,7 +15,19 @@
     {
       "effect_type": "aoe",
       "shape": "cone",
-      "radius": 60
+      "size": 60
+    },
+    {
+      "effect_type": "save",
+      "save_ability": "dex"
+    },
+    {
+      "effect_type": "damage",
+      "target": "all_enemies",
+      "apply_on": "save_fail",
+      "save_ability": "dex",
+      "damage": "3d8",
+      "damage_type": "weapon"
     }
   ]
 }

@@ -10,7 +10,8 @@
       },
       "effect": {
         "unarmed_strikes": 3
-      }
+      },
+      "meta_type": "resource_spend"
     },
     {
       "action": "Patient Defense",
@@ -22,7 +23,8 @@
         "temporary_hit_points": {
           "formula": "2 * martial_arts_die"
         }
-      }
+      },
+      "meta_type": "resource_spend"
     },
     {
       "action": "Step of the Wind",
@@ -37,7 +39,8 @@
           "duration": "until end of turn",
           "no_opportunity_attack": true
         }
-      }
+      },
+      "meta_type": "resource_spend"
     }
   ],
   "source_type": "class"

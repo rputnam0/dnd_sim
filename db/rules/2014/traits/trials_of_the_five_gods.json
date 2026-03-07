@@ -1,6 +1,20 @@
 {
   "name": "Trials of the Five Gods",
-  "description": "Your life is oriented around your participation in the five trials that will determine your worthiness in the afterlife. While you prepare for and undergo those trials, you have constant access to training. A comfortable place to live and regular meals are provided to you by servitor mummies (the anointed) under the supervision of viziers. You can enjoy these benefits only as long as you obey the societal norms of Naktamun—training for the trials (with or without your crop), obeying the orders of the gods, and following the instructions of their viziers. If you violate these norms, you risk being treated as a dissenter. See \"Trials of the Five Gods (PS-A, p.3)\" for more information about undertaking the trials and their rewards.",
-  "mechanics": [],
+  "description": "Your life is oriented around your participation in the five trials that will determine your worthiness in the afterlife. While you prepare for and undergo those trials, you have constant access to training. A comfortable place to live and regular meals are provided to you by servitor mummies (the anointed) under the supervision of viziers. You can enjoy these benefits only as long as you obey the societal norms of Naktamun\u2014training for the trials (with or without your crop), obeying the orders of the gods, and following the instructions of their viziers. If you violate these norms, you risk being treated as a dissenter. See \"Trials of the Five Gods (PS-A, p.3)\" for more information about undertaking the trials and their rewards.",
+  "mechanics": [
+    {
+      "meta_type": "institutional_support",
+      "benefits": [
+        "constant_access_to_training",
+        "comfortable_place_to_live",
+        "regular_meals"
+      ],
+      "providers": [
+        "servitor_mummies",
+        "viziers"
+      ],
+      "limitation": "benefits_last_only_while_obeying_the_societal_norms_of_Naktamun"
+    }
+  ],
   "source_type": "background"
 }

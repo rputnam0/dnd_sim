@@ -13,9 +13,10 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "aoe",
-      "shape": "sphere",
-      "radius": 20
+      "effect_type": "hazard",
+      "hazard_type": "light",
+      "radius_ft": 20,
+      "duration_rounds": 600
     }
   ]
 }

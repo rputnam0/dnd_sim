@@ -7,14 +7,16 @@
       "condition": {
         "raging": true,
         "wearing_heavy_armor": false
-      }
+      },
+      "meta_type": "benefit"
     },
     {
       "effect": "dash_as_bonus_action",
       "condition": {
         "raging": true,
         "wearing_heavy_armor": false
-      }
+      },
+      "meta_type": "benefit"
     }
   ],
   "source_type": "subclass"

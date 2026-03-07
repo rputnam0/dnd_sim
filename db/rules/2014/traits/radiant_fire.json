@@ -3,15 +3,16 @@
   "description": "One creature you can see within 30 feet of yourself takes 1d4 Fire or Radiant damage (your choice).",
   "mechanics": [
     {
-      "effect": "damage",
-      "target": "creature",
-      "range": 30,
-      "damage": "1d4",
+      "name": "Radiant Fire",
+      "target": "one creature you can see",
+      "range_feet": 30,
+      "damage_die": "1d4",
       "damage_type_options": [
         "fire",
         "radiant"
       ],
-      "choice": "damage_type"
+      "choice": "damage_type",
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

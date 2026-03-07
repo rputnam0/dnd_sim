@@ -6,10 +6,17 @@
   "casting_time": "action",
   "range_ft": 0,
   "concentration": false,
-  "ritual": false,
+  "ritual": true,
   "duration_rounds": 0,
   "description": "Describe or name a specific kind of beast or plant. Concentrating on the voice of nature in your surroundings, you learn the direction and distance to the closest creature or plant of that kind within 5 miles, if any are present.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "sense",
+      "sense": "nearest_named_animal_or_plant",
+      "range_ft": 26400,
+      "provides_distance_and_direction": true
+    }
+  ]
 }

@@ -4,14 +4,16 @@
   "mechanics": [
     {
       "action": "Help",
-      "usage": "bonus_action"
+      "usage": "bonus_action",
+      "meta_type": "action"
     },
     {
       "action": "Help",
       "effect": "extended_range",
       "range": 30,
       "original_range": 5,
-      "condition": "target can see or hear you"
+      "condition": "target can see or hear you",
+      "meta_type": "benefit"
     }
   ],
   "source_type": "subclass"

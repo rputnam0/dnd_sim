@@ -3,24 +3,33 @@
   "description": "10th-level Circle of the Stars feature. The constellations of your Starry Form improve. The 1d8 of the Archer and the Chalice becomes 2d8, and while the Dragon is active, you have a flying speed of 20 feet and can hover. Moreover, at the start of each of your turns while in your Starry Form, you can change which constellation glimmers on your body.",
   "mechanics": [
     {
-      "effect": "damage_die_upgrade",
-      "target": [
+      "source": "Starry Form",
+      "targets": [
         "Archer",
         "Chalice"
       ],
-      "from": "1d8",
-      "to": "2d8"
+      "damage": "2d8",
+      "replaces": "1d8",
+      "meta_type": "damage_increase"
     },
     {
-      "effect": "grant_flying_speed",
+      "source": "Starry Form",
+      "condition": "dragon_constellation_active",
       "speed": 20,
       "hover": true,
-      "condition": "Dragon constellation active"
+      "meta_type": "grant_flying_speed"
     },
     {
-      "effect": "change_constellation",
-      "timing": "start_of_turn",
-      "condition": "in Starry Form"
+      "source": "Starry Form",
+      "meta_type": "choice",
+      "choice_key": "starry_form_constellation",
+      "trigger": "start_of_turn_while_in_starry_form",
+      "count": 1,
+      "options": [
+        "Archer",
+        "Chalice",
+        "Dragon"
+      ]
     }
   ],
   "source_type": "subclass"

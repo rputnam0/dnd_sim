@@ -10,7 +10,8 @@
       "uses": {
         "perLongRest": true,
         "max": "Wisdom modifier (minimum 1)"
-      }
+      },
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

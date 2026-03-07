@@ -6,7 +6,8 @@
       "trigger": "creature attacks another creature",
       "range": 30,
       "visibility": "see",
-      "effect": "use Warding Flare"
+      "effect": "use Warding Flare",
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

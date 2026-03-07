@@ -3,12 +3,13 @@
   "description": "Beginning at 10th level, your Spirit Totem safeguards the beasts and fey that you call forth with your magic. When a beast or fey that you summoned or created with a spell ends its turn in your Spirit Totem aura, that creature regains a number of hit points equal to half your druid level.",
   "mechanics": [
     {
-      "trigger": "end_of_turn",
-      "condition": "creature is a beast or fey summoned or created by the druid and is within the Spirit Totem aura",
-      "effect": {
-        "type": "heal",
-        "amount": "half_druid_level"
-      }
+      "meta_type": "summon_support_healing",
+      "creature_families": [
+        "beast",
+        "fey"
+      ],
+      "trigger": "end_of_turn_in_spirit_totem",
+      "healing": "half_druid_level"
     }
   ],
   "source_type": "subclass"

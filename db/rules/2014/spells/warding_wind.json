@@ -11,5 +11,19 @@
   "description": "A strong wind (20 miles per hour) blows around you in a 10-foot radius and moves with you, remaining centered on you. The wind lasts for the spell's duration. The wind has the following effects: It deafens you and other creatures in its area. It extinguishes unprotected flames in its area that are torch-sized or smaller. It hedges out vapor, gas, and fog that can be dispersed by strong wind. The area is difficult terrain for creatures other than you. The attack rolls of ranged weapon attacks have disadvantage if the attacks pass in or out of the wind.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "hazard",
+      "hazard_type": "warding_wind",
+      "radius_ft": 10,
+      "duration_rounds": 100,
+      "concentration_linked": true,
+      "moves_with_source": true,
+      "difficult_terrain_for_others": true,
+      "ranged_attacks_through_disadvantage": true,
+      "extinguishes_small_unprotected_flames": true,
+      "disperses_vapor_gas_fog": true,
+      "applies_conditions": ["deafened"]
+    }
+  ]
 }

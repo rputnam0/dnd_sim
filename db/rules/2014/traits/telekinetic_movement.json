@@ -23,7 +23,8 @@
       "movement_axes": [
         "horizontal",
         "vertical"
-      ]
+      ],
+      "meta_type": "movement"
     }
   ],
   "source_type": "subclass"

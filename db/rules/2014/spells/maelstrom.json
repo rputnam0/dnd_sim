@@ -11,5 +11,21 @@
   "description": "A swirling mass of 5-foot-deep water appears in a 30-foot radius centered on a point you can see within range. The point must be on the ground or in a body of water. Until the spell ends, that area is difficult terrain, and any creature that starts its turn there must succeed on a Strength saving throw or take 6d6 bludgeoning damage and be pulled 10 feet toward the center.",
   "save_ability": "str",
   "damage_type": "bludgeoning",
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "target",
+      "apply_on": "save_fail",
+      "damage": "6d6",
+      "damage_type": "bludgeoning",
+      "save_ability": "str"
+    },
+    {
+      "effect_type": "forced_movement",
+      "target": "target",
+      "apply_on": "save_fail",
+      "distance_ft": 10,
+      "direction": "toward_source"
+    }
+  ]
 }

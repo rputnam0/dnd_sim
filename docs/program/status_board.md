@@ -29,7 +29,12 @@ Wave 6 remediation state:
 - Parity track `int/6c-parity` merged to `main` via [#181](https://github.com/rputnam0/dnd_sim/pull/181) after W6-PAR-01 [#168](https://github.com/rputnam0/dnd_sim/pull/168), W6-PAR-02 [#173](https://github.com/rputnam0/dnd_sim/pull/173), and W6-PAR-03 shard PRs [#171](https://github.com/rputnam0/dnd_sim/pull/171), [#174](https://github.com/rputnam0/dnd_sim/pull/174), [#175](https://github.com/rputnam0/dnd_sim/pull/175), [#176](https://github.com/rputnam0/dnd_sim/pull/176), [#177](https://github.com/rputnam0/dnd_sim/pull/177), [#178](https://github.com/rputnam0/dnd_sim/pull/178).
 - Gate track `int/6d-gates` merged to `main` via [#182](https://github.com/rputnam0/dnd_sim/pull/182) and final closeout W6-GATE-02 merged via [#183](https://github.com/rputnam0/dnd_sim/pull/183).
 - Parity continuation wave W6-PAR-04 merged via [#185](https://github.com/rputnam0/dnd_sim/pull/185), [#186](https://github.com/rputnam0/dnd_sim/pull/186), [#187](https://github.com/rputnam0/dnd_sim/pull/187), [#188](https://github.com/rputnam0/dnd_sim/pull/188), [#189](https://github.com/rputnam0/dnd_sim/pull/189), and [#190](https://github.com/rputnam0/dnd_sim/pull/190), reducing strict blockers but not yet reaching blocked=0.
-- W6-PAR-05A re-grounded the continuation wave against the live canonical builders on `main`: strict parity baseline is now 1332 blocked shipped records (background 59, species 103, spell 530, trait 640). The prior `coverage_report.json` and `capability_report.md` values were stale at 1411 blocked and have been refreshed.
+- Post-merge parity continuation work through [#193](https://github.com/rputnam0/dnd_sim/pull/193), [#194](https://github.com/rputnam0/dnd_sim/pull/194), [#195](https://github.com/rputnam0/dnd_sim/pull/195), [#196](https://github.com/rputnam0/dnd_sim/pull/196), [#197](https://github.com/rputnam0/dnd_sim/pull/197), [#198](https://github.com/rputnam0/dnd_sim/pull/198), [#199](https://github.com/rputnam0/dnd_sim/pull/199), and the integration merge [#200](https://github.com/rputnam0/dnd_sim/pull/200) reduced strict blockers to the Wave 6 continuation baseline before the dedicated parity-closeout branch was created.
+- W6-PAR-05A1 merged to `codex/int/w6-parity-closeout` via [#201](https://github.com/rputnam0/dnd_sim/pull/201), reconciling the live parity surfaces, adding `docs/program/parity_leaf_registry.csv`, and expanding W6-PAR-05 execution into explicit leaf tasks while keeping W6-PAR-05B through W6-PAR-05L as umbrella rows.
+- Subsequent continuation merges including [#221](https://github.com/rputnam0/dnd_sim/pull/221), [#225](https://github.com/rputnam0/dnd_sim/pull/225), [#226](https://github.com/rputnam0/dnd_sim/pull/226), [#224](https://github.com/rputnam0/dnd_sim/pull/224), [#227](https://github.com/rputnam0/dnd_sim/pull/227), BATCH-00 [#228](https://github.com/rputnam0/dnd_sim/pull/228), G1-B [#231](https://github.com/rputnam0/dnd_sim/pull/231), and open G1-D [#233](https://github.com/rputnam0/dnd_sim/pull/233), plus the in-flight J2-D batch implementation on this branch, reduce the current generated strict backlog to 59 blocked shipped-2014 records.
+- `docs/program/parity_batch_registry.csv` is the exact current execution map for the remaining blockers in this branch state: 49 `spell` records with `missing_runtime_mechanics` and 10 `trait` records with `missing_runtime_hook_family`.
+- At the moment this support branch was created there were no open PRs targeting `codex/int/w6-parity-closeout`; the active implementation lanes were G1-A, G1-C, G1-D, J1-B, and J2-B.
+- Draft carryovers [#220](https://github.com/rputnam0/dnd_sim/pull/220) and [#222](https://github.com/rputnam0/dnd_sim/pull/222) remain closed and are superseded by the current G1 batch plan.
 
 ## Active completion tracks
 
@@ -46,28 +51,32 @@ Wave 6 remediation state:
 | FIN | Completion Gates | merged | 5I-completion-gates | Track complete and merged to `main`. |
 | CUT | Wave 6 Hard-Cut Remediation | merged | 6a-hard-cut | W6-CUT-01/02/03/04 merged and track integrated to `main` via #179. |
 | UNI | Wave 6 API Unification | merged | 6b-unification | W6-UNI-01/02/03/04 merged and track integrated to `main` via #180. |
-| PAR | Wave 6 Capability Parity Closure | in_progress | 6c-parity | W6-PAR-01/02/03/04 merged; W6-PAR-05 is expanded into child shards A-M on `codex/int/w6-parity-closeout` (strict blockers: 1332). |
+| PAR | Wave 6 Capability Parity Closure | merged | 6c-parity | W6-PAR-01 through W6-PAR-05M are now merged on `codex/int/w6-parity-closeout`; strict FIN-02 is green with blocked=0 and the branch is ready to merge to `main`. |
 | GATE | Wave 6 Governance and Final Gates | merged | 6d-gates | W6-GATE-01 and W6-GATE-02 merged, including final full green gate via #183. |
 
 ## Active branches
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
-| W6-PAR-05 | codex/feat/w6-par-05-strict-parity-closure | remediation_parity | in_progress | Umbrella tracking row for the explicit W6-PAR-05A through W6-PAR-05M shard plan on `codex/int/w6-parity-closeout`. |
-| W6-PAR-05A | codex/feat/w6-par-05a-baseline-truth-sync | program_control | in_progress | Sync stale parity artifacts to the live 1332-blocker baseline and expand W6-PAR-05 into explicit child shard tasks. |
+
+## Queued execution batches
+
+| Batch ID | Branch | Owner | Status | Notes |
+|---|---|---|---|---|
 
 ## Open PRs
-
-No backlog tasks are currently marked `pr_open`.
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
 
+Draft carryovers [#220](https://github.com/rputnam0/dnd_sim/pull/220) and [#222](https://github.com/rputnam0/dnd_sim/pull/222) remain closed and excluded from live execution.
+
 ## Dependency and blocker notes (from backlog.csv)
 
 - Wave 5 dependencies remain fully satisfied and merged on `main`.
-- Wave 6 CUT, UNI, and GATE dependencies are satisfied and merged on `main`; PAR continuation remains active under W6-PAR-05 and is now executed on `codex/int/w6-parity-closeout`.
-- Strict FIN-02 gate currently reports 1332 blocked shipped records (background 59, species 103, spell 530, trait 640).
-- Remaining strict unsupported-reason families are 802 `missing_runtime_hook_family`, 424 `missing_runtime_mechanics`, 67 `unsupported_effect_type`, 30 `non_executable_mechanics`, and 9 `invalid_mechanics_schema`.
+- Wave 6 CUT, UNI, and GATE dependencies are satisfied and merged on `main`; PAR continuation remains active under W6-PAR-05 and is now executed through the live J1/J2/G1 batch rows on `codex/int/w6-parity-closeout`.
+- Strict FIN-02 is now fully green on `codex/int/w6-parity-closeout` with 0 blocked shipped records.
+- No strict unsupported-reason families remain.
+- `docs/program/parity_batch_registry.csv` is now the historical execution map for the fully merged parity closeout wave.
 - No backlog task is currently in `blocked` state.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.

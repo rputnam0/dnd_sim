@@ -8,8 +8,21 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "You touch a dead humanoid or a piece of a dead humanoid that has been dead no longer than 10 days. The spell forms a new adult body for the creature and calls its soul to enter that body; if the soul isn’t free or willing, the spell fails. The magic fashions a new body, causing the creature’s race to change. The DM rolls a d100 to determine the new race (see Reincarnate Races table) or chooses a form. The reincarnated creature recalls its former life and experiences, retaining its previous capabilities except for its original race, which is replaced by the new one and its racial traits are changed.",
+  "description": "You touch a dead humanoid or a piece of a dead humanoid that has been dead no longer than 10 days. The spell forms a new adult body for the creature and calls its soul to enter that body; if the soul isn\u2019t free or willing, the spell fails. The magic fashions a new body, causing the creature\u2019s race to change. The DM rolls a d100 to determine the new race (see Reincarnate Races table) or chooses a form. The reincarnated creature recalls its former life and experiences, retaining its previous capabilities except for its original race, which is replaced by the new one and its racial traits are changed.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "heal",
+      "target": "target",
+      "apply_on": "always",
+      "amount": "1"
+    },
+    {
+      "effect_type": "remove_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "dead"
+    }
+  ]
 }

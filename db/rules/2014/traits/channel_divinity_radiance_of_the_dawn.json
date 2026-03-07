@@ -9,7 +9,8 @@
       "effect": "dispel",
       "target": "magical darkness",
       "range": 30,
-      "description": "Dispels any magical darkness within 30 feet."
+      "description": "Dispels any magical darkness within 30 feet.",
+      "meta_type": "channel_divinity"
     },
     {
       "action": "use",
@@ -29,7 +30,8 @@
         "modifier": "cleric level"
       },
       "exclusion": "creatures with total cover",
-      "description": "Each hostile creature within 30 feet makes a Constitution saving throw. On a failure, it takes 2d10 + cleric level radiant damage; on a success, it takes half damage."
+      "description": "Each hostile creature within 30 feet makes a Constitution saving throw. On a failure, it takes 2d10 + cleric level radiant damage; on a success, it takes half damage.",
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"

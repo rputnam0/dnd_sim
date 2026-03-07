@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "effect": "hold_breath",
-      "duration": "indefinite"
+      "duration": "indefinite",
+      "meta_type": "breathing"
     },
     {
       "effect": "no_need",
@@ -12,25 +13,30 @@
         "food",
         "water",
         "sleep"
-      ]
+      ],
+      "meta_type": "restriction"
     },
     {
       "effect": "rest_benefit",
       "short_rest": true,
-      "long_rest": true
+      "long_rest": true,
+      "meta_type": "benefit"
     },
     {
       "effect": "exhaustion_reduction",
-      "requires_rest": true
+      "requires_rest": true,
+      "meta_type": "restriction"
     },
     {
       "effect": "aging_rate",
       "years_passed": 10,
-      "years_aged": 1
+      "years_aged": 1,
+      "meta_type": "age"
     },
     {
       "effect": "immunity",
-      "condition": "magical_aging"
+      "condition": "magical_aging",
+      "meta_type": "condition_immunity"
     }
   ],
   "source_type": "subclass"

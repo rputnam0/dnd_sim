@@ -3,9 +3,8 @@
   "description": "You have advantage on saving throws against spells and other magical effects.",
   "mechanics": [
     {
-      "effect": "advantage",
-      "target": "saving_throws",
-      "condition": "against spells and other magical effects"
+      "meta_type": "saving_throw_advantage",
+      "against": "spells and other magical effects"
     }
   ],
   "source_type": "species"

@@ -13,13 +13,12 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "lock_object",
-      "duration": "permanent"
-    },
-    {
-      "effect_type": "increase_dc",
-      "target": "break_or_pick",
-      "amount": 10
+      "effect_type": "transform",
+      "condition": "arcane_locked",
+      "duration": "permanent",
+      "target": "target",
+      "stack_policy": "replace",
+      "break_or_pick_dc_bonus": 10
     }
   ]
 }

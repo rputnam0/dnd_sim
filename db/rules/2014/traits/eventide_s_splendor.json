@@ -17,7 +17,8 @@
           }
         }
       ],
-      "duration": "until start of next turn"
+      "duration": "until start of next turn",
+      "meta_type": "inspired_eclipse_shadow_support"
     },
     {
       "trigger": "use lunar vitality",
@@ -26,7 +27,8 @@
           "resource": "Bardic Inspiration die",
           "with": "1d6 roll"
         }
-      }
+      },
+      "meta_type": "lunar_vitality_resource_swap_support"
     }
   ],
   "source_type": "subclass"

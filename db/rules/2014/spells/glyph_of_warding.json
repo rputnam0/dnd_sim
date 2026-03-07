@@ -8,25 +8,27 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "When you cast this spell, you inscribe a glyph that later unleashes a magical effect. You inscribe it either on a surface (such as a table or a section of floor or wall) or within an object that can be closed (such as a book, a scroll, or a treasure chest) to conceal the glyph. The glyph can cover an area no larger than 10 feet in diameter. If the surface or object is moved more than 10 feet from where you cast this spell, the glyph is broken, and the spell ends without being triggered. The glyph is nearly invisible and requires a successful Intelligence (Investigation) check against your spell save DC to be found. You decide what triggers the glyph when you cast the spell. For glyphs inscribed on a surface, typical triggers include touching or standing on the glyph, removing another object covering the glyph, approaching within a certain distance of the glyph, or manipulating the object on which the glyph is inscribed. For glyphs inscribed within an object, common triggers include opening that object, approaching within a certain distance of the object, or seeing or reading the glyph. Once a glyph is triggered, this spell ends. You can further refine the trigger so the spell activates only under certain circumstances or according to physical characteristics, creature kind, or alignment, and you can set conditions for creatures that don't trigger the glyph. When you inscribe the glyph, choose explosive runes or a spell glyph. Explosive Runes: When triggered, the glyph erupts with magical energy in a 20‑foot‑radius sphere centered on the glyph. Each creature in the area must make a Dexterity saving throw. A creature takes 5d8 acid, cold, fire, lightning, or thunder damage on a failed save (your choice), or half as much on a successful one. Spell Glyph: You can store a prepared spell of 3rd level or lower in the glyph by casting it as part of creating the glyph. The stored spell has no immediate effect. When the glyph is triggered, the stored spell is cast, targeting the creature that triggered it or centered on that creature. If the stored spell summons hostile creatures or creates harmful objects or traps, they appear as close as possible to the intruder and attack it. If the stored spell requires concentration, it lasts until the end of its full duration. At Higher Levels: When you cast this spell using a spell slot of 4th level or higher, the damage of an explosive runes glyph increases by 1d8 for each slot level above 3rd. If you create a spell glyph, you can store any spell of up to the same level as the slot you use for the glyph of warding.",
+  "description": "When you cast this spell, you inscribe a glyph that later unleashes a magical effect. You inscribe it either on a surface (such as a table or a section of floor or wall) or within an object that can be closed (such as a book, a scroll, or a treasure chest) to conceal the glyph. The glyph can cover an area no larger than 10 feet in diameter. If the surface or object is moved more than 10 feet from where you cast this spell, the glyph is broken, and the spell ends without being triggered. The glyph is nearly invisible and requires a successful Intelligence (Investigation) check against your spell save DC to be found. You decide what triggers the glyph when you cast the spell. For glyphs inscribed on a surface, typical triggers include touching or standing on the glyph, removing another object covering the glyph, approaching within a certain distance of the glyph, or manipulating the object on which the glyph is inscribed. For glyphs inscribed within an object, common triggers include opening that object, approaching within a certain distance of the object, or seeing or reading the glyph. Once a glyph is triggered, this spell ends. You can further refine the trigger so the spell activates only under certain circumstances or according to physical characteristics, creature kind, or alignment, and you can set conditions for creatures that don't trigger the glyph. When you inscribe the glyph, choose explosive runes or a spell glyph. Explosive Runes: When triggered, the glyph erupts with magical energy in a 20\u2011foot\u2011radius sphere centered on the glyph. Each creature in the area must make a Dexterity saving throw. A creature takes 5d8 acid, cold, fire, lightning, or thunder damage on a failed save (your choice), or half as much on a successful one. Spell Glyph: You can store a prepared spell of 3rd level or lower in the glyph by casting it as part of creating the glyph. The stored spell has no immediate effect. When the glyph is triggered, the stored spell is cast, targeting the creature that triggered it or centered on that creature. If the stored spell summons hostile creatures or creates harmful objects or traps, they appear as close as possible to the intruder and attack it. If the stored spell requires concentration, it lasts until the end of its full duration. At Higher Levels: When you cast this spell using a spell slot of 4th level or higher, the damage of an explosive runes glyph increases by 1d8 for each slot level above 3rd. If you create a spell glyph, you can store any spell of up to the same level as the slot you use for the glyph of warding.",
   "save_ability": "dex",
   "damage_type": null,
   "mechanics": [
     {
       "effect_type": "aoe",
-      "shape": "sphere",
-      "radius": 20,
+      "damage_type": "variable",
+      "radius_ft": 20,
       "save": "dex",
-      "damage_type": "variable"
+      "shape": "sphere"
+    },
+    {
+      "effect_type": "hazard",
+      "hazard_type": "glyph_of_warding",
+      "duration_rounds": 4800,
+      "stored_spell": true,
+      "max_spell_level": 3
     },
     {
       "effect_type": "apply_condition",
-      "condition": "found_by_intelligence_check",
-      "duration": null
-    },
-    {
-      "effect_type": "store_spell",
-      "max_spell_level": 3
+      "condition": "found_by_intelligence_check"
     }
   ]
 }

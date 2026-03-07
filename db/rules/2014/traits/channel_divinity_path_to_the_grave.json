@@ -22,7 +22,8 @@
         "vulnerability": "all",
         "applies_to": "damage of triggering attack",
         "once": true
-      }
+      },
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"

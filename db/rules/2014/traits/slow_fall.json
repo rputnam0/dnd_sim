@@ -6,7 +6,8 @@
       "action": "reaction",
       "trigger": "fall",
       "effect": "reduce_falling_damage",
-      "amount": "5 * monk_level"
+      "amount": "5 * monk_level",
+      "meta_type": "fall_damage_reduction_support"
     }
   ],
   "source_type": "class"

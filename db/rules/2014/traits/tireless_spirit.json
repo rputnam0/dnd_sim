@@ -5,7 +5,8 @@
     {
       "trigger": "initiative roll",
       "condition": "no uses of Fighting Spirit remaining",
-      "effect": "regain 1 use of Fighting Spirit"
+      "effect": "regain 1 use of Fighting Spirit",
+      "meta_type": "resource_recovery_support"
     }
   ],
   "source_type": "subclass"

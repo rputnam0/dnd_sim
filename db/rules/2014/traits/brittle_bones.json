@@ -3,9 +3,8 @@
   "description": "You are vulnerable to bludgeoning damage.",
   "mechanics": [
     {
-      "vulnerability": {
-        "damage_type": "bludgeoning"
-      }
+      "meta_type": "damage_vulnerability",
+      "damage_type": "bludgeoning"
     }
   ],
   "source_type": "species"

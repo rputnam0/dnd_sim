@@ -15,25 +15,23 @@
     {
       "effect_type": "apply_condition",
       "condition": "restrained",
-      "duration": 10
+      "duration_rounds": 10
     },
     {
-      "effect_type": "damage_over_time",
+      "effect_type": "damage",
       "damage": "1d6",
       "damage_type": "piercing",
-      "timing": "start_of_turn"
+      "trigger": "start_of_turn_while_restrained"
     },
     {
       "effect_type": "save",
-      "ability": "strength",
-      "on_fail": "apply_condition"
+      "ability": "str",
+      "on_fail": "remain_restrained"
     },
     {
-      "effect_type": "action",
-      "action_type": "strength_check",
-      "target": "restrained_creature",
-      "effect": "remove_condition",
-      "condition": "restrained"
+      "effect_type": "remove_condition",
+      "condition": "restrained",
+      "trigger": "action_strength_check"
     }
   ]
 }

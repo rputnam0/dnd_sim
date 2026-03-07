@@ -6,7 +6,8 @@
       "always_prepared_spells": [
         "Charm Person",
         "Mirror Image"
-      ]
+      ],
+      "meta_type": "always_prepared_spells"
     },
     {
       "trigger": "after_cast_spell",
@@ -24,7 +25,8 @@
         "condition": "Charmed or Frightened (choice)",
         "duration": "1 minute",
         "save_end": "end of each of its turns"
-      }
+      },
+      "meta_type": "save"
     },
     {
       "uses": 1,
@@ -32,7 +34,8 @@
       "alternative_recharge": {
         "spend_resource": "Bardic Inspiration",
         "cost": 1
-      }
+      },
+      "meta_type": "recharge"
     }
   ],
   "source_type": "subclass"

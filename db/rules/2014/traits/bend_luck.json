@@ -13,7 +13,8 @@
         "roll": "1d4",
         "apply": "add or subtract the rolled number to the creature's roll (choice of bonus or penalty)",
         "timing": "after the creature rolls but before any effects of the roll occur"
-      }
+      },
+      "meta_type": "resource_spend"
     }
   ],
   "source_type": "subclass"

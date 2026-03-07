@@ -3,8 +3,9 @@
   "description": "Starting at 14th level, any creature that you summon or create with a conjuration spell has 30 temporary hit points.",
   "mechanics": [
     {
-      "grantTemporaryHP": 30,
-      "target": "creature summoned or created by a conjuration spell"
+      "meta_type": "summoned_creature_bonus",
+      "creature_scope": "conjuration_summons",
+      "benefit": "30_temporary_hit_points"
     }
   ],
   "source_type": "subclass"

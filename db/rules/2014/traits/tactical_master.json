@@ -3,7 +3,11 @@
   "description": "When you attack with a weapon whose mastery property you can use, you can replace that property with the Push, Sap, or Slow mastery property for that attack.",
   "mechanics": [
     {
-      "effect": "replace_mastery_property",
+      "meta_type": "choice",
+      "choice_key": "tactical_master_mastery_property",
+      "trigger": "attack_with_weapon_whose_mastery_property_you_can_use",
+      "applies_to": "that_attack",
+      "count": 1,
       "options": [
         "Push",
         "Sap",

@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "effect": "modify_portent",
-      "diceCount": 3
+      "diceCount": 3,
+      "meta_type": "resource"
     }
   ],
   "source_type": "subclass"

@@ -13,25 +13,15 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "create_object",
-      "object": "floating_disk",
+      "effect_type": "hazard",
+      "hazard_type": "floating_disk",
+      "duration_rounds": 600,
       "diameter_ft": 3,
       "thickness_in": 1,
-      "capacity_lb": 500
-    },
-    {
-      "effect_type": "follow",
-      "max_distance_ft": 20
-    },
-    {
-      "effect_type": "end_condition",
-      "condition": "distance_exceeds",
-      "distance_ft": 100
-    },
-    {
-      "effect_type": "end_condition",
-      "condition": "overweight",
-      "capacity_lb": 500
+      "capacity_lb": 500,
+      "follow_distance_ft": 20,
+      "ends_if_distance_exceeds_ft": 100,
+      "ends_if_over_capacity": true
     }
   ]
 }

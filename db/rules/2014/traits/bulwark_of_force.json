@@ -15,7 +15,8 @@
           "resource": "Psionic Energy die",
           "type": "expend"
         }
-      }
+      },
+      "meta_type": "ac_bonus"
     }
   ],
   "source_type": "subclass"

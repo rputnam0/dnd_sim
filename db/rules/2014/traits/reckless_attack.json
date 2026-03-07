@@ -3,18 +3,15 @@
   "description": "Starting at 2nd level, you can throw aside all concern for defense to attack with fierce desperation. When you make your first attack on your turn, you can decide to attack recklessly. Doing so gives you advantage on melee weapon attack rolls using Strength during this turn, but attack rolls against you have advantage until your next turn.",
   "mechanics": [
     {
-      "grant_advantage": {
-        "target": "self",
-        "attack_type": "melee_weapon",
-        "ability": "Strength",
-        "duration": "turn"
-      }
+      "meta_type": "advantage",
+      "target": "your_melee_weapon_attack_rolls_using_strength",
+      "trigger": "make_first_attack_on_your_turn_and_choose_reckless_attack",
+      "duration": "this_turn"
     },
     {
-      "grant_advantage_to_attackers": {
-        "target": "self",
-        "duration": "until_next_turn"
-      }
+      "meta_type": "advantage_granted_to_attackers",
+      "target": "attack_rolls_against_you",
+      "duration": "until_start_of_next_turn"
     }
   ],
   "source_type": "class"

@@ -18,7 +18,8 @@
       "resource": {
         "required_item": "Poisoner's Kit",
         "cost": "1d6"
-      }
+      },
+      "meta_type": "save"
     }
   ],
   "source_type": "class"

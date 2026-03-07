@@ -13,10 +13,23 @@
   "damage_type": "force",
   "mechanics": [
     {
+      "effect_type": "aoe",
+      "shape": "sphere",
+      "radius": 20
+    },
+    {
+      "effect_type": "damage",
       "damage": "5d10",
       "damage_type": "force",
-      "scaling": "+1d10 per slot level above 4th",
-      "effect": "pulls creature toward center"
+      "save": "con",
+      "half_on_success": true,
+      "scaling": "+1d10 per slot level above 4th"
+    },
+    {
+      "effect_type": "forced_movement",
+      "apply_on": "save_fail",
+      "distance_ft": 20,
+      "direction": "toward_center"
     }
   ]
 }

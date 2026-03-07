@@ -16,7 +16,8 @@
         "target": "unoccupied space you can see",
         "distance_formula": "10 * roll_result"
       },
-      "additional_effect": "Psychic Blade vanishes after teleport"
+      "additional_effect": "Psychic Blade vanishes after teleport",
+      "meta_type": "teleport"
     }
   ],
   "source_type": "subclass"

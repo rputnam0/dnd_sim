@@ -16,30 +16,26 @@ Do not edit manually.
 
 | Metric | Value |
 |---|---:|
-| Total records | 2527 |
-| Supported records | 1302 |
-| Blocked records | 1225 |
-| Schema-valid records | 2518 |
-| Executable records | 1302 |
-| Tested records | 1302 |
+| Total records | 2526 |
+| Supported records | 2526 |
+| Blocked records | 0 |
+| Schema-valid records | 2526 |
+| Executable records | 2526 |
+| Tested records | 2526 |
 
 ## Coverage By Content Type
 
 | Content type | Total | Supported | Blocked | Schema valid | Executable | Tested |
 |---|---:|---:|---:|---:|---:|---:|
-| background | 86 | 43 | 43 | 86 | 43 | 43 |
+| background | 86 | 86 | 0 | 86 | 86 | 86 |
 | feat | 219 | 219 | 0 | 219 | 219 | 219 |
 | monster | 191 | 191 | 0 | 191 | 191 | 191 |
-| species | 256 | 211 | 45 | 256 | 211 | 211 |
-| spell | 594 | 65 | 529 | 585 | 65 | 65 |
-| trait | 1181 | 573 | 608 | 1181 | 573 | 573 |
+| species | 256 | 256 | 0 | 256 | 256 | 256 |
+| spell | 593 | 593 | 0 | 593 | 593 | 593 |
+| trait | 1181 | 1181 | 0 | 1181 | 1181 | 1181 |
 
 ## Unsupported Reason Coverage
 
 | Unsupported reason | Count |
 |---|---:|
-| invalid_mechanics_schema | 9 |
-| missing_runtime_hook_family | 696 |
-| missing_runtime_mechanics | 424 |
-| non_executable_mechanics | 30 |
-| unsupported_effect_type | 66 |
+| (none) | 0 |

@@ -8,8 +8,16 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "Polymorph 4th-­‐‑level transmutation",
+  "description": "Polymorph 4th-\u00ad\u2010\u2011level transmutation",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "target",
+      "apply_on": "save_fail",
+      "damage": "1d12",
+      "damage_type": "poison"
+    }
+  ]
 }

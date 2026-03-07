@@ -3,13 +3,12 @@
   "description": "Starting at 14th level, when you are hit by a melee attack, you can use your reaction to deal fire damage to the attacker. The damage equals your sorcerer level, and ignores resistance to fire damage.",
   "mechanics": [
     {
-      "action": "reaction",
+      "effect_type": "damage",
       "trigger": "hit_by_melee_attack",
-      "effect": {
-        "damage_type": "fire",
-        "damage_amount": "sorcerer_level",
-        "ignore_resistance": "fire"
-      }
+      "damage": "sorcerer_level",
+      "damage_type": "fire",
+      "uses_reaction": true,
+      "ignores_resistance": true
     }
   ],
   "source_type": "subclass"

@@ -24,7 +24,8 @@
           "distance": 5,
           "direction": "chosen"
         }
-      ]
+      ],
+      "meta_type": "on_hit_swarm_option_support"
     }
   ],
   "source_type": "subclass"

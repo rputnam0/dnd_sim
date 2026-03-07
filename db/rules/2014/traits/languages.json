@@ -3,7 +3,8 @@
   "description": "You can speak, read, and write Common and Celestial.",
   "mechanics": [
     {
-      "grant_languages": [
+      "meta_type": "gain_languages",
+      "languages": [
         "Common",
         "Celestial"
       ]

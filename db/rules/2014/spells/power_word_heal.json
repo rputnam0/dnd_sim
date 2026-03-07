@@ -13,7 +13,7 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "restore_hp",
+      "effect_type": "heal",
       "amount": "full"
     },
     {

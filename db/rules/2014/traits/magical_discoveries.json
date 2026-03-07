@@ -13,7 +13,8 @@
         "must_be_cantrip_or_slot_spell": true,
         "always_prepared": true,
         "replace_on_level_gain": true
-      }
+      },
+      "meta_type": "spellcasting_option"
     }
   ],
   "source_type": "subclass"

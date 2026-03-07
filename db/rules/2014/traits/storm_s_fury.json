@@ -3,21 +3,23 @@
   "description": "Starting at 14th level, when you are hit by a melee attack, you can use your reaction to deal lightning damage to the attacker. The damage equals your sorcerer level. The attacker must also make a Strength saving throw against your sorcerer spell save DC. On a failed save, the attacker is pushed in a straight line up to 20 feet away from you.",
   "mechanics": [
     {
-      "trigger": "hit by melee attack",
-      "usesReaction": true,
-      "damage": {
-        "type": "lightning",
-        "amount": "sorcerer level"
-      },
-      "savingThrow": {
-        "ability": "Strength",
-        "dc": "sorcerer spell save DC",
-        "onFail": {
-          "effect": "push",
-          "distance": "20 feet",
-          "direction": "away from you"
-        }
-      }
+      "meta_type": "reaction",
+      "trigger": "hit_by_melee_attack"
+    },
+    {
+      "effect_type": "damage",
+      "trigger": "storm_s_fury_reaction",
+      "damage": "sorcerer_level",
+      "damage_type": "lightning"
+    },
+    {
+      "effect_type": "forced_movement",
+      "trigger": "storm_s_fury_strength_save_fail",
+      "target": "attacker",
+      "distance_ft": 20,
+      "direction": "away_from_source",
+      "save_ability": "str",
+      "save_dc": "sorcerer_spell_save_dc"
     }
   ],
   "source_type": "subclass"

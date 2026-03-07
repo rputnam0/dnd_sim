@@ -1110,13 +1110,14 @@ def _roll_damage_with_channel_divinity_hooks(
     crit: bool = False,
     empowered_rerolls: int = 0,
 ) -> int:
+    resolved_expr = _resolve_runtime_roll_expression(actor=actor, expr=expr)
     normalized_type = str(damage_type).lower()
     if normalized_type in {"lightning", "thunder"} and _has_destructive_wrath(actor):
         if _spend_channel_divinity(actor, resources_spent):
-            return _max_damage_expression(expr, crit=crit)
+            return _max_damage_expression(resolved_expr, crit=crit)
     return roll_damage(
         rng,
-        expr,
+        resolved_expr,
         crit=crit,
         empowered_rerolls=empowered_rerolls,
         source=actor,
@@ -3489,12 +3490,79 @@ def _extract_primary_save_damage_mechanic(
         effect_type = str(row.get("effect_type", "")).strip().lower()
         apply_on = str(row.get("apply_on", "")).strip().lower()
         damage = str(row.get("damage", "")).strip()
-        row_save = str(row.get("save_ability", "")).strip().lower()
+        raw_row_save = row.get("save_ability", row.get("save"))
+        row_save = _normalize_condition(str(raw_row_save)) if raw_row_save else ""
+        has_explicit_half_on_success = bool(
+            row.get("half_on_success", row.get("half_on_save", False))
+        )
         if (
             effect_type == "damage"
-            and apply_on == "save_fail"
             and damage
+            and (
+                apply_on == "save_fail"
+                or (row_save and has_explicit_half_on_success)
+            )
             and (not normalized_save or not row_save or row_save == normalized_save)
+        ):
+            primary_candidates.append(dict(row))
+            continue
+        remaining.append(row)
+
+    if len(primary_candidates) != 1:
+        return None, mechanics
+    return primary_candidates[0], remaining
+
+
+def _extract_primary_attack_damage_mechanic(
+    mechanics: Any,
+    *,
+    action_type: str,
+) -> tuple[dict[str, Any] | None, list[Any]]:
+    if action_type != "attack" or not isinstance(mechanics, list):
+        return None, mechanics if isinstance(mechanics, list) else []
+
+    primary_candidates: list[dict[str, Any]] = []
+    remaining: list[Any] = []
+    for row in mechanics:
+        if not isinstance(row, dict):
+            remaining.append(row)
+            continue
+        effect_type = str(row.get("effect_type", "")).strip().lower()
+        apply_on = str(row.get("apply_on", "")).strip().lower()
+        damage = str(row.get("damage", "")).strip()
+        if effect_type == "damage" and apply_on == "hit" and damage:
+            primary_candidates.append(dict(row))
+            continue
+        remaining.append(row)
+
+    if len(primary_candidates) != 1:
+        return None, mechanics
+    return primary_candidates[0], remaining
+
+
+def _extract_primary_heal_mechanic(
+    mechanics: Any,
+    *,
+    action_type: str,
+) -> tuple[dict[str, Any] | None, list[Any]]:
+    del action_type
+    if not isinstance(mechanics, list):
+        return None, mechanics if isinstance(mechanics, list) else []
+
+    primary_candidates: list[dict[str, Any]] = []
+    remaining: list[Any] = []
+    for row in mechanics:
+        if not isinstance(row, dict):
+            remaining.append(row)
+            continue
+        effect_type = str(row.get("effect_type", "")).strip().lower()
+        apply_on = str(row.get("apply_on", "always")).strip().lower()
+        amount = str(row.get("amount", "")).strip()
+        if (
+            effect_type == "heal"
+            and apply_on in {"", "always"}
+            and amount
+            and "last_damage_applied" not in amount.lower()
         ):
             primary_candidates.append(dict(row))
             continue
@@ -3616,6 +3684,14 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 casting_time_text = str(spell_def.get("casting_time") or "").strip()
                 if casting_time_text:
                     hydrated["casting_time"] = casting_time_text
+            if "action_type" in spell_def:
+                action_type_text = str(spell_def.get("action_type") or "").strip().lower()
+                if action_type_text:
+                    hydrated["action_type"] = action_type_text
+            if "target_mode" in spell_def:
+                target_mode_text = str(spell_def.get("target_mode") or "").strip().lower()
+                if target_mode_text:
+                    hydrated["target_mode"] = target_mode_text
             duration_rounds = _coerce_non_negative_int(spell_def.get("duration_rounds"))
             if duration_rounds is not None:
                 hydrated["duration_rounds"] = duration_rounds
@@ -3645,8 +3721,28 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 tags.append("ignore_dex_save_cover")
                 hydrated["tags"] = list(dict.fromkeys(tags))
 
+            mechanics_rows = hydrated.get("mechanics")
+            has_explicit_damage_mechanic = (
+                any(
+                    isinstance(row, dict)
+                    and str(row.get("effect_type", "")).strip().lower() == "damage"
+                    for row in mechanics_rows
+                )
+                if isinstance(mechanics_rows, list)
+                else False
+            )
+            has_explicit_heal_mechanic = (
+                any(
+                    isinstance(row, dict)
+                    and str(row.get("effect_type", "")).strip().lower() == "heal"
+                    for row in mechanics_rows
+                )
+                if isinstance(mechanics_rows, list)
+                else False
+            )
+
             # Damage: "take 8d6 fire damage"
-            if "damage" not in hydrated:
+            if "damage" not in hydrated and not has_explicit_damage_mechanic:
                 dmg = re.search(
                     r"take[s]?\s+(\d+d\d+(?:\s*[+-]\s*\d+)?)\s+([a-z]+)\s+damage",
                     description,
@@ -3671,7 +3767,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 hydrated["half_on_save"] = True
 
             # Healing: Cure Wounds / Healing Word baseline parsing.
-            if re.search(
+            if not has_explicit_heal_mechanic and re.search(
                 r"regains?(?:\s+a\s+number\s+of)?\s+hit\s+points?\s+equal\s+to\s+(\d+d\d+)",
                 description,
                 re.IGNORECASE,
@@ -3713,6 +3809,50 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             if damage_type:
                 hydrated["damage_type"] = damage_type
             hydrated["mechanics"] = remaining_mechanics
+        primary_attack_damage, remaining_mechanics = _extract_primary_attack_damage_mechanic(
+            hydrated.get("mechanics"),
+            action_type=str(hydrated.get("action_type", "utility")).strip().lower(),
+        )
+        if primary_attack_damage is not None:
+            hydrated["damage"] = hydrated.get("damage") or str(primary_attack_damage.get("damage"))
+            damage_type = str(primary_attack_damage.get("damage_type") or "").strip().lower()
+            if damage_type:
+                hydrated["damage_type"] = damage_type
+            hydrated["mechanics"] = remaining_mechanics
+        primary_heal, remaining_mechanics = _extract_primary_heal_mechanic(
+            hydrated.get("mechanics"),
+            action_type=str(hydrated.get("action_type", "utility")).strip().lower(),
+        )
+        if primary_heal is not None:
+            hydrated["healing"] = str(primary_heal.get("amount"))
+            hydrated["mechanics"] = remaining_mechanics
+            if not hydrated.get("damage"):
+                hydrated["action_type"] = "utility"
+                hydrated["to_hit"] = None
+        normalized_mechanics = (
+            [row for row in hydrated.get("mechanics", []) if isinstance(row, dict)]
+            if isinstance(hydrated.get("mechanics"), list)
+            else []
+        )
+        if (
+            hydrated.get("action_type") == "attack"
+            and not hydrated.get("damage")
+            and (
+                any(
+                    str(row.get("effect_type", "")).strip().lower() == "heal"
+                    and str(row.get("target", "target")).strip().lower() == "target"
+                    for row in normalized_mechanics
+                )
+                or any(
+                    str(row.get("effect_type", "")).strip().lower() == "damage"
+                    and str(row.get("target", "target")).strip().lower() == "source"
+                    and str(row.get("apply_on", "always")).strip().lower() in {"", "always"}
+                    for row in normalized_mechanics
+                )
+            )
+        ):
+            hydrated["action_type"] = "utility"
+            hydrated["to_hit"] = None
         if (
             hydrated.get("action_type") == "save"
             and "half_on_save" not in hydrated
@@ -3762,6 +3902,16 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
         non_single_target = not hydrated.get(
             "aoe_type"
         ) and _description_is_probably_non_single_target(description)
+        has_target_heal_mechanic = any(
+            str(row.get("effect_type", "")).strip().lower() == "heal"
+            and str(row.get("target", "target")).strip().lower() == "target"
+            for row in normalized_mechanics
+        )
+        has_target_damage_mechanic = any(
+            str(row.get("effect_type", "")).strip().lower() == "damage"
+            and str(row.get("target", "target")).strip().lower() == "target"
+            for row in normalized_mechanics
+        )
         if not target_mode:
             if hydrated.get("aoe_type") and action_type in {"attack", "save"}:
                 target_mode = "single_enemy"
@@ -3770,6 +3920,12 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                     action_type=action_type,
                     description=description,
                 )
+            elif (
+                has_target_heal_mechanic
+                and not hydrated.get("damage")
+                and not has_target_damage_mechanic
+            ):
+                target_mode = "single_ally"
             elif hydrated.get("healing") or "friendly creature" in description.lower():
                 target_mode = "single_ally"
             else:
@@ -5716,7 +5872,10 @@ def _build_actor_from_character(
         inventory=InventoryState.from_character_payload(character),
         speed_ft=int(character.get("speed_ft", 30)),
         movement_modes={"walk": float(int(character.get("speed_ft", 30)))},
+        exhaustion_level=max(0, min(6, int(character.get("exhaustion_level", 0) or 0))),
     )
+    if actor.exhaustion_level > 0:
+        actor.add_manual_condition("exhaustion")
     _ensure_channel_divinity_resource(actor)
     _apply_passive_traits(actor)
     _apply_trait_attunement_limit(actor)
@@ -8945,6 +9104,122 @@ def _effect_matches_event(effect: dict[str, Any], event: str) -> bool:
     return apply_on == "always" or apply_on == event
 
 
+def _is_spell_effect_row(
+    effect: dict[str, Any],
+    *,
+    action: ActionDefinition | None,
+) -> bool:
+    if action is not None and getattr(action, "tags", None):
+        return "spell" in action.tags
+    if effect.get("spell_level") is not None:
+        return True
+    return "spell_effect" in _normalize_internal_tags(effect.get("internal_tags"))
+
+
+def _resolve_damage_effect_save_result(
+    *,
+    rng: random.Random,
+    recipient: ActorRuntimeState,
+    effect: dict[str, Any],
+    action: ActionDefinition | None,
+    resources_spent: dict[str, dict[str, int]],
+) -> tuple[bool, str, bool] | None:
+    raw_save_ability = effect.get("save_ability", effect.get("save"))
+    save_key = _normalize_condition(raw_save_ability) if raw_save_ability else ""
+    if save_key not in ABILITY_KEYS:
+        return None
+
+    raw_save_dc = effect.get("save_dc")
+    try:
+        save_dc = int(raw_save_dc)
+    except (TypeError, ValueError):
+        return None
+
+    half_on_success = bool(effect.get("half_on_success", effect.get("half_on_save", False)))
+    auto_fail_save = _auto_fails_strength_or_dex_save(recipient, save_key)
+    if auto_fail_save:
+        success = False
+    else:
+        save_mod = int(recipient.save_mods.get(save_key, 0))
+        save_roll = rng.randint(1, 20)
+        if (
+            save_key == "dex"
+            and _has_trait(recipient, "danger sense")
+            and not has_condition(recipient, "blinded")
+            and not has_condition(recipient, "deafened")
+            and not has_condition(recipient, "incapacitated")
+        ):
+            save_roll = max(save_roll, rng.randint(1, 20))
+        if (
+            _is_spell_effect_row(effect, action=action)
+            and _has_trait(recipient, "gnomish cunning")
+            and save_key in {"int", "wis", "cha"}
+        ):
+            save_roll = max(save_roll, rng.randint(1, 20))
+        if save_key == "dex" and has_condition(recipient, "dodging"):
+            save_roll = max(save_roll, rng.randint(1, 20))
+        success = (save_roll + save_mod) >= save_dc
+
+    if not auto_fail_save and not success and recipient.resources.get("legendary_resistance", 0) > 0:
+        recipient.resources["legendary_resistance"] -= 1
+        resources_spent[recipient.actor_id]["legendary_resistance"] = (
+            resources_spent[recipient.actor_id].get("legendary_resistance", 0) + 1
+        )
+        success = True
+
+    return success, save_key, half_on_success
+
+
+def _hydrate_zone_trigger_effects_with_spell_context(
+    zone: dict[str, Any],
+    *,
+    effect: dict[str, Any],
+    action: ActionDefinition | None,
+) -> None:
+    try:
+        zone_save_dc = int(zone.get("save_dc"))
+    except (TypeError, ValueError):
+        try:
+            zone_save_dc = int(effect.get("save_dc"))
+        except (TypeError, ValueError):
+            try:
+                zone_save_dc = int(action.save_dc) if action is not None and action.save_dc is not None else None
+            except (TypeError, ValueError):
+                zone_save_dc = None
+    if zone_save_dc is not None:
+        zone["save_dc"] = zone_save_dc
+
+    inherited_spell_level = zone.get("spell_level")
+    inherited_internal_tags = list(zone.get("internal_tags", []))
+    if "spell_effect" not in inherited_internal_tags:
+        inherited_internal_tags.append("spell_effect")
+
+    trigger_row_groups: list[list[dict[str, Any]]] = []
+    trigger_effects = zone.get("trigger_effects")
+    if isinstance(trigger_effects, dict):
+        for rows in trigger_effects.values():
+            if isinstance(rows, list):
+                trigger_row_groups.append(rows)
+    for key in ("on_enter", "on_leave", "on_start_turn", "on_end_turn"):
+        rows = zone.get(key)
+        if isinstance(rows, list):
+            trigger_row_groups.append(rows)
+
+    for rows in trigger_row_groups:
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            if row.get("effect_type") != "damage":
+                continue
+            if not row.get("save_ability", row.get("save")):
+                continue
+            if zone_save_dc is not None:
+                row.setdefault("save_dc", zone_save_dc)
+            if inherited_spell_level is not None:
+                row.setdefault("spell_level", inherited_spell_level)
+            row.setdefault("internal_tags", list(inherited_internal_tags))
+
+
 def _consume_attack_flags(actor: ActorRuntimeState) -> tuple[bool, bool]:
     advantage = actor.next_attack_advantage
     disadvantage = _disadvantaged(actor) or actor.next_attack_disadvantage
@@ -8984,6 +9259,7 @@ def _apply_effect(
     strategy_name: str | None = None,
     turn_token: str | None = None,
     rule_trace: list[dict[str, Any]] | None = None,
+    effect_context: dict[str, Any] | None = None,
 ) -> None:
     recipient = _resolve_effect_target(effect, actor=actor, target=target)
     effect_type = str(effect.get("effect_type", "")).strip().lower()
@@ -9012,9 +9288,38 @@ def _apply_effect(
             resources_spent=resources_spent,
             crit=False,
         )
+        final_damage = raw_damage
+        if action is None:
+            save_result = _resolve_damage_effect_save_result(
+                rng=rng,
+                recipient=recipient,
+                effect=effect,
+                action=action,
+                resources_spent=resources_spent,
+            )
+            if save_result is not None:
+                success, save_key, half_on_success = save_result
+                if success:
+                    final_damage = raw_damage // 2 if half_on_success else 0
+                elif save_key == "dex" and _has_trait(recipient, "evasion") and half_on_success:
+                    final_damage = raw_damage // 2
+
+                if success and save_key == "dex":
+                    if _has_trait(recipient, "evasion"):
+                        final_damage = 0
+                    elif (
+                        _has_trait(recipient, "shield master")
+                        and _actor_has_equipped_shield(recipient)
+                        and half_on_success
+                        and _can_take_reaction(recipient)
+                    ):
+                        final_damage = 0
+                        recipient.reaction_available = False
         applied = apply_damage(
-            recipient, raw_damage, damage_type, is_magical=is_magical, source=actor
+            recipient, final_damage, damage_type, is_magical=is_magical, source=actor
         )
+        if effect_context is not None:
+            effect_context["last_damage_applied"] = applied
         if applied > 0:
             if not _force_end_concentration_if_needed(
                 recipient, actors=actors, active_hazards=active_hazards
@@ -9043,7 +9348,19 @@ def _apply_effect(
 
     if effect_type == "heal":
         before = recipient.hp
-        amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
+        raw_amount = str(effect.get("amount", "0")).strip().lower()
+        if raw_amount == "full":
+            amount = max(0, recipient.max_hp - recipient.hp)
+        else:
+            amount = roll_damage(
+                rng,
+                _resolve_runtime_roll_expression(
+                    actor=actor,
+                    expr=effect.get("amount", "0"),
+                    effect_context=effect_context,
+                ),
+                crit=False,
+            )
         _apply_healing(recipient, amount)
         if telemetry is not None:
             telemetry.append(
@@ -9063,7 +9380,15 @@ def _apply_effect(
         return
 
     if effect_type == "temp_hp":
-        amount = roll_damage(rng, str(effect.get("amount", "0")), crit=False)
+        amount = roll_damage(
+            rng,
+            _resolve_runtime_roll_expression(
+                actor=actor,
+                expr=effect.get("amount", "0"),
+                effect_context=effect_context,
+            ),
+            crit=False,
+        )
         before = recipient.temp_hp
         if amount > 0:
             recipient.temp_hp = max(recipient.temp_hp, amount)
@@ -9159,8 +9484,44 @@ def _apply_effect(
         return
 
     if effect_type == "remove_condition":
+        normalized_condition = str(effect.get("condition", "")).strip().lower()
+        if normalized_condition == "exhaustion":
+            raw_levels = effect.get("levels", effect.get("amount", 1))
+            try:
+                remove_levels = max(1, int(raw_levels))
+            except (TypeError, ValueError):
+                remove_levels = 1
+
+            before_level = max(0, int(getattr(recipient, "exhaustion_level", 0)))
+            if before_level <= 0 and "exhaustion" in recipient.conditions:
+                before_level = 1
+            after_level = max(0, before_level - remove_levels)
+            recipient.exhaustion_level = after_level
+            if after_level <= 0:
+                _remove_condition(recipient, "exhaustion")
+            else:
+                recipient.add_manual_condition("exhaustion")
+
+            if telemetry is not None and before_level != after_level:
+                telemetry.append(
+                    {
+                        "telemetry_type": "effect_contribution",
+                        "round": round_number,
+                        "strategy": strategy_name,
+                        "actor_id": actor.actor_id,
+                        "target_id": recipient.actor_id,
+                        "action_name": action_name or (action.name if action else None),
+                        "source_bucket": source_bucket,
+                        "trigger_event": trigger_event,
+                        "effect_type": "remove_condition",
+                        "condition": normalized_condition,
+                        "applied_amount": before_level - after_level,
+                    }
+                )
+            return
+
         before_conditions = set(recipient.conditions)
-        _remove_condition(recipient, str(effect.get("condition", "")))
+        _remove_condition(recipient, normalized_condition)
         if telemetry is not None and recipient.conditions != before_conditions:
             telemetry.append(
                 {
@@ -9207,6 +9568,7 @@ def _apply_effect(
                 zone_spell_level = _spell_level_from_action(action)
                 if zone_spell_level >= 0:
                     zone["spell_level"] = zone_spell_level
+        _hydrate_zone_trigger_effects_with_spell_context(zone, effect=effect, action=action)
         zone["concentration_linked"] = concentration_linked
         zone["concentration_owner_id"] = actor.actor_id if concentration_linked else None
         stack_policy = str(zone.get("stack_policy", "independent"))
@@ -9316,9 +9678,20 @@ def _apply_effect(
             summon_speed = actor.speed_ft
         is_mount = bool(effect.get("mount", False))
 
+        summon_team = actor.team
+        explicit_team = str(effect.get("team", "")).strip().lower()
+        if explicit_team in {"enemy", "hostile"}:
+            summon_team = "enemy" if actor.team != "enemy" else "party"
+        elif explicit_team in {"source", "self", "ally", "allies", "party"}:
+            summon_team = actor.team
+        elif explicit_team == "target":
+            summon_team = recipient.team
+        elif explicit_team:
+            summon_team = explicit_team
+
         summoned_actor = ActorRuntimeState(
             actor_id=summon_id,
-            team=actor.team,
+            team=summon_team,
             name=summon_name,
             max_hp=summon_hp,
             hp=summon_hp,
@@ -9337,7 +9710,7 @@ def _apply_effect(
             position=_to_position3(effect.get("position")) or actor.position,
             requires_command=requires_command,
             companion_owner_id=controller_id or None,
-            allied_controller_id=controller_id or None,
+            allied_controller_id=(controller_id or None) if summon_team == actor.team else None,
             mount_controller_id=(controller_id or None) if is_mount else None,
             movement_modes={"walk": float(summon_speed)},
         )
@@ -9550,6 +9923,7 @@ def _apply_effect(
             strategy_name=strategy_name,
             source_bucket=source_bucket,
             trigger_event=trigger_event,
+            effect_context=effect_context,
         )
         return
 
@@ -9631,7 +10005,9 @@ def _apply_action_effects(
     telemetry: list[dict[str, Any]] | None = None,
     strategy_name: str | None = None,
     once_per_action_used: set[tuple[str, int]] | None = None,
+    effect_context: dict[str, Any] | None = None,
 ) -> None:
+    shared_effect_context = effect_context if effect_context is not None else {}
     for source_bucket, effect_list in (
         ("effects", action.effects),
         ("mechanics", action.mechanics),
@@ -9685,6 +10061,7 @@ def _apply_action_effects(
                 strategy_name=strategy_name,
                 turn_token=turn_token,
                 rule_trace=rule_trace,
+                effect_context=shared_effect_context,
             )
 
 
@@ -11182,6 +11559,32 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
 
 def _spellcasting_ability_mod(actor: ActorRuntimeState) -> int:
     return max(actor.int_mod, actor.wis_mod, actor.cha_mod)
+
+
+_RUNTIME_EXPR_TOKEN_RE = re.compile(r"\bspellcasting(?:_ability)?_mod\b", re.IGNORECASE)
+_LAST_DAMAGE_APPLIED_TOKEN_RE = re.compile(
+    r"\blast_damage_applied(?:_x(?P<multiplier>\d+))?\b", re.IGNORECASE
+)
+
+
+def _resolve_runtime_roll_expression(
+    *,
+    actor: ActorRuntimeState,
+    expr: Any,
+    effect_context: dict[str, Any] | None = None,
+) -> str:
+    text = str(expr or "0").strip()
+    if not text:
+        return "0"
+
+    def _replace_last_damage_applied(match: re.Match[str]) -> str:
+        base = int((effect_context or {}).get("last_damage_applied", 0))
+        multiplier = int(match.group("multiplier") or "1")
+        return str(base * multiplier)
+
+    resolved = _LAST_DAMAGE_APPLIED_TOKEN_RE.sub(_replace_last_damage_applied, text)
+    resolved = _RUNTIME_EXPR_TOKEN_RE.sub(str(_spellcasting_ability_mod(actor)), resolved)
+    return resolved.replace("+-", "-").replace("--", "+")
 
 
 def _effect_internal_tag_int(effect: EffectInstance, *, prefix: str) -> int | None:

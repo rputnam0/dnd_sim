@@ -9,13 +9,15 @@
       "source_condition": "not incapacitated",
       "blocks": [
         "total cover"
-      ]
+      ],
+      "meta_type": "aura"
     },
     {
       "effect": "speed_reduction",
       "target_condition": "frightened",
       "new_speed": 0,
-      "area": "aura"
+      "area": "aura",
+      "meta_type": "speed_modifier"
     },
     {
       "effect": "damage",
@@ -23,7 +25,8 @@
       "damage_formula": "half_paladin_level",
       "trigger": "start_of_turn",
       "target_condition": "frightened",
-      "area": "aura"
+      "area": "aura",
+      "meta_type": "damage_modifier"
     }
   ],
   "source_type": "subclass"

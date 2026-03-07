@@ -3,8 +3,8 @@
   "description": "You can make an Unarmed Strike as a Bonus Action.",
   "mechanics": [
     {
-      "action": "bonus",
-      "grants": "unarmed strike"
+      "meta_type": "bonus_action_attack",
+      "attack": "unarmed_strike"
     }
   ],
   "source_type": "class"

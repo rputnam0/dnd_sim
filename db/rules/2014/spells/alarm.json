@@ -13,6 +13,14 @@
   "damage_type": null,
   "mechanics": [
     {
+      "effect_type": "hazard",
+      "hazard_type": "alarm",
+      "radius_ft": 10,
+      "shape": "cube",
+      "size": 20,
+      "duration_rounds": 4800
+    },
+    {
       "effect_type": "aoe",
       "shape": "cube",
       "size": 20

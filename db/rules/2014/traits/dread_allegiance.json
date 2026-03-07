@@ -18,7 +18,8 @@
           "god": "Myrkul",
           "damage_type": "necrotic"
         }
-      ]
+      ],
+      "meta_type": "choice"
     },
     {
       "effect": "grant_cantrip",
@@ -37,7 +38,8 @@
           "cantrip": "Chill Touch"
         }
       ],
-      "spellcasting_ability": "Intelligence"
+      "spellcasting_ability": "Intelligence",
+      "meta_type": "grant_spell"
     }
   ],
   "source_type": "subclass"

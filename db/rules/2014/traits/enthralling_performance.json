@@ -3,22 +3,16 @@
   "description": "Starting at 3rd level, you can charge your performance with seductive, fey magic. If you perform for at least 1 minute, you can attempt to inspire wonder in your audience by singing, reciting a poem, or dancing. At the end of the performance, choose a number of humanoids within 60 feet of you who watched and listened to all of it, up to a number equal to your Charisma modifier (minimum of one). Each target must succeed on a Wisdom saving throw against your spell save DC or be charmed by you. While charmed in this way, the target idolizes you, speaks glowingly of you to anyone who talks to it, and hinders anyone who opposes you, although it avoids violence unless it was already inclined to fight on your behalf. This effect ends on a target after 1 hour, if it takes any damage, if you attack it, or if it witnesses you attacking or damaging any of its allies. If a target succeeds on its saving throw, the target has no hint that you tried to charm it. Once you use this feature, you can't use it again until you finish a short or long rest.",
   "mechanics": [
     {
-      "effect": "charm",
-      "target": "humanoid",
-      "range": "60 feet",
-      "condition": "watched and listened to the entire performance",
-      "max_targets": "Charisma modifier (minimum 1)",
-      "save": {
-        "ability": "Wisdom",
-        "dc": "spell save DC"
-      },
-      "duration": "1 hour",
-      "early_termination": [
-        "target takes any damage",
-        "you attack the target",
-        "target sees you attack or damage any of its allies"
-      ],
-      "usage": "once per short or long rest"
+      "meta_type": "performance_charm",
+      "activation": "one_minute_performance",
+      "targets": "humanoids_within_60_feet_who_watched_and_listened",
+      "save": "wisdom_vs_spell_save_dc",
+      "duration": "1_hour_or_until_broken"
+    },
+    {
+      "meta_type": "resource",
+      "resource": "enthralling_performance",
+      "recharge": "short_or_long_rest"
     }
   ],
   "source_type": "subclass"

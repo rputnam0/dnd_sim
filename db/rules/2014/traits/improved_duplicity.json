@@ -4,13 +4,15 @@
   "mechanics": [
     {
       "effect": "increase_duplicate_limit",
-      "new_limit": 4
+      "new_limit": 4,
+      "meta_type": "benefit"
     },
     {
       "effect": "duplicate_movement",
       "action_type": "bonus",
       "distance_per_duplicate": 30,
-      "maximum_total_range": 120
+      "maximum_total_range": 120,
+      "meta_type": "movement"
     }
   ],
   "source_type": "subclass"

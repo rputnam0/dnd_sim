@@ -3,15 +3,14 @@
   "description": "You can move twice the normal amount of time (up to 16 hours) each day before being subject to the effect of a forced march (see \"Travel Pace\" in chapter 8 of the Player's Handbook). Additionally, you can automatically find a safe route to land a boat on shore, provided such a route exists.",
   "mechanics": [
     {
-      "effect": "travel_time",
+      "meta_type": "travel_endurance",
       "multiplier": 2,
       "max_hours": 16,
-      "condition": "before forced march"
+      "condition": "before_forced_march"
     },
     {
-      "effect": "boat_landing_navigation",
-      "auto_find_safe_route": true,
-      "requires": "existing safe route"
+      "meta_type": "boat_landing_navigation",
+      "benefit": "automatically_find_a_safe_route_to_land_a_boat_if_one_exists"
     }
   ],
   "source_type": "background"

@@ -17,7 +17,8 @@
         ],
         "appliesTo": "the specific instance of damage taken",
         "duration": "instantaneous"
-      }
+      },
+      "meta_type": "damage_resistance"
     }
   ],
   "source_type": "subclass"

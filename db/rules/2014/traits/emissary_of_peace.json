@@ -12,7 +12,8 @@
         "skill": "Persuasion",
         "ability": "Charisma",
         "bonus": 5
-      }
+      },
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "subclass"

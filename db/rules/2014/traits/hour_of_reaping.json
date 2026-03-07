@@ -16,7 +16,8 @@
       "effect": {
         "condition": "frightened",
         "duration": "until the end of your next turn"
-      }
+      },
+      "meta_type": "save"
     }
   ],
   "source_type": "subclass"

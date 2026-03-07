@@ -6,7 +6,8 @@
       "trigger": "command_beast_companion_attack",
       "effect": "grant_extra_attack",
       "extra_attacks": 2,
-      "allow_multiattack_if_available": true
+      "allow_multiattack_if_available": true,
+      "meta_type": "world_linked_option"
     }
   ],
   "source_type": "subclass"

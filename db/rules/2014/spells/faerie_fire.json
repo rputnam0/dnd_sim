@@ -8,8 +8,17 @@
   "concentration": true,
   "ritual": false,
   "duration_rounds": 10,
-  "description": "Each object in a 20-­‐‑foot cube within range is outlined in blue, green, or violet light (your choice). Any creature in the area when the spell is cast is also outlined in light if it fails a Dexterity saving throw. For the duration, objects and affected creatures shed dim light in a 10-­‐‑foot radius. Any attack roll against an affected creature or object has advantage if the attacker can see it, and the affected creature or object can’t benefit from being invisible. Faithful Hound 4th-­‐‑level conjuration",
-  "save_ability": null,
+  "description": "Each object in a 20-\u00ad\u2010\u2011foot cube within range is outlined in blue, green, or violet light (your choice). Any creature in the area when the spell is cast is also outlined in light if it fails a Dexterity saving throw. For the duration, objects and affected creatures shed dim light in a 10-\u00ad\u2010\u2011foot radius. Any attack roll against an affected creature or object has advantage if the attacker can see it, and the affected creature or object can\u2019t benefit from being invisible. Faithful Hound 4th-\u00ad\u2010\u2011level conjuration",
+  "save_ability": "dex",
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "target",
+      "apply_on": "save_fail",
+      "condition": "faerie_fired",
+      "duration_rounds": 10,
+      "concentration_linked": true
+    }
+  ]
 }

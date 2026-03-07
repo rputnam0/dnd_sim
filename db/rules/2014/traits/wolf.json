@@ -8,7 +8,8 @@
       "action": "melee_attack",
       "condition": "raging",
       "range": "5 feet",
-      "filter": "hostile_creature"
+      "filter": "hostile_creature",
+      "meta_type": "benefit"
     }
   ],
   "source_type": "subclass"

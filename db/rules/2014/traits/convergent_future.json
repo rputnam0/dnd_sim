@@ -7,7 +7,8 @@
       "trigger": "you or a creature you can see within 60 feet makes an attack roll, ability check, or saving throw",
       "effect": "replace the die roll with either the minimum needed to succeed or one less than that number (choose)",
       "exhaustionGain": 1,
-      "exhaustionRemoval": "requires a long rest"
+      "exhaustionRemoval": "requires a long rest",
+      "meta_type": "reaction"
     }
   ],
   "source_type": "subclass"

@@ -17,7 +17,8 @@
         },
         "amount": "fighter level",
         "unit": "hit points"
-      }
+      },
+      "meta_type": "ally_healing_support"
     }
   ],
   "source_type": "subclass"

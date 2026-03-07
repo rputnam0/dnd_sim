@@ -6,7 +6,8 @@
       "effect": "spellbook_copy_cost_reduction",
       "school": "Transmutation",
       "cost_multiplier": 0.5,
-      "time_multiplier": 0.5
+      "time_multiplier": 0.5,
+      "meta_type": "cost_modifier"
     }
   ],
   "source_type": "subclass"

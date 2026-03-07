@@ -3,16 +3,12 @@
   "description": "When you or a creature within 30 feet of you misses with an attack roll, you can expend one use of your Channel Divinity and give that roll a +10 bonus, potentially causing it to hit. When you use this feature to benefit another creature's attack roll, you must take a Reaction to do so.",
   "mechanics": [
     {
-      "action": "add_attack_bonus",
+      "meta_type": "attack_roll_bonus",
+      "trigger": "miss_attack_roll_within_30ft",
       "bonus": 10,
-      "trigger": "miss",
-      "target": "self_or_ally",
-      "range": 30,
-      "resource": {
-        "type": "channel_divinity",
-        "cost": 1
-      },
-      "requires_reaction": true
+      "resource": "channel_divinity",
+      "range_ft": 30,
+      "reaction_when_targeting_other_creature": true
     }
   ],
   "source_type": "subclass"

@@ -6,7 +6,8 @@
       "effect": "additional_healing",
       "formula": "2 + spell_level",
       "trigger": "spell_healing",
-      "condition": "spell_level >= 1"
+      "condition": "spell_level >= 1",
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

@@ -3,11 +3,12 @@
   "description": "At 6th level, when you deal lightning damage to a Large or smaller creature, you can also push it up to 10 feet away from you.",
   "mechanics": [
     {
-      "effect": "push",
-      "distance": 10,
-      "target": "creature",
-      "size_limit": "Large or smaller",
-      "trigger": "deal lightning damage"
+      "effect_type": "forced_movement",
+      "trigger": "deal_lightning_damage_to_large_or_smaller_creature",
+      "target": "damaged_creature",
+      "distance_ft": 10,
+      "direction": "away_from_source",
+      "size_limit": "large"
     }
   ],
   "source_type": "subclass"

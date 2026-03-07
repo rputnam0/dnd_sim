@@ -9,7 +9,8 @@
       "duration": "1 minute",
       "limitations": [
         "object cannot deal damage or directly harm anyone"
-      ]
+      ],
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"

@@ -3,11 +3,11 @@
   "description": "You know the Minor Illusion spell. Wisdom is your spellcasting ability for it.",
   "mechanics": [
     {
-      "grantSpell": {
+      "grant_cantrip": {
         "name": "Minor Illusion",
-        "level": 0,
-        "castingAbility": "wisdom"
-      }
+        "ability": "Wisdom"
+      },
+      "meta_type": "grant_cantrip"
     }
   ],
   "source_type": "subclass"

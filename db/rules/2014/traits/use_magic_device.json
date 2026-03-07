@@ -9,7 +9,8 @@
         "race",
         "level"
       ],
-      "item_type": "magic_item"
+      "item_type": "magic_item",
+      "meta_type": "benefit"
     }
   ],
   "source_type": "subclass"

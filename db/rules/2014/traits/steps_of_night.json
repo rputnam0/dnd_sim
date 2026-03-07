@@ -7,12 +7,14 @@
       "condition": "dim_light_or_darkness",
       "effect": "grant_flight",
       "speed": "walking_speed",
-      "duration": "1 minute"
+      "duration": "1 minute",
+      "meta_type": "grant_flying_speed"
     },
     {
       "resource": "uses",
       "max_uses": "proficiency_bonus",
-      "reset": "long_rest"
+      "reset": "long_rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "subclass"

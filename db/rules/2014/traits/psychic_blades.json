@@ -25,7 +25,8 @@
             "dice": "8d6"
           }
         ]
-      }
+      },
+      "meta_type": "psychic_blades_extra_damage_support"
     }
   ],
   "source_type": "subclass"

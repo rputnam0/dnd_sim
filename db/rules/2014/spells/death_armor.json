@@ -13,12 +13,11 @@
   "damage_type": "necrotic",
   "mechanics": [
     {
-      "effect_type": "note",
-      "text": "Target gains advantage on death saving throws"
-    },
-    {
-      "effect_type": "note",
-      "text": "When a creature within 5 feet hits the target with a melee attack, the attacker takes 2d4 necrotic damage (once per turn)"
+      "effect_type": "apply_condition",
+      "target": "target",
+      "condition": "death_armored",
+      "duration_rounds": 600,
+      "effect_id": "death_armor"
     }
   ]
 }

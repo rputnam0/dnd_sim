@@ -11,5 +11,12 @@
   "description": "You touch a living creature that has 0 hit points. The creature becomes stable. This spell has no effect on undead or constructs.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "remove_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "dying"
+    }
+  ]
 }

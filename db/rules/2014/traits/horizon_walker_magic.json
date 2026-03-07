@@ -6,31 +6,36 @@
       "effect": "grant_spell",
       "spell": "protection from evil and good",
       "required_level": 3,
-      "source": "Horizon Walker Magic"
+      "source": "Horizon Walker Magic",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "spell": "misty step",
       "required_level": 5,
-      "source": "Horizon Walker Magic"
+      "source": "Horizon Walker Magic",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "spell": "haste",
       "required_level": 9,
-      "source": "Horizon Walker Magic"
+      "source": "Horizon Walker Magic",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "spell": "banishment",
       "required_level": 13,
-      "source": "Horizon Walker Magic"
+      "source": "Horizon Walker Magic",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "grant_spell",
       "spell": "teleportation circle",
       "required_level": 17,
-      "source": "Horizon Walker Magic"
+      "source": "Horizon Walker Magic",
+      "meta_type": "grant_spell"
     }
   ],
   "source_type": "subclass"

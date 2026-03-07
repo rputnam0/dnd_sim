@@ -13,14 +13,19 @@
   "damage_type": "cold",
   "mechanics": [
     {
-      "effect_type": "grant_temporary_hit_points",
+      "effect_type": "temp_hp",
       "amount": 5,
-      "duration_rounds": 600
+      "duration_rounds": 600,
+      "target": "source"
     },
     {
-      "effect_type": "damage_on_melee_hit",
+      "effect_type": "apply_condition",
+      "condition": "armor_of_agathys_retaliation",
+      "duration_rounds": 600,
+      "target": "source",
       "damage": 5,
-      "damage_type": "cold"
+      "damage_type": "cold",
+      "trigger": "melee_hit_while_temp_hp_remains"
     }
   ]
 }

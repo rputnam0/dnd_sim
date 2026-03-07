@@ -5,7 +5,8 @@
     {
       "effect": "copy_spell_cost",
       "school": "Enchantment",
-      "multiplier": 0.5
+      "multiplier": 0.5,
+      "meta_type": "cost_modifier"
     }
   ],
   "source_type": "subclass"

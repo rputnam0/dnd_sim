@@ -8,7 +8,8 @@
       "range": "30 ft emanation centered on you",
       "targetLimit": "Charisma modifier (minimum 1) allies",
       "healing": "1d4 + fighter level hit points per ally",
-      "recharge": "once per short or long rest"
+      "recharge": "once per short or long rest",
+      "meta_type": "healing"
     }
   ],
   "source_type": "subclass"

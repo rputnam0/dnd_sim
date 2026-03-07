@@ -5,7 +5,8 @@
     {
       "action": "reaction",
       "trigger": "when a creature cursed by your hexblade's curse hits you with an attack roll",
-      "effect": "roll a d6; on a result of 4, 5, or 6 the attack misses you"
+      "effect": "roll a d6; on a result of 4, 5, or 6 the attack misses you",
+      "meta_type": "reaction_attack_negation_support"
     }
   ],
   "source_type": "subclass"

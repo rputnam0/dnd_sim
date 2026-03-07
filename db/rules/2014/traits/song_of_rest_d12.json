@@ -4,7 +4,8 @@
   "mechanics": [
     {
       "effect": "song_of_rest_healing_increase",
-      "dice": "1d12"
+      "dice": "1d12",
+      "meta_type": "healing"
     }
   ],
   "source_type": "class"

@@ -5,7 +5,8 @@
     {
       "trigger": "action_cast_cantrip",
       "effect": "bonus_action_weapon_attack",
-      "count": 1
+      "count": 1,
+      "meta_type": "bonus_action_attack"
     }
   ],
   "source_type": "subclass"

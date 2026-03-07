@@ -9,7 +9,8 @@
         "cleric",
         "sorcerer"
       ],
-      "restriction": "must obey normal spell selection rules"
+      "restriction": "must obey normal spell selection rules",
+      "meta_type": "grant_spell"
     },
     {
       "effect": "extra_spell_affinity",
@@ -21,7 +22,8 @@
         "Neutrality": "protection from evil and good"
       },
       "countsAgainstKnown": false,
-      "replaceable_from": "cleric"
+      "replaceable_from": "cleric",
+      "meta_type": "grant_spell"
     }
   ],
   "source_type": "subclass"

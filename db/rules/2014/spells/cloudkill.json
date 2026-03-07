@@ -10,6 +10,41 @@
   "duration_rounds": 100,
   "description": "You create a 20-­‐‑foot-­‐‑radius sphere of poisonous, yellow-­‐‑green fog centered on a point you choose within range. The fog spreads around corners. It lasts for the duration or until strong wind disperses the fog, ending the spell. Its area is heavily obscured. When a creature enters the spell’s area for the first time on a turn or starts its turn there, that creature must make a Constitution saving throw. The creature takes 5d8 poison damage on a failed save, or half as much damage on a successful one. Creatures are affected even if they hold their breath or don’t need to breathe. The fog moves 10 feet away from you at the start of each of your turns, rolling along the surface of the ground. The vapors, being heavier than air, sink to the lowest level of the land, even pouring down openings. At Higher Levels. When you cast this spell using a spell slot of 6th level or higher, the damage increases by 1d8 for each slot level above 5th. Color Spray 1st-­‐‑level illusion",
   "save_ability": "con",
-  "damage_type": null,
-  "mechanics": []
+  "damage_type": "poison",
+  "mechanics": [
+    {
+      "effect_type": "hazard",
+      "hazard_type": "cloudkill",
+      "radius_ft": 20,
+      "duration_rounds": 100,
+      "concentration_linked": true,
+      "obscures_vision": true,
+      "moves_away_from_source_ft": 10,
+      "settles_to_low_ground": true,
+      "dispersed_by": "strong_wind",
+      "on_enter": [
+        {
+          "effect_type": "damage",
+          "damage": "5d8",
+          "damage_type": "poison",
+          "save_ability": "con",
+          "half_on_success": true
+        }
+      ],
+      "on_start_turn": [
+        {
+          "effect_type": "damage",
+          "damage": "5d8",
+          "damage_type": "poison",
+          "save_ability": "con",
+          "half_on_success": true
+        }
+      ]
+    },
+    {
+      "effect_type": "aoe",
+      "shape": "sphere",
+      "radius": 20
+    }
+  ]
 }

@@ -23,7 +23,8 @@
         "target takes any damage",
         "source becomes Incapacitated",
         "source dies"
-      ]
+      ],
+      "meta_type": "channel_divinity"
     }
   ],
   "source_type": "class"

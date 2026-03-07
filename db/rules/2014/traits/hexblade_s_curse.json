@@ -12,26 +12,31 @@
         "target dies",
         "user dies",
         "incapacitated"
-      ]
+      ],
+      "meta_type": "action"
     },
     {
       "effect": "damage_bonus",
       "value": "proficiency_bonus",
-      "condition": "target cursed"
+      "condition": "target cursed",
+      "meta_type": "damage_modifier"
     },
     {
       "effect": "critical_range",
       "range": "19-20",
-      "condition": "target cursed"
+      "condition": "target cursed",
+      "meta_type": "benefit"
     },
     {
       "effect": "heal_on_target_death",
       "value": "warlock_level + charisma_modifier",
       "minimum": 1,
-      "condition": "target cursed and dies"
+      "condition": "target cursed and dies",
+      "meta_type": "healing"
     },
     {
-      "recharge": "short_or_long_rest"
+      "recharge": "short_or_long_rest",
+      "meta_type": "recharge"
     }
   ],
   "source_type": "subclass"

@@ -3,13 +3,12 @@
   "description": "You have advantage on saving throws you make to avoid or end the poisoned condition on yourself. You also have resistance to poison damage.",
   "mechanics": [
     {
-      "effect": "advantage",
-      "target": "saving_throw",
+      "meta_type": "saving_throw_advantage",
       "condition": "poisoned",
-      "note": "applies to saves to avoid or end the poisoned condition"
+      "applies_to": "saving_throws_to_avoid_or_end_condition_on_self"
     },
     {
-      "effect": "resistance",
+      "meta_type": "damage_resistance",
       "damage_type": "poison"
     }
   ],

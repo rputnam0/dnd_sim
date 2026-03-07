@@ -1,6 +1,11 @@
 {
   "name": "Oath Spells",
-  "description": "You gain oath spells at the paladin levels listed. Oath of the Ancients Spells: 3rd – ensnaring strike, speak with animals; 5th – moonbeam, misty step; 9th – plant growth, protection from energy; 13th – ice storm, stoneskin; 17th – commune with nature, tree stride.",
-  "mechanics": [],
+  "description": "You gain oath spells at the paladin levels listed. Oath of the Ancients Spells: 3rd \u2013 ensnaring strike, speak with animals; 5th \u2013 moonbeam, misty step; 9th \u2013 plant growth, protection from energy; 13th \u2013 ice storm, stoneskin; 17th \u2013 commune with nature, tree stride.",
+  "mechanics": [
+    {
+      "effect": "feature_progression",
+      "meta_type": "feature_progression"
+    }
+  ],
   "source_type": "subclass"
 }

@@ -8,7 +8,8 @@
       "target": "self_or_willing_creature",
       "range": "touch",
       "uses": "charisma_modifier",
-      "reset": "long_rest"
+      "reset": "long_rest",
+      "meta_type": "condition"
     }
   ],
   "source_type": "class"

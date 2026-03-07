@@ -11,7 +11,8 @@
       "damageImmunities": [
         "poison",
         "psychic"
-      ]
+      ],
+      "meta_type": "world_linked_option"
     },
     {
       "action": "replaceVessel",
@@ -20,11 +21,13 @@
         "short rest",
         "long rest"
       ],
-      "description": "Perform a ceremony to receive a replacement vessel from your patron; the previous vessel is destroyed if it still exists."
+      "description": "Perform a ceremony to receive a replacement vessel from your patron; the previous vessel is destroyed if it still exists.",
+      "meta_type": "world_linked_option"
     },
     {
       "event": "death",
-      "effect": "vessel vanishes in a flare of elemental power"
+      "effect": "vessel vanishes in a flare of elemental power",
+      "meta_type": "world_linked_option"
     }
   ],
   "source_type": "subclass"

@@ -8,8 +8,21 @@
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "You touch a creature that has been dead for no longer than 200 years and that died for any reason except old age. If the creature’s soul is free and willing, the creature is restored to life with all its hit points. This spell closes all wounds, neutralizes any poison, cures all diseases, and lifts any curses affecting the creature when it died. The spell replaces damaged or missing organs and limbs. The spell can even provide a new body if the original no longer exists, in which case you must speak the creature’s name. The creature then appears in an unoccupied space you choose within 10 feet of you. True Seeing 6th-­‐‑level divination",
+  "description": "You touch a creature that has been dead for no longer than 200 years and that died for any reason except old age. If the creature\u2019s soul is free and willing, the creature is restored to life with all its hit points. This spell closes all wounds, neutralizes any poison, cures all diseases, and lifts any curses affecting the creature when it died. The spell replaces damaged or missing organs and limbs. The spell can even provide a new body if the original no longer exists, in which case you must speak the creature\u2019s name. The creature then appears in an unoccupied space you choose within 10 feet of you. True Seeing 6th-\u00ad\u2010\u2011level divination",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "heal",
+      "target": "target",
+      "apply_on": "always",
+      "amount": "1"
+    },
+    {
+      "effect_type": "remove_condition",
+      "target": "target",
+      "apply_on": "always",
+      "condition": "dead"
+    }
+  ]
 }

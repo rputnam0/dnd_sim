@@ -26,7 +26,8 @@
         "allows_movement": true,
         "movement": "speed",
         "no_opportunity_attack": true
-      }
+      },
+      "meta_type": "action"
     }
   ],
   "source_type": "subclass"
