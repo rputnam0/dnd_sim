@@ -15823,20 +15823,6 @@
       "support_state": "supported"
     },
     {
-      "content_id": "spell:nystuls_magic_aura",
-      "content_type": "spell",
-      "runtime_hook_family": "effect",
-      "states": {
-        "blocked": false,
-        "cataloged": true,
-        "executable": true,
-        "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
-      },
-      "support_state": "supported"
-    },
-    {
       "content_id": "spell:otiluke_s_resilient_sphere",
       "content_type": "spell",
       "runtime_hook_family": "effect",

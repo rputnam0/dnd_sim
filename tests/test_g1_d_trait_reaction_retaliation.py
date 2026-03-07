@@ -53,7 +53,7 @@ def test_g1_d_registry_rows_match_owned_batch() -> None:
                 statuses.add(str(row.get("status", "")).strip())
 
     assert seen == G1_D_IDS
-    assert statuses <= {"in_progress", "pr_open"}
+    assert statuses <= {"in_progress", "pr_open", "merged"}
 
 
 def test_g1_d_owned_trait_records_are_supported() -> None:

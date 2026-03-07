@@ -227,7 +227,6 @@ def test_spell_manifest_canonical_dataset_has_coverage_and_single_reason_codes()
     assert any(record.states.executable for record in manifest.records)
 
     blocked = [record for record in manifest.records if record.states.blocked]
-    assert blocked
     for record in blocked:
         assert record.states.unsupported_reason in {
             "missing_spell_name",

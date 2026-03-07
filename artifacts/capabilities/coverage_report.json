@@ -39,11 +39,11 @@
     {
       "blocked_records": 0,
       "content_type": "spell",
-      "executable_records": 594,
-      "schema_valid_records": 594,
-      "supported_records": 594,
-      "tested_records": 594,
-      "total_records": 594
+      "executable_records": 593,
+      "schema_valid_records": 593,
+      "supported_records": 593,
+      "tested_records": 593,
+      "total_records": 593
     },
     {
       "blocked_records": 0,
@@ -15864,20 +15864,6 @@
     },
     {
       "content_id": "spell:nystul_s_magic_aura",
-      "content_type": "spell",
-      "runtime_hook_family": "effect",
-      "states": {
-        "blocked": false,
-        "cataloged": true,
-        "executable": true,
-        "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
-      },
-      "support_state": "supported"
-    },
-    {
-      "content_id": "spell:nystuls_magic_aura",
       "content_type": "spell",
       "runtime_hook_family": "effect",
       "states": {
@@ -35438,11 +35424,11 @@
   "report_version": "1.0",
   "summary": {
     "blocked_records": 0,
-    "executable_records": 2527,
-    "schema_valid_records": 2527,
-    "supported_records": 2527,
-    "tested_records": 2527,
-    "total_records": 2527
+    "executable_records": 2526,
+    "schema_valid_records": 2526,
+    "supported_records": 2526,
+    "tested_records": 2526,
+    "total_records": 2526
   },
   "unsupported_reason_coverage": []
 }

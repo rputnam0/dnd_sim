@@ -209,4 +209,4 @@ def test_w6_par_05i2_checkpoint_top_level_save_ability_matches_spell_mechanics()
 
 def test_w6_par_05i2_review_checklist_stays_open_while_pr_is_open() -> None:
     checklist = REVIEW_CHECKLIST_PATH.read_text(encoding="utf-8")
-    assert "- [ ] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (PR #227 open)" in checklist
+    assert "- [x] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (merged via #227)" in checklist

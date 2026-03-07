@@ -108,7 +108,7 @@ def test_w6_par_05j2_owned_spell_blockers_shrink_after_supported_slices() -> Non
     }
 
     assert SUPPORTED_SLICE_IDS.isdisjoint(blocked_owned)
-    assert 0 < len(blocked_owned) < len(owned_ids)
+    assert blocked_owned == set()
 
 
 def test_w6_par_05j2_supported_spell_files_use_canonical_rows() -> None:

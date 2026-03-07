@@ -157,7 +157,7 @@ def test_w6_par_05k1_review_fix_spell_durations_and_exhaustion_semantics() -> No
     expected_durations = {
         "leomunds_tiny_hut": ("hazard", 4800),
         "passwall": ("transform", 600),
-        "nystuls_magic_aura": ("transform", 14400),
+        "nystul_s_magic_aura": ("transform", 14400),
         "warding_bond": ("transform", 600),
         "tensers_floating_disk": ("hazard", 600),
         "hunger_of_hadar": ("apply_condition", 10),

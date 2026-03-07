@@ -1146,7 +1146,7 @@ W6-PAR-05K1,spell:locate_creature,unsupported_effect_type,spell_effect_normaliza
 W6-PAR-05K1,spell:magic_circle,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
 W6-PAR-05K1,spell:magic_jar,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
 W6-PAR-05K1,spell:mordenkainens_faithful_hound,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
-W6-PAR-05K1,spell:nystuls_magic_aura,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
+W6-PAR-05K1,spell:nystul_s_magic_aura,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
 W6-PAR-05K1,spell:passwall,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
 W6-PAR-05K1,spell:phantasmal_force,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task
 W6-PAR-05K1,spell:plane_shift,unsupported_effect_type,spell_effect_normalization,hotspot,normalize onto existing canonical effect families before residual support task

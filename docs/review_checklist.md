@@ -145,26 +145,26 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-05I Umbrella row for spell mechanics damage/support leaves
 - [x] W6-PAR-05I1 Spell damage/heal/condition mechanics leaf
 - [x] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (merged via #227)
-- [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves (live batches J1-B through J1-D and J2-B through J2-F remain)
-- [ ] W6-PAR-05J1 Spell summon/command/control mechanics leaf (29 live blockers batched as J1-B through J1-D)
+- [x] W6-PAR-05J Umbrella row for summon/control/utility spell leaves
+- [x] W6-PAR-05J1 Spell summon/command/control mechanics leaf
 - [x] J1-A First 10-item summon/command/control spell batch (merged)
-- [ ] J1-B Second 10-item summon/command/control spell batch
-- [ ] J1-C Third 10-item summon/command/control spell batch
-- [ ] J1-D Final 9-item summon/command/control spell batch
-- [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf (50 live blockers batched as J2-B through J2-F)
+- [x] J1-B Second 10-item summon/command/control spell batch
+- [x] J1-C Third 10-item summon/command/control spell batch
+- [x] J1-D Final 9-item summon/command/control spell batch
+- [x] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf
 - [x] J2-A First 10-item hazard/zone/utility spell batch (merged)
-- [ ] J2-B Second 10-item hazard/zone/utility spell batch
-- [ ] J2-C Third 10-item hazard/zone/utility spell batch
-- [ ] J2-D Fourth 10-item hazard/zone/utility spell batch (in progress)
-- [ ] J2-E Fifth 10-item hazard/zone/utility spell batch
-- [ ] J2-F Final 10-item hazard/zone/utility spell batch
+- [x] J2-B Second 10-item hazard/zone/utility spell batch
+- [x] J2-C Third 10-item hazard/zone/utility spell batch
+- [x] J2-D Fourth 10-item hazard/zone/utility spell batch
+- [x] J2-E Fifth 10-item hazard/zone/utility spell batch
+- [x] J2-F Final 10-item hazard/zone/utility spell batch
 - [x] W6-PAR-05K Umbrella row for spell effect-family normalization leaves
 - [x] W6-PAR-05K1 Normalize blocked unsupported spell effect payloads to existing canonical families
 - [x] W6-PAR-05K2 Add residual canonical effect-family support after normalization pass
 - [x] W6-PAR-05L Umbrella row for spell schema repair leaves
 - [x] W6-PAR-05L1 Repair invalid mechanics schema blockers
 - [x] W6-PAR-05L2 Convert non-executable mechanics blockers into executable canonical payloads
-- [ ] W6-PAR-05M Final strict closeout and parity integration merge
+- [x] W6-PAR-05M Final strict closeout and parity integration merge
 - [x] W6-GATE-01 Sync docs/backlog/checklist truth and maintenance waivers for remediation state (merged via #172)
 - [x] W6-GATE-02 Final green gate and closeout pass (merged via #183)
 
@@ -176,5 +176,5 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] Capability manifest gate passes.
 - [x] Campaign/world/combat integration gate passes.
 - [x] Agent-only maintenance gate passes.
-- [ ] Strict FIN-02 parity gate (`verify_completion_capabilities.py --strict`) passes with blocked=0.
+- [x] Strict FIN-02 parity gate (`verify_completion_capabilities.py --strict`) passes with blocked=0.
 - [x] `docs/program/status_board.md` and `docs/program/backlog.csv` are synchronized for the active Wave 6 remediation state.

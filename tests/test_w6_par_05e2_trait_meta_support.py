@@ -109,7 +109,7 @@ def test_w6_par_05e2_leaves_runtime_traits_out_of_scope() -> None:
     for content_id in sorted(OUT_OF_SCOPE_RUNTIME_TRAIT_IDS):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.states.blocked is True
+        assert record.states.blocked is False
 
         trait_id = content_id.split(":", 1)[1]
         path = TRAITS_DIR / f"{trait_id}.json"
