@@ -145,16 +145,16 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-05I Umbrella row for spell mechanics damage/support leaves
 - [x] W6-PAR-05I1 Spell damage/heal/condition mechanics leaf
 - [x] W6-PAR-05I2 Spell buff/debuff/mark mechanics leaf (merged via #227)
-- [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves (live batches J1-B through J1-D and J2-B through J2-F remain)
+- [ ] W6-PAR-05J Umbrella row for summon/control/utility spell leaves (live batches J1-C through J1-D and J2-C through J2-F remain)
 - [ ] W6-PAR-05J1 Spell summon/command/control mechanics leaf (29 live blockers batched as J1-B through J1-D)
 - [x] J1-A First 10-item summon/command/control spell batch (merged)
 - [ ] J1-B Second 10-item summon/command/control spell batch
 - [ ] J1-C Third 10-item summon/command/control spell batch
 - [ ] J1-D Final 9-item summon/command/control spell batch
-- [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf (50 live blockers batched as J2-B through J2-F)
+- [ ] W6-PAR-05J2 Spell hazard/zone/utility mechanics leaf (active and remaining batches J2-C through J2-F)
 - [x] J2-A First 10-item hazard/zone/utility spell batch (merged)
-- [ ] J2-B Second 10-item hazard/zone/utility spell batch
-- [ ] J2-C Third 10-item hazard/zone/utility spell batch
+- [x] J2-B Second 10-item hazard/zone/utility spell batch (merged via #236)
+- [ ] J2-C Third 10-item hazard/zone/utility spell batch (PR #240)
 - [ ] J2-D Fourth 10-item hazard/zone/utility spell batch
 - [ ] J2-E Fifth 10-item hazard/zone/utility spell batch
 - [ ] J2-F Final 10-item hazard/zone/utility spell batch
