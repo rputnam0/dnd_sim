@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-06
+Last updated: 2026-03-07
 Canonical source: `docs/program/README.md`
 
 This file is the single canonical planning entrypoint for the DnD Sim completion program.
@@ -41,8 +41,8 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 | `docs/program/risk_register.md` | canonical | Program risk tracking. |
 | `docs/program/labels_and_milestones.md` | canonical | Labeling and milestone mapping. |
 | `docs/program/status_board.md` | canonical | Human-readable status dashboard. |
-| `docs/program/parity_leaf_registry.csv` | canonical | Exact record-to-leaf ownership map for remaining strict blockers. |
-| `docs/program/parity_batch_registry.csv` | canonical | Exact record-to-batch execution map for remaining strict blockers. |
+| `docs/program/parity_leaf_registry.csv` | canonical | Exact record-to-leaf ownership map used during strict parity closeout. |
+| `docs/program/parity_batch_registry.csv` | canonical | Exact record-to-batch execution map used during strict parity closeout. |
 | `docs/program/completion_task_cards.md` | canonical | Human-readable task expansion of backlog. |
 | `docs/program/capability_report.md` | canonical | Capability report output surface. |
 
@@ -57,12 +57,11 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 
 ## Current Strict Parity Snapshot
 
-- Live baseline on `codex/int/w6-parity-closeout`: `107` blocked shipped-2014 records
-- Remaining blocker families: `79` spell `missing_runtime_mechanics`, `28` trait `missing_runtime_hook_family`
-- Active implementation lanes at this sync point: `G1-A`, `G1-C`, `G1-D`, `J1-B`, and `J2-B`
-- Recently cleared lanes now absent from the live blocked set: `J1-A`, `J2-A`, and `G1-B`
-- No open PRs targeted `codex/int/w6-parity-closeout` when this snapshot was recorded
-- Use `docs/program/status_board.md` and `docs/program/parity_batch_registry.csv` for the current lane-by-lane execution picture
+- Strict shipped-2014 parity is complete on `main` with `0` blocked records.
+- Current capability report totals are `2526/2526` schema-valid, executable, tested, and supported records.
+- Wave 6 parity closeout was promoted from `codex/int/w6-parity-closeout` to `main` via [#244](https://github.com/rputnam0/dnd_sim/pull/244).
+- `docs/program/parity_leaf_registry.csv` and `docs/program/parity_batch_registry.csv` remain canonical historical execution maps for the closeout wave.
+- Use `docs/program/capability_report.md` and `docs/program/status_board.md` for current truth.
 
 Ownership and metadata-header requirements for this same live planning surface are defined in
 `docs/program/doc_governance.md`.
