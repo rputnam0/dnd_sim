@@ -11,5 +11,19 @@
   "description": "You create a shadowy door on a flat solid surface that you can see within range. The door is large enough to allow Medium creatures to pass through unhindered. When opened, the door leads to a demiplane that appears to be an empty room 30 feet in each dimension, made of wood or stone. When the spell ends, the door disappears, and any creatures or objects inside the demiplane remain trapped there, as the door also disappears from the other side. Each time you cast this spell, you can create a new demiplane, or have the shadowy door connect to a demiplane you created with a previous casting of this spell. Additionally, if you know the nature and contents of a demiplane created by a casting of this spell by another creature, you can have the shadowy door connect to its demiplane instead. Detect Evil and Good 1st-­‐‑level divination",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "transform",
+      "target": "source",
+      "condition": "demiplane_access_open",
+      "duration_rounds": 600,
+      "requires_flat_solid_surface": true,
+      "door_width_ft": 5,
+      "door_height_ft": 10,
+      "room_size_ft": 30,
+      "traps_contents_on_expire": true,
+      "can_link_existing_demiplane": true,
+      "can_link_known_foreign_demiplane": true
+    }
+  ]
 }
