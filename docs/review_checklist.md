@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: integration-review  
-Last updated: 2026-03-06  
+Last updated: 2026-03-07  
 Canonical source: `docs/program/status_board.md`
 
 This checklist is the program closeout gate. Do not mark the backend complete until every item is checked in the repository.
@@ -130,15 +130,15 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-PAR-05F1 Trait passive defense/support leaf (closed via continuation PRs #221 and #225)
 - [x] W6-PAR-05F1B Trait passive defense/support finalization continuation (merged via #225)
 - [x] W6-PAR-05F2 Trait passive offense/mobility leaf
-- [ ] W6-PAR-05G Umbrella row for reaction/resource trait leaves (live batches G1-A, G1-C, and G1-D remain)
-- [ ] W6-PAR-05G1 Trait reaction/retaliation leaf (28 live blockers batched as G1-A, G1-C, and G1-D)
+- [x] W6-PAR-05G Umbrella row for reaction/resource trait leaves
+- [x] W6-PAR-05G1 Trait reaction/retaliation leaf (closed through G1-A/G1-B/G1-C/G1-D)
 - [x] W6-PAR-05G1C Trait reaction/support follow-up slice (merged via #224)
 - [x] W6-PAR-05G1D Trait survival/recovery support continuation leaf (merged via #226)
 - [x] W6-PAR-05G2 Trait resource-change/turn-gated leaf
-- [ ] G1-A First 10-item trait reaction/retaliation batch
+- [x] G1-A First 10-item trait reaction/retaliation batch (merged via #234)
 - [x] G1-B Second 10-item trait reaction/retaliation batch (merged via #231)
-- [ ] G1-C Third 10-item trait reaction/retaliation batch
-- [ ] G1-D Final 8-item trait reaction/retaliation batch (PR #233)
+- [x] G1-C Third 10-item trait reaction/retaliation batch (merged via #237)
+- [x] G1-D Final 8-item trait reaction/retaliation batch (merged via #233)
 - [x] W6-PAR-05H Umbrella row for summon/transform trait leaves
 - [x] W6-PAR-05H1 Trait summon/companion/mount leaf
 - [x] W6-PAR-05H2 Trait transform/world-linked leaf
