@@ -3,10 +3,11 @@
   "description": "Immediately after the attack, you move up to half your Speed without provoking Opportunity Attacks.",
   "mechanics": [
     {
-      "trigger": "after attack",
-      "action": "move",
-      "distance": "half speed",
-      "no_opportunity_attack": true,
+      "meta_type": "movement",
+      "trigger": "after_attack",
+      "activation": "immediate",
+      "distance": "half_speed",
+      "no_opportunity_attacks": true,
       "resource_cost": "1d6"
     }
   ],

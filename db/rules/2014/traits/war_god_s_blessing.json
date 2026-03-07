@@ -3,30 +3,34 @@
   "description": "You can expend a use of your Channel Divinity to cast Shield of Faith or Spiritual Weapon rather than expending a spell slot. When you cast either spell in this way, the spell doesn't require Concentration. Instead the spell lasts for 1 minute, but it ends early if you cast that spell again, have the Incapacitated condition, or die.",
   "mechanics": [
     {
-      "action": "channelDivinity",
-      "allowsCasting": [
-        {
-          "spell": "Shield of Faith",
-          "requiresSpellSlot": false,
-          "requiresConcentration": false,
-          "duration": "1 minute",
-          "endsEarlyIf": [
-            "cast Shield of Faith again",
-            "incapacitated",
-            "death"
-          ]
-        },
-        {
-          "spell": "Spiritual Weapon",
-          "requiresSpellSlot": false,
-          "requiresConcentration": false,
-          "duration": "1 minute",
-          "endsEarlyIf": [
-            "cast Spiritual Weapon again",
-            "incapacitated",
-            "death"
-          ]
-        }
+      "meta_type": "resource_spend",
+      "resource": "channel_divinity",
+      "activation": "special_cast"
+    },
+    {
+      "meta_type": "spell_override",
+      "spell": "shield_of_faith",
+      "resource": "channel_divinity",
+      "expends_spell_slot": false,
+      "concentration": false,
+      "duration_rounds": 10,
+      "ends_early": [
+        "cast_shield_of_faith_again",
+        "incapacitated",
+        "dead"
+      ]
+    },
+    {
+      "meta_type": "spell_override",
+      "spell": "spiritual_weapon",
+      "resource": "channel_divinity",
+      "expends_spell_slot": false,
+      "concentration": false,
+      "duration_rounds": 10,
+      "ends_early": [
+        "cast_spiritual_weapon_again",
+        "incapacitated",
+        "dead"
       ]
     }
   ],

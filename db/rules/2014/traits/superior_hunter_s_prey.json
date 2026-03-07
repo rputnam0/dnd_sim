@@ -3,11 +3,15 @@
   "description": "Once per turn when you deal damage to a creature marked by your Hunter's Mark, you can also deal that spell's extra damage to a different creature that you can see within 30 feet of the first creature.",
   "mechanics": [
     {
-      "trigger": "when you deal damage to a creature marked by your hunter's mark",
-      "frequency": "once per turn",
-      "effect": "deal the extra damage of Hunter's Mark",
-      "target": "a different creature you can see",
-      "range": "30 feet from the creature you originally damaged"
+      "effect_type": "extra_damage",
+      "meta_type": "retargeted_mark_damage",
+      "trigger": "deal_damage_to_hunters_marked_target",
+      "frequency": "once_per_turn",
+      "damage": "hunters_mark_extra_damage",
+      "damage_type": "same_as_hunters_mark",
+      "target": "different_creature_within_30ft_of_marked_target",
+      "range_ft": 30,
+      "requires_condition": "hunter_s_mark_on_initial_target"
     }
   ],
   "source_type": "subclass"

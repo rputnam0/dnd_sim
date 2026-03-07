@@ -3,19 +3,29 @@
   "description": "At 14th level, your appearance permanently gains an otherworldly aspect that makes you look more lovely and fierce. In addition, as a bonus action, you can assume a magically majestic presence for 1 minute or until you are incapacitated. For the duration, whenever any creature tries to attack you for the first time on a turn, the attacker must make a Charisma saving throw against your spell save DC. On a failed save, it can't attack you on this turn, and it must choose a new target for its attack or the attack is wasted. On a successful save, it can attack you on this turn, but it has disadvantage on any saving throw it makes against your spells on your next turn. Once you assume this majestic presence, you can't do so again until you finish a short or long rest.",
   "mechanics": [
     {
-      "action": "bonus",
-      "name": "Majestic Presence",
-      "duration": "1 minute or until incapacitated",
-      "effect": {
-        "trigger": "first time a creature attempts to attack you on its turn",
-        "save": {
-          "type": "Charisma",
-          "DC": "spell save DC",
-          "on_fail": "creature cannot attack you this turn; must choose a new target or the attack is wasted",
-          "on_success": "creature may attack you, but has disadvantage on any saving throws against your spells on its next turn"
-        }
+      "meta_type": "presence",
+      "name": "majestic_presence",
+      "activation": "bonus_action",
+      "duration_rounds": 10,
+      "ends_early": [
+        "incapacitated"
+      ]
+    },
+    {
+      "meta_type": "reaction",
+      "trigger": "first_attack_attempt_against_you_each_turn",
+      "save": {
+        "ability": "cha",
+        "dc": "spell_save_dc"
       },
-      "recharge": "short or long rest"
+      "on_fail": "attacker_cannot_attack_you_this_turn_and_must_choose_new_target_or_waste_attack",
+      "on_success": "attacker_has_disadvantage_on_saving_throws_against_your_spells_until_end_of_your_next_turn"
+    },
+    {
+      "meta_type": "resource",
+      "resource": "unbreakable_majesty_uses",
+      "uses": 1,
+      "reset": "short_or_long_rest"
     }
   ],
   "source_type": "subclass"
