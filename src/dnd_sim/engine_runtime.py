@@ -9710,7 +9710,7 @@ def _apply_effect(
             position=_to_position3(effect.get("position")) or actor.position,
             requires_command=requires_command,
             companion_owner_id=controller_id or None,
-            allied_controller_id=controller_id or None,
+            allied_controller_id=(controller_id or None) if summon_team == actor.team else None,
             mount_controller_id=(controller_id or None) if is_mount else None,
             movement_modes={"walk": float(summon_speed)},
         )

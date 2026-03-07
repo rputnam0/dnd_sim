@@ -116,7 +116,7 @@ def test_j1_d_batch_uses_canonical_summon_rows() -> None:
             assert str(effect.get("controller", "")).strip().lower() == "source", (
                 f"{slug} should link control to the caster"
             )
-            assert bool(effect.get("concentration_linked", True)) is True, (
+            assert "concentration_linked" in effect and effect["concentration_linked"] is True, (
                 f"{slug} summon should be concentration-linked"
             )
 
@@ -183,4 +183,5 @@ def test_j1_d_summon_lesser_demons_runtime_stays_hostile() -> None:
     )
     assert summoned.team == "enemy"
     assert summoned.companion_owner_id == caster.actor_id
+    assert summoned.allied_controller_id is None
     assert summoned.requires_command is False
