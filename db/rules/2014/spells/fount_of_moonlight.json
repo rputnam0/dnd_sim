@@ -11,5 +11,25 @@
   "description": "A cool light wreathes your body for the duration, emitting Bright Light in a 20-foot radius and Dim Light for an additional 20 feet. Until the spell ends, you have Resistance to Radiant damage, and your melee attacks deal an extra 2d6 Radiant damage on a hit. In addition, immediately after you take damage from a creature you can see within 60 feet of yourself, you can take a Reaction to force the creature to make a Constitution saving throw. On a failed save, the creature has the Blinded condition until the end of your next turn.",
   "save_ability": "con",
   "damage_type": "radiant",
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "fount_of_moonlight_active",
+      "duration_rounds": 100,
+      "concentration_linked": true,
+      "stack_policy": "refresh",
+      "bright_light_radius_ft": 20,
+      "dim_light_radius_ft": 40,
+      "grants_radiant_resistance": true,
+      "melee_extra_damage": "2d6",
+      "melee_extra_damage_type": "radiant",
+      "retaliatory_blind_range_ft": 60,
+      "retaliatory_blind_save_ability": "con",
+      "retaliatory_blind_condition": "blinded",
+      "retaliatory_blind_duration_rounds": 1,
+      "retaliatory_blind_duration_timing": "turn_end"
+    }
+  ]
 }
