@@ -12,7 +12,8 @@
         "use_feature_again",
         "dismiss_as_bonus_action",
         "symbiotic_entity_inactive"
-      ]
+      ],
+      "meta_type": "spore_zone_deployment_support"
     },
     {
       "area_damage": {
@@ -28,13 +29,15 @@
           "DC": "spell_save_dc"
         },
         "once_per_turn_per_creature": true
-      }
+      },
+      "meta_type": "spore_zone_damage_support"
     },
     {
       "restriction": {
         "while_active": "spores_cube",
         "cannot_use": "Halo of Spores reaction"
-      }
+      },
+      "meta_type": "spore_zone_reaction_lockout_support"
     }
   ],
   "source_type": "subclass"

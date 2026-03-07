@@ -7,7 +7,8 @@
       "action": "move",
       "distance": "half speed",
       "asPartOfReaction": true,
-      "doesNotProvokeOpportunityAttacks": true
+      "doesNotProvokeOpportunityAttacks": true,
+      "meta_type": "opportunity_attack_reposition_support"
     }
   ],
   "source_type": "subclass"
