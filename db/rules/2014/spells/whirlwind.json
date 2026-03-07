@@ -11,5 +11,52 @@
   "description": "A whirlwind howls down to a point that you can see on the ground within range. The whirlwind is a 10-foot-radius, 30-foot-high cylinder centered on that point. Until the spell ends, you can use your action to move the whirlwind up to 30 feet in any direction along the ground. The whirlwind sucks up any Medium or smaller objects that aren't secured to anything and that aren't worn or carried by anyone. A creature must make a Dexterity saving throw the first time on a turn that it enters the whirlwind or that the whirlwind enters its space, including when the whirlwind first appears. A creature takes 10d6 bludgeoning damage on a failed save, or half as much damage on a successful one. In addition, a Large or smaller creature that fails the save must succeed on a Strength saving throw or become restrained in the whirlwind until the spell ends. When a creature starts its turn restrained by the whirlwind, the creature is pulled 5 feet higher inside it, unless the creature is at the top. A restrained creature moves with the whirlwind and falls when the spell ends, unless the creature has some means to stay aloft. A restrained creature can use an action to make a Strength or Dexterity check against your spell save DC. If successful, the creature is no longer restrained by the whirlwind and is hurled 3d6 × 10 feet away from it in a random direction.",
   "save_ability": "dex",
   "damage_type": "bludgeoning",
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "hazard",
+      "hazard_type": "whirlwind",
+      "radius_ft": 10,
+      "height_ft": 30,
+      "duration_rounds": 10,
+      "concentration_linked": true,
+      "move_action_distance_ft": 30,
+      "pull_restrained_upward_ft": 5,
+      "restrained_moves_with_hazard": true,
+      "save_ability": "dex",
+      "secondary_save_ability": "str",
+      "on_cast": [
+        {
+          "effect_type": "damage",
+          "damage": "10d6",
+          "damage_type": "bludgeoning",
+          "save_ability": "dex",
+          "half_on_success": true
+        }
+      ],
+      "on_enter": [
+        {
+          "effect_type": "damage",
+          "damage": "10d6",
+          "damage_type": "bludgeoning",
+          "save_ability": "dex",
+          "half_on_success": true
+        },
+        {
+          "effect_type": "apply_condition",
+          "condition": "restrained",
+          "save_ability": "str",
+          "apply_on": "save_fail",
+          "escape_check_abilities": ["str", "dex"],
+          "escape_action_cost": "action",
+          "escape_hurl_distance": "3d6x10"
+        }
+      ]
+    },
+    {
+      "effect_type": "aoe",
+      "shape": "cylinder",
+      "radius_ft": 10,
+      "height_ft": 30
+    }
+  ]
 }
