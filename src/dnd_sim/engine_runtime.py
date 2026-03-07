@@ -3490,11 +3490,18 @@ def _extract_primary_save_damage_mechanic(
         effect_type = str(row.get("effect_type", "")).strip().lower()
         apply_on = str(row.get("apply_on", "")).strip().lower()
         damage = str(row.get("damage", "")).strip()
-        row_save = str(row.get("save_ability", "")).strip().lower()
+        raw_row_save = row.get("save_ability", row.get("save"))
+        row_save = _normalize_condition(str(raw_row_save)) if raw_row_save else ""
+        has_explicit_half_on_success = bool(
+            row.get("half_on_success", row.get("half_on_save", False))
+        )
         if (
             effect_type == "damage"
-            and apply_on == "save_fail"
             and damage
+            and (
+                apply_on == "save_fail"
+                or (row_save and has_explicit_half_on_success)
+            )
             and (not normalized_save or not row_save or row_save == normalized_save)
         ):
             primary_candidates.append(dict(row))
@@ -9097,6 +9104,122 @@ def _effect_matches_event(effect: dict[str, Any], event: str) -> bool:
     return apply_on == "always" or apply_on == event
 
 
+def _is_spell_effect_row(
+    effect: dict[str, Any],
+    *,
+    action: ActionDefinition | None,
+) -> bool:
+    if action is not None and getattr(action, "tags", None):
+        return "spell" in action.tags
+    if effect.get("spell_level") is not None:
+        return True
+    return "spell_effect" in _normalize_internal_tags(effect.get("internal_tags"))
+
+
+def _resolve_damage_effect_save_result(
+    *,
+    rng: random.Random,
+    recipient: ActorRuntimeState,
+    effect: dict[str, Any],
+    action: ActionDefinition | None,
+    resources_spent: dict[str, dict[str, int]],
+) -> tuple[bool, str, bool] | None:
+    raw_save_ability = effect.get("save_ability", effect.get("save"))
+    save_key = _normalize_condition(raw_save_ability) if raw_save_ability else ""
+    if save_key not in ABILITY_KEYS:
+        return None
+
+    raw_save_dc = effect.get("save_dc")
+    try:
+        save_dc = int(raw_save_dc)
+    except (TypeError, ValueError):
+        return None
+
+    half_on_success = bool(effect.get("half_on_success", effect.get("half_on_save", False)))
+    auto_fail_save = _auto_fails_strength_or_dex_save(recipient, save_key)
+    if auto_fail_save:
+        success = False
+    else:
+        save_mod = int(recipient.save_mods.get(save_key, 0))
+        save_roll = rng.randint(1, 20)
+        if (
+            save_key == "dex"
+            and _has_trait(recipient, "danger sense")
+            and not has_condition(recipient, "blinded")
+            and not has_condition(recipient, "deafened")
+            and not has_condition(recipient, "incapacitated")
+        ):
+            save_roll = max(save_roll, rng.randint(1, 20))
+        if (
+            _is_spell_effect_row(effect, action=action)
+            and _has_trait(recipient, "gnomish cunning")
+            and save_key in {"int", "wis", "cha"}
+        ):
+            save_roll = max(save_roll, rng.randint(1, 20))
+        if save_key == "dex" and has_condition(recipient, "dodging"):
+            save_roll = max(save_roll, rng.randint(1, 20))
+        success = (save_roll + save_mod) >= save_dc
+
+    if not auto_fail_save and not success and recipient.resources.get("legendary_resistance", 0) > 0:
+        recipient.resources["legendary_resistance"] -= 1
+        resources_spent[recipient.actor_id]["legendary_resistance"] = (
+            resources_spent[recipient.actor_id].get("legendary_resistance", 0) + 1
+        )
+        success = True
+
+    return success, save_key, half_on_success
+
+
+def _hydrate_zone_trigger_effects_with_spell_context(
+    zone: dict[str, Any],
+    *,
+    effect: dict[str, Any],
+    action: ActionDefinition | None,
+) -> None:
+    try:
+        zone_save_dc = int(zone.get("save_dc"))
+    except (TypeError, ValueError):
+        try:
+            zone_save_dc = int(effect.get("save_dc"))
+        except (TypeError, ValueError):
+            try:
+                zone_save_dc = int(action.save_dc) if action is not None and action.save_dc is not None else None
+            except (TypeError, ValueError):
+                zone_save_dc = None
+    if zone_save_dc is not None:
+        zone["save_dc"] = zone_save_dc
+
+    inherited_spell_level = zone.get("spell_level")
+    inherited_internal_tags = list(zone.get("internal_tags", []))
+    if "spell_effect" not in inherited_internal_tags:
+        inherited_internal_tags.append("spell_effect")
+
+    trigger_row_groups: list[list[dict[str, Any]]] = []
+    trigger_effects = zone.get("trigger_effects")
+    if isinstance(trigger_effects, dict):
+        for rows in trigger_effects.values():
+            if isinstance(rows, list):
+                trigger_row_groups.append(rows)
+    for key in ("on_enter", "on_leave", "on_start_turn", "on_end_turn"):
+        rows = zone.get(key)
+        if isinstance(rows, list):
+            trigger_row_groups.append(rows)
+
+    for rows in trigger_row_groups:
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            if row.get("effect_type") != "damage":
+                continue
+            if not row.get("save_ability", row.get("save")):
+                continue
+            if zone_save_dc is not None:
+                row.setdefault("save_dc", zone_save_dc)
+            if inherited_spell_level is not None:
+                row.setdefault("spell_level", inherited_spell_level)
+            row.setdefault("internal_tags", list(inherited_internal_tags))
+
+
 def _consume_attack_flags(actor: ActorRuntimeState) -> tuple[bool, bool]:
     advantage = actor.next_attack_advantage
     disadvantage = _disadvantaged(actor) or actor.next_attack_disadvantage
@@ -9165,8 +9288,35 @@ def _apply_effect(
             resources_spent=resources_spent,
             crit=False,
         )
+        final_damage = raw_damage
+        if action is None:
+            save_result = _resolve_damage_effect_save_result(
+                rng=rng,
+                recipient=recipient,
+                effect=effect,
+                action=action,
+                resources_spent=resources_spent,
+            )
+            if save_result is not None:
+                success, save_key, half_on_success = save_result
+                if success:
+                    final_damage = raw_damage // 2 if half_on_success else 0
+                elif save_key == "dex" and _has_trait(recipient, "evasion") and half_on_success:
+                    final_damage = raw_damage // 2
+
+                if success and save_key == "dex":
+                    if _has_trait(recipient, "evasion"):
+                        final_damage = 0
+                    elif (
+                        _has_trait(recipient, "shield master")
+                        and _actor_has_equipped_shield(recipient)
+                        and half_on_success
+                        and _can_take_reaction(recipient)
+                    ):
+                        final_damage = 0
+                        recipient.reaction_available = False
         applied = apply_damage(
-            recipient, raw_damage, damage_type, is_magical=is_magical, source=actor
+            recipient, final_damage, damage_type, is_magical=is_magical, source=actor
         )
         if effect_context is not None:
             effect_context["last_damage_applied"] = applied
@@ -9418,6 +9568,7 @@ def _apply_effect(
                 zone_spell_level = _spell_level_from_action(action)
                 if zone_spell_level >= 0:
                     zone["spell_level"] = zone_spell_level
+        _hydrate_zone_trigger_effects_with_spell_context(zone, effect=effect, action=action)
         zone["concentration_linked"] = concentration_linked
         zone["concentration_owner_id"] = actor.actor_id if concentration_linked else None
         stack_policy = str(zone.get("stack_policy", "independent"))

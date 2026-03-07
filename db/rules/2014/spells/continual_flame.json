@@ -4,12 +4,26 @@
   "level": 2,
   "school": "Evocation",
   "casting_time": "1 action",
-  "range_ft": null,
+  "range_ft": 0,
   "concentration": false,
   "ritual": false,
   "duration_rounds": null,
   "description": "A flame, equivalent in brightness to a torch, springs forth from an object that you touch. The effect looks like a regular flame, but it creates no heat and doesn’t use oxygen. A continual flame can be covered or hidden but not smothered or quenched. Control Water 4th-­‐‑level transmutation",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "hazard",
+      "target": "target",
+      "hazard_type": "light",
+      "radius_ft": 20,
+      "dim_light_radius_ft": 40,
+      "duration": "permanent",
+      "spell_level": 2,
+      "creates_heat": false,
+      "consumes_oxygen": false,
+      "can_be_covered": true,
+      "can_be_smothered": false
+    }
+  ]
 }

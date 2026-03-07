@@ -11,5 +11,16 @@
   "description": "You create 45 pounds of food and 30 gallons of water on the ground or in containers within range, enough to sustain up to fifteen humanoids or five steeds for 24 hours. The food is bland but nourishing, and spoils if uneaten after 24 hours. The water is clean and doesn’t go bad. Create or Destroy Water 1st-­‐‑level transmutation",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "transform",
+      "target": "source",
+      "condition": "create_food_and_water_resolved",
+      "food_lb": 45,
+      "water_gallons": 30,
+      "sustains_humanoids": 15,
+      "sustains_steeds": 5,
+      "food_spoils_after_rounds": 14400
+    }
+  ]
 }
