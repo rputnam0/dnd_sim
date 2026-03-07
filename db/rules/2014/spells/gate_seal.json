@@ -11,5 +11,19 @@
   "description": "You fortify the fabric of the planes in a 30-foot cube you can see within range. Within that area, portals close and can't be opened for the duration. Spells and other effects that allow planar travel or open portals, such as gate or plane shift, fail if used to enter or leave the area. The cube is stationary. At Higher Levels: When you cast this spell using a spell slot of 6th level or higher, the spell lasts until dispelled.",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "hazard",
+      "hazard_type": "gate_seal",
+      "radius_ft": 15,
+      "cube_size_ft": 30,
+      "duration_rounds": 14400,
+      "shape": "cube",
+      "closes_portals": true,
+      "prevents_portals_opening": true,
+      "blocks_planar_travel": true,
+      "stationary": true,
+      "upcast_permanent_slot_level": 6
+    }
+  ]
 }

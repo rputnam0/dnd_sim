@@ -10,6 +10,50 @@
   "duration_rounds": 10,
   "description": "A swirling cloud of smoke shot through with white-­‐‑ hot embers appears in a 20-­‐‑foot-­‐‑radius sphere centered on a point within range. The cloud spreads around corners and is heavily obscured. It lasts for the duration or until a wind of moderate or greater speed (at least 10 miles per hour) disperses it. When the cloud appears, each creature in it must make a Dexterity saving throw. A creature takes 10d8 fire damage on a failed save, or half as much damage on a successful one. A creature must also make this saving throw when it enters the spell’s area for the first time on a turn or ends its turn there. The cloud moves 10 feet directly away from you in a direction that you choose at the start of each of your turns. Inflict Wounds 1st-­‐‑level necromancy",
   "save_ability": "dex",
-  "damage_type": null,
-  "mechanics": []
+  "damage_type": "fire",
+  "mechanics": [
+    {
+      "effect_type": "hazard",
+      "hazard_type": "incendiary_cloud",
+      "radius_ft": 20,
+      "duration_rounds": 10,
+      "concentration_linked": true,
+      "obscures_vision": true,
+      "spreads_around_corners": true,
+      "moves_away_from_source_ft": 10,
+      "dispersed_by": "moderate_wind",
+      "on_create": [
+        {
+          "effect_type": "damage",
+          "damage": "10d8",
+          "damage_type": "fire",
+          "save_ability": "dex",
+          "half_on_success": true
+        }
+      ],
+      "on_enter": [
+        {
+          "effect_type": "damage",
+          "damage": "10d8",
+          "damage_type": "fire",
+          "save_ability": "dex",
+          "half_on_success": true
+        }
+      ],
+      "on_end_turn": [
+        {
+          "effect_type": "damage",
+          "damage": "10d8",
+          "damage_type": "fire",
+          "save_ability": "dex",
+          "half_on_success": true
+        }
+      ]
+    },
+    {
+      "effect_type": "aoe",
+      "shape": "sphere",
+      "radius": 20
+    }
+  ]
 }

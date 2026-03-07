@@ -11,5 +11,25 @@
   "description": "Until the spell ends, wind whirls around you, and you gain the following benefits: Ranged weapon attacks made against you have disadvantage on the attack roll. You gain a flying speed of 60 feet. If you are still flying when the spell ends, you fall, unless you can somehow prevent it. You can use your action to create a 15-foot cube of swirling wind centered on a point you can see within 60 feet of you. Each creature in that area must make a Constitution saving throw. A creature takes 2d10 bludgeoning damage on a failed save, or half as much damage on a successful one. If a Large or smaller creature fails the save, that creature is also pushed up to 10 feet away from the center of the cube.",
   "save_ability": "con",
   "damage_type": "bludgeoning",
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "apply_condition",
+      "target": "source",
+      "apply_on": "always",
+      "condition": "investiture_of_wind_active",
+      "duration_rounds": 100,
+      "concentration_linked": true,
+      "stack_policy": "refresh",
+      "fly_speed_ft": 60,
+      "ranged_attacks_against_you_disadvantage": true,
+      "fall_if_airborne_on_expire": true,
+      "action_cube_size_ft": 15,
+      "action_range_ft": 60,
+      "action_damage": "2d10",
+      "action_damage_type": "bludgeoning",
+      "action_save_ability": "con",
+      "action_push_distance_ft": 10,
+      "action_push_size_limit": "large"
+    }
+  ]
 }
