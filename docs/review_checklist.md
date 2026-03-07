@@ -138,7 +138,7 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [ ] G1-A First 10-item trait reaction/retaliation batch
 - [x] G1-B Second 10-item trait reaction/retaliation batch (merged via #231)
 - [ ] G1-C Third 10-item trait reaction/retaliation batch
-- [ ] G1-D Final 8-item trait reaction/retaliation batch
+- [ ] G1-D Final 8-item trait reaction/retaliation batch (PR #233)
 - [x] W6-PAR-05H Umbrella row for summon/transform trait leaves
 - [x] W6-PAR-05H1 Trait summon/companion/mount leaf
 - [x] W6-PAR-05H2 Trait transform/world-linked leaf
