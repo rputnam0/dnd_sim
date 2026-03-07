@@ -37,12 +37,12 @@
       "total_records": 256
     },
     {
-      "blocked_records": 30,
+      "blocked_records": 20,
       "content_type": "spell",
-      "executable_records": 564,
+      "executable_records": 574,
       "schema_valid_records": 594,
-      "supported_records": 564,
-      "tested_records": 564,
+      "supported_records": 574,
+      "tested_records": 574,
       "total_records": 594
     },
     {
@@ -14815,16 +14815,16 @@
     {
       "content_id": "spell:jallarzi_s_storm_of_radiance",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:jim_s_glowing_coin",
@@ -15067,16 +15067,16 @@
     {
       "content_id": "spell:linked_glyphs",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:locate_animals_or_plants",
@@ -15137,16 +15137,16 @@
     {
       "content_id": "spell:maddening_darkness",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:maelstrom",
@@ -15865,16 +15865,16 @@
     {
       "content_id": "spell:nystul_s_magic_aura",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:nystuls_magic_aura",
@@ -15893,16 +15893,16 @@
     {
       "content_id": "spell:otiluke_s_resilient_sphere",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:otilukes_freezing_sphere",
@@ -16257,16 +16257,16 @@
     {
       "content_id": "spell:prismatic_wall",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:produce_flame",
@@ -16593,16 +16593,16 @@
     {
       "content_id": "spell:resilient_sphere",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:resistance",
@@ -16915,16 +16915,16 @@
     {
       "content_id": "spell:shape_water",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:shapechange",
@@ -17363,16 +17363,16 @@
     {
       "content_id": "spell:spellfire_storm",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:spider_climb",
@@ -17503,16 +17503,16 @@
     {
       "content_id": "spell:steel_wind_strike",
       "content_type": "spell",
-      "runtime_hook_family": "narrative",
+      "runtime_hook_family": "effect",
       "states": {
-        "blocked": true,
+        "blocked": false,
         "cataloged": true,
-        "executable": false,
+        "executable": true,
         "schema_valid": true,
-        "tested": false,
-        "unsupported_reason": "missing_runtime_mechanics"
+        "tested": true,
+        "unsupported_reason": null
       },
-      "support_state": "unsupported"
+      "support_state": "supported"
     },
     {
       "content_id": "spell:stinking_cloud",
@@ -35437,16 +35437,16 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 30,
-    "executable_records": 2497,
+    "blocked_records": 20,
+    "executable_records": 2507,
     "schema_valid_records": 2527,
-    "supported_records": 2497,
-    "tested_records": 2497,
+    "supported_records": 2507,
+    "tested_records": 2507,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
     {
-      "count": 30,
+      "count": 20,
       "unsupported_reason": "missing_runtime_mechanics"
     }
   ]

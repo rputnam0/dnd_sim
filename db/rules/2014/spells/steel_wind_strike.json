@@ -11,5 +11,22 @@
   "description": "You flourish the weapon used in the casting and then vanish to strike like the wind. Choose up to five creatures you can see within range. Make a melee spell attack against each target. On a hit, a target takes 6d10 force damage. You can then teleport to an unoccupied space you can see within 5 feet of one of the targets you hit or missed.",
   "save_ability": null,
   "damage_type": "force",
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "damage",
+      "target": "up_to_five_visible_creatures",
+      "attack_type": "melee_spell_attack",
+      "max_targets": 5,
+      "range_ft": 30,
+      "damage": "6d10",
+      "damage_type": "force"
+    },
+    {
+      "effect_type": "transform",
+      "target": "source",
+      "condition": "steel_wind_strike_reposition",
+      "distance_from_target_ft": 5,
+      "requires_visible_unoccupied_space": true
+    }
+  ]
 }
