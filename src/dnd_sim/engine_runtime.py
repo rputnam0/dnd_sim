@@ -3490,11 +3490,18 @@ def _extract_primary_save_damage_mechanic(
         effect_type = str(row.get("effect_type", "")).strip().lower()
         apply_on = str(row.get("apply_on", "")).strip().lower()
         damage = str(row.get("damage", "")).strip()
-        row_save = str(row.get("save_ability", "")).strip().lower()
+        raw_row_save = row.get("save_ability", row.get("save"))
+        row_save = _normalize_condition(str(raw_row_save)) if raw_row_save else ""
+        has_explicit_half_on_success = bool(
+            row.get("half_on_success", row.get("half_on_save", False))
+        )
         if (
             effect_type == "damage"
-            and apply_on == "save_fail"
             and damage
+            and (
+                apply_on == "save_fail"
+                or (row_save and has_explicit_half_on_success)
+            )
             and (not normalized_save or not row_save or row_save == normalized_save)
         ):
             primary_candidates.append(dict(row))
@@ -9166,30 +9173,39 @@ def _resolve_damage_effect_save_result(
 def _hydrate_zone_trigger_effects_with_spell_context(
     zone: dict[str, Any],
     *,
+    effect: dict[str, Any],
     action: ActionDefinition | None,
 ) -> None:
-    if action is None:
-        return
-
     try:
-        action_save_dc = int(action.save_dc) if action.save_dc is not None else None
+        zone_save_dc = int(zone.get("save_dc"))
     except (TypeError, ValueError):
-        action_save_dc = None
-    if action_save_dc is None:
-        return
+        try:
+            zone_save_dc = int(effect.get("save_dc"))
+        except (TypeError, ValueError):
+            try:
+                zone_save_dc = int(action.save_dc) if action is not None and action.save_dc is not None else None
+            except (TypeError, ValueError):
+                zone_save_dc = None
+    if zone_save_dc is not None:
+        zone["save_dc"] = zone_save_dc
 
     inherited_spell_level = zone.get("spell_level")
     inherited_internal_tags = list(zone.get("internal_tags", []))
     if "spell_effect" not in inherited_internal_tags:
         inherited_internal_tags.append("spell_effect")
 
+    trigger_row_groups: list[list[dict[str, Any]]] = []
     trigger_effects = zone.get("trigger_effects")
-    if not isinstance(trigger_effects, dict):
-        return
+    if isinstance(trigger_effects, dict):
+        for rows in trigger_effects.values():
+            if isinstance(rows, list):
+                trigger_row_groups.append(rows)
+    for key in ("on_enter", "on_leave", "on_start_turn", "on_end_turn"):
+        rows = zone.get(key)
+        if isinstance(rows, list):
+            trigger_row_groups.append(rows)
 
-    for rows in trigger_effects.values():
-        if not isinstance(rows, list):
-            continue
+    for rows in trigger_row_groups:
         for row in rows:
             if not isinstance(row, dict):
                 continue
@@ -9197,7 +9213,8 @@ def _hydrate_zone_trigger_effects_with_spell_context(
                 continue
             if not row.get("save_ability", row.get("save")):
                 continue
-            row.setdefault("save_dc", action_save_dc)
+            if zone_save_dc is not None:
+                row.setdefault("save_dc", zone_save_dc)
             if inherited_spell_level is not None:
                 row.setdefault("spell_level", inherited_spell_level)
             row.setdefault("internal_tags", list(inherited_internal_tags))
@@ -9551,7 +9568,7 @@ def _apply_effect(
                 zone_spell_level = _spell_level_from_action(action)
                 if zone_spell_level >= 0:
                     zone["spell_level"] = zone_spell_level
-            _hydrate_zone_trigger_effects_with_spell_context(zone, action=action)
+        _hydrate_zone_trigger_effects_with_spell_context(zone, effect=effect, action=action)
         zone["concentration_linked"] = concentration_linked
         zone["concentration_owner_id"] = actor.actor_id if concentration_linked else None
         stack_policy = str(zone.get("stack_policy", "independent"))

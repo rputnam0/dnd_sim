@@ -15,10 +15,9 @@
     {
       "effect_type": "damage",
       "target": "target",
-      "apply_on": "save_fail",
       "damage": "8d8",
       "damage_type": "necrotic",
-      "save_ability": "con",
+      "save": "con",
       "half_on_success": true,
       "immune_creature_types": [
         "undead",

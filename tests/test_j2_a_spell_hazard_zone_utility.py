@@ -6,24 +6,37 @@ from collections.abc import Callable
 from pathlib import Path
 
 from dnd_sim.capability_manifest import build_spell_capability_manifest
-from dnd_sim.engine_runtime import _apply_effect, _process_hazard_start_turn_triggers
+from dnd_sim.engine_runtime import (
+    _apply_effect,
+    _extract_primary_save_damage_mechanic,
+    _process_hazard_start_turn_triggers,
+)
 from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
-from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.models import ActorRuntimeState
 from dnd_sim.spatial import can_see
 
 SPELLS_DIR = Path("db/rules/2014/spells")
-OWNED_SPELL_PATHS = {
-    "spell:antimagic_field": SPELLS_DIR / "antimagic_field.json",
-    "spell:arcanist_s_magic_aura": SPELLS_DIR / "arcanist_s_magic_aura.json",
-    "spell:blade_barrier": SPELLS_DIR / "blade_barrier.json",
-    "spell:blight": SPELLS_DIR / "blight.json",
-    "spell:cloudkill": SPELLS_DIR / "cloudkill.json",
-    "spell:continual_flame": SPELLS_DIR / "continual_flame.json",
-    "spell:create_food_and_water": SPELLS_DIR / "create_food_and_water.json",
-    "spell:create_or_destroy_water": SPELLS_DIR / "create_or_destroy_water.json",
-    "spell:create_spelljamming_helm": SPELLS_DIR / "create_spelljamming_helm.json",
-    "spell:darkness": SPELLS_DIR / "darkness.json",
-}
+OWNED_SPELL_IDS = (
+    "spell:antimagic_field",
+    "spell:arcanist_s_magic_aura",
+    "spell:blade_barrier",
+    "spell:blight",
+    "spell:cloudkill",
+    "spell:continual_flame",
+    "spell:create_food_and_water",
+    "spell:create_or_destroy_water",
+    "spell:create_spelljamming_helm",
+    "spell:darkness",
+)
+
+
+def _owned_spell_path(content_id: str) -> Path:
+    slug = content_id.split(":", 1)[1]
+    assert slug.isascii()
+    return SPELLS_DIR / f"{slug}.json"
+
+
+OWNED_SPELL_PATHS = {content_id: _owned_spell_path(content_id) for content_id in OWNED_SPELL_IDS}
 
 
 def _load_payload(path: Path) -> dict[str, object]:
@@ -95,8 +108,8 @@ def test_j2_a_owned_spell_records_are_supported() -> None:
     manifest = build_spell_capability_manifest(spell_payloads=_load_owned_payloads())
     by_id = {record.content_id: record for record in manifest.records}
 
-    assert set(by_id) == set(OWNED_SPELL_PATHS)
-    for content_id in OWNED_SPELL_PATHS:
+    assert set(by_id) == set(OWNED_SPELL_IDS)
+    for content_id in OWNED_SPELL_IDS:
         record = by_id[content_id]
         assert record.runtime_hook_family == "effect"
         assert record.support_state == "supported"
@@ -111,6 +124,13 @@ def test_j2_a_owned_spell_mechanics_are_schema_valid() -> None:
     for path in OWNED_SPELL_PATHS.values():
         payload = _load_payload(path)
         assert validate_rule_mechanics_payload(kind="spell", payload=payload) == []
+
+
+def test_j2_a_owned_spell_paths_are_ascii_and_stable() -> None:
+    for content_id in OWNED_SPELL_IDS:
+        path = OWNED_SPELL_PATHS[content_id]
+        assert path.name.isascii()
+        assert path.exists()
 
 
 def test_j2_a_reviewed_spell_rows_match_expected_canonical_shapes() -> None:
@@ -161,7 +181,7 @@ def test_j2_a_reviewed_spell_rows_match_expected_canonical_shapes() -> None:
     blight_damage = _find_effect(blight, "damage")
     assert blight_damage["damage"] == "8d8"
     assert blight_damage["damage_type"] == "necrotic"
-    assert blight_damage["save_ability"] == "con"
+    assert blight_damage["save"] == "con"
     assert blight_damage["half_on_success"] is True
     assert blight_damage["plant_targets_take_max_damage"] is True
 
@@ -258,7 +278,22 @@ def test_j2_a_darkness_and_antimagic_use_existing_runtime_shapes() -> None:
     ) is False
 
 
-def test_j2_a_spell_hazards_preserve_save_for_half_on_trigger_damage() -> None:
+def test_j2_a_blight_canonical_damage_row_is_extractable_for_save_actions() -> None:
+    blight = _load_payload(OWNED_SPELL_PATHS["spell:blight"])
+    primary_damage, remaining = _extract_primary_save_damage_mechanic(
+        blight["mechanics"],
+        action_type="save",
+        save_ability="con",
+    )
+
+    assert primary_damage is not None
+    assert primary_damage["damage"] == "8d8"
+    assert primary_damage["save"] == "con"
+    assert primary_damage["half_on_success"] is True
+    assert remaining == []
+
+
+def test_j2_a_spell_hazards_preserve_save_for_half_on_trigger_damage_without_action() -> None:
     caster = _runtime_actor(actor_id="caster", team="party")
     resilient_target = _runtime_actor(actor_id="resilient", team="enemy", hp=40, max_hp=40)
     failing_target = _runtime_actor(actor_id="failing", team="enemy", hp=40, max_hp=40)
@@ -267,16 +302,6 @@ def test_j2_a_spell_hazards_preserve_save_for_half_on_trigger_damage() -> None:
     failing_target.position = (0.0, 0.0, 0.0)
     resilient_target.save_mods["con"] = 20
     failing_target.save_mods["con"] = -5
-
-    spell_action = ActionDefinition(
-        name="cloudkill",
-        action_type="save",
-        save_dc=15,
-        save_ability="con",
-        half_on_save=True,
-        concentration=True,
-        tags=["spell"],
-    )
 
     success_damage = 0
     failed_damage = 0
@@ -288,9 +313,9 @@ def test_j2_a_spell_hazards_preserve_save_for_half_on_trigger_damage() -> None:
         active_hazards: list[dict[str, object]] = []
         cloudkill_effect = dict(_find_effect(_load_payload(OWNED_SPELL_PATHS["spell:cloudkill"]), "hazard"))
         cloudkill_effect["position"] = actor.position
+        cloudkill_effect["save_dc"] = 15
 
         _apply_effect(
-            action=spell_action,
             effect=cloudkill_effect,
             rng=random.Random(seed),
             actor=caster,
@@ -302,6 +327,9 @@ def test_j2_a_spell_hazards_preserve_save_for_half_on_trigger_damage() -> None:
             actors=actors,
             active_hazards=active_hazards,
         )
+        assert active_hazards[0]["save_dc"] == 15
+        assert active_hazards[0]["trigger_effects"]["start_turn"][0]["save_dc"] == 15
+        assert active_hazards[0]["on_start_turn"][0]["save_dc"] == 15
         _process_hazard_start_turn_triggers(
             rng=random.Random(seed),
             actor=actor,

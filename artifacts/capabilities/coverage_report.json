@@ -37,12 +37,12 @@
       "total_records": 256
     },
     {
-      "blocked_records": 89,
+      "blocked_records": 79,
       "content_type": "spell",
-      "executable_records": 505,
+      "executable_records": 515,
       "schema_valid_records": 594,
-      "supported_records": 505,
-      "tested_records": 505,
+      "supported_records": 515,
+      "tested_records": 515,
       "total_records": 594
     },
     {
@@ -35437,11 +35437,11 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 117,
-    "executable_records": 2410,
+    "blocked_records": 107,
+    "executable_records": 2420,
     "schema_valid_records": 2527,
-    "supported_records": 2410,
-    "tested_records": 2410,
+    "supported_records": 2420,
+    "tested_records": 2420,
     "total_records": 2527
   },
   "unsupported_reason_coverage": [
@@ -35450,7 +35450,7 @@
       "unsupported_reason": "missing_runtime_hook_family"
     },
     {
-      "count": 89,
+      "count": 79,
       "unsupported_reason": "missing_runtime_mechanics"
     }
   ]
