@@ -145,24 +145,34 @@ def test_j1_c_batch_uses_canonical_rows() -> None:
         "instant_summons_recall",
     }
 
+    familiar = _find_effects(_spell_payload("find_familiar"), "summon")[0]
+    assert familiar["controller"] == "source"
+    assert familiar["ac"] == 11
+    assert familiar["max_hp"] == 1
+
     greater_steed = _find_effects(_spell_payload("find_greater_steed"), "summon")[0]
     assert greater_steed["controller"] == "source"
     assert greater_steed["mount"] is True
+    assert greater_steed["ac"] == 12
+    assert greater_steed["max_hp"] == 59
 
     phantom_steed = _find_effects(_spell_payload("phantom_steed"), "summon")[0]
     assert phantom_steed["mount"] is True
     assert phantom_steed["speed_ft"] == 100
+    assert phantom_steed["ac"] == 10
+    assert phantom_steed["max_hp"] == 13
 
-    for slug in (
-        "find_familiar",
-        "summon_aberration",
-        "summon_beast",
-        "summon_celestial",
-        "summon_construct",
-    ):
+    for slug, expected in {
+        "summon_aberration": {"ac": 15, "max_hp": 40},
+        "summon_beast": {"ac": 13, "max_hp": 20},
+        "summon_celestial": {"ac": 16, "max_hp": 40},
+        "summon_construct": {"ac": 15, "max_hp": 40},
+    }.items():
         summon_effect = _find_effects(_spell_payload(slug), "summon")[0]
         assert summon_effect["controller"] == "source"
         assert summon_effect.get("requires_command", False) is False
+        assert summon_effect["ac"] == expected["ac"]
+        assert summon_effect["max_hp"] == expected["max_hp"]
 
 
 def test_j1_c_find_greater_steed_runtime_creates_mount_ready_for_rider() -> None:
@@ -192,6 +202,8 @@ def test_j1_c_find_greater_steed_runtime_creates_mount_ready_for_rider() -> None
     assert steed.mounted_rider_id is None
     assert steed.traits["summoned"]["mount"] is True
     assert steed.companion_owner_id == caster.actor_id
+    assert steed.ac == 12
+    assert steed.max_hp == 59
 
 
 def test_j1_c_summon_beast_runtime_creates_concentration_linked_companion() -> None:
@@ -223,3 +235,5 @@ def test_j1_c_summon_beast_runtime_creates_concentration_linked_companion() -> N
     assert summoned.companion_owner_id == caster.actor_id
     assert summoned.requires_command is False
     assert summoned.actor_id in caster.concentrated_targets
+    assert summoned.ac == 13
+    assert summoned.max_hp == 20

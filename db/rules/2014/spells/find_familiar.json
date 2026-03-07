@@ -8,7 +8,7 @@
   "concentration": false,
   "ritual": true,
   "duration_rounds": 0,
-  "description": "Find Steed 2nd-­‐‑level conjuration",
+  "description": "You gain the service of a familiar, a spirit that takes an animal form you choose and acts independently of you while remaining bonded to your magic.",
   "save_ability": null,
   "damage_type": null,
   "mechanics": [
@@ -35,7 +35,10 @@
         "spider",
         "weasel"
       ],
-      "telepathic_range_ft": 100
+      "telepathic_range_ft": 100,
+      "max_hp": 1,
+      "ac": 11,
+      "speed_ft": 30
     }
   ]
 }

@@ -24,7 +24,9 @@
         "metal",
         "stone"
       ],
-      "initiative": "shares_caster_count"
+      "initiative": "shares_caster_count",
+      "max_hp": 40,
+      "ac": 15
     }
   ]
 }

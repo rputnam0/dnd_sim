@@ -24,7 +24,9 @@
         "land",
         "water"
       ],
-      "initiative": "shares_caster_count"
+      "initiative": "shares_caster_count",
+      "max_hp": 20,
+      "ac": 13
     }
   ]
 }

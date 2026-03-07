@@ -32,7 +32,10 @@
         "fey",
         "fiend"
       ],
-      "telepathic_range_ft": 5280
+      "telepathic_range_ft": 5280,
+      "max_hp": 59,
+      "ac": 12,
+      "speed_ft": 80
     }
   ]
 }
