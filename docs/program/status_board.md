@@ -66,6 +66,7 @@ Wave 6 remediation state:
 | W6-PAR-05J1 | codex/feat/w6-par-05j1-spell-summon-command-control | remediation_parity | in_progress | Current live J1 backlog is 39 blocked summon, conjure, command, and control spells, split into batches J1-A through J1-D. |
 | W6-PAR-05J2 | codex/feat/w6-par-05j2-spell-hazard-zone-utility | remediation_parity | in_progress | Current live J2 backlog is 60 blocked hazard, zone, darkness, and utility spells, split into batches J2-A through J2-F. |
 | G1-A | codex/feat/g1-a-trait-reaction-retaliation | remediation_parity | in_progress | Active 10-item trait batch owning the first remaining G1 slice from `docs/program/parity_batch_registry.csv`. |
+| G1-B | codex/feat/g1-b-trait-reaction-retaliation | remediation_parity | in_progress | Active 10-item trait batch owning the second remaining G1 slice from `docs/program/parity_batch_registry.csv`. |
 | J1-A | codex/feat/j1-a-summon-conjure-command-control | remediation_parity | in_progress | Active 10-item summon, conjure, command, and control spell batch owning the first remaining J1 slice. |
 | J2-A | codex/feat/j2-a-utility-hazard-darkness | remediation_parity | in_progress | Active 10-item hazard, zone, darkness, and utility spell batch owning the first remaining J2 slice. |
 
@@ -73,7 +74,6 @@ Wave 6 remediation state:
 
 | Batch ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
-| G1-B | codex/feat/g1-b-trait-reaction-retaliation | remediation_parity | not_started | Queued second 10-item G1 trait batch. |
 | G1-C | codex/feat/g1-c-trait-reaction-retaliation | remediation_parity | not_started | Queued third 10-item G1 trait batch. |
 | G1-D | codex/feat/g1-d-trait-reaction-retaliation | remediation_parity | not_started | Queued final 8-item G1 trait batch. |
 | J1-B | codex/feat/j1-b-summon-conjure-command-control | remediation_parity | not_started | Queued second 10-item J1 spell batch. |

@@ -3,9 +3,11 @@
   "description": "6th-level Graviturgy Magic feature. You've learned how to manipulate gravity around a living being: whenever you cast a spell on a creature, you can move the target 5 feet to an unoccupied space of your choice if the target is willing to move, the spell hits it with an attack, or it fails a saving throw against the spell.",
   "mechanics": [
     {
+      "effect_type": "forced_movement",
       "trigger": "cast_spell_on_creature",
-      "action": "move_target",
-      "distance_feet": 5,
+      "target": "spell_target",
+      "distance_ft": 5,
+      "destination": "unoccupied_space_of_your_choice",
       "conditions": [
         "target_is_willing_to_move",
         "spell_hits_target",
