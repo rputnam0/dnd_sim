@@ -121,6 +121,7 @@ def test_j2_f_reviewed_spell_rows_match_expected_canonical_shapes() -> None:
     thorns_hazard = _find_effect(wall_of_thorns, "hazard")
     assert thorns_hazard["hazard_type"] == "wall_of_thorns"
     assert thorns_hazard["extra_movement_cost_multiplier"] == 4
+    assert thorns_hazard["single_damage_trigger_per_turn"] is True
     assert thorns_hazard["on_cast"][0]["damage_type"] == "piercing"
     assert thorns_hazard["on_enter"][0]["damage_type"] == "slashing"
 

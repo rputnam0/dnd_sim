@@ -20,6 +20,7 @@
       "blocks_line_of_sight": true,
       "extra_movement_cost_multiplier": 4,
       "upcast_damage_per_slot": "1d8",
+      "single_damage_trigger_per_turn": true,
       "on_cast": [
         {
           "effect_type": "damage",
