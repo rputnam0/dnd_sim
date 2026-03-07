@@ -31,9 +31,9 @@ Wave 6 remediation state:
 - Parity continuation wave W6-PAR-04 merged via [#185](https://github.com/rputnam0/dnd_sim/pull/185), [#186](https://github.com/rputnam0/dnd_sim/pull/186), [#187](https://github.com/rputnam0/dnd_sim/pull/187), [#188](https://github.com/rputnam0/dnd_sim/pull/188), [#189](https://github.com/rputnam0/dnd_sim/pull/189), and [#190](https://github.com/rputnam0/dnd_sim/pull/190), reducing strict blockers but not yet reaching blocked=0.
 - Post-merge parity continuation work through [#193](https://github.com/rputnam0/dnd_sim/pull/193), [#194](https://github.com/rputnam0/dnd_sim/pull/194), [#195](https://github.com/rputnam0/dnd_sim/pull/195), [#196](https://github.com/rputnam0/dnd_sim/pull/196), [#197](https://github.com/rputnam0/dnd_sim/pull/197), [#198](https://github.com/rputnam0/dnd_sim/pull/198), [#199](https://github.com/rputnam0/dnd_sim/pull/199), and the integration merge [#200](https://github.com/rputnam0/dnd_sim/pull/200) reduced strict blockers to the Wave 6 continuation baseline before the dedicated parity-closeout branch was created.
 - W6-PAR-05A1 merged to `codex/int/w6-parity-closeout` via [#201](https://github.com/rputnam0/dnd_sim/pull/201), reconciling the live parity surfaces, adding `docs/program/parity_leaf_registry.csv`, and expanding W6-PAR-05 execution into explicit leaf tasks while keeping W6-PAR-05B through W6-PAR-05L as umbrella rows.
-- Subsequent continuation merges including [#221](https://github.com/rputnam0/dnd_sim/pull/221), [#225](https://github.com/rputnam0/dnd_sim/pull/225), [#226](https://github.com/rputnam0/dnd_sim/pull/226), [#224](https://github.com/rputnam0/dnd_sim/pull/224), and [#227](https://github.com/rputnam0/dnd_sim/pull/227) reduced the live strict backlog on `codex/int/w6-parity-closeout` at `cb9e869` to 137 blocked shipped-2014 records.
-- `docs/program/parity_batch_registry.csv` is now the exact live execution map for the remaining batches: J1-A through J1-D (39 blocked spells), J2-A through J2-F (60 blocked spells), and G1-A through G1-D (38 blocked traits).
-- `BATCH-00` is the active truth-sync lane that aligns the human docs to the generated 137-blocker baseline, registers `docs/program/parity_batch_registry.csv` as canonical, and prepares the next batch PRs.
+- Subsequent continuation merges including [#221](https://github.com/rputnam0/dnd_sim/pull/221), [#225](https://github.com/rputnam0/dnd_sim/pull/225), [#226](https://github.com/rputnam0/dnd_sim/pull/226), [#224](https://github.com/rputnam0/dnd_sim/pull/224), [#227](https://github.com/rputnam0/dnd_sim/pull/227), the J1-A merge, and open G1-B batch PR [#231](https://github.com/rputnam0/dnd_sim/pull/231) reduce the branch baseline to 117 blocked shipped-2014 records.
+- `docs/program/parity_batch_registry.csv` remains the live execution map for the current batches; the regenerated branch artifacts now report 89 blocked spells and 28 blocked traits, with G1-B under review in PR #231.
+- `BATCH-00` is the active truth-sync lane that aligns the human docs to the generated 117-blocker branch baseline, registers `docs/program/parity_batch_registry.csv` as canonical, and prepares the next batch PRs.
 - Draft carryovers [#220](https://github.com/rputnam0/dnd_sim/pull/220) and [#222](https://github.com/rputnam0/dnd_sim/pull/222) remain closed and are superseded by the current G1 batch plan.
 
 ## Active completion tracks
@@ -51,19 +51,19 @@ Wave 6 remediation state:
 | FIN | Completion Gates | merged | 5I-completion-gates | Track complete and merged to `main`. |
 | CUT | Wave 6 Hard-Cut Remediation | merged | 6a-hard-cut | W6-CUT-01/02/03/04 merged and track integrated to `main` via #179. |
 | UNI | Wave 6 API Unification | merged | 6b-unification | W6-UNI-01/02/03/04 merged and track integrated to `main` via #180. |
-| PAR | Wave 6 Capability Parity Closure | in_progress | 6c-parity | W6-PAR-01/02/03/04 are merged; the current live strict backlog on `codex/int/w6-parity-closeout` is 137 blockers, and `docs/program/parity_batch_registry.csv` is the exact execution map for the remaining J1/J2/G1 batches. |
+| PAR | Wave 6 Capability Parity Closure | in_progress | 6c-parity | W6-PAR-01/02/03/04 are merged; the current branch baseline is 117 blockers, and `docs/program/parity_batch_registry.csv` is the live execution map for the active J1/J2/G1 batches plus the open G1-B review lane. |
 | GATE | Wave 6 Governance and Final Gates | merged | 6d-gates | W6-GATE-01 and W6-GATE-02 merged, including final full green gate via #183. |
 
 ## Active branches
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
-| BATCH-00 | codex/feat/batch-00-parity-batch-truth-sync | program_control | in_progress | Truth-sync lane for the 10-item batch model. It updates the canonical docs to the 137-blocker baseline and prepares the next batch PRs. |
-| W6-PAR-05 | codex/feat/w6-par-05-strict-parity-closure | remediation_parity | in_progress | Umbrella row for the remaining Wave 6 strict-parity closeout. The live backlog at `cb9e869` is 137 blocked records, and `docs/program/parity_batch_registry.csv` is the exact current execution map. |
+| BATCH-00 | codex/feat/batch-00-parity-batch-truth-sync | program_control | in_progress | Truth-sync lane for the 10-item batch model. It updates the canonical docs to the current 117-blocker branch baseline and prepares the next batch PRs. |
+| W6-PAR-05 | codex/feat/w6-par-05-strict-parity-closure | remediation_parity | in_progress | Umbrella row for the remaining Wave 6 strict-parity closeout. The current branch baseline is 117 blocked records, and `docs/program/parity_batch_registry.csv` is the live execution map. |
 | W6-PAR-05G | codex/feat/w6-par-05g-trait-hooks-e | remediation_parity | in_progress | Runtime-touching trait umbrella remains active only for G1. The remaining live trait blockers are batched as G1-A through G1-D, and draft carryovers #220/#222 are superseded. |
-| W6-PAR-05G1 | codex/feat/w6-par-05g1-trait-reaction-retaliation | remediation_parity | in_progress | Remaining live reaction and retaliation trait work is batched as G1-A through G1-D in `docs/program/parity_batch_registry.csv` (38 blocked traits). |
-| W6-PAR-05J | codex/feat/w6-par-05j-spell-mechanics-e | remediation_parity | in_progress | Remaining live spell mechanics work is batched via `docs/program/parity_batch_registry.csv` into J1-A through J1-D and J2-A through J2-F. |
-| W6-PAR-05J1 | codex/feat/w6-par-05j1-spell-summon-command-control | remediation_parity | in_progress | Current live J1 backlog is 39 blocked summon, conjure, command, and control spells, split into batches J1-A through J1-D. |
+| W6-PAR-05G1 | codex/feat/w6-par-05g1-trait-reaction-retaliation | remediation_parity | in_progress | Remaining live reaction and retaliation trait work is tracked in `docs/program/parity_batch_registry.csv`; 28 blocked traits remain across G1-A, G1-C, and G1-D while G1-B is under review in PR #231. |
+| W6-PAR-05J | codex/feat/w6-par-05j-spell-mechanics-e | remediation_parity | in_progress | Remaining live spell mechanics work is batched via `docs/program/parity_batch_registry.csv`; the regenerated branch artifacts report 89 blocked spell records across the active J1/J2 lanes. |
+| W6-PAR-05J1 | codex/feat/w6-par-05j1-spell-summon-command-control | remediation_parity | in_progress | J1 remains the summon, conjure, command, and control portion of the live spell backlog after the J1-A merge reduced the branch baseline. |
 | W6-PAR-05J2 | codex/feat/w6-par-05j2-spell-hazard-zone-utility | remediation_parity | in_progress | Current live J2 backlog is 60 blocked hazard, zone, darkness, and utility spells, split into batches J2-A through J2-F. |
 | G1-A | codex/feat/g1-a-trait-reaction-retaliation | remediation_parity | in_progress | Active 10-item trait batch owning the first remaining G1 slice from `docs/program/parity_batch_registry.csv`. |
 | G1-B | codex/feat/g1-b-trait-reaction-retaliation | remediation_parity | pr_open | Open PR for the second remaining G1 10-item slice from `docs/program/parity_batch_registry.csv`. |
@@ -97,8 +97,8 @@ Draft carryovers [#220](https://github.com/rputnam0/dnd_sim/pull/220) and [#222]
 
 - Wave 5 dependencies remain fully satisfied and merged on `main`.
 - Wave 6 CUT, UNI, and GATE dependencies are satisfied and merged on `main`; PAR continuation remains active under W6-PAR-05 and is now executed through `BATCH-00` plus the live J1/J2/G1 batch rows on `codex/int/w6-parity-closeout`.
-- Strict FIN-02 at `cb9e869` currently reports 137 blocked shipped records: 99 `spell` records and 38 `trait` records.
-- Remaining strict unsupported-reason families are 99 `missing_runtime_mechanics` and 38 `missing_runtime_hook_family`.
-- Live batch ownership is exact in `docs/program/parity_batch_registry.csv`: J1-A through J1-D own 39 spell blockers, J2-A through J2-F own 60 spell blockers, and G1-A through G1-D own 38 trait blockers.
+- Strict FIN-02 on the current branch baseline reports 117 blocked shipped records: 89 `spell` records and 28 `trait` records.
+- Remaining strict unsupported-reason families are 89 `missing_runtime_mechanics` and 28 `missing_runtime_hook_family`.
+- Live batch ownership remains tracked in `docs/program/parity_batch_registry.csv`; the regenerated branch artifacts report 89 blocked spells and 28 blocked traits, with G1-B under review in PR #231.
 - No backlog task is currently in `blocked` state.
 - Dependency links are informational here; canonical task state remains in `docs/program/backlog.csv`.
