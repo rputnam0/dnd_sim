@@ -17,7 +17,8 @@
           "target": "unoccupied space you can see"
         }
       ],
-      "recharge": "once per short or long rest"
+      "recharge": "once per short or long rest",
+      "meta_type": "reactive_invisibility_teleport_support"
     }
   ],
   "source_type": "subclass"

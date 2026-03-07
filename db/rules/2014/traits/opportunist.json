@@ -5,7 +5,8 @@
     {
       "trigger": "a creature within 5 feet of you is hit by an attack made by a creature other than you",
       "action": "reaction",
-      "effect": "make a melee attack against that creature"
+      "effect": "make a melee attack against that creature",
+      "meta_type": "reaction_followup_attack_support"
     }
   ],
   "source_type": "subclass"

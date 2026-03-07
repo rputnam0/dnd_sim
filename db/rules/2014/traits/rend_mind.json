@@ -19,7 +19,8 @@
           "resource": "Psionic Energy dice",
           "amount": 3
         }
-      }
+      },
+      "meta_type": "rend_mind_stun_support"
     }
   ],
   "source_type": "subclass"
