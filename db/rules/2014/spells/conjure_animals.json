@@ -8,8 +8,25 @@
   "concentration": true,
   "ritual": false,
   "duration_rounds": 600,
-  "description": "You summon fey spirits that take the form of beasts and appear in unoccupied spaces that you can see within range. Choose one of the following options for what appears: • One beast of challenge rating 2 or lower • Two beasts of challenge rating 1 or lower • Four beasts of challenge rating 1/2 or lower • Eight beasts of challenge rating 1/4 or lower Each beast is also considered fey, and it disappears when it drops to 0 hit points or when the spell ends. The summoned creatures are friendly to you and your companions. Roll initiative for the summoned creatures as a group, which has its own turns. They obey any verbal commands that you issue to them (no action required by you). If you don’t issue any commands to them, they defend themselves from hostile creatures, but otherwise take no actions. The GM has the creatures’ statistics. At Higher Levels. When you cast this spell using certain higher-­‐‑level spell slots, you choose one of the summoning options above, and more creatures appear: twice as many with a 5th-­‐‑level slot, three times as many with a 7th-­‐‑level slot, and four times as many with a 9th-­‐‑level slot. Conjure Celestial 7th-­‐‑level conjuration",
+  "description": "You summon fey spirits that take the form of beasts and appear in unoccupied spaces that you can see within range. Choose one of the following options for what appears: \u2022 One beast of challenge rating 2 or lower \u2022 Two beasts of challenge rating 1 or lower \u2022 Four beasts of challenge rating 1/2 or lower \u2022 Eight beasts of challenge rating 1/4 or lower Each beast is also considered fey, and it disappears when it drops to 0 hit points or when the spell ends. The summoned creatures are friendly to you and your companions. Roll initiative for the summoned creatures as a group, which has its own turns. They obey any verbal commands that you issue to them (no action required by you). If you don\u2019t issue any commands to them, they defend themselves from hostile creatures, but otherwise take no actions. The GM has the creatures\u2019 statistics. At Higher Levels. When you cast this spell using certain higher-\u00ad\u2010\u2011level spell slots, you choose one of the summoning options above, and more creatures appear: twice as many with a 5th-\u00ad\u2010\u2011level slot, three times as many with a 7th-\u00ad\u2010\u2011level slot, and four times as many with a 9th-\u00ad\u2010\u2011level slot. Conjure Celestial 7th-\u00ad\u2010\u2011level conjuration",
   "save_ability": null,
   "damage_type": null,
-  "mechanics": []
+  "mechanics": [
+    {
+      "effect_type": "conjure",
+      "name": "Conjured Animals",
+      "duration_rounds": 600,
+      "controller": "source",
+      "creature_type": "beast",
+      "count_options": [
+        "one CR 2",
+        "two CR 1",
+        "four CR 1/2",
+        "eight CR 1/4"
+      ],
+      "concentration_linked": true
+    }
+  ],
+  "action_type": "utility",
+  "target_mode": "self"
 }
