@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import random
 
-from dnd_sim.engine_runtime import _break_concentration, _execute_action, has_condition
+from dnd_sim.engine_runtime import (
+    _break_concentration,
+    _execute_action,
+    _force_end_concentration_if_needed,
+    has_condition,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 
@@ -108,7 +113,9 @@ def test_new_concentration_spell_ends_previous_one_immediately() -> None:
     target_a = _actor("target_a", "enemy")
     target_b = _actor("target_b", "enemy")
     actors = {a.actor_id: a for a in (caster, target_a, target_b)}
-    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target_a, target_b)
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        caster, target_a, target_b
+    )
     active_hazards: list[dict[str, object]] = []
 
     first_spell = ActionDefinition(
@@ -172,7 +179,12 @@ def test_breaking_concentration_ends_linked_effect_dependencies() -> None:
         tags=["spell"],
         effects=[
             {"effect_type": "apply_condition", "target": "target", "condition": "restrained"},
-            {"effect_type": "hazard", "target": "target", "hazard_type": "web", "effect_id": "web_field"},
+            {
+                "effect_type": "hazard",
+                "target": "target",
+                "hazard_type": "web",
+                "effect_id": "web_field",
+            },
             {"effect_type": "summon", "target": "self", "actor_id": "webling", "name": "Webling"},
         ],
     )
@@ -207,7 +219,9 @@ def test_non_concentration_spell_does_not_disturb_existing_concentration() -> No
     target_a = _actor("target_a", "enemy")
     target_b = _actor("target_b", "enemy")
     actors = {a.actor_id: a for a in (caster, target_a, target_b)}
-    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target_a, target_b)
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        caster, target_a, target_b
+    )
     active_hazards: list[dict[str, object]] = []
 
     concentration_spell = ActionDefinition(
@@ -257,3 +271,22 @@ def test_non_concentration_spell_does_not_disturb_existing_concentration() -> No
     assert caster.concentrated_spell == "hold_person"
     assert has_condition(target_a, "paralyzed")
     assert has_condition(target_b, "blinded")
+
+
+def test_surprise_does_not_force_end_concentration() -> None:
+    caster = _actor("caster", "party")
+    caster.concentrating = True
+    caster.concentrated_spell = "hex"
+    caster.surprised = True
+    caster.add_manual_condition("surprised")
+
+    assert (
+        _force_end_concentration_if_needed(
+            caster,
+            actors={caster.actor_id: caster},
+            active_hazards=[],
+        )
+        is False
+    )
+    assert caster.concentrating is True
+    assert caster.concentrated_spell == "hex"

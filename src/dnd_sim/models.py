@@ -294,6 +294,9 @@ class ActorRuntimeState:
     mounted_rider_id: str | None = None
     requires_command: bool = False
     commanded_this_round: bool = False
+    hidden: bool = False
+    detected_by: set[str] = field(default_factory=set)
+    surprised: bool = False
 
     def is_active(self) -> bool:
         return not self.dead

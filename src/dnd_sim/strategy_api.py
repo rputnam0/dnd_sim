@@ -71,6 +71,9 @@ class ActorView:
     movement_remaining: float
     traits: dict[str, dict[str, Any]]
     concentrating: bool = False
+    hidden: bool = False
+    detected_by: set[str] = field(default_factory=set)
+    surprised: bool = False
 
 
 @dataclass(slots=True)
@@ -234,9 +237,7 @@ def validate_strategy_instance(strategy: Any) -> None:
 
     _validate_strategy_instance_impl(strategy)
     legacy_methods = sorted(
-        name
-        for name in _REMOVED_LEGACY_STRATEGY_METHODS
-        if callable(getattr(strategy, name, None))
+        name for name in _REMOVED_LEGACY_STRATEGY_METHODS if callable(getattr(strategy, name, None))
     )
     if legacy_methods:
         joined = ", ".join(legacy_methods)

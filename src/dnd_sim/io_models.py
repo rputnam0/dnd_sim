@@ -467,12 +467,91 @@ class CustomSimulationConfig(BaseModel):
     callable: str = "run_custom_simulation"
 
 
+class StealthActorConfig(BaseModel):
+    actor_id: str
+    team: str
+    hidden: bool = False
+    detected_by: list[str] = Field(default_factory=list)
+    surprised: bool = False
+    stealth_total: int | None = None
+    passive_perception: int | None = None
+
+    @field_validator("stealth_total", "passive_perception")
+    @classmethod
+    def validate_non_negative_optional_values(cls, value: int | None) -> int | None:
+        if value is not None and value < 0:
+            raise ValueError("stealth/passive values must be >= 0")
+        return value
+
+
+class InteractableConfig(BaseModel):
+    object_id: str
+    kind: Literal["trap", "lock", "container", "secret", "searchable"]
+    location_id: str | None = None
+    hidden: bool = False
+    discovered: bool = False
+    open: bool = False
+    locked: bool = False
+    trap_armed: bool = False
+    disarmed: bool = False
+    triggered: bool = False
+    discovery_dc: int | None = None
+    unlock_dc: int | None = None
+    disarm_dc: int | None = None
+    trigger_on_fail: bool = False
+    key_item_id: str | None = None
+    contents: list[str] = Field(default_factory=list)
+    loot_transferred: bool = False
+
+    @field_validator("discovery_dc", "unlock_dc", "disarm_dc")
+    @classmethod
+    def validate_non_negative_dc(cls, value: int | None) -> int | None:
+        if value is not None and value < 0:
+            raise ValueError("DC values must be >= 0")
+        return value
+
+    @model_validator(mode="after")
+    def validate_open_locked_state(self) -> "InteractableConfig":
+        if self.open and self.locked:
+            raise ValueError("interactable objects cannot be both open and locked")
+        return self
+
+
+class ExplorationActionConfig(BaseModel):
+    action: Literal[
+        "search",
+        "disarm",
+        "unlock",
+        "open",
+        "close",
+        "transfer_loot",
+        "contested_stealth",
+        "surprise",
+    ]
+    actor_id: str | None = None
+    object_id: str | None = None
+    target_actor_ids: list[str] = Field(default_factory=list)
+    target_object_ids: list[str] = Field(default_factory=list)
+    check_total: int | None = None
+    teams: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("check_total")
+    @classmethod
+    def validate_non_negative_check_total(cls, value: int | None) -> int | None:
+        if value is not None and value < 0:
+            raise ValueError("check_total must be >= 0")
+        return value
+
+
 class EncounterConfig(BaseModel):
     enemies: list[str] = Field(default_factory=list)
     short_rest_after: bool = False
     long_rest_after: bool = False
     branches: dict[str, int] = Field(default_factory=dict)
     checkpoint: str | None = None
+    stealth_actors: list[StealthActorConfig] = Field(default_factory=list)
+    interactables: list[InteractableConfig] = Field(default_factory=list)
+    interaction_actions: list[ExplorationActionConfig] = Field(default_factory=list)
 
     @field_validator("branches")
     @classmethod
@@ -503,6 +582,9 @@ class ScenarioConfig(BaseModel):
     initiative_mode: Literal["individual", "grouped"] = "individual"
     battlefield: dict[str, Any] = Field(default_factory=dict)
     exploration: dict[str, Any] = Field(default_factory=dict)
+    stealth_actors: list[StealthActorConfig] = Field(default_factory=list)
+    interactables: list[InteractableConfig] = Field(default_factory=list)
+    interaction_actions: list[ExplorationActionConfig] = Field(default_factory=list)
     termination_rules: dict[str, Any]
     strategy_modules: list[StrategyModuleConfig]
     resource_policy: dict[str, Any] = Field(default_factory=dict)

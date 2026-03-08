@@ -2,6 +2,12 @@ from __future__ import annotations
 
 import pytest
 
+from dnd_sim.exploration_interaction import (
+    AwarenessState,
+    ExplorationInteractionState,
+    InteractionEvent,
+    InteractableState,
+)
 from dnd_sim.persistence import (
     deserialize_world_exploration_state,
     serialize_world_exploration_state,
@@ -168,3 +174,77 @@ def test_deserialize_world_exploration_state_rejects_non_string_light_source_id(
                 ],
             }
         )
+
+
+def test_exploration_turn_preserves_interaction_state_across_time_advancement() -> None:
+    state = create_exploration_state(
+        day=1,
+        hour=12,
+        minute=0,
+        interaction_state=ExplorationInteractionState(
+            awareness={
+                "rogue": AwarenessState(
+                    actor_id="rogue",
+                    hidden=True,
+                    detected_by=(),
+                    stealth_total=16,
+                )
+            },
+            interactables={
+                "chest_a": InteractableState(
+                    object_id="chest_a",
+                    kind="container",
+                    discovered=True,
+                    locked=True,
+                    unlock_dc=14,
+                    contents=("potion_healing",),
+                )
+            },
+        ),
+    )
+
+    result = run_exploration_turn(state, activity="move", elapsed_minutes=10)
+
+    assert result.state.interaction_state == state.interaction_state
+
+
+def test_world_exploration_state_round_trip_preserves_interaction_payload() -> None:
+    interaction_state = ExplorationInteractionState(
+        awareness={
+            "guard": AwarenessState(
+                actor_id="guard",
+                hidden=False,
+                detected_by=("rogue",),
+                surprised=True,
+                stealth_total=5,
+            )
+        },
+        interactables={
+            "secret_door": InteractableState(
+                object_id="secret_door",
+                kind="secret",
+                hidden=False,
+                discovered=True,
+                discovery_dc=15,
+            )
+        },
+        event_log=(
+            InteractionEvent(
+                event_type="search",
+                actor_id="rogue",
+                outcome="resolved",
+                object_id="secret_door",
+            ),
+        ),
+    )
+    state = create_exploration_state(
+        day=3,
+        hour=9,
+        minute=5,
+        interaction_state=interaction_state,
+    )
+
+    payload = serialize_world_exploration_state(state)
+    restored = deserialize_world_exploration_state(payload)
+
+    assert restored.interaction_state == interaction_state

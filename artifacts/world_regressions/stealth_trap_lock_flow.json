@@ -1,0 +1,286 @@
+{
+  "case_id": "stealth_trap_lock_flow",
+  "expected_replay": {
+    "clock": {
+      "day": 1,
+      "hour": 10,
+      "minute": 10,
+      "minute_of_day": 610
+    },
+    "interaction_state": {
+      "awareness": [
+        {
+          "actor_id": "guard",
+          "detected_by": [],
+          "hidden": false,
+          "stealth_total": null,
+          "surprised": true
+        },
+        {
+          "actor_id": "rogue",
+          "detected_by": [
+            "guard"
+          ],
+          "hidden": false,
+          "stealth_total": 16,
+          "surprised": false
+        }
+      ],
+      "events": [
+        {
+          "actor_id": "rogue",
+          "details": {
+            "detected_by": [],
+            "stealth_total": 16,
+            "undetected_by": [
+              "guard"
+            ]
+          },
+          "event_type": "stealth_check",
+          "object_id": null,
+          "outcome": "hidden"
+        },
+        {
+          "actor_id": "encounter",
+          "details": {
+            "surprised_actor_ids": [
+              "guard"
+            ]
+          },
+          "event_type": "surprise_resolution",
+          "object_id": null,
+          "outcome": "resolved"
+        },
+        {
+          "actor_id": "rogue",
+          "details": {
+            "trap_triggered": true
+          },
+          "event_type": "disarm",
+          "object_id": "needle_trap",
+          "outcome": "failure"
+        },
+        {
+          "actor_id": "rogue",
+          "details": {
+            "trap_triggered": false
+          },
+          "event_type": "unlock",
+          "object_id": "chest_a",
+          "outcome": "success"
+        },
+        {
+          "actor_id": "rogue",
+          "details": {},
+          "event_type": "open_close",
+          "object_id": "chest_a",
+          "outcome": "open"
+        },
+        {
+          "actor_id": "rogue",
+          "details": {
+            "loot_item_ids": [
+              "potion_healing",
+              "ruby"
+            ]
+          },
+          "event_type": "loot_transfer",
+          "object_id": "chest_a",
+          "outcome": "success"
+        },
+        {
+          "actor_id": "guard",
+          "details": {
+            "discovered_object_ids": [
+              "secret_door"
+            ],
+            "revealed_actor_ids": [
+              "rogue"
+            ],
+            "search_total": 16
+          },
+          "event_type": "search",
+          "object_id": null,
+          "outcome": "resolved"
+        }
+      ],
+      "interactables": [
+        {
+          "contents": [
+            "potion_healing",
+            "ruby"
+          ],
+          "disarm_dc": null,
+          "disarmed": false,
+          "discovered": true,
+          "discovery_dc": null,
+          "hidden": false,
+          "key_item_id": null,
+          "kind": "container",
+          "location_id": null,
+          "locked": false,
+          "loot_transferred": true,
+          "object_id": "chest_a",
+          "open": true,
+          "trap_armed": false,
+          "trigger_on_fail": false,
+          "triggered": false,
+          "unlock_dc": 14
+        },
+        {
+          "contents": [],
+          "disarm_dc": 15,
+          "disarmed": false,
+          "discovered": true,
+          "discovery_dc": null,
+          "hidden": false,
+          "key_item_id": null,
+          "kind": "trap",
+          "location_id": null,
+          "locked": false,
+          "loot_transferred": false,
+          "object_id": "needle_trap",
+          "open": false,
+          "trap_armed": true,
+          "trigger_on_fail": true,
+          "triggered": true,
+          "unlock_dc": null
+        },
+        {
+          "contents": [],
+          "disarm_dc": null,
+          "disarmed": false,
+          "discovered": true,
+          "discovery_dc": 15,
+          "hidden": false,
+          "key_item_id": null,
+          "kind": "secret",
+          "location_id": null,
+          "locked": false,
+          "loot_transferred": false,
+          "object_id": "secret_door",
+          "open": false,
+          "trap_armed": false,
+          "trigger_on_fail": false,
+          "triggered": false,
+          "unlock_dc": null
+        }
+      ]
+    },
+    "light_sources": {},
+    "location_id": "crypt_entry",
+    "turn_index": 1
+  },
+  "initial_state": {
+    "day": 1,
+    "hour": 10,
+    "interaction_state": {
+      "awareness": [
+        {
+          "actor_id": "guard",
+          "detected_by": [],
+          "hidden": false,
+          "surprised": false
+        },
+        {
+          "actor_id": "rogue",
+          "detected_by": [],
+          "hidden": false,
+          "surprised": false
+        }
+      ],
+      "events": [],
+      "interactables": [
+        {
+          "discovered": false,
+          "discovery_dc": 15,
+          "hidden": true,
+          "kind": "secret",
+          "object_id": "secret_door"
+        },
+        {
+          "disarm_dc": 15,
+          "discovered": true,
+          "hidden": false,
+          "kind": "trap",
+          "object_id": "needle_trap",
+          "trap_armed": true,
+          "trigger_on_fail": true
+        },
+        {
+          "contents": [
+            "ruby",
+            "potion_healing"
+          ],
+          "discovered": true,
+          "hidden": false,
+          "kind": "container",
+          "locked": true,
+          "object_id": "chest_a",
+          "open": false,
+          "unlock_dc": 14
+        }
+      ]
+    },
+    "location_id": "crypt_entry",
+    "minute": 0
+  },
+  "mode": "exploration",
+  "performance_baseline_ms": 60.0,
+  "steps": [
+    {
+      "actor_id": "rogue",
+      "kind": "contested_stealth",
+      "observer_passive_perception": {
+        "guard": 12
+      },
+      "stealth_total": 16
+    },
+    {
+      "kind": "surprise",
+      "teams": {
+        "guard": "enemy",
+        "rogue": "party"
+      }
+    },
+    {
+      "actor_id": "rogue",
+      "check_total": 10,
+      "kind": "disarm_trap",
+      "object_id": "needle_trap"
+    },
+    {
+      "actor_id": "rogue",
+      "check_total": 17,
+      "kind": "unlock",
+      "object_id": "chest_a"
+    },
+    {
+      "actor_id": "rogue",
+      "kind": "open_close",
+      "object_id": "chest_a",
+      "open": true
+    },
+    {
+      "actor_id": "rogue",
+      "kind": "transfer_loot",
+      "object_id": "chest_a"
+    },
+    {
+      "kind": "active_search",
+      "search_total": 16,
+      "seeker_id": "guard",
+      "target_actor_ids": [
+        "rogue"
+      ],
+      "target_object_ids": [
+        "secret_door"
+      ]
+    },
+    {
+      "activity": "search",
+      "elapsed_minutes": 10,
+      "kind": "exploration_turn"
+    }
+  ]
+}

@@ -20,6 +20,10 @@ from dnd_sim.economy import (
     VendorStock,
     create_economy_state,
 )
+from dnd_sim.exploration_interaction import (
+    deserialize_interaction_state,
+    serialize_interaction_state,
+)
 from dnd_sim.world_runtime import (
     ExplorationState,
     LightSourceState,
@@ -747,6 +751,7 @@ def serialize_world_exploration_state(state: ExplorationState) -> dict[str, Any]
             }
             for _, light in sorted(state.light_sources.items())
         ],
+        "interaction_state": serialize_interaction_state(state.interaction_state),
     }
 
 
@@ -769,6 +774,7 @@ def deserialize_world_exploration_state(payload: Mapping[str, Any]) -> Explorati
         location_id = _required_text(payload.get("location_id"), field_name="location_id")
 
     light_sources = _deserialize_light_sources(payload.get("light_sources"))
+    interaction_state = deserialize_interaction_state(payload.get("interaction_state"))
     turn_index = _required_int(payload.get("turn_index", 0), field_name="turn_index")
 
     return ExplorationState(
@@ -776,6 +782,7 @@ def deserialize_world_exploration_state(payload: Mapping[str, Any]) -> Explorati
         clock=WorldClock(day=day, minute_of_day=minute_of_day),
         light_sources=light_sources,
         location_id=location_id,
+        interaction_state=interaction_state,
     )
 
 

@@ -16,6 +16,16 @@ from dnd_sim.encounter_script import (
     set_encounter_objective,
     trigger_map_hook,
 )
+from dnd_sim.exploration_interaction import (
+    resolve_active_search,
+    resolve_contested_stealth,
+    resolve_encounter_surprise,
+    resolve_open_close,
+    resolve_transfer_loot,
+    resolve_trap_disarm,
+    resolve_unlock,
+    serialize_interaction_state,
+)
 from dnd_sim.world_runtime import (
     ExplorationState,
     LightSourceState,
@@ -116,6 +126,7 @@ def _build_exploration_state(initial_state: Mapping[str, Any]) -> ExplorationSta
         turn_index=turn_index,
         location_id=location_id,
         light_sources=_normalize_light_sources(initial_state.get("light_sources")),
+        interaction_state=initial_state.get("interaction_state"),
     )
 
 
@@ -189,7 +200,22 @@ def _snapshot_exploration_state(state: ExplorationState) -> dict[str, Any]:
             }
             for source_id, light in sorted(state.light_sources.items())
         },
+        "interaction_state": serialize_interaction_state(state.interaction_state),
     }
+
+
+def _replace_interaction_state(
+    state: ExplorationState,
+    *,
+    interaction_state: Any,
+) -> ExplorationState:
+    return ExplorationState(
+        turn_index=state.turn_index,
+        clock=state.clock,
+        light_sources=state.light_sources,
+        location_id=state.location_id,
+        interaction_state=interaction_state,
+    )
 
 
 def _snapshot_world_state(state: WorldState) -> dict[str, Any]:
@@ -277,17 +303,79 @@ def _run_exploration_case(case: Mapping[str, Any]) -> dict[str, Any]:
     for step in steps:
         step_payload = _required_mapping(step, field_name="step")
         kind = _required_text(step_payload.get("kind"), field_name="step.kind")
-        if kind != "exploration_turn":
+        if kind == "exploration_turn":
+            activity = _required_text(step_payload.get("activity"), field_name="step.activity")
+            elapsed_minutes = _required_int(
+                step_payload.get("elapsed_minutes"), field_name="step.elapsed_minutes"
+            )
+            state = run_exploration_turn(
+                state,
+                activity=activity,
+                elapsed_minutes=elapsed_minutes,
+            ).state
+        elif kind == "contested_stealth":
+            result = resolve_contested_stealth(
+                state.interaction_state,
+                actor_id=step_payload.get("actor_id"),
+                stealth_total=step_payload.get("stealth_total"),
+                observer_passive_perception=_required_mapping(
+                    step_payload.get("observer_passive_perception", {}),
+                    field_name="step.observer_passive_perception",
+                ),
+            )
+            state = _replace_interaction_state(state, interaction_state=result.state)
+        elif kind == "active_search":
+            result = resolve_active_search(
+                state.interaction_state,
+                seeker_id=step_payload.get("seeker_id"),
+                search_total=step_payload.get("search_total"),
+                target_actor_ids=list(step_payload.get("target_actor_ids", ())),
+                target_object_ids=list(step_payload.get("target_object_ids", ())),
+            )
+            state = _replace_interaction_state(state, interaction_state=result.state)
+        elif kind == "surprise":
+            result = resolve_encounter_surprise(
+                state.interaction_state,
+                teams=_required_mapping(step_payload.get("teams", {}), field_name="step.teams"),
+            )
+            state = _replace_interaction_state(state, interaction_state=result.state)
+        elif kind == "unlock":
+            result = resolve_unlock(
+                state.interaction_state,
+                actor_id=step_payload.get("actor_id"),
+                object_id=step_payload.get("object_id"),
+                check_total=step_payload.get("check_total", 0),
+                key_item_ids=list(step_payload.get("key_item_ids", ())),
+            )
+            state = _replace_interaction_state(state, interaction_state=result.state)
+        elif kind == "disarm_trap":
+            result = resolve_trap_disarm(
+                state.interaction_state,
+                actor_id=step_payload.get("actor_id"),
+                object_id=step_payload.get("object_id"),
+                check_total=step_payload.get("check_total", 0),
+            )
+            state = _replace_interaction_state(state, interaction_state=result.state)
+        elif kind == "open_close":
+            open_value = step_payload.get("open")
+            if not isinstance(open_value, bool):
+                raise ValueError("step.open must be a bool")
+            result = resolve_open_close(
+                state.interaction_state,
+                actor_id=step_payload.get("actor_id"),
+                object_id=step_payload.get("object_id"),
+                open=open_value,
+            )
+            state = _replace_interaction_state(state, interaction_state=result.state)
+        elif kind == "transfer_loot":
+            result = resolve_transfer_loot(
+                state.interaction_state,
+                actor_id=step_payload.get("actor_id"),
+                object_id=step_payload.get("object_id"),
+            )
+            state = _replace_interaction_state(state, interaction_state=result.state)
+        else:
             raise ValueError(f"Unsupported exploration step kind: {kind}")
-        activity = _required_text(step_payload.get("activity"), field_name="step.activity")
-        elapsed_minutes = _required_int(
-            step_payload.get("elapsed_minutes"), field_name="step.elapsed_minutes"
-        )
-        state = run_exploration_turn(
-            state,
-            activity=activity,
-            elapsed_minutes=elapsed_minutes,
-        ).state
     return _snapshot_exploration_state(state)
 
 
