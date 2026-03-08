@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-07  
+Last updated: 2026-03-08  
 Canonical source: `docs/program/backlog.csv`
 
 Use this document as the human dashboard.  
@@ -21,6 +21,9 @@ Legend: `not_started` | `in_progress` | `blocked` | `pr_open` | `merged`
 ## Completion Summary
 
 Wave 5 baseline remains merged to `main`.
+
+Wave 6 remains closed as historical truth for its declared strict shipped-2014 parity scope.
+Wave 7 closeout is merged on `main` and completes the remaining CRPG-core hardening surfaces: canonical itemization, canonical class/subclass progression, and deterministic stealth/search/trap/lock interaction loops.
 
 Wave 6 remediation state:
 
@@ -51,6 +54,11 @@ Wave 6 remediation state:
 | UNI | Wave 6 API Unification | merged | 6b-unification | W6-UNI-01/02/03/04 merged and track integrated to `main` via #180. |
 | PAR | Wave 6 Capability Parity Closure | merged | 6c-parity | W6-PAR-01 through W6-PAR-05M are merged and promoted to `main` via #244; strict FIN-02 is green with blocked=0. |
 | GATE | Wave 6 Governance and Final Gates | merged | 6d-gates | W6-GATE-01 and W6-GATE-02 merged, including final full green gate via #183. |
+| W7DOC | Wave 7 Documentation Truth Reset | merged | 7-doc-truth | W7-DOC-01 merged and the live planning docs now describe Wave 7 as historical closeout work. |
+| ITM | Wave 7 Itemization Hard-Cut | merged | 7a-itemization | Canonical raw/canonical item catalogs, runtime hard-cut hooks, and magic-item support are merged. |
+| CLS | Wave 7 Class/Subclass Hard-Cut | merged | 7b-classes | Canonical class/subclass catalogs, progression builder wiring, capability coverage, and multiclass edge handling are merged. |
+| EXP | Wave 7 Stealth and Dungeon Interaction | merged | 7c-exploration | Hidden/detected/surprised state, interactables, persistence, and lightweight social support are merged. |
+| W7GATE | Wave 7 Gates and Closeout | merged | 7d-gates | Capability expansion, CRPG-core scenario gates, artifact rebuilds, and doc truth-sync are merged. |
 
 ## Active branches
 
@@ -73,6 +81,7 @@ Draft carryovers [#220](https://github.com/rputnam0/dnd_sim/pull/220) and [#222]
 
 - Wave 5 dependencies remain fully satisfied and merged on `main`.
 - Wave 6 CUT, UNI, PAR, and GATE dependencies are satisfied and merged on `main`.
+- Wave 7 is fully merged in `docs/program/backlog.csv` and promoted as historical closeout truth on `main`.
 - Strict FIN-02 is now fully green on `main` with 0 blocked shipped records.
 - No strict unsupported-reason families remain.
 - `docs/program/parity_batch_registry.csv` is now the historical execution map for the fully merged parity closeout wave.

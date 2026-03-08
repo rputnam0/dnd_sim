@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-05  
+Last updated: 2026-03-08  
 Canonical source: `docs/program/README.md`
 
 ## Objective
@@ -16,6 +16,25 @@ Complete the simulator as a greenfield, feature-complete D&D 5e 2014 engine and 
 - The legacy decommission program is baseline complete.
 
 Treat all new work below as the active completion program.
+
+## Wave 7 closeout (merged)
+
+Wave 6 remains historically complete for its declared strict shipped-2014 parity scope.  
+Wave 7 is merged and closes the last CRPG-core surfaces that were not yet first-class:
+
+- canonical itemization (`item` catalogs and runtime item execution),
+- canonical class/subclass progression (`class` and `subclass` catalogs),
+- stealth/search/trap/lock interaction loops with deterministic persistence.
+
+Wave 7 tracks (all merged):
+
+- 7A Itemization hard-cut (`W7-ITM-01` through `W7-ITM-04`)
+- 7B Class/subclass hard-cut (`W7-CLS-01` through `W7-CLS-04`)
+- 7C Stealth and dungeon interaction (`W7-EXP-01` through `W7-EXP-04`)
+- 7D Gates and closeout (`W7-GATE-01` through `W7-GATE-03`)
+
+Wave 7 delivered `5e + CRPG core`: full 2014 rules parity plus deterministic progression, itemization, stealth/search/trap interaction, persistence, and replayable world-state behavior.  
+Dialogue trees, cinematic conversations, and cutscene tooling remain out of scope for this wave.
 
 ## Renamed Wave 5
 
@@ -257,9 +276,10 @@ Mark the backend complete only when all of the following are true:
 
 - A legal turn is fully declarable and validated through the public API.
 - 2014 combat legality and timing windows are enforced.
-- Character, item, spell, feat, monster, and world content are canonicalized, queryable, and data-driven.
+- Character, class, subclass, item, spell, feat, monster, and world content are canonicalized, queryable, and data-driven.
 - Campaign persistence and multi-encounter adventuring-day flow work.
 - Noncombat, exploration, world-state, and economy systems work.
+- Stealth, surprise, search, trap, lock, and container interaction loops are deterministic and replayable.
 - Capability manifests are green for the shipped 2014 scope.
 - Replay corpora prove deterministic stability.
 - AI benchmark gates pass with full rationale traces.

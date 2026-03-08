@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-07
+Last updated: 2026-03-08
 Canonical source: `docs/program/README.md`
 
 This file is the single canonical planning entrypoint for the DnD Sim completion program.
@@ -52,15 +52,16 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 - Machine-readable JSON: [`artifacts/capabilities/coverage_report.json`](../../artifacts/capabilities/coverage_report.json)
 - Strict parity leaf registry: [`docs/program/parity_leaf_registry.csv`](parity_leaf_registry.csv)
 - Strict parity batch registry: [`docs/program/parity_batch_registry.csv`](parity_batch_registry.csv)
-- Regenerate both outputs with:
-  `uv run python scripts/content/render_capability_report.py --last-updated YYYY-MM-DD`
+- Regenerate the catalog-driven capability artifacts with:
+  `uv run python scripts/content/rebuild_capability_artifacts.py`
 
-## Current Strict Parity Snapshot
+## Current Backend Snapshot
 
 - Strict shipped-2014 parity is complete on `main` with `0` blocked records.
-- Current capability report totals are `2526/2526` schema-valid, executable, tested, and supported records.
+- Current capability report totals are `2674/2674` schema-valid, executable, tested, and supported records.
 - Wave 6 parity closeout was promoted from `codex/int/w6-parity-closeout` to `main` via [#244](https://github.com/rputnam0/dnd_sim/pull/244).
 - `docs/program/parity_leaf_registry.csv` and `docs/program/parity_batch_registry.csv` remain canonical historical execution maps for the closeout wave.
+- Wave 7 closeout is merged on `main`: canonical items, classes, subclasses, stealth/search/surprise state, traps, locks, containers, and persistence-backed interaction flows are all first-class shipped surfaces.
 - Use `docs/program/capability_report.md` and `docs/program/status_board.md` for current truth.
 
 Ownership and metadata-header requirements for this same live planning surface are defined in

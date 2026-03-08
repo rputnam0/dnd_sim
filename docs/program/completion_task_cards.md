@@ -2,10 +2,11 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-05  
+Last updated: 2026-03-08  
 Canonical source: `docs/program/backlog.csv`
 
 This file expands the machine-readable backlog into a human-readable task reference for coding agents and reviewers.
+Wave 7 is now fully merged; keep using `docs/program/backlog.csv` and `docs/program/status_board.md` for current status, and treat the cards below as task reference plus historical execution context.
 
 ## Documentation Control
 
