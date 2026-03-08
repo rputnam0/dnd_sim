@@ -5,6 +5,7 @@ from dnd_sim.engine_runtime import (
     _actor_state_snapshot,
     _build_actor_views,
     _can_act,
+    long_rest,
     actor_is_incapacitated,
 )
 from dnd_sim.io_models import ExplorationActionConfig, InteractableConfig, StealthActorConfig
@@ -126,3 +127,40 @@ def test_configured_interaction_setup_updates_actor_and_object_runtime_state() -
     assert actors["rogue"].detected_by == set()
     assert actors["guard"].surprised is True
     assert actor_is_incapacitated(actors["guard"]) is True
+
+
+def test_long_rest_clears_visibility_state() -> None:
+    actor = _actor("rogue")
+    actor.hidden = True
+    actor.detected_by = {"guard"}
+    actor.surprised = True
+    actor.add_manual_condition("surprised")
+
+    long_rest(actor)
+
+    assert actor.hidden is False
+    assert actor.detected_by == set()
+    assert actor.surprised is False
+    assert "surprised" not in actor.conditions
+
+
+def test_configured_interaction_setup_ignores_none_actor_ids() -> None:
+    rogue = _actor("rogue")
+    actors = {"rogue": rogue}
+
+    interaction_state = _apply_configured_interaction_setup(
+        actors,
+        stealth_actors=[],
+        interactables=[],
+        interaction_actions=[
+            ExplorationActionConfig(
+                action="search",
+                actor_id=None,
+                check_total=12,
+                target_actor_ids=["rogue"],
+            )
+        ],
+    )
+
+    assert interaction_state.awareness == {}
+    assert interaction_state.interactables == {}

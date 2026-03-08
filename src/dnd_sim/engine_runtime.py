@@ -5923,6 +5923,8 @@ def _resolve_configured_actor_id(
     actor_id: str,
     actors: dict[str, ActorRuntimeState],
 ) -> str | None:
+    if actor_id is None:
+        return None
     normalized = str(actor_id).strip()
     if not normalized:
         return None
@@ -6732,6 +6734,9 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.movement_remaining = float(actor.speed_ft)
     actor.mounted_on_id = None
     actor.mounted_rider_id = None
+    actor.hidden = False
+    actor.detected_by.clear()
+    actor.surprised = False
 
 
 def _normalize_travel_pace(value: Any) -> str:
