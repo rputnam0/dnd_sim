@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:nature_cleric|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Nature Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Charm Animals and Plants"
+    },
+    {
+      "level": 6,
+      "name": "Dampen Elements"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Master of Nature"
+    }
+  ],
+  "name": "Nature Domain",
+  "source_book": "PHB",
+  "subclass_id": "nature"
+}

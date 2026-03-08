@@ -1,0 +1,25 @@
+{
+  "class_id": "rogue",
+  "content_id": "subclass:assassin_rogue|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Assassin"
+    },
+    {
+      "level": 9,
+      "name": "Infiltration Expertise"
+    },
+    {
+      "level": 13,
+      "name": "Impostor"
+    },
+    {
+      "level": 17,
+      "name": "Death Strike"
+    }
+  ],
+  "name": "Assassin",
+  "source_book": "PHB",
+  "subclass_id": "assassin"
+}

@@ -1,0 +1,25 @@
+{
+  "class_id": "artificer",
+  "content_id": "subclass:alchemist_artificer|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Alchemist"
+    },
+    {
+      "level": 5,
+      "name": "Alchemical Savant"
+    },
+    {
+      "level": 9,
+      "name": "Restorative Reagents"
+    },
+    {
+      "level": 15,
+      "name": "Chemical Mastery"
+    }
+  ],
+  "name": "Alchemist",
+  "source_book": "TCE",
+  "subclass_id": "alchemist"
+}

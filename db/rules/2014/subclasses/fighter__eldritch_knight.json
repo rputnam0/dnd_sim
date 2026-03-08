@@ -1,0 +1,29 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:eldritch_knight_fighter|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Eldritch Knight"
+    },
+    {
+      "level": 7,
+      "name": "War Magic"
+    },
+    {
+      "level": 10,
+      "name": "Eldritch Strike"
+    },
+    {
+      "level": 15,
+      "name": "Arcane Charge"
+    },
+    {
+      "level": 18,
+      "name": "Improved War Magic"
+    }
+  ],
+  "name": "Eldritch Knight",
+  "source_book": "PHB",
+  "subclass_id": "eldritch_knight"
+}

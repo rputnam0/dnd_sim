@@ -8,6 +8,7 @@ import random
 import re
 import statistics
 from dataclasses import dataclass, replace
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
@@ -16,7 +17,9 @@ from dnd_sim.characters import (
     spell_slots_for_multiclass,
     total_character_level,
 )
+from dnd_sim.class_progression import build_character_progression
 from dnd_sim.inventory import InventoryState
+from dnd_sim.items import CanonicalItem, load_default_item_catalog
 from dnd_sim.io import EncounterConfig, EnemyConfig, LoadedScenario
 from dnd_sim.models import (
     ABILITY_KEYS,
@@ -560,6 +563,13 @@ def _resolve_character_traits(
 
     class_levels = _class_levels_from_character_payload(character)
     explicit_candidates: set[str] = set(str(value) for value in (character.get("traits", []) or []))
+    progression = build_character_progression(
+        class_levels=class_levels,
+        subclass_choices=_subclass_choices_from_character_payload(character),
+    )
+    explicit_candidates.update(
+        candidate for candidate in progression.feature_names if find_match(candidate) is not None
+    )
     explicit_candidates.update(
         _infer_rogue_package_trait_names(
             class_levels=class_levels,
@@ -1248,6 +1258,21 @@ def _class_levels_from_character_payload(character: dict[str, Any]) -> dict[str,
     if not class_levels:
         raise ValueError("invalid class_levels: class_levels mapping is required")
     return class_levels
+
+
+def _subclass_choices_from_character_payload(character: dict[str, Any]) -> dict[str, str]:
+    raw = character.get("subclass_by_class")
+    if raw is None:
+        raw = character.get("subclasses")
+    if not isinstance(raw, dict):
+        return {}
+    normalized: dict[str, str] = {}
+    for class_name, subclass_name in raw.items():
+        class_key = _canonical_id(class_name, default="")
+        subclass_key = _canonical_id(subclass_name, default="")
+        if class_key and subclass_key:
+            normalized[class_key] = subclass_key
+    return normalized
 
 
 def _infer_rogue_package_trait_names(
@@ -5590,10 +5615,18 @@ def _extract_flat_resources(character: dict[str, Any]) -> dict[str, int]:
     }
     raw = character.get("resources", {})
     class_levels = _class_levels_from_character_payload(character)
+    progression = build_character_progression(
+        class_levels=class_levels,
+        subclass_choices=_subclass_choices_from_character_payload(character),
+    )
     has_pact_magic = _is_pact_magic_character(character)
     warlock_level = _warlock_level_from_character(character)
     raw_spell_slots = raw.get("spell_slots")
-    inferred_spell_slots = spell_slots_for_multiclass(class_levels)
+    inferred_spell_slots = (
+        progression.spell_slots
+        if progression.spell_slots
+        else spell_slots_for_multiclass(class_levels)
+    )
     pact_slot_profile = _extract_pact_slot_profile_from_spell_slots(raw_spell_slots)
     has_any_positive_slot = False
     if isinstance(raw_spell_slots, dict):
@@ -5717,6 +5750,160 @@ def _apply_trait_attunement_limit(actor: ActorRuntimeState) -> None:
     actor.inventory.attunement_limit = max(int(actor.inventory.attunement_limit), int(limit))
 
 
+@lru_cache(maxsize=1)
+def _canonical_item_catalog() -> dict[str, CanonicalItem]:
+    return load_default_item_catalog()
+
+
+def _item_is_runtime_active(actor_item: Any, item_def: CanonicalItem) -> bool:
+    if item_def.requires_attunement and not bool(getattr(actor_item, "attuned", False)):
+        return False
+    if item_def.equip_slots and getattr(actor_item, "equipped_slot", None) is None:
+        return False
+    return True
+
+
+def _normalize_item_resource_key(item_id: str) -> str:
+    return f"item_charge:{_canonical_id(item_id, default='item')}"
+
+
+def _apply_item_charge_resources(actor: ActorRuntimeState, item: Any) -> str | None:
+    max_charges = getattr(item, "max_charges", None)
+    current_charges = getattr(item, "current_charges", None)
+    if max_charges is None:
+        return None
+    try:
+        max_charges_int = int(max_charges)
+    except (TypeError, ValueError):
+        return None
+    if max_charges_int <= 0:
+        return None
+    quantity = max(1, int(getattr(item, "quantity", 1) or 1))
+    resource_key = _normalize_item_resource_key(str(getattr(item, "item_id", "")))
+    total_max = max_charges_int * quantity
+    total_current = total_max if current_charges is None else max(0, int(current_charges))
+    actor.max_resources[resource_key] = max(actor.max_resources.get(resource_key, 0), total_max)
+    actor.resources[resource_key] = min(actor.max_resources[resource_key], total_current)
+    return resource_key
+
+
+def _apply_canonical_item_passives(
+    actor: ActorRuntimeState, *, item_catalog: dict[str, CanonicalItem]
+) -> None:
+    for item in actor.inventory.items.values():
+        item_def = item_catalog.get(item.item_id)
+        if item_def is None:
+            continue
+        _apply_item_charge_resources(actor, item)
+        if not _item_is_runtime_active(item, item_def):
+            continue
+        for effect in item_def.passive_effects:
+            if not isinstance(effect, dict):
+                continue
+            effect_type = str(effect.get("effect_type", "")).strip().lower()
+            if effect_type == "ac_bonus":
+                actor.ac += int(effect.get("amount", 0) or 0)
+            elif effect_type == "save_bonus":
+                bonus = int(effect.get("amount", 0) or 0)
+                for key in ABILITY_KEYS:
+                    actor.save_mods[key] = int(actor.save_mods.get(key, 0)) + bonus
+            elif effect_type == "grant_trait":
+                trait_name = str(effect.get("name", "")).strip()
+                if trait_name:
+                    actor.traits.setdefault(_normalize_trait_name(trait_name), {})
+            elif effect_type == "resource_cap_bonus":
+                resource = str(effect.get("resource", "")).strip()
+                amount = int(effect.get("amount", 0) or 0)
+                if resource and amount > 0:
+                    key = _canonical_id(resource, default=resource)
+                    _ensure_resource_cap(actor, key, int(actor.max_resources.get(key, 0)) + amount)
+
+
+def _build_item_granted_action(
+    *,
+    payload: dict[str, Any],
+    item: Any,
+    item_def: CanonicalItem,
+    item_resource_key: str | None,
+) -> ActionDefinition | None:
+    name = str(payload.get("name", "")).strip()
+    if not name:
+        return None
+    action_type = str(payload.get("action_type", "utility")).strip().lower()
+    if action_type not in {"attack", "save", "utility", "buff", "grapple", "shove"}:
+        action_type = "utility"
+    target_mode = str(payload.get("target_mode", "single_enemy")).strip() or "single_enemy"
+    resource_cost: dict[str, int] = {}
+    raw_cost = payload.get("resource_cost")
+    if isinstance(raw_cost, dict):
+        for key, value in raw_cost.items():
+            try:
+                amount = int(value)
+            except (TypeError, ValueError):
+                continue
+            if amount > 0:
+                resource_cost[str(key)] = amount
+    if not resource_cost and item_resource_key is not None:
+        resource_cost[item_resource_key] = 1
+
+    tags = [str(tag) for tag in payload.get("tags", []) if str(tag).strip()]
+    tags.append("item_granted")
+    tags.append(f"item_id:{item.item_id}")
+    if item_def.requires_attunement:
+        tags.append("requires_attunement")
+    tags = list(dict.fromkeys(tags))
+
+    return ActionDefinition(
+        name=name,
+        action_type=action_type,
+        to_hit=_coerce_optional_int(payload.get("to_hit")),
+        damage=str(payload.get("damage")) if payload.get("damage") is not None else None,
+        damage_type=str(payload.get("damage_type", "force")),
+        save_dc=_coerce_optional_int(payload.get("save_dc")),
+        save_ability=(
+            str(payload.get("save_ability", "")).strip().lower()[:3]
+            if payload.get("save_ability") is not None
+            else None
+        ),
+        half_on_save=bool(payload.get("half_on_save", False)),
+        attack_count=max(1, int(payload.get("attack_count", 1) or 1)),
+        action_cost=str(payload.get("action_cost", "action")),
+        target_mode=target_mode,
+        max_targets=_coerce_optional_int(payload.get("max_targets")),
+        resource_cost=resource_cost,
+        tags=tags,
+    )
+
+
+def _apply_canonical_item_granted_actions(
+    actor: ActorRuntimeState, *, item_catalog: dict[str, CanonicalItem]
+) -> None:
+    seen_names = {
+        (action.name, _extract_tag_value(list(action.tags), "item_id:")) for action in actor.actions
+    }
+    for item in actor.inventory.items.values():
+        item_def = item_catalog.get(item.item_id)
+        if item_def is None or not _item_is_runtime_active(item, item_def):
+            continue
+        item_resource_key = _apply_item_charge_resources(actor, item)
+        for action_payload in item_def.granted_actions:
+            if not isinstance(action_payload, dict):
+                continue
+            action = _build_item_granted_action(
+                payload=action_payload,
+                item=item,
+                item_def=item_def,
+                item_resource_key=item_resource_key,
+            )
+            if action is None:
+                continue
+            dedupe_key = (action.name, item.item_id)
+            if dedupe_key in seen_names:
+                continue
+            actor.actions.append(action)
+            seen_names.add(dedupe_key)
+
+
 def _actor_has_equipped_shield(actor: ActorRuntimeState) -> bool:
     return actor.inventory.has_equipped_shield()
 
@@ -5831,10 +6018,13 @@ def _ensure_channel_divinity_resource(actor: ActorRuntimeState) -> None:
 
 
 def _build_actor_from_character(
-    character: dict[str, Any], traits_db: dict[str, dict[str, Any]] = None
+    character: dict[str, Any],
+    traits_db: dict[str, dict[str, Any]] = None,
+    item_catalog: dict[str, CanonicalItem] | None = None,
 ) -> ActorRuntimeState:
     class_levels = _class_levels_from_character_payload(character)
     character_level = total_character_level(class_levels)
+    active_item_catalog = item_catalog if item_catalog is not None else _canonical_item_catalog()
     ability_scores = character.get("ability_scores", {})
     dex_mod = (int(ability_scores.get("dex", 10)) - 10) // 2
     con_mod = (int(ability_scores.get("con", 10)) - 10) // 2
@@ -5869,7 +6059,10 @@ def _build_actor_from_character(
         traits=_resolve_character_traits(character, traits_db),
         level=character_level,
         class_levels=class_levels,
-        inventory=InventoryState.from_character_payload(character),
+        inventory=InventoryState.from_character_payload(
+            character,
+            item_catalog=active_item_catalog,
+        ),
         speed_ft=int(character.get("speed_ft", 30)),
         movement_modes={"walk": float(int(character.get("speed_ft", 30)))},
         exhaustion_level=max(0, min(6, int(character.get("exhaustion_level", 0) or 0))),
@@ -5879,6 +6072,8 @@ def _build_actor_from_character(
     _ensure_channel_divinity_resource(actor)
     _apply_passive_traits(actor)
     _apply_trait_attunement_limit(actor)
+    _apply_canonical_item_passives(actor, item_catalog=active_item_catalog)
+    _apply_canonical_item_granted_actions(actor, item_catalog=active_item_catalog)
     _apply_artificer_infusion_passives(actor)
     _apply_inferred_wizard_resources(actor)
     _apply_inferred_fighter_resources(actor)

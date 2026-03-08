@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:illusion_wizard|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "School of Illusion"
+    },
+    {
+      "level": 6,
+      "name": "Malleable Illusions"
+    },
+    {
+      "level": 10,
+      "name": "Illusory Self"
+    },
+    {
+      "level": 14,
+      "name": "Illusory Reality"
+    }
+  ],
+  "name": "School of Illusion",
+  "source_book": "PHB",
+  "subclass_id": "illusion"
+}

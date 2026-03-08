@@ -1,0 +1,25 @@
+{
+  "class_id": "druid",
+  "content_id": "subclass:land_druid|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "Circle of the Land"
+    },
+    {
+      "level": 6,
+      "name": "Land's Stride"
+    },
+    {
+      "level": 10,
+      "name": "Nature's Ward"
+    },
+    {
+      "level": 14,
+      "name": "Nature's Sanctuary"
+    }
+  ],
+  "name": "Circle of the Land",
+  "source_book": "PHB",
+  "subclass_id": "land"
+}

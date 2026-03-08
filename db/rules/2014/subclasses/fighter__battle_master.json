@@ -1,0 +1,49 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:battle_master_fighter|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Battle Master"
+    },
+    {
+      "level": 7,
+      "name": "Additional Maneuvers"
+    },
+    {
+      "level": 7,
+      "name": "Additional Superiority Die"
+    },
+    {
+      "level": 7,
+      "name": "Know Your Enemy"
+    },
+    {
+      "level": 10,
+      "name": "Additional Maneuvers"
+    },
+    {
+      "level": 10,
+      "name": "Improved Combat Superiority (d10)"
+    },
+    {
+      "level": 15,
+      "name": "Additional Maneuvers"
+    },
+    {
+      "level": 15,
+      "name": "Additional Superiority Die"
+    },
+    {
+      "level": 15,
+      "name": "Relentless"
+    },
+    {
+      "level": 18,
+      "name": "Improved Combat Superiority (d12)"
+    }
+  ],
+  "name": "Battle Master",
+  "source_book": "PHB",
+  "subclass_id": "battle_master"
+}

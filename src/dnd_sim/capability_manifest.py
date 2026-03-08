@@ -9,6 +9,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from dnd_sim.class_progression import DEFAULT_CLASSES_DIR, DEFAULT_SUBCLASSES_DIR
+from dnd_sim.items import DEFAULT_ITEMS_DIR, build_item_catalog
 from dnd_sim.mechanics_schema import (
     EXECUTABLE_EFFECT_TYPES,
     SPELL_METADATA_EFFECT_TYPES,
@@ -272,6 +274,57 @@ def load_spell_payloads(spells_dir: Path = DEFAULT_SPELLS_DIR) -> list[dict[str,
     return payloads
 
 
+def load_item_payloads(items_dir: Path = DEFAULT_ITEMS_DIR) -> list[dict[str, Any]]:
+    payloads: list[dict[str, Any]] = []
+    for path in sorted(items_dir.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            continue
+        normalized = dict(payload)
+        normalized.setdefault("item_id", _slug_token(path.stem, f"item_{len(payloads)+1}"))
+        normalized.setdefault("name", path.stem)
+        normalized.setdefault(
+            "source_book", payload.get("source_book", payload.get("source", "2014"))
+        )
+        normalized["_manifest_path"] = str(path)
+        payloads.append(normalized)
+    return payloads
+
+
+def load_class_payloads(classes_dir: Path = DEFAULT_CLASSES_DIR) -> list[dict[str, Any]]:
+    payloads: list[dict[str, Any]] = []
+    for path in sorted(classes_dir.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            continue
+        normalized = dict(payload)
+        normalized.setdefault("class_id", _slug_token(path.stem, f"class_{len(payloads)+1}"))
+        normalized.setdefault("name", path.stem)
+        normalized.setdefault(
+            "source_book", payload.get("source_book", payload.get("source", "2014"))
+        )
+        normalized["_manifest_path"] = str(path)
+        payloads.append(normalized)
+    return payloads
+
+
+def load_subclass_payloads(subclasses_dir: Path = DEFAULT_SUBCLASSES_DIR) -> list[dict[str, Any]]:
+    payloads: list[dict[str, Any]] = []
+    for path in sorted(subclasses_dir.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            continue
+        normalized = dict(payload)
+        normalized.setdefault("subclass_id", _slug_token(path.stem, f"subclass_{len(payloads)+1}"))
+        normalized.setdefault("name", path.stem)
+        normalized.setdefault(
+            "source_book", payload.get("source_book", payload.get("source", "2014"))
+        )
+        normalized["_manifest_path"] = str(path)
+        payloads.append(normalized)
+    return payloads
+
+
 def _feature_content_type(payload: dict[str, Any]) -> str:
     source_type = str(payload.get("source_type", "")).strip().lower()
     if source_type == "feat":
@@ -494,6 +547,178 @@ def build_spell_capability_manifest(
 ) -> CapabilityManifest:
     payloads = spell_payloads if spell_payloads is not None else load_spell_payloads(spells_dir)
     records = build_spell_capability_records(spell_payloads=payloads)
+    return build_manifest(
+        records=records,
+        manifest_version=manifest_version,
+        generated_at=generated_at,
+    )
+
+
+def build_item_capability_records(
+    *,
+    item_payloads: list[dict[str, Any]],
+) -> list[CapabilityRecord]:
+    sanitized_payloads = [
+        {key: value for key, value in payload.items() if not str(key).startswith("_")}
+        for payload in item_payloads
+    ]
+    catalog = build_item_catalog(item_payloads=sanitized_payloads)
+    records: list[CapabilityRecord] = []
+    for item in catalog.values():
+        records.append(
+            CapabilityRecord(
+                content_id=str(item.content_id),
+                content_type="item",
+                runtime_hook_family="item_runtime",
+                support_state="supported",
+                states=_supported_states(),
+            )
+        )
+    return records
+
+
+def build_item_capability_manifest(
+    *,
+    item_payloads: list[dict[str, Any]] | None = None,
+    items_dir: Path = DEFAULT_ITEMS_DIR,
+    manifest_version: str = MANIFEST_VERSION,
+    generated_at: str | None = None,
+) -> CapabilityManifest:
+    payloads = item_payloads if item_payloads is not None else load_item_payloads(items_dir)
+    records = build_item_capability_records(item_payloads=payloads)
+    return build_manifest(
+        records=records,
+        manifest_version=manifest_version,
+        generated_at=generated_at,
+    )
+
+
+def _class_content_id(payload: dict[str, Any], *, index: int) -> str:
+    explicit = str(payload.get("content_id", "")).strip()
+    if explicit:
+        return explicit
+    class_id = _slug_token(payload.get("class_id", payload.get("name", "")), f"class_{index}")
+    source = _slug_token(payload.get("source_book", payload.get("source", "2014")), "2014").upper()
+    return f"class:{class_id}|{source}"
+
+
+def _subclass_content_id(payload: dict[str, Any], *, index: int) -> str:
+    explicit = str(payload.get("content_id", "")).strip()
+    if explicit:
+        return explicit
+    subclass_id = _slug_token(
+        payload.get("subclass_id", payload.get("short_name", payload.get("name", ""))),
+        f"subclass_{index}",
+    )
+    class_id = _slug_token(payload.get("class_id", payload.get("class_name", "")), "class")
+    source = _slug_token(payload.get("source_book", payload.get("source", "2014")), "2014").upper()
+    return f"subclass:{subclass_id}_{class_id}|{source}"
+
+
+def build_class_capability_records(
+    *,
+    class_payloads: list[dict[str, Any]],
+) -> list[CapabilityRecord]:
+    records: list[CapabilityRecord] = []
+    for index, payload in enumerate(class_payloads, start=1):
+        class_name = str(payload.get("name", "")).strip()
+        class_id = _slug_token(payload.get("class_id", class_name), f"class_{index}")
+        features = payload.get("features")
+        if not class_name or not class_id:
+            states = _blocked_states(reason="missing_class_name", schema_valid=False)
+            support_state = "unsupported"
+        elif not isinstance(features, list):
+            states = _blocked_states(reason="malformed_class_features", schema_valid=False)
+            support_state = "unsupported"
+        elif not features:
+            states = _blocked_states(reason="missing_class_features", schema_valid=True)
+            support_state = "unsupported"
+        else:
+            states = _supported_states()
+            support_state = "supported"
+
+        records.append(
+            CapabilityRecord(
+                content_id=_class_content_id(payload, index=index),
+                content_type="class",
+                runtime_hook_family="class_progression",
+                support_state=support_state,
+                states=states,
+            )
+        )
+    return records
+
+
+def build_class_capability_manifest(
+    *,
+    class_payloads: list[dict[str, Any]] | None = None,
+    classes_dir: Path = DEFAULT_CLASSES_DIR,
+    manifest_version: str = MANIFEST_VERSION,
+    generated_at: str | None = None,
+) -> CapabilityManifest:
+    payloads = class_payloads if class_payloads is not None else load_class_payloads(classes_dir)
+    records = build_class_capability_records(class_payloads=payloads)
+    return build_manifest(
+        records=records,
+        manifest_version=manifest_version,
+        generated_at=generated_at,
+    )
+
+
+def build_subclass_capability_records(
+    *,
+    subclass_payloads: list[dict[str, Any]],
+) -> list[CapabilityRecord]:
+    records: list[CapabilityRecord] = []
+    for index, payload in enumerate(subclass_payloads, start=1):
+        subclass_name = str(payload.get("name", "")).strip()
+        subclass_id = _slug_token(
+            payload.get("subclass_id", payload.get("short_name", subclass_name)),
+            f"subclass_{index}",
+        )
+        class_id = _slug_token(payload.get("class_id", payload.get("class_name", "")), "")
+        features = payload.get("features")
+        if not subclass_name or not subclass_id:
+            states = _blocked_states(reason="missing_subclass_name", schema_valid=False)
+            support_state = "unsupported"
+        elif not class_id:
+            states = _blocked_states(reason="missing_subclass_class_id", schema_valid=False)
+            support_state = "unsupported"
+        elif not isinstance(features, list):
+            states = _blocked_states(reason="malformed_subclass_features", schema_valid=False)
+            support_state = "unsupported"
+        elif not features:
+            states = _blocked_states(reason="missing_subclass_features", schema_valid=True)
+            support_state = "unsupported"
+        else:
+            states = _supported_states()
+            support_state = "supported"
+
+        records.append(
+            CapabilityRecord(
+                content_id=_subclass_content_id(payload, index=index),
+                content_type="subclass",
+                runtime_hook_family="class_progression",
+                support_state=support_state,
+                states=states,
+            )
+        )
+    return records
+
+
+def build_subclass_capability_manifest(
+    *,
+    subclass_payloads: list[dict[str, Any]] | None = None,
+    subclasses_dir: Path = DEFAULT_SUBCLASSES_DIR,
+    manifest_version: str = MANIFEST_VERSION,
+    generated_at: str | None = None,
+) -> CapabilityManifest:
+    payloads = (
+        subclass_payloads
+        if subclass_payloads is not None
+        else load_subclass_payloads(subclasses_dir)
+    )
+    records = build_subclass_capability_records(subclass_payloads=payloads)
     return build_manifest(
         records=records,
         manifest_version=manifest_version,

@@ -1,0 +1,21 @@
+{
+  "class_id": "bard",
+  "content_id": "subclass:spirits_bard|VRGR",
+  "features": [
+    {
+      "level": 3,
+      "name": "College of Spirits"
+    },
+    {
+      "level": 6,
+      "name": "Spirit Session"
+    },
+    {
+      "level": 14,
+      "name": "Mystical Connection"
+    }
+  ],
+  "name": "College of Spirits",
+  "source_book": "VRGR",
+  "subclass_id": "spirits"
+}

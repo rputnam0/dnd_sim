@@ -1,0 +1,25 @@
+{
+  "class_id": "ranger",
+  "content_id": "subclass:gloom_stalker_ranger|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Gloom Stalker"
+    },
+    {
+      "level": 7,
+      "name": "Iron Mind"
+    },
+    {
+      "level": 11,
+      "name": "Stalker's Flurry"
+    },
+    {
+      "level": 15,
+      "name": "Shadowy Dodge"
+    }
+  ],
+  "name": "Gloom Stalker",
+  "source_book": "XGE",
+  "subclass_id": "gloom_stalker"
+}

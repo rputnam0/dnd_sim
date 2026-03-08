@@ -1,0 +1,25 @@
+{
+  "class_id": "artificer",
+  "content_id": "subclass:artillerist_artificer|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Artillerist"
+    },
+    {
+      "level": 5,
+      "name": "Arcane Firearm"
+    },
+    {
+      "level": 9,
+      "name": "Explosive Cannon"
+    },
+    {
+      "level": 15,
+      "name": "Fortified Position"
+    }
+  ],
+  "name": "Artillerist",
+  "source_book": "TCE",
+  "subclass_id": "artillerist"
+}

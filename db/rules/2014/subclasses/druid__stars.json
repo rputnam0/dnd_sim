@@ -1,0 +1,25 @@
+{
+  "class_id": "druid",
+  "content_id": "subclass:stars_druid|TCE",
+  "features": [
+    {
+      "level": 2,
+      "name": "Circle of Stars"
+    },
+    {
+      "level": 6,
+      "name": "Cosmic Omen"
+    },
+    {
+      "level": 10,
+      "name": "Twinkling Constellations"
+    },
+    {
+      "level": 14,
+      "name": "Full of Stars"
+    }
+  ],
+  "name": "Circle of Stars",
+  "source_book": "TCE",
+  "subclass_id": "stars"
+}

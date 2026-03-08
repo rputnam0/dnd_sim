@@ -1,0 +1,25 @@
+{
+  "class_id": "ranger",
+  "content_id": "subclass:swarmkeeper_ranger|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Swarmkeeper"
+    },
+    {
+      "level": 7,
+      "name": "Writhing Tide"
+    },
+    {
+      "level": 11,
+      "name": "Mighty Swarm"
+    },
+    {
+      "level": 15,
+      "name": "Swarming Dispersal"
+    }
+  ],
+  "name": "Swarmkeeper",
+  "source_book": "TCE",
+  "subclass_id": "swarmkeeper"
+}

@@ -1,0 +1,41 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:rune_knight_fighter|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Rune Knight"
+    },
+    {
+      "level": 7,
+      "name": "Additional Rune Known"
+    },
+    {
+      "level": 7,
+      "name": "Runic Shield"
+    },
+    {
+      "level": 10,
+      "name": "Additional Rune Known"
+    },
+    {
+      "level": 10,
+      "name": "Great Stature"
+    },
+    {
+      "level": 15,
+      "name": "Additional Rune Known"
+    },
+    {
+      "level": 15,
+      "name": "Master of Runes"
+    },
+    {
+      "level": 18,
+      "name": "Runic Juggernaut"
+    }
+  ],
+  "name": "Rune Knight",
+  "source_book": "TCE",
+  "subclass_id": "rune_knight"
+}

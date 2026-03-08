@@ -1,0 +1,21 @@
+{
+  "class_id": "bard",
+  "content_id": "subclass:whispers_bard|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "College of Whispers"
+    },
+    {
+      "level": 6,
+      "name": "Mantle of Whispers"
+    },
+    {
+      "level": 14,
+      "name": "Shadow Lore"
+    }
+  ],
+  "name": "College of Whispers",
+  "source_book": "XGE",
+  "subclass_id": "whispers"
+}

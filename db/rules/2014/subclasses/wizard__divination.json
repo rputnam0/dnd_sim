@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:divination_wizard|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "School of Divination"
+    },
+    {
+      "level": 6,
+      "name": "Expert Divination"
+    },
+    {
+      "level": 10,
+      "name": "The Third Eye"
+    },
+    {
+      "level": 14,
+      "name": "Greater Portent"
+    }
+  ],
+  "name": "School of Divination",
+  "source_book": "PHB",
+  "subclass_id": "divination"
+}

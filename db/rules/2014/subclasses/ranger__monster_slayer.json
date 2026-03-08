@@ -1,0 +1,25 @@
+{
+  "class_id": "ranger",
+  "content_id": "subclass:monster_slayer_ranger|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Monster Slayer"
+    },
+    {
+      "level": 7,
+      "name": "Supernatural Defense"
+    },
+    {
+      "level": 11,
+      "name": "Magic-User's Nemesis"
+    },
+    {
+      "level": 15,
+      "name": "Slayer's Counter"
+    }
+  ],
+  "name": "Monster Slayer",
+  "source_book": "XGE",
+  "subclass_id": "monster_slayer"
+}

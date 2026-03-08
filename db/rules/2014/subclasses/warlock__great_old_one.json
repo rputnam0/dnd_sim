@@ -1,0 +1,25 @@
+{
+  "class_id": "warlock",
+  "content_id": "subclass:great_old_one_warlock|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "The Great Old One"
+    },
+    {
+      "level": 6,
+      "name": "Entropic Ward"
+    },
+    {
+      "level": 10,
+      "name": "Thought Shield"
+    },
+    {
+      "level": 14,
+      "name": "Create Thrall"
+    }
+  ],
+  "name": "The Great Old One",
+  "source_book": "PHB",
+  "subclass_id": "great_old_one"
+}

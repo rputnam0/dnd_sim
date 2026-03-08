@@ -1,0 +1,9 @@
+{
+  "category": "tool",
+  "content_id": "item:thieves_tools|PHB",
+  "item_id": "thieves_tools",
+  "name": "Thieves' Tools",
+  "source_book": "PHB",
+  "value_cp": 2500,
+  "weight_lb": 1.0
+}

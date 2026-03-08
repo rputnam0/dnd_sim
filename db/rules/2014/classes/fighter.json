@@ -1,0 +1,108 @@
+{
+  "class_id": "fighter",
+  "content_id": "class:fighter|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Fighting Style"
+    },
+    {
+      "level": 1,
+      "name": "Second Wind"
+    },
+    {
+      "level": 2,
+      "name": "Action Surge"
+    },
+    {
+      "level": 3,
+      "name": "Martial Archetype",
+      "subclass_unlock": true
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 4,
+      "name": "Martial Versatility"
+    },
+    {
+      "level": 5,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 6,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 7,
+      "name": "Martial Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 9,
+      "name": "Indomitable"
+    },
+    {
+      "level": 10,
+      "name": "Martial Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 11,
+      "name": "Extra Attack (2)"
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 13,
+      "name": "Indomitable (two uses)"
+    },
+    {
+      "level": 14,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 15,
+      "name": "Martial Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 17,
+      "name": "Action Surge (two uses)"
+    },
+    {
+      "level": 17,
+      "name": "Indomitable (three uses)"
+    },
+    {
+      "level": 18,
+      "name": "Martial Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Extra Attack (3)"
+    }
+  ],
+  "name": "Fighter",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "none"
+  }
+}

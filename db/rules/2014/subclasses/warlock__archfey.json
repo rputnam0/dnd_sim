@@ -1,0 +1,25 @@
+{
+  "class_id": "warlock",
+  "content_id": "subclass:archfey_warlock|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "The Archfey"
+    },
+    {
+      "level": 6,
+      "name": "Misty Escape"
+    },
+    {
+      "level": 10,
+      "name": "Beguiling Defenses"
+    },
+    {
+      "level": 14,
+      "name": "Dark Delirium"
+    }
+  ],
+  "name": "The Archfey",
+  "source_book": "PHB",
+  "subclass_id": "archfey"
+}

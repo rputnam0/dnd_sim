@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:strength_psa_cleric|PSA",
+  "features": [
+    {
+      "level": 1,
+      "name": "Strength Domain (PSA)"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Feat of Strength"
+    },
+    {
+      "level": 6,
+      "name": "Rhonas's Blessing"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Avatar of Battle"
+    }
+  ],
+  "name": "Strength Domain (PSA)",
+  "source_book": "PSA",
+  "subclass_id": "strength_psa"
+}

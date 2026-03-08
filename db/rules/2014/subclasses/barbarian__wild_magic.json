@@ -1,0 +1,25 @@
+{
+  "class_id": "barbarian",
+  "content_id": "subclass:wild_magic_barbarian|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Path of Wild Magic"
+    },
+    {
+      "level": 6,
+      "name": "Bolstering Magic"
+    },
+    {
+      "level": 10,
+      "name": "Unstable Backlash"
+    },
+    {
+      "level": 14,
+      "name": "Controlled Surge"
+    }
+  ],
+  "name": "Path of Wild Magic",
+  "source_book": "TCE",
+  "subclass_id": "wild_magic"
+}

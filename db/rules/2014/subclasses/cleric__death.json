@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:death_cleric|DMG",
+  "features": [
+    {
+      "level": 1,
+      "name": "Death Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Touch of Death"
+    },
+    {
+      "level": 6,
+      "name": "Inescapable Destruction"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Improved Reaper"
+    }
+  ],
+  "name": "Death Domain",
+  "source_book": "DMG",
+  "subclass_id": "death"
+}

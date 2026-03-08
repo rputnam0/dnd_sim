@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:abjuration_wizard|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "School of Abjuration"
+    },
+    {
+      "level": 6,
+      "name": "Projected Ward"
+    },
+    {
+      "level": 10,
+      "name": "Improved Abjuration"
+    },
+    {
+      "level": 14,
+      "name": "Spell Resistance"
+    }
+  ],
+  "name": "School of Abjuration",
+  "source_book": "PHB",
+  "subclass_id": "abjuration"
+}

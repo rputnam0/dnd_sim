@@ -1,0 +1,25 @@
+{
+  "class_id": "ranger",
+  "content_id": "subclass:horizon_walker_ranger|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Horizon Walker"
+    },
+    {
+      "level": 7,
+      "name": "Ethereal Step"
+    },
+    {
+      "level": 11,
+      "name": "Distant Strike"
+    },
+    {
+      "level": 15,
+      "name": "Spectral Defense"
+    }
+  ],
+  "name": "Horizon Walker",
+  "source_book": "XGE",
+  "subclass_id": "horizon_walker"
+}

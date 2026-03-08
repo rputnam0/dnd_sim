@@ -8,10 +8,13 @@ from pathlib import Path
 import pytest
 from dnd_sim.capability_manifest import (
     MANIFEST_VERSION,
+    build_class_capability_manifest,
     build_feature_capability_manifest,
+    build_item_capability_manifest,
     build_manifest,
     build_monster_capability_manifest,
     build_spell_capability_manifest,
+    build_subclass_capability_manifest,
     manifest_to_json_text,
 )
 
@@ -56,6 +59,9 @@ def test_repository_manifest_matches_canonical_builder_snapshot() -> None:
         build_spell_capability_manifest(spells_dir=base / "spells"),
         build_feature_capability_manifest(features_dir=base / "traits"),
         build_monster_capability_manifest(monsters_dir=base / "monsters"),
+        build_item_capability_manifest(items_dir=base / "items"),
+        build_class_capability_manifest(classes_dir=base / "classes"),
+        build_subclass_capability_manifest(subclasses_dir=base / "subclasses"),
     ):
         records.extend(record.model_dump(mode="json") for record in manifest.records)
 
@@ -120,9 +126,7 @@ def test_manifest_completeness_gate_detects_missing_records() -> None:
     payload = {
         "manifest_version": "1.0",
         "generated_at": None,
-        "records": [
-            _record(content_id="spell:acid_splash")
-        ]
+        "records": [_record(content_id="spell:acid_splash")],
     }
     issues = verify_completion_capabilities.verify_manifest_payload(
         payload,
@@ -144,7 +148,7 @@ def test_supported_scope_gate_requires_tested_for_executable_records() -> None:
                 blocked=False,
                 unsupported_reason=None,
             )
-        ]
+        ],
     }
     issues = verify_completion_capabilities.verify_manifest_payload(
         payload,
@@ -169,7 +173,7 @@ def test_unsupported_reason_coverage_gate_requires_single_reason_code(
                 content_id="trait:rage",
                 unsupported_reason=unsupported_reason,
             )
-        ]
+        ],
     }
     issues = verify_completion_capabilities.verify_manifest_payload(
         payload,

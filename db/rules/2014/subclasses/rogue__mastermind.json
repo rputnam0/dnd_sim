@@ -1,0 +1,25 @@
+{
+  "class_id": "rogue",
+  "content_id": "subclass:mastermind_rogue|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Mastermind"
+    },
+    {
+      "level": 9,
+      "name": "Insightful Manipulator"
+    },
+    {
+      "level": 13,
+      "name": "Misdirection"
+    },
+    {
+      "level": 17,
+      "name": "Soul of Deceit"
+    }
+  ],
+  "name": "Mastermind",
+  "source_book": "XGE",
+  "subclass_id": "mastermind"
+}

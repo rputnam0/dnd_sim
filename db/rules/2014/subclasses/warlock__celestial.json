@@ -1,0 +1,25 @@
+{
+  "class_id": "warlock",
+  "content_id": "subclass:celestial_warlock|XGE",
+  "features": [
+    {
+      "level": 1,
+      "name": "The Celestial"
+    },
+    {
+      "level": 6,
+      "name": "Radiant Soul"
+    },
+    {
+      "level": 10,
+      "name": "Celestial Resilience"
+    },
+    {
+      "level": 14,
+      "name": "Searing Vengeance"
+    }
+  ],
+  "name": "The Celestial",
+  "source_book": "XGE",
+  "subclass_id": "celestial"
+}

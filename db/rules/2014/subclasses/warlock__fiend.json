@@ -1,0 +1,25 @@
+{
+  "class_id": "warlock",
+  "content_id": "subclass:fiend_warlock|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "The Fiend"
+    },
+    {
+      "level": 6,
+      "name": "Dark One's Own Luck"
+    },
+    {
+      "level": 10,
+      "name": "Fiendish Resilience"
+    },
+    {
+      "level": 14,
+      "name": "Hurl Through Hell"
+    }
+  ],
+  "name": "The Fiend",
+  "source_book": "PHB",
+  "subclass_id": "fiend"
+}

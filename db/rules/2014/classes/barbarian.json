@@ -1,0 +1,115 @@
+{
+  "class_id": "barbarian",
+  "content_id": "class:barbarian|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Rage"
+    },
+    {
+      "level": 1,
+      "name": "Unarmored Defense"
+    },
+    {
+      "level": 2,
+      "name": "Danger Sense"
+    },
+    {
+      "level": 2,
+      "name": "Reckless Attack"
+    },
+    {
+      "level": 3,
+      "name": "Primal Knowledge"
+    },
+    {
+      "level": 3,
+      "name": "Primal Path",
+      "subclass_unlock": true
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 5,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 5,
+      "name": "Fast Movement"
+    },
+    {
+      "level": 6,
+      "name": "Path Feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 7,
+      "name": "Feral Instinct"
+    },
+    {
+      "level": 7,
+      "name": "Instinctive Pounce"
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 9,
+      "name": "Brutal Critical (1 die)"
+    },
+    {
+      "level": 10,
+      "name": "Path feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 11,
+      "name": "Relentless Rage"
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 13,
+      "name": "Brutal Critical (2 dice)"
+    },
+    {
+      "level": 14,
+      "name": "Path feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 15,
+      "name": "Persistent Rage"
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 17,
+      "name": "Brutal Critical (3 dice)"
+    },
+    {
+      "level": 18,
+      "name": "Indomitable Might"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Primal Champion"
+    }
+  ],
+  "name": "Barbarian",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "none"
+  }
+}

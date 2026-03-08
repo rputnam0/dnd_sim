@@ -1,0 +1,25 @@
+{
+  "class_id": "rogue",
+  "content_id": "subclass:inquisitive_rogue|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Inquisitive"
+    },
+    {
+      "level": 9,
+      "name": "Steady Eye"
+    },
+    {
+      "level": 13,
+      "name": "Unerring Eye"
+    },
+    {
+      "level": 17,
+      "name": "Eye for Weakness"
+    }
+  ],
+  "name": "Inquisitive",
+  "source_book": "XGE",
+  "subclass_id": "inquisitive"
+}

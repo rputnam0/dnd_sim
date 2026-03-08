@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:graviturgy_wizard|EGW",
+  "features": [
+    {
+      "level": 2,
+      "name": "Graviturgy Magic"
+    },
+    {
+      "level": 6,
+      "name": "Gravity Well"
+    },
+    {
+      "level": 10,
+      "name": "Violent Attraction"
+    },
+    {
+      "level": 14,
+      "name": "Event Horizon"
+    }
+  ],
+  "name": "Graviturgy Magic",
+  "source_book": "EGW",
+  "subclass_id": "graviturgy"
+}

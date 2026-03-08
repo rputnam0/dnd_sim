@@ -1,0 +1,21 @@
+{
+  "class_id": "bard",
+  "content_id": "subclass:swords_bard|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "College of Swords"
+    },
+    {
+      "level": 6,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 14,
+      "name": "Master's Flourish"
+    }
+  ],
+  "name": "College of Swords",
+  "source_book": "XGE",
+  "subclass_id": "swords"
+}

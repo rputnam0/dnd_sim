@@ -1,0 +1,87 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "class:sorcerer|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Sorcerous Origin",
+      "subclass_unlock": true
+    },
+    {
+      "level": 1,
+      "name": "Spellcasting"
+    },
+    {
+      "level": 2,
+      "name": "Font of Magic"
+    },
+    {
+      "level": 3,
+      "name": "Metamagic"
+    },
+    {
+      "level": 3,
+      "name": "Metamagic Options"
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 4,
+      "name": "Sorcerous Versatility"
+    },
+    {
+      "level": 5,
+      "name": "Magical Guidance"
+    },
+    {
+      "level": 6,
+      "name": "Sorcerous Origin feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 10,
+      "name": "Metamagic"
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 14,
+      "name": "Sorcerous Origin feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 17,
+      "name": "Metamagic"
+    },
+    {
+      "level": 18,
+      "name": "Sorcerous Origin feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Sorcerous Restoration"
+    }
+  ],
+  "name": "Sorcerer",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "full"
+  }
+}

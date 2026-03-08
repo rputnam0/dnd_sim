@@ -1,0 +1,25 @@
+{
+  "class_id": "paladin",
+  "content_id": "subclass:devotion_paladin|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Oath of Devotion"
+    },
+    {
+      "level": 7,
+      "name": "Aura of Devotion"
+    },
+    {
+      "level": 15,
+      "name": "Purity of Spirit"
+    },
+    {
+      "level": 20,
+      "name": "Holy Nimbus"
+    }
+  ],
+  "name": "Oath of Devotion",
+  "source_book": "PHB",
+  "subclass_id": "devotion"
+}

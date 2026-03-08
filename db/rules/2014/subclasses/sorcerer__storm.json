@@ -1,0 +1,29 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "subclass:storm_sorcerer|XGE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Storm Sorcery"
+    },
+    {
+      "level": 6,
+      "name": "Heart of the Storm"
+    },
+    {
+      "level": 6,
+      "name": "Storm Guide"
+    },
+    {
+      "level": 14,
+      "name": "Storm's Fury"
+    },
+    {
+      "level": 18,
+      "name": "Wind Soul"
+    }
+  ],
+  "name": "Storm Sorcery",
+  "source_book": "XGE",
+  "subclass_id": "storm"
+}

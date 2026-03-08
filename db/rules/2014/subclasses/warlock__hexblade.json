@@ -1,0 +1,25 @@
+{
+  "class_id": "warlock",
+  "content_id": "subclass:hexblade_warlock|XGE",
+  "features": [
+    {
+      "level": 1,
+      "name": "The Hexblade"
+    },
+    {
+      "level": 6,
+      "name": "Accursed Specter"
+    },
+    {
+      "level": 10,
+      "name": "Armor of Hexes"
+    },
+    {
+      "level": 14,
+      "name": "Master of Hexes"
+    }
+  ],
+  "name": "The Hexblade",
+  "source_book": "XGE",
+  "subclass_id": "hexblade"
+}

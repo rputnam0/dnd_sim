@@ -1,0 +1,169 @@
+{
+  "class_id": "warlock",
+  "content_id": "class:warlock|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Otherworldly Patron",
+      "subclass_unlock": true
+    },
+    {
+      "level": 1,
+      "name": "Pact Magic"
+    },
+    {
+      "level": 2,
+      "name": "Eldritch Invocations"
+    },
+    {
+      "level": 3,
+      "name": "Pact Boon"
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 4,
+      "name": "Eldritch Versatility"
+    },
+    {
+      "level": 6,
+      "name": "Otherworldly Patron feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 10,
+      "name": "Otherworldly Patron feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 11,
+      "name": "Mystic Arcanum (6th level)"
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 13,
+      "name": "Mystic Arcanum (7th level)"
+    },
+    {
+      "level": 14,
+      "name": "Otherworldly Patron feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 15,
+      "name": "Mystic Arcanum (8th level)"
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 17,
+      "name": "Mystic Arcanum (9th level)"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Eldritch Master"
+    }
+  ],
+  "name": "Warlock",
+  "source_book": "PHB",
+  "spellcasting": {
+    "pact_slots_by_level": {
+      "1": {
+        "slot_level": 1,
+        "slots": 1
+      },
+      "10": {
+        "slot_level": 5,
+        "slots": 2
+      },
+      "11": {
+        "slot_level": 5,
+        "slots": 3
+      },
+      "12": {
+        "slot_level": 5,
+        "slots": 3
+      },
+      "13": {
+        "slot_level": 5,
+        "slots": 3
+      },
+      "14": {
+        "slot_level": 5,
+        "slots": 3
+      },
+      "15": {
+        "slot_level": 5,
+        "slots": 3
+      },
+      "16": {
+        "slot_level": 5,
+        "slots": 3
+      },
+      "17": {
+        "slot_level": 5,
+        "slots": 4
+      },
+      "18": {
+        "slot_level": 5,
+        "slots": 4
+      },
+      "19": {
+        "slot_level": 5,
+        "slots": 4
+      },
+      "2": {
+        "slot_level": 1,
+        "slots": 2
+      },
+      "20": {
+        "slot_level": 5,
+        "slots": 4
+      },
+      "3": {
+        "slot_level": 2,
+        "slots": 2
+      },
+      "4": {
+        "slot_level": 2,
+        "slots": 2
+      },
+      "5": {
+        "slot_level": 3,
+        "slots": 2
+      },
+      "6": {
+        "slot_level": 3,
+        "slots": 2
+      },
+      "7": {
+        "slot_level": 4,
+        "slots": 2
+      },
+      "8": {
+        "slot_level": 4,
+        "slots": 2
+      },
+      "9": {
+        "slot_level": 5,
+        "slots": 2
+      }
+    },
+    "progression": "pact"
+  }
+}

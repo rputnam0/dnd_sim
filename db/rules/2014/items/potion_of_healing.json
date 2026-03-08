@@ -1,0 +1,13 @@
+{
+  "category": "consumable",
+  "consumable": true,
+  "content_id": "item:potion_of_healing|DMG",
+  "item_id": "potion_of_healing",
+  "metadata": {
+    "healing": "2d4+2"
+  },
+  "name": "Potion of Healing",
+  "source_book": "DMG",
+  "value_cp": 5000,
+  "weight_lb": 0.5
+}

@@ -1,0 +1,25 @@
+{
+  "class_id": "paladin",
+  "content_id": "subclass:conquest_paladin|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Oath of Conquest"
+    },
+    {
+      "level": 7,
+      "name": "Aura of Conquest"
+    },
+    {
+      "level": 15,
+      "name": "Scornful Rebuke"
+    },
+    {
+      "level": 20,
+      "name": "Invincible Conqueror"
+    }
+  ],
+  "name": "Oath of Conquest",
+  "source_book": "XGE",
+  "subclass_id": "conquest"
+}

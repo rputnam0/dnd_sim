@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:drunken_master_monk|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of the Drunken Master"
+    },
+    {
+      "level": 6,
+      "name": "Tipsy Sway"
+    },
+    {
+      "level": 11,
+      "name": "Drunkard's Luck"
+    },
+    {
+      "level": 17,
+      "name": "Intoxicated Frenzy"
+    }
+  ],
+  "name": "Way of the Drunken Master",
+  "source_book": "XGE",
+  "subclass_id": "drunken_master"
+}

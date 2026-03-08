@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:chronurgy_wizard|EGW",
+  "features": [
+    {
+      "level": 2,
+      "name": "Chronurgy Magic"
+    },
+    {
+      "level": 6,
+      "name": "Momentary Stasis"
+    },
+    {
+      "level": 10,
+      "name": "Arcane Abeyance"
+    },
+    {
+      "level": 14,
+      "name": "Convergent Future"
+    }
+  ],
+  "name": "Chronurgy Magic",
+  "source_book": "EGW",
+  "subclass_id": "chronurgy"
+}

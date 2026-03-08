@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:shadow_monk|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of Shadow"
+    },
+    {
+      "level": 6,
+      "name": "Shadow Step"
+    },
+    {
+      "level": 11,
+      "name": "Cloak of Shadows"
+    },
+    {
+      "level": 17,
+      "name": "Opportunist"
+    }
+  ],
+  "name": "Way of Shadow",
+  "source_book": "PHB",
+  "subclass_id": "shadow"
+}

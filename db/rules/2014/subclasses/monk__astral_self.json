@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:astral_self_monk|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of the Astral Self"
+    },
+    {
+      "level": 6,
+      "name": "Visage of the Astral Self"
+    },
+    {
+      "level": 11,
+      "name": "Body of the Astral Self"
+    },
+    {
+      "level": 17,
+      "name": "Awakened Astral Self"
+    }
+  ],
+  "name": "Way of the Astral Self",
+  "source_book": "TCE",
+  "subclass_id": "astral_self"
+}

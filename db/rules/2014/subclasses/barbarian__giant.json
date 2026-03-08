@@ -1,0 +1,25 @@
+{
+  "class_id": "barbarian",
+  "content_id": "subclass:giant_barbarian|BGG",
+  "features": [
+    {
+      "level": 3,
+      "name": "Path of the Giant"
+    },
+    {
+      "level": 6,
+      "name": "Elemental Cleaver"
+    },
+    {
+      "level": 10,
+      "name": "Mighty Impel"
+    },
+    {
+      "level": 14,
+      "name": "Demiurgic Colossus"
+    }
+  ],
+  "name": "Path of the Giant",
+  "source_book": "BGG",
+  "subclass_id": "giant"
+}

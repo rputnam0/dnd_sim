@@ -1,0 +1,29 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "subclass:lunar_sorcerer|DSOTDQ",
+  "features": [
+    {
+      "level": 1,
+      "name": "Lunar Sorcery"
+    },
+    {
+      "level": 6,
+      "name": "Lunar Boons"
+    },
+    {
+      "level": 6,
+      "name": "Waxing and Waning"
+    },
+    {
+      "level": 14,
+      "name": "Lunar Empowerment"
+    },
+    {
+      "level": 18,
+      "name": "Lunar Phenomenon"
+    }
+  ],
+  "name": "Lunar Sorcery",
+  "source_book": "DSOTDQ",
+  "subclass_id": "lunar"
+}

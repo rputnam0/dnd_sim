@@ -1,0 +1,25 @@
+{
+  "class_id": "bard",
+  "content_id": "subclass:eloquence_bard|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "College of Eloquence"
+    },
+    {
+      "level": 6,
+      "name": "Unfailing Inspiration"
+    },
+    {
+      "level": 6,
+      "name": "Universal Speech"
+    },
+    {
+      "level": 14,
+      "name": "Infectious Inspiration"
+    }
+  ],
+  "name": "College of Eloquence",
+  "source_book": "TCE",
+  "subclass_id": "eloquence"
+}

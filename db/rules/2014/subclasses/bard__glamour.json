@@ -1,0 +1,21 @@
+{
+  "class_id": "bard",
+  "content_id": "subclass:glamour_bard|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "College of Glamour"
+    },
+    {
+      "level": 6,
+      "name": "Mantle of Majesty"
+    },
+    {
+      "level": 14,
+      "name": "Unbreakable Majesty"
+    }
+  ],
+  "name": "College of Glamour",
+  "source_book": "XGE",
+  "subclass_id": "glamour"
+}

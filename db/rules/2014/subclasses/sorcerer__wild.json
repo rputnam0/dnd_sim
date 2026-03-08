@@ -1,0 +1,25 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "subclass:wild_sorcerer|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Wild Magic"
+    },
+    {
+      "level": 6,
+      "name": "Bend Luck"
+    },
+    {
+      "level": 14,
+      "name": "Controlled Chaos"
+    },
+    {
+      "level": 18,
+      "name": "Spell Bombardment"
+    }
+  ],
+  "name": "Wild Magic",
+  "source_book": "PHB",
+  "subclass_id": "wild"
+}

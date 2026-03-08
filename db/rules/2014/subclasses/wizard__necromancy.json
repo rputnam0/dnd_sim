@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:necromancy_wizard|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "School of Necromancy"
+    },
+    {
+      "level": 6,
+      "name": "Undead Thralls"
+    },
+    {
+      "level": 10,
+      "name": "Inured to Undeath"
+    },
+    {
+      "level": 14,
+      "name": "Command Undead"
+    }
+  ],
+  "name": "School of Necromancy",
+  "source_book": "PHB",
+  "subclass_id": "necromancy"
+}

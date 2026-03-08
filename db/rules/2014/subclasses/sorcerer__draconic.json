@@ -1,0 +1,25 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "subclass:draconic_sorcerer|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Draconic Bloodline"
+    },
+    {
+      "level": 6,
+      "name": "Elemental Affinity"
+    },
+    {
+      "level": 14,
+      "name": "Dragon Wings"
+    },
+    {
+      "level": 18,
+      "name": "Draconic Presence"
+    }
+  ],
+  "name": "Draconic Bloodline",
+  "source_book": "PHB",
+  "subclass_id": "draconic"
+}

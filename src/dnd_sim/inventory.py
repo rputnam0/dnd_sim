@@ -151,6 +151,7 @@ class CurrencyWallet:
 class InventoryItem:
     item_id: str
     name: str
+    content_id: str | None = None
     quantity: int = 1
     value_cp: int = 0
     weight_lb: float = 0.0
@@ -159,9 +160,14 @@ class InventoryItem:
     consumable: bool = False
     equip_slots: tuple[str, ...] = ()
     equipped_slot: str | None = None
+    max_charges: int | None = None
+    current_charges: int | None = None
+    charge_recovery: dict[str, Any] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        if self.content_id is not None:
+            self.content_id = str(self.content_id).strip() or None
         self.item_id = _slugify(self.item_id.strip())
         if not self.item_id:
             raise ValueError("item_id must not be blank")
@@ -185,6 +191,22 @@ class InventoryItem:
                 raise ValueError(
                     f"equipped_slot={self.equipped_slot} is not legal for item_id={self.item_id}"
                 )
+        if self.max_charges is not None:
+            self.max_charges = _coerce_non_negative_int(self.max_charges, field_name="max_charges")
+            if self.max_charges <= 0:
+                raise ValueError("max_charges must be >= 1 when provided")
+        if self.current_charges is None and self.max_charges is not None:
+            self.current_charges = int(self.max_charges)
+        if self.current_charges is not None:
+            self.current_charges = _coerce_non_negative_int(
+                self.current_charges, field_name="current_charges"
+            )
+            if self.max_charges is None:
+                self.max_charges = int(self.current_charges)
+            if int(self.current_charges) > int(self.max_charges):
+                raise ValueError("current_charges cannot exceed max_charges")
+        if self.charge_recovery is not None and not isinstance(self.charge_recovery, dict):
+            raise ValueError("charge_recovery must be a mapping when provided")
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> InventoryItem:
@@ -216,6 +238,11 @@ class InventoryItem:
             raw_equipped_slot = slots[0] if slots else None
 
         return cls(
+            content_id=(
+                str(raw.get("content_id")).strip()
+                if isinstance(raw.get("content_id"), str)
+                else None
+            ),
             item_id=item_id,
             name=str(name),
             quantity=int(raw.get("quantity", 1)),
@@ -227,6 +254,41 @@ class InventoryItem:
             equip_slots=_coerce_slot_tuple(raw_slots),
             equipped_slot=(
                 _normalize_slot_name(raw_equipped_slot) if raw_equipped_slot is not None else None
+            ),
+            max_charges=(
+                int(raw.get("max_charges"))
+                if raw.get("max_charges") is not None
+                else (
+                    int(metadata.get("max_charges"))
+                    if metadata.get("max_charges") is not None
+                    else None
+                )
+            ),
+            current_charges=(
+                int(raw.get("current_charges"))
+                if raw.get("current_charges") is not None
+                else (
+                    int(raw.get("charges"))
+                    if raw.get("charges") is not None
+                    else (
+                        int(metadata.get("current_charges"))
+                        if metadata.get("current_charges") is not None
+                        else (
+                            int(metadata.get("charges"))
+                            if metadata.get("charges") is not None
+                            else None
+                        )
+                    )
+                )
+            ),
+            charge_recovery=(
+                dict(raw.get("charge_recovery"))
+                if isinstance(raw.get("charge_recovery"), Mapping)
+                else (
+                    dict(metadata.get("charge_recovery"))
+                    if isinstance(metadata.get("charge_recovery"), Mapping)
+                    else None
+                )
             ),
             metadata=metadata,
         )
@@ -258,7 +320,17 @@ class InventoryState:
                 )
 
     @classmethod
-    def from_character_payload(cls, character: Mapping[str, Any]) -> InventoryState:
+    def from_character_payload(
+        cls,
+        character: Mapping[str, Any],
+        *,
+        item_catalog: Mapping[str, Any] | None = None,
+    ) -> InventoryState:
+        from dnd_sim.items import (
+            load_default_item_catalog,
+            merge_item_payload_with_catalog_defaults,
+        )
+
         raw_attunement_limit = character.get("attunement_limit", 3)
         attunement_limit = int(raw_attunement_limit) if isinstance(raw_attunement_limit, int) else 3
 
@@ -274,11 +346,26 @@ class InventoryState:
         if not isinstance(raw_items, list):
             return state
 
+        active_catalog: Mapping[str, Any]
+        if item_catalog is None:
+            active_catalog = load_default_item_catalog()
+        else:
+            active_catalog = item_catalog
+
         for row in raw_items:
             if not isinstance(row, Mapping):
                 continue
+            merged_row: Mapping[str, Any] = row
+            raw_item_id = str(row.get("item_id") or row.get("id") or "").strip()
+            item_key = _slugify(raw_item_id)
+            canonical_item = active_catalog.get(item_key)
+            if canonical_item is not None:
+                merged_row = merge_item_payload_with_catalog_defaults(
+                    row=row,
+                    item=canonical_item,
+                )
             try:
-                item = InventoryItem.from_mapping(row)
+                item = InventoryItem.from_mapping(merged_row)
             except (TypeError, ValueError):
                 continue
             state.add_item(item)
@@ -302,6 +389,8 @@ class InventoryState:
             raise ValueError(f"Item shape mismatch for item_id={item.item_id}")
         if existing.equip_slots != item.equip_slots:
             raise ValueError(f"Item shape mismatch for item_id={item.item_id}")
+        if existing.max_charges != item.max_charges:
+            raise ValueError(f"Item shape mismatch for item_id={item.item_id}")
         if (
             existing.equipped_slot is not None
             and item.equipped_slot is not None
@@ -313,6 +402,8 @@ class InventoryState:
         existing.equipped_slot = existing.equipped_slot or item.equipped_slot
         existing.value_cp = max(existing.value_cp, item.value_cp)
         existing.weight_lb = max(existing.weight_lb, item.weight_lb)
+        if existing.current_charges is not None and item.current_charges is not None:
+            existing.current_charges += item.current_charges
 
     def remove_item(self, item_id: str, *, quantity: int = 1) -> None:
         key = _slugify(item_id)
@@ -433,6 +524,30 @@ class InventoryState:
 
     def consume_ammo(self, item_id: str, *, quantity: int = 1) -> None:
         self.remove_item(item_id, quantity=quantity)
+
+    def spend_charge(self, item_id: str, *, amount: int = 1) -> None:
+        item = self.items.get(_slugify(item_id))
+        if item is None:
+            raise KeyError(f"Unknown item_id={item_id}")
+        if item.current_charges is None:
+            raise ValueError(f"Item {item_id} does not track charges")
+        spend_amount = _coerce_non_negative_int(amount, field_name="amount")
+        if spend_amount <= 0:
+            raise ValueError("amount must be >= 1")
+        if item.current_charges < spend_amount:
+            raise ValueError(f"Item {item_id} does not have enough charges")
+        item.current_charges -= spend_amount
+
+    def recover_charges(self, item_id: str, *, amount: int) -> None:
+        item = self.items.get(_slugify(item_id))
+        if item is None:
+            raise KeyError(f"Unknown item_id={item_id}")
+        if item.current_charges is None or item.max_charges is None:
+            raise ValueError(f"Item {item_id} does not track charges")
+        recover_amount = _coerce_non_negative_int(amount, field_name="amount")
+        if recover_amount <= 0:
+            raise ValueError("amount must be >= 1")
+        item.current_charges = min(item.max_charges, item.current_charges + recover_amount)
 
     def find_ammo_item_id(self, ammo_type: str) -> str | None:
         token = _slugify(ammo_type)

@@ -1,0 +1,25 @@
+{
+  "class_id": "rogue",
+  "content_id": "subclass:arcane_trickster_rogue|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Arcane Trickster"
+    },
+    {
+      "level": 9,
+      "name": "Magical Ambush"
+    },
+    {
+      "level": 13,
+      "name": "Versatile Trickster"
+    },
+    {
+      "level": 17,
+      "name": "Spell Thief"
+    }
+  ],
+  "name": "Arcane Trickster",
+  "source_book": "PHB",
+  "subclass_id": "arcane_trickster"
+}

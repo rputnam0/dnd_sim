@@ -28,9 +28,12 @@ class CapabilityIssue:
 
 def discover_shipped_2014_content_ids(repo_root: Path) -> tuple[str, ...]:
     from dnd_sim.capability_manifest import (
+        build_class_capability_manifest,
         build_feature_capability_manifest,
+        build_item_capability_manifest,
         build_monster_capability_manifest,
         build_spell_capability_manifest,
+        build_subclass_capability_manifest,
     )
 
     base = repo_root / "db" / "rules" / "2014"
@@ -38,6 +41,9 @@ def discover_shipped_2014_content_ids(repo_root: Path) -> tuple[str, ...]:
         build_spell_capability_manifest(spells_dir=base / "spells"),
         build_feature_capability_manifest(features_dir=base / "traits"),
         build_monster_capability_manifest(monsters_dir=base / "monsters"),
+        build_item_capability_manifest(items_dir=base / "items"),
+        build_class_capability_manifest(classes_dir=base / "classes"),
+        build_subclass_capability_manifest(subclasses_dir=base / "subclasses"),
     )
 
     shipped_ids: set[str] = set()
@@ -112,7 +118,9 @@ def verify_manifest_payload(
         )
     if "generated_at" in payload:
         generated_at = payload.get("generated_at")
-        if generated_at is not None and (not isinstance(generated_at, str) or not generated_at.strip()):
+        if generated_at is not None and (
+            not isinstance(generated_at, str) or not generated_at.strip()
+        ):
             issues.append(
                 CapabilityIssue(
                     code="CAP-GATE-002",

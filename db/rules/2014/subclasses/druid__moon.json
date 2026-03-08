@@ -1,0 +1,25 @@
+{
+  "class_id": "druid",
+  "content_id": "subclass:moon_druid|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "Circle of the Moon"
+    },
+    {
+      "level": 6,
+      "name": "Primal Strike"
+    },
+    {
+      "level": 10,
+      "name": "Elemental Wild Shape"
+    },
+    {
+      "level": 14,
+      "name": "Thousand Forms"
+    }
+  ],
+  "name": "Circle of the Moon",
+  "source_book": "PHB",
+  "subclass_id": "moon"
+}

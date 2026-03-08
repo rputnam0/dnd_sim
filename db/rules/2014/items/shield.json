@@ -1,0 +1,18 @@
+{
+  "category": "armor",
+  "content_id": "item:shield|PHB",
+  "equip_slots": [
+    "shield"
+  ],
+  "item_id": "shield",
+  "name": "Shield",
+  "passive_effects": [
+    {
+      "amount": 2,
+      "effect_type": "ac_bonus"
+    }
+  ],
+  "source_book": "PHB",
+  "value_cp": 1000,
+  "weight_lb": 6.0
+}

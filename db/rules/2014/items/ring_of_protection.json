@@ -1,0 +1,24 @@
+{
+  "category": "wondrous",
+  "content_id": "item:ring_of_protection|DMG",
+  "equip_slots": [
+    "ring_left",
+    "ring_right"
+  ],
+  "item_id": "ring_of_protection",
+  "name": "Ring of Protection",
+  "passive_effects": [
+    {
+      "amount": 1,
+      "effect_type": "ac_bonus"
+    },
+    {
+      "amount": 1,
+      "effect_type": "save_bonus"
+    }
+  ],
+  "requires_attunement": true,
+  "source_book": "DMG",
+  "value_cp": 250000,
+  "weight_lb": 0.0
+}

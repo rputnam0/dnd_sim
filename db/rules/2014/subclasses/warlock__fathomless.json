@@ -1,0 +1,29 @@
+{
+  "class_id": "warlock",
+  "content_id": "subclass:fathomless_warlock|TCE",
+  "features": [
+    {
+      "level": 1,
+      "name": "The Fathomless"
+    },
+    {
+      "level": 6,
+      "name": "Guardian Coil"
+    },
+    {
+      "level": 6,
+      "name": "Oceanic Soul"
+    },
+    {
+      "level": 10,
+      "name": "Grasping Tentacles"
+    },
+    {
+      "level": 14,
+      "name": "Fathomless Plunge"
+    }
+  ],
+  "name": "The Fathomless",
+  "source_book": "TCE",
+  "subclass_id": "fathomless"
+}

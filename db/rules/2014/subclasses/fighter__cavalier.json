@@ -1,0 +1,29 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:cavalier_fighter|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Cavalier"
+    },
+    {
+      "level": 7,
+      "name": "Warding Maneuver"
+    },
+    {
+      "level": 10,
+      "name": "Hold the Line"
+    },
+    {
+      "level": 15,
+      "name": "Ferocious Charger"
+    },
+    {
+      "level": 18,
+      "name": "Vigilant Defender"
+    }
+  ],
+  "name": "Cavalier",
+  "source_book": "XGE",
+  "subclass_id": "cavalier"
+}

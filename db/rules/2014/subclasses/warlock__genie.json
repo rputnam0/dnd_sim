@@ -1,0 +1,25 @@
+{
+  "class_id": "warlock",
+  "content_id": "subclass:genie_warlock|TCE",
+  "features": [
+    {
+      "level": 1,
+      "name": "The Genie"
+    },
+    {
+      "level": 6,
+      "name": "Elemental Gift"
+    },
+    {
+      "level": 10,
+      "name": "Sanctuary Vessel"
+    },
+    {
+      "level": 14,
+      "name": "Limited Wish"
+    }
+  ],
+  "name": "The Genie",
+  "source_book": "TCE",
+  "subclass_id": "genie"
+}

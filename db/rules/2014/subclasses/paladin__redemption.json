@@ -1,0 +1,25 @@
+{
+  "class_id": "paladin",
+  "content_id": "subclass:redemption_paladin|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Oath of Redemption"
+    },
+    {
+      "level": 7,
+      "name": "Aura of the Guardian"
+    },
+    {
+      "level": 15,
+      "name": "Protective Spirit"
+    },
+    {
+      "level": 20,
+      "name": "Emissary of Redemption"
+    }
+  ],
+  "name": "Oath of Redemption",
+  "source_book": "XGE",
+  "subclass_id": "redemption"
+}

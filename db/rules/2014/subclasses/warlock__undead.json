@@ -1,0 +1,25 @@
+{
+  "class_id": "warlock",
+  "content_id": "subclass:undead_warlock|VRGR",
+  "features": [
+    {
+      "level": 1,
+      "name": "The Undead"
+    },
+    {
+      "level": 6,
+      "name": "Grave Touched"
+    },
+    {
+      "level": 10,
+      "name": "Necrotic Husk"
+    },
+    {
+      "level": 14,
+      "name": "Spirit Projection"
+    }
+  ],
+  "name": "The Undead",
+  "source_book": "VRGR",
+  "subclass_id": "undead"
+}

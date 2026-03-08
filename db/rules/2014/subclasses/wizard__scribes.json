@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:scribes_wizard|TCE",
+  "features": [
+    {
+      "level": 2,
+      "name": "Order of Scribes"
+    },
+    {
+      "level": 6,
+      "name": "Manifest Mind"
+    },
+    {
+      "level": 10,
+      "name": "Master Scrivener"
+    },
+    {
+      "level": 14,
+      "name": "One with the Word"
+    }
+  ],
+  "name": "Order of Scribes",
+  "source_book": "TCE",
+  "subclass_id": "scribes"
+}

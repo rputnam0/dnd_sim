@@ -1,0 +1,25 @@
+{
+  "class_id": "barbarian",
+  "content_id": "subclass:zealot_barbarian|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Path of the Zealot"
+    },
+    {
+      "level": 6,
+      "name": "Fanatical Focus"
+    },
+    {
+      "level": 10,
+      "name": "Zealous Presence"
+    },
+    {
+      "level": 14,
+      "name": "Rage beyond Death"
+    }
+  ],
+  "name": "Path of the Zealot",
+  "source_book": "XGE",
+  "subclass_id": "zealot"
+}

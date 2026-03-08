@@ -1,0 +1,33 @@
+{
+  "category": "wand",
+  "charge_recovery": {
+    "formula": "1d6+1",
+    "period": "dawn"
+  },
+  "content_id": "item:wand_of_magic_missiles|DMG",
+  "equip_slots": [
+    "main_hand",
+    "off_hand"
+  ],
+  "granted_actions": [
+    {
+      "action_cost": "action",
+      "action_type": "utility",
+      "damage": "3d4+3",
+      "damage_type": "force",
+      "max_targets": 3,
+      "name": "wand_magic_missile",
+      "tags": [
+        "spell"
+      ],
+      "target_mode": "single_enemy"
+    }
+  ],
+  "item_id": "wand_of_magic_missiles",
+  "max_charges": 7,
+  "name": "Wand of Magic Missiles",
+  "requires_attunement": true,
+  "source_book": "DMG",
+  "value_cp": 500000,
+  "weight_lb": 1.0
+}

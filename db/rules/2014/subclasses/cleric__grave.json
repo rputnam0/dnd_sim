@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:grave_cleric|XGE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Grave Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Path to the Grave"
+    },
+    {
+      "level": 6,
+      "name": "Sentinel at Death's Door"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Potent Spellcasting"
+    },
+    {
+      "level": 17,
+      "name": "Keeper of Souls"
+    }
+  ],
+  "name": "Grave Domain",
+  "source_book": "XGE",
+  "subclass_id": "grave"
+}

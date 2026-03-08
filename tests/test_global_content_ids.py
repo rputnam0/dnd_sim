@@ -69,6 +69,55 @@ def test_build_global_content_index_rejects_transitional_alias_id_fields(tmp_pat
         build_global_content_index(rules_root=rules_root, include_non_class_catalog=False)
 
 
+def test_build_global_content_index_supports_item_class_and_subclass_payloads(
+    tmp_path: Path,
+) -> None:
+    rules_root = tmp_path / "rules_2014"
+    items_dir = rules_root / "items"
+    classes_dir = rules_root / "classes"
+    subclasses_dir = rules_root / "subclasses"
+    items_dir.mkdir(parents=True, exist_ok=True)
+    classes_dir.mkdir(parents=True, exist_ok=True)
+    subclasses_dir.mkdir(parents=True, exist_ok=True)
+
+    write_json(
+        items_dir / "longsword.json",
+        {
+            "content_id": "item:longsword|PHB",
+            "item_id": "longsword",
+            "name": "Longsword",
+            "source_book": "PHB",
+            "category": "weapon",
+        },
+    )
+    write_json(
+        classes_dir / "fighter.json",
+        {
+            "content_id": "class:fighter|PHB",
+            "class_id": "fighter",
+            "name": "Fighter",
+            "source_book": "PHB",
+            "features": [{"name": "Second Wind", "level": 1}],
+        },
+    )
+    write_json(
+        subclasses_dir / "battle_master.json",
+        {
+            "content_id": "subclass:battle_master_fighter|PHB",
+            "subclass_id": "battle_master",
+            "class_id": "fighter",
+            "name": "Battle Master",
+            "source_book": "PHB",
+            "features": [{"name": "Combat Superiority", "level": 3}],
+        },
+    )
+
+    index = build_global_content_index(rules_root=rules_root, include_non_class_catalog=False)
+    assert "item:longsword|PHB" in index
+    assert "class:fighter|PHB" in index
+    assert "subclass:battle_master_fighter|PHB" in index
+
+
 def test_load_character_db_assigns_canonical_character_content_id(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

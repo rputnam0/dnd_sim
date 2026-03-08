@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:tempest_cleric|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Tempest Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Destructive Wrath"
+    },
+    {
+      "level": 6,
+      "name": "Thunderbolt Strike"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Stormborn"
+    }
+  ],
+  "name": "Tempest Domain",
+  "source_book": "PHB",
+  "subclass_id": "tempest"
+}

@@ -1,0 +1,25 @@
+{
+  "class_id": "ranger",
+  "content_id": "subclass:drakewarden_ranger|FTD",
+  "features": [
+    {
+      "level": 3,
+      "name": "Drakewarden"
+    },
+    {
+      "level": 7,
+      "name": "Bond of Fang and Scale"
+    },
+    {
+      "level": 11,
+      "name": "Drake's Breath"
+    },
+    {
+      "level": 15,
+      "name": "Perfected Bond"
+    }
+  ],
+  "name": "Drakewarden",
+  "source_book": "FTD",
+  "subclass_id": "drakewarden"
+}

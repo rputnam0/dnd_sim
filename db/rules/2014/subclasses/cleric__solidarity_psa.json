@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:solidarity_psa_cleric|PSA",
+  "features": [
+    {
+      "level": 1,
+      "name": "Solidarity Domain (PSA)"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Preserve Life"
+    },
+    {
+      "level": 6,
+      "name": "Oketra's Blessing"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Supreme Healing"
+    }
+  ],
+  "name": "Solidarity Domain (PSA)",
+  "source_book": "PSA",
+  "subclass_id": "solidarity_psa"
+}

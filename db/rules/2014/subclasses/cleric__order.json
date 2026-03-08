@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:order_cleric|TCE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Order Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Order's Demand"
+    },
+    {
+      "level": 6,
+      "name": "Embodiment of the Law"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Order's Wrath"
+    }
+  ],
+  "name": "Order Domain",
+  "source_book": "TCE",
+  "subclass_id": "order"
+}

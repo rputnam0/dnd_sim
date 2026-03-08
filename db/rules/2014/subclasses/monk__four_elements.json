@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:four_elements_monk|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of the Four Elements"
+    },
+    {
+      "level": 6,
+      "name": "Extra Elemental Discipline"
+    },
+    {
+      "level": 11,
+      "name": "Extra Elemental Discipline"
+    },
+    {
+      "level": 17,
+      "name": "Extra Elemental Discipline"
+    }
+  ],
+  "name": "Way of the Four Elements",
+  "source_book": "PHB",
+  "subclass_id": "four_elements"
+}

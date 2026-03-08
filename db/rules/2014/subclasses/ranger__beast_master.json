@@ -1,0 +1,25 @@
+{
+  "class_id": "ranger",
+  "content_id": "subclass:beast_master_ranger|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Beast Master"
+    },
+    {
+      "level": 7,
+      "name": "Exceptional Training"
+    },
+    {
+      "level": 11,
+      "name": "Bestial Fury"
+    },
+    {
+      "level": 15,
+      "name": "Share Spells"
+    }
+  ],
+  "name": "Beast Master",
+  "source_book": "PHB",
+  "subclass_id": "beast_master"
+}

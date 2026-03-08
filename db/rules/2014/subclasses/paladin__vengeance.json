@@ -1,0 +1,25 @@
+{
+  "class_id": "paladin",
+  "content_id": "subclass:vengeance_paladin|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Oath of Vengeance"
+    },
+    {
+      "level": 7,
+      "name": "Relentless Avenger"
+    },
+    {
+      "level": 15,
+      "name": "Soul of Vengeance"
+    },
+    {
+      "level": 20,
+      "name": "Avenging Angel"
+    }
+  ],
+  "name": "Oath of Vengeance",
+  "source_book": "PHB",
+  "subclass_id": "vengeance"
+}
