@@ -1,0 +1,25 @@
+{
+  "class_id": "paladin",
+  "content_id": "subclass:glory_paladin|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Oath of Glory"
+    },
+    {
+      "level": 7,
+      "name": "Aura of Alacrity"
+    },
+    {
+      "level": 15,
+      "name": "Glorious Defense"
+    },
+    {
+      "level": 20,
+      "name": "Living Legend"
+    }
+  ],
+  "name": "Oath of Glory",
+  "source_book": "TCE",
+  "subclass_id": "glory"
+}

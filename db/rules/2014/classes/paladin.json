@@ -1,0 +1,103 @@
+{
+  "class_id": "paladin",
+  "content_id": "class:paladin|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Divine Sense"
+    },
+    {
+      "level": 1,
+      "name": "Lay on Hands"
+    },
+    {
+      "level": 2,
+      "name": "Divine Smite"
+    },
+    {
+      "level": 2,
+      "name": "Fighting Style"
+    },
+    {
+      "level": 2,
+      "name": "Spellcasting"
+    },
+    {
+      "level": 3,
+      "name": "Divine Health"
+    },
+    {
+      "level": 3,
+      "name": "Sacred Oath",
+      "subclass_unlock": true
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 4,
+      "name": "Martial Versatility"
+    },
+    {
+      "level": 5,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 6,
+      "name": "Aura of Protection"
+    },
+    {
+      "level": 7,
+      "name": "Sacred Oath feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 10,
+      "name": "Aura of Courage"
+    },
+    {
+      "level": 11,
+      "name": "Improved Divine Smite"
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 14,
+      "name": "Cleansing Touch"
+    },
+    {
+      "level": 15,
+      "name": "Sacred Oath feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 18,
+      "name": "Aura improvements"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Sacred Oath feature",
+      "subclass_unlock": true
+    }
+  ],
+  "name": "Paladin",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "half"
+  }
+}

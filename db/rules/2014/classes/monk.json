@@ -1,0 +1,139 @@
+{
+  "class_id": "monk",
+  "content_id": "class:monk|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Martial Arts"
+    },
+    {
+      "level": 1,
+      "name": "Unarmored Defense"
+    },
+    {
+      "level": 2,
+      "name": "Dedicated Weapon"
+    },
+    {
+      "level": 2,
+      "name": "Ki"
+    },
+    {
+      "level": 2,
+      "name": "Unarmored Movement"
+    },
+    {
+      "level": 3,
+      "name": "Deflect Missiles"
+    },
+    {
+      "level": 3,
+      "name": "Ki-Fueled Attack"
+    },
+    {
+      "level": 3,
+      "name": "Monastic Tradition",
+      "subclass_unlock": true
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 4,
+      "name": "Quickened Healing"
+    },
+    {
+      "level": 4,
+      "name": "Slow Fall"
+    },
+    {
+      "level": 5,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 5,
+      "name": "Focused Aim"
+    },
+    {
+      "level": 5,
+      "name": "Stunning Strike"
+    },
+    {
+      "level": 6,
+      "name": "Ki-Empowered Strikes"
+    },
+    {
+      "level": 6,
+      "name": "Monastic Tradition feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 7,
+      "name": "Evasion"
+    },
+    {
+      "level": 7,
+      "name": "Stillness of Mind"
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 9,
+      "name": "Unarmored Movement improvement"
+    },
+    {
+      "level": 10,
+      "name": "Purity of Body"
+    },
+    {
+      "level": 11,
+      "name": "Monastic Tradition feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 13,
+      "name": "Tongue of the Sun and Moon"
+    },
+    {
+      "level": 14,
+      "name": "Diamond Soul"
+    },
+    {
+      "level": 15,
+      "name": "Timeless Body"
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 17,
+      "name": "Monastic Tradition feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 18,
+      "name": "Empty Body"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Perfect Self"
+    }
+  ],
+  "name": "Monk",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "none"
+  }
+}

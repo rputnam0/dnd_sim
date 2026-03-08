@@ -1207,6 +1207,188 @@
       "support_state": "supported"
     },
     {
+      "content_id": "class:artificer|TCE",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:barbarian|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:bard|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:cleric|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:druid|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:fighter|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:monk|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:paladin|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:ranger|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:rogue|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:sorcerer|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:warlock|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "class:wizard|PHB",
+      "content_type": "class",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
       "content_id": "feat:aberrant_dragonmark",
       "content_type": "feat",
       "runtime_hook_family": "effect",
@@ -4262,6 +4444,146 @@
       "content_id": "feat:zhentarim_tactics",
       "content_type": "feat",
       "runtime_hook_family": "effect",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:arrows|PHB",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:bag_of_holding|DMG",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:cloak_of_protection|DMG",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:longsword|PHB",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:potion_of_healing|DMG",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:ring_of_protection|DMG",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:shield|PHB",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:shortbow|PHB",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:thieves_tools|PHB",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "item:wand_of_magic_missiles|DMG",
+      "content_type": "item",
+      "runtime_hook_family": "item_runtime",
       "states": {
         "blocked": false,
         "cataloged": true,
@@ -18822,6 +19144,1756 @@
       "content_id": "spell:zone_of_truth",
       "content_type": "spell",
       "runtime_hook_family": "effect",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:aberrant_mind_sorcerer|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:abjuration_wizard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:alchemist_artificer|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:ambition_psa_cleric|PSA",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:ancestral_guardian_barbarian|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:ancients_paladin|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:arcana_cleric|SCAG",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:arcane_archer_fighter|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:arcane_trickster_rogue|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:archfey_warlock|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:armorer_artificer|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:artillerist_artificer|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:ascendant_dragon_monk|FTD",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:assassin_rogue|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:astral_self_monk|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:battle_master_fighter|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:battle_smith_artificer|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:battlerager_barbarian|SCAG",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:beast_barbarian|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:beast_master_ranger|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:berserker_barbarian|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:bladesinging_wizard|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:cartographer_artificer|EFA",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:cavalier_fighter|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:celestial_warlock|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:champion_fighter|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:chronurgy_wizard|EGW",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:clockwork_soul_sorcerer|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:conjuration_wizard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:conquest_paladin|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:creation_bard|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:crown_paladin|SCAG",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:death_cleric|DMG",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:devotion_paladin|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:divination_wizard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:divine_soul_sorcerer|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:draconic_sorcerer|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:drakewarden_ranger|FTD",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:dreams_druid|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:drunken_master_monk|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:echo_knight_fighter|EGW",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:eldritch_knight_fighter|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:eloquence_bard|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:enchantment_wizard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:evocation_wizard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:fathomless_warlock|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:fey_wanderer_ranger|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:fiend_warlock|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:forge_cleric|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:four_elements_monk|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:genie_warlock|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:giant_barbarian|BGG",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:glamour_bard|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:gloom_stalker_ranger|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:glory_paladin|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:grave_cleric|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:graviturgy_wizard|EGW",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:great_old_one_warlock|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:hexblade_warlock|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:horizon_walker_ranger|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:hunter_ranger|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:illusion_wizard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:inquisitive_rogue|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:kensei_monk|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:knowledge_cleric|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:knowledge_psa_cleric|PSA",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:land_druid|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:life_cleric|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:light_cleric|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:long_death_monk|SCAG",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:lore_bard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:lunar_sorcerer|DSOTDQ",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:mastermind_rogue|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:mercy_monk|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:monster_slayer_ranger|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:moon_druid|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:nature_cleric|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:necromancy_wizard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:oathbreaker_paladin|DMG",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:open_hand_monk|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:order_cleric|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:peace_cleric|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:phantom_rogue|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:psi_warrior_fighter|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:purple_dragon_knight_banneret_fighter|SCAG",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:pyromancer_psk_sorcerer|PSK",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:redemption_paladin|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:rune_knight_fighter|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:samurai_fighter|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:scout_rogue|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:scribes_wizard|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:shadow_monk|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:shadow_sorcerer|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:shepherd_druid|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:solidarity_psa_cleric|PSA",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:soulknife_rogue|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:spirits_bard|VRGR",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:spores_druid|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:stars_druid|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:storm_herald_barbarian|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:storm_sorcerer|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:strength_psa_cleric|PSA",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:sun_soul_monk|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:swarmkeeper_ranger|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:swashbuckler_rogue|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:swords_bard|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:tempest_cleric|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:thief_rogue|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:totem_warrior_barbarian|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:transmutation_wizard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:trickery_cleric|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:twilight_cleric|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:undead_warlock|VRGR",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:undying_warlock|SCAG",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:valor_bard|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:vengeance_paladin|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:war_cleric|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:war_wizard|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:watchers_paladin|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:whispers_bard|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:wild_magic_barbarian|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:wild_sorcerer|PHB",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:wildfire_druid|TCE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:zeal_psa_cleric|PSA",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
+      "states": {
+        "blocked": false,
+        "cataloged": true,
+        "executable": true,
+        "schema_valid": true,
+        "tested": true,
+        "unsupported_reason": null
+      },
+      "support_state": "supported"
+    },
+    {
+      "content_id": "subclass:zealot_barbarian|XGE",
+      "content_type": "subclass",
+      "runtime_hook_family": "class_progression",
       "states": {
         "blocked": false,
         "cataloged": true,

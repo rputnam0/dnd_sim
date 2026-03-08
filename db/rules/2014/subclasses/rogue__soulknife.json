@@ -1,0 +1,25 @@
+{
+  "class_id": "rogue",
+  "content_id": "subclass:soulknife_rogue|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Soulknife"
+    },
+    {
+      "level": 9,
+      "name": "Soul Blades"
+    },
+    {
+      "level": 13,
+      "name": "Psychic Veil"
+    },
+    {
+      "level": 17,
+      "name": "Rend Mind"
+    }
+  ],
+  "name": "Soulknife",
+  "source_book": "TCE",
+  "subclass_id": "soulknife"
+}

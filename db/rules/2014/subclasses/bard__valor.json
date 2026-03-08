@@ -1,0 +1,21 @@
+{
+  "class_id": "bard",
+  "content_id": "subclass:valor_bard|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "College of Valor"
+    },
+    {
+      "level": 6,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 14,
+      "name": "Battle Magic"
+    }
+  ],
+  "name": "College of Valor",
+  "source_book": "PHB",
+  "subclass_id": "valor"
+}

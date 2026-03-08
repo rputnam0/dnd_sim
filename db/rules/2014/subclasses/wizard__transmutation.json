@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:transmutation_wizard|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "School of Transmutation"
+    },
+    {
+      "level": 6,
+      "name": "Transmuter's Stone"
+    },
+    {
+      "level": 10,
+      "name": "Shapechanger"
+    },
+    {
+      "level": 14,
+      "name": "Master Transmuter"
+    }
+  ],
+  "name": "School of Transmutation",
+  "source_book": "PHB",
+  "subclass_id": "transmutation"
+}

@@ -1,0 +1,108 @@
+{
+  "class_id": "cleric",
+  "content_id": "class:cleric|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Divine Domain",
+      "subclass_unlock": true
+    },
+    {
+      "level": 1,
+      "name": "Spellcasting"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Harness Divine Power"
+    },
+    {
+      "level": 2,
+      "name": "Divine Domain feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 4,
+      "name": "Cantrip Versatility"
+    },
+    {
+      "level": 5,
+      "name": "Destroy Undead (CR 1/2)"
+    },
+    {
+      "level": 6,
+      "name": "Channel Divinity"
+    },
+    {
+      "level": 6,
+      "name": "Divine Domain feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 8,
+      "name": "Destroy Undead (CR 1)"
+    },
+    {
+      "level": 8,
+      "name": "Divine Domain feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 10,
+      "name": "Divine Intervention"
+    },
+    {
+      "level": 11,
+      "name": "Destroy Undead (CR 2)"
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 14,
+      "name": "Destroy Undead (CR 3)"
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 17,
+      "name": "Destroy Undead (CR 4)"
+    },
+    {
+      "level": 17,
+      "name": "Divine Domain feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 18,
+      "name": "Channel Divinity"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Divine Intervention Improvement"
+    }
+  ],
+  "name": "Cleric",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "full"
+  }
+}

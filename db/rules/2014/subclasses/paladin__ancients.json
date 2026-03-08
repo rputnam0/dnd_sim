@@ -1,0 +1,25 @@
+{
+  "class_id": "paladin",
+  "content_id": "subclass:ancients_paladin|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Oath of the Ancients"
+    },
+    {
+      "level": 7,
+      "name": "Aura of Warding"
+    },
+    {
+      "level": 15,
+      "name": "Undying Sentinel"
+    },
+    {
+      "level": 20,
+      "name": "Elder Champion"
+    }
+  ],
+  "name": "Oath of the Ancients",
+  "source_book": "PHB",
+  "subclass_id": "ancients"
+}

@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:ambition_psa_cleric|PSA",
+  "features": [
+    {
+      "level": 1,
+      "name": "Ambition Domain (PSA)"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Invoke Duplicity"
+    },
+    {
+      "level": 6,
+      "name": "Channel Divinity: Cloak of Shadows"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Potent Spellcasting"
+    },
+    {
+      "level": 17,
+      "name": "Improved Duplicity"
+    }
+  ],
+  "name": "Ambition Domain (PSA)",
+  "source_book": "PSA",
+  "subclass_id": "ambition_psa"
+}

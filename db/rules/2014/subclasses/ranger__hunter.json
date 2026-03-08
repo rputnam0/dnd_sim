@@ -1,0 +1,25 @@
+{
+  "class_id": "ranger",
+  "content_id": "subclass:hunter_ranger|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Hunter"
+    },
+    {
+      "level": 7,
+      "name": "Defensive Tactics"
+    },
+    {
+      "level": 11,
+      "name": "Multiattack"
+    },
+    {
+      "level": 15,
+      "name": "Superior Hunter's Defense"
+    }
+  ],
+  "name": "Hunter",
+  "source_book": "PHB",
+  "subclass_id": "hunter"
+}

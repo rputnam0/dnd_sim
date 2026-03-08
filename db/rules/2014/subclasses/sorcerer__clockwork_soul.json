@@ -1,0 +1,25 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "subclass:clockwork_soul_sorcerer|TCE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Clockwork Soul"
+    },
+    {
+      "level": 6,
+      "name": "Bastion of Law"
+    },
+    {
+      "level": 14,
+      "name": "Trance of Order"
+    },
+    {
+      "level": 18,
+      "name": "Clockwork Cavalcade"
+    }
+  ],
+  "name": "Clockwork Soul",
+  "source_book": "TCE",
+  "subclass_id": "clockwork_soul"
+}

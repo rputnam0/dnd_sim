@@ -1,0 +1,41 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:arcane_archer_fighter|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Arcane Archer"
+    },
+    {
+      "level": 7,
+      "name": "Additional Arcane Shot Option"
+    },
+    {
+      "level": 7,
+      "name": "Curving Shot"
+    },
+    {
+      "level": 7,
+      "name": "Magic Arrow"
+    },
+    {
+      "level": 10,
+      "name": "Additional Arcane Shot Option"
+    },
+    {
+      "level": 15,
+      "name": "Additional Arcane Shot Option"
+    },
+    {
+      "level": 15,
+      "name": "Ever-Ready Shot"
+    },
+    {
+      "level": 18,
+      "name": "Additional Arcane Shot Option"
+    }
+  ],
+  "name": "Arcane Archer",
+  "source_book": "XGE",
+  "subclass_id": "arcane_archer"
+}

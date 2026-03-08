@@ -92,6 +92,15 @@ def test_verify_capabilities_cli_dry_run_returns_zero_when_issues_present(
     assert verify_capabilities.main([]) == 1
 
 
+def test_verify_capabilities_cli_accepts_item_and_class_scopes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("dnd_sim.io.capability_gate_issues_for_types", lambda **_kwargs: [])
+
+    assert verify_capabilities.main(["--scope", "item"]) == 0
+    assert verify_capabilities.main(["--scope", "class"]) == 0
+
+
 def test_species_hook_shard_a_ids_are_supported_in_canonical_capability_records() -> None:
     io._canonical_capability_records.cache_clear()
     by_id = {record.content_id: record for record in io._canonical_capability_records()}

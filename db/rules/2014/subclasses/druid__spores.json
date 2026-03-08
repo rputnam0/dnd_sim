@@ -1,0 +1,25 @@
+{
+  "class_id": "druid",
+  "content_id": "subclass:spores_druid|TCE",
+  "features": [
+    {
+      "level": 2,
+      "name": "Circle of Spores"
+    },
+    {
+      "level": 6,
+      "name": "Fungal Infestation"
+    },
+    {
+      "level": 10,
+      "name": "Spreading Spores"
+    },
+    {
+      "level": 14,
+      "name": "Fungal Body"
+    }
+  ],
+  "name": "Circle of Spores",
+  "source_book": "TCE",
+  "subclass_id": "spores"
+}

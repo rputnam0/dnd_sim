@@ -1,0 +1,25 @@
+{
+  "class_id": "druid",
+  "content_id": "subclass:shepherd_druid|XGE",
+  "features": [
+    {
+      "level": 2,
+      "name": "Circle of the Shepherd"
+    },
+    {
+      "level": 6,
+      "name": "Mighty Summoner"
+    },
+    {
+      "level": 10,
+      "name": "Guardian Spirit"
+    },
+    {
+      "level": 14,
+      "name": "Faithful Summons"
+    }
+  ],
+  "name": "Circle of the Shepherd",
+  "source_book": "XGE",
+  "subclass_id": "shepherd"
+}

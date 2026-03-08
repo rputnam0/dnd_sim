@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:open_hand_monk|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of the Open Hand"
+    },
+    {
+      "level": 6,
+      "name": "Wholeness of Body"
+    },
+    {
+      "level": 11,
+      "name": "Tranquility"
+    },
+    {
+      "level": 17,
+      "name": "Quivering Palm"
+    }
+  ],
+  "name": "Way of the Open Hand",
+  "source_book": "PHB",
+  "subclass_id": "open_hand"
+}

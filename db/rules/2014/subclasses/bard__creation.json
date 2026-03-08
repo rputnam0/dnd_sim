@@ -1,0 +1,21 @@
+{
+  "class_id": "bard",
+  "content_id": "subclass:creation_bard|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "College of Creation"
+    },
+    {
+      "level": 6,
+      "name": "Animating Performance"
+    },
+    {
+      "level": 14,
+      "name": "Creative Crescendo"
+    }
+  ],
+  "name": "College of Creation",
+  "source_book": "TCE",
+  "subclass_id": "creation"
+}

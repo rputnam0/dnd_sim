@@ -1,0 +1,14 @@
+{
+  "ammo_type": "arrow",
+  "category": "ammunition",
+  "consumable": true,
+  "content_id": "item:arrows|PHB",
+  "item_id": "arrows",
+  "metadata": {
+    "bundle_size": 20
+  },
+  "name": "Arrows",
+  "source_book": "PHB",
+  "value_cp": 100,
+  "weight_lb": 1.0
+}

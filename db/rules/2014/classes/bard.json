@@ -1,0 +1,126 @@
+{
+  "class_id": "bard",
+  "content_id": "class:bard|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Bardic Inspiration"
+    },
+    {
+      "level": 1,
+      "name": "Spellcasting"
+    },
+    {
+      "level": 2,
+      "name": "Jack of All Trades"
+    },
+    {
+      "level": 2,
+      "name": "Magical Inspiration"
+    },
+    {
+      "level": 2,
+      "name": "Song of Rest (d6)"
+    },
+    {
+      "level": 3,
+      "name": "Bard College",
+      "subclass_unlock": true
+    },
+    {
+      "level": 3,
+      "name": "Expertise"
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 4,
+      "name": "Bardic Versatility"
+    },
+    {
+      "level": 5,
+      "name": "Bardic Inspiration (d8)"
+    },
+    {
+      "level": 5,
+      "name": "Font of Inspiration"
+    },
+    {
+      "level": 6,
+      "name": "Bard College feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 6,
+      "name": "Countercharm"
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 9,
+      "name": "Song of Rest (d8)"
+    },
+    {
+      "level": 10,
+      "name": "Bardic Inspiration (d10)"
+    },
+    {
+      "level": 10,
+      "name": "Expertise"
+    },
+    {
+      "level": 10,
+      "name": "Magical Secrets"
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 13,
+      "name": "Song of Rest (d10)"
+    },
+    {
+      "level": 14,
+      "name": "Bard College feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 14,
+      "name": "Magical Secrets"
+    },
+    {
+      "level": 15,
+      "name": "Bardic Inspiration (d12)"
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 17,
+      "name": "Song of Rest (d12)"
+    },
+    {
+      "level": 18,
+      "name": "Magical Secrets"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Superior Inspiration"
+    }
+  ],
+  "name": "Bard",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "full"
+  }
+}

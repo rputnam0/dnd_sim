@@ -1,0 +1,91 @@
+{
+  "class_id": "druid",
+  "content_id": "class:druid|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Druidic"
+    },
+    {
+      "level": 1,
+      "name": "Spellcasting"
+    },
+    {
+      "level": 2,
+      "name": "Druid Circle",
+      "subclass_unlock": true
+    },
+    {
+      "level": 2,
+      "name": "Wild Companion"
+    },
+    {
+      "level": 2,
+      "name": "Wild Shape"
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 4,
+      "name": "Cantrip Versatility"
+    },
+    {
+      "level": 4,
+      "name": "Wild Shape Improvement"
+    },
+    {
+      "level": 6,
+      "name": "Druid Circle feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 8,
+      "name": "Wild Shape Improvement"
+    },
+    {
+      "level": 10,
+      "name": "Druid Circle feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 14,
+      "name": "Druid Circle feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 18,
+      "name": "Beast Spells"
+    },
+    {
+      "level": 18,
+      "name": "Timeless Body"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Archdruid"
+    }
+  ],
+  "name": "Druid",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "full"
+  }
+}

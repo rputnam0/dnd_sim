@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:sun_soul_monk|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of the Sun Soul"
+    },
+    {
+      "level": 6,
+      "name": "Searing Arc Strike"
+    },
+    {
+      "level": 11,
+      "name": "Searing Sunburst"
+    },
+    {
+      "level": 17,
+      "name": "Sun Shield"
+    }
+  ],
+  "name": "Way of the Sun Soul",
+  "source_book": "XGE",
+  "subclass_id": "sun_soul"
+}

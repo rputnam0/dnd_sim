@@ -1,0 +1,99 @@
+{
+  "class_id": "artificer",
+  "content_id": "class:artificer|TCE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Magical Tinkering"
+    },
+    {
+      "level": 1,
+      "name": "Optional Rule: Firearm Proficiency"
+    },
+    {
+      "level": 1,
+      "name": "Spellcasting"
+    },
+    {
+      "level": 2,
+      "name": "Infuse Item"
+    },
+    {
+      "level": 3,
+      "name": "Artificer Specialist",
+      "subclass_unlock": true
+    },
+    {
+      "level": 3,
+      "name": "The Right Tool for the Job"
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 5,
+      "name": "Artificer Specialist Feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 6,
+      "name": "Tool Expertise"
+    },
+    {
+      "level": 7,
+      "name": "Flash of Genius"
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 9,
+      "name": "Artificer Specialist Feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 10,
+      "name": "Magic Item Adept"
+    },
+    {
+      "level": 11,
+      "name": "Spell-Storing Item"
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 14,
+      "name": "Magic Item Savant"
+    },
+    {
+      "level": 15,
+      "name": "Artificer Specialist Feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 18,
+      "name": "Magic Item Master"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Soul of Artifice"
+    }
+  ],
+  "name": "Artificer",
+  "source_book": "TCE",
+  "spellcasting": {
+    "progression": "half_up"
+  }
+}

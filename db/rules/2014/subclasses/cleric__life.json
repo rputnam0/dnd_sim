@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:life_cleric|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Life Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Preserve Life"
+    },
+    {
+      "level": 6,
+      "name": "Blessed Healer"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Supreme Healing"
+    }
+  ],
+  "name": "Life Domain",
+  "source_book": "PHB",
+  "subclass_id": "life"
+}

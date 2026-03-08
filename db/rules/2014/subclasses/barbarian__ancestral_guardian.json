@@ -1,0 +1,25 @@
+{
+  "class_id": "barbarian",
+  "content_id": "subclass:ancestral_guardian_barbarian|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Path of the Ancestral Guardian"
+    },
+    {
+      "level": 6,
+      "name": "Spirit Shield"
+    },
+    {
+      "level": 10,
+      "name": "Consult the Spirits"
+    },
+    {
+      "level": 14,
+      "name": "Vengeful Ancestors"
+    }
+  ],
+  "name": "Path of the Ancestral Guardian",
+  "source_book": "XGE",
+  "subclass_id": "ancestral_guardian"
+}

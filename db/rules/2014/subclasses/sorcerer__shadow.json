@@ -1,0 +1,25 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "subclass:shadow_sorcerer|XGE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Shadow Magic"
+    },
+    {
+      "level": 6,
+      "name": "Hound of Ill Omen"
+    },
+    {
+      "level": 14,
+      "name": "Shadow Walk"
+    },
+    {
+      "level": 18,
+      "name": "Umbral Form"
+    }
+  ],
+  "name": "Shadow Magic",
+  "source_book": "XGE",
+  "subclass_id": "shadow"
+}

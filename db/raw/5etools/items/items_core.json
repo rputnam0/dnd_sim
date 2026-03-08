@@ -1,0 +1,186 @@
+{
+  "_meta": {
+    "notes": "Curated Wave 7 2014 item subset used to build the canonical shipped item catalog.",
+    "source": "wave7_curated_subset"
+  },
+  "item": [
+    {
+      "category": "weapon",
+      "damage": "1d8",
+      "damageType": "slashing",
+      "equipSlots": [
+        "main_hand",
+        "off_hand"
+      ],
+      "item_id": "longsword",
+      "name": "Longsword",
+      "source": "PHB",
+      "valueCp": 1500,
+      "weaponProperties": [
+        "versatile"
+      ],
+      "weightLb": 3.0
+    },
+    {
+      "category": "weapon",
+      "damage": "1d6",
+      "damageType": "piercing",
+      "equipSlots": [
+        "main_hand",
+        "off_hand"
+      ],
+      "item_id": "shortbow",
+      "metadata": {
+        "range_long_ft": 320,
+        "range_normal_ft": 80
+      },
+      "name": "Shortbow",
+      "source": "PHB",
+      "valueCp": 2500,
+      "weaponProperties": [
+        "ammunition",
+        "two_handed"
+      ],
+      "ammoType": "arrow",
+      "weightLb": 2.0
+    },
+    {
+      "ammoType": "arrow",
+      "category": "ammunition",
+      "consumable": true,
+      "item_id": "arrows",
+      "metadata": {
+        "bundle_size": 20
+      },
+      "name": "Arrows",
+      "source": "PHB",
+      "valueCp": 100,
+      "weightLb": 1.0
+    },
+    {
+      "category": "armor",
+      "equipSlots": [
+        "shield"
+      ],
+      "item_id": "shield",
+      "name": "Shield",
+      "passiveEffects": [
+        {
+          "amount": 2,
+          "effect_type": "ac_bonus"
+        }
+      ],
+      "source": "PHB",
+      "valueCp": 1000,
+      "weightLb": 6.0
+    },
+    {
+      "category": "tool",
+      "item_id": "thieves_tools",
+      "name": "Thieves' Tools",
+      "source": "PHB",
+      "valueCp": 2500,
+      "weightLb": 1.0
+    },
+    {
+      "category": "consumable",
+      "consumable": true,
+      "item_id": "potion_of_healing",
+      "metadata": {
+        "healing": "2d4+2"
+      },
+      "name": "Potion of Healing",
+      "source": "DMG",
+      "valueCp": 5000,
+      "weightLb": 0.5
+    },
+    {
+      "category": "wondrous",
+      "equipSlots": [
+        "ring_left",
+        "ring_right"
+      ],
+      "item_id": "ring_of_protection",
+      "name": "Ring of Protection",
+      "passiveEffects": [
+        {
+          "amount": 1,
+          "effect_type": "ac_bonus"
+        },
+        {
+          "amount": 1,
+          "effect_type": "save_bonus"
+        }
+      ],
+      "requiresAttunement": true,
+      "source": "DMG",
+      "valueCp": 250000,
+      "weightLb": 0.0
+    },
+    {
+      "category": "wondrous",
+      "equipSlots": [
+        "shoulders"
+      ],
+      "item_id": "cloak_of_protection",
+      "name": "Cloak of Protection",
+      "passiveEffects": [
+        {
+          "amount": 1,
+          "effect_type": "ac_bonus"
+        },
+        {
+          "amount": 1,
+          "effect_type": "save_bonus"
+        }
+      ],
+      "requiresAttunement": true,
+      "source": "DMG",
+      "valueCp": 350000,
+      "weightLb": 1.0
+    },
+    {
+      "category": "wand",
+      "chargeRecovery": {
+        "formula": "1d6+1",
+        "period": "dawn"
+      },
+      "equipSlots": [
+        "main_hand",
+        "off_hand"
+      ],
+      "grantedActions": [
+        {
+          "action_cost": "action",
+          "action_type": "utility",
+          "damage": "3d4+3",
+          "damage_type": "force",
+          "max_targets": 3,
+          "name": "wand_magic_missile",
+          "tags": [
+            "spell"
+          ],
+          "target_mode": "single_enemy"
+        }
+      ],
+      "item_id": "wand_of_magic_missiles",
+      "maxCharges": 7,
+      "name": "Wand of Magic Missiles",
+      "requiresAttunement": true,
+      "source": "DMG",
+      "valueCp": 500000,
+      "weightLb": 1.0
+    },
+    {
+      "category": "wondrous",
+      "item_id": "bag_of_holding",
+      "metadata": {
+        "capacity_lb": 500
+      },
+      "name": "Bag of Holding",
+      "source": "DMG",
+      "valueCp": 400000,
+      "weightLb": 15.0
+    }
+  ]
+}

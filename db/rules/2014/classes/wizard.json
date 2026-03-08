@@ -1,0 +1,71 @@
+{
+  "class_id": "wizard",
+  "content_id": "class:wizard|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Arcane Recovery"
+    },
+    {
+      "level": 1,
+      "name": "Spellcasting"
+    },
+    {
+      "level": 2,
+      "name": "Arcane Tradition",
+      "subclass_unlock": true
+    },
+    {
+      "level": 3,
+      "name": "Cantrip Formulas"
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 6,
+      "name": "Arcane Tradition feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 10,
+      "name": "Arcane Tradition feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 14,
+      "name": "Arcane Tradition feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 18,
+      "name": "Spell Mastery"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Signature Spells"
+    }
+  ],
+  "name": "Wizard",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "full"
+  }
+}

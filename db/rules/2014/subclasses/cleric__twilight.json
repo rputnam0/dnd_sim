@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:twilight_cleric|TCE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Twilight Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Twilight Sanctuary"
+    },
+    {
+      "level": 6,
+      "name": "Steps of Night"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Twilight Shroud"
+    }
+  ],
+  "name": "Twilight Domain",
+  "source_book": "TCE",
+  "subclass_id": "twilight"
+}

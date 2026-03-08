@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:evocation_wizard|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "School of Evocation"
+    },
+    {
+      "level": 6,
+      "name": "Potent Cantrip"
+    },
+    {
+      "level": 10,
+      "name": "Empowered Evocation"
+    },
+    {
+      "level": 14,
+      "name": "Overchannel"
+    }
+  ],
+  "name": "School of Evocation",
+  "source_book": "PHB",
+  "subclass_id": "evocation"
+}

@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:kensei_monk|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of the Kensei"
+    },
+    {
+      "level": 6,
+      "name": "One with the Blade"
+    },
+    {
+      "level": 11,
+      "name": "Sharpen the Blade"
+    },
+    {
+      "level": 17,
+      "name": "Unerring Accuracy"
+    }
+  ],
+  "name": "Way of the Kensei",
+  "source_book": "XGE",
+  "subclass_id": "kensei"
+}

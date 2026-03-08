@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:long_death_monk|SCAG",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of the Long Death"
+    },
+    {
+      "level": 6,
+      "name": "Hour of Reaping"
+    },
+    {
+      "level": 11,
+      "name": "Mastery of Death"
+    },
+    {
+      "level": 17,
+      "name": "Touch of the Long Death"
+    }
+  ],
+  "name": "Way of the Long Death",
+  "source_book": "SCAG",
+  "subclass_id": "long_death"
+}

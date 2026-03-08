@@ -1,0 +1,29 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:echo_knight_fighter|EGW",
+  "features": [
+    {
+      "level": 3,
+      "name": "Echo Knight"
+    },
+    {
+      "level": 7,
+      "name": "Echo Avatar"
+    },
+    {
+      "level": 10,
+      "name": "Shadow Martyr"
+    },
+    {
+      "level": 15,
+      "name": "Reclaim Potential"
+    },
+    {
+      "level": 18,
+      "name": "Legion of One"
+    }
+  ],
+  "name": "Echo Knight",
+  "source_book": "EGW",
+  "subclass_id": "echo_knight"
+}

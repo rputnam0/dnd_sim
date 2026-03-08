@@ -1,0 +1,12 @@
+{
+  "category": "wondrous",
+  "content_id": "item:bag_of_holding|DMG",
+  "item_id": "bag_of_holding",
+  "metadata": {
+    "capacity_lb": 500
+  },
+  "name": "Bag of Holding",
+  "source_book": "DMG",
+  "value_cp": 400000,
+  "weight_lb": 15.0
+}

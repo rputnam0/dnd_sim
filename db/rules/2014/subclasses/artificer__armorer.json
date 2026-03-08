@@ -1,0 +1,25 @@
+{
+  "class_id": "artificer",
+  "content_id": "subclass:armorer_artificer|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Armorer"
+    },
+    {
+      "level": 5,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 9,
+      "name": "Armor Modifications"
+    },
+    {
+      "level": 15,
+      "name": "Perfected Armor"
+    }
+  ],
+  "name": "Armorer",
+  "source_book": "TCE",
+  "subclass_id": "armorer"
+}

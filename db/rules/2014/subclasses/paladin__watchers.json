@@ -1,0 +1,25 @@
+{
+  "class_id": "paladin",
+  "content_id": "subclass:watchers_paladin|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Oath of the Watchers"
+    },
+    {
+      "level": 7,
+      "name": "Aura of the Sentinel"
+    },
+    {
+      "level": 15,
+      "name": "Vigilant Rebuke"
+    },
+    {
+      "level": 20,
+      "name": "Mortal Bulwark"
+    }
+  ],
+  "name": "Oath of the Watchers",
+  "source_book": "TCE",
+  "subclass_id": "watchers"
+}

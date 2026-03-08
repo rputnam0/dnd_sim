@@ -1,0 +1,107 @@
+{
+  "class_id": "rogue",
+  "content_id": "class:rogue|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Expertise"
+    },
+    {
+      "level": 1,
+      "name": "Sneak Attack"
+    },
+    {
+      "level": 1,
+      "name": "Thieves' Cant"
+    },
+    {
+      "level": 2,
+      "name": "Cunning Action"
+    },
+    {
+      "level": 3,
+      "name": "Roguish Archetype",
+      "subclass_unlock": true
+    },
+    {
+      "level": 3,
+      "name": "Steady Aim"
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 5,
+      "name": "Uncanny Dodge"
+    },
+    {
+      "level": 6,
+      "name": "Expertise"
+    },
+    {
+      "level": 7,
+      "name": "Evasion"
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 9,
+      "name": "Roguish Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 10,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 11,
+      "name": "Reliable Talent"
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 13,
+      "name": "Roguish Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 14,
+      "name": "Blindsense"
+    },
+    {
+      "level": 15,
+      "name": "Slippery Mind"
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 17,
+      "name": "Roguish Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 18,
+      "name": "Elusive"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Stroke of Luck"
+    }
+  ],
+  "name": "Rogue",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "none"
+  }
+}

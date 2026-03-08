@@ -1,0 +1,25 @@
+{
+  "class_id": "paladin",
+  "content_id": "subclass:oathbreaker_paladin|DMG",
+  "features": [
+    {
+      "level": 3,
+      "name": "Oathbreaker"
+    },
+    {
+      "level": 7,
+      "name": "Aura of Hate"
+    },
+    {
+      "level": 15,
+      "name": "Supernatural Resistance"
+    },
+    {
+      "level": 20,
+      "name": "Dread Lord"
+    }
+  ],
+  "name": "Oathbreaker",
+  "source_book": "DMG",
+  "subclass_id": "oathbreaker"
+}

@@ -1,0 +1,29 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "subclass:aberrant_mind_sorcerer|TCE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Aberrant Mind"
+    },
+    {
+      "level": 6,
+      "name": "Psionic Sorcery"
+    },
+    {
+      "level": 6,
+      "name": "Psychic Defenses"
+    },
+    {
+      "level": 14,
+      "name": "Revelation in Flesh"
+    },
+    {
+      "level": 18,
+      "name": "Warping Implosion"
+    }
+  ],
+  "name": "Aberrant Mind",
+  "source_book": "TCE",
+  "subclass_id": "aberrant_mind"
+}

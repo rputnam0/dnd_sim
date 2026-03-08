@@ -1,0 +1,25 @@
+{
+  "class_id": "barbarian",
+  "content_id": "subclass:berserker_barbarian|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Path of the Berserker"
+    },
+    {
+      "level": 6,
+      "name": "Mindless Rage"
+    },
+    {
+      "level": 10,
+      "name": "Intimidating Presence"
+    },
+    {
+      "level": 14,
+      "name": "Retaliation"
+    }
+  ],
+  "name": "Path of the Berserker",
+  "source_book": "PHB",
+  "subclass_id": "berserker"
+}

@@ -1,0 +1,25 @@
+{
+  "class_id": "druid",
+  "content_id": "subclass:dreams_druid|XGE",
+  "features": [
+    {
+      "level": 2,
+      "name": "Circle of Dreams"
+    },
+    {
+      "level": 6,
+      "name": "Hearth of Moonlight and Shadow"
+    },
+    {
+      "level": 10,
+      "name": "Hidden Paths"
+    },
+    {
+      "level": 14,
+      "name": "Walker in Dreams"
+    }
+  ],
+  "name": "Circle of Dreams",
+  "source_book": "XGE",
+  "subclass_id": "dreams"
+}

@@ -1,0 +1,25 @@
+{
+  "class_id": "barbarian",
+  "content_id": "subclass:battlerager_barbarian|SCAG",
+  "features": [
+    {
+      "level": 3,
+      "name": "Path of the Battlerager"
+    },
+    {
+      "level": 6,
+      "name": "Reckless Abandon"
+    },
+    {
+      "level": 10,
+      "name": "Battlerager Charge"
+    },
+    {
+      "level": 14,
+      "name": "Spiked Retribution"
+    }
+  ],
+  "name": "Path of the Battlerager",
+  "source_book": "SCAG",
+  "subclass_id": "battlerager"
+}

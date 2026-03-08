@@ -1,0 +1,25 @@
+{
+  "class_id": "ranger",
+  "content_id": "subclass:fey_wanderer_ranger|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Fey Wanderer"
+    },
+    {
+      "level": 7,
+      "name": "Beguiling Twist"
+    },
+    {
+      "level": 11,
+      "name": "Fey Reinforcements"
+    },
+    {
+      "level": 15,
+      "name": "Misty Wanderer"
+    }
+  ],
+  "name": "Fey Wanderer",
+  "source_book": "TCE",
+  "subclass_id": "fey_wanderer"
+}

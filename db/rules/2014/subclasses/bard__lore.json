@@ -1,0 +1,21 @@
+{
+  "class_id": "bard",
+  "content_id": "subclass:lore_bard|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "College of Lore"
+    },
+    {
+      "level": 6,
+      "name": "Additional Magical Secrets"
+    },
+    {
+      "level": 14,
+      "name": "Peerless Skill"
+    }
+  ],
+  "name": "College of Lore",
+  "source_book": "PHB",
+  "subclass_id": "lore"
+}

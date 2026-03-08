@@ -1,0 +1,25 @@
+{
+  "class_id": "artificer",
+  "content_id": "subclass:battle_smith_artificer|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Battle Smith"
+    },
+    {
+      "level": 5,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 9,
+      "name": "Arcane Jolt"
+    },
+    {
+      "level": 15,
+      "name": "Improved Defender"
+    }
+  ],
+  "name": "Battle Smith",
+  "source_book": "TCE",
+  "subclass_id": "battle_smith"
+}

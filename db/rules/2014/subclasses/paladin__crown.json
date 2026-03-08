@@ -1,0 +1,25 @@
+{
+  "class_id": "paladin",
+  "content_id": "subclass:crown_paladin|SCAG",
+  "features": [
+    {
+      "level": 3,
+      "name": "Oath of the Crown"
+    },
+    {
+      "level": 7,
+      "name": "Divine Allegiance"
+    },
+    {
+      "level": 15,
+      "name": "Unyielding Spirit"
+    },
+    {
+      "level": 20,
+      "name": "Exalted Champion"
+    }
+  ],
+  "name": "Oath of the Crown",
+  "source_book": "SCAG",
+  "subclass_id": "crown"
+}

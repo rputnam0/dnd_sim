@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:arcana_cleric|SCAG",
+  "features": [
+    {
+      "level": 1,
+      "name": "Arcana Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Arcane Abjuration"
+    },
+    {
+      "level": 6,
+      "name": "Spell Breaker"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Potent Spellcasting"
+    },
+    {
+      "level": 17,
+      "name": "Arcane Mastery"
+    }
+  ],
+  "name": "Arcana Domain",
+  "source_book": "SCAG",
+  "subclass_id": "arcana"
+}

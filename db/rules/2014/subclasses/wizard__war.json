@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:war_wizard|XGE",
+  "features": [
+    {
+      "level": 2,
+      "name": "War Magic"
+    },
+    {
+      "level": 6,
+      "name": "Power Surge"
+    },
+    {
+      "level": 10,
+      "name": "Durable Magic"
+    },
+    {
+      "level": 14,
+      "name": "Deflecting Shroud"
+    }
+  ],
+  "name": "War Magic",
+  "source_book": "XGE",
+  "subclass_id": "war"
+}

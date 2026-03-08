@@ -13,9 +13,12 @@ if str(REPO_ROOT / "src") not in sys.path:
 
 from dnd_sim.capability_manifest import (
     CapabilityRecord,
+    build_class_capability_manifest,
     build_feature_capability_manifest,
+    build_item_capability_manifest,
     build_monster_capability_manifest,
     build_spell_capability_manifest,
+    build_subclass_capability_manifest,
 )
 
 REPORT_VERSION = "1.0"
@@ -69,6 +72,9 @@ def collect_capability_records() -> list[CapabilityRecord]:
         build_spell_capability_manifest(),
         build_feature_capability_manifest(),
         build_monster_capability_manifest(),
+        build_item_capability_manifest(),
+        build_class_capability_manifest(),
+        build_subclass_capability_manifest(),
     ):
         records.extend(manifest.records)
     return sorted(records, key=_record_sort_key)

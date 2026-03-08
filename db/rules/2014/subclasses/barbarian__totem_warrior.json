@@ -1,0 +1,25 @@
+{
+  "class_id": "barbarian",
+  "content_id": "subclass:totem_warrior_barbarian|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Path of the Totem Warrior"
+    },
+    {
+      "level": 6,
+      "name": "Aspect of the Beast"
+    },
+    {
+      "level": 10,
+      "name": "Spirit Walker"
+    },
+    {
+      "level": 14,
+      "name": "Totemic Attunement"
+    }
+  ],
+  "name": "Path of the Totem Warrior",
+  "source_book": "PHB",
+  "subclass_id": "totem_warrior"
+}

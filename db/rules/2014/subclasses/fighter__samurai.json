@@ -1,0 +1,29 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:samurai_fighter|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Samurai"
+    },
+    {
+      "level": 7,
+      "name": "Elegant Courtier"
+    },
+    {
+      "level": 10,
+      "name": "Tireless Spirit"
+    },
+    {
+      "level": 15,
+      "name": "Rapid Strike"
+    },
+    {
+      "level": 18,
+      "name": "Strength before Death"
+    }
+  ],
+  "name": "Samurai",
+  "source_book": "XGE",
+  "subclass_id": "samurai"
+}

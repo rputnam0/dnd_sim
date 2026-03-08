@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:war_cleric|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "War Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Guided Strike"
+    },
+    {
+      "level": 6,
+      "name": "Channel Divinity: War God's Blessing"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Avatar of Battle"
+    }
+  ],
+  "name": "War Domain",
+  "source_book": "PHB",
+  "subclass_id": "war"
+}

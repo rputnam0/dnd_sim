@@ -1,0 +1,25 @@
+{
+  "class_id": "rogue",
+  "content_id": "subclass:swashbuckler_rogue|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Swashbuckler"
+    },
+    {
+      "level": 9,
+      "name": "Panache"
+    },
+    {
+      "level": 13,
+      "name": "Elegant Maneuver"
+    },
+    {
+      "level": 17,
+      "name": "Master Duelist"
+    }
+  ],
+  "name": "Swashbuckler",
+  "source_book": "XGE",
+  "subclass_id": "swashbuckler"
+}

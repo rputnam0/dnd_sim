@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:enchantment_wizard|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "School of Enchantment"
+    },
+    {
+      "level": 6,
+      "name": "Instinctive Charm"
+    },
+    {
+      "level": 10,
+      "name": "Split Enchantment"
+    },
+    {
+      "level": 14,
+      "name": "Alter Memories"
+    }
+  ],
+  "name": "School of Enchantment",
+  "source_book": "PHB",
+  "subclass_id": "enchantment"
+}

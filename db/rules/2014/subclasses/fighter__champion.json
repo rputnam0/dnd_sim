@@ -1,0 +1,29 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:champion_fighter|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Champion"
+    },
+    {
+      "level": 7,
+      "name": "Remarkable Athlete"
+    },
+    {
+      "level": 10,
+      "name": "Additional Fighting Style"
+    },
+    {
+      "level": 15,
+      "name": "Superior Critical"
+    },
+    {
+      "level": 18,
+      "name": "Survivor"
+    }
+  ],
+  "name": "Champion",
+  "source_book": "PHB",
+  "subclass_id": "champion"
+}

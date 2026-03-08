@@ -1,0 +1,29 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:psi_warrior_fighter|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Psi Warrior"
+    },
+    {
+      "level": 7,
+      "name": "Telekinetic Adept"
+    },
+    {
+      "level": 10,
+      "name": "Guarded Mind"
+    },
+    {
+      "level": 15,
+      "name": "Bulwark of Force"
+    },
+    {
+      "level": 18,
+      "name": "Telekinetic Master"
+    }
+  ],
+  "name": "Psi Warrior",
+  "source_book": "TCE",
+  "subclass_id": "psi_warrior"
+}

@@ -1,0 +1,25 @@
+{
+  "class_id": "barbarian",
+  "content_id": "subclass:storm_herald_barbarian|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Path of the Storm Herald"
+    },
+    {
+      "level": 6,
+      "name": "Storm Soul"
+    },
+    {
+      "level": 10,
+      "name": "Shielding Storm"
+    },
+    {
+      "level": 14,
+      "name": "Raging Storm"
+    }
+  ],
+  "name": "Path of the Storm Herald",
+  "source_book": "XGE",
+  "subclass_id": "storm_herald"
+}

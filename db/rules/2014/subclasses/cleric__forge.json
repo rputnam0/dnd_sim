@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:forge_cleric|XGE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Forge Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Artisan's Blessing"
+    },
+    {
+      "level": 6,
+      "name": "Soul of the Forge"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Saint of Forge and Fire"
+    }
+  ],
+  "name": "Forge Domain",
+  "source_book": "XGE",
+  "subclass_id": "forge"
+}

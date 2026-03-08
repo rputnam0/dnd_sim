@@ -1,0 +1,25 @@
+{
+  "class_id": "artificer",
+  "content_id": "subclass:cartographer_artificer|EFA",
+  "features": [
+    {
+      "level": 3,
+      "name": "Cartographer"
+    },
+    {
+      "level": 5,
+      "name": "Guided Precision"
+    },
+    {
+      "level": 9,
+      "name": "Ingenious Movement"
+    },
+    {
+      "level": 15,
+      "name": "Superior Atlas"
+    }
+  ],
+  "name": "Cartographer",
+  "source_book": "EFA",
+  "subclass_id": "cartographer"
+}

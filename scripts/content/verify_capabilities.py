@@ -14,6 +14,8 @@ _SCOPE_MAP = {
     "all": None,
     "spell": {"spell"},
     "feature": {"feat", "trait", "background", "species"},
+    "item": {"item"},
+    "class": {"class", "subclass"},
     "monster": {
         "monster",
         "monster_action",

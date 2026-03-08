@@ -1,0 +1,25 @@
+{
+  "class_id": "rogue",
+  "content_id": "subclass:scout_rogue|XGE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Scout"
+    },
+    {
+      "level": 9,
+      "name": "Superior Mobility"
+    },
+    {
+      "level": 13,
+      "name": "Ambush Master"
+    },
+    {
+      "level": 17,
+      "name": "Sudden Strike"
+    }
+  ],
+  "name": "Scout",
+  "source_book": "XGE",
+  "subclass_id": "scout"
+}

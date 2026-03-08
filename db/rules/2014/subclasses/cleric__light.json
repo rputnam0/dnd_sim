@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:light_cleric|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Light Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Radiance of the Dawn"
+    },
+    {
+      "level": 6,
+      "name": "Improved Flare"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Potent Spellcasting"
+    },
+    {
+      "level": 17,
+      "name": "Corona of Light"
+    }
+  ],
+  "name": "Light Domain",
+  "source_book": "PHB",
+  "subclass_id": "light"
+}

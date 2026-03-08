@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:bladesinging_wizard|TCE",
+  "features": [
+    {
+      "level": 2,
+      "name": "Bladesinging"
+    },
+    {
+      "level": 6,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 10,
+      "name": "Song of Defense"
+    },
+    {
+      "level": 14,
+      "name": "Song of Victory"
+    }
+  ],
+  "name": "Bladesinging",
+  "source_book": "TCE",
+  "subclass_id": "bladesinging"
+}

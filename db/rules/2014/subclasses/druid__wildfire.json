@@ -1,0 +1,25 @@
+{
+  "class_id": "druid",
+  "content_id": "subclass:wildfire_druid|TCE",
+  "features": [
+    {
+      "level": 2,
+      "name": "Circle of Wildfire"
+    },
+    {
+      "level": 6,
+      "name": "Enhanced Bond"
+    },
+    {
+      "level": 10,
+      "name": "Cauterizing Flames"
+    },
+    {
+      "level": 14,
+      "name": "Blazing Revival"
+    }
+  ],
+  "name": "Circle of Wildfire",
+  "source_book": "TCE",
+  "subclass_id": "wildfire"
+}

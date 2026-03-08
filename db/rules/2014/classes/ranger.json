@@ -1,0 +1,139 @@
+{
+  "class_id": "ranger",
+  "content_id": "class:ranger|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Deft Explorer"
+    },
+    {
+      "level": 1,
+      "name": "Favored Enemy"
+    },
+    {
+      "level": 1,
+      "name": "Favored Foe"
+    },
+    {
+      "level": 1,
+      "name": "Natural Explorer"
+    },
+    {
+      "level": 2,
+      "name": "Fighting Style"
+    },
+    {
+      "level": 2,
+      "name": "Spellcasting"
+    },
+    {
+      "level": 2,
+      "name": "Spellcasting Focus"
+    },
+    {
+      "level": 3,
+      "name": "Primal Awareness"
+    },
+    {
+      "level": 3,
+      "name": "Primeval Awareness"
+    },
+    {
+      "level": 3,
+      "name": "Ranger Archetype",
+      "subclass_unlock": true
+    },
+    {
+      "level": 4,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 4,
+      "name": "Martial Versatility"
+    },
+    {
+      "level": 5,
+      "name": "Extra Attack"
+    },
+    {
+      "level": 6,
+      "name": "Deft Explorer Improvement"
+    },
+    {
+      "level": 6,
+      "name": "Favored Enemy and Natural Explorer improvements"
+    },
+    {
+      "level": 7,
+      "name": "Ranger Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 8,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 8,
+      "name": "Land's Stride"
+    },
+    {
+      "level": 10,
+      "name": "Deft Explorer Improvement"
+    },
+    {
+      "level": 10,
+      "name": "Hide in Plain Sight"
+    },
+    {
+      "level": 10,
+      "name": "Natural Explorer improvement"
+    },
+    {
+      "level": 10,
+      "name": "Nature's Veil"
+    },
+    {
+      "level": 11,
+      "name": "Ranger Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 12,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 14,
+      "name": "Favored Enemy improvement"
+    },
+    {
+      "level": 14,
+      "name": "Vanish"
+    },
+    {
+      "level": 15,
+      "name": "Ranger Archetype feature",
+      "subclass_unlock": true
+    },
+    {
+      "level": 16,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 18,
+      "name": "Feral Senses"
+    },
+    {
+      "level": 19,
+      "name": "Ability Score Improvement"
+    },
+    {
+      "level": 20,
+      "name": "Foe Slayer"
+    }
+  ],
+  "name": "Ranger",
+  "source_book": "PHB",
+  "spellcasting": {
+    "progression": "half"
+  }
+}

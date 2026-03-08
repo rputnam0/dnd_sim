@@ -1,0 +1,29 @@
+{
+  "class_id": "fighter",
+  "content_id": "subclass:purple_dragon_knight_banneret_fighter|SCAG",
+  "features": [
+    {
+      "level": 3,
+      "name": "Purple Dragon Knight (Banneret)"
+    },
+    {
+      "level": 7,
+      "name": "Royal Envoy"
+    },
+    {
+      "level": 10,
+      "name": "Inspiring Surge"
+    },
+    {
+      "level": 15,
+      "name": "Bulwark"
+    },
+    {
+      "level": 18,
+      "name": "Inspiring Surge"
+    }
+  ],
+  "name": "Purple Dragon Knight (Banneret)",
+  "source_book": "SCAG",
+  "subclass_id": "purple_dragon_knight_banneret"
+}

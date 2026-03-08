@@ -1,0 +1,25 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "subclass:divine_soul_sorcerer|XGE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Divine Soul"
+    },
+    {
+      "level": 6,
+      "name": "Empowered Healing"
+    },
+    {
+      "level": 14,
+      "name": "Otherworldly Wings"
+    },
+    {
+      "level": 18,
+      "name": "Unearthly Recovery"
+    }
+  ],
+  "name": "Divine Soul",
+  "source_book": "XGE",
+  "subclass_id": "divine_soul"
+}

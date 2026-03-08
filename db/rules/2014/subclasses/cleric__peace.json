@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:peace_cleric|TCE",
+  "features": [
+    {
+      "level": 1,
+      "name": "Peace Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Balm of Peace"
+    },
+    {
+      "level": 6,
+      "name": "Protective Bond"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Potent Spellcasting"
+    },
+    {
+      "level": 17,
+      "name": "Expansive Bond"
+    }
+  ],
+  "name": "Peace Domain",
+  "source_book": "TCE",
+  "subclass_id": "peace"
+}

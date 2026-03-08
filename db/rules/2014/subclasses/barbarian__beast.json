@@ -1,0 +1,25 @@
+{
+  "class_id": "barbarian",
+  "content_id": "subclass:beast_barbarian|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Path of the Beast"
+    },
+    {
+      "level": 6,
+      "name": "Bestial Soul"
+    },
+    {
+      "level": 10,
+      "name": "Infectious Fury"
+    },
+    {
+      "level": 14,
+      "name": "Call the Hunt"
+    }
+  ],
+  "name": "Path of the Beast",
+  "source_book": "TCE",
+  "subclass_id": "beast"
+}

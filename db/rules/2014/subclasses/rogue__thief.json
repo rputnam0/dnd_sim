@@ -1,0 +1,25 @@
+{
+  "class_id": "rogue",
+  "content_id": "subclass:thief_rogue|PHB",
+  "features": [
+    {
+      "level": 3,
+      "name": "Thief"
+    },
+    {
+      "level": 9,
+      "name": "Supreme Sneak"
+    },
+    {
+      "level": 13,
+      "name": "Use Magic Device"
+    },
+    {
+      "level": 17,
+      "name": "Thief's Reflexes"
+    }
+  ],
+  "name": "Thief",
+  "source_book": "PHB",
+  "subclass_id": "thief"
+}

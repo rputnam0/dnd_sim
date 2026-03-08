@@ -1,0 +1,25 @@
+{
+  "class_id": "rogue",
+  "content_id": "subclass:phantom_rogue|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Phantom"
+    },
+    {
+      "level": 9,
+      "name": "Tokens of the Departed"
+    },
+    {
+      "level": 13,
+      "name": "Ghost Walk"
+    },
+    {
+      "level": 17,
+      "name": "Death's Friend"
+    }
+  ],
+  "name": "Phantom",
+  "source_book": "TCE",
+  "subclass_id": "phantom"
+}

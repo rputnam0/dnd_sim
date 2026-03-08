@@ -13,9 +13,12 @@ from pydantic import ValidationError
 
 from dnd_sim.capability_manifest import (
     CapabilityRecord,
+    build_class_capability_manifest,
     build_feature_capability_manifest,
+    build_item_capability_manifest,
     build_monster_capability_manifest,
     build_spell_capability_manifest,
+    build_subclass_capability_manifest,
 )
 from dnd_sim.spells import (
     DuplicatePolicy as SpellDuplicatePolicy,
@@ -85,6 +88,8 @@ _GLOBAL_CONTENT_KINDS = frozenset(
         "trait",
         "monster",
         "item",
+        "class",
+        "subclass",
         "world_object",
         "species",
         "background",
@@ -113,6 +118,8 @@ _CAPABILITY_MONSTER_CONTENT_TYPES = frozenset(
         "monster_innate_spellcasting",
     }
 )
+_CAPABILITY_ITEM_CONTENT_TYPES = frozenset({"item"})
+_CAPABILITY_CLASS_CONTENT_TYPES = frozenset({"class", "subclass"})
 
 
 def _canonical_hash_json_text(payload: Any) -> str:
@@ -477,7 +484,9 @@ def build_global_content_index(
             add_record(metadata_monster)
 
     for directory_name, kind, aliases in (
-        ("items", "item", ("id", "item_id")),
+        ("items", "item", ("id",)),
+        ("classes", "class", ("id",)),
+        ("subclasses", "subclass", ("id",)),
         ("world_objects", "world_object", ("id", "world_object_id")),
         ("characters", "character", ("id",)),
     ):
@@ -491,7 +500,11 @@ def build_global_content_index(
                 source_path=path,
                 aliases=aliases,
             )
-            identifier = payload.get("name") or payload.get("character_id") or path.stem
+            identifier = _content_index_identifier(
+                kind=kind,
+                payload=payload,
+                default=path.stem,
+            )
             metadata_payload = _apply_content_metadata(
                 payload,
                 kind=kind,
@@ -597,6 +610,9 @@ def _canonical_capability_records() -> tuple[CapabilityRecord, ...]:
         build_spell_capability_manifest(),
         build_feature_capability_manifest(),
         build_monster_capability_manifest(),
+        build_item_capability_manifest(),
+        build_class_capability_manifest(),
+        build_subclass_capability_manifest(),
     ):
         records.extend(manifest.records)
     return tuple(records)
@@ -677,6 +693,22 @@ def _assert_capability_gate(
 
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _content_index_identifier(*, kind: str, payload: dict[str, Any], default: str) -> str:
+    if kind == "item":
+        return str(payload.get("item_id") or payload.get("name") or default)
+    if kind == "class":
+        return str(payload.get("class_id") or payload.get("name") or default)
+    if kind == "subclass":
+        subclass_id = str(payload.get("subclass_id") or payload.get("name") or "").strip()
+        class_id = str(payload.get("class_id") or payload.get("class_name") or "").strip()
+        if subclass_id and class_id:
+            return f"{subclass_id}_{class_id}"
+        if subclass_id:
+            return subclass_id
+        return default
+    return str(payload.get("name") or payload.get("character_id") or default)
 
 
 def load_scenario(scenario_path: Path) -> LoadedScenario:

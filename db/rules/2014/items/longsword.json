@@ -1,0 +1,18 @@
+{
+  "category": "weapon",
+  "content_id": "item:longsword|PHB",
+  "damage": "1d8",
+  "damage_type": "slashing",
+  "equip_slots": [
+    "main_hand",
+    "off_hand"
+  ],
+  "item_id": "longsword",
+  "name": "Longsword",
+  "source_book": "PHB",
+  "value_cp": 1500,
+  "weapon_properties": [
+    "versatile"
+  ],
+  "weight_lb": 3.0
+}

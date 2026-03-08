@@ -1,0 +1,25 @@
+{
+  "class_id": "sorcerer",
+  "content_id": "subclass:pyromancer_psk_sorcerer|PSK",
+  "features": [
+    {
+      "level": 1,
+      "name": "Pyromancer (PSK)"
+    },
+    {
+      "level": 6,
+      "name": "Fire in the Veins"
+    },
+    {
+      "level": 14,
+      "name": "Pyromancer's Fury"
+    },
+    {
+      "level": 18,
+      "name": "Fiery Soul"
+    }
+  ],
+  "name": "Pyromancer (PSK)",
+  "source_book": "PSK",
+  "subclass_id": "pyromancer_psk"
+}

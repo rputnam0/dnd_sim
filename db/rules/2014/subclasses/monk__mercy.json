@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:mercy_monk|TCE",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of Mercy"
+    },
+    {
+      "level": 6,
+      "name": "Physician's Touch"
+    },
+    {
+      "level": 11,
+      "name": "Flurry of Healing and Harm"
+    },
+    {
+      "level": 17,
+      "name": "Hand of Ultimate Mercy"
+    }
+  ],
+  "name": "Way of Mercy",
+  "source_book": "TCE",
+  "subclass_id": "mercy"
+}

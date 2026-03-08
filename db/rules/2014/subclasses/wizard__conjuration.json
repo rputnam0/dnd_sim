@@ -1,0 +1,25 @@
+{
+  "class_id": "wizard",
+  "content_id": "subclass:conjuration_wizard|PHB",
+  "features": [
+    {
+      "level": 2,
+      "name": "School of Conjuration"
+    },
+    {
+      "level": 6,
+      "name": "Benign Transposition"
+    },
+    {
+      "level": 10,
+      "name": "Focused Conjuration"
+    },
+    {
+      "level": 14,
+      "name": "Durable Summons"
+    }
+  ],
+  "name": "School of Conjuration",
+  "source_book": "PHB",
+  "subclass_id": "conjuration"
+}

@@ -1,0 +1,33 @@
+{
+  "class_id": "cleric",
+  "content_id": "subclass:trickery_cleric|PHB",
+  "features": [
+    {
+      "level": 1,
+      "name": "Trickery Domain"
+    },
+    {
+      "level": 2,
+      "name": "Channel Divinity: Invoke Duplicity"
+    },
+    {
+      "level": 6,
+      "name": "Channel Divinity: Cloak of Shadows"
+    },
+    {
+      "level": 8,
+      "name": "Blessed Strikes"
+    },
+    {
+      "level": 8,
+      "name": "Divine Strike"
+    },
+    {
+      "level": 17,
+      "name": "Improved Duplicity"
+    }
+  ],
+  "name": "Trickery Domain",
+  "source_book": "PHB",
+  "subclass_id": "trickery"
+}

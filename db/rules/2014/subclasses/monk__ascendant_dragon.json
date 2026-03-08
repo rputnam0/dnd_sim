@@ -1,0 +1,25 @@
+{
+  "class_id": "monk",
+  "content_id": "subclass:ascendant_dragon_monk|FTD",
+  "features": [
+    {
+      "level": 3,
+      "name": "Way of the Ascendant Dragon"
+    },
+    {
+      "level": 6,
+      "name": "Wings Unfurled"
+    },
+    {
+      "level": 11,
+      "name": "Aspect of the Wyrm"
+    },
+    {
+      "level": 17,
+      "name": "Ascendant Aspect"
+    }
+  ],
+  "name": "Way of the Ascendant Dragon",
+  "source_book": "FTD",
+  "subclass_id": "ascendant_dragon"
+}
