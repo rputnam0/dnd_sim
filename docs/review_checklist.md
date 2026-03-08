@@ -2,12 +2,12 @@
 
 Status: canonical  
 Owner: integration-review  
-Last updated: 2026-03-07  
+Last updated: 2026-03-08  
 Canonical source: `docs/program/status_board.md`
 
 This checklist is the program closeout gate. Do not mark the backend complete until every item is checked in the repository.
 
-Wave 5 closeout items below are historical baseline state. Wave 6 remediation items must also be complete before re-affirming final completion.
+Wave 5 and Wave 6 items below are historical baseline state. Wave 7 CRPG-core hardening items must also be complete before re-affirming final completion.
 
 ## Documentation Control
 
@@ -168,6 +168,25 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] W6-GATE-01 Sync docs/backlog/checklist truth and maintenance waivers for remediation state (merged via #172)
 - [x] W6-GATE-02 Final green gate and closeout pass (merged via #183)
 
+## Wave 7 CRPG-Core Hardening
+
+- [x] W7-DOC-01 Reset roadmap/backlog/status/checklist truth so Wave 6 is historical and Wave 7 is active.
+- [x] W7-ITM-01 Add raw item ingest and canonical `db/rules/2014/items`.
+- [x] W7-ITM-02 Add first-class item capability coverage in manifests/reports/query APIs.
+- [x] W7-ITM-03 Hard-cut runtime item resolution to canonical item records.
+- [x] W7-ITM-04 Add executable magic-item progression mechanics.
+- [x] W7-CLS-01 Canonicalize class and subclass catalogs with stable IDs.
+- [x] W7-CLS-02 Replace package inference with canonical progression builder.
+- [x] W7-CLS-03 Add class/subclass capability manifests and explicit coverage gates.
+- [x] W7-CLS-04 Close multiclass edge rules against canonical progression.
+- [x] W7-EXP-01 Add hidden/detected/surprised state machine.
+- [x] W7-EXP-02 Add canonical trap/lock/container/secret/searchable interactables.
+- [x] W7-EXP-03 Integrate stealth and interactable loops into persistent world flow.
+- [x] W7-EXP-04 Keep social support lightweight and non-cinematic.
+- [x] W7-GATE-01 Expand completion gates for `item`, `class`, and `subclass`.
+- [x] W7-GATE-02 Add integrated CRPG-core scenario gates.
+- [x] W7-GATE-03 Final Wave 7 closeout and promotion.
+
 
 ## Final review gate
 
@@ -177,4 +196,4 @@ Wave 5 closeout items below are historical baseline state. Wave 6 remediation it
 - [x] Campaign/world/combat integration gate passes.
 - [x] Agent-only maintenance gate passes.
 - [x] Strict FIN-02 parity gate (`verify_completion_capabilities.py --strict`) passes with blocked=0.
-- [x] `docs/program/status_board.md` and `docs/program/backlog.csv` are synchronized for the active Wave 6 remediation state.
+- [x] `docs/program/status_board.md` and `docs/program/backlog.csv` are synchronized for the finished Wave 7 closeout state.
