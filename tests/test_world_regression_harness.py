@@ -42,7 +42,7 @@ def test_world_regression_suite_passes_on_canonical_corpus(tmp_path: Path) -> No
     result = harness.run_regression_suite(corpus_dir=corpus_dir)
 
     assert result.passed is True
-    assert result.total_cases == 3
+    assert result.total_cases == 4
     assert result.failed_cases == 0
     assert result.diff_failures == 0
     assert result.performance_failures == 0

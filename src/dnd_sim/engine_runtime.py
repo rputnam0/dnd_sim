@@ -18,6 +18,18 @@ from dnd_sim.characters import (
     total_character_level,
 )
 from dnd_sim.class_progression import build_character_progression
+from dnd_sim.exploration_interaction import (
+    AwarenessState,
+    ExplorationInteractionState,
+    InteractableState,
+    resolve_active_search,
+    resolve_contested_stealth,
+    resolve_encounter_surprise,
+    resolve_open_close,
+    resolve_transfer_loot,
+    resolve_trap_disarm,
+    resolve_unlock,
+)
 from dnd_sim.inventory import InventoryState
 from dnd_sim.items import CanonicalItem, load_default_item_catalog
 from dnd_sim.io import EncounterConfig, EnemyConfig, LoadedScenario
@@ -154,8 +166,14 @@ from dnd_sim.telemetry import build_event_envelope
 logger = logging.getLogger(__name__)
 
 
-_CONTROL_BLOCKING_CONDITIONS = {"incapacitated", "stunned", "unconscious", "paralyzed"}
-_CONCENTRATION_FORCED_END_CONDITIONS = _CONTROL_BLOCKING_CONDITIONS
+_CONTROL_BLOCKING_CONDITIONS = {
+    "incapacitated",
+    "stunned",
+    "unconscious",
+    "paralyzed",
+    "surprised",
+}
+_CONCENTRATION_FORCED_END_CONDITIONS = _CONTROL_BLOCKING_CONDITIONS - {"surprised"}
 _DISADVANTAGE_CONDITIONS = {"poisoned", "frightened", "restrained", "blinded", "prone"}
 _ATTACKER_ADVANTAGE_CONDITIONS = {
     "blinded",
@@ -3523,10 +3541,7 @@ def _extract_primary_save_damage_mechanic(
         if (
             effect_type == "damage"
             and damage
-            and (
-                apply_on == "save_fail"
-                or (row_save and has_explicit_half_on_success)
-            )
+            and (apply_on == "save_fail" or (row_save and has_explicit_half_on_success))
             and (not normalized_save or not row_save or row_save == normalized_save)
         ):
             primary_candidates.append(dict(row))
@@ -5904,6 +5919,243 @@ def _apply_canonical_item_granted_actions(
             seen_names.add(dedupe_key)
 
 
+def _resolve_configured_actor_id(
+    actor_id: str,
+    actors: dict[str, ActorRuntimeState],
+) -> str | None:
+    if actor_id is None:
+        return None
+    normalized = str(actor_id).strip()
+    if not normalized:
+        return None
+    if normalized in actors:
+        return normalized
+    matches = [candidate for candidate in actors if candidate.startswith(f"{normalized}_e")]
+    if len(matches) == 1:
+        return matches[0]
+    return None
+
+
+def _build_configured_interaction_state(
+    actors: dict[str, ActorRuntimeState],
+    *,
+    stealth_actors: list[Any],
+    interactables: list[Any],
+) -> ExplorationInteractionState:
+    awareness: dict[str, AwarenessState] = {}
+    for row in stealth_actors:
+        resolved_actor_id = _resolve_configured_actor_id(getattr(row, "actor_id", ""), actors)
+        if resolved_actor_id is None:
+            continue
+        detected_by: list[str] = []
+        for raw_observer_id in getattr(row, "detected_by", []) or []:
+            resolved_observer_id = _resolve_configured_actor_id(str(raw_observer_id), actors)
+            if resolved_observer_id is not None:
+                detected_by.append(resolved_observer_id)
+        awareness[resolved_actor_id] = AwarenessState(
+            actor_id=resolved_actor_id,
+            hidden=bool(getattr(row, "hidden", False)),
+            detected_by=tuple(detected_by),
+            surprised=bool(getattr(row, "surprised", False)),
+            stealth_total=getattr(row, "stealth_total", None),
+        )
+
+    interactable_rows: dict[str, InteractableState] = {}
+    for row in interactables:
+        object_id = str(getattr(row, "object_id", "")).strip()
+        if not object_id:
+            continue
+        interactable_rows[object_id] = InteractableState(
+            object_id=object_id,
+            kind=str(getattr(row, "kind", "")).strip(),
+            location_id=getattr(row, "location_id", None),
+            hidden=bool(getattr(row, "hidden", False)),
+            discovered=bool(getattr(row, "discovered", False)),
+            open=bool(getattr(row, "open", False)),
+            locked=bool(getattr(row, "locked", False)),
+            trap_armed=bool(getattr(row, "trap_armed", False)),
+            disarmed=bool(getattr(row, "disarmed", False)),
+            triggered=bool(getattr(row, "triggered", False)),
+            discovery_dc=getattr(row, "discovery_dc", None),
+            unlock_dc=getattr(row, "unlock_dc", None),
+            disarm_dc=getattr(row, "disarm_dc", None),
+            trigger_on_fail=bool(getattr(row, "trigger_on_fail", False)),
+            key_item_id=getattr(row, "key_item_id", None),
+            contents=tuple(getattr(row, "contents", []) or ()),
+            loot_transferred=bool(getattr(row, "loot_transferred", False)),
+        )
+
+    return ExplorationInteractionState(
+        awareness=awareness,
+        interactables=interactable_rows,
+    )
+
+
+def _passive_perception_for_configured_actor(
+    actor_id: str,
+    actors: dict[str, ActorRuntimeState],
+    stealth_actors: list[Any],
+) -> int:
+    for row in stealth_actors:
+        resolved_actor_id = _resolve_configured_actor_id(getattr(row, "actor_id", ""), actors)
+        if resolved_actor_id != actor_id:
+            continue
+        passive = getattr(row, "passive_perception", None)
+        if passive is not None:
+            return int(passive)
+        break
+    actor = actors[actor_id]
+    return 10 + int(actor.wis_mod)
+
+
+def _apply_awareness_to_actor(actor: ActorRuntimeState, awareness: AwarenessState) -> None:
+    actor.hidden = bool(awareness.hidden)
+    actor.detected_by = set(awareness.detected_by)
+    actor.surprised = bool(awareness.surprised)
+    if actor.surprised:
+        actor.add_manual_condition("surprised")
+    else:
+        actor.discard_manual_condition("surprised")
+
+
+def _apply_configured_interaction_setup(
+    actors: dict[str, ActorRuntimeState],
+    *,
+    stealth_actors: list[Any],
+    interactables: list[Any],
+    interaction_actions: list[Any],
+) -> ExplorationInteractionState:
+    state = _build_configured_interaction_state(
+        actors,
+        stealth_actors=stealth_actors,
+        interactables=interactables,
+    )
+
+    for action in interaction_actions:
+        action_name = str(getattr(action, "action", "")).strip().lower()
+        actor_id = _resolve_configured_actor_id(getattr(action, "actor_id", ""), actors)
+        object_id = getattr(action, "object_id", None)
+        check_total = getattr(action, "check_total", None)
+
+        if action_name == "contested_stealth" and actor_id is not None and check_total is not None:
+            raw_targets = getattr(action, "target_actor_ids", []) or []
+            target_actor_ids = [
+                resolved_id
+                for target_actor_id in raw_targets
+                if (resolved_id := _resolve_configured_actor_id(str(target_actor_id), actors))
+                is not None
+            ]
+            if not target_actor_ids and actor_id in actors:
+                target_actor_ids = [
+                    candidate_id
+                    for candidate_id, actor in actors.items()
+                    if actor.team != actors[actor_id].team
+                ]
+            passive_map = {
+                target_actor_id: _passive_perception_for_configured_actor(
+                    target_actor_id,
+                    actors,
+                    stealth_actors,
+                )
+                for target_actor_id in target_actor_ids
+            }
+            state = resolve_contested_stealth(
+                state,
+                actor_id=actor_id,
+                stealth_total=int(check_total),
+                observer_passive_perception=passive_map,
+            ).state
+        elif action_name == "search" and actor_id is not None and check_total is not None:
+            target_actor_ids = [
+                resolved_id
+                for target_actor_id in getattr(action, "target_actor_ids", []) or []
+                if (resolved_id := _resolve_configured_actor_id(str(target_actor_id), actors))
+                is not None
+            ]
+            state = resolve_active_search(
+                state,
+                seeker_id=actor_id,
+                search_total=int(check_total),
+                target_actor_ids=target_actor_ids,
+                target_object_ids=tuple(getattr(action, "target_object_ids", []) or ()),
+            ).state
+        elif action_name == "surprise":
+            teams: dict[str, str] = {}
+            for raw_actor_id, team in dict(getattr(action, "teams", {}) or {}).items():
+                resolved_actor_id = _resolve_configured_actor_id(str(raw_actor_id), actors)
+                if resolved_actor_id is not None:
+                    teams[resolved_actor_id] = str(team)
+            if not teams:
+                teams = {candidate_id: actor.team for candidate_id, actor in actors.items()}
+            state = resolve_encounter_surprise(
+                state,
+                teams=teams,
+            ).state
+        elif action_name == "unlock" and actor_id is not None and object_id is not None:
+            key_item_ids = tuple(sorted(actors[actor_id].inventory.items.keys()))
+            state = resolve_unlock(
+                state,
+                actor_id=actor_id,
+                object_id=str(object_id),
+                check_total=int(check_total or 0),
+                key_item_ids=key_item_ids,
+            ).state
+        elif action_name == "disarm" and actor_id is not None and object_id is not None:
+            state = resolve_trap_disarm(
+                state,
+                actor_id=actor_id,
+                object_id=str(object_id),
+                check_total=int(check_total or 0),
+            ).state
+        elif action_name in {"open", "close"} and actor_id is not None and object_id is not None:
+            state = resolve_open_close(
+                state,
+                actor_id=actor_id,
+                object_id=str(object_id),
+                open=(action_name == "open"),
+            ).state
+        elif action_name == "transfer_loot" and actor_id is not None and object_id is not None:
+            state = resolve_transfer_loot(
+                state,
+                actor_id=actor_id,
+                object_id=str(object_id),
+            ).state
+
+    for resolved_actor_id, awareness in state.awareness.items():
+        actor = actors.get(resolved_actor_id)
+        if actor is None:
+            continue
+        _apply_awareness_to_actor(actor, awareness)
+
+    return state
+
+
+def _configured_interaction_rows(
+    scenario: LoadedScenario,
+    encounter: EncounterConfig,
+) -> tuple[list[Any], list[Any], list[Any]]:
+    stealth_rows_by_actor: dict[str, Any] = {}
+    for row in scenario.config.stealth_actors:
+        stealth_rows_by_actor[str(getattr(row, "actor_id", "")).strip()] = row
+    for row in encounter.stealth_actors:
+        stealth_rows_by_actor[str(getattr(row, "actor_id", "")).strip()] = row
+
+    interactable_rows_by_object: dict[str, Any] = {}
+    for row in scenario.config.interactables:
+        interactable_rows_by_object[str(getattr(row, "object_id", "")).strip()] = row
+    for row in encounter.interactables:
+        interactable_rows_by_object[str(getattr(row, "object_id", "")).strip()] = row
+
+    interaction_actions = list(scenario.config.interaction_actions) + list(
+        encounter.interaction_actions
+    )
+    return (
+        [row for key, row in sorted(stealth_rows_by_actor.items()) if key],
+        [row for key, row in sorted(interactable_rows_by_object.items()) if key],
+        interaction_actions,
+    )
+
+
 def _actor_has_equipped_shield(actor: ActorRuntimeState) -> bool:
     return actor.inventory.has_equipped_shield()
 
@@ -6067,6 +6319,17 @@ def _build_actor_from_character(
         movement_modes={"walk": float(int(character.get("speed_ft", 30)))},
         exhaustion_level=max(0, min(6, int(character.get("exhaustion_level", 0) or 0))),
     )
+    actor.hidden = bool(character.get("hidden", False))
+    actor.surprised = bool(character.get("surprised", False))
+    raw_detected_by = character.get("detected_by", ())
+    if isinstance(raw_detected_by, (list, tuple, set)):
+        actor.detected_by = {
+            str(value).strip()
+            for value in raw_detected_by
+            if str(value).strip() and str(value).strip() != actor.actor_id
+        }
+    if actor.surprised:
+        actor.add_manual_condition("surprised")
     if actor.exhaustion_level > 0:
         actor.add_manual_condition("exhaustion")
     _ensure_channel_divinity_resource(actor)
@@ -6380,6 +6643,17 @@ def _build_actor_from_enemy(
         speed_ft=enemy_speed_ft,
         movement_modes={"walk": float(enemy_speed_ft)},
     )
+    actor.hidden = bool(enemy.script_hooks.get("hidden", False))
+    actor.surprised = bool(enemy.script_hooks.get("surprised", False))
+    raw_detected_by = enemy.script_hooks.get("detected_by", ())
+    if isinstance(raw_detected_by, (list, tuple, set)):
+        actor.detected_by = {
+            str(value).strip()
+            for value in raw_detected_by
+            if str(value).strip() and str(value).strip() != actor.actor_id
+        }
+    if actor.surprised:
+        actor.add_manual_condition("surprised")
     legendary_resistance_uses = _infer_legendary_resistance_from_traits(list(enemy.traits))
     if (
         legendary_resistance_uses is not None
@@ -6460,6 +6734,9 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.movement_remaining = float(actor.speed_ft)
     actor.mounted_on_id = None
     actor.mounted_rider_id = None
+    actor.hidden = False
+    actor.detected_by.clear()
+    actor.surprised = False
 
 
 def _normalize_travel_pace(value: Any) -> str:
@@ -6657,6 +6934,9 @@ def _build_actor_views(
                 position=actor.position,
                 traits=dict(actor.traits),
                 concentrating=actor.concentrating,
+                hidden=actor.hidden,
+                detected_by=set(actor.detected_by),
+                surprised=actor.surprised,
             )
             for actor_id, actor in actors.items()
         },
@@ -6818,6 +7098,9 @@ def _actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
         "downed_count": actor.downed_count,
         "conditions": sorted(actor.conditions),
         "resources": dict(sorted(actor.resources.items())),
+        "hidden": actor.hidden,
+        "detected_by": sorted(actor.detected_by),
+        "surprised": actor.surprised,
     }
 
 
@@ -8981,6 +9264,8 @@ def actor_is_incapacitated(actor: ActorRuntimeState | None) -> bool:
         return True
     if actor.dead or actor.hp <= 0:
         return True
+    if actor.surprised:
+        return True
     return any(has_condition(actor, condition) for condition in _CONTROL_BLOCKING_CONDITIONS)
 
 
@@ -9355,7 +9640,11 @@ def _resolve_damage_effect_save_result(
             save_roll = max(save_roll, rng.randint(1, 20))
         success = (save_roll + save_mod) >= save_dc
 
-    if not auto_fail_save and not success and recipient.resources.get("legendary_resistance", 0) > 0:
+    if (
+        not auto_fail_save
+        and not success
+        and recipient.resources.get("legendary_resistance", 0) > 0
+    ):
         recipient.resources["legendary_resistance"] -= 1
         resources_spent[recipient.actor_id]["legendary_resistance"] = (
             resources_spent[recipient.actor_id].get("legendary_resistance", 0) + 1
@@ -9378,7 +9667,11 @@ def _hydrate_zone_trigger_effects_with_spell_context(
             zone_save_dc = int(effect.get("save_dc"))
         except (TypeError, ValueError):
             try:
-                zone_save_dc = int(action.save_dc) if action is not None and action.save_dc is not None else None
+                zone_save_dc = (
+                    int(action.save_dc)
+                    if action is not None and action.save_dc is not None
+                    else None
+                )
             except (TypeError, ValueError):
                 zone_save_dc = None
     if zone_save_dc is not None:
@@ -14439,6 +14732,17 @@ def run_simulation(
                     actor_id: set(actor.resources.keys()) for actor_id, actor in actors.items()
                 }
 
+            stealth_actors, interactables, interaction_actions = _configured_interaction_rows(
+                scenario,
+                encounter,
+            )
+            _apply_configured_interaction_setup(
+                actors,
+                stealth_actors=stealth_actors,
+                interactables=interactables,
+                interaction_actions=interaction_actions,
+            )
+
             initiative_order, initiative_scores = _build_initiative_order_with_scores(
                 rng, actors, scenario.config.initiative_mode
             )
@@ -14508,6 +14812,9 @@ def run_simulation(
                         round_number=rounds,
                         turn_token=turn_token,
                     )
+                    if actor.surprised:
+                        actor.surprised = False
+                        actor.discard_manual_condition("surprised")
 
                 for actor_id in initiative_order:
                     if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(

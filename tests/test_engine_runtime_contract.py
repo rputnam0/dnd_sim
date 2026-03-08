@@ -116,3 +116,77 @@ def test_runtime_uses_configured_defeat_rules_for_all_termination_checks(
 
     assert seen["party"] > 0
     assert seen["enemy"] > 0
+
+
+def test_runtime_applies_configured_precombat_interaction_state(
+    tmp_path: Path, monkeypatch
+) -> None:
+    scenario_path = _setup_env(
+        tmp_path,
+        party=[build_character("rogue", "Rogue", 18, 14, 5, "1d6+3")],
+        enemies=[
+            build_enemy(enemy_id="guard", name="Guard", hp=12, ac=12, to_hit=3, damage="1d6+1")
+        ],
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+        max_rounds=1,
+    )
+
+    scenario_payload = json.loads(scenario_path.read_text(encoding="utf-8"))
+    scenario_payload["stealth_actors"] = [
+        {"actor_id": "rogue", "team": "party", "hidden": False, "detected_by": []},
+        {
+            "actor_id": "guard",
+            "team": "enemy",
+            "hidden": False,
+            "detected_by": ["rogue"],
+            "passive_perception": 10,
+        },
+    ]
+    scenario_payload["interaction_actions"] = [
+        {
+            "action": "contested_stealth",
+            "actor_id": "rogue",
+            "check_total": 17,
+            "target_actor_ids": ["guard"],
+        },
+        {
+            "action": "surprise",
+            "teams": {"rogue": "party", "guard": "enemy"},
+        },
+    ]
+    scenario_path.write_text(json.dumps(scenario_payload, indent=2), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+    registry = load_strategy_registry(loaded)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    captured: dict[str, dict[str, object]] = {}
+    original_build_actor_views = engine_runtime._build_actor_views
+
+    def capture_initial_view(actors, actor_order, round_number, metadata):
+        if round_number == 1 and not captured:
+            for actor_id, actor in actors.items():
+                captured[actor_id] = {
+                    "hidden": actor.hidden,
+                    "detected_by": set(actor.detected_by),
+                    "surprised": actor.surprised,
+                }
+        return original_build_actor_views(actors, actor_order, round_number, metadata)
+
+    monkeypatch.setattr(engine_runtime, "_build_actor_views", capture_initial_view)
+
+    engine_runtime.run_simulation(
+        loaded,
+        db,
+        {},
+        registry,
+        trials=1,
+        seed=11,
+        run_id="precombat_interaction_runtime",
+    )
+
+    assert captured["rogue"]["hidden"] is True
+    assert captured["rogue"]["detected_by"] == set()
+    assert captured["guard"]["surprised"] is True

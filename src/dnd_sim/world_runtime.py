@@ -7,6 +7,10 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from dnd_sim.economy import CraftingProject, CraftingRecipe, apply_crafting_days
+from dnd_sim.exploration_interaction import (
+    ExplorationInteractionState,
+    deserialize_interaction_state,
+)
 from dnd_sim.world_hazards import (
     HazardActorState,
     HazardResolution,
@@ -103,6 +107,9 @@ class ExplorationState:
     clock: WorldClock
     light_sources: dict[str, LightSourceState]
     location_id: str | None = None
+    interaction_state: ExplorationInteractionState = field(
+        default_factory=ExplorationInteractionState
+    )
 
     def __post_init__(self) -> None:
         if (
@@ -113,6 +120,8 @@ class ExplorationState:
             raise ValueError("turn_index must be an integer >= 0")
         if not isinstance(self.clock, WorldClock):
             raise ValueError("clock must be a WorldClock")
+        if not isinstance(self.interaction_state, ExplorationInteractionState):
+            raise ValueError("interaction_state must be an ExplorationInteractionState")
 
         location = self.location_id
         if location is not None:
@@ -559,11 +568,21 @@ def create_exploration_state(
     location_id: str | None = None,
     turn_index: int = 0,
     light_sources: dict[str, int | LightSourceState] | None = None,
+    interaction_state: ExplorationInteractionState | Mapping[str, Any] | None = None,
 ) -> ExplorationState:
     if not isinstance(hour, int) or isinstance(hour, bool) or hour < 0 or hour > 23:
         raise ValueError("hour must be an integer from 0 to 23")
     if not isinstance(minute, int) or isinstance(minute, bool) or minute < 0 or minute > 59:
         raise ValueError("minute must be an integer from 0 to 59")
+
+    if interaction_state is None:
+        normalized_interaction_state = ExplorationInteractionState()
+    elif isinstance(interaction_state, ExplorationInteractionState):
+        normalized_interaction_state = interaction_state
+    elif isinstance(interaction_state, Mapping):
+        normalized_interaction_state = deserialize_interaction_state(interaction_state)
+    else:
+        raise ValueError("interaction_state must be ExplorationInteractionState, mapping, or None")
 
     normalized_lights: dict[str, LightSourceState] = {}
     for source_id, value in sorted((light_sources or {}).items()):
@@ -578,6 +597,7 @@ def create_exploration_state(
         clock=WorldClock(day=day, minute_of_day=(hour * 60) + minute),
         location_id=location_id,
         light_sources=normalized_lights,
+        interaction_state=normalized_interaction_state,
     )
 
 
@@ -864,6 +884,7 @@ def run_exploration_turn(
         clock=end_clock,
         location_id=state.location_id,
         light_sources=light_sources,
+        interaction_state=state.interaction_state,
     )
 
     return ExplorationTurnResult(

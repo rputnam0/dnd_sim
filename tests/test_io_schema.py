@@ -200,3 +200,82 @@ def test_enemy_schema_rejects_unknown_innate_spell_reference() -> None:
 
     with pytest.raises(ValidationError):
         EnemyConfig.model_validate(payload)
+
+
+def test_scenario_schema_accepts_first_class_stealth_and_interactable_payloads(
+    tmp_path: Path,
+) -> None:
+    payload = json.loads(SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["stealth_actors"] = [
+        {
+            "actor_id": "hero_rogue",
+            "team": "party",
+            "hidden": True,
+            "stealth_total": 16,
+            "detected_by": [],
+            "surprised": False,
+        }
+    ]
+    payload["interactables"] = [
+        {
+            "object_id": "locked_chest_a",
+            "kind": "container",
+            "discovered": True,
+            "locked": True,
+            "unlock_dc": 14,
+            "contents": ["potion_healing"],
+        }
+    ]
+    payload["interaction_actions"] = [
+        {
+            "action": "unlock",
+            "actor_id": "hero_rogue",
+            "object_id": "locked_chest_a",
+            "check_total": 17,
+        }
+    ]
+
+    base = tmp_path / "encounters" / "x"
+    (base / "scenarios").mkdir(parents=True, exist_ok=True)
+    (base / "enemies").mkdir(parents=True, exist_ok=True)
+
+    for enemy_id in payload["enemies"]:
+        src = ROOT / "river_line" / "encounters" / "ley_heart" / "enemies" / f"{enemy_id}.json"
+        (base / "enemies" / f"{enemy_id}.json").write_text(src.read_text(encoding="utf-8"))
+
+    scenario_path = base / "scenarios" / "stealth_interactable_schema.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+    loaded = load_scenario(scenario_path)
+
+    assert loaded.config.stealth_actors[0].actor_id == "hero_rogue"
+    assert loaded.config.interactables[0].object_id == "locked_chest_a"
+    assert loaded.config.interaction_actions[0].action == "unlock"
+
+
+def test_scenario_schema_rejects_interactable_with_open_and_locked_state(tmp_path: Path) -> None:
+    payload = json.loads(SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["interactables"] = [
+        {
+            "object_id": "bad_chest",
+            "kind": "container",
+            "open": True,
+            "locked": True,
+        }
+    ]
+
+    base = tmp_path / "encounters" / "x"
+    (base / "scenarios").mkdir(parents=True, exist_ok=True)
+    (base / "enemies").mkdir(parents=True, exist_ok=True)
+
+    for enemy_id in payload["enemies"]:
+        src = ROOT / "river_line" / "encounters" / "ley_heart" / "enemies" / f"{enemy_id}.json"
+        (base / "enemies" / f"{enemy_id}.json").write_text(src.read_text(encoding="utf-8"))
+
+    scenario_path = base / "scenarios" / "invalid_interactable_state.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_scenario(scenario_path)
+
+    assert "Invalid scenario schema" in str(exc.value)
+    assert "open and locked" in str(exc.value)
