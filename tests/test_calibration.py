@@ -60,7 +60,7 @@ def _setup_benchmark_scenario(
         "scenario_id": scenario_id,
         "encounter_id": scenario_id,
         "ruleset": "5e-2014",
-        "character_db_dir": str(db_dir),
+        "character_db_dir": "../../../db/characters",
         "party": ["hero"],
         "enemies": ["boss"],
         "initiative_mode": "individual",
@@ -70,7 +70,7 @@ def _setup_benchmark_scenario(
             "enemy_defeat": "all_dead",
             "max_rounds": max_rounds,
         },
-        "strategy_modules": [
+        "internal_harness": {"strategy_modules": [
             {
                 "name": "focus_fire_lowest_hp",
                 "source": "builtin",
@@ -81,7 +81,8 @@ def _setup_benchmark_scenario(
                 "source": "builtin",
                 "class_name": "BossHighestThreatTargetStrategy",
             },
-        ],
+            ]
+        },
         "resource_policy": {"mode": "combat_and_utility", "burst_round_threshold": 3},
         "assumption_overrides": {
             "party_strategy": "focus_fire_lowest_hp",

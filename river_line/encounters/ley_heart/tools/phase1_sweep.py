@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from dnd_sim.io import load_character_db, load_custom_simulation_runner, load_scenario
+from dnd_sim.io import load_character_db, load_custom_simulation_runner, load_runtime_scenario
+
+REPO_ROOT = Path(__file__).resolve().parents[4]
 
 
 @dataclass(frozen=True)
@@ -118,9 +120,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--dm-card",
         type=Path,
-        default=Path(
-            "/Users/rexputnam/Documents/projects/dnd_sim/river_line/encounters/ley_heart/phase_1/phase_1_dm_encounter_card.md"
-        ),
+        default=REPO_ROOT
+        / "river_line"
+        / "encounters"
+        / "ley_heart"
+        / "phase_1"
+        / "phase_1_dm_encounter_card.md",
         help="Path to DM encounter card markdown.",
     )
     return p
@@ -286,7 +291,7 @@ def _update_dm_card(dm_path: Path, boss_cfg: dict[str, Any]) -> None:
 def main() -> None:
     args = build_parser().parse_args()
 
-    base_loaded = load_scenario(args.scenario)
+    base_loaded = load_runtime_scenario(args.scenario)
     base_raw = json.loads(Path(args.scenario).read_text(encoding="utf-8"))
     custom_sim = base_raw.get("assumption_overrides", {}).get("custom_sim", {}).copy()
 

@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from dnd_sim.engine import run_simulation
 from dnd_sim.engine_runtime import _execute_action, _reorder_initiative_for_construct_companions
-from dnd_sim.io import ActionConfig, load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import ActionConfig, load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_character, build_enemy, write_json
@@ -121,7 +121,7 @@ def _setup_env(
         "scenario_id": "com10_fixture",
         "encounter_id": "fixture",
         "ruleset": "5e-2014",
-        "character_db_dir": str(db_dir),
+        "character_db_dir": "../../../db/characters",
         "party": [character["character_id"] for character in party],
         "enemies": [enemy["identity"]["enemy_id"] for enemy in enemies],
         "initiative_mode": "individual",
@@ -131,13 +131,14 @@ def _setup_env(
             "enemy_defeat": "all_dead",
             "max_rounds": 5,
         },
-        "strategy_modules": [
+        "internal_harness": {"strategy_modules": [
             {
                 "name": "boss_highest_threat_target",
                 "source": "builtin",
                 "class_name": "BossHighestThreatTargetStrategy",
             }
-        ],
+            ]
+        },
         "resource_policy": {
             "mode": "combat_and_utility",
             "burst_round_threshold": 3,
@@ -270,7 +271,7 @@ def test_com10_controlled_summon_command_flow_and_determinism(tmp_path: Path) ->
     )
 
     scenario_path = _setup_env(tmp_path, party=[hero], enemies=[enemy])
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     registry["party_no_command"] = _ControlledSummonStrategy(use_command=False)
     registry["party_with_command"] = _ControlledSummonStrategy(use_command=True)

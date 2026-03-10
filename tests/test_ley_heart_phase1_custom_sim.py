@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from dnd_sim.io import load_character_db, load_custom_simulation_runner, load_scenario
+from dnd_sim.io import load_character_db, load_custom_simulation_runner, load_runtime_scenario
 
 
 def test_phase1_custom_sim_outputs_damage_metrics(tmp_path: Path) -> None:
@@ -10,7 +10,7 @@ def test_phase1_custom_sim_outputs_damage_metrics(tmp_path: Path) -> None:
     scenario_path = (
         root / "river_line" / "encounters" / "ley_heart" / "scenarios" / "ley_heart_phase_1.json"
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     runner = load_custom_simulation_runner(loaded)
     assert callable(runner)
@@ -41,8 +41,9 @@ def test_phase1_custom_sim_accepts_breakpoint_threshold_overrides(tmp_path: Path
     scenario_path = (
         root / "river_line" / "encounters" / "ley_heart" / "scenarios" / "ley_heart_phase_1.json"
     )
-    loaded = load_scenario(scenario_path)
-    loaded.config.assumption_overrides["custom_sim"]["breakpoint_thresholds"] = [20, 0]
+    loaded = load_runtime_scenario(scenario_path)
+    assert loaded.config.internal_harness is not None
+    loaded.config.internal_harness.custom_sim_settings["breakpoint_thresholds"] = [20, 0]
     db = load_character_db(Path(loaded.config.character_db_dir))
     runner = load_custom_simulation_runner(loaded)
     assert callable(runner)
@@ -65,7 +66,7 @@ def test_phase1_custom_sim_tracks_boss_phase1_metrics(tmp_path: Path) -> None:
     scenario_path = (
         root / "river_line" / "encounters" / "ley_heart" / "scenarios" / "ley_heart_phase_1.json"
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     runner = load_custom_simulation_runner(loaded)
     assert callable(runner)
@@ -104,8 +105,9 @@ def test_phase1_custom_sim_allows_disabling_boss_phase1(tmp_path: Path) -> None:
     scenario_path = (
         root / "river_line" / "encounters" / "ley_heart" / "scenarios" / "ley_heart_phase_1.json"
     )
-    loaded = load_scenario(scenario_path)
-    loaded.config.assumption_overrides["custom_sim"]["boss_phase_1"] = {"enabled": False}
+    loaded = load_runtime_scenario(scenario_path)
+    assert loaded.config.internal_harness is not None
+    loaded.config.internal_harness.custom_sim_settings["boss_phase_1"] = {"enabled": False}
     db = load_character_db(Path(loaded.config.character_db_dir))
     runner = load_custom_simulation_runner(loaded)
     assert callable(runner)
@@ -137,7 +139,7 @@ def test_phase1_custom_sim_parallel_mode_runs(tmp_path: Path) -> None:
         / "scenarios"
         / "ley_heart_phase_1_split_two_pylons.json"
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     runner = load_custom_simulation_runner(loaded)
     assert callable(runner)

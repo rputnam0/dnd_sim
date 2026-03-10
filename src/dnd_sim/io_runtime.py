@@ -12,6 +12,10 @@ from typing import Any
 from dnd_sim.io_models import LoadedScenario
 from dnd_sim.strategy_api import BaseStrategy, validate_strategy_instance
 
+_DEFAULT_BUILTIN_STRATEGY_MODULE = "dnd_sim.strategies.defaults"
+_APPROVED_BUILTIN_STRATEGY_MODULES = {_DEFAULT_BUILTIN_STRATEGY_MODULE}
+_APPROVED_BUILTIN_CUSTOM_SIMULATION_MODULES: set[str] = set()
+
 
 def _import_encounter_strategy(module_name: str, path: Path) -> Any:
     spec = importlib.util.spec_from_file_location(module_name, path)
@@ -22,14 +26,24 @@ def _import_encounter_strategy(module_name: str, path: Path) -> Any:
     return module
 
 
+def _encounter_internal_strategy_dir(scenario: LoadedScenario) -> Path:
+    scenario_path = Path(scenario.scenario_path)
+    return scenario_path.parent.parent / "internal_harness" / "strategies"
+
+
+def _resolve_encounter_strategy_module_path(scenario: LoadedScenario, module_name: str) -> Path:
+    strategy_dir = _encounter_internal_strategy_dir(scenario)
+    candidate = strategy_dir / f"{module_name}.py"
+    if candidate.exists():
+        return candidate
+    raise ValueError(f"Strategy module file not found: {candidate}")
+
+
 def load_strategy_registry(
     scenario: LoadedScenario,
 ) -> dict[str, BaseStrategy]:
-    scenario_path = Path(scenario.scenario_path)
-    strategy_dir = scenario_path.parent.parent / "strategies"
-
     registry: dict[str, BaseStrategy] = {}
-    default_module = importlib.import_module("dnd_sim.strategies.defaults")
+    default_module = importlib.import_module(_DEFAULT_BUILTIN_STRATEGY_MODULE)
     default_classes = {
         "focus_fire_lowest_hp": "FocusFireLowestHPStrategy",
         "boss_highest_threat_target": "BossHighestThreatTargetStrategy",
@@ -46,18 +60,22 @@ def load_strategy_registry(
         validate_strategy_instance(instance)
         registry[name] = instance
 
-    for cfg in scenario.config.strategy_modules:
+    harness = scenario.config.internal_harness
+    strategy_modules = harness.strategy_modules if harness is not None else []
+    for cfg in strategy_modules:
         if cfg.source == "builtin":
-            module_name = cfg.module or "dnd_sim.strategies.defaults"
+            module_name = cfg.module or _DEFAULT_BUILTIN_STRATEGY_MODULE
+            if module_name not in _APPROVED_BUILTIN_STRATEGY_MODULES:
+                raise ValueError(
+                    f"Builtin strategy module is not in the approved registry: {module_name}"
+                )
             module = importlib.import_module(module_name)
         else:
             if not cfg.module:
                 raise ValueError(
                     f"Strategy module name is required for encounter strategy: {cfg.name}"
                 )
-            module_path = strategy_dir / f"{cfg.module}.py"
-            if not module_path.exists():
-                raise ValueError(f"Strategy module file not found: {module_path}")
+            module_path = _resolve_encounter_strategy_module_path(scenario, cfg.module)
             module = _import_encounter_strategy(cfg.module, module_path)
 
         cls = getattr(module, cfg.class_name, None)
@@ -75,19 +93,19 @@ def load_strategy_registry(
 
 
 def load_custom_simulation_runner(scenario: LoadedScenario) -> Any | None:
-    cfg = scenario.config.custom_simulation
+    harness = scenario.config.internal_harness
+    cfg = harness.custom_simulation if harness is not None else None
     if cfg is None:
         return None
 
-    scenario_path = Path(scenario.scenario_path)
-    strategy_dir = scenario_path.parent.parent / "strategies"
-
     if cfg.source == "builtin":
+        if cfg.module not in _APPROVED_BUILTIN_CUSTOM_SIMULATION_MODULES:
+            raise ValueError(
+                f"Builtin custom simulation module is not in the approved registry: {cfg.module}"
+            )
         module = importlib.import_module(cfg.module)
     else:
-        module_path = strategy_dir / f"{cfg.module}.py"
-        if not module_path.exists():
-            raise ValueError(f"Custom simulation module file not found: {module_path}")
+        module_path = _resolve_encounter_strategy_module_path(scenario, cfg.module)
         module = _import_encounter_strategy(cfg.module, module_path)
 
     runner = getattr(module, cfg.callable, None)

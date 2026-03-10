@@ -4,7 +4,7 @@ import argparse
 import sqlite3
 from pathlib import Path
 
-from dnd_sim.db import (
+from dnd_sim.db_schema import (
     CONTENT_CAPABILITIES_TABLE,
     CONTENT_RECORDS_TABLE,
     create_content_metadata_tables,

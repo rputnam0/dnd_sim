@@ -11,7 +11,7 @@ from dnd_sim.economy import (
     purchase_from_vendor,
 )
 from dnd_sim.inventory import CurrencyWallet
-from dnd_sim.persistence import deserialize_economy_state, serialize_economy_state
+from dnd_sim.snapshot_codecs import deserialize_economy_state, serialize_economy_state
 
 
 def _catalog() -> dict[str, MarketItem]:

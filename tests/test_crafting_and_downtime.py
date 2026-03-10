@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from dnd_sim.economy import CraftingRecipe
-from dnd_sim.world_runtime import (
+from dnd_sim.world_downtime_service import (
     assess_encumbrance,
     create_downtime_state,
     run_crafting_downtime,

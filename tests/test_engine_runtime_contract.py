@@ -2,19 +2,21 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import dnd_sim.engine as engine_module
 import dnd_sim.engine_runtime as engine_runtime
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from tests.helpers import build_character, build_enemy
 from tests.runtime_test_support import _setup_env
 
 
 def test_engine_facade_delegates_to_engine_runtime(monkeypatch) -> None:
     captured: dict[str, object] = {}
-    sentinel = object()
+    sentinel_rows = [{"trial_index": 0}]
+    sentinel_summary = SimpleNamespace(trials=3)
 
-    def fake_run_simulation(
+    def fake_run_simulation_core(
         scenario,
         character_db,
         traits_db,
@@ -31,11 +33,20 @@ def test_engine_facade_delegates_to_engine_runtime(monkeypatch) -> None:
         captured["trials"] = trials
         captured["seed"] = seed
         captured["run_id"] = run_id
-        return sentinel
+        return engine_runtime.SimulationCoreResult(
+            trial_results=["core_trial"],  # type: ignore[list-item]
+            tracked_resource_names={"hero": {"ki"}},
+        )
 
-    monkeypatch.setattr(engine_runtime, "run_simulation", fake_run_simulation)
+    monkeypatch.setattr(engine_runtime, "run_simulation_core", fake_run_simulation_core)
+    monkeypatch.setattr(engine_module, "build_trial_rows", lambda trial_results: sentinel_rows)
+    monkeypatch.setattr(
+        engine_module,
+        "build_simulation_summary",
+        lambda **_: sentinel_summary,
+    )
 
-    scenario = object()
+    scenario = SimpleNamespace(config=SimpleNamespace(scenario_id="fixture"))
     character_db = {"hero": {"name": "Hero"}}
     traits_db = {"alert": {}}
     strategy_registry = {"focus": object()}
@@ -50,7 +61,9 @@ def test_engine_facade_delegates_to_engine_runtime(monkeypatch) -> None:
         run_id="arc01_delegate",
     )
 
-    assert result is sentinel
+    assert result.trial_results == ["core_trial"]
+    assert result.trial_rows == sentinel_rows
+    assert result.summary is sentinel_summary
     assert captured == {
         "scenario": scenario,
         "character_db": character_db,
@@ -83,7 +96,7 @@ def test_runtime_uses_configured_defeat_rules_for_all_termination_checks(
     scenario_payload["termination_rules"]["enemy_defeat"] = "any_downed"
     scenario_path.write_text(json.dumps(scenario_payload, indent=2), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
@@ -104,7 +117,7 @@ def test_runtime_uses_configured_defeat_rules_for_all_termination_checks(
     monkeypatch.setattr(engine_runtime, "_party_defeated", _party_defeated_with_rule)
     monkeypatch.setattr(engine_runtime, "_enemies_defeated", _enemies_defeated_with_rule)
 
-    engine_runtime.run_simulation(
+    engine_runtime.run_simulation_core(
         loaded,
         db,
         {},
@@ -159,7 +172,7 @@ def test_runtime_applies_configured_precombat_interaction_state(
     ]
     scenario_path.write_text(json.dumps(scenario_payload, indent=2), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
     captured: dict[str, dict[str, object]] = {}
@@ -177,7 +190,7 @@ def test_runtime_applies_configured_precombat_interaction_state(
 
     monkeypatch.setattr(engine_runtime, "_build_actor_views", capture_initial_view)
 
-    engine_runtime.run_simulation(
+    engine_runtime.run_simulation_core(
         loaded,
         db,
         {},

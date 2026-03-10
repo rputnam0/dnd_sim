@@ -282,7 +282,7 @@ Replace thin blob-centric persistence with canonical metadata tables, lineage, a
 
 - Depends on: CAP-01
 - Owner pool: `persistence_a`
-- Target modules: src/dnd_sim/db.py; scripts/migrations/*content_metadata*; tests/test_content_metadata_tables.py
+- Target modules: src/dnd_sim/db_schema.py; scripts/migrations/*content_metadata*; tests/test_content_metadata_tables.py
 - Required tests: schema migration tests; round-trip insert/query tests; rollback tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
 - Exit criteria: Add canonical tables content_records and content_capabilities with content_id, content_type, source_book, schema_version, source_hash, payload_json, support_state, unsupported_reason, and last_verified_commit.
@@ -291,7 +291,7 @@ Replace thin blob-centric persistence with canonical metadata tables, lineage, a
 
 - Depends on: DBS-01
 - Owner pool: `persistence_b`
-- Target modules: src/dnd_sim/db.py; src/dnd_sim/io.py; tests/test_content_lineage.py
+- Target modules: src/dnd_sim/db_schema.py; src/dnd_sim/io.py; tests/test_content_lineage.py
 - Required tests: hash stability tests; lineage migration tests; duplicate hash handling tests
 - Required docs: docs/program/completion_task_cards.md; docs/program/status_board.md
 - Exit criteria: Persist schema_version, source_path, source_hash, canonicalization_hash, and imported_at for every content record and replay the lineage deterministically.
@@ -314,7 +314,7 @@ DBS-02 implementation contract:
 
 - Depends on: DBS-01;ARC-08
 - Owner pool: `persistence_campaign`
-- Target modules: src/dnd_sim/persistence.py; src/dnd_sim/db.py; tests/test_campaign_persistence.py
+- Target modules: src/dnd_sim/snapshot_store.py; src/dnd_sim/db_schema.py; tests/test_campaign_persistence.py
 - Required tests: campaign round-trip tests; snapshot compatibility tests; corruption negative tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
 - Exit criteria: Add campaign_states and encounter_states storage with deterministic save/load semantics for party state, resources, active effects, initiative context, and replay linkage.
@@ -323,7 +323,7 @@ DBS-02 implementation contract:
 
 - Depends on: DBS-04
 - Owner pool: `persistence_world`
-- Target modules: src/dnd_sim/persistence.py; src/dnd_sim/db.py; tests/test_world_state_persistence.py
+- Target modules: src/dnd_sim/snapshot_store.py; src/dnd_sim/db_schema.py; tests/test_world_state_persistence.py
 - Required tests: world flag lifecycle tests; objective persistence tests; faction round-trip tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
 - Exit criteria: Add world_states and faction_states storage with deterministic lifecycle for flags, reputations, scripted objectives, map state, and encounter wave progression.
@@ -332,7 +332,7 @@ DBS-02 implementation contract:
 
 - Depends on: DBS-02;DBS-04;DBS-05
 - Owner pool: `persistence_migration`
-- Target modules: scripts/migrations/*; src/dnd_sim/db.py; tests/test_persistence_migrations.py
+- Target modules: scripts/migrations/*; src/dnd_sim/db_schema.py; tests/test_persistence_migrations.py
 - Required tests: backfill tests; rollback tests; mixed-old-new read tests
 - Required docs: docs/program/status_board.md; docs/program/roadmap_2014_backend.md
 - Exit criteria: Backfill existing persisted records into canonical metadata and state tables; preserve read compatibility during migration and remove transitional paths at completion.
@@ -489,25 +489,25 @@ Deliver noncombat, persistence, world-state, encounter scripting, and platform-s
 
 - Depends on: DBS-04
 - Owner pool: `world_explore_a`
-- Target modules: src/dnd_sim/world_runtime.py; src/dnd_sim/persistence.py; tests/test_world_time_and_light.py
+- Target modules: src/dnd_sim/world_contracts.py; src/dnd_sim/snapshot_store.py; tests/test_world_time_and_light.py
 - Required tests: time advancement tests; light decay tests; turn structure tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
-- Exit criteria: Create src/dnd_sim/world_runtime.py with exploration turn structure, calendar/time advancement, and light source tracking.
+- Exit criteria: Create src/dnd_sim/world_contracts.py with exploration turn structure, calendar/time advancement, and light source tracking.
 
 ### WLD-04 Build travel pace, navigation, foraging, resting, and day-cycle integration
 
 - Depends on: WLD-03;WLD-01
 - Owner pool: `world_explore_b`
-- Target modules: src/dnd_sim/world_runtime.py; tests/test_travel_and_rest.py
+- Target modules: src/dnd_sim/world_contracts.py; tests/test_travel_and_rest.py
 - Required tests: travel pace tests; navigation tests; foraging tests; rest integration tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
-- Exit criteria: Implement travel pace, navigation outcomes, foraging, random encounter hooks, and resting/day-cycle integration in world_runtime.py.
+- Exit criteria: Implement travel pace, navigation outcomes, foraging, random encounter hooks, and resting/day-cycle integration in `src/dnd_sim/world_travel_service.py`.
 
 ### WLD-05 Build environmental exposure, falling, suffocation, drowning, disease, and poison world rules
 
 - Depends on: WLD-03
 - Owner pool: `world_hazards`
-- Target modules: src/dnd_sim/world_hazards.py; src/dnd_sim/world_runtime.py; tests/test_world_hazards.py
+- Target modules: src/dnd_sim/world_hazards.py; src/dnd_sim/world_contracts.py; tests/test_world_hazards.py
 - Required tests: falling tests; suffocation tests; drowning tests; environmental exposure tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
 - Exit criteria: Create src/dnd_sim/world_hazards.py and implement deterministic environmental hazard resolution and persistence.
@@ -516,7 +516,7 @@ Deliver noncombat, persistence, world-state, encounter scripting, and platform-s
 
 - Depends on: DBS-04
 - Owner pool: `world_economy_a`
-- Target modules: src/dnd_sim/economy.py; src/dnd_sim/persistence.py; tests/test_economy_and_loot.py
+- Target modules: src/dnd_sim/economy.py; src/dnd_sim/snapshot_store.py; tests/test_economy_and_loot.py
 - Required tests: loot generation tests; vendor inventory tests; pricing tests; invalid purchase tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
 - Exit criteria: Create src/dnd_sim/economy.py and implement deterministic item pricing, loot flow, vendor inventory, and transaction handling.
@@ -525,7 +525,7 @@ Deliver noncombat, persistence, world-state, encounter scripting, and platform-s
 
 - Depends on: WLD-06;WLD-02
 - Owner pool: `world_economy_b`
-- Target modules: src/dnd_sim/economy.py; src/dnd_sim/world_runtime.py; tests/test_crafting_and_downtime.py
+- Target modules: src/dnd_sim/economy.py; src/dnd_sim/world_contracts.py; tests/test_crafting_and_downtime.py
 - Required tests: crafting tests; downtime tests; encumbrance tests; service action tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
 - Exit criteria: Implement deterministic crafting, downtime activities, encumbrance handling, and service actions with persistent world effects.
@@ -534,7 +534,7 @@ Deliver noncombat, persistence, world-state, encounter scripting, and platform-s
 
 - Depends on: DBS-05
 - Owner pool: `world_state_a`
-- Target modules: src/dnd_sim/world_state.py; src/dnd_sim/persistence.py; tests/test_world_flags_and_factions.py
+- Target modules: src/dnd_sim/world_state.py; src/dnd_sim/snapshot_store.py; tests/test_world_flags_and_factions.py
 - Required tests: flag lifecycle tests; faction reputation tests; quest state tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
 - Exit criteria: Create src/dnd_sim/world_state.py and implement persistent quests, factions, reputations, and world-flag transitions.
@@ -543,7 +543,7 @@ Deliver noncombat, persistence, world-state, encounter scripting, and platform-s
 
 - Depends on: WLD-03;DBS-04;DBS-05
 - Owner pool: `world_state_b`
-- Target modules: src/dnd_sim/campaign_runtime.py; src/dnd_sim/persistence.py; tests/test_adventuring_day_flow.py
+- Target modules: src/dnd_sim/campaign_runtime.py; src/dnd_sim/snapshot_store.py; tests/test_adventuring_day_flow.py
 - Required tests: multi-encounter persistence tests; short/long rest tests; resource carryover tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
 - Exit criteria: Create src/dnd_sim/campaign_runtime.py and persist party state across multiple encounters, rests, and world turns.
@@ -561,7 +561,7 @@ Deliver noncombat, persistence, world-state, encounter scripting, and platform-s
 
 - Depends on: CAP-05;DBS-06
 - Owner pool: `world_schema_a`
-- Target modules: src/dnd_sim/io.py; src/dnd_sim/db.py; db/rules/2014/*; tests/test_global_content_ids.py
+- Target modules: src/dnd_sim/io.py; src/dnd_sim/db_schema.py; db/rules/2014/*; tests/test_global_content_ids.py
 - Required tests: content id uniqueness tests; import contract tests; migration tests
 - Required docs: docs/program/roadmap_2014_backend.md; docs/program/status_board.md
 - Exit criteria: Apply one canonical content ID model across characters, spells, feats, traits, monsters, items, and world objects; remove transitional ID aliases.

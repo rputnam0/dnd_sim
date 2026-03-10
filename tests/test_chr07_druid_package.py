@@ -14,7 +14,7 @@ from dnd_sim.engine_runtime import (
     long_rest,
     short_rest,
 )
-from dnd_sim.io import load_character_db, load_scenario
+from dnd_sim.io import load_character_db, load_runtime_scenario
 from dnd_sim.models import ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_enemy, with_class_levels
@@ -250,7 +250,7 @@ def test_chr07_integration_wild_shape_spend_is_deterministic_across_short_rest(
     raw["enemies"] = []
     scenario_path.write_text(json.dumps(raw, indent=2), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": WildShapeTurnStrategy(),
@@ -286,7 +286,7 @@ def test_declared_wild_shape_revert_before_transform_is_rejected(tmp_path: Path)
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": IllegalWildShapeRevertStrategy(),

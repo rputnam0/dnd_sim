@@ -11,7 +11,7 @@ from dnd_sim.world_hazards import (
     advance_drowning,
     advance_suffocation,
 )
-from dnd_sim.world_runtime import (
+from dnd_sim.world_hazard_service import (
     deserialize_world_hazard_state,
     run_world_hazard_turn,
     serialize_world_hazard_state,

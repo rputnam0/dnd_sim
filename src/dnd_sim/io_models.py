@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from dnd_sim.spells import lookup_spell_definition as _lookup_spell_definition
 
@@ -467,6 +467,14 @@ class CustomSimulationConfig(BaseModel):
     callable: str = "run_custom_simulation"
 
 
+class InternalHarnessConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    strategy_modules: list[StrategyModuleConfig] = Field(default_factory=list)
+    custom_simulation: CustomSimulationConfig | None = None
+    custom_sim_settings: dict[str, Any] = Field(default_factory=dict)
+
+
 class StealthActorConfig(BaseModel):
     actor_id: str
     team: str
@@ -572,6 +580,8 @@ class EncounterConfig(BaseModel):
 
 
 class ScenarioConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     scenario_id: str
     encounter_id: str
     ruleset: str
@@ -586,10 +596,8 @@ class ScenarioConfig(BaseModel):
     interactables: list[InteractableConfig] = Field(default_factory=list)
     interaction_actions: list[ExplorationActionConfig] = Field(default_factory=list)
     termination_rules: dict[str, Any]
-    strategy_modules: list[StrategyModuleConfig]
     resource_policy: dict[str, Any] = Field(default_factory=dict)
     assumption_overrides: dict[str, Any] = Field(default_factory=dict)
-    custom_simulation: CustomSimulationConfig | None = None
 
     @field_validator("ruleset")
     @classmethod
@@ -643,8 +651,32 @@ class ScenarioConfig(BaseModel):
                 raise ValueError(f"exploration.legs[{index}] must be an object")
         return exploration
 
+    @model_validator(mode="after")
+    def validate_public_content_contract(self) -> "ScenarioConfig":
+        path_ref = str(self.character_db_dir).strip()
+        if not path_ref:
+            raise ValueError("character_db_dir must be non-empty")
+        if Path(path_ref).is_absolute():
+            raise ValueError(
+                "character_db_dir must be scenario-relative or repo-relative"
+            )
+        if path_ref.startswith("repo:") and not path_ref.split(":", 1)[1].strip().lstrip("/"):
+            raise ValueError("repo-relative character_db_dir must include a repository path")
+
+        if "custom_sim" in self.assumption_overrides:
+            raise ValueError(
+                "scenarios must not set assumption_overrides.custom_sim; "
+                "internal-only tuning belongs in internal_harness"
+            )
+
+        return self
+
+
+class RuntimeScenarioConfig(ScenarioConfig):
+    internal_harness: InternalHarnessConfig | None = None
+
 
 class LoadedScenario(BaseModel):
     scenario_path: str
-    config: ScenarioConfig
+    config: RuntimeScenarioConfig
     enemies: dict[str, EnemyConfig]

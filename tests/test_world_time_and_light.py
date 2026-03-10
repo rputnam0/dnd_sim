@@ -8,13 +8,15 @@ from dnd_sim.exploration_interaction import (
     InteractionEvent,
     InteractableState,
 )
-from dnd_sim.persistence import (
+from dnd_sim.snapshot_codecs import (
     deserialize_world_exploration_state,
     serialize_world_exploration_state,
 )
-from dnd_sim.world_runtime import (
+from dnd_sim.world_contracts import (
     LightSourceState,
     WorldClock,
+)
+from dnd_sim.world_exploration_service import (
     create_exploration_state,
     run_exploration_turn,
 )

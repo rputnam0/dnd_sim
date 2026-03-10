@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from dnd_sim.engine import run_simulation
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.telemetry import emit_event
 
 logger = logging.getLogger(__name__)
@@ -103,7 +103,7 @@ def run_calibration_harness(
     benchmark_rows: list[dict[str, Any]] = []
     for idx, raw_path in enumerate(scenario_paths):
         scenario_path = Path(raw_path)
-        loaded = load_scenario(scenario_path)
+        loaded = load_runtime_scenario(scenario_path)
         character_db = load_character_db(Path(loaded.config.character_db_dir))
         strategy_registry = load_strategy_registry(loaded)
         artifacts = run_simulation(

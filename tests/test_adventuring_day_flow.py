@@ -10,11 +10,11 @@ from dnd_sim.campaign_runtime import (
     current_encounter_id,
     advance_adventuring_day,
 )
-from dnd_sim.persistence import (
+from dnd_sim.snapshot_codecs import (
     deserialize_adventuring_day_state,
     serialize_adventuring_day_state,
 )
-from dnd_sim.world_runtime import create_exploration_state
+from dnd_sim.world_exploration_service import create_exploration_state
 
 
 def _party() -> dict[str, AdventuringActorState]:

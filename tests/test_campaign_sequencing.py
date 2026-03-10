@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from dnd_sim.engine import run_simulation
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from tests.helpers import build_character, build_enemy, write_json
 
 
@@ -51,7 +51,7 @@ def _setup_campaign_env(
         "scenario_id": "campaign_fixture",
         "encounter_id": "campaign_fixture",
         "ruleset": "5e-2014",
-        "character_db_dir": str(db_dir),
+        "character_db_dir": "../../../db/characters",
         "party": [character["character_id"] for character in party],
         "enemies": [],
         "encounters": encounters,
@@ -64,7 +64,7 @@ def _setup_campaign_env(
             "enemy_defeat": "all_dead",
             "max_rounds": 1,
         },
-        "strategy_modules": [
+        "internal_harness": {"strategy_modules": [
             {
                 "name": "focus_fire_lowest_hp",
                 "source": "builtin",
@@ -80,7 +80,8 @@ def _setup_campaign_env(
                 "source": "builtin",
                 "class_name": "AlwaysUseSignatureAbilityStrategy",
             },
-        ],
+            ]
+        },
         "resource_policy": resource_policy
         or {
             "mode": "combat_and_utility",
@@ -101,7 +102,7 @@ def _setup_campaign_env(
 def _load_for_run(
     scenario_path: Path,
 ) -> tuple[Any, dict[str, dict[str, Any]], dict[str, Any]]:
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
     return loaded, db, registry

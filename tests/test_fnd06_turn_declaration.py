@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from dnd_sim.engine import TurnDeclarationValidationError, run_simulation
-from dnd_sim.io import load_character_db, load_scenario
+from dnd_sim.io import load_character_db, load_runtime_scenario
 from dnd_sim.strategy_api import (
     BaseStrategy,
     DeclaredAction,
@@ -202,7 +202,7 @@ def _setup_env(tmp_path: Path) -> Path:
         "scenario_id": "fnd06_fixture",
         "encounter_id": "fixture",
         "ruleset": "5e-2014",
-        "character_db_dir": str(db_dir),
+        "character_db_dir": "../../../db/characters",
         "party": ["hero"],
         "enemies": ["boss"],
         "initiative_mode": "individual",
@@ -212,7 +212,7 @@ def _setup_env(tmp_path: Path) -> Path:
             "enemy_defeat": "all_dead",
             "max_rounds": 3,
         },
-        "strategy_modules": [],
+        "internal_harness": {"strategy_modules": []},
         "resource_policy": {"mode": "combat_and_utility", "burst_round_threshold": 1},
         "assumption_overrides": {
             "party_strategy": "party_strategy",
@@ -240,7 +240,7 @@ def test_validate_strategy_instance_rejects_missing_on_round_start() -> None:
 
 def test_turn_only_strategy_without_legacy_methods_can_noop_turns(tmp_path: Path) -> None:
     scenario_path = _setup_env(tmp_path)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     registry = {
@@ -271,7 +271,7 @@ def test_turn_loop_does_not_call_legacy_methods_when_declare_turn_is_present(
     tmp_path: Path,
 ) -> None:
     scenario_path = _setup_env(tmp_path)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     registry = {
@@ -287,7 +287,7 @@ def test_hidden_action_surge_is_removed_for_legacy_and_explicit_turn_plans(
     tmp_path: Path,
 ) -> None:
     scenario_path = _setup_env(tmp_path)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     legacy_registry = {
@@ -314,7 +314,7 @@ def test_hidden_action_surge_is_removed_for_legacy_and_explicit_turn_plans(
 
 def test_illegal_turn_plan_raises_structured_bonus_action_error(tmp_path: Path) -> None:
     scenario_path = _setup_env(tmp_path)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     registry = {

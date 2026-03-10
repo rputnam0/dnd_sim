@@ -11,7 +11,7 @@ from dnd_sim.engine_runtime import (
     long_rest,
     short_rest,
 )
-from dnd_sim.io import load_character_db, load_scenario
+from dnd_sim.io import load_character_db, load_runtime_scenario
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_enemy, with_class_levels
 from tests.test_engine_integration import _setup_env
@@ -248,7 +248,7 @@ def test_chr13_integration_quickened_sequence_is_legal_and_deterministic(
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": QuickenedCantripStrategy(),
@@ -318,7 +318,7 @@ def test_declared_quickened_spell_with_insufficient_sorcery_points_is_rejected(
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": QuickenedCantripStrategy(),
@@ -382,7 +382,7 @@ def test_declared_double_leveled_spell_sequence_is_rejected(tmp_path: Path) -> N
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": IllegalDoubleLeveledSpellSequenceStrategy(),

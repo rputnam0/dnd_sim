@@ -7,13 +7,13 @@ import sys
 from pathlib import Path
 
 from dnd_sim import content_index
-from dnd_sim import db as db_module
+from dnd_sim import db_schema
 
 logger = logging.getLogger(__name__)
 
 
 def _add_query_filters(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--db-path", type=Path, default=db_module.get_db_path())
+    parser.add_argument("--db-path", type=Path, default=db_schema.get_db_path())
     parser.add_argument("--content-id", default=None)
     parser.add_argument("--content-type", default=None)
     parser.add_argument("--support-state", default=None)

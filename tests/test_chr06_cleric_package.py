@@ -14,7 +14,7 @@ from dnd_sim.engine_runtime import (
     long_rest,
     short_rest,
 )
-from dnd_sim.io import load_character_db, load_scenario
+from dnd_sim.io import load_character_db, load_runtime_scenario
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_enemy, with_class_levels
@@ -275,7 +275,7 @@ def test_chr06_integration_turn_undead_spends_across_short_rest_encounters_deter
     raw["enemies"] = []
     scenario_path.write_text(json.dumps(raw, indent=2), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {"party_strategy": TurnUndeadDeclarationStrategy(), "enemy_strategy": BaseStrategy()}
 
@@ -316,7 +316,7 @@ def test_declared_turn_undead_rejected_when_target_is_not_undead(tmp_path: Path)
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {"party_strategy": TurnUndeadDeclarationStrategy(), "enemy_strategy": BaseStrategy()}
 

@@ -15,7 +15,7 @@ from dnd_sim.engine_runtime import (
     long_rest,
     short_rest,
 )
-from dnd_sim.io import load_character_db, load_scenario
+from dnd_sim.io import load_character_db, load_runtime_scenario
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_enemy, with_class_levels
@@ -383,7 +383,7 @@ def test_chr15_integration_wizard_package_is_deterministic(tmp_path: Path) -> No
         max_rounds=1,
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": WizardMagicMissilePlanStrategy(),
@@ -445,7 +445,7 @@ def test_declared_main_action_rejects_wizard_reaction_spell(tmp_path: Path) -> N
         max_rounds=1,
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": IllegalShieldAsMainActionStrategy(),

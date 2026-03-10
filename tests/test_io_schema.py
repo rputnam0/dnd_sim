@@ -11,7 +11,8 @@ from dnd_sim.io import (
     build_run_dir,
     default_results_dir,
     load_custom_simulation_runner,
-    load_scenario,
+    load_public_scenario,
+    load_runtime_scenario,
     load_strategy_registry,
 )
 
@@ -19,10 +20,13 @@ ROOT = Path(__file__).resolve().parents[1]
 SCENARIO_PATH = (
     ROOT / "river_line" / "encounters" / "ley_heart" / "scenarios" / "ley_heart_phase_1.json"
 )
+PUBLIC_SCENARIO_PATH = (
+    ROOT / "river_line" / "encounters" / "ley_heart" / "scenarios" / "ley_heart_phase_2.json"
+)
 
 
 def test_load_valid_scenario() -> None:
-    loaded = load_scenario(SCENARIO_PATH)
+    loaded = load_runtime_scenario(SCENARIO_PATH)
     assert loaded.config.ruleset == "5e-2014"
     assert loaded.config.party
     assert set(loaded.enemies.keys()) == {"past_pylon", "present_pylon", "future_pylon"}
@@ -36,7 +40,7 @@ def test_invalid_scenario_schema_has_path_in_error(tmp_path: Path) -> None:
     invalid_path.write_text(json.dumps(payload), encoding="utf-8")
 
     with pytest.raises(ValueError) as exc:
-        load_scenario(invalid_path)
+        load_runtime_scenario(invalid_path)
 
     message = str(exc.value)
     assert "Invalid scenario schema" in message
@@ -45,7 +49,7 @@ def test_invalid_scenario_schema_has_path_in_error(tmp_path: Path) -> None:
 
 def test_missing_strategy_module_fails_before_simulation(tmp_path: Path) -> None:
     payload = json.loads(SCENARIO_PATH.read_text(encoding="utf-8"))
-    payload["strategy_modules"].append(
+    payload.setdefault("internal_harness", {}).setdefault("strategy_modules", []).append(
         {
             "name": "bad_strategy",
             "source": "encounter",
@@ -65,7 +69,7 @@ def test_missing_strategy_module_fails_before_simulation(tmp_path: Path) -> None
     scenario_path = base / "scenarios" / "broken.json"
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     with pytest.raises(ValueError) as exc:
         load_strategy_registry(loaded)
 
@@ -92,7 +96,7 @@ def test_encounter_branch_target_index_must_be_within_encounter_bounds(tmp_path:
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
     with pytest.raises(ValueError) as exc:
-        load_scenario(scenario_path)
+        load_runtime_scenario(scenario_path)
 
     message = str(exc.value)
     assert "Invalid scenario schema" in message
@@ -114,7 +118,7 @@ def test_long_rest_after_is_loaded_from_encounter_schema(tmp_path: Path) -> None
     scenario_path = base / "scenarios" / "long_rest_after.json"
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     assert loaded.config.encounters[0].long_rest_after is True
     assert loaded.config.encounters[0].short_rest_after is False
 
@@ -137,7 +141,7 @@ def test_encounter_cannot_set_both_short_and_long_rest_after(tmp_path: Path) -> 
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
     with pytest.raises(ValueError) as exc:
-        load_scenario(scenario_path)
+        load_runtime_scenario(scenario_path)
 
     message = str(exc.value)
     assert "Invalid scenario schema" in message
@@ -155,9 +159,127 @@ def test_default_results_dir_and_descriptive_folder_name(tmp_path: Path) -> None
 
 
 def test_load_custom_simulation_runner() -> None:
-    loaded = load_scenario(SCENARIO_PATH)
+    loaded = load_runtime_scenario(SCENARIO_PATH)
     runner = load_custom_simulation_runner(loaded)
     assert callable(runner)
+
+
+def test_load_public_scenario_resolves_repo_relative_character_db_dir() -> None:
+    loaded = load_public_scenario(PUBLIC_SCENARIO_PATH)
+
+    assert Path(loaded.config.character_db_dir).is_absolute()
+    assert loaded.config.character_db_dir.endswith("river_line/db/characters")
+    assert loaded.config.internal_harness is None
+
+
+def test_public_scenario_rejects_machine_local_character_db_dir(tmp_path: Path) -> None:
+    payload = json.loads(PUBLIC_SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["character_db_dir"] = "/Users/example/private/characters"
+
+    scenario_path = tmp_path / "public_absolute_path.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_public_scenario(scenario_path)
+
+    assert "scenario-relative or repo-relative" in str(exc.value)
+
+
+def test_public_scenario_rejects_internal_harness_extensions(tmp_path: Path) -> None:
+    payload = json.loads(PUBLIC_SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["internal_harness"] = {
+        "strategy_modules": [
+            {
+                "name": "bad_strategy",
+                "source": "encounter",
+                "module": "bad_strategy",
+                "class_name": "BadStrategy",
+            }
+        ]
+    }
+
+    scenario_path = tmp_path / "public_internal_harness.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_public_scenario(scenario_path)
+
+    assert "internal_harness" in str(exc.value)
+
+
+def test_public_scenario_rejects_legacy_strategy_modules_field(tmp_path: Path) -> None:
+    payload = json.loads(PUBLIC_SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["strategy_modules"] = [
+        {
+            "name": "bad_strategy",
+            "source": "encounter",
+            "module": "bad_strategy",
+            "class_name": "BadStrategy",
+        }
+    ]
+
+    scenario_path = tmp_path / "public_legacy_strategy_modules.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_public_scenario(scenario_path)
+
+    assert "strategy_modules" in str(exc.value)
+
+
+def test_public_scenario_rejects_legacy_custom_simulation_field(tmp_path: Path) -> None:
+    payload = json.loads(PUBLIC_SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["custom_simulation"] = {
+        "source": "encounter",
+        "module": "bad_custom_sim",
+        "function": "run",
+    }
+
+    scenario_path = tmp_path / "public_legacy_custom_simulation.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_public_scenario(scenario_path)
+
+    assert "custom_simulation" in str(exc.value)
+
+
+def test_public_scenario_rejects_internal_custom_sim_override(tmp_path: Path) -> None:
+    payload = json.loads(PUBLIC_SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["assumption_overrides"]["custom_sim"] = {"enabled": True}
+
+    scenario_path = tmp_path / "public_custom_sim_override.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_public_scenario(scenario_path)
+
+    assert "assumption_overrides.custom_sim" in str(exc.value)
+
+
+def test_public_scenario_rejects_enemy_script_hooks(tmp_path: Path) -> None:
+    payload = json.loads(PUBLIC_SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["enemies"] = ["validator_enemy"]
+    payload["encounters"] = [{"enemies": ["validator_enemy"]}]
+
+    base = tmp_path / "encounters" / "validator"
+    (base / "scenarios").mkdir(parents=True, exist_ok=True)
+    (base / "enemies").mkdir(parents=True, exist_ok=True)
+
+    enemy_payload = _minimal_enemy_payload()
+    enemy_payload["script_hooks"] = {"on_turn_start": "bad_hook"}
+    (base / "enemies" / "validator_enemy.json").write_text(
+        json.dumps(enemy_payload),
+        encoding="utf-8",
+    )
+
+    scenario_path = base / "scenarios" / "public_with_script_hooks.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError) as exc:
+        load_public_scenario(scenario_path)
+
+    assert "script_hooks" in str(exc.value)
 
 
 def _minimal_enemy_payload() -> dict[str, object]:
@@ -245,7 +367,7 @@ def test_scenario_schema_accepts_first_class_stealth_and_interactable_payloads(
 
     scenario_path = base / "scenarios" / "stealth_interactable_schema.json"
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
 
     assert loaded.config.stealth_actors[0].actor_id == "hero_rogue"
     assert loaded.config.interactables[0].object_id == "locked_chest_a"
@@ -275,7 +397,36 @@ def test_scenario_schema_rejects_interactable_with_open_and_locked_state(tmp_pat
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
     with pytest.raises(ValueError) as exc:
-        load_scenario(scenario_path)
+        load_runtime_scenario(scenario_path)
 
     assert "Invalid scenario schema" in str(exc.value)
     assert "open and locked" in str(exc.value)
+
+
+def test_runtime_loader_rejects_unapproved_builtin_strategy_modules(tmp_path: Path) -> None:
+    payload = json.loads(PUBLIC_SCENARIO_PATH.read_text(encoding="utf-8"))
+    payload["internal_harness"] = {
+        "strategy_modules": [
+            {
+                "name": "bad_builtin",
+                "source": "builtin",
+                "module": "pathlib",
+                "class_name": "Path",
+            }
+        ]
+    }
+
+    base = tmp_path / "encounters" / "fixture"
+    (base / "scenarios").mkdir(parents=True, exist_ok=True)
+    (base / "enemies").mkdir(parents=True, exist_ok=True)
+    src = ROOT / "river_line" / "encounters" / "ley_heart" / "enemies" / "unanchored_engine.json"
+    (base / "enemies" / "unanchored_engine.json").write_text(src.read_text(encoding="utf-8"))
+
+    scenario_path = base / "scenarios" / "bad_builtin_strategy.json"
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    loaded = load_runtime_scenario(scenario_path)
+    with pytest.raises(ValueError) as exc:
+        load_strategy_registry(loaded)
+
+    assert "approved registry" in str(exc.value)

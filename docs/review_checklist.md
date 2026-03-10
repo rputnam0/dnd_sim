@@ -2,12 +2,24 @@
 
 Status: canonical  
 Owner: integration-review  
-Last updated: 2026-03-08  
+Last updated: 2026-03-09  
 Canonical source: `docs/program/status_board.md`
 
 This checklist is the program closeout gate. Do not mark the backend complete until every item is checked in the repository.
 
-Wave 5 and Wave 6 items below are historical baseline state. Wave 7 CRPG-core hardening items must also be complete before re-affirming final completion.
+Wave 5 through Wave 7 items below are historical baseline state. Wave 8 Section 2 stabilization must now be complete before re-affirming final completion.
+
+## Wave 8 Section 2 Stabilization
+
+- [x] W8-AUD-01 baseline is green and live docs truthfully describe the repo as an authoritative core rather than the full Part 1 backend.
+- [x] W8-AUD-02 `docs/program/section1_gap_matrix.md` is current and linked from the live planning entrypoint.
+- [x] W8-PRT-01 live non-archival scenario/tool content contains no machine-local absolute paths.
+- [x] W8-PRT-02 public content paths resolve via scenario-relative or `repo:` references only.
+- [x] W8-CRT-01 public scenarios reject internal harness fields, encounter-local Python, and custom simulation overrides.
+- [x] W8-CRT-02 internal-only executable content is fenced under explicit internal harness paths.
+- [x] W8-ARC-01 replay/reporting artifact assembly is outside the authoritative runtime loop and deterministic regressions remain green.
+- [x] W8-DAT-01 malformed public content and stale persisted state fail explicitly enough for debugging.
+- [x] W8-GATE-01 full Wave 8 gate suite passes on the active branch.
 
 ## Documentation Control
 

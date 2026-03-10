@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from dnd_sim.engine import run_simulation
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CAMPAIGN_FIXTURE_PATH = (
@@ -48,7 +48,7 @@ def _materialize_campaign_fixture(tmp_path: Path) -> tuple[Path, dict[str, Any],
         _write_json(enemy_dir / f"{enemy['identity']['enemy_id']}.json", enemy)
 
     scenario = dict(fixture["scenario"])
-    scenario["character_db_dir"] = str(db_dir)
+    scenario["character_db_dir"] = "../../../db/characters"
     scenario_path = scenario_dir / "scenario.json"
     _write_json(scenario_path, scenario)
 
@@ -57,7 +57,7 @@ def _materialize_campaign_fixture(tmp_path: Path) -> tuple[Path, dict[str, Any],
 
 
 def _run_trial(scenario_path: Path, *, seed: int, run_id: str):
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
     summary = run_simulation(loaded, db, {}, registry, trials=1, seed=seed, run_id=run_id)

@@ -157,10 +157,6 @@ from dnd_sim.spells import (
     slugify_spell_name as _canonical_spell_slug,
     spell_lookup_key as _canonical_spell_lookup_key,
 )
-from dnd_sim.replay import build_trial_rows as _replay_build_trial_rows
-from dnd_sim.reporting_runtime import (
-    build_simulation_summary as _reporting_build_simulation_summary,
-)
 from dnd_sim.telemetry import build_event_envelope
 
 logger = logging.getLogger(__name__)
@@ -334,6 +330,12 @@ class SimulationArtifacts:
     trial_results: list[TrialResult]
     trial_rows: list[dict[str, Any]]
     summary: SimulationSummary
+
+
+@dataclass(slots=True)
+class SimulationCoreResult:
+    trial_results: list[TrialResult]
+    tracked_resource_names: dict[str, set[str]]
 
 
 @dataclass(slots=True)
@@ -14591,7 +14593,7 @@ def _emit_turn_trace_event(
     )
 
 
-def run_simulation(
+def run_simulation_core(
     scenario: LoadedScenario,
     character_db: dict[str, dict[str, Any]],
     traits_db: dict[str, dict[str, Any]],
@@ -15286,18 +15288,7 @@ def run_simulation(
         )
         trial_results.append(trial)
 
-    trial_rows = _replay_build_trial_rows(trial_results)
-
-    summary = _reporting_build_simulation_summary(
-        run_id=run_id,
-        scenario_id=scenario.config.scenario_id,
-        trials=trials,
+    return SimulationCoreResult(
         trial_results=trial_results,
         tracked_resource_names=tracked_resource_names,
-    )
-
-    return SimulationArtifacts(
-        trial_results=trial_results,
-        trial_rows=trial_rows,
-        summary=summary,
     )

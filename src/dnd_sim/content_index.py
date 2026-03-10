@@ -5,7 +5,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from dnd_sim import db as db_module
+from dnd_sim import db_content_store, db_schema
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,10 @@ def query_content_records(
             "unsupported_reason filter requires support_state='blocked' or omitted support_state"
         )
 
-    records = db_module.fetch_content_records_compatible(conn, content_type=normalized_content_type)
+    records = db_content_store.fetch_content_records_compatible(
+        conn,
+        content_type=normalized_content_type,
+    )
     filtered: list[dict[str, Any]] = []
     for record in records:
         if not _record_matches_filter(
@@ -164,7 +167,7 @@ def query_content_records_from_db(
     schema_version: str | None = None,
     limit: int | None = None,
 ) -> list[dict[str, Any]]:
-    target_path = Path(db_path) if db_path is not None else db_module.get_db_path()
+    target_path = Path(db_path) if db_path is not None else db_schema.get_db_path()
     if not target_path.exists():
         raise FileNotFoundError(f"Database file not found: {target_path}")
 

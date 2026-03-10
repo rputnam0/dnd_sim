@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-import dnd_sim.db as db_module
+from dnd_sim import db_migrations, db_schema
 from dnd_sim.io import build_global_content_index, canonical_content_id, load_character_db
 from tests.helpers import build_character, write_json
 
@@ -121,7 +121,7 @@ def test_build_global_content_index_supports_item_class_and_subclass_payloads(
 def test_load_character_db_assigns_canonical_character_content_id(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("dnd_sim.db.execute_query", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr("dnd_sim.db_schema.execute_query", lambda *_args, **_kwargs: [])
 
     db_dir = tmp_path / "characters"
     db_dir.mkdir(parents=True, exist_ok=True)
@@ -163,8 +163,8 @@ def test_backfill_content_records_populates_rows_from_legacy_tables(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     db_path = tmp_path / "content_records.db"
-    monkeypatch.setattr(db_module, "get_db_path", lambda: db_path)
-    db_module.init_db()
+    monkeypatch.setattr(db_schema, "get_db_path", lambda: db_path)
+    db_schema.init_db()
 
     trait_payload = {
         "name": "Alert",
@@ -218,7 +218,7 @@ def test_backfill_content_records_populates_rows_from_legacy_tables(
         )
         conn.commit()
 
-    db_module.backfill_content_records()
+    db_migrations.backfill_content_records()
 
     with sqlite3.connect(db_path) as conn:
         rows = conn.execute(
@@ -236,8 +236,8 @@ def test_backfill_content_records_rejects_duplicate_content_ids(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     db_path = tmp_path / "duplicate_content_records.db"
-    monkeypatch.setattr(db_module, "get_db_path", lambda: db_path)
-    db_module.init_db()
+    monkeypatch.setattr(db_schema, "get_db_path", lambda: db_path)
+    db_schema.init_db()
 
     with sqlite3.connect(db_path) as conn:
         conn.execute(
@@ -275,4 +275,4 @@ def test_backfill_content_records_rejects_duplicate_content_ids(
         conn.commit()
 
     with pytest.raises(ValueError, match="duplicate content_id"):
-        db_module.backfill_content_records()
+        db_migrations.backfill_content_records()

@@ -291,7 +291,7 @@
       },
       "max_rounds": 1
     },
-    "strategy_modules": [
+    "internal_harness": {"strategy_modules": [
       {
         "name": "focus_fire_lowest_hp",
         "source": "builtin",
@@ -307,7 +307,8 @@
         "source": "builtin",
         "class_name": "AlwaysUseSignatureAbilityStrategy"
       }
-    ],
+      ]
+    },
     "resource_policy": {
       "mode": "combat_and_utility",
       "burst_round_threshold": 1

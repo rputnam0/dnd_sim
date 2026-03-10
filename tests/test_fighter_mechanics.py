@@ -13,7 +13,7 @@ from dnd_sim.engine_runtime import (
     _spend_resources,
     short_rest,
 )
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.models import ActorRuntimeState
 from dnd_sim.strategy_api import (
     BaseStrategy,
@@ -266,7 +266,7 @@ def test_action_surge_is_not_auto_spent_between_encounters_with_short_rest(tmp_p
     raw["enemies"] = []
     scenario_path.write_text(json.dumps(raw, indent=2), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
@@ -309,7 +309,7 @@ def test_action_surge_spends_across_short_rest_encounters_deterministically(tmp_
     raw["enemies"] = []
     scenario_path.write_text(json.dumps(raw, indent=2), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": ActionSurgePriorityStrategy(),
@@ -343,7 +343,7 @@ def test_declared_bonus_action_cannot_use_action_surge(tmp_path: Path) -> None:
             "enemy_strategy": "enemy_strategy",
         },
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": IllegalActionSurgeBonusStrategy(),

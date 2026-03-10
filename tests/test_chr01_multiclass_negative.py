@@ -11,7 +11,7 @@ from tests.helpers import build_character, write_json
 def test_load_character_db_rejects_missing_class_levels_mapping(
     tmp_path, monkeypatch
 ) -> None:
-    monkeypatch.setattr("dnd_sim.db.execute_query", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr("dnd_sim.db_schema.execute_query", lambda *_args, **_kwargs: [])
 
     db_dir = tmp_path / "characters"
     db_dir.mkdir(parents=True, exist_ok=True)
@@ -76,7 +76,7 @@ def test_load_character_db_skips_sqlite_rows_with_missing_class_levels_mapping(
             "data_json": json.dumps(invalid_character),
         },
     ]
-    monkeypatch.setattr("dnd_sim.db.execute_query", lambda *_args, **_kwargs: sqlite_rows)
+    monkeypatch.setattr("dnd_sim.db_schema.execute_query", lambda *_args, **_kwargs: sqlite_rows)
 
     db = load_character_db(tmp_path / "characters")
 
@@ -85,7 +85,7 @@ def test_load_character_db_skips_sqlite_rows_with_missing_class_levels_mapping(
 
 
 def test_load_character_db_strips_legacy_class_level_field(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr("dnd_sim.db.execute_query", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr("dnd_sim.db_schema.execute_query", lambda *_args, **_kwargs: [])
 
     db_dir = tmp_path / "characters"
     db_dir.mkdir(parents=True, exist_ok=True)

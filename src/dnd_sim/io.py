@@ -52,6 +52,7 @@ from dnd_sim.io_models import (
     NoteEffectConfig,
     RemoveConditionEffectConfig,
     ResourceChangeEffectConfig,
+    RuntimeScenarioConfig,
     ScenarioConfig,
     StrategyModuleConfig,
     SummonEffectConfig,
@@ -70,6 +71,8 @@ from dnd_sim.io_runtime import (
 )
 
 logger = logging.getLogger(__name__)
+REPO_ROOT = Path(__file__).resolve().parents[2]
+_MACHINE_LOCAL_ABSOLUTE_PREFIXES = ("/Users/", "/home/")
 
 _GLOBAL_CONTENT_ID_RE = re.compile(
     r"^(?P<kind>[a-z_]+)\s*:\s*(?P<slug>[a-z0-9_]+)\s*\|\s*(?P<source>[a-z0-9_]+)\s*$",
@@ -152,7 +155,7 @@ def persist_content_lineage_record(
     imported_at: str | None = None,
 ) -> dict[str, str]:
     """Persist one content record with deterministic lineage hashes."""
-    from dnd_sim.db import upsert_content_record
+    from dnd_sim.db_content_store import upsert_content_record
 
     imported = imported_at if isinstance(imported_at, str) and imported_at.strip() else None
     if imported is None:
@@ -181,7 +184,7 @@ def persist_content_lineage_record(
 
 def replay_content_lineage(conn: Any, *, content_type: str | None = None) -> list[dict[str, Any]]:
     """Load persisted content lineage rows in deterministic replay order."""
-    from dnd_sim.db import fetch_content_lineage
+    from dnd_sim.db_content_store import fetch_content_lineage
 
     return fetch_content_lineage(conn, content_type=content_type)
 
@@ -695,6 +698,35 @@ def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _is_machine_local_absolute_path(raw_path: str) -> bool:
+    normalized = str(raw_path).strip()
+    return any(normalized.startswith(prefix) for prefix in _MACHINE_LOCAL_ABSOLUTE_PREFIXES)
+
+
+def _resolve_content_path_ref(raw_path: str, *, scenario_path: Path) -> Path:
+    normalized = _required_text(raw_path, field_name="path")
+    if normalized.startswith("repo:"):
+        relative_path = normalized.split(":", 1)[1].strip().lstrip("/")
+        candidate = (REPO_ROOT / relative_path).resolve()
+        try:
+            candidate.relative_to(REPO_ROOT.resolve())
+        except ValueError as exc:
+            raise ValueError(f"repo-relative path escapes repository root: {raw_path}") from exc
+        return candidate
+
+    candidate = Path(normalized)
+    if candidate.is_absolute():
+        raise ValueError("content paths must be scenario-relative or repo-relative")
+    return (scenario_path.parent / candidate).resolve()
+
+
+def _validate_public_enemy_payload(*, enemy_payload: dict[str, Any], enemy_id: str) -> None:
+    if "script_hooks" in enemy_payload:
+        raise ValueError(
+            f"Public enemy content must not declare script_hooks: {enemy_id}"
+        )
+
+
 def _content_index_identifier(*, kind: str, payload: dict[str, Any], default: str) -> str:
     if kind == "item":
         return str(payload.get("item_id") or payload.get("name") or default)
@@ -711,16 +743,22 @@ def _content_index_identifier(*, kind: str, payload: dict[str, Any], default: st
     return str(payload.get("name") or payload.get("character_id") or default)
 
 
-def load_scenario(scenario_path: Path) -> LoadedScenario:
-    raw = _load_json(scenario_path)
-    try:
-        scenario = ScenarioConfig.model_validate(raw)
-    except ValidationError as exc:
-        raise ValueError(f"Invalid scenario schema at {scenario_path}: {exc}") from exc
+def _load_validated_scenario(
+    scenario_path: Path,
+    *,
+    scenario: RuntimeScenarioConfig,
+    public_contract: bool,
+) -> LoadedScenario:
     _assert_capability_gate(
         required_content_types=set(_CAPABILITY_MONSTER_CONTENT_TYPES),
-        source="load_scenario",
+        source="load_public_scenario" if public_contract else "load_runtime_scenario",
     )
+
+    resolved_character_db_dir = _resolve_content_path_ref(
+        scenario.character_db_dir,
+        scenario_path=scenario_path,
+    )
+    scenario = scenario.model_copy(update={"character_db_dir": str(resolved_character_db_dir)})
 
     enemies: dict[str, EnemyConfig] = {}
     enemy_dir = scenario_path.parent.parent / "enemies"
@@ -733,7 +771,7 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
     for enc in scenario.encounters:
         all_enemy_ids.update(enc.enemies)
 
-    from .db import execute_query
+    from .db_schema import execute_query
 
     for enemy_id in all_enemy_ids:
         # 1. Check local file first (for tests running via tmp_path or local overrides)
@@ -753,6 +791,8 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
                 raise ValueError(f"Enemy definition not found on disk or SQLite DB: {enemy_id}")
 
         if isinstance(enemy_payload, dict):
+            if public_contract:
+                _validate_public_enemy_payload(enemy_payload=enemy_payload, enemy_id=enemy_id)
             if source_path is not None:
                 _reject_legacy_alias_fields(
                     enemy_payload,
@@ -778,15 +818,42 @@ def load_scenario(scenario_path: Path) -> LoadedScenario:
 
         enemies[enemy_id] = enemy
 
-    return LoadedScenario(
+    return LoadedScenario.model_construct(
         scenario_path=str(scenario_path),
         config=scenario,
         enemies=enemies,
     )
 
 
+def load_public_scenario(scenario_path: Path) -> LoadedScenario:
+    raw = _load_json(scenario_path)
+    try:
+        public_config = ScenarioConfig.model_validate(raw)
+    except ValidationError as exc:
+        raise ValueError(f"Invalid scenario schema at {scenario_path}: {exc}") from exc
+    runtime_config = RuntimeScenarioConfig.model_validate(public_config.model_dump())
+    return _load_validated_scenario(
+        scenario_path,
+        scenario=runtime_config,
+        public_contract=True,
+    )
+
+
+def load_runtime_scenario(scenario_path: Path) -> LoadedScenario:
+    raw = _load_json(scenario_path)
+    try:
+        runtime_config = RuntimeScenarioConfig.model_validate(raw)
+    except ValidationError as exc:
+        raise ValueError(f"Invalid scenario schema at {scenario_path}: {exc}") from exc
+    return _load_validated_scenario(
+        scenario_path,
+        scenario=runtime_config,
+        public_contract=False,
+    )
+
+
 def load_character_db(db_dir: Path) -> dict[str, dict[str, Any]]:
-    from .db import execute_query
+    from .db_schema import execute_query
 
     out: dict[str, dict[str, Any]] = {}
     non_class_content_catalog = _load_non_class_content_catalog(str(_non_class_raw_root_dir()))
@@ -904,7 +971,7 @@ def _normalize_trait_payload(trait_data: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_traits_db(traits_dir: Path) -> dict[str, dict[str, Any]]:
-    from .db import execute_query
+    from .db_schema import execute_query
 
     resolved_traits_dir = Path(traits_dir).resolve()
     canonical_traits_dir = _traits_root_dir().resolve()

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from dnd_sim.persistence import deserialize_world_state, serialize_world_state
+from dnd_sim.snapshot_codecs import deserialize_world_state, serialize_world_state
 from dnd_sim.world_state import (
     FactionState,
     QuestState,

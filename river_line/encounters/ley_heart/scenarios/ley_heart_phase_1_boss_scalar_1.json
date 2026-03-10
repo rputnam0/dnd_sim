@@ -2,7 +2,7 @@
   "scenario_id": "ley_heart_phase_1_boss_scalar_1",
   "encounter_id": "ley_heart",
   "ruleset": "5e-2014",
-  "character_db_dir": "/Users/rexputnam/Documents/projects/dnd_sim/river_line/db/characters",
+  "character_db_dir": "repo:river_line/db/characters",
   "party": [
     "squanch_161607569",
     "furyen_fury",
@@ -23,50 +23,21 @@
     "enemy_defeat": "all_dead",
     "max_rounds": 20
   },
-  "strategy_modules": [
-    {
-      "name": "focus_fire_lowest_hp",
-      "source": "builtin",
-      "class_name": "FocusFireLowestHPStrategy"
-    },
-    {
-      "name": "boss_highest_threat_target",
-      "source": "builtin",
-      "class_name": "BossHighestThreatTargetStrategy"
-    },
-    {
-      "name": "conserve_resources_then_burst",
-      "source": "builtin",
-      "class_name": "ConserveResourcesThenBurstStrategy"
-    },
-    {
-      "name": "always_use_signature_ability_if_ready",
-      "source": "builtin",
-      "class_name": "AlwaysUseSignatureAbilityStrategy"
-    },
-    {
-      "name": "ley_heart_phase_1",
+  "internal_harness": {
+    "strategy_modules": [
+      {
+        "name": "ley_heart_phase_1",
+        "source": "encounter",
+        "module": "ley_heart_phase_1_strategy",
+        "class_name": "LeyHeartPhase1Strategy"
+      }
+    ],
+    "custom_simulation": {
       "source": "encounter",
-      "module": "ley_heart_phase_1_strategy",
-      "class_name": "LeyHeartPhase1Strategy"
-    }
-  ],
-  "resource_policy": {
-    "mode": "combat_and_utility",
-    "burst_round_threshold": 2
-  },
-  "custom_simulation": {
-    "source": "encounter",
-    "module": "ley_heart_phase_1_custom_sim",
-    "callable": "run_custom_simulation"
-  },
-  "assumption_overrides": {
-    "party_strategy": "ley_heart_phase_1",
-    "enemy_strategy": "boss_highest_threat_target",
-    "actor_strategy": {
-      "squanch_161607569": "conserve_resources_then_burst"
+      "module": "ley_heart_phase_1_custom_sim",
+      "callable": "run_custom_simulation"
     },
-    "custom_sim": {
+    "custom_sim_settings": {
       "pylon_hp": 39,
       "pylon_ac": 12,
       "procedure_dc": 13,
@@ -121,6 +92,17 @@
         "temporal_reversal_reduction": 10,
         "temporal_reversal_recharge_min": 5
       }
+    }
+  },
+  "resource_policy": {
+    "mode": "combat_and_utility",
+    "burst_round_threshold": 2
+  },
+  "assumption_overrides": {
+    "party_strategy": "ley_heart_phase_1",
+    "enemy_strategy": "boss_highest_threat_target",
+    "actor_strategy": {
+      "squanch_161607569": "conserve_resources_then_burst"
     }
   }
 }

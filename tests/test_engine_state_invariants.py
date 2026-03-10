@@ -4,7 +4,7 @@ from pathlib import Path
 
 from dnd_sim.engine_runtime import _break_concentration, _execute_action
 from dnd_sim.engine import run_simulation
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from tests.helpers import build_character, build_enemy
 from tests.test_engine_integration import _setup_env
@@ -461,7 +461,7 @@ def test_action_surge_resource_spend_is_bounded_per_trial(tmp_path: Path) -> Non
             "enemy_strategy": "boss_highest_threat_target",
         },
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 

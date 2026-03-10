@@ -6,7 +6,7 @@ from pathlib import Path
 
 from dnd_sim.engine import run_simulation
 from dnd_sim.engine_runtime import _build_actor_from_character
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.rules_2014 import run_concentration_check
 from tests.helpers import build_character, build_enemy, write_json
 
@@ -48,7 +48,7 @@ def _setup_env(
         "scenario_id": "fixture_scenario",
         "encounter_id": "fixture",
         "ruleset": "5e-2014",
-        "character_db_dir": str(db_dir),
+        "character_db_dir": "../../../db/characters",
         "party": [character["character_id"] for character in party],
         "enemies": [enemy["identity"]["enemy_id"] for enemy in enemies],
         "initiative_mode": "individual",
@@ -58,7 +58,7 @@ def _setup_env(
             "enemy_defeat": "all_dead",
             "max_rounds": 10,
         },
-        "strategy_modules": [
+        "internal_harness": {"strategy_modules": [
             {
                 "name": "focus_fire_lowest_hp",
                 "source": "builtin",
@@ -69,7 +69,8 @@ def _setup_env(
                 "source": "builtin",
                 "class_name": "BossHighestThreatTargetStrategy",
             },
-        ],
+            ]
+        },
         "resource_policy": {
             "mode": "combat_and_utility",
             "burst_round_threshold": 3,
@@ -145,7 +146,7 @@ def test_steel_defender_companion_is_added_to_party_actor_roster(tmp_path: Path)
         )
     ]
     scenario_path = _setup_env(tmp_path, party=[artificer], enemies=enemies)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 

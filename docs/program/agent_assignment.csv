@@ -63,3 +63,9 @@ FIN-03,integration_replay_gate,explorer_fin,batch-6,fin,OBS-07;WLD-12,feat/fin-0
 FIN-04,integration_world_gate,explorer_fin,batch-6,fin,WLD-09;WLD-10;WLD-12;DBS-06,feat/fin-04-enforce-integrated-campaign-world-and-combat-scena
 FIN-05,integration_agent_gate,explorer_fin,batch-6,fin,ARC-08;OBS-07;DOC-06;FIN-01,feat/fin-05-enforce-agent-only-maintenance-gate
 FIN-06,release_lead,explorer_fin,batch-6,fin,FIN-02;FIN-03;FIN-04;FIN-05,feat/fin-06-cut-release-baseline-archive-prior-program-artifac
+W8-AUD-01,program_control,explorer_doc,batch-7,w8aud,W7-GATE-03,codex/wave8-section2-stabilization
+W8-PRT-01,portability_core,explorer_doc,batch-7,w8prt,W8-AUD-01,codex/wave8-section2-stabilization
+W8-CRT-01,creator_boundary,explorer_doc,batch-7,w8crt,W8-PRT-01,codex/wave8-section2-stabilization
+W8-ARC-01,runtime_report,explorer_fin,batch-7,w8arc,W8-AUD-01;W8-CRT-01,codex/wave8-section2-stabilization
+W8-DAT-01,data_integrity,explorer_fin,batch-7,w8dat,W8-PRT-01;W8-CRT-01,codex/feat/w8-dat-01-persistence-and-public-content-failure-clar
+W8-GATE-01,program_control,explorer_fin,batch-7,w8gate,W8-AUD-01;W8-PRT-01;W8-CRT-01;W8-ARC-01;W8-DAT-01,codex/feat/w8-gate-01-section-2-closeout

@@ -24,7 +24,7 @@ from dnd_sim.engine_runtime import (
     _saving_throw_succeeds,
     _tick_conditions_for_actor,
 )
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.rules_2014 import DamageRollEvent
 from tests.helpers import build_character, build_enemy
@@ -2145,7 +2145,7 @@ def test_run_simulation_invokes_turn_start_reaction_trigger(tmp_path: Path, monk
             "enemy_strategy": "boss_highest_threat_target",
         },
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 

@@ -8,7 +8,7 @@ import pytest
 
 import dnd_sim.engine_runtime as engine_module
 from dnd_sim.engine import TurnDeclarationValidationError, run_simulation
-from dnd_sim.io import load_character_db, load_scenario
+from dnd_sim.io import load_character_db, load_runtime_scenario
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from dnd_sim.telemetry import TURN_TRACE_EVENT_TYPES
 from tests.helpers import build_enemy, write_json
@@ -132,7 +132,7 @@ def _setup_env(tmp_path: Path) -> Path:
         "scenario_id": "obs02_fixture",
         "encounter_id": "fixture",
         "ruleset": "5e-2014",
-        "character_db_dir": str(db_dir),
+        "character_db_dir": "../../../db/characters",
         "party": ["hero"],
         "enemies": ["boss"],
         "initiative_mode": "individual",
@@ -142,7 +142,7 @@ def _setup_env(tmp_path: Path) -> Path:
             "enemy_defeat": "all_dead",
             "max_rounds": 1,
         },
-        "strategy_modules": [],
+        "internal_harness": {"strategy_modules": []},
         "resource_policy": {"mode": "combat_and_utility", "burst_round_threshold": 1},
         "assumption_overrides": {
             "party_strategy": "party_strategy",
@@ -181,7 +181,7 @@ def test_turn_traces_include_declaration_selection_resolution_and_outcome(
     tmp_path: Path,
 ) -> None:
     scenario_path = _setup_env(tmp_path)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     registry = {
@@ -226,7 +226,7 @@ def test_turn_traces_include_declaration_selection_resolution_and_outcome(
 
 def test_turn_traces_have_deterministic_ordering_with_fixed_seed(tmp_path: Path) -> None:
     scenario_path = _setup_env(tmp_path)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     registry = {
@@ -249,7 +249,7 @@ def test_illegal_declared_action_emits_illegal_action_selection_trace(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     scenario_path = _setup_env(tmp_path)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     captured_payloads: list[dict[str, Any]] = []

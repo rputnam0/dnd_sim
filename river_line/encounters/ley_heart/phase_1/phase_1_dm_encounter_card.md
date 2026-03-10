@@ -220,7 +220,7 @@ This appendix captures the assumptions used for the current Phase 1 simulation r
 - **Positioning model:** pylons are equidistant; boss is at center; PCs avoid center unless pulled.
 
 ## Baseline scenario settings (from JSON)
-Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/encounters/ley_heart/scenarios/ley_heart_phase_1.json`
+Source: `river_line/encounters/ley_heart/scenarios/ley_heart_phase_1.json`
 - Pylon HP / AC: 39 / 12
 - Procedure DC: 13
 - Pulse save DC: 15
@@ -249,7 +249,7 @@ Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/encounters/ley_h
 All results below use seed `20260219` and are Monte Carlo estimates (mean/median).
 
 ## Scenario: Baseline (focus-fire order past → present → future)
-Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220T020151Z_baseline_boss_original_damage_50k/summary.json`
+Source: `river_line/results/20260220T020151Z_baseline_boss_original_damage_50k/summary.json`
 - Mean rounds to destroy all pylons: 5.680 (median 6)
 - Mean pylon kill rounds: Past 2.004, Present 3.762, Future 5.679
 - Mean damage taken: Isak 21.886, Fury 22.968, Squanch 18.295
@@ -265,7 +265,7 @@ Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220
 - Mean Temporal Reversal uses (per fight): 1.907
 
 ## Scenario: Baseline + fail-forward (next Procedure attempt has advantage after a failure)
-Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220T020458Z_proc_adv_boss_original_damage_50k/summary.json`
+Source: `river_line/results/20260220T020458Z_proc_adv_boss_original_damage_50k/summary.json`
 - Mean rounds to destroy all pylons: 5.545 (median 6)
 - Mean pylon kill rounds: Past 1.927, Present 3.654, Future 5.545
 - Mean damage taken: Isak 21.506, Fury 22.534, Squanch 17.688
@@ -281,7 +281,7 @@ Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220
 - Mean Temporal Reversal uses (per fight): 1.863
 
 ## Scenario: Aggressive play (both monks focus-fire and Flurry whenever ki is available)
-Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220T020517Z_double_monk_flurry_boss_original_damage_50k/summary.json`
+Source: `river_line/results/20260220T020517Z_double_monk_flurry_boss_original_damage_50k/summary.json`
 - Mean rounds to destroy all pylons: 4.918 (median 5)
 - Mean pylon kill rounds: Past 1.780, Present 3.294, Future 4.918
 - Mean damage taken: Isak 39.751, Fury 18.412, Squanch 11.909
@@ -297,7 +297,7 @@ Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220
 - Mean Temporal Reversal uses (per fight): 1.751
 
 ## Scenario: Split pressure (parallel mode; monks split onto two pylons)
-Source: `/Users/rexputnam/Documents/projects/dnd_sim/river_line/results/20260220T020625Z_split_two_pylons_boss_original_damage_50k/summary.json`
+Source: `river_line/results/20260220T020625Z_split_two_pylons_boss_original_damage_50k/summary.json`
 - Mean rounds to destroy all pylons: 5.396 (median 5)
 - Mean pylon kill rounds: Past 4.496, Present 3.943, Future 4.200
 - Mean damage taken: Isak 27.016, Fury 20.042, Squanch 33.100
