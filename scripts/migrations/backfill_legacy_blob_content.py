@@ -5,11 +5,8 @@ import json
 import sqlite3
 from pathlib import Path
 
-from dnd_sim.db import (
-    backfill_legacy_blob_content,
-    get_db_path,
-    rollback_legacy_blob_backfill,
-)
+from dnd_sim.db_migrations import backfill_legacy_blob_content, rollback_legacy_blob_backfill
+from dnd_sim.db_schema import get_db_path
 
 
 def migrate_backfill_legacy_blob_content(conn: sqlite3.Connection) -> dict[str, int]:

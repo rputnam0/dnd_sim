@@ -4,7 +4,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-import dnd_sim.db as db_module
+from dnd_sim import db_content_store, db_schema
 from dnd_sim.io import stable_content_hash
 from scripts.migrations.content_metadata_tables import (
     migrate_add_content_metadata_tables,
@@ -163,7 +163,7 @@ def test_content_metadata_migration_upgrades_existing_dbs01_schema(tmp_path: Pat
         assert lineage_row is not None
         assert lineage_row[0] == "legacy:spell:magic_missile|PHB"
         assert lineage_row[1] == stable_content_hash(payload)
-        assert lineage_row[2] == db_module.LEGACY_IMPORTED_AT
+        assert lineage_row[2] == db_schema.LEGACY_IMPORTED_AT
 
         assert migrate_add_content_metadata_tables(conn) is False
 
@@ -174,7 +174,7 @@ def test_content_metadata_tables_round_trip_insert_and_query(tmp_path: Path) -> 
         _create_legacy_core_tables(conn)
         assert migrate_add_content_metadata_tables(conn) is True
 
-        db_module.upsert_content_record(
+        db_content_store.upsert_content_record(
             conn,
             content_id="spell:magic_missile|PHB",
             content_type="spell",
@@ -186,7 +186,7 @@ def test_content_metadata_tables_round_trip_insert_and_query(tmp_path: Path) -> 
             payload_json={"name": "Magic Missile", "level": 1},
             imported_at="2026-03-05T10:00:00+00:00",
         )
-        db_module.upsert_content_capability(
+        db_content_store.upsert_content_capability(
             conn,
             content_id="spell:magic_missile|PHB",
             content_type="spell",
@@ -247,9 +247,9 @@ def test_content_metadata_rollback_drops_tables(tmp_path: Path) -> None:
 
 def test_init_db_creates_content_metadata_tables(tmp_path: Path, monkeypatch) -> None:
     db_path = tmp_path / "canonical_init.db"
-    monkeypatch.setattr(db_module, "get_db_path", lambda: db_path)
+    monkeypatch.setattr(db_schema, "get_db_path", lambda: db_path)
 
-    db_module.init_db()
+    db_schema.init_db()
 
     with sqlite3.connect(db_path) as conn:
         assert _table_exists(conn, "content_records")

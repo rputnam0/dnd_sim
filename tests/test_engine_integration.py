@@ -14,7 +14,7 @@ from dnd_sim.engine_runtime import (
     _run_opportunity_attacks_for_movement,
 )
 from dnd_sim.inventory import InventoryItem
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.spatial import AABB
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
@@ -65,7 +65,7 @@ def _setup_env(
         "scenario_id": "fixture_scenario",
         "encounter_id": "fixture",
         "ruleset": "5e-2014",
-        "character_db_dir": str(db_dir),
+        "character_db_dir": "../../../db/characters",
         "party": [character["character_id"] for character in party],
         "enemies": [enemy["identity"]["enemy_id"] for enemy in enemies],
         "initiative_mode": "individual",
@@ -75,7 +75,7 @@ def _setup_env(
             "enemy_defeat": "all_dead",
             "max_rounds": max_rounds,
         },
-        "strategy_modules": [
+        "internal_harness": {"strategy_modules": [
             {
                 "name": "focus_fire_lowest_hp",
                 "source": "builtin",
@@ -96,7 +96,8 @@ def _setup_env(
                 "source": "builtin",
                 "class_name": "AlwaysUseSignatureAbilityStrategy",
             },
-        ],
+            ]
+        },
         "resource_policy": {
             "mode": "combat_and_utility",
             "burst_round_threshold": burst_threshold,
@@ -207,7 +208,7 @@ def test_fixed_seed_is_deterministic(tmp_path: Path) -> None:
         },
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
@@ -236,7 +237,7 @@ def test_run_simulation_rejects_non_positive_trials(tmp_path: Path) -> None:
         },
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
@@ -263,7 +264,7 @@ def test_n_vs_n_runs_with_all_combatants_present(tmp_path: Path) -> None:
             "enemy_strategy": "boss_highest_threat_target",
         },
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
@@ -297,7 +298,7 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
         },
         burst_threshold=2,
     )
-    loaded_always = load_scenario(scenario_always)
+    loaded_always = load_runtime_scenario(scenario_always)
     db_always = load_character_db(Path(loaded_always.config.character_db_dir))
     reg_always = load_strategy_registry(loaded_always)
     always_summary = run_simulation(
@@ -320,7 +321,7 @@ def test_resource_policy_changes_resource_usage(tmp_path: Path) -> None:
         },
         burst_threshold=99,
     )
-    loaded_conserve = load_scenario(scenario_conserve)
+    loaded_conserve = load_runtime_scenario(scenario_conserve)
     db_conserve = load_character_db(Path(loaded_conserve.config.character_db_dir))
     reg_conserve = load_strategy_registry(loaded_conserve)
     conserve_summary = run_simulation(
@@ -400,7 +401,7 @@ def test_two_weapon_legacy_strategy_does_not_auto_spend_offhand_bonus_action(
         payload["termination_rules"]["max_rounds"] = 1
         scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-        loaded = load_scenario(scenario_path)
+        loaded = load_runtime_scenario(scenario_path)
         registry = load_strategy_registry(loaded)
         db = load_character_db(Path(loaded.config.character_db_dir))
         summary = run_simulation(
@@ -507,7 +508,7 @@ def test_rage_is_not_auto_activated_without_declared_bonus_action(tmp_path: Path
     payload["termination_rules"]["max_rounds"] = 2
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
     artifacts = run_simulation(
@@ -554,7 +555,7 @@ def test_monk_flurry_is_not_auto_spent_without_declared_bonus_action(tmp_path: P
     payload["termination_rules"]["max_rounds"] = 1
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
     summary = run_simulation(
@@ -596,7 +597,7 @@ def test_declared_monk_flurry_requires_attack_action_before_bonus_step(tmp_path:
         max_rounds=1,
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     with pytest.raises(TurnDeclarationValidationError) as exc_info:
@@ -645,7 +646,7 @@ def test_declared_monk_martial_arts_bonus_requires_attack_action_before_bonus_st
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     with pytest.raises(TurnDeclarationValidationError) as exc_info:
@@ -710,7 +711,7 @@ def test_declared_monk_flurry_spends_ki_deterministically(tmp_path: Path) -> Non
         max_rounds=1,
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     run_a = run_simulation(
         loaded,
@@ -781,7 +782,7 @@ def test_declared_monk_flurry_ki_restores_after_long_rest_between_encounters(
     ]
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     run = run_simulation(
         loaded,
@@ -827,7 +828,7 @@ def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
             "enemy_strategy": "boss_highest_threat_target",
         },
     )
-    loaded_plain = load_scenario(scenario_plain)
+    loaded_plain = load_runtime_scenario(scenario_plain)
     db_plain = load_character_db(Path(loaded_plain.config.character_db_dir))
     reg_plain = load_strategy_registry(loaded_plain)
     plain_summary = run_simulation(
@@ -862,7 +863,7 @@ def test_legendary_actions_increase_enemy_damage_output(tmp_path: Path) -> None:
             "enemy_strategy": "boss_highest_threat_target",
         },
     )
-    loaded_legendary = load_scenario(scenario_legendary)
+    loaded_legendary = load_runtime_scenario(scenario_legendary)
     db_legendary = load_character_db(Path(loaded_legendary.config.character_db_dir))
     reg_legendary = load_strategy_registry(loaded_legendary)
     legendary_summary = run_simulation(
@@ -936,7 +937,7 @@ def test_legendary_actions_refresh_on_own_turn_before_later_turn_windows(tmp_pat
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
     summary = run_simulation(
@@ -1014,7 +1015,7 @@ def test_lair_action_does_not_fire_before_initiative_20_if_lair_actor_is_killed(
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
     summary = run_simulation(
@@ -1054,7 +1055,7 @@ def test_optimal_strategy_uses_resources_for_damage(tmp_path: Path) -> None:
             "enemy_strategy": "boss_highest_threat_target",
         },
     )
-    loaded_focus = load_scenario(scenario_focus)
+    loaded_focus = load_runtime_scenario(scenario_focus)
     db_focus = load_character_db(Path(loaded_focus.config.character_db_dir))
     reg_focus = load_strategy_registry(loaded_focus)
     focus_summary = run_simulation(
@@ -1076,7 +1077,7 @@ def test_optimal_strategy_uses_resources_for_damage(tmp_path: Path) -> None:
             "enemy_strategy": "boss_highest_threat_target",
         },
     )
-    loaded_optimal = load_scenario(scenario_optimal)
+    loaded_optimal = load_runtime_scenario(scenario_optimal)
     db_optimal = load_character_db(Path(loaded_optimal.config.character_db_dir))
     reg_optimal = load_strategy_registry(loaded_optimal)
     optimal_summary = run_simulation(
@@ -1151,7 +1152,7 @@ def test_schema_target_mode_all_enemies_hits_each_party_member(tmp_path: Path) -
     payload["termination_rules"]["max_rounds"] = 1
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
     summary = run_simulation(
@@ -1232,7 +1233,7 @@ def test_schema_total_cover_blocks_line_of_effect_for_all_enemies_save(tmp_path:
     }
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
     summary = run_simulation(
@@ -1326,7 +1327,7 @@ def test_schema_effect_damage_and_resource_change_are_tracked(tmp_path: Path) ->
     payload["termination_rules"]["max_rounds"] = 1
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
     summary = run_simulation(
@@ -1356,7 +1357,7 @@ def test_trial_rows_include_strategy_decision_rationale_telemetry(tmp_path: Path
             "enemy_strategy": "boss_highest_threat_target",
         },
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
@@ -1462,7 +1463,7 @@ def test_multiattack_sequence_integration_executes_defined_subactions(tmp_path: 
     payload["termination_rules"]["max_rounds"] = 1
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
     summary = run_simulation(
@@ -1738,7 +1739,7 @@ def test_line_of_effect_blocked_prevents_many_spells_even_with_line_of_sight(
     }
     scenario_path.write_text(json.dumps(payload), encoding="utf-8")
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
     summary = run_simulation(
@@ -1843,7 +1844,7 @@ def test_same_strategy_different_tactical_offhand_bonus_action_choices_change_da
             "enemy_strategy": "enemy_strategy",
         },
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     with_offhand = run_simulation(
@@ -1900,7 +1901,7 @@ def test_legacy_omitted_bonus_action_remains_unused(tmp_path: Path) -> None:
             "enemy_strategy": "enemy_strategy",
         },
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     artifacts = run_simulation(
@@ -1941,7 +1942,7 @@ def test_legacy_strategy_does_not_auto_spend_action_surge(tmp_path: Path) -> Non
             "enemy_strategy": "enemy_strategy",
         },
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
     artifacts = run_simulation(

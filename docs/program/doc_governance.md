@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-07
+Last updated: 2026-03-09
 Canonical source: `docs/program/README.md`
 
 This file defines the live planning surface, ownership, and freshness rules.
@@ -21,6 +21,7 @@ The table below is the canonical registry for every live planning file.
 | `docs/program/README.md` | canonical | program-control | required | Single planning entrypoint. |
 | `docs/program/doc_governance.md` | canonical | program-control | required | Live planning governance contract. |
 | `docs/program/roadmap_2014_backend.md` | canonical | program-control | required | Program roadmap and sequencing detail. |
+| `docs/program/section1_gap_matrix.md` | canonical | program-control | required | Section 1 product-gap audit and Wave 8 stabilization bridge. |
 | `docs/program/backlog.csv` | canonical | program-control | not_applicable | Task-level source of truth. |
 | `docs/program/agent_assignment.csv` | canonical | program-control | not_applicable | Machine-readable owner assignment map. |
 | `docs/program/dependency_graph.mmd` | canonical | program-control | not_applicable | Task dependency graph source. |

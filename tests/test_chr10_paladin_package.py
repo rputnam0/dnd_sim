@@ -15,7 +15,7 @@ from dnd_sim.engine_runtime import (
     long_rest,
     short_rest,
 )
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.models import ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_enemy, with_class_levels
@@ -259,7 +259,7 @@ def test_chr10_integration_paladin_package_inference_is_deterministic(tmp_path: 
         max_rounds=1,
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
 
@@ -305,7 +305,7 @@ def test_declared_main_action_rejects_smite_setup_bonus_timing(tmp_path: Path) -
         max_rounds=1,
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": IllegalSmiteAsMainActionStrategy(),

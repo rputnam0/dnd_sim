@@ -8,7 +8,7 @@ from pathlib import Path
 
 from dnd_sim import report as report_cli
 from dnd_sim.engine import run_simulation
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.reporting import build_report_markdown, generate_plots_from_trials
 from tests.helpers import build_character, build_enemy, write_json
 
@@ -56,7 +56,7 @@ def _setup_reporting_fixture(tmp_path: Path) -> Path:
         "scenario_id": "report_case",
         "encounter_id": "report_case",
         "ruleset": "5e-2014",
-        "character_db_dir": str(db_dir),
+        "character_db_dir": "../../../db/characters",
         "party": ["hero"],
         "enemies": ["boss"],
         "initiative_mode": "individual",
@@ -66,7 +66,7 @@ def _setup_reporting_fixture(tmp_path: Path) -> Path:
             "enemy_defeat": "all_dead",
             "max_rounds": 20,
         },
-        "strategy_modules": [
+        "internal_harness": {"strategy_modules": [
             {
                 "name": "focus_fire_lowest_hp",
                 "source": "builtin",
@@ -82,7 +82,8 @@ def _setup_reporting_fixture(tmp_path: Path) -> Path:
                 "source": "builtin",
                 "class_name": "AlwaysUseSignatureAbilityStrategy",
             },
-        ],
+            ]
+        },
         "resource_policy": {
             "mode": "combat_and_utility",
             "burst_round_threshold": 1,
@@ -99,7 +100,7 @@ def _setup_reporting_fixture(tmp_path: Path) -> Path:
 
 def test_report_contains_required_sections_and_pngs(tmp_path: Path) -> None:
     scenario_path = _setup_reporting_fixture(tmp_path)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 
@@ -129,7 +130,7 @@ def test_report_contains_required_sections_and_pngs(tmp_path: Path) -> None:
 
 def test_report_cli_uses_trial_rows_path_from_run_config(tmp_path: Path, monkeypatch) -> None:
     scenario_path = _setup_reporting_fixture(tmp_path)
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
     artifacts = run_simulation(loaded, db, {}, registry, trials=6, seed=7, run_id="report")

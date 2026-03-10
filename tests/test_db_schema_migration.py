@@ -4,7 +4,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-import dnd_sim.db as db_module
+from dnd_sim import db_schema
 from scripts.migrations.drop_characters_class_level_column import (
     migrate_drop_class_level_column,
     rollback_restore_class_level_column,
@@ -156,9 +156,9 @@ def test_rollback_preserves_rows_created_after_migration(tmp_path: Path) -> None
 
 def test_init_db_creates_canonical_characters_schema(tmp_path: Path, monkeypatch) -> None:
     db_path = tmp_path / "canonical_init.db"
-    monkeypatch.setattr(db_module, "get_db_path", lambda: db_path)
+    monkeypatch.setattr(db_schema, "get_db_path", lambda: db_path)
 
-    db_module.init_db()
+    db_schema.init_db()
 
     with sqlite3.connect(db_path) as conn:
         assert "class_level" not in _columns(conn, "characters")

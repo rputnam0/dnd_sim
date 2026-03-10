@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from dnd_sim.world_runtime import ExplorationState, run_exploration_turn
+from dnd_sim.world_contracts import ExplorationState
+from dnd_sim.world_exploration_service import run_exploration_turn
 
 REST_NONE = "none"
 REST_SHORT = "short"

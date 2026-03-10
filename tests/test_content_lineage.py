@@ -4,7 +4,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-import dnd_sim.db as db_module
+from dnd_sim import db_schema
 from dnd_sim.io import persist_content_lineage_record, replay_content_lineage, stable_content_hash
 
 
@@ -65,7 +65,7 @@ def test_content_records_lineage_migration_adds_required_columns(tmp_path: Path)
         )
         conn.commit()
 
-        db_module.create_content_metadata_tables(conn)
+        db_schema.create_content_metadata_tables(conn)
 
         assert set(_columns(conn, "content_records")) == {
             "content_id",
@@ -90,14 +90,14 @@ def test_content_records_lineage_migration_adds_required_columns(tmp_path: Path)
         assert row is not None
         assert row[0] == "legacy:spell:magic_missile|PHB"
         assert row[1] == stable_content_hash({"name": "Magic Missile", "level": 1})
-        assert row[2] == db_module.LEGACY_IMPORTED_AT
+        assert row[2] == db_schema.LEGACY_IMPORTED_AT
 
 
 def test_duplicate_hashes_are_allowed_for_distinct_content_ids(tmp_path: Path) -> None:
     db_path = tmp_path / "duplicate_hashes.db"
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
-        db_module.create_content_metadata_tables(conn)
+        db_schema.create_content_metadata_tables(conn)
 
         source_payload = {"name": "Shared", "value": 1}
         canonical_payload = {"name": "Shared", "value": 1}
@@ -139,7 +139,7 @@ def test_replay_content_lineage_returns_deterministic_order(tmp_path: Path) -> N
     db_path = tmp_path / "replay_order.db"
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
-        db_module.create_content_metadata_tables(conn)
+        db_schema.create_content_metadata_tables(conn)
 
         persist_content_lineage_record(
             conn,

@@ -1,0 +1,377 @@
+import hashlib
+import json
+import sqlite3
+from pathlib import Path
+from typing import Any
+
+CONTENT_RECORDS_TABLE = "content_records"
+CONTENT_CAPABILITIES_TABLE = "content_capabilities"
+CAMPAIGN_STATES_TABLE = "campaign_states"
+ENCOUNTER_STATES_TABLE = "encounter_states"
+WORLD_STATES_TABLE = "world_states"
+FACTION_STATES_TABLE = "faction_states"
+LEGACY_IMPORTED_AT = "1970-01-01T00:00:00+00:00"
+LEGACY_BLOB_SCHEMA_VERSION = "legacy_blob.v1"
+LEGACY_BLOB_SUPPORT_STATE = "legacy_unverified"
+LEGACY_BLOB_LAST_VERIFIED_COMMIT = "legacy_blob_backfill"
+LEGACY_BLOB_SOURCE_PREFIX = "legacy_db"
+LEGACY_BLOB_TABLE_SPECS: tuple[tuple[str, str, str], ...] = (
+    ("traits", "id", "trait"),
+    ("enemies", "enemy_id", "enemy"),
+    ("characters", "character_id", "character"),
+)
+
+CONTENT_RECORDS_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS content_records (
+    content_id TEXT PRIMARY KEY,
+    content_type TEXT NOT NULL,
+    source_book TEXT NOT NULL,
+    schema_version TEXT NOT NULL,
+    source_path TEXT NOT NULL,
+    source_hash TEXT NOT NULL,
+    canonicalization_hash TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    imported_at TEXT NOT NULL,
+    CHECK (length(trim(content_id)) > 0),
+    CHECK (length(trim(content_type)) > 0),
+    CHECK (length(trim(source_book)) > 0),
+    CHECK (length(trim(schema_version)) > 0),
+    CHECK (length(trim(source_path)) > 0),
+    CHECK (length(trim(source_hash)) > 0),
+    CHECK (length(trim(canonicalization_hash)) > 0),
+    CHECK (length(trim(payload_json)) > 0),
+    CHECK (length(trim(imported_at)) > 0)
+)
+"""
+
+CONTENT_CAPABILITIES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS content_capabilities (
+    content_id TEXT PRIMARY KEY,
+    content_type TEXT NOT NULL,
+    support_state TEXT NOT NULL,
+    unsupported_reason TEXT,
+    last_verified_commit TEXT NOT NULL,
+    FOREIGN KEY (content_id) REFERENCES content_records(content_id) ON DELETE CASCADE,
+    CHECK (length(trim(content_id)) > 0),
+    CHECK (length(trim(content_type)) > 0),
+    CHECK (length(trim(support_state)) > 0),
+    CHECK (length(trim(last_verified_commit)) > 0),
+    CHECK (
+        (support_state = 'blocked' AND unsupported_reason IS NOT NULL AND length(trim(unsupported_reason)) > 0)
+        OR
+        (support_state <> 'blocked' AND unsupported_reason IS NULL)
+    )
+)
+"""
+
+CONTENT_METADATA_INDEXES_SQL = (
+    "CREATE INDEX IF NOT EXISTS idx_content_records_content_type ON content_records(content_type)",
+    "CREATE INDEX IF NOT EXISTS idx_content_records_source_hash ON content_records(source_hash)",
+    (
+        "CREATE INDEX IF NOT EXISTS idx_content_records_canonicalization_hash "
+        "ON content_records(canonicalization_hash)"
+    ),
+    "CREATE INDEX IF NOT EXISTS idx_content_records_imported_at ON content_records(imported_at)",
+    (
+        "CREATE INDEX IF NOT EXISTS idx_content_capabilities_support_state "
+        "ON content_capabilities(support_state)"
+    ),
+)
+
+CAMPAIGN_STATES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS campaign_states (
+    campaign_id TEXT PRIMARY KEY,
+    snapshot_version TEXT NOT NULL,
+    party_state_json TEXT NOT NULL,
+    resources_json TEXT NOT NULL,
+    active_effects_json TEXT NOT NULL,
+    initiative_context_json TEXT NOT NULL,
+    replay_bundle_id TEXT,
+    snapshot_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    CHECK (length(trim(campaign_id)) > 0),
+    CHECK (length(trim(snapshot_version)) > 0),
+    CHECK (length(trim(party_state_json)) > 0),
+    CHECK (length(trim(resources_json)) > 0),
+    CHECK (length(trim(active_effects_json)) > 0),
+    CHECK (length(trim(initiative_context_json)) > 0),
+    CHECK (length(trim(snapshot_hash)) > 0),
+    CHECK (length(trim(updated_at)) > 0)
+)
+"""
+
+ENCOUNTER_STATES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS encounter_states (
+    campaign_id TEXT NOT NULL,
+    encounter_id TEXT NOT NULL,
+    snapshot_version TEXT NOT NULL,
+    party_state_json TEXT NOT NULL,
+    resources_json TEXT NOT NULL,
+    active_effects_json TEXT NOT NULL,
+    initiative_context_json TEXT NOT NULL,
+    replay_bundle_id TEXT,
+    snapshot_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (campaign_id, encounter_id),
+    FOREIGN KEY (campaign_id) REFERENCES campaign_states(campaign_id) ON DELETE CASCADE,
+    CHECK (length(trim(campaign_id)) > 0),
+    CHECK (length(trim(encounter_id)) > 0),
+    CHECK (length(trim(snapshot_version)) > 0),
+    CHECK (length(trim(party_state_json)) > 0),
+    CHECK (length(trim(resources_json)) > 0),
+    CHECK (length(trim(active_effects_json)) > 0),
+    CHECK (length(trim(initiative_context_json)) > 0),
+    CHECK (length(trim(snapshot_hash)) > 0),
+    CHECK (length(trim(updated_at)) > 0)
+)
+"""
+
+WORLD_STATES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS world_states (
+    campaign_id TEXT PRIMARY KEY,
+    snapshot_version TEXT NOT NULL,
+    world_flags_json TEXT NOT NULL,
+    objectives_json TEXT NOT NULL,
+    map_state_json TEXT NOT NULL,
+    encounter_state_json TEXT NOT NULL,
+    replay_bundle_id TEXT,
+    snapshot_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (campaign_id) REFERENCES campaign_states(campaign_id) ON DELETE CASCADE,
+    CHECK (length(trim(campaign_id)) > 0),
+    CHECK (length(trim(snapshot_version)) > 0),
+    CHECK (length(trim(world_flags_json)) > 0),
+    CHECK (length(trim(objectives_json)) > 0),
+    CHECK (length(trim(map_state_json)) > 0),
+    CHECK (length(trim(encounter_state_json)) > 0),
+    CHECK (length(trim(snapshot_hash)) > 0),
+    CHECK (length(trim(updated_at)) > 0)
+)
+"""
+
+FACTION_STATES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS faction_states (
+    campaign_id TEXT NOT NULL,
+    faction_id TEXT NOT NULL,
+    snapshot_version TEXT NOT NULL,
+    reputation_json TEXT NOT NULL,
+    faction_state_json TEXT NOT NULL,
+    snapshot_hash TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (campaign_id, faction_id),
+    FOREIGN KEY (campaign_id) REFERENCES world_states(campaign_id) ON DELETE CASCADE,
+    CHECK (length(trim(campaign_id)) > 0),
+    CHECK (length(trim(faction_id)) > 0),
+    CHECK (length(trim(snapshot_version)) > 0),
+    CHECK (length(trim(reputation_json)) > 0),
+    CHECK (length(trim(faction_state_json)) > 0),
+    CHECK (length(trim(snapshot_hash)) > 0),
+    CHECK (length(trim(updated_at)) > 0)
+)
+"""
+
+CAMPAIGN_STATE_INDEXES_SQL = (
+    "CREATE INDEX IF NOT EXISTS idx_campaign_states_updated_at ON campaign_states(updated_at)",
+    (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_states_replay_bundle_id "
+        "ON campaign_states(replay_bundle_id)"
+    ),
+    "CREATE INDEX IF NOT EXISTS idx_encounter_states_campaign_id ON encounter_states(campaign_id)",
+    "CREATE INDEX IF NOT EXISTS idx_encounter_states_updated_at ON encounter_states(updated_at)",
+    (
+        "CREATE INDEX IF NOT EXISTS idx_encounter_states_replay_bundle_id "
+        "ON encounter_states(replay_bundle_id)"
+    ),
+    "CREATE INDEX IF NOT EXISTS idx_world_states_updated_at ON world_states(updated_at)",
+    "CREATE INDEX IF NOT EXISTS idx_world_states_replay_bundle_id ON world_states(replay_bundle_id)",
+    "CREATE INDEX IF NOT EXISTS idx_faction_states_campaign_id ON faction_states(campaign_id)",
+    "CREATE INDEX IF NOT EXISTS idx_faction_states_updated_at ON faction_states(updated_at)",
+)
+
+
+def _canonical_json_text(payload: dict[str, Any] | list[Any] | str) -> str:
+    if isinstance(payload, str):
+        try:
+            decoded = json.loads(payload)
+        except json.JSONDecodeError:
+            return payload.strip()
+        return json.dumps(decoded, sort_keys=True, separators=(",", ":"))
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def _stable_payload_hash(payload: dict[str, Any] | list[Any] | str) -> str:
+    if isinstance(payload, str):
+        try:
+            canonical = _canonical_json_text(payload)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            canonical = payload.strip()
+    else:
+        canonical = _canonical_json_text(payload)
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return f"sha256:{digest}"
+
+
+def _required_text(value: str, *, field_name: str) -> str:
+    normalized = str(value).strip()
+    if not normalized:
+        raise ValueError(f"{field_name} must be non-empty")
+    return normalized
+
+
+def get_db_path() -> Path:
+    """Returns the absolute path to the dnd_sim SQLite database."""
+    base_dir = Path(__file__).resolve().parent.parent.parent
+    return base_dir / "data" / "dnd_sim.db"
+
+
+def get_connection() -> sqlite3.Connection:
+    """Returns a configured SQLite connection with foreign keys enabled."""
+    db_path = get_db_path()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON;")
+    return conn
+
+
+def _table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+        (table_name,),
+    ).fetchone()
+    return row is not None
+
+
+def _table_columns(conn: sqlite3.Connection, table_name: str) -> list[str]:
+    rows = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+    return [str(row[1]) for row in rows]
+
+
+def _add_lineage_column_if_missing(
+    conn: sqlite3.Connection,
+    *,
+    column_name: str,
+    definition: str,
+) -> None:
+    columns = set(_table_columns(conn, CONTENT_RECORDS_TABLE))
+    if column_name in columns:
+        return
+    conn.execute(f"ALTER TABLE {CONTENT_RECORDS_TABLE} ADD COLUMN {column_name} {definition}")
+
+
+def _migrate_content_record_lineage_columns(conn: sqlite3.Connection) -> None:
+    if not _table_exists(conn, CONTENT_RECORDS_TABLE):
+        return
+
+    _add_lineage_column_if_missing(
+        conn,
+        column_name="source_hash",
+        definition="TEXT NOT NULL DEFAULT ''",
+    )
+    _add_lineage_column_if_missing(
+        conn,
+        column_name="source_path",
+        definition="TEXT NOT NULL DEFAULT ''",
+    )
+    _add_lineage_column_if_missing(
+        conn,
+        column_name="canonicalization_hash",
+        definition="TEXT NOT NULL DEFAULT ''",
+    )
+    _add_lineage_column_if_missing(
+        conn,
+        column_name="imported_at",
+        definition="TEXT NOT NULL DEFAULT ''",
+    )
+
+    rows = conn.execute("""
+        SELECT content_id, source_path, source_hash, canonicalization_hash, payload_json, imported_at
+        FROM content_records
+        """).fetchall()
+    for row in rows:
+        content_id = _required_text(str(row[0]), field_name="content_id")
+        payload_json = str(row[4])
+        payload_hash = _stable_payload_hash(payload_json)
+
+        source_path = str(row[1] or "").strip() or f"legacy:{content_id}"
+        source_hash = str(row[2] or "").strip() or payload_hash
+        canonicalization_hash = str(row[3] or "").strip() or payload_hash
+        imported_at = str(row[5] or "").strip() or LEGACY_IMPORTED_AT
+
+        conn.execute(
+            """
+            UPDATE content_records
+            SET source_path = ?, source_hash = ?, canonicalization_hash = ?, imported_at = ?
+            WHERE content_id = ?
+            """,
+            (source_path, source_hash, canonicalization_hash, imported_at, content_id),
+        )
+
+
+def create_content_metadata_tables(conn: sqlite3.Connection) -> None:
+    """Create canonical metadata tables for content records and support state."""
+    conn.execute(CONTENT_RECORDS_SCHEMA_SQL)
+    _migrate_content_record_lineage_columns(conn)
+    conn.execute(CONTENT_CAPABILITIES_SCHEMA_SQL)
+    for statement in CONTENT_METADATA_INDEXES_SQL:
+        conn.execute(statement)
+
+
+def create_campaign_state_tables(conn: sqlite3.Connection) -> None:
+    """Create campaign, encounter, world, and faction state persistence tables."""
+    conn.execute(CAMPAIGN_STATES_SCHEMA_SQL)
+    conn.execute(ENCOUNTER_STATES_SCHEMA_SQL)
+    conn.execute(WORLD_STATES_SCHEMA_SQL)
+    conn.execute(FACTION_STATES_SCHEMA_SQL)
+    for statement in CAMPAIGN_STATE_INDEXES_SQL:
+        conn.execute(statement)
+
+
+def init_db() -> None:
+    """Initializes the SQLite database schemas for the Hybrid JSON architecture."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS traits (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                data_json TEXT NOT NULL
+            )
+            """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS characters (
+                character_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                ac INTEGER NOT NULL,
+                max_hp INTEGER NOT NULL,
+                initiative_mod INTEGER,
+                data_json TEXT NOT NULL
+            )
+            """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS enemies (
+                enemy_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                team TEXT NOT NULL,
+                cr REAL,
+                ac INTEGER NOT NULL,
+                max_hp INTEGER NOT NULL,
+                initiative_mod INTEGER,
+                data_json TEXT NOT NULL
+            )
+            """)
+
+        create_content_metadata_tables(conn)
+        create_campaign_state_tables(conn)
+        conn.commit()
+
+
+def execute_query(query: str, params: tuple = ()) -> list[sqlite3.Row]:
+    """Helper to execute a query and fetch all rows."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        return cursor.fetchall()

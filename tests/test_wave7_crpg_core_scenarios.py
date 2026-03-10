@@ -22,11 +22,11 @@ from dnd_sim.exploration_interaction import (
     resolve_unlock,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
-from dnd_sim.persistence import (
+from dnd_sim.snapshot_codecs import (
     deserialize_world_exploration_state,
     serialize_world_exploration_state,
 )
-from dnd_sim.world_runtime import create_exploration_state, run_exploration_turn
+from dnd_sim.world_exploration_service import create_exploration_state, run_exploration_turn
 
 
 def _actor(actor_id: str, *, team: str) -> ActorRuntimeState:

@@ -12,7 +12,7 @@ from dnd_sim.engine_runtime import (
     long_rest,
     short_rest,
 )
-from dnd_sim.io import load_character_db, load_scenario
+from dnd_sim.io import load_character_db, load_runtime_scenario
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_enemy, with_class_levels
@@ -359,7 +359,7 @@ def test_chr05_integration_declared_bardic_inspiration_is_deterministic(tmp_path
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": BardInspirationPlanStrategy(),
@@ -398,7 +398,7 @@ def test_declared_bardic_inspiration_without_resource_is_rejected(tmp_path: Path
         },
         max_rounds=1,
     )
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = {
         "party_strategy": IllegalBardNoResourcePlanStrategy(),

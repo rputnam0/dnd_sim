@@ -380,7 +380,8 @@ def run_custom_simulation(
         raise ValueError("Expected exactly one non-monk party member for druid role.")
     druid = by_id[druid_party_ids[0]]
 
-    custom_cfg = (scenario.config.assumption_overrides or {}).get("custom_sim", {})
+    harness = getattr(scenario.config, "internal_harness", None)
+    custom_cfg = dict(harness.custom_sim_settings) if harness is not None else {}
     emit_plots = bool(custom_cfg.get("emit_plots", True))
     emit_report = bool(custom_cfg.get("emit_report", True))
     emit_trial_rows = bool(custom_cfg.get("emit_trial_rows", True))

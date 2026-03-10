@@ -2,18 +2,20 @@ from __future__ import annotations
 
 import pytest
 
-from dnd_sim.world_runtime import (
+from dnd_sim.world_contracts import (
     REST_LONG,
     REST_SHORT,
     ForagingOutcome,
     NavigationOutcome,
     TravelPartyMemberState,
+)
+from dnd_sim.world_exploration_service import create_exploration_state
+from dnd_sim.world_travel_service import (
     day_cycle_phase,
     plan_travel_pace,
     resolve_foraging,
     resolve_navigation,
     run_travel_and_rest_cycle,
-    create_exploration_state,
 )
 
 

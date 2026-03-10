@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from dnd_sim.db import get_connection, init_db
+from dnd_sim.db_schema import get_connection, init_db
 from dnd_sim.monster_backfill import backfill_monster_payload
 
 

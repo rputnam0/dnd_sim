@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: qa-gate  
-Last updated: 2026-03-05  
+Last updated: 2026-03-09  
 Canonical source: `docs/program/README.md`
 
 ## Global requirements for every task
@@ -132,3 +132,13 @@ A completion branch is green only when:
 - integrated campaign/world/combat scenarios pass,
 - agent-only maintenance gate passes,
 - doc consistency gate passes.
+
+## Wave 8 Stabilization
+
+Required coverage:
+- public-vs-internal scenario contract tests,
+- portable path-resolution tests for live scenario content,
+- negative validation tests for internal harness fields in public content,
+- adapter regression tests proving replay/reporting outputs remain deterministic after runtime responsibility shifts,
+- persistence/data-integrity negative tests for malformed content and stale saved-state failure clarity,
+- live-doc truth tests for Wave 8 activation and gap-matrix registration.

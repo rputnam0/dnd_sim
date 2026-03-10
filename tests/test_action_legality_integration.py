@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from dnd_sim.engine import TurnDeclarationValidationError, run_simulation
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_character, build_enemy
 from tests.test_engine_integration import _setup_env
@@ -57,7 +57,7 @@ def _load_fixture(tmp_path: Path):
         max_rounds=2,
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     return loaded, db
 

@@ -6,15 +6,15 @@ from pathlib import Path
 
 import pytest
 
-import dnd_sim.db as db_module
 import dnd_sim.content_index as content_index
 import dnd_sim.cli as cli_module
+from dnd_sim import db_content_store, db_schema
 
 
 def _seed_content(conn: sqlite3.Connection) -> None:
-    db_module.create_content_metadata_tables(conn)
+    db_schema.create_content_metadata_tables(conn)
 
-    db_module.upsert_content_record(
+    db_content_store.upsert_content_record(
         conn,
         content_id="spell:shield|PHB",
         content_type="spell",
@@ -26,7 +26,7 @@ def _seed_content(conn: sqlite3.Connection) -> None:
         payload_json={"name": "Shield", "level": 1},
         imported_at="2026-03-05T10:00:00+00:00",
     )
-    db_module.upsert_content_capability(
+    db_content_store.upsert_content_capability(
         conn,
         content_id="spell:shield|PHB",
         content_type="spell",
@@ -35,7 +35,7 @@ def _seed_content(conn: sqlite3.Connection) -> None:
         last_verified_commit="abc1234",
     )
 
-    db_module.upsert_content_record(
+    db_content_store.upsert_content_record(
         conn,
         content_id="spell:misty_step|PHB",
         content_type="spell",
@@ -47,7 +47,7 @@ def _seed_content(conn: sqlite3.Connection) -> None:
         payload_json={"name": "Misty Step", "level": 2},
         imported_at="2026-03-05T10:00:01+00:00",
     )
-    db_module.upsert_content_capability(
+    db_content_store.upsert_content_capability(
         conn,
         content_id="spell:misty_step|PHB",
         content_type="spell",
@@ -56,7 +56,7 @@ def _seed_content(conn: sqlite3.Connection) -> None:
         last_verified_commit="abc1234",
     )
 
-    db_module.upsert_content_record(
+    db_content_store.upsert_content_record(
         conn,
         content_id="trait:alertness",
         content_type="trait",
@@ -68,7 +68,7 @@ def _seed_content(conn: sqlite3.Connection) -> None:
         payload_json={"name": "Alertness", "mechanics": []},
         imported_at="1970-01-01T00:00:00+00:00",
     )
-    db_module.upsert_content_capability(
+    db_content_store.upsert_content_capability(
         conn,
         content_id="trait:alertness",
         content_type="trait",
@@ -147,7 +147,7 @@ def test_query_api_filters_support_schema_and_lineage_fields(tmp_path: Path) -> 
         legacy_enemy_rows = content_index.query_content_records(conn, content_type="enemy")
         assert [row["content_id"] for row in legacy_enemy_rows] == ["enemy:goblin_1"]
         assert legacy_enemy_rows[0]["storage_origin"] == "legacy_blob"
-        assert legacy_enemy_rows[0]["support_state"] == db_module.LEGACY_BLOB_SUPPORT_STATE
+        assert legacy_enemy_rows[0]["support_state"] == db_schema.LEGACY_BLOB_SUPPORT_STATE
 
 
 def test_cli_coverage_snapshot(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

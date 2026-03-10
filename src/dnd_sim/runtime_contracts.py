@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 DEFAULT_AGENT_INDEX_PATH = Path("docs/agent_index.yaml")
 DEFAULT_OWNERSHIP_GLOBS = ("src/dnd_sim/*.py",)
@@ -20,6 +20,38 @@ TRACE_KEYWORDS = (
     "traces",
     "telemetry",
 )
+
+
+@runtime_checkable
+class ContentProvider(Protocol):
+    def resolve_content_path(self, reference: str, *, scenario_path: Path) -> Path:
+        """Resolve a public or internal content reference into a deterministic local path."""
+
+
+@runtime_checkable
+class CampaignStateStore(Protocol):
+    def save_campaign_snapshot(self, *, campaign_id: str, snapshot: dict[str, Any]) -> None:
+        """Persist one canonical campaign snapshot."""
+
+    def load_campaign_snapshot(self, *, campaign_id: str) -> dict[str, Any]:
+        """Load one canonical campaign snapshot."""
+
+
+@runtime_checkable
+class ReplayReporter(Protocol):
+    def build_trial_rows(self, trials: list[Any]) -> list[dict[str, Any]]:
+        """Project authoritative trial results into deterministic replay rows."""
+
+    def build_summary(
+        self,
+        *,
+        run_id: str,
+        scenario_id: str,
+        trials: int,
+        trial_results: list[Any],
+        tracked_resource_names: dict[str, set[str]],
+    ) -> Any:
+        """Project authoritative trial results into a report-friendly summary object."""
 
 
 @dataclass(frozen=True, slots=True)

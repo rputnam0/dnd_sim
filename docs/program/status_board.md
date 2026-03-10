@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-08  
+Last updated: 2026-03-09  
 Canonical source: `docs/program/backlog.csv`
 
 Use this document as the human dashboard.  
@@ -24,6 +24,13 @@ Wave 5 baseline remains merged to `main`.
 
 Wave 6 remains closed as historical truth for its declared strict shipped-2014 parity scope.
 Wave 7 closeout is merged on `main` and completes the remaining CRPG-core hardening surfaces: canonical itemization, canonical class/subclass progression, and deterministic stealth/search/trap/lock interaction loops.
+Wave 8 is now active and exists to finish Section 2 stabilization for the Part 1 product target.
+
+Current repo interpretation:
+
+- The repo is an authoritative simulation and campaign core.
+- The repo is not yet the full Part 1 product backend.
+- Wave 8 focuses on truthful baseline control, portability, creator-safe boundaries, and core extraction seams before any broader product expansion.
 
 Wave 6 remediation state:
 
@@ -59,11 +66,23 @@ Wave 6 remediation state:
 | CLS | Wave 7 Class/Subclass Hard-Cut | merged | 7b-classes | Canonical class/subclass catalogs, progression builder wiring, capability coverage, and multiclass edge handling are merged. |
 | EXP | Wave 7 Stealth and Dungeon Interaction | merged | 7c-exploration | Hidden/detected/surprised state, interactables, persistence, and lightweight social support are merged. |
 | W7GATE | Wave 7 Gates and Closeout | merged | 7d-gates | Capability expansion, CRPG-core scenario gates, artifact rebuilds, and doc truth-sync are merged. |
+| W8AUD | Wave 8 Truthful Baseline and Audit | in_progress | 8a-truth-audit | Gap matrix, baseline truth reset, and live doc truth updates are implemented on `codex/wave8-section2-stabilization`; merge is the remaining step. |
+| W8PRT | Wave 8 Portability and Environment Hardening | in_progress | 8b-portability | Live scenario/tool path portability hardening and portability coverage are implemented on `codex/wave8-section2-stabilization`; merge is the remaining step. |
+| W8CRT | Wave 8 Creator-Boundary Hardening | in_progress | 8c-creator-boundary | Public/internal scenario split, validation fences, and internal harness relocation are implemented on `codex/wave8-section2-stabilization`; merge is the remaining step. |
+| W8ARC | Wave 8 Core Contract Decomposition | in_progress | 8d-core-contracts | Engine/runtime, world-service, persistence, and db facades now route to narrower modules on `codex/wave8-section2-stabilization`; merge is the remaining step. |
+| W8DAT | Wave 8 Persistence and Data Integrity Hardening | in_progress | 8e-data-hardening | Snapshot codecs/store separation, persistence failure-clarity coverage, and creator-boundary negatives are implemented on `codex/wave8-section2-stabilization`; merge is the remaining step. |
+| W8GATE | Wave 8 Section 2 Gates and Closeout | in_progress | 8f-gates | `uv run python -m pytest`, `uv run python scripts/docs/verify_program_docs.py`, and `uv run python scripts/content/verify_completion_capabilities.py --strict` are green on `codex/wave8-section2-stabilization`; merge is the remaining step. |
 
 ## Active branches
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| W8-AUD-01 | codex/wave8-section2-stabilization | program_control | in_progress | Wave 8 docs, gap matrix, and truthful baseline reset are implemented on the active branch and waiting on merge. |
+| W8-PRT-01 | codex/wave8-section2-stabilization | portability_core | in_progress | Live portable path refs, public-content path validation, and portability tests are implemented on the active branch and waiting on merge. |
+| W8-CRT-01 | codex/wave8-section2-stabilization | creator_boundary | in_progress | Public/internal scenario split, internal harness move, and creator-boundary validation gates are implemented on the active branch and waiting on merge. |
+| W8-ARC-01 | codex/wave8-section2-stabilization | runtime_report | in_progress | Engine artifact handoff plus world/persistence/db facade decomposition are implemented on the active branch and waiting on merge. |
+| W8-DAT-01 | codex/wave8-section2-stabilization | data_integrity | in_progress | Persistence/codec decomposition, stale-state failure clarity, and public-content negative validation coverage are implemented on the active branch and waiting on merge. |
+| W8-GATE-01 | codex/wave8-section2-stabilization | program_control | in_progress | Full Wave 8 gate commands are green on the active branch and waiting on merge. |
 
 ## Queued execution batches
 
@@ -82,6 +101,7 @@ Draft carryovers [#220](https://github.com/rputnam0/dnd_sim/pull/220) and [#222]
 - Wave 5 dependencies remain fully satisfied and merged on `main`.
 - Wave 6 CUT, UNI, PAR, and GATE dependencies are satisfied and merged on `main`.
 - Wave 7 is fully merged in `docs/program/backlog.csv` and promoted as historical closeout truth on `main`.
+- Wave 8 is now the active backlog wave and tracks Section 2 stabilization rather than new product-surface expansion.
 - Strict FIN-02 is now fully green on `main` with 0 blocked shipped records.
 - No strict unsupported-reason families remain.
 - `docs/program/parity_batch_registry.csv` is now the historical execution map for the fully merged parity closeout wave.

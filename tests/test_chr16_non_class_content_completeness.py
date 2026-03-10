@@ -47,7 +47,7 @@ def test_chr16_catalog_exposes_2014_non_class_content_ids() -> None:
 def test_chr16_load_character_db_normalizes_multi_source_content_refs(
     tmp_path, monkeypatch
 ) -> None:
-    monkeypatch.setattr("dnd_sim.db.execute_query", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr("dnd_sim.db_schema.execute_query", lambda *_args, **_kwargs: [])
 
     db_dir = tmp_path / "characters"
     db_dir.mkdir(parents=True, exist_ok=True)
@@ -143,7 +143,7 @@ def test_chr16_load_character_db_normalizes_multi_source_content_refs(
 def test_chr16_load_character_db_rejects_invalid_content_references(
     tmp_path, monkeypatch, content_refs: list[str], match: str
 ) -> None:
-    monkeypatch.setattr("dnd_sim.db.execute_query", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr("dnd_sim.db_schema.execute_query", lambda *_args, **_kwargs: [])
 
     db_dir = tmp_path / "characters"
     db_dir.mkdir(parents=True, exist_ok=True)
@@ -204,7 +204,7 @@ def test_chr16_load_character_db_rejects_invalid_content_refs_from_sqlite_rows(
             "data_json": json.dumps(broken_character),
         },
     ]
-    monkeypatch.setattr("dnd_sim.db.execute_query", lambda *_args, **_kwargs: sqlite_rows)
+    monkeypatch.setattr("dnd_sim.db_schema.execute_query", lambda *_args, **_kwargs: sqlite_rows)
 
     with pytest.raises(
         ValueError,

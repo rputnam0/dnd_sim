@@ -10,7 +10,7 @@ from dnd_sim.characters import (
     normalize_class_levels,
     parse_class_levels_strict,
 )
-from dnd_sim.db import get_db_path
+from dnd_sim.db_schema import get_db_path
 
 _CHARACTERS_SCHEMA_WITH_CLASS_LEVEL = """
 CREATE TABLE characters (

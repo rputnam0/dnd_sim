@@ -4,8 +4,8 @@ import sqlite3
 
 import pytest
 
-import dnd_sim.db as db_module
-from dnd_sim.persistence import (
+from dnd_sim import db_schema
+from dnd_sim.snapshot_store import (
     load_campaign_snapshot,
     load_encounter_snapshot,
     save_campaign_snapshot,
@@ -45,7 +45,7 @@ def _campaign_snapshot() -> dict[str, object]:
 
 def test_campaign_state_round_trip_preserves_canonical_snapshot_and_hash() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         snapshot = _campaign_snapshot()
 
         save_campaign_snapshot(conn, campaign_id="campaign_alpha", snapshot=snapshot)
@@ -83,7 +83,7 @@ def test_campaign_state_round_trip_preserves_canonical_snapshot_and_hash() -> No
 
 def test_encounter_state_round_trip_links_campaign_and_replay() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         save_campaign_snapshot(
             conn,
             campaign_id="campaign_alpha",
@@ -120,7 +120,7 @@ def test_encounter_state_round_trip_links_campaign_and_replay() -> None:
 
 def test_campaign_snapshot_rejects_legacy_shape_under_hard_cut_policy() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         with pytest.raises(ValueError, match="missing required keys|unexpected keys"):
             save_campaign_snapshot(
                 conn,
@@ -137,7 +137,7 @@ def test_campaign_snapshot_rejects_legacy_shape_under_hard_cut_policy() -> None:
 
 def test_load_campaign_snapshot_rejects_corrupt_json_payload() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         save_campaign_snapshot(conn, campaign_id="campaign_alpha", snapshot=_campaign_snapshot())
         conn.execute(
             "UPDATE campaign_states SET active_effects_json = ? WHERE campaign_id = ?",
@@ -151,7 +151,7 @@ def test_load_campaign_snapshot_rejects_corrupt_json_payload() -> None:
 
 def test_load_campaign_snapshot_rejects_hash_mismatch_corruption() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         save_campaign_snapshot(conn, campaign_id="campaign_alpha", snapshot=_campaign_snapshot())
         conn.execute(
             "UPDATE campaign_states SET snapshot_hash = ? WHERE campaign_id = ?",

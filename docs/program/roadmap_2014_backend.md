@@ -2,12 +2,14 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-08  
+Last updated: 2026-03-09  
 Canonical source: `docs/program/README.md`
 
 ## Objective
 
-Complete the simulator as a greenfield, feature-complete D&D 5e 2014 engine and world platform that is maintained primarily by agentic coding agents. Every delivery must optimize for explicit boundaries, deterministic behavior, machine-readable support status, structured errors, and replayable observability.
+Stabilize the simulator as an authoritative D&D 5e 2014 engine and campaign core that can safely grow toward the Part 1 product. Every delivery must optimize for explicit boundaries, deterministic behavior, machine-readable support status, structured errors, and replayable observability.
+
+Current program rule: do not describe the repository as the complete Part 1 product backend while Wave 8 is active. Wave 8 exists to finish Section 2 stabilization before AI DM, dialogue, live session, and creator-tooling expansion.
 
 ## Baseline already merged
 
@@ -16,6 +18,35 @@ Complete the simulator as a greenfield, feature-complete D&D 5e 2014 engine and 
 - The legacy decommission program is baseline complete.
 
 Treat all new work below as the active completion program.
+
+## Wave 8 stabilization (active)
+
+Wave 8 is the live program wave and maps directly to Section 2 of the product roadmap.
+
+Wave 8 objective:
+
+- keep the current deterministic kernel green and truthful,
+- remove machine-local assumptions from live content and tools,
+- split creator/public content from internal executable harnesses,
+- narrow core runtime responsibilities and record truthful waivers,
+- harden persistence/data-integrity contracts before later product expansion.
+
+Wave 8 workstreams:
+
+- 8A Truthful Baseline and Section 1 Gap Audit
+- 8B Portability and Environment Hardening
+- 8C Creator-Boundary Hardening
+- 8D Core Contract Decomposition
+- 8E Persistence and Data Integrity Hardening
+- 8F Section 2 Gates and Closeout
+
+Wave 8 non-goals:
+
+- building the governed AI DM runtime,
+- authored dialogue/cinematic conversation systems,
+- live browser-session or multiplayer service architecture,
+- creator editor/publishing tooling,
+- claiming the Part 1 one-shot product fantasy is already complete.
 
 ## Wave 7 closeout (merged)
 

@@ -10,7 +10,7 @@ from dnd_sim.io import (
     default_results_dir,
     load_character_db,
     load_custom_simulation_runner,
-    load_scenario,
+    load_runtime_scenario,
     load_strategy_registry,
     load_traits_db,
     write_json,
@@ -52,7 +52,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     args = build_parser().parse_args()
 
-    loaded = load_scenario(args.scenario)
+    loaded = load_runtime_scenario(args.scenario)
     db_dir = (Path(loaded.config.character_db_dir)).resolve()
     character_db = load_character_db(db_dir)
     traits_db = _load_traits_db_for_run(db_dir)

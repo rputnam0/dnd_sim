@@ -16,7 +16,7 @@ from dnd_sim.engine_runtime import (
     long_rest,
     short_rest,
 )
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.rules_2014 import apply_damage
 from tests.helpers import build_enemy, with_class_levels
@@ -201,7 +201,7 @@ def test_chr04_integration_multiclass_rage_inference_survives_scenario_build(
         max_rounds=1,
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
     registry = load_strategy_registry(loaded)
     artifacts = run_simulation(

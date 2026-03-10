@@ -26,9 +26,11 @@ from dnd_sim.exploration_interaction import (
     resolve_unlock,
     serialize_interaction_state,
 )
-from dnd_sim.world_runtime import (
+from dnd_sim.world_contracts import (
     ExplorationState,
     LightSourceState,
+)
+from dnd_sim.world_exploration_service import (
     create_exploration_state,
     run_exploration_turn,
 )

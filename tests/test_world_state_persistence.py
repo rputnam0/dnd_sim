@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import sqlite3
 
-import dnd_sim.db as db_module
 import pytest
-from dnd_sim.persistence import (
+from dnd_sim import db_schema
+from dnd_sim.snapshot_store import (
     load_faction_snapshot,
     load_world_snapshot,
     save_campaign_snapshot,
@@ -32,7 +32,7 @@ def _campaign_snapshot() -> dict[str, object]:
 
 def test_world_state_lifecycle_persists_flags_and_wave_progression() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         save_campaign_snapshot(conn, campaign_id="campaign_alpha", snapshot=_campaign_snapshot())
 
         initial_snapshot = {
@@ -114,7 +114,7 @@ def test_world_state_lifecycle_persists_flags_and_wave_progression() -> None:
 
 def test_world_snapshot_rejects_legacy_shape_under_hard_cut_policy() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         save_campaign_snapshot(conn, campaign_id="campaign_beta", snapshot=_campaign_snapshot())
         with pytest.raises(ValueError, match="missing required keys|unexpected keys"):
             save_world_snapshot(
@@ -140,7 +140,7 @@ def test_world_snapshot_rejects_legacy_shape_under_hard_cut_policy() -> None:
 
 def test_faction_state_round_trip_preserves_reputation_and_state() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         save_campaign_snapshot(conn, campaign_id="campaign_gamma", snapshot=_campaign_snapshot())
         save_world_snapshot(
             conn,
@@ -225,7 +225,7 @@ def test_faction_state_round_trip_preserves_reputation_and_state() -> None:
 
 def test_faction_snapshot_rejects_legacy_alias_keys_under_hard_cut_policy() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         save_campaign_snapshot(conn, campaign_id="campaign_hard_cut", snapshot=_campaign_snapshot())
         save_world_snapshot(
             conn,
@@ -252,7 +252,7 @@ def test_faction_snapshot_rejects_legacy_alias_keys_under_hard_cut_policy() -> N
 
 def test_load_world_snapshot_rejects_corrupt_json_payload() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         save_campaign_snapshot(conn, campaign_id="campaign_delta", snapshot=_campaign_snapshot())
         save_world_snapshot(
             conn,
@@ -276,7 +276,7 @@ def test_load_world_snapshot_rejects_corrupt_json_payload() -> None:
 
 def test_load_faction_snapshot_rejects_hash_mismatch_corruption() -> None:
     with _memory_connection() as conn:
-        db_module.create_campaign_state_tables(conn)
+        db_schema.create_campaign_state_tables(conn)
         save_campaign_snapshot(conn, campaign_id="campaign_epsilon", snapshot=_campaign_snapshot())
         save_world_snapshot(
             conn,

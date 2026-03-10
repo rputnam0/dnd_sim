@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from dnd_sim.engine_runtime import run_simulation
-from dnd_sim.io import load_character_db, load_scenario, load_strategy_registry
+from dnd_sim.engine import run_simulation
+from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
 from tests.helpers import build_character, build_enemy
 from tests.runtime_test_support import _setup_env
 
@@ -31,7 +31,7 @@ def test_runtime_entrypoint_fixed_seed_replays_identically(tmp_path: Path) -> No
         },
     )
 
-    loaded = load_scenario(scenario_path)
+    loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
     db = load_character_db(Path(loaded.config.character_db_dir))
 

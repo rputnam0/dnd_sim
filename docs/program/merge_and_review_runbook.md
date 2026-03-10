@@ -30,7 +30,7 @@ The following hotspots require dependency-ordered merges and rebases after every
 - `src/dnd_sim/rules_2014.py`
 - `src/dnd_sim/strategy_api.py`
 - `src/dnd_sim/strategies/defaults.py`
-- `src/dnd_sim/db.py`
+- `src/dnd_sim/db_schema.py`
 - `docs/agent_index.yaml`
 - `docs/program/backlog.csv`
 - `docs/program/status_board.md`

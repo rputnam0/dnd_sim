@@ -239,7 +239,6 @@
   "condition_immunities": [
     "poisoned"
   ],
-  "script_hooks": {},
   "traits": [
     "Immutable Form"
   ]

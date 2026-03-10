@@ -66,7 +66,7 @@ Each worker prompt must include:
 
 ## Failure handling
 
-- If a hotspot task conflicts on `engine.py`, `spatial.py`, `rules_2014.py`, `strategy_api.py`, `strategies/defaults.py`, `db.py`, or `docs/program/*`, rebase that task before any further code changes.
+- If a hotspot task conflicts on `engine.py`, `spatial.py`, `rules_2014.py`, `strategy_api.py`, `strategies/defaults.py`, `db_schema.py`, or `docs/program/*`, rebase that task before any further code changes.
 - If deterministic drift appears, block merge and open a replay diff report in the same branch.
 - If a task adds a runtime module without updating `docs/agent_index.yaml`, the task is not ready.
 - If a task changes live planning docs without updating `status_board.md`, the task is not ready.

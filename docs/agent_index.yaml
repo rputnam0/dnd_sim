@@ -86,7 +86,7 @@ subsystems:
   world_travel_runtime:
     owner_pool: world_explore_b
     owner_task: WLD-04
-    owner_module: src/dnd_sim/world_runtime.py
+    owner_module: src/dnd_sim/world_travel_service.py
     invariants:
       - "Travel pace normalization and segment planning remain deterministic for identical inputs."
       - "Navigation and foraging outcomes must produce structured results and preserve encounter-hook semantics."
@@ -94,7 +94,7 @@ subsystems:
     safe_edit_boundaries:
       - "Safe: additive travel/rest helper decomposition and validation hardening."
       - "Caution: WorldClock advancement, light decay side effects, and rest-resource recovery rules."
-      - "Do not introduce non-deterministic randomness into world_runtime travel services."
+      - "Do not introduce non-deterministic randomness into world travel services."
   exploration_interaction_runtime:
     owner_pool: world_explore_c
     owner_task: W7-EXP-03
@@ -270,4 +270,4 @@ policies:
     file_size_waivers:
       - module: src/dnd_sim/engine_runtime.py
         max_lines: 16000
-        reason: "Wave 6 hard-cut architecture keeps the canonical runtime execution orchestration centralized in engine_runtime.py while extraction tracks complete."
+        reason: "Wave 8 stabilization still keeps core combat and campaign orchestration centralized in engine_runtime.py while replay/reporting adapters and public-content boundary hardening move outward; further decomposition continues under W8-ARC-01."

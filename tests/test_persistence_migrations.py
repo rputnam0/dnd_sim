@@ -6,7 +6,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-import dnd_sim.db as db_module
+from dnd_sim import db_content_store, db_schema
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts/migrations/backfill_legacy_blob_content.py"
@@ -122,7 +122,7 @@ def test_backfill_migrates_legacy_blob_rows_into_canonical_tables() -> None:
             "enemy:goblin_1",
             "trait:alertness",
         ]
-        assert all(row[3] == db_module.LEGACY_BLOB_SCHEMA_VERSION for row in rows)
+        assert all(row[3] == db_schema.LEGACY_BLOB_SCHEMA_VERSION for row in rows)
         assert rows[0][4] == "legacy_db/characters/hero_1"
         assert rows[1][4] == "legacy_db/enemies/goblin_1"
         assert rows[2][4] == "legacy_db/traits/alertness"
@@ -132,9 +132,9 @@ def test_backfill_migrates_legacy_blob_rows_into_canonical_tables() -> None:
             FROM content_capabilities
             ORDER BY content_id
             """).fetchall()
-        assert all(row[1] == db_module.LEGACY_BLOB_SUPPORT_STATE for row in capability_rows)
+        assert all(row[1] == db_schema.LEGACY_BLOB_SUPPORT_STATE for row in capability_rows)
         assert all(row[2] is None for row in capability_rows)
-        assert all(row[3] == db_module.LEGACY_BLOB_LAST_VERIFIED_COMMIT for row in capability_rows)
+        assert all(row[3] == db_schema.LEGACY_BLOB_LAST_VERIFIED_COMMIT for row in capability_rows)
 
         # DBS-06 migration should leave canonical state tables present for mixed persistence reads.
         for table in ("campaign_states", "encounter_states", "world_states", "faction_states"):
@@ -151,9 +151,9 @@ def test_backfill_rollback_removes_only_legacy_backfilled_rows() -> None:
     with _memory_connection() as conn:
         _create_legacy_blob_tables(conn)
         _insert_legacy_rows(conn)
-        db_module.create_content_metadata_tables(conn)
+        db_schema.create_content_metadata_tables(conn)
 
-        db_module.upsert_content_record(
+        db_content_store.upsert_content_record(
             conn,
             content_id="spell:shield|PHB",
             content_type="spell",
@@ -165,7 +165,7 @@ def test_backfill_rollback_removes_only_legacy_backfilled_rows() -> None:
             payload_json={"name": "Shield", "level": 1},
             imported_at="2026-03-05T10:00:00+00:00",
         )
-        db_module.upsert_content_capability(
+        db_content_store.upsert_content_capability(
             conn,
             content_id="spell:shield|PHB",
             content_type="spell",
@@ -192,9 +192,9 @@ def test_mixed_old_new_read_prefers_canonical_and_falls_back_to_legacy_blob() ->
     with _memory_connection() as conn:
         _create_legacy_blob_tables(conn)
         _insert_legacy_rows(conn)
-        db_module.create_content_metadata_tables(conn)
+        db_schema.create_content_metadata_tables(conn)
 
-        db_module.upsert_content_record(
+        db_content_store.upsert_content_record(
             conn,
             content_id="trait:alertness",
             content_type="trait",
@@ -206,7 +206,7 @@ def test_mixed_old_new_read_prefers_canonical_and_falls_back_to_legacy_blob() ->
             payload_json={"name": "Alertness", "mechanics": [{"effect_type": "sense"}]},
             imported_at="2026-03-05T10:00:00+00:00",
         )
-        db_module.upsert_content_capability(
+        db_content_store.upsert_content_capability(
             conn,
             content_id="trait:alertness",
             content_type="trait",
@@ -215,8 +215,14 @@ def test_mixed_old_new_read_prefers_canonical_and_falls_back_to_legacy_blob() ->
             last_verified_commit="def5678",
         )
 
-        trait_record = db_module.fetch_content_record_compatible(conn, content_id="trait:alertness")
-        enemy_record = db_module.fetch_content_record_compatible(conn, content_id="enemy:goblin_1")
+        trait_record = db_content_store.fetch_content_record_compatible(
+            conn,
+            content_id="trait:alertness",
+        )
+        enemy_record = db_content_store.fetch_content_record_compatible(
+            conn,
+            content_id="enemy:goblin_1",
+        )
 
         assert trait_record is not None
         assert trait_record["storage_origin"] == "canonical"
@@ -227,10 +233,10 @@ def test_mixed_old_new_read_prefers_canonical_and_falls_back_to_legacy_blob() ->
         assert enemy_record["storage_origin"] == "legacy_blob"
         assert enemy_record["content_id"] == "enemy:goblin_1"
         assert enemy_record["source_path"] == "legacy_db/enemies/goblin_1"
-        assert enemy_record["support_state"] == db_module.LEGACY_BLOB_SUPPORT_STATE
+        assert enemy_record["support_state"] == db_schema.LEGACY_BLOB_SUPPORT_STATE
         assert enemy_record["payload_json"]["name"] == "Goblin"
 
-        all_records = db_module.fetch_content_records_compatible(conn)
+        all_records = db_content_store.fetch_content_records_compatible(conn)
         assert [row["content_id"] for row in all_records] == [
             "character:hero_1",
             "enemy:goblin_1",
