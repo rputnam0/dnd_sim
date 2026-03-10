@@ -24,6 +24,27 @@ class CandidateResult:
     mean_ki_spent: dict[str, float]
 
 
+def _get_internal_custom_sim_settings(payload: dict[str, Any]) -> dict[str, Any]:
+    internal_harness = payload.get("internal_harness", {})
+    if not isinstance(internal_harness, dict):
+        return {}
+    custom_sim_settings = internal_harness.get("custom_sim_settings", {})
+    if not isinstance(custom_sim_settings, dict):
+        return {}
+    return json.loads(json.dumps(custom_sim_settings))
+
+
+def _set_internal_custom_sim_settings(
+    payload: dict[str, Any],
+    *,
+    custom_sim_settings: dict[str, Any],
+) -> None:
+    internal_harness = payload.setdefault("internal_harness", {})
+    if not isinstance(internal_harness, dict):
+        raise ValueError("scenario internal_harness must be an object")
+    internal_harness["custom_sim_settings"] = custom_sim_settings
+
+
 def _deep_get(dct: dict[str, Any], path: str) -> Any:
     cur: Any = dct
     for part in path.split("."):
@@ -91,7 +112,7 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         type=Path,
         help=(
-            "JSON file mapping dot-path keys under assumption_overrides.custom_sim to lists of "
+            "JSON file mapping dot-path keys under internal_harness.custom_sim_settings to lists of "
             "candidate values. Example key: boss_phase_1.guilt_fog_dc"
         ),
     )
@@ -293,7 +314,7 @@ def main() -> None:
 
     base_loaded = load_runtime_scenario(args.scenario)
     base_raw = json.loads(Path(args.scenario).read_text(encoding="utf-8"))
-    custom_sim = base_raw.get("assumption_overrides", {}).get("custom_sim", {}).copy()
+    custom_sim = _get_internal_custom_sim_settings(base_raw)
 
     grid_raw = json.loads(args.grid.read_text(encoding="utf-8"))
     if not isinstance(grid_raw, dict) or not grid_raw:
@@ -338,12 +359,13 @@ def main() -> None:
             _deep_set(candidate_sim, path, value)
 
         candidate_raw = json.loads(json.dumps(base_raw))
-        candidate_raw.setdefault("assumption_overrides", {})
-        candidate_raw["assumption_overrides"].setdefault("custom_sim", {})
-        candidate_raw["assumption_overrides"]["custom_sim"] = candidate_sim
+        _set_internal_custom_sim_settings(
+            candidate_raw,
+            custom_sim_settings=candidate_sim,
+        )
 
         candidate_config = base_loaded.config.model_copy(
-            update={"assumption_overrides": candidate_raw.get("assumption_overrides", {})},
+            update={"internal_harness": candidate_raw.get("internal_harness", {})},
             deep=True,
         )
         candidate_loaded = base_loaded.model_copy(
@@ -453,12 +475,13 @@ def main() -> None:
             raise ValueError(f"--promote idx not found: {args.promote}")
         # Apply chosen overrides to the scenario JSON itself.
         promote_raw = json.loads(Path(args.scenario).read_text(encoding="utf-8"))
-        promote_custom = promote_raw.get("assumption_overrides", {}).get("custom_sim", {}).copy()
+        promote_custom = _get_internal_custom_sim_settings(promote_raw)
         for path, value in chosen.overrides.items():
             _deep_set(promote_custom, path, value)
-        promote_raw.setdefault("assumption_overrides", {})
-        promote_raw["assumption_overrides"].setdefault("custom_sim", {})
-        promote_raw["assumption_overrides"]["custom_sim"] = promote_custom
+        _set_internal_custom_sim_settings(
+            promote_raw,
+            custom_sim_settings=promote_custom,
+        )
         Path(args.scenario).write_text(json.dumps(promote_raw, indent=2) + "\n", encoding="utf-8")
 
         boss_cfg = _deep_get(promote_custom, "boss_phase_1")
