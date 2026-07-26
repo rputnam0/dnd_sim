@@ -23,6 +23,7 @@
     "unsupported_action_cost",
     "unsupported_action_mechanic_effect_type",
     "invalid_action_schema",
+    "non_executable_action_payload",
     "malformed_recharge_entry",
     "source_action_blocked",
     "missing_innate_spell_name",

@@ -15,7 +15,6 @@ from dnd_sim.io_models import ActionConfig, EnemyConfig, InnateSpellConfig
 from dnd_sim.mechanics_schema import (
     EXECUTABLE_EFFECT_TYPES,
     SPELL_METADATA_EFFECT_TYPES,
-    monster_has_executable_action_kit,
     validate_rule_mechanics_payload,
 )
 from dnd_sim.spells import canonicalize_spell_payload, slugify_spell_name
@@ -46,6 +45,45 @@ FEATURE_EXECUTABLE_EFFECT_TYPES = frozenset(
         "sense",
         "speed_increase",
     }
+)
+MONSTER_ACTION_RUNTIME_EFFECT_TYPES = frozenset(
+    {
+        "antimagic_field",
+        "apply_condition",
+        "command_allied",
+        "conjure",
+        "damage",
+        "dismount",
+        "forced_movement",
+        "hazard",
+        "heal",
+        "mount",
+        "next_attack_advantage",
+        "next_attack_disadvantage",
+        "persistent_zone",
+        "push",
+        "remove_condition",
+        "remove_wild_shape",
+        "resource_change",
+        "summon",
+        "temp_hp",
+        "transform",
+        "wild_shape",
+    }
+)
+MONSTER_ATTACK_FRAMEWORK_EFFECT_TYPES = frozenset(
+    {
+        "attack_replacement",
+        "attack_sequence",
+        "extra_attack",
+        "grant_extra_attack",
+        "multiattack_sequence",
+        "replace_attack",
+        "replacement_attack",
+    }
+)
+MONSTER_BUILTIN_UTILITY_ACTIONS = frozenset(
+    {"dash", "disengage", "dodge", "escape_grapple", "hide", "ready"}
 )
 
 
@@ -820,7 +858,7 @@ def _action_entry_states(
     normalized_payload["action_type"] = action_type
     normalized_payload["action_cost"] = action_cost
     try:
-        ActionConfig.model_validate(normalized_payload)
+        validated = ActionConfig.model_validate(normalized_payload)
     except ValidationError as exc:
         errors = exc.errors()
         if any(error.get("type") == "unsupported_action_mechanic_effect_type" for error in errors):
@@ -835,10 +873,65 @@ def _action_entry_states(
             reason = "invalid_action_schema"
         return _blocked_states(reason=reason, schema_valid=False)
 
+    if not _monster_action_has_runtime_effect(validated):
+        return _blocked_states(reason="non_executable_action_payload", schema_valid=True)
+
     return _supported_states()
 
 
-def _monster_base_states(payload: dict[str, Any]) -> CapabilityStates:
+def _action_effect_type(value: Any) -> str:
+    if isinstance(value, dict):
+        raw_value = value.get("effect_type", "")
+    else:
+        raw_value = getattr(value, "effect_type", "")
+    return str(raw_value).strip().lower()
+
+
+def _action_effect_can_fire(*, action_type: str, value: Any) -> bool:
+    if isinstance(value, dict):
+        apply_on = str(value.get("apply_on", "always")).strip().lower()
+    else:
+        apply_on = str(getattr(value, "apply_on", "always")).strip().lower()
+    possible_events = {
+        "attack": {"always", "hit", "miss"},
+        "save": {"always", "save_fail", "save_success"},
+        "utility": {"always"},
+    }
+    return apply_on in possible_events[action_type]
+
+
+def _monster_action_has_runtime_effect(action: ActionConfig) -> bool:
+    """Return whether the validated action can mutate a battle at runtime."""
+
+    effect_types = {
+        _action_effect_type(effect)
+        for effect in (*action.effects, *action.mechanics)
+        if _action_effect_can_fire(action_type=action.action_type, value=effect)
+    }
+    has_runtime_effect = bool(effect_types & MONSTER_ACTION_RUNTIME_EFFECT_TYPES)
+    has_attack_framework = bool(effect_types & MONSTER_ATTACK_FRAMEWORK_EFFECT_TYPES)
+    has_damage = bool(str(action.damage or "").strip())
+
+    if action.action_type == "attack":
+        return has_attack_framework or (
+            action.to_hit is not None and (has_damage or has_runtime_effect)
+        )
+    if action.action_type == "save":
+        return bool(
+            action.save_dc is not None
+            and action.save_ability
+            and (has_damage or has_runtime_effect)
+        )
+    return (
+        action.name.strip().lower() in MONSTER_BUILTIN_UTILITY_ACTIONS
+        or has_runtime_effect
+        or has_attack_framework
+    )
+
+
+def _monster_base_states(
+    payload: dict[str, Any], *, policy: MonsterCapabilityPolicy
+) -> CapabilityStates:
     identity = payload.get("identity")
     stat_block = payload.get("stat_block")
     if not isinstance(identity, dict):
@@ -851,9 +944,30 @@ def _monster_base_states(payload: dict[str, Any]) -> CapabilityStates:
         validated = EnemyConfig.model_validate(payload)
     except ValidationError:
         return _blocked_states(reason="invalid_monster_schema", schema_valid=False)
-    if not monster_has_executable_action_kit(validated.model_dump(mode="python")):
-        return _blocked_states(reason="missing_executable_action_kit", schema_valid=True)
-    return _supported_states()
+    action_groups = (
+        (validated.actions, "action"),
+        (validated.bonus_actions, "bonus"),
+        (validated.reactions, "reaction"),
+        (validated.legendary_actions, "legendary"),
+        (validated.lair_actions, "lair"),
+    )
+    for actions, default_action_cost in action_groups:
+        for action in actions:
+            states = _action_entry_states(
+                action_payload=action.model_dump(mode="python"),
+                policy=policy,
+                default_action_cost=default_action_cost,
+            )
+            if states.executable:
+                return _supported_states()
+    if validated.innate_spellcasting:
+        return _supported_states()
+    return _blocked_states(reason="missing_executable_action_kit", schema_valid=True)
+
+
+def _action_family_entries(payload: dict[str, Any], key: str) -> list[Any]:
+    entries = payload.get(key, [])
+    return entries if isinstance(entries, list) else []
 
 
 def _add_action_family_records(
@@ -983,7 +1097,7 @@ def build_monster_capability_records(
             CapabilityRecord(
                 content_id=f"monster:{monster_id}",
                 content_type="monster",
-                states=_monster_base_states(payload),
+                states=_monster_base_states(payload, policy=active_policy),
             )
         )
 
@@ -991,7 +1105,7 @@ def build_monster_capability_records(
             records=records,
             monster_id=monster_id,
             family="monster_action",
-            entries=list(payload.get("actions", [])),
+            entries=_action_family_entries(payload, "actions"),
             policy=active_policy,
             default_action_cost="action",
         )
@@ -999,7 +1113,7 @@ def build_monster_capability_records(
             records=records,
             monster_id=monster_id,
             family="monster_bonus_action",
-            entries=list(payload.get("bonus_actions", [])),
+            entries=_action_family_entries(payload, "bonus_actions"),
             policy=active_policy,
             default_action_cost="bonus",
         )
@@ -1007,7 +1121,7 @@ def build_monster_capability_records(
             records=records,
             monster_id=monster_id,
             family="monster_reaction",
-            entries=list(payload.get("reactions", [])),
+            entries=_action_family_entries(payload, "reactions"),
             policy=active_policy,
             default_action_cost="reaction",
         )
@@ -1015,7 +1129,7 @@ def build_monster_capability_records(
             records=records,
             monster_id=monster_id,
             family="monster_legendary_action",
-            entries=list(payload.get("legendary_actions", [])),
+            entries=_action_family_entries(payload, "legendary_actions"),
             policy=active_policy,
             default_action_cost="legendary",
         )
@@ -1023,14 +1137,14 @@ def build_monster_capability_records(
             records=records,
             monster_id=monster_id,
             family="monster_lair_action",
-            entries=list(payload.get("lair_actions", [])),
+            entries=_action_family_entries(payload, "lair_actions"),
             policy=active_policy,
             default_action_cost="lair",
         )
         _add_innate_spellcasting_records(
             records=records,
             monster_id=monster_id,
-            entries=list(payload.get("innate_spellcasting", [])),
+            entries=_action_family_entries(payload, "innate_spellcasting"),
             policy=active_policy,
         )
     return records

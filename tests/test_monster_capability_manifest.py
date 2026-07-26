@@ -114,6 +114,45 @@ def test_monster_action_support_marks_supported_entries_executable() -> None:
     assert by_id["monster:clockwork_sentry"].states.executable is True
 
 
+def test_runtime_noop_action_does_not_make_monster_executable() -> None:
+    payload = {
+        "identity": {"enemy_id": "silent_shell", "name": "Silent Shell", "team": "enemy"},
+        "stat_block": {"max_hp": 40, "ac": 14},
+        "actions": [{"name": "do_nothing", "action_type": "utility"}],
+    }
+
+    manifest = build_monster_capability_manifest(monster_payloads=[payload])
+    by_id = {record.content_id: record for record in manifest.records}
+
+    action = by_id["monster_action:silent_shell:do_nothing:1"]
+    assert action.states.schema_valid is True
+    assert action.states.executable is False
+    assert action.states.blocked is True
+    assert action.states.unsupported_reason == "non_executable_action_payload"
+
+    monster = by_id["monster:silent_shell"]
+    assert monster.states.schema_valid is True
+    assert monster.states.executable is False
+    assert monster.states.blocked is True
+    assert monster.states.unsupported_reason == "missing_executable_action_kit"
+
+
+def test_malformed_action_family_container_is_blocked_without_builder_crash() -> None:
+    payload = {
+        "identity": {"enemy_id": "bad_groups", "name": "Bad Groups", "team": "enemy"},
+        "stat_block": {"max_hp": 40, "ac": 14},
+        "actions": None,
+    }
+
+    manifest = build_monster_capability_manifest(monster_payloads=[payload])
+    monster = next(record for record in manifest.records if record.content_type == "monster")
+
+    assert monster.states.schema_valid is False
+    assert monster.states.executable is False
+    assert monster.states.blocked is True
+    assert monster.states.unsupported_reason == "invalid_monster_schema"
+
+
 def test_unknown_action_mechanic_blocks_action_and_parent_monster() -> None:
     payload = {
         "identity": {"enemy_id": "rift_mage", "name": "Rift Mage", "team": "enemy"},
