@@ -75,7 +75,9 @@ def _build_state() -> tuple[ActorView, BattleStateView]:
     return hero, state
 
 
-def test_same_strategy_with_different_tactical_bonus_action_choices_produces_distinct_plans() -> None:
+def test_same_strategy_with_different_tactical_bonus_action_choices_produces_distinct_plans() -> (
+    None
+):
     actor, state = _build_state()
 
     with_offhand = TacticalBonusChoiceStrategy(bonus_action_name="off_hand_attack").declare_turn(

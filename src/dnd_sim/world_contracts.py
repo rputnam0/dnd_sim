@@ -558,4 +558,3 @@ def _normalize_light_source_entry(
             is_lit=light.is_lit,
         )
     return _canonicalize_light(light)
-

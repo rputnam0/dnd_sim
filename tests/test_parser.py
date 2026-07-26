@@ -58,7 +58,10 @@ def test_character_db_write_is_idempotent(tmp_path: Path) -> None:
     index = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
     assert len(index["characters"]) == 3
     assert all("class_level" not in row for row in index["characters"])
-    assert all(isinstance(row.get("class_levels"), dict) and row["class_levels"] for row in index["characters"])
+    assert all(
+        isinstance(row.get("class_levels"), dict) and row["class_levels"]
+        for row in index["characters"]
+    )
     character_payload = json.loads((tmp_path / "isak_wissa.json").read_text(encoding="utf-8"))
     assert "class_level" not in character_payload
     assert character_payload["class_levels"] == {"monk": 8}

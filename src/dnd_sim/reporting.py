@@ -121,6 +121,10 @@ def build_report_markdown(
         "",
         f"- Party win rate: `{summary.get('party_win_rate', 0):.3f}`",
         f"- Enemy win rate: `{summary.get('enemy_win_rate', 0):.3f}`",
+        f"- Draw rate: `{summary.get('draw_rate', 0):.3f}`",
+        f"- Timeout rate: `{summary.get('timeout_rate', 0):.3f}`",
+        f"- Censored rate: `{summary.get('censored_rate', 0):.3f}`",
+        f"- Resolved rate: `{summary.get('resolved_rate', 1):.3f}`",
     ]
 
     rounds = summary.get("rounds", {})

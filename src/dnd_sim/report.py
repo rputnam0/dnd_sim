@@ -30,6 +30,28 @@ def _parse_int_field(value: Any, *, field_name: str) -> int:
         raise ValueError(f"Invalid integer value for '{field_name}': {value!r}") from exc
 
 
+def _parse_optional_text_field(value: Any) -> str | None:
+    if value in (None, ""):
+        return None
+    return str(value)
+
+
+def _parse_bool_field(value: Any, *, field_name: str, default: bool = False) -> bool:
+    if value in (None, ""):
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in {0, 1}:
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes"}:
+            return True
+        if normalized in {"false", "0", "no"}:
+            return False
+    raise ValueError(f"Invalid boolean value for '{field_name}': {value!r}")
+
+
 def _parse_json_object_field(value: Any, *, field_name: str) -> dict[str, Any]:
     if isinstance(value, dict):
         return {str(key): payload for key, payload in value.items()}
@@ -74,6 +96,9 @@ def _trial_result_from_row(row: dict[str, Any]) -> TrialResult:
         trial_index=_parse_int_field(row.get("trial_index"), field_name="trial_index"),
         rounds=_parse_int_field(row.get("rounds"), field_name="rounds"),
         winner=str(row.get("winner", "draw")),
+        outcome=_parse_optional_text_field(row.get("outcome")),
+        termination_reason=_parse_optional_text_field(row.get("termination_reason")),
+        censored=_parse_bool_field(row.get("censored"), field_name="censored"),
         damage_taken=_parse_json_int_dict_field(row.get("damage_taken"), field_name="damage_taken"),
         damage_dealt=_parse_json_int_dict_field(row.get("damage_dealt"), field_name="damage_dealt"),
         resources_spent=_parse_resources_spent_field(row.get("resources_spent")),

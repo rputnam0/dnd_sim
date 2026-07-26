@@ -4,8 +4,10 @@ import re
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic_core import PydanticCustomError
 
+from dnd_sim.mechanics_schema import KNOWN_EFFECT_TYPES
 from dnd_sim.spells import lookup_spell_definition as _lookup_spell_definition
 
 _RECHARGE_PATTERN = re.compile(
@@ -18,6 +20,20 @@ _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES = {
     "replace_attack",
     "replacement_attack",
 }
+_ATTACK_ACTION_EXTRA_EFFECT_TYPES = {"extra_attack", "grant_extra_attack"}
+_ACTION_RUNTIME_EFFECT_TYPES = {
+    "antimagic_field",
+    "persistent_zone",
+    "remove_wild_shape",
+    "wild_shape",
+}
+_KNOWN_ACTION_MECHANIC_EFFECT_TYPES = frozenset(
+    KNOWN_EFFECT_TYPES
+    | _ATTACK_ACTION_SEQUENCE_EFFECT_TYPES
+    | _ATTACK_ACTION_REPLACEMENT_EFFECT_TYPES
+    | _ATTACK_ACTION_EXTRA_EFFECT_TYPES
+    | _ACTION_RUNTIME_EFFECT_TYPES
+)
 
 
 def _spell_root_dir() -> Path:
@@ -149,6 +165,21 @@ class ActionConfig(BaseModel):
             effect_type = str(row.get("effect_type", "")).strip().lower()
             if not effect_type:
                 raise ValueError(f"mechanics[{index}] must define effect_type")
+            if effect_type not in _KNOWN_ACTION_MECHANIC_EFFECT_TYPES:
+                raise ValidationError.from_exception_data(
+                    cls.__name__,
+                    [
+                        {
+                            "type": PydanticCustomError(
+                                "unsupported_action_mechanic_effect_type",
+                                "mechanics[{index}].effect_type '{effect_type}' is unsupported",
+                                {"index": index, "effect_type": effect_type},
+                            ),
+                            "loc": (index, "effect_type"),
+                            "input": row.get("effect_type"),
+                        }
+                    ],
+                )
             payload = dict(row)
             payload["effect_type"] = effect_type
             normalized.append(payload)
@@ -262,6 +293,7 @@ class SummonEffectConfig(BaseModel):
     controller: Literal["source", "target"] | None = None
     controller_id: str | None = None
     mount: bool = False
+    uses_death_saves: bool = False
 
     @model_validator(mode="after")
     def validate_summon_identity(self) -> "SummonEffectConfig":
@@ -378,6 +410,7 @@ class EnemyConfig(BaseModel):
     identity: EnemyIdentityConfig
     stat_block: EnemyStatBlockConfig
     actions: list[ActionConfig]
+    uses_death_saves: bool = False
     bonus_actions: list[ActionConfig] = Field(default_factory=list)
     reactions: list[ActionConfig] = Field(default_factory=list)
     legendary_actions: list[ActionConfig] = Field(default_factory=list)
@@ -657,9 +690,7 @@ class ScenarioConfig(BaseModel):
         if not path_ref:
             raise ValueError("character_db_dir must be non-empty")
         if Path(path_ref).is_absolute():
-            raise ValueError(
-                "character_db_dir must be scenario-relative or repo-relative"
-            )
+            raise ValueError("character_db_dir must be scenario-relative or repo-relative")
         if path_ref.startswith("repo:") and not path_ref.split(":", 1)[1].strip().lstrip("/"):
             raise ValueError("repo-relative character_db_dir must include a repository path")
 

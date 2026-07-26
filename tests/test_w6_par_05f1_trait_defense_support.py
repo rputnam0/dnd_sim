@@ -54,7 +54,7 @@ def test_w6_par_05f1_registry_still_covers_this_slice() -> None:
     assert COVERED_F1_TRAIT_IDS <= owned_ids
 
 
-def test_trait_defense_support_covered_records_are_supported() -> None:
+def test_trait_defense_support_covered_records_are_non_executable_metadata() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
@@ -72,9 +72,13 @@ def test_trait_defense_support_covered_records_are_supported() -> None:
     for content_id in COVERED_F1_TRAIT_IDS:
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
         assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_w6_par_05f1_trait_files_use_meta_rows_only() -> None:
@@ -91,9 +95,9 @@ def test_w6_par_05f1_trait_files_use_meta_rows_only() -> None:
             assert isinstance(row, dict), f"{content_id} mechanics[{idx}] must be object"
             meta_type = str(row.get("meta_type", "")).strip()
             assert meta_type, f"{content_id} mechanics[{idx}] missing meta_type"
-            assert "effect_type" not in row, (
-                f"{content_id} mechanics[{idx}] must not define effect_type for F1 meta scope"
-            )
+            assert (
+                "effect_type" not in row
+            ), f"{content_id} mechanics[{idx}] must not define effect_type for F1 meta scope"
         issues = validate_rule_mechanics_payload(kind="trait", payload=payload)
         assert issues == [], f"{content_id} has schema issues: {issues}"
 

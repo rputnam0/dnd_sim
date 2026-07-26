@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "ruleset": "2014",
+  "evidence": [
+    {
+      "evidence_id": "pytest.spell.acid_arrow.base_hit.v1",
+      "kind": "pytest",
+      "content_id": "spell:acid_arrow",
+      "claims": [
+        "canonical_hydration",
+        "base_hit_damage_resolution",
+        "primary_effect_not_duplicated"
+      ],
+      "pytest_node_ids": [
+        "tests/test_w6_par_05i1_spell_damage_heal_conditions.py::test_w6_par_05i1_acid_arrow_uses_primary_attack_damage_once"
+      ]
+    },
+    {
+      "evidence_id": "pytest.spell.cure_wounds.base_heal.v1",
+      "kind": "pytest",
+      "content_id": "spell:cure_wounds",
+      "claims": [
+        "canonical_hydration",
+        "base_healing_resolution",
+        "primary_effect_not_duplicated"
+      ],
+      "pytest_node_ids": [
+        "tests/test_w6_par_05i1_spell_damage_heal_conditions.py::test_w6_par_05i1_cure_wounds_uses_primary_heal_once"
+      ]
+    },
+    {
+      "evidence_id": "pytest.spell.thunderwave.failed_save.v1",
+      "kind": "pytest",
+      "content_id": "spell:thunderwave",
+      "claims": [
+        "canonical_hydration",
+        "failed_save_damage_resolution",
+        "failed_save_forced_movement"
+      ],
+      "pytest_node_ids": [
+        "tests/test_w6_par_05i1_spell_damage_heal_conditions.py::test_w6_par_05i1_thunderwave_damage_and_push_share_canonical_runtime"
+      ]
+    }
+  ]
+}

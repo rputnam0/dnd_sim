@@ -43,7 +43,7 @@ class LegacyBasicStrategy(BaseStrategy):
             action=DeclaredAction(
                 action_name="basic",
                 targets=[TargetRef(actor_id=target.actor_id)],
-            )
+            ),
         )
 
 
@@ -256,10 +256,7 @@ def test_turn_only_strategy_without_legacy_methods_can_noop_turns(tmp_path: Path
         for event in result.trial_results[0].telemetry
         if event.get("telemetry_type") == "decision" and event.get("actor_id") == "hero"
     ]
-    assert any(
-        event.get("fallback_reason") == "declare_turn_none"
-        for event in hero_decisions
-    )
+    assert any(event.get("fallback_reason") == "declare_turn_none" for event in hero_decisions)
 
 
 def test_validate_strategy_instance_rejects_removed_legacy_methods() -> None:

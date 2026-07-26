@@ -8,8 +8,7 @@ from typing import Protocol
 
 
 class SupportsRandInt(Protocol):
-    def randint(self, a: int, b: int) -> int:
-        ...
+    def randint(self, a: int, b: int) -> int: ...
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

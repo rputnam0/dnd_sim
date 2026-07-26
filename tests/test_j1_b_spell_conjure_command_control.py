@@ -123,9 +123,9 @@ def test_j1_b_batch_uses_canonical_rows() -> None:
             for row in mechanics
             if isinstance(row, dict)
         }
-        assert EXPECTED_EFFECT_TYPES[slug].issubset(seen_effect_types), (
-            f"{slug} should include {EXPECTED_EFFECT_TYPES[slug]}"
-        )
+        assert EXPECTED_EFFECT_TYPES[slug].issubset(
+            seen_effect_types
+        ), f"{slug} should include {EXPECTED_EFFECT_TYPES[slug]}"
 
     for slug in ("dominate_beast", "dominate_monster", "dominate_person"):
         effects = _find_effects(_spell_payload(slug), "apply_condition")

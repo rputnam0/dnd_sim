@@ -127,7 +127,8 @@ def test_extract_single_target_family_adds_condition_and_sight_metadata(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine_runtime._load_spell_definition", lambda _name: _hold_person_spell_definition()
+        "dnd_sim.engine_runtime._load_spell_definition",
+        lambda _name: _hold_person_spell_definition(),
     )
 
     spells = _extract_spells_from_raw_fields(_hold_person_sheet_payload())
@@ -151,7 +152,8 @@ def test_single_target_hold_person_applies_condition_and_clears_on_concentration
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine_runtime._load_spell_definition", lambda _name: _hold_person_spell_definition()
+        "dnd_sim.engine_runtime._load_spell_definition",
+        lambda _name: _hold_person_spell_definition(),
     )
 
     spell_rows = _extract_spells_from_raw_fields(_hold_person_sheet_payload())
@@ -361,7 +363,8 @@ def test_single_target_spell_suppressed_by_invalid_state_and_line_of_effect(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
-        "dnd_sim.engine_runtime._load_spell_definition", lambda _name: _hold_person_spell_definition()
+        "dnd_sim.engine_runtime._load_spell_definition",
+        lambda _name: _hold_person_spell_definition(),
     )
 
     spell_rows = _extract_spells_from_raw_fields(_hold_person_sheet_payload())

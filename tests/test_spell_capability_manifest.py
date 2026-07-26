@@ -56,6 +56,7 @@ def test_spell_manifest_marks_executable_spells_supported() -> None:
     assert record.content_type == "spell"
     assert record.support_state == "supported"
     assert record.states.executable is True
+    assert record.states.tested is False
     assert record.states.blocked is False
     assert record.states.unsupported_reason is None
 

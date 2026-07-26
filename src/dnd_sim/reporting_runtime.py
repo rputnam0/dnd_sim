@@ -7,6 +7,31 @@ from dnd_sim.models import SimulationSummary, SummaryMetric, TrialResult
 
 logger = logging.getLogger(__name__)
 
+_TERMINAL_STATE_CONTRACT: dict[str, tuple[str, bool]] = {
+    "party_victory": ("party", False),
+    "enemy_victory": ("enemy", False),
+    "draw": ("draw", False),
+    "timeout": ("draw", True),
+    "censored": ("draw", True),
+}
+
+
+def _normalized_trial_outcome(trial: TrialResult) -> str:
+    outcome = str(trial.outcome or "").strip().lower()
+    aliases = {
+        "enemy_defeat": "party_victory",
+        "party": "party_victory",
+        "party_defeat": "enemy_victory",
+        "enemy": "enemy_victory",
+    }
+    if outcome:
+        return aliases.get(outcome, outcome)
+    if trial.winner == "party":
+        return "party_victory"
+    if trial.winner == "enemy":
+        return "enemy_victory"
+    return "draw"
+
 
 def _summary_metric(values: list[float]) -> SummaryMetric:
     ordered = sorted(values)
@@ -27,8 +52,39 @@ def build_simulation_summary(
     trial_results: list[TrialResult],
     tracked_resource_names: dict[str, set[str]],
 ) -> SimulationSummary:
-    party_wins = sum(1 for trial in trial_results if trial.winner == "party")
-    enemy_wins = sum(1 for trial in trial_results if trial.winner == "enemy")
+    if trials <= 0:
+        raise ValueError("trials must be greater than zero")
+    if trials != len(trial_results):
+        raise ValueError("trials must equal len(trial_results)")
+
+    outcomes = [_normalized_trial_outcome(trial) for trial in trial_results]
+    for trial, outcome in zip(trial_results, outcomes, strict=True):
+        expected = _TERMINAL_STATE_CONTRACT.get(outcome)
+        winner = str(trial.winner).strip().lower()
+        actual = (winner, bool(trial.censored))
+        if expected is None or actual != expected:
+            raise ValueError(
+                "invalid terminal state for trial "
+                f"{trial.trial_index}: outcome={outcome!r}, winner={winner!r}, "
+                f"censored={bool(trial.censored)!r}"
+            )
+
+    censored_flags = [bool(trial.censored) for trial in trial_results]
+    party_wins = sum(
+        outcome == "party_victory" and not is_censored
+        for outcome, is_censored in zip(outcomes, censored_flags, strict=True)
+    )
+    enemy_wins = sum(
+        outcome == "enemy_victory" and not is_censored
+        for outcome, is_censored in zip(outcomes, censored_flags, strict=True)
+    )
+    draws = sum(
+        outcome == "draw" and not is_censored
+        for outcome, is_censored in zip(outcomes, censored_flags, strict=True)
+    )
+    timeouts = sum(outcome == "timeout" for outcome in outcomes)
+    censored = sum(censored_flags)
+    resolved = sum(not flag for flag in censored_flags)
 
     actor_ids = sorted(trial_results[0].damage_taken.keys()) if trial_results else []
 
@@ -77,6 +133,10 @@ def build_simulation_summary(
         trials=trials,
         party_win_rate=party_wins / trials,
         enemy_win_rate=enemy_wins / trials,
+        draw_rate=draws / trials,
+        timeout_rate=timeouts / trials,
+        censored_rate=censored / trials,
+        resolved_rate=resolved / trials,
         rounds=_summary_metric([trial.rounds for trial in trial_results]),
         per_actor_damage_taken=per_actor_damage_taken,
         per_actor_damage_dealt=per_actor_damage_dealt,

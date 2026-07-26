@@ -7,10 +7,16 @@ import re
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from dnd_sim.capability_evidence import (
+    CapabilityEvidenceTarget,
+    CapabilityTestEvidenceRegistry,
+    build_evidence_overlay,
+)
 from dnd_sim.class_progression import DEFAULT_CLASSES_DIR, DEFAULT_SUBCLASSES_DIR
 from dnd_sim.items import DEFAULT_ITEMS_DIR, build_item_catalog
+from dnd_sim.io_models import ActionConfig, EnemyConfig, InnateSpellConfig
 from dnd_sim.mechanics_schema import (
     EXECUTABLE_EFFECT_TYPES,
     SPELL_METADATA_EFFECT_TYPES,
@@ -18,7 +24,7 @@ from dnd_sim.mechanics_schema import (
 )
 from dnd_sim.spells import canonicalize_spell_payload, slugify_spell_name
 
-MANIFEST_VERSION = "1.0"
+MANIFEST_VERSION = "1.1"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MONSTERS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "monsters"
 DEFAULT_FEATURES_DIR = REPO_ROOT / "db" / "rules" / "2014" / "traits"
@@ -33,7 +39,58 @@ CAPABILITY_STATE_KEYS = (
     "unsupported_reason",
 )
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
+_EVIDENCE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._:-]*$")
 FEATURE_SUPPORT_STATES = {"supported", "unsupported"}
+FEATURE_EXECUTABLE_EFFECT_TYPES = frozenset(
+    {
+        "damage_roll_floor",
+        "ignore_resistance",
+        "max_hp_increase",
+        "reaction_attack",
+        "reduce_damage_taken",
+        "sense",
+        "speed_increase",
+    }
+)
+MONSTER_ACTION_RUNTIME_EFFECT_TYPES = frozenset(
+    {
+        "antimagic_field",
+        "apply_condition",
+        "command_allied",
+        "conjure",
+        "damage",
+        "dismount",
+        "forced_movement",
+        "hazard",
+        "heal",
+        "mount",
+        "next_attack_advantage",
+        "next_attack_disadvantage",
+        "persistent_zone",
+        "push",
+        "remove_condition",
+        "remove_wild_shape",
+        "resource_change",
+        "summon",
+        "temp_hp",
+        "transform",
+        "wild_shape",
+    }
+)
+MONSTER_ATTACK_FRAMEWORK_EFFECT_TYPES = frozenset(
+    {
+        "attack_replacement",
+        "attack_sequence",
+        "extra_attack",
+        "grant_extra_attack",
+        "multiattack_sequence",
+        "replace_attack",
+        "replacement_attack",
+    }
+)
+MONSTER_BUILTIN_UTILITY_ACTIONS = frozenset(
+    {"dash", "disengage", "dodge", "escape_grapple", "hide", "ready"}
+)
 
 
 class CapabilityStates(BaseModel):
@@ -75,6 +132,7 @@ class CapabilityRecord(BaseModel):
     content_id: str
     content_type: str
     states: CapabilityStates
+    evidence_ids: tuple[str, ...] = ()
     runtime_hook_family: str | None = None
     support_state: str | None = None
 
@@ -96,20 +154,36 @@ class CapabilityRecord(BaseModel):
             raise ValueError("must be non-empty when provided")
         return normalized
 
+    @field_validator("evidence_ids")
+    @classmethod
+    def validate_evidence_ids(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        normalized = tuple(value.strip() for value in values)
+        if any(_EVIDENCE_ID_RE.fullmatch(value) is None for value in normalized):
+            raise ValueError("evidence_ids contain an invalid evidence identifier")
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("evidence_ids must be unique")
+        return tuple(sorted(normalized, key=str.casefold))
+
     @model_validator(mode="after")
     def validate_support_state_consistency(self) -> CapabilityRecord:
-        if self.support_state is None:
-            return self
-        normalized = self.support_state.strip().lower()
-        if normalized not in FEATURE_SUPPORT_STATES:
-            raise ValueError(f"unsupported support_state: {self.support_state}")
-        self.support_state = normalized
-        if normalized == "supported" and self.states.blocked:
-            raise ValueError("support_state supported cannot map to blocked states")
-        if normalized == "unsupported" and not self.states.blocked:
-            raise ValueError("support_state unsupported must map to blocked states")
-        if normalized == "unsupported" and self.states.unsupported_reason is None:
-            raise ValueError("unsupported records must declare states.unsupported_reason")
+        if self.support_state is not None:
+            normalized = self.support_state.strip().lower()
+            if normalized not in FEATURE_SUPPORT_STATES:
+                raise ValueError(f"unsupported support_state: {self.support_state}")
+            self.support_state = normalized
+            if normalized == "supported" and self.states.blocked:
+                raise ValueError("support_state supported cannot map to blocked states")
+            if normalized == "unsupported" and not self.states.blocked:
+                raise ValueError("support_state unsupported must map to blocked states")
+            if normalized == "unsupported" and self.states.unsupported_reason is None:
+                raise ValueError("unsupported records must declare states.unsupported_reason")
+
+        if self.states.tested != bool(self.evidence_ids):
+            raise ValueError("states.tested must equal bool(evidence_ids)")
+        if self.evidence_ids and (
+            not self.states.schema_valid or not self.states.executable or self.states.blocked
+        ):
+            raise ValueError("evidence_ids require schema-valid, executable, unblocked content")
         return self
 
 
@@ -194,6 +268,37 @@ def build_manifest(
     )
 
 
+def apply_capability_evidence(
+    *,
+    records: list[CapabilityRecord | dict[str, Any]],
+    registry: CapabilityTestEvidenceRegistry,
+) -> list[CapabilityRecord]:
+    """Apply traceable behavioral evidence to canonical capability records."""
+
+    normalized_records = [CapabilityRecord.model_validate(record) for record in records]
+    overlay = build_evidence_overlay(
+        targets=(
+            CapabilityEvidenceTarget(
+                content_id=record.content_id,
+                schema_valid=record.states.schema_valid,
+                executable=record.states.executable,
+                blocked=record.states.blocked,
+            )
+            for record in normalized_records
+        ),
+        registry=registry,
+    )
+
+    overlaid_records: list[CapabilityRecord] = []
+    for record in normalized_records:
+        evidence = overlay[record.content_id]
+        payload = record.model_dump(mode="python")
+        payload["states"]["tested"] = evidence.tested
+        payload["evidence_ids"] = evidence.evidence_ids
+        overlaid_records.append(CapabilityRecord.model_validate(payload))
+    return overlaid_records
+
+
 @lru_cache(maxsize=1)
 def load_monster_capability_policy(path: Path | None = None) -> MonsterCapabilityPolicy:
     source = (path or MONSTER_POLICY_PATH).resolve()
@@ -207,12 +312,18 @@ def _slug_token(value: Any, fallback: str) -> str:
     return text or fallback
 
 
-def _supported_states() -> CapabilityStates:
+def _supported_states(*, tested: bool = False) -> CapabilityStates:
+    """Build executable states without inferring behavioral test evidence.
+
+    Callers may set ``tested=True`` only when they have independent conformance evidence for the
+    exact content record. Catalog shape or runtime dispatchability alone is not test evidence.
+    """
+
     return CapabilityStates(
         cataloged=True,
         schema_valid=True,
         executable=True,
-        tested=True,
+        tested=tested,
         blocked=False,
         unsupported_reason=None,
     )
@@ -365,23 +476,36 @@ def _feature_hook_family_and_state(payload: dict[str, Any]) -> tuple[str, str, s
     if not mechanics:
         return "narrative", "unsupported", "missing_runtime_hook_family", True
 
-    has_effect_type = False
-    has_meta_type = False
-    for row in mechanics:
-        if not isinstance(row, dict):
-            return "invalid", "unsupported", "malformed_mechanics_payload", False
-        if str(row.get("effect_type", "")).strip():
-            has_effect_type = True
-        if str(row.get("meta_type", "")).strip():
-            has_meta_type = True
+    has_effect_type = any(
+        isinstance(row, dict) and bool(str(row.get("effect_type", "")).strip()) for row in mechanics
+    )
+    has_meta_type = any(
+        isinstance(row, dict) and bool(str(row.get("meta_type", "")).strip()) for row in mechanics
+    )
 
     if has_effect_type and has_meta_type:
-        return "effect_meta", "supported", None, True
-    if has_effect_type:
-        return "effect", "supported", None, True
-    if has_meta_type:
-        return "meta", "supported", None, True
-    return "narrative", "unsupported", "missing_runtime_hook_family", True
+        hook_family = "effect_meta"
+    elif has_effect_type:
+        hook_family = "effect"
+    elif has_meta_type:
+        hook_family = "meta"
+    else:
+        hook_family = "narrative"
+
+    issues = validate_rule_mechanics_payload(kind="feature", payload=payload)
+    if issues:
+        if any("unsupported" in issue for issue in issues):
+            return hook_family, "unsupported", "unsupported_effect_type", False
+        return "invalid", "unsupported", "invalid_mechanics_schema", False
+
+    has_executable_effect = any(
+        isinstance(row, dict)
+        and str(row.get("effect_type", "")).strip().lower() in FEATURE_EXECUTABLE_EFFECT_TYPES
+        for row in mechanics
+    )
+    if not has_executable_effect:
+        return hook_family, "unsupported", "non_executable_mechanics", True
+    return hook_family, "supported", None, True
 
 
 def build_feature_capability_records(
@@ -615,6 +739,24 @@ def _subclass_content_id(payload: dict[str, Any], *, index: int) -> str:
     return f"subclass:{subclass_id}_{class_id}|{source}"
 
 
+def _progression_feature_grants_are_valid(features: list[Any]) -> bool:
+    for feature in features:
+        if not isinstance(feature, dict):
+            return False
+        if not str(feature.get("name", "")).strip():
+            return False
+        raw_level = feature.get("level")
+        if isinstance(raw_level, bool):
+            return False
+        try:
+            level = int(raw_level)
+        except (TypeError, ValueError):
+            return False
+        if level < 1 or level > 20:
+            return False
+    return True
+
+
 def build_class_capability_records(
     *,
     class_payloads: list[dict[str, Any]],
@@ -633,9 +775,17 @@ def build_class_capability_records(
         elif not features:
             states = _blocked_states(reason="missing_class_features", schema_valid=True)
             support_state = "unsupported"
+        elif not _progression_feature_grants_are_valid(features):
+            states = _blocked_states(reason="invalid_class_feature_schema", schema_valid=False)
+            support_state = "unsupported"
         else:
-            states = _supported_states()
-            support_state = "supported"
+            # A progression list can grant feature names and spell-slot progression, but it does
+            # not prove that every granted class feature has executable 5e semantics.
+            states = _blocked_states(
+                reason="unverified_class_feature_semantics",
+                schema_valid=True,
+            )
+            support_state = "unsupported"
 
         records.append(
             CapabilityRecord(
@@ -690,9 +840,18 @@ def build_subclass_capability_records(
         elif not features:
             states = _blocked_states(reason="missing_subclass_features", schema_valid=True)
             support_state = "unsupported"
+        elif not _progression_feature_grants_are_valid(features):
+            states = _blocked_states(
+                reason="invalid_subclass_feature_schema",
+                schema_valid=False,
+            )
+            support_state = "unsupported"
         else:
-            states = _supported_states()
-            support_state = "supported"
+            states = _blocked_states(
+                reason="unverified_subclass_feature_semantics",
+                schema_valid=True,
+            )
+            support_state = "unsupported"
 
         records.append(
             CapabilityRecord(
@@ -736,22 +895,97 @@ def _action_entry_states(
     if not action_name:
         return _blocked_states(reason="missing_action_name", schema_valid=False)
 
-    action_type = str(action_payload.get("action_type", "")).strip().lower()
+    action_type = str(action_payload.get("action_type", "attack")).strip().lower()
     if not action_type:
         return _blocked_states(reason="missing_action_type", schema_valid=False)
     if action_type not in policy.supported_action_types:
-        return _blocked_states(reason="unsupported_action_type", schema_valid=True)
+        return _blocked_states(reason="unsupported_action_type", schema_valid=False)
 
     action_cost = str(action_payload.get("action_cost", default_action_cost)).strip().lower()
     if not action_cost:
         return _blocked_states(reason="missing_action_cost", schema_valid=False)
     if action_cost not in policy.supported_action_costs:
-        return _blocked_states(reason="unsupported_action_cost", schema_valid=True)
+        return _blocked_states(reason="unsupported_action_cost", schema_valid=False)
+
+    normalized_payload = dict(action_payload)
+    normalized_payload["name"] = action_name
+    normalized_payload["action_type"] = action_type
+    normalized_payload["action_cost"] = action_cost
+    try:
+        validated = ActionConfig.model_validate(normalized_payload)
+    except ValidationError as exc:
+        errors = exc.errors()
+        if any(error.get("type") == "unsupported_action_mechanic_effect_type" for error in errors):
+            reason = "unsupported_action_mechanic_effect_type"
+        elif any(tuple(error.get("loc", ()))[:1] == ("action_type",) for error in errors):
+            reason = "unsupported_action_type"
+        elif any(tuple(error.get("loc", ()))[:1] == ("action_cost",) for error in errors):
+            reason = "unsupported_action_cost"
+        elif any(tuple(error.get("loc", ()))[:1] == ("recharge",) for error in errors):
+            reason = "malformed_recharge_entry"
+        else:
+            reason = "invalid_action_schema"
+        return _blocked_states(reason=reason, schema_valid=False)
+
+    if not _monster_action_has_runtime_effect(validated):
+        return _blocked_states(reason="non_executable_action_payload", schema_valid=True)
 
     return _supported_states()
 
 
-def _monster_base_states(payload: dict[str, Any]) -> CapabilityStates:
+def _action_effect_type(value: Any) -> str:
+    if isinstance(value, dict):
+        raw_value = value.get("effect_type", "")
+    else:
+        raw_value = getattr(value, "effect_type", "")
+    return str(raw_value).strip().lower()
+
+
+def _action_effect_can_fire(*, action_type: str, value: Any) -> bool:
+    if isinstance(value, dict):
+        apply_on = str(value.get("apply_on", "always")).strip().lower()
+    else:
+        apply_on = str(getattr(value, "apply_on", "always")).strip().lower()
+    possible_events = {
+        "attack": {"always", "hit", "miss"},
+        "save": {"always", "save_fail", "save_success"},
+        "utility": {"always"},
+    }
+    return apply_on in possible_events[action_type]
+
+
+def _monster_action_has_runtime_effect(action: ActionConfig) -> bool:
+    """Return whether the validated action can mutate a battle at runtime."""
+
+    effect_types = {
+        _action_effect_type(effect)
+        for effect in (*action.effects, *action.mechanics)
+        if _action_effect_can_fire(action_type=action.action_type, value=effect)
+    }
+    has_runtime_effect = bool(effect_types & MONSTER_ACTION_RUNTIME_EFFECT_TYPES)
+    has_attack_framework = bool(effect_types & MONSTER_ATTACK_FRAMEWORK_EFFECT_TYPES)
+    has_damage = bool(str(action.damage or "").strip())
+
+    if action.action_type == "attack":
+        return has_attack_framework or (
+            action.to_hit is not None and (has_damage or has_runtime_effect)
+        )
+    if action.action_type == "save":
+        return bool(
+            action.save_dc is not None
+            and action.save_ability
+            and (has_damage or has_runtime_effect)
+        )
+    return (
+        action.name.strip().lower() in MONSTER_BUILTIN_UTILITY_ACTIONS
+        or has_runtime_effect
+        or has_attack_framework
+    )
+
+
+def _monster_base_states(
+    payload: dict[str, Any], *, policy: MonsterCapabilityPolicy
+) -> CapabilityStates:
     identity = payload.get("identity")
     stat_block = payload.get("stat_block")
     if not isinstance(identity, dict):
@@ -760,7 +994,34 @@ def _monster_base_states(payload: dict[str, Any]) -> CapabilityStates:
         return _blocked_states(reason="missing_monster_identity", schema_valid=False)
     if not isinstance(stat_block, dict):
         return _blocked_states(reason="missing_monster_stat_block", schema_valid=False)
-    return _supported_states()
+    try:
+        validated = EnemyConfig.model_validate(payload)
+    except ValidationError:
+        return _blocked_states(reason="invalid_monster_schema", schema_valid=False)
+    action_groups = (
+        (validated.actions, "action"),
+        (validated.bonus_actions, "bonus"),
+        (validated.reactions, "reaction"),
+        (validated.legendary_actions, "legendary"),
+        (validated.lair_actions, "lair"),
+    )
+    for actions, default_action_cost in action_groups:
+        for action in actions:
+            states = _action_entry_states(
+                action_payload=action.model_dump(mode="python"),
+                policy=policy,
+                default_action_cost=default_action_cost,
+            )
+            if states.executable:
+                return _supported_states()
+    if validated.innate_spellcasting:
+        return _supported_states()
+    return _blocked_states(reason="missing_executable_action_kit", schema_valid=True)
+
+
+def _action_family_entries(payload: dict[str, Any], key: str) -> list[Any]:
+    entries = payload.get(key, [])
+    return entries if isinstance(entries, list) else []
 
 
 def _add_action_family_records(
@@ -843,7 +1104,19 @@ def _add_innate_spellcasting_records(
             spell_name = str(entry.get("spell", "")).strip()
             token = _slug_token(spell_name, fallback)
             if spell_name:
-                states = _supported_states()
+                try:
+                    InnateSpellConfig.model_validate(entry)
+                except ValidationError as exc:
+                    if any(
+                        "Unknown innate spell reference" in str(error.get("msg", ""))
+                        for error in exc.errors()
+                    ):
+                        reason = "unknown_innate_spell_reference"
+                    else:
+                        reason = "invalid_innate_spell_schema"
+                    states = _blocked_states(reason=reason, schema_valid=False)
+                else:
+                    states = _supported_states()
             else:
                 states = _blocked_states(reason="missing_innate_spell_name", schema_valid=False)
         else:
@@ -878,7 +1151,7 @@ def build_monster_capability_records(
             CapabilityRecord(
                 content_id=f"monster:{monster_id}",
                 content_type="monster",
-                states=_monster_base_states(payload),
+                states=_monster_base_states(payload, policy=active_policy),
             )
         )
 
@@ -886,15 +1159,23 @@ def build_monster_capability_records(
             records=records,
             monster_id=monster_id,
             family="monster_action",
-            entries=list(payload.get("actions", [])),
+            entries=_action_family_entries(payload, "actions"),
             policy=active_policy,
             default_action_cost="action",
         )
         _add_action_family_records(
             records=records,
             monster_id=monster_id,
+            family="monster_bonus_action",
+            entries=_action_family_entries(payload, "bonus_actions"),
+            policy=active_policy,
+            default_action_cost="bonus",
+        )
+        _add_action_family_records(
+            records=records,
+            monster_id=monster_id,
             family="monster_reaction",
-            entries=list(payload.get("reactions", [])),
+            entries=_action_family_entries(payload, "reactions"),
             policy=active_policy,
             default_action_cost="reaction",
         )
@@ -902,7 +1183,7 @@ def build_monster_capability_records(
             records=records,
             monster_id=monster_id,
             family="monster_legendary_action",
-            entries=list(payload.get("legendary_actions", [])),
+            entries=_action_family_entries(payload, "legendary_actions"),
             policy=active_policy,
             default_action_cost="legendary",
         )
@@ -910,14 +1191,14 @@ def build_monster_capability_records(
             records=records,
             monster_id=monster_id,
             family="monster_lair_action",
-            entries=list(payload.get("lair_actions", [])),
+            entries=_action_family_entries(payload, "lair_actions"),
             policy=active_policy,
             default_action_cost="lair",
         )
         _add_innate_spellcasting_records(
             records=records,
             monster_id=monster_id,
-            entries=list(payload.get("innate_spellcasting", [])),
+            entries=_action_family_entries(payload, "innate_spellcasting"),
             policy=active_policy,
         )
     return records

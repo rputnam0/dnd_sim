@@ -1,31 +1,31 @@
-name: completion-capability-gate
+name: capability-catalog-integrity
 
 on:
   pull_request:
-    branches:
-      - "int/5i-completion-gates"
     paths:
+      - "db/rules/2014/**"
+      - "src/dnd_sim/**"
       - "artifacts/capabilities/**"
-      - "scripts/content/verify_completion_capabilities.py"
-      - "tests/test_completion_capabilities.py"
+      - "scripts/content/**"
+      - "scripts/mechanics_coverage.py"
+      - "tests/**"
       - "docs/program/capability_report.md"
-      - "docs/program/status_board.md"
-      - "docs/program/backlog.csv"
       - ".github/workflows/completion-capability-gate.yml"
   push:
     branches:
-      - "codex/feat/fin-02-enforce-full-capability-manifest-green-gate-for-sh"
+      - "main"
     paths:
+      - "db/rules/2014/**"
+      - "src/dnd_sim/**"
       - "artifacts/capabilities/**"
-      - "scripts/content/verify_completion_capabilities.py"
-      - "tests/test_completion_capabilities.py"
+      - "scripts/content/**"
+      - "scripts/mechanics_coverage.py"
+      - "tests/**"
       - "docs/program/capability_report.md"
-      - "docs/program/status_board.md"
-      - "docs/program/backlog.csv"
       - ".github/workflows/completion-capability-gate.yml"
 
 jobs:
-  verify-completion-capabilities:
+  verify-capability-catalog-integrity:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -37,8 +37,14 @@ jobs:
       - name: Sync dependencies
         run: uv sync --frozen --extra dev
 
-      - name: Run completion capability gate
+      - name: Run structural capability catalog gate
         run: uv run python scripts/content/verify_completion_capabilities.py
 
-      - name: Run completion capability tests
-        run: uv run python -m pytest tests/test_completion_capabilities.py
+      - name: Run declared supported-pack evidence gate
+        run: uv run python scripts/content/verify_completion_capabilities.py --supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json
+
+      - name: Run strict mechanics gate for declared support
+        run: uv run python scripts/mechanics_coverage.py --strict --supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json
+
+      - name: Run capability catalog tests
+        run: uv run python -m pytest tests/test_completion_capabilities.py tests/test_capability_evidence.py tests/test_mechanics_coverage_cli.py

@@ -58,17 +58,18 @@ def _setup_env(
             "enemy_defeat": "all_dead",
             "max_rounds": 10,
         },
-        "internal_harness": {"strategy_modules": [
-            {
-                "name": "focus_fire_lowest_hp",
-                "source": "builtin",
-                "class_name": "FocusFireLowestHPStrategy",
-            },
-            {
-                "name": "boss_highest_threat_target",
-                "source": "builtin",
-                "class_name": "BossHighestThreatTargetStrategy",
-            },
+        "internal_harness": {
+            "strategy_modules": [
+                {
+                    "name": "focus_fire_lowest_hp",
+                    "source": "builtin",
+                    "class_name": "FocusFireLowestHPStrategy",
+                },
+                {
+                    "name": "boss_highest_threat_target",
+                    "source": "builtin",
+                    "class_name": "BossHighestThreatTargetStrategy",
+                },
             ]
         },
         "resource_policy": {

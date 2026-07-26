@@ -10,6 +10,7 @@ from dnd_sim.mechanics_schema import validate_rule_mechanics_payload
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = REPO_ROOT / "docs/program/parity_leaf_registry.csv"
 
+
 def _w6_par_05h2_trait_ids() -> set[str]:
     with REGISTRY_PATH.open(newline="", encoding="utf-8") as handle:
         ids = {
@@ -21,7 +22,7 @@ def _w6_par_05h2_trait_ids() -> set[str]:
     return ids
 
 
-def test_w6_par_05h2_trait_records_are_supported() -> None:
+def test_w6_par_05h2_trait_records_are_non_executable_metadata() -> None:
     owned_ids = _w6_par_05h2_trait_ids()
 
     manifest = build_feature_capability_manifest()
@@ -41,9 +42,13 @@ def test_w6_par_05h2_trait_records_are_supported() -> None:
     for content_id in sorted(owned_ids):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
         assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_w6_par_05h2_trait_files_use_canonical_mechanics() -> None:

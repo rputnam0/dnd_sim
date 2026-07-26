@@ -43,7 +43,7 @@ def test_item_manifest_marks_supported_items_executable() -> None:
     assert record.states.blocked is False
 
 
-def test_class_and_subclass_manifests_emit_first_class_records() -> None:
+def test_class_and_subclass_manifests_do_not_claim_unverified_feature_semantics() -> None:
     class_manifest = build_class_capability_manifest(
         class_payloads=[
             {
@@ -72,9 +72,37 @@ def test_class_and_subclass_manifests_emit_first_class_records() -> None:
     subclass_record = subclass_manifest.records[0]
 
     assert class_record.content_type == "class"
-    assert class_record.support_state == "supported"
+    assert class_record.support_state == "unsupported"
+    assert class_record.states.schema_valid is True
+    assert class_record.states.executable is False
+    assert class_record.states.blocked is True
+    assert class_record.states.unsupported_reason == "unverified_class_feature_semantics"
     assert subclass_record.content_type == "subclass"
-    assert subclass_record.support_state == "supported"
+    assert subclass_record.support_state == "unsupported"
+    assert subclass_record.states.schema_valid is True
+    assert subclass_record.states.executable is False
+    assert subclass_record.states.blocked is True
+    assert subclass_record.states.unsupported_reason == "unverified_subclass_feature_semantics"
+
+
+def test_class_manifest_rejects_malformed_feature_grants() -> None:
+    manifest = build_class_capability_manifest(
+        class_payloads=[
+            {
+                "content_id": "class:broken|TEST",
+                "class_id": "broken",
+                "name": "Broken",
+                "source_book": "TEST",
+                "features": [{"name": "", "level": 0}],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.states.schema_valid is False
+    assert record.states.executable is False
+    assert record.states.blocked is True
+    assert record.states.unsupported_reason == "invalid_class_feature_schema"
 
 
 def test_discover_shipped_ids_includes_item_class_and_subclass(tmp_path: Path) -> None:

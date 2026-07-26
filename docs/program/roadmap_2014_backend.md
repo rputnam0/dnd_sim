@@ -168,8 +168,11 @@ Capability states:
 CAP-01 canonical schema and storage contract:
 - Canonical storage format is UTF-8 JSON with deterministic key ordering (`sort_keys=true`) and a trailing newline.
 - Canonical manifest root fields are `manifest_version`, `generated_at`, and `records`.
-- Every record must include `content_id`, `content_type`, and `states`.
+- Every record must include `content_id`, `content_type`, `states`, and `evidence_ids`.
 - `states` must include `cataloged`, `schema_valid`, `executable`, `tested`, `blocked`, and `unsupported_reason`.
+- `tested` must equal `bool(evidence_ids)`; evidence identifiers must resolve through the
+  canonical test-evidence registry and may only attach to schema-valid, executable, unblocked
+  records.
 - `blocked=true` requires a non-empty `unsupported_reason`; `blocked=false` requires `unsupported_reason=null`.
 - Canonical emission command is `uv run python -m dnd_sim.capability_manifest --input <source.json> --out artifacts/capabilities/<name>.manifest.json`.
 - CLI emission must normalize record ordering by `(content_type, content_id)`.

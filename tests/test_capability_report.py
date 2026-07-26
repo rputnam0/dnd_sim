@@ -7,7 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from dnd_sim.capability_manifest import CapabilityRecord, CapabilityStates
+from dnd_sim.capability_manifest import (
+    CapabilityRecord,
+    CapabilityStates,
+    build_manifest,
+    write_manifest,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts/content/render_capability_report.py"
@@ -34,6 +39,7 @@ def _record(
         content_type=content_type,
         support_state=support_state,
         runtime_hook_family=runtime_hook_family,
+        evidence_ids=() if blocked else (f"pytest.{content_type}.behavior.v1",),
         states=CapabilityStates(
             cataloged=True,
             schema_valid=True,
@@ -84,6 +90,8 @@ def test_build_coverage_report_aggregates_expected_counts() -> None:
         {"count": 1, "unsupported_reason": "missing_runtime_hook_family"},
         {"count": 1, "unsupported_reason": "unsupported_action_cost"},
     ]
+    report_by_id = {row["content_id"]: row for row in report["records"]}
+    assert report_by_id["spell:arc_flash"]["evidence_ids"] == ("pytest.spell.behavior.v1",)
 
 
 def test_cli_outputs_are_stable_and_sorted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -104,7 +112,7 @@ def test_cli_outputs_are_stable_and_sorted(tmp_path: Path, monkeypatch: pytest.M
     monkeypatch.setattr(
         render_capability_report,
         "collect_capability_records",
-        lambda: list(records),
+        lambda _manifest_path: list(records),
     )
     assert (
         render_capability_report.main(
@@ -147,6 +155,23 @@ def test_cli_outputs_are_stable_and_sorted(tmp_path: Path, monkeypatch: pytest.M
     assert first_json == second_json
 
 
+def test_collect_capability_records_reads_the_canonical_manifest(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    write_manifest(
+        build_manifest(
+            records=[
+                _record(content_id="spell:zeta", content_type="spell", blocked=False),
+                _record(content_id="spell:alpha", content_type="spell", blocked=False),
+            ]
+        ),
+        manifest_path,
+    )
+
+    records = render_capability_report.collect_capability_records(manifest_path)
+
+    assert [record.content_id for record in records] == ["spell:alpha", "spell:zeta"]
+
+
 def test_render_markdown_report_snapshot() -> None:
     report = render_capability_report.build_coverage_report(
         records=[
@@ -185,6 +210,12 @@ Do not edit manually.
 ## Artifacts
 
 - Machine-readable JSON: `artifacts/capabilities/coverage_report.json`
+
+## Interpretation
+
+- `Executable` means a validated, content-type-specific runtime consumer exists; it does not by itself prove complete rules semantics.
+- `Tested` means the record links registered exact behavioral-test evidence; it is never inferred from catalog or schema validity.
+- Blocked records remain cataloged so unsupported shipped content is visible instead of silently degrading at runtime.
 
 ## Coverage Summary
 
