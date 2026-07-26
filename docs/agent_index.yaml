@@ -143,6 +143,19 @@ subsystems:
       - "Safe: extracting helper methods and tightening orchestration-level contracts."
       - "Caution: round start/end ordering and initiative tie-breaking behavior."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  interactive_session:
+    owner_pool: runtime_interactive
+    owner_task: VTT-00
+    owner_module: src/dnd_sim/interactive/
+    invariants:
+      - "Every accepted command is serialized at the session boundary and advances revision exactly once."
+      - "Canonical event sequences are contiguous, immutable to callers, and deterministic for identical version pins, state, RNG, and commands."
+      - "Preview, stale, failed, duplicate, and version-mismatched commands do not mutate canonical state or consume canonical RNG."
+      - "Snapshots preserve version-pinned state, RNG, events, idempotency records, and pending reactions with an integrity checksum."
+    safe_edit_boundaries:
+      - "Safe: additive versioned contract fields, driver adapters, and stronger snapshot validation with migration coverage."
+      - "Caution: idempotency lookup order, revision/event assignment, canonical JSON, and RNG restoration."
+      - "Do not couple this boundary to HTTP/WebSocket concerns or duplicate rules resolution in a session driver."
   action_legality_runtime:
     owner_pool: runtime_b
     owner_task: ARC-02
