@@ -51,11 +51,23 @@ def build_simulation_summary(
     trials: int,
     trial_results: list[TrialResult],
     tracked_resource_names: dict[str, set[str]],
+    rules_profile_id: str | None = None,
+    rules_profile_version: str | None = None,
 ) -> SimulationSummary:
     if trials <= 0:
         raise ValueError("trials must be greater than zero")
     if trials != len(trial_results):
         raise ValueError("trials must equal len(trial_results)")
+    expected_profile = (rules_profile_id, rules_profile_version)
+    if (rules_profile_id is None) != (rules_profile_version is None):
+        raise ValueError("rules profile ID and version must be provided together")
+    for trial in trial_results:
+        trial_profile = (trial.rules_profile_id, trial.rules_profile_version)
+        if trial_profile != expected_profile:
+            raise ValueError(
+                "trial rules profile does not match summary profile: "
+                f"trial {trial.trial_index} has {trial_profile}, expected {expected_profile}"
+            )
 
     outcomes = [_normalized_trial_outcome(trial) for trial in trial_results]
     for trial, outcome in zip(trial_results, outcomes, strict=True):
@@ -130,6 +142,8 @@ def build_simulation_summary(
     return SimulationSummary(
         run_id=run_id,
         scenario_id=scenario_id,
+        rules_profile_id=rules_profile_id,
+        rules_profile_version=rules_profile_version,
         trials=trials,
         party_win_rate=party_wins / trials,
         enemy_win_rate=enemy_wins / trials,

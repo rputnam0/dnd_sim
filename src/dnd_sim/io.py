@@ -69,6 +69,7 @@ from dnd_sim.io_runtime import (
     write_json,
     write_trial_rows,
 )
+from dnd_sim.rules_profiles import load_supported_rules_profile
 
 logger = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -804,6 +805,16 @@ def _load_validated_scenario(
     scenario: RuntimeScenarioConfig,
     public_contract: bool,
 ) -> LoadedScenario:
+    rules_profile = load_supported_rules_profile(
+        profile_id=scenario.rules_profile_id,
+        profile_version=scenario.rules_profile_version,
+    )
+    if rules_profile.ruleset != scenario.ruleset:
+        raise ValueError(
+            "rules profile ruleset mismatch: "
+            f"scenario uses {scenario.ruleset}, profile uses {rules_profile.ruleset}"
+        )
+
     _assert_capability_gate(
         required_content_types=set(_CAPABILITY_MONSTER_CONTENT_TYPES),
         source="load_public_scenario" if public_contract else "load_runtime_scenario",
@@ -882,6 +893,7 @@ def _load_validated_scenario(
         scenario_path=str(scenario_path),
         config=scenario,
         enemies=enemies,
+        rules_profile=rules_profile,
     )
 
 

@@ -132,6 +132,13 @@ def test_rules_profile_schema_rejects_unknown_fields_and_invalid_versions() -> N
             _profile_payload(compatibility={"rules_runtime_api": "2.0"})
         )
 
+    internal_name_payload = _profile_payload()
+    zero_hp = internal_name_payload["zero_hit_point_policy"]
+    assert isinstance(zero_hp, dict)
+    zero_hp["construct_actor"] = zero_hp.pop("construct")
+    with pytest.raises(ValidationError, match="construct"):
+        SupportedRulesProfile.model_validate(internal_name_payload)
+
 
 def test_loader_can_retain_multiple_exact_profile_versions(tmp_path: Path) -> None:
     profile_dir = tmp_path / "test_combat_profile"

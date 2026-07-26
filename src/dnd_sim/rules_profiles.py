@@ -28,7 +28,6 @@ class _StrictProfileModel(BaseModel):
         extra="forbid",
         frozen=True,
         strict=True,
-        populate_by_name=True,
         serialize_by_alias=True,
     )
 

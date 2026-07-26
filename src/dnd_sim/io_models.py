@@ -8,6 +8,11 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from pydantic_core import PydanticCustomError
 
 from dnd_sim.mechanics_schema import KNOWN_EFFECT_TYPES
+from dnd_sim.rules_profiles import (
+    DEFAULT_RULES_PROFILE_ID,
+    DEFAULT_RULES_PROFILE_VERSION,
+    SupportedRulesProfile,
+)
 from dnd_sim.spells import lookup_spell_definition as _lookup_spell_definition
 
 _RECHARGE_PATTERN = re.compile(
@@ -293,7 +298,7 @@ class SummonEffectConfig(BaseModel):
     controller: Literal["source", "target"] | None = None
     controller_id: str | None = None
     mount: bool = False
-    uses_death_saves: bool = False
+    uses_death_saves: bool | None = None
 
     @model_validator(mode="after")
     def validate_summon_identity(self) -> "SummonEffectConfig":
@@ -410,7 +415,7 @@ class EnemyConfig(BaseModel):
     identity: EnemyIdentityConfig
     stat_block: EnemyStatBlockConfig
     actions: list[ActionConfig]
-    uses_death_saves: bool = False
+    uses_death_saves: bool | None = None
     bonus_actions: list[ActionConfig] = Field(default_factory=list)
     reactions: list[ActionConfig] = Field(default_factory=list)
     legendary_actions: list[ActionConfig] = Field(default_factory=list)
@@ -618,6 +623,8 @@ class ScenarioConfig(BaseModel):
     scenario_id: str
     encounter_id: str
     ruleset: str
+    rules_profile_id: str = DEFAULT_RULES_PROFILE_ID
+    rules_profile_version: str = DEFAULT_RULES_PROFILE_VERSION
     character_db_dir: str
     party: list[str]
     enemies: list[str] = Field(default_factory=list)
@@ -711,3 +718,4 @@ class LoadedScenario(BaseModel):
     scenario_path: str
     config: RuntimeScenarioConfig
     enemies: dict[str, EnemyConfig]
+    rules_profile: SupportedRulesProfile

@@ -96,6 +96,8 @@ def _trial_result_from_row(row: dict[str, Any]) -> TrialResult:
         trial_index=_parse_int_field(row.get("trial_index"), field_name="trial_index"),
         rounds=_parse_int_field(row.get("rounds"), field_name="rounds"),
         winner=str(row.get("winner", "draw")),
+        rules_profile_id=_parse_optional_text_field(row.get("rules_profile_id")),
+        rules_profile_version=_parse_optional_text_field(row.get("rules_profile_version")),
         outcome=_parse_optional_text_field(row.get("outcome")),
         termination_reason=_parse_optional_text_field(row.get("termination_reason")),
         censored=_parse_bool_field(row.get("censored"), field_name="censored"),

@@ -116,6 +116,11 @@ def build_report_markdown(
         f"- Run ID: `{summary.get('run_id', 'unknown')}`",
         f"- Trials: `{summary.get('trials', 0)}`",
         f"- Seed: `{run_config.get('seed', 'unknown')}`",
+        f"- Ruleset: `{run_config.get('ruleset', 'unknown')}`",
+        "- Rules profile: "
+        f"`{run_config.get('rules_profile_id', summary.get('rules_profile_id', 'unknown'))}"
+        "@"
+        f"{run_config.get('rules_profile_version', summary.get('rules_profile_version', 'unknown'))}`",
         "",
         "## Outcome Overview",
         "",

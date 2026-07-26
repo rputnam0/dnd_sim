@@ -1286,6 +1286,8 @@ def apply_damage_bundle(
     _sync_rage_state(target)
     resolution = resolve_damage_bundle(target, bundle, source=source)
     adjusted = resolution.applied_total
+    if target.dead:
+        return resolution
     if adjusted > 0 and _rage_benefits_active(target):
         target.rage_sustained_since_last_turn = True
 
@@ -1322,6 +1324,7 @@ def apply_damage_bundle(
         return resolution
 
     def _mark_dead() -> None:
+        target.hp = 0
         target.dead = True
         target.stable = False
         target.death_failures = max(3, target.death_failures)
@@ -1329,6 +1332,9 @@ def apply_damage_bundle(
         _end_rage_if_active()
 
     if target.hp <= 0 and not target.dead:
+        if target.uses_death_saves is False:
+            _mark_dead()
+            return resolution
         if remaining >= target.max_hp:
             _mark_dead()
             return resolution
@@ -1358,6 +1364,8 @@ def apply_damage_bundle(
             target.downed_count += 1
             target.was_downed = True
         if overflow >= target.max_hp:
+            _mark_dead()
+        elif target.uses_death_saves is False:
             _mark_dead()
 
     if adjusted > 0 and "turned" in target.conditions:
@@ -1433,6 +1441,12 @@ def run_concentration_check(
 def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSaveResult:
     if target.hp > 0 or target.stable or target.dead:
         return DeathSaveResult(False, target.dead, False)
+    if target.uses_death_saves is False:
+        target.dead = True
+        target.stable = False
+        target.death_failures = max(3, target.death_failures)
+        target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
+        return DeathSaveResult(False, True, False)
 
     roll = rng.randint(1, 20)
     if roll == 1:
@@ -1442,6 +1456,7 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
         target.death_successes = 0
         target.death_failures = 0
         target.stable = False
+        target.was_downed = False
         _remove_condition_everywhere(target, "unconscious")
         _remove_condition_everywhere(target, "incapacitated")
         return DeathSaveResult(False, False, True)
@@ -1454,9 +1469,12 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
     became_dead = False
     if target.death_successes >= 3:
         target.stable = True
+        target.death_successes = 0
+        target.death_failures = 0
         became_stable = True
     if target.death_failures >= 3:
         target.dead = True
+        target.stable = False
         target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         became_dead = True
 

@@ -101,6 +101,7 @@ from dnd_sim.rules_2014 import (
     roll_damage_packet,
     run_concentration_check,
 )
+from dnd_sim.rules_profiles import ActorKind, SupportedRulesProfile
 from dnd_sim.strategy_api import (
     ActorView,
     BattleStateView,
@@ -1908,7 +1909,39 @@ def _apply_artificer_infusion_passives(actor: ActorRuntimeState) -> None:
         _ensure_action(actor, _construct_command_action())
 
 
-def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRuntimeState:
+def _resolve_actor_death_save_policy(
+    *,
+    actor_kind: ActorKind,
+    explicit: bool | None,
+    rules_profile: SupportedRulesProfile | None,
+    legacy_default: bool,
+) -> bool:
+    if rules_profile is not None:
+        return rules_profile.resolve_uses_death_saves(
+            actor_kind=actor_kind,
+            explicit=explicit,
+        )
+    return explicit if explicit is not None else legacy_default
+
+
+def _resolve_summon_death_save_policy(
+    source: ActorRuntimeState,
+    effect: dict[str, Any],
+) -> bool:
+    explicit = effect.get("uses_death_saves")
+    if not isinstance(explicit, bool):
+        return source.summon_uses_death_saves_default
+    if not source.death_save_overrides_allowed:
+        raise ValueError("rules profile does not allow explicit actor overrides")
+    return explicit
+
+
+def _build_construct_companion(
+    owner: ActorRuntimeState,
+    kind: str,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
+) -> ActorRuntimeState:
     proficiency = _calculate_proficiency_bonus(owner.level)
     if kind == "steel_defender":
         max_hp = max(1, 2 + owner.int_mod + (5 * owner.level))
@@ -1982,7 +2015,14 @@ def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRunt
         cha_mod=cha_mod,
         save_mods=save_mods,
         actions=[attack] + _get_standard_actions(),
-        uses_death_saves=False,
+        uses_death_saves=_resolve_actor_death_save_policy(
+            actor_kind="construct",
+            explicit=None,
+            rules_profile=rules_profile,
+            legacy_default=False,
+        ),
+        summon_uses_death_saves_default=owner.summon_uses_death_saves_default,
+        death_save_overrides_allowed=owner.death_save_overrides_allowed,
         resources={},
         max_resources={},
         traits=traits,
@@ -1998,10 +2038,14 @@ def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRunt
     return companion
 
 
-def _build_construct_companions(owner: ActorRuntimeState) -> list[ActorRuntimeState]:
+def _build_construct_companions(
+    owner: ActorRuntimeState,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
+) -> list[ActorRuntimeState]:
     companions: list[ActorRuntimeState] = []
     for kind in sorted(_discover_construct_companion_kinds(owner)):
-        companions.append(_build_construct_companion(owner, kind))
+        companions.append(_build_construct_companion(owner, kind, rules_profile=rules_profile))
     return companions
 
 
@@ -6276,6 +6320,8 @@ def _build_actor_from_character(
     character: dict[str, Any],
     traits_db: dict[str, dict[str, Any]] = None,
     item_catalog: dict[str, CanonicalItem] | None = None,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
 ) -> ActorRuntimeState:
     class_levels = _class_levels_from_character_payload(character)
     character_level = total_character_level(class_levels)
@@ -6307,9 +6353,24 @@ def _build_actor_from_character(
         cha_mod=ability_mods.get("cha", 0),
         save_mods=save_mods,
         actions=_build_character_actions(character) + _get_standard_actions(),
-        uses_death_saves=(
-            character["uses_death_saves"]
-            if isinstance(character.get("uses_death_saves"), bool)
+        uses_death_saves=_resolve_actor_death_save_policy(
+            actor_kind="player_character",
+            explicit=(
+                character["uses_death_saves"]
+                if isinstance(character.get("uses_death_saves"), bool)
+                else None
+            ),
+            rules_profile=rules_profile,
+            legacy_default=True,
+        ),
+        summon_uses_death_saves_default=(
+            rules_profile.resolve_uses_death_saves(actor_kind="summon")
+            if rules_profile is not None
+            else False
+        ),
+        death_save_overrides_allowed=(
+            rules_profile.zero_hit_point_policy.allow_explicit_actor_override
+            if rules_profile is not None
             else True
         ),
         proficiencies={str(v).lower() for v in character.get("proficiencies", [])},
@@ -6535,7 +6596,10 @@ def _build_enemy_innate_spell_actions(enemy: EnemyConfig) -> list[ActionDefiniti
 
 
 def _build_actor_from_enemy(
-    enemy: EnemyConfig, traits_db: dict[str, dict[str, Any]] = None
+    enemy: EnemyConfig,
+    traits_db: dict[str, dict[str, Any]] = None,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
 ) -> ActorRuntimeState:
     normalized_traits_db = {
         _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
@@ -6631,7 +6695,22 @@ def _build_actor_from_enemy(
         cha_mod=_enemy_ability_mod("cha"),
         save_mods=dict(enemy.stat_block.save_mods),
         actions=actions,
-        uses_death_saves=bool(getattr(enemy, "uses_death_saves", False)),
+        uses_death_saves=_resolve_actor_death_save_policy(
+            actor_kind="monster",
+            explicit=getattr(enemy, "uses_death_saves", None),
+            rules_profile=rules_profile,
+            legacy_default=False,
+        ),
+        summon_uses_death_saves_default=(
+            rules_profile.resolve_uses_death_saves(actor_kind="summon")
+            if rules_profile is not None
+            else False
+        ),
+        death_save_overrides_allowed=(
+            rules_profile.zero_hit_point_policy.allow_explicit_actor_override
+            if rules_profile is not None
+            else True
+        ),
         damage_resistances={v.lower() for v in enemy.damage_resistances},
         damage_immunities={v.lower() for v in enemy.damage_immunities},
         damage_vulnerabilities={v.lower() for v in enemy.damage_vulnerabilities},
@@ -6713,6 +6792,8 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
 
 
 def long_rest(actor: ActorRuntimeState) -> None:
+    if actor.dead:
+        return
     _revert_wild_shape(actor)
     actor.hp = actor.max_hp
     actor.temp_hp = 0
@@ -6725,7 +6806,8 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.effect_instance_seq = 0
     actor.death_failures = 0
     actor.death_successes = 0
-    actor.downed_count = 0
+    actor.stable = False
+    actor.was_downed = False
     actor.concentrating = False
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
@@ -6964,16 +7046,6 @@ def _actor_uses_death_saves(actor: ActorRuntimeState) -> bool:
     return actor.team == "party"
 
 
-def _finalize_zero_hp_without_death_saves(actor: ActorRuntimeState) -> None:
-    if actor.hp > 0 or actor.dead or _actor_uses_death_saves(actor):
-        return
-    actor.hp = 0
-    actor.dead = True
-    actor.stable = False
-    actor.death_failures = max(3, actor.death_failures)
-    actor.update_manual_conditions({"dead", "unconscious", "incapacitated"})
-
-
 def _team_actors(actors: dict[str, ActorRuntimeState], *, team: str) -> list[ActorRuntimeState]:
     if team == "party":
         return [actor for actor in actors.values() if actor.team == "party"]
@@ -7048,8 +7120,6 @@ def _team_defeated(
     team_members = _team_actors(actors, team=team)
     if not team_members:
         return False
-    for actor in team_members:
-        _finalize_zero_hp_without_death_saves(actor)
 
     rule = rule_spec if rule_spec is not None else default_rule
     if isinstance(rule, dict):
@@ -10221,11 +10291,9 @@ def _apply_effect(
             cha_mod=0,
             save_mods={"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
             actions=summon_actions + _get_standard_actions(),
-            uses_death_saves=(
-                effect["uses_death_saves"]
-                if isinstance(effect.get("uses_death_saves"), bool)
-                else False
-            ),
+            uses_death_saves=_resolve_summon_death_save_policy(actor, effect),
+            summon_uses_death_saves_default=actor.summon_uses_death_saves_default,
+            death_save_overrides_allowed=actor.death_save_overrides_allowed,
             speed_ft=summon_speed,
             position=_to_position3(effect.get("position")) or actor.position,
             requires_command=requires_command,
@@ -14697,7 +14765,11 @@ def run_simulation_core(
         for character_id in scenario.config.party:
             if character_id not in character_db:
                 raise ValueError(f"Character ID missing from DB: {character_id}")
-            actor = _build_actor_from_character(character_db[character_id], traits_db)
+            actor = _build_actor_from_character(
+                character_db[character_id],
+                traits_db,
+                rules_profile=scenario.rules_profile,
+            )
             actors[actor.actor_id] = actor
             damage_taken[actor.actor_id] = 0
             damage_dealt[actor.actor_id] = 0
@@ -14706,7 +14778,10 @@ def run_simulation_core(
             downed_counts[actor.actor_id] = 0
             death_counts[actor.actor_id] = 0
 
-            for companion in _build_construct_companions(actor):
+            for companion in _build_construct_companions(
+                actor,
+                rules_profile=scenario.rules_profile,
+            ):
                 if companion.actor_id in actors:
                     continue
                 actors[companion.actor_id] = companion
@@ -14753,7 +14828,11 @@ def run_simulation_core(
                     else enemy_id
                 )
 
-                actor = _build_actor_from_enemy(scenario.enemies[enemy_id], traits_db)
+                actor = _build_actor_from_enemy(
+                    scenario.enemies[enemy_id],
+                    traits_db,
+                    rules_profile=scenario.rules_profile,
+                )
                 actor.actor_id = unique_enemy_id
                 actor.position = (0.0, 30.0, 0.0)
                 actors[actor.actor_id] = actor
@@ -14928,7 +15007,8 @@ def run_simulation_core(
                         continue
 
                     if actor.hp <= 0:
-                        resolve_death_save(rng, actor)
+                        if _actor_uses_death_saves(actor):
+                            resolve_death_save(rng, actor)
                         _resolve_turn_end(actor, f"{rounds}:{actor.actor_id}")
                         continue
 
@@ -15357,6 +15437,8 @@ def run_simulation_core(
             outcome=overall_outcome,
             termination_reason=overall_termination_reason,
             censored=overall_censored,
+            rules_profile_id=scenario.rules_profile.profile_id,
+            rules_profile_version=scenario.rules_profile.profile_version,
         )
         trial_results.append(trial)
 

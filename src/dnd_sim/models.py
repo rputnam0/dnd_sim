@@ -298,6 +298,8 @@ class ActorRuntimeState:
     detected_by: set[str] = field(default_factory=set)
     surprised: bool = False
     uses_death_saves: bool | None = None
+    summon_uses_death_saves_default: bool = False
+    death_save_overrides_allowed: bool = True
 
     def is_active(self) -> bool:
         return not self.dead
@@ -342,6 +344,8 @@ class TrialResult:
     outcome: str | None = None
     termination_reason: str | None = None
     censored: bool = False
+    rules_profile_id: str | None = None
+    rules_profile_version: str | None = None
 
 
 @dataclass(slots=True)
@@ -371,11 +375,15 @@ class SimulationSummary:
     timeout_rate: float = 0.0
     censored_rate: float = 0.0
     resolved_rate: float = 1.0
+    rules_profile_id: str | None = None
+    rules_profile_version: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "run_id": self.run_id,
             "scenario_id": self.scenario_id,
+            "rules_profile_id": self.rules_profile_id,
+            "rules_profile_version": self.rules_profile_version,
             "trials": self.trials,
             "party_win_rate": self.party_win_rate,
             "enemy_win_rate": self.enemy_win_rate,

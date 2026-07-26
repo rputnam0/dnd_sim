@@ -2,6 +2,8 @@
   "scenario_id": "ley_heart_phase_1_boss_scalar_1",
   "encounter_id": "ley_heart",
   "ruleset": "5e-2014",
+  "rules_profile_id": "5e_2014_combat_foundation",
+  "rules_profile_version": "1.0.0",
   "character_db_dir": "repo:river_line/db/characters",
   "party": [
     "squanch_161607569",
