@@ -9,7 +9,7 @@ from dnd_sim.ai.scoring import (
     enumerate_legal_action_candidates,
 )
 from dnd_sim.rules_2014 import parse_damage_expression
-from dnd_sim.spatial import check_cover, distance_chebyshev, has_clear_path, move_towards
+from dnd_sim.spatial import check_cover, distance_chebyshev, has_clear_path
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from dnd_sim.telemetry import build_ai_action_rationale_trace, build_ai_candidate_scoring_trace
 
@@ -162,6 +162,24 @@ def _coerce_position(position: tuple[float, float, float]) -> tuple[float, float
     return (float(position[0]), float(position[1]), float(position[2]))
 
 
+def _move_towards_by_grid_distance(
+    current: tuple[float, float, float],
+    target: tuple[float, float, float],
+    max_distance: float,
+) -> tuple[float, float, float]:
+    """Move toward a target using the grid metric used by combat legality."""
+    distance = distance_chebyshev(current, target)
+    if distance <= max_distance or distance == 0:
+        return target
+
+    ratio = max_distance / distance
+    return (
+        current[0] + ((target[0] - current[0]) * ratio),
+        current[1] + ((target[1] - current[1]) * ratio),
+        current[2] + ((target[2] - current[2]) * ratio),
+    )
+
+
 def _movement_path_to_target(
     actor,
     target,
@@ -190,7 +208,7 @@ def _movement_path_to_target(
         return None
 
     travel_distance = min(movement_remaining, max(0.0, current_distance - action_range))
-    destination = move_towards(origin, target_position, travel_distance)
+    destination = _move_towards_by_grid_distance(origin, target_position, travel_distance)
     destination = _coerce_position(destination)
 
     if obstacles and not has_clear_path(origin, destination, obstacles):
