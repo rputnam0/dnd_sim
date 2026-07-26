@@ -39,8 +39,8 @@ SHARD_B_SPECIES_IDS = {
 }
 
 
-def test_supported_scope_requires_schema_valid_and_tested() -> None:
-    issues = validate_capability_gate_records(
+def test_runtime_scope_requires_executable_content_but_not_test_evidence() -> None:
+    executable_untested_issues = validate_capability_gate_records(
         records=[
             {
                 "content_id": "spell:arc_flash",
@@ -57,7 +57,26 @@ def test_supported_scope_requires_schema_valid_and_tested() -> None:
         ]
     )
 
-    assert any("tested=true" in issue for issue in issues)
+    assert executable_untested_issues == []
+
+    non_executable_issues = validate_capability_gate_records(
+        records=[
+            {
+                "content_id": "spell:arc_flash",
+                "content_type": "spell",
+                "states": {
+                    "cataloged": True,
+                    "schema_valid": True,
+                    "executable": False,
+                    "tested": False,
+                    "blocked": False,
+                    "unsupported_reason": None,
+                },
+            }
+        ]
+    )
+
+    assert any("executable=true" in issue for issue in non_executable_issues)
 
 
 def test_blocked_record_fixture_requires_unsupported_reason() -> None:
