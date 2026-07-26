@@ -19,14 +19,14 @@ and their implementation is included in a pull request.
 
 ### Milestone 0 — Simulation truth gate
 
-- [ ] Every shipped public scenario executes in CI.
-- [ ] Tactical strategies and authoritative legality share one reachability contract.
-- [ ] Encounter results distinguish victory, defeat, draw, and timeout/censored outcomes.
+- [x] Every shipped public scenario executes in CI.
+- [x] Tactical strategies and authoritative legality share one reachability contract.
+- [x] Encounter results distinguish victory, defeat, draw, and timeout/censored outcomes.
 - [ ] NPC and PC zero-hit-point policies are explicit and rules-profile driven.
-- [ ] Unknown mechanic types fail validation with a path-specific diagnostic.
-- [ ] Actionless production monsters fail validation instead of receiving a synthetic attack.
-- [ ] Capability states are derived independently and `tested` links to behavioral evidence.
-- [ ] Strict mechanics coverage is a required CI gate for the declared supported content pack.
+- [x] Unknown mechanic types fail validation with a path-specific diagnostic.
+- [x] Actionless production monsters fail validation instead of receiving a synthetic attack.
+- [x] Capability states are derived independently and `tested` links to behavioral evidence.
+- [x] Strict mechanics coverage is a required CI gate for the declared supported content pack.
 
 ### Milestone 1 — Executable rules and content pack
 
@@ -86,10 +86,11 @@ and their implementation is included in a pull request.
 
 Branch: `codex/trustworthy-engine-foundation`
 
-The first pull request is limited to Milestone 0. It must include red/green regression evidence
-for the shipped scenario, terminal outcome semantics, strict mechanic validation, monster fallback
-removal, and truthful capability gates. Broader rules content and session APIs follow in separate
-feature branches after this trust gate is reviewable.
+Draft pull request: `#251`. This first pull request is limited to Milestone 0. It includes
+red/green regression evidence for the shipped scenario, terminal outcome semantics, strict
+mechanic validation, monster fallback removal, and truthful capability gates. A formal versioned
+rules profile for zero-hit-point policy remains open; broader rules content and session APIs follow
+in separate feature branches after this trust gate is reviewed.
 
 ## Required verification for Milestone 0
 
