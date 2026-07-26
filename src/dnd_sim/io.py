@@ -635,6 +635,15 @@ def validate_capability_gate_records(
 
     issues: list[str] = []
     for index, raw_record in enumerate(records):
+        if isinstance(raw_record, dict):
+            raw_states = raw_record.get("states")
+            if (
+                isinstance(raw_states, dict)
+                and raw_states.get("tested") is True
+                and raw_states.get("executable") is not True
+            ):
+                content_id = str(raw_record.get("content_id", f"index {index}"))
+                issues.append(f"{content_id} tested record requires states.executable=true")
         try:
             record = (
                 raw_record

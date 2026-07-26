@@ -13,15 +13,11 @@ if str(REPO_ROOT / "src") not in sys.path:
 
 from dnd_sim.capability_manifest import (
     CapabilityRecord,
-    build_class_capability_manifest,
-    build_feature_capability_manifest,
-    build_item_capability_manifest,
-    build_monster_capability_manifest,
-    build_spell_capability_manifest,
-    build_subclass_capability_manifest,
+    read_manifest,
 )
 
-REPORT_VERSION = "1.0"
+REPORT_VERSION = "1.1"
+DEFAULT_MANIFEST_PATH = REPO_ROOT / "artifacts" / "capabilities" / "manifest_2014.json"
 DEFAULT_JSON_OUT = REPO_ROOT / "artifacts" / "capabilities" / "coverage_report.json"
 DEFAULT_MARKDOWN_OUT = REPO_ROOT / "docs" / "program" / "capability_report.md"
 _LAST_UPDATED_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -30,6 +26,12 @@ _LAST_UPDATED_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Render deterministic machine-readable and markdown capability coverage reports."
+    )
+    parser.add_argument(
+        "--manifest-path",
+        type=Path,
+        default=DEFAULT_MANIFEST_PATH,
+        help="Canonical capability manifest to summarize.",
     )
     parser.add_argument(
         "--json-out",
@@ -66,18 +68,11 @@ def _normalized_support_state(record: CapabilityRecord) -> str:
     return "unsupported" if record.states.blocked else "supported"
 
 
-def collect_capability_records() -> list[CapabilityRecord]:
-    records: list[CapabilityRecord] = []
-    for manifest in (
-        build_spell_capability_manifest(),
-        build_feature_capability_manifest(),
-        build_monster_capability_manifest(),
-        build_item_capability_manifest(),
-        build_class_capability_manifest(),
-        build_subclass_capability_manifest(),
-    ):
-        records.extend(manifest.records)
-    return sorted(records, key=_record_sort_key)
+def collect_capability_records(
+    manifest_path: Path = DEFAULT_MANIFEST_PATH,
+) -> list[CapabilityRecord]:
+    manifest = read_manifest(manifest_path)
+    return sorted(manifest.records, key=_record_sort_key)
 
 
 def build_coverage_report(*, records: list[CapabilityRecord]) -> dict[str, Any]:
@@ -137,6 +132,7 @@ def build_coverage_report(*, records: list[CapabilityRecord]) -> dict[str, Any]:
             {
                 "content_id": record.content_id,
                 "content_type": record.content_type,
+                "evidence_ids": record.evidence_ids,
                 "runtime_hook_family": record.runtime_hook_family,
                 "support_state": support_state,
                 "states": {
@@ -219,10 +215,10 @@ def render_markdown_report(
         "",
         "## Interpretation",
         "",
-        "- `Executable` means the manifest builder found a runtime-dispatchable shape; "
+        "- `Executable` means a validated, content-type-specific runtime consumer exists; "
         "it does not by itself prove complete rules semantics.",
-        "- `Tested` is independent behavioral-conformance evidence and is never inferred "
-        "from catalog or schema validity.",
+        "- `Tested` means the record links registered exact behavioral-test evidence; it is "
+        "never inferred from catalog or schema validity.",
         "- Blocked records remain cataloged so unsupported shipped content is visible "
         "instead of silently degrading at runtime.",
         "",
@@ -313,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
         markdown_path=markdown_out,
     )
 
-    report = build_coverage_report(records=collect_capability_records())
+    report = build_coverage_report(records=collect_capability_records(args.manifest_path.resolve()))
     write_json_report(report=report, path=json_out)
     markdown = render_markdown_report(
         report=report,

@@ -9,6 +9,11 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from dnd_sim.capability_evidence import (
+    CapabilityEvidenceTarget,
+    CapabilityTestEvidenceRegistry,
+    build_evidence_overlay,
+)
 from dnd_sim.class_progression import DEFAULT_CLASSES_DIR, DEFAULT_SUBCLASSES_DIR
 from dnd_sim.items import DEFAULT_ITEMS_DIR, build_item_catalog
 from dnd_sim.io_models import ActionConfig, EnemyConfig, InnateSpellConfig
@@ -19,7 +24,7 @@ from dnd_sim.mechanics_schema import (
 )
 from dnd_sim.spells import canonicalize_spell_payload, slugify_spell_name
 
-MANIFEST_VERSION = "1.0"
+MANIFEST_VERSION = "1.1"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MONSTERS_DIR = REPO_ROOT / "db" / "rules" / "2014" / "monsters"
 DEFAULT_FEATURES_DIR = REPO_ROOT / "db" / "rules" / "2014" / "traits"
@@ -34,6 +39,7 @@ CAPABILITY_STATE_KEYS = (
     "unsupported_reason",
 )
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
+_EVIDENCE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._:-]*$")
 FEATURE_SUPPORT_STATES = {"supported", "unsupported"}
 FEATURE_EXECUTABLE_EFFECT_TYPES = frozenset(
     {
@@ -126,6 +132,7 @@ class CapabilityRecord(BaseModel):
     content_id: str
     content_type: str
     states: CapabilityStates
+    evidence_ids: tuple[str, ...] = ()
     runtime_hook_family: str | None = None
     support_state: str | None = None
 
@@ -147,20 +154,36 @@ class CapabilityRecord(BaseModel):
             raise ValueError("must be non-empty when provided")
         return normalized
 
+    @field_validator("evidence_ids")
+    @classmethod
+    def validate_evidence_ids(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        normalized = tuple(value.strip() for value in values)
+        if any(_EVIDENCE_ID_RE.fullmatch(value) is None for value in normalized):
+            raise ValueError("evidence_ids contain an invalid evidence identifier")
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("evidence_ids must be unique")
+        return tuple(sorted(normalized, key=str.casefold))
+
     @model_validator(mode="after")
     def validate_support_state_consistency(self) -> CapabilityRecord:
-        if self.support_state is None:
-            return self
-        normalized = self.support_state.strip().lower()
-        if normalized not in FEATURE_SUPPORT_STATES:
-            raise ValueError(f"unsupported support_state: {self.support_state}")
-        self.support_state = normalized
-        if normalized == "supported" and self.states.blocked:
-            raise ValueError("support_state supported cannot map to blocked states")
-        if normalized == "unsupported" and not self.states.blocked:
-            raise ValueError("support_state unsupported must map to blocked states")
-        if normalized == "unsupported" and self.states.unsupported_reason is None:
-            raise ValueError("unsupported records must declare states.unsupported_reason")
+        if self.support_state is not None:
+            normalized = self.support_state.strip().lower()
+            if normalized not in FEATURE_SUPPORT_STATES:
+                raise ValueError(f"unsupported support_state: {self.support_state}")
+            self.support_state = normalized
+            if normalized == "supported" and self.states.blocked:
+                raise ValueError("support_state supported cannot map to blocked states")
+            if normalized == "unsupported" and not self.states.blocked:
+                raise ValueError("support_state unsupported must map to blocked states")
+            if normalized == "unsupported" and self.states.unsupported_reason is None:
+                raise ValueError("unsupported records must declare states.unsupported_reason")
+
+        if self.states.tested != bool(self.evidence_ids):
+            raise ValueError("states.tested must equal bool(evidence_ids)")
+        if self.evidence_ids and (
+            not self.states.schema_valid or not self.states.executable or self.states.blocked
+        ):
+            raise ValueError("evidence_ids require schema-valid, executable, unblocked content")
         return self
 
 
@@ -243,6 +266,37 @@ def build_manifest(
         generated_at=generated_at,
         records=normalized_records,
     )
+
+
+def apply_capability_evidence(
+    *,
+    records: list[CapabilityRecord | dict[str, Any]],
+    registry: CapabilityTestEvidenceRegistry,
+) -> list[CapabilityRecord]:
+    """Apply traceable behavioral evidence to canonical capability records."""
+
+    normalized_records = [CapabilityRecord.model_validate(record) for record in records]
+    overlay = build_evidence_overlay(
+        targets=(
+            CapabilityEvidenceTarget(
+                content_id=record.content_id,
+                schema_valid=record.states.schema_valid,
+                executable=record.states.executable,
+                blocked=record.states.blocked,
+            )
+            for record in normalized_records
+        ),
+        registry=registry,
+    )
+
+    overlaid_records: list[CapabilityRecord] = []
+    for record in normalized_records:
+        evidence = overlay[record.content_id]
+        payload = record.model_dump(mode="python")
+        payload["states"]["tested"] = evidence.tested
+        payload["evidence_ids"] = evidence.evidence_ids
+        overlaid_records.append(CapabilityRecord.model_validate(payload))
+    return overlaid_records
 
 
 @lru_cache(maxsize=1)

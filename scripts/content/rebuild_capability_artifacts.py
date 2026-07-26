@@ -11,6 +11,8 @@ if str(REPO_ROOT / "src") not in sys.path:
 
 from dnd_sim.capability_manifest import (
     MANIFEST_VERSION,
+    CapabilityManifest,
+    apply_capability_evidence,
     build_class_capability_manifest,
     build_feature_capability_manifest,
     build_item_capability_manifest,
@@ -20,11 +22,14 @@ from dnd_sim.capability_manifest import (
     build_subclass_capability_manifest,
     write_manifest,
 )
+from dnd_sim.capability_evidence import load_test_evidence_registry
 
 MANIFEST_PATH = REPO_ROOT / "artifacts" / "capabilities" / "manifest_2014.json"
 
 
-def rebuild_manifest() -> None:
+def build_repository_manifest() -> CapabilityManifest:
+    """Build the canonical repository manifest with its traceable evidence overlay."""
+
     base = REPO_ROOT / "db" / "rules" / "2014"
     records = []
     for manifest in (
@@ -35,14 +40,22 @@ def rebuild_manifest() -> None:
         build_class_capability_manifest(classes_dir=base / "classes"),
         build_subclass_capability_manifest(subclasses_dir=base / "subclasses"),
     ):
-        records.extend(record.model_dump(mode="json") for record in manifest.records)
+        records.extend(manifest.records)
 
-    manifest = build_manifest(
+    records = apply_capability_evidence(
+        records=records,
+        registry=load_test_evidence_registry(),
+    )
+
+    return build_manifest(
         records=records,
         manifest_version=MANIFEST_VERSION,
         generated_at=None,
     )
-    write_manifest(manifest, MANIFEST_PATH)
+
+
+def rebuild_manifest() -> None:
+    write_manifest(build_repository_manifest(), MANIFEST_PATH)
 
 
 def rebuild_report() -> None:
