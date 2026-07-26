@@ -722,11 +722,22 @@ def test_capability_workflows_cover_canonical_content_and_current_pull_requests(
     assert 'branches:\n      - "int/5i-completion-gates"' not in completion_workflow
     for required_path in (
         '"db/rules/2014/**"',
-        '"src/dnd_sim/capability_manifest.py"',
-        '"src/dnd_sim/mechanics_schema.py"',
+        '"src/dnd_sim/**"',
+        '"tests/**"',
     ):
         assert required_path in completion_workflow
         assert required_path in content_workflow
+
+    assert (
+        "uv run python scripts/content/verify_completion_capabilities.py "
+        "--supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json"
+        in completion_workflow
+    )
+    assert (
+        "uv run python scripts/mechanics_coverage.py --strict "
+        "--supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json"
+        in completion_workflow
+    )
 
 
 def test_rebuild_report_uses_the_regeneration_date(monkeypatch: pytest.MonkeyPatch) -> None:

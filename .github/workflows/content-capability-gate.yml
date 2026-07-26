@@ -4,24 +4,16 @@ on:
   pull_request:
     paths:
       - "db/rules/2014/**"
-      - "src/dnd_sim/io.py"
-      - "src/dnd_sim/io_models.py"
-      - "src/dnd_sim/capability_manifest.py"
-      - "src/dnd_sim/mechanics_schema.py"
+      - "src/dnd_sim/**"
       - "scripts/content/**"
-      - "tests/test_capability_gates.py"
-      - "tests/fixtures/capability_gates/**"
+      - "tests/**"
       - ".github/workflows/content-capability-gate.yml"
   push:
     paths:
       - "db/rules/2014/**"
-      - "src/dnd_sim/io.py"
-      - "src/dnd_sim/io_models.py"
-      - "src/dnd_sim/capability_manifest.py"
-      - "src/dnd_sim/mechanics_schema.py"
+      - "src/dnd_sim/**"
       - "scripts/content/**"
-      - "tests/test_capability_gates.py"
-      - "tests/fixtures/capability_gates/**"
+      - "tests/**"
       - ".github/workflows/content-capability-gate.yml"
 
 jobs:
