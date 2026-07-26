@@ -150,20 +150,20 @@ def test_w6_par_05j2_supported_spell_files_use_canonical_rows() -> None:
             for idx, row in enumerate(mechanics):
                 assert isinstance(row, dict), f"{content_id} mechanics[{idx}] must be object"
                 if content_id in PURE_SENSE_SLICE_IDS:
-                    assert row.get("effect_type") == "sense", (
-                        f"{content_id} mechanics[{idx}] must use effect_type=sense"
-                    )
+                    assert (
+                        row.get("effect_type") == "sense"
+                    ), f"{content_id} mechanics[{idx}] must use effect_type=sense"
                     assert "range_ft" in row, f"{content_id} mechanics[{idx}] missing range_ft"
-                    assert row.get("range_ft") is not None, (
-                        f"{content_id} mechanics[{idx}] range_ft must not be null"
-                    )
+                    assert (
+                        row.get("range_ft") is not None
+                    ), f"{content_id} mechanics[{idx}] range_ft must not be null"
                     assert row.get("sense"), f"{content_id} mechanics[{idx}] missing sense"
                     if content_id in CONCENTRATION_SENSE_SLICE_IDS:
                         assert row.get("duration_rounds") == payload.get("duration_rounds")
                 else:
-                    assert row.get("effect_type") == "apply_condition", (
-                        f"{content_id} mechanics[{idx}] must use effect_type=apply_condition"
-                    )
+                    assert (
+                        row.get("effect_type") == "apply_condition"
+                    ), f"{content_id} mechanics[{idx}] must use effect_type=apply_condition"
                     assert row.get("condition") == "guidance_bonus_d4"
                     assert row.get("bonus") == "1d4"
                     assert row.get("applies_to") == "ability_check"

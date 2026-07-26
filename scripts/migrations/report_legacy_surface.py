@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 LEGACY_METHOD_PATTERN = re.compile(
     r"^\s*def\s+(choose_action|choose_targets|decide_resource_spend)\s*\("
 )
@@ -104,7 +103,9 @@ def _normalize_lookup_key(name: str) -> str:
     return " ".join(lowered.split())
 
 
-def _collect_counts(repo_root: Path) -> tuple[list[tuple[str, str, str, str]], list[tuple[str, list[str]]]]:
+def _collect_counts(
+    repo_root: Path,
+) -> tuple[list[tuple[str, str, str, str]], list[tuple[str, list[str]]]]:
     traits_dir = repo_root / "db/rules/2014/traits"
     spells_dir = repo_root / "db/rules/2014/spells"
     monsters_dir = repo_root / "db/rules/2014/monsters"
@@ -219,8 +220,18 @@ def _collect_counts(repo_root: Path) -> tuple[list[tuple[str, str, str, str]], l
             str(traits_top_source_type),
             "canonical source discriminator field",
         ),
-        ("traits", "mechanics_rows_total", str(traits_mechanics_rows_total), "sum mechanics[] rows"),
-        ("traits", "mechanics_type", str(traits_mechanics_type), "legacy executable/metadata alias field"),
+        (
+            "traits",
+            "mechanics_rows_total",
+            str(traits_mechanics_rows_total),
+            "sum mechanics[] rows",
+        ),
+        (
+            "traits",
+            "mechanics_type",
+            str(traits_mechanics_type),
+            "legacy executable/metadata alias field",
+        ),
         (
             "traits",
             "mechanics_effect_type",
@@ -373,9 +384,7 @@ def _write_outputs(
         "| File | Line | Method |",
         "|---|---:|---|",
     ]
-    inventory_lines.extend(
-        f"| `{row.path}` | {row.line} | `{row.method}` |" for row in legacy_defs
-    )
+    inventory_lines.extend(f"| `{row.path}` | {row.line} | `{row.method}` |" for row in legacy_defs)
 
     inventory_lines.extend(
         [
@@ -430,7 +439,9 @@ def _write_outputs(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate legacy decommission inventory artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Generate legacy decommission inventory artifacts."
+    )
     parser.add_argument("--date", required=True, help="Date stamp in YYYYMMDD format.")
     parser.add_argument(
         "--repo-root",
@@ -447,7 +458,14 @@ def main() -> None:
     alias_markers = _scan_alias_markers(repo_root)
     data_rows, duplicate_keys = _collect_counts(repo_root)
 
-    rows = [("strategy", "legacy_method_defs", str(len(legacy_defs)), "def choose_action|choose_targets|decide_resource_spend across src/ river_line/ tests")]
+    rows = [
+        (
+            "strategy",
+            "legacy_method_defs",
+            str(len(legacy_defs)),
+            "def choose_action|choose_targets|decide_resource_spend across src/ river_line/ tests",
+        )
+    ]
     rows.extend(data_rows)
 
     _write_outputs(

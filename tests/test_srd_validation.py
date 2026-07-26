@@ -13,6 +13,7 @@ def get_proficiency_bonus(cr_str: str) -> int:
     except ValueError:
         return 2
 
+
 def get_ability_modifier(score: int) -> int:
     return math.floor((score - 10) / 2)
 

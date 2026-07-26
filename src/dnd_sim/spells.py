@@ -48,8 +48,8 @@ _META_HYPHEN_TRANSLATION = str.maketrans(
         "\u2212": "-",
         "\u00ad": "-",
         "\u2043": "-",
-        "\uFE63": "-",
-        "\uFF0D": "-",
+        "\ufe63": "-",
+        "\uff0d": "-",
     }
 )
 
@@ -65,18 +65,21 @@ class CanonicalSpellRecord(BaseModel):
     school: str | None = None
     casting_time: str
     action_type: Literal["attack", "save", "utility"] | None = None
-    target_mode: Literal[
-        "single_enemy",
-        "single_ally",
-        "self",
-        "all_enemies",
-        "all_allies",
-        "all_creatures",
-        "n_enemies",
-        "n_allies",
-        "random_enemy",
-        "random_ally",
-    ] | None = None
+    target_mode: (
+        Literal[
+            "single_enemy",
+            "single_ally",
+            "self",
+            "all_enemies",
+            "all_allies",
+            "all_creatures",
+            "n_enemies",
+            "n_allies",
+            "random_enemy",
+            "random_ally",
+        ]
+        | None
+    ) = None
     range_ft: int | None = Field(default=None, ge=0)
     concentration: bool = False
     ritual: bool = False

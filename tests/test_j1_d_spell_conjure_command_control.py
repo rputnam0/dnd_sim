@@ -22,9 +22,7 @@ BATCH_SLUGS = (
     "summon_shadowspawn",
     "summon_undead",
 )
-HOSTILE_SUMMON_SLUGS = (
-    "summon_lesser_demons",
-)
+HOSTILE_SUMMON_SLUGS = ("summon_lesser_demons",)
 
 
 def _spell_payload(slug: str) -> dict[str, object]:
@@ -113,17 +111,16 @@ def test_j1_d_batch_uses_canonical_summon_rows() -> None:
 
         for effect in summon_effects:
             assert str(effect.get("name", "")).strip(), f"{slug} summon should name the creature"
-            assert str(effect.get("controller", "")).strip().lower() == "source", (
-                f"{slug} should link control to the caster"
-            )
-            assert "concentration_linked" in effect and effect["concentration_linked"] is True, (
-                f"{slug} summon should be concentration-linked"
-            )
+            assert (
+                str(effect.get("controller", "")).strip().lower() == "source"
+            ), f"{slug} should link control to the caster"
+            assert (
+                "concentration_linked" in effect and effect["concentration_linked"] is True
+            ), f"{slug} summon should be concentration-linked"
 
         if slug in HOSTILE_SUMMON_SLUGS:
             assert any(
-                str(effect.get("team", "")).strip().lower() == "enemy"
-                for effect in summon_effects
+                str(effect.get("team", "")).strip().lower() == "enemy" for effect in summon_effects
             ), f"{slug} should keep the summon hostile"
 
 

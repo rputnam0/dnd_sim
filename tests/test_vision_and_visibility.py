@@ -81,9 +81,7 @@ def test_line_of_effect_blocked_even_when_line_of_sight_exists() -> None:
         attacker_conditions=set(),
         target_conditions=set(),
         active_hazards=[],
-        obstacles=[
-            AABB(min_pos=(10.0, -1.0, -1.0), max_pos=(20.0, 1.0, 1.0), cover_level="TOTAL")
-        ],
+        obstacles=[AABB(min_pos=(10.0, -1.0, -1.0), max_pos=(20.0, 1.0, 1.0), cover_level="TOTAL")],
         light_level="bright",
         requires_sight=False,
         requires_line_of_effect=True,
