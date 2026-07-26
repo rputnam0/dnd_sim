@@ -7,17 +7,8 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from dnd_sim.capability_manifest import (
-    MANIFEST_VERSION,
-    build_class_capability_manifest,
-    build_feature_capability_manifest,
-    build_item_capability_manifest,
-    build_manifest,
-    build_monster_capability_manifest,
-    build_spell_capability_manifest,
-    build_subclass_capability_manifest,
-    manifest_to_json_text,
-)
+from dnd_sim.capability_evidence import PytestEvidenceRun
+from dnd_sim.capability_manifest import manifest_to_json_text
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts/content/verify_completion_capabilities.py"
@@ -49,9 +40,14 @@ def _record(
     tested: bool = False,
     blocked: bool = True,
     unsupported_reason: str | None = "runtime_hook_missing",
+    evidence_ids: tuple[str, ...] | None = None,
 ) -> dict[str, object]:
+    resolved_evidence_ids = evidence_ids
+    if resolved_evidence_ids is None:
+        resolved_evidence_ids = ("pytest.synthetic.v1",) if tested else ()
     return {
         "content_id": content_id,
+        "evidence_ids": list(resolved_evidence_ids),
         "states": {
             "cataloged": cataloged,
             "schema_valid": schema_valid,
@@ -63,24 +59,69 @@ def _record(
     }
 
 
-def test_repository_manifest_matches_canonical_builder_snapshot() -> None:
-    base = REPO_ROOT / "db" / "rules" / "2014"
-    records: list[dict[str, object]] = []
-    for manifest in (
-        build_spell_capability_manifest(spells_dir=base / "spells"),
-        build_feature_capability_manifest(features_dir=base / "traits"),
-        build_monster_capability_manifest(monsters_dir=base / "monsters"),
-        build_item_capability_manifest(items_dir=base / "items"),
-        build_class_capability_manifest(classes_dir=base / "classes"),
-        build_subclass_capability_manifest(subclasses_dir=base / "subclasses"),
-    ):
-        records.extend(record.model_dump(mode="json") for record in manifest.records)
+def _evidence_registry_payload(
+    *,
+    content_id: str = "spell:acid_arrow",
+    evidence_id: str = "pytest.spell.acid_arrow.base_hit.v1",
+    claims: tuple[str, ...] = ("base_hit_damage_resolution",),
+) -> dict[str, object]:
+    return {
+        "schema_version": "1.0",
+        "ruleset": "2014",
+        "evidence": [
+            {
+                "evidence_id": evidence_id,
+                "kind": "pytest",
+                "content_id": content_id,
+                "claims": list(claims),
+                "pytest_node_ids": ["tests/test_spell_evidence.py::test_acid_arrow_base_hit"],
+            }
+        ],
+    }
 
-    canonical = build_manifest(
-        records=records,
-        manifest_version=MANIFEST_VERSION,
-        generated_at=None,
+
+def _supported_pack_payload(
+    *,
+    content_id: str = "spell:acid_arrow",
+    claims: tuple[str, ...] = ("base_hit_damage_resolution",),
+) -> dict[str, object]:
+    return {
+        "schema_version": "1.0",
+        "pack_id": "combat_primitives_v0",
+        "ruleset": "2014",
+        "support_contract": "verified_primary_combat_resolution_v1",
+        "entries": [
+            {
+                "content_id": content_id,
+                "required_claims": list(claims),
+            }
+        ],
+    }
+
+
+def _supported_manifest_payload(
+    *,
+    content_id: str = "spell:acid_arrow",
+    tested: bool = True,
+    evidence_ids: tuple[str, ...] = ("pytest.spell.acid_arrow.base_hit.v1",),
+) -> dict[str, object]:
+    record = _record(
+        content_id=content_id,
+        executable=True,
+        tested=tested,
+        blocked=False,
+        unsupported_reason=None,
     )
+    record["evidence_ids"] = list(evidence_ids)
+    return {
+        "manifest_version": "1.1",
+        "generated_at": None,
+        "records": [record],
+    }
+
+
+def test_repository_manifest_matches_canonical_builder_snapshot() -> None:
+    canonical = rebuild_capability_artifacts.build_repository_manifest()
     manifest_path = REPO_ROOT / "artifacts" / "capabilities" / "manifest_2014.json"
 
     assert manifest_path.read_text(encoding="utf-8") == manifest_to_json_text(canonical)
@@ -167,6 +208,62 @@ def test_default_gate_keeps_executable_and_tested_states_independent() -> None:
     )
     codes = {issue.code for issue in issues}
     assert "CAP-GATE-007" not in codes
+
+
+@pytest.mark.parametrize(
+    ("tested", "evidence_ids"),
+    [
+        (True, ()),
+        (False, ("pytest.synthetic.v1",)),
+    ],
+)
+def test_structural_gate_requires_tested_to_match_traceable_evidence(
+    tested: bool,
+    evidence_ids: tuple[str, ...],
+) -> None:
+    payload = {
+        "manifest_version": "1.1",
+        "generated_at": None,
+        "records": [
+            _record(
+                content_id="spell:acid_arrow",
+                executable=True,
+                tested=tested,
+                blocked=False,
+                unsupported_reason=None,
+                evidence_ids=evidence_ids,
+            )
+        ],
+    }
+
+    issues = verify_completion_capabilities.verify_manifest_payload(
+        payload,
+        expected_content_ids=("spell:acid_arrow",),
+    )
+
+    assert any(
+        issue.code == "CAP-GATE-010" and "tested must equal bool(evidence_ids)" in issue.message
+        for issue in issues
+    )
+
+
+def test_structural_gate_requires_evidence_ids_array() -> None:
+    record = _record(content_id="spell:acid_arrow")
+    del record["evidence_ids"]
+
+    issues = verify_completion_capabilities.verify_manifest_payload(
+        {
+            "manifest_version": "1.1",
+            "generated_at": None,
+            "records": [record],
+        },
+        expected_content_ids=("spell:acid_arrow",),
+    )
+
+    assert any(
+        issue.code == "CAP-GATE-003" and "evidence_ids must be an array" in issue.message
+        for issue in issues
+    )
 
 
 def test_strict_gate_requires_tested_for_executable_records() -> None:
@@ -442,6 +539,176 @@ def test_cli_strict_returns_nonzero_for_blocked_manifest(tmp_path: Path) -> None
         ]
     )
     assert exit_code == 1
+
+
+def test_supported_pack_gate_requires_green_state_and_exact_evidence_ids(
+    tmp_path: Path,
+) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    registry_path = tmp_path / "evidence.json"
+    pack_path = tmp_path / "pack.json"
+    manifest_path.write_text(
+        json.dumps(
+            _supported_manifest_payload(
+                tested=False,
+                evidence_ids=("pytest.spell.acid_arrow.wrong.v1",),
+            )
+        ),
+        encoding="utf-8",
+    )
+    registry_path.write_text(json.dumps(_evidence_registry_payload()), encoding="utf-8")
+    pack_path.write_text(json.dumps(_supported_pack_payload()), encoding="utf-8")
+
+    plan, issues = verify_completion_capabilities.verify_supported_pack_capabilities(
+        repo_root=tmp_path,
+        manifest_path=manifest_path,
+        supported_pack_path=pack_path,
+        evidence_registry_path=registry_path,
+    )
+
+    assert plan is None
+    assert {issue.code for issue in issues} == {"CAP-PACK-002", "CAP-PACK-003"}
+    assert any("tested=true" in issue.message for issue in issues)
+    assert any("exactly match" in issue.message for issue in issues)
+
+
+def test_supported_pack_gate_rejects_unproven_required_claims(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    registry_path = tmp_path / "evidence.json"
+    pack_path = tmp_path / "pack.json"
+    manifest_path.write_text(json.dumps(_supported_manifest_payload()), encoding="utf-8")
+    registry_path.write_text(json.dumps(_evidence_registry_payload()), encoding="utf-8")
+    pack_path.write_text(
+        json.dumps(_supported_pack_payload(claims=("failed_save_forced_movement",))),
+        encoding="utf-8",
+    )
+
+    plan, issues = verify_completion_capabilities.verify_supported_pack_capabilities(
+        repo_root=tmp_path,
+        manifest_path=manifest_path,
+        supported_pack_path=pack_path,
+        evidence_registry_path=registry_path,
+    )
+
+    assert plan is None
+    assert len(issues) == 1
+    assert issues[0].code == "CAP-PACK-001"
+    assert "missing required claims" in issues[0].message
+
+
+def test_cli_supported_pack_executes_only_resolved_exact_evidence_nodes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repo_root = tmp_path / "repo"
+    spells_dir = repo_root / "db" / "rules" / "2014" / "spells"
+    spells_dir.mkdir(parents=True)
+    (spells_dir / "acid_arrow.json").write_text(
+        json.dumps(
+            {
+                "name": "Acid Arrow",
+                "description": "A magical arrow deals acid damage.",
+                "mechanics": [{"effect_type": "damage", "damage": "4d4"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_path = repo_root / "manifest.json"
+    registry_path = repo_root / "evidence.json"
+    pack_path = repo_root / "pack.json"
+    manifest_path.write_text(json.dumps(_supported_manifest_payload()), encoding="utf-8")
+    registry_path.write_text(json.dumps(_evidence_registry_payload()), encoding="utf-8")
+    pack_path.write_text(json.dumps(_supported_pack_payload()), encoding="utf-8")
+
+    observed: dict[str, object] = {}
+
+    def _run_exact_nodes(node_ids, *, repo_root: Path):
+        observed["node_ids"] = tuple(node_ids)
+        observed["repo_root"] = repo_root
+        return PytestEvidenceRun(
+            node_ids=tuple(node_ids),
+            passed_count=len(tuple(node_ids)),
+        )
+
+    monkeypatch.setattr(verify_completion_capabilities, "run_exact_pytest_nodes", _run_exact_nodes)
+
+    exit_code = verify_completion_capabilities.main(
+        [
+            "--repo-root",
+            str(repo_root),
+            "--manifest-path",
+            str(manifest_path),
+            "--supported-pack",
+            str(pack_path),
+            "--evidence-registry",
+            str(registry_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert observed == {
+        "node_ids": ("tests/test_spell_evidence.py::test_acid_arrow_base_hit",),
+        "repo_root": repo_root,
+    }
+    output = capsys.readouterr().out
+    assert "combat_primitives_v0" in output
+    assert "1 exact behavioral evidence test" in output
+
+
+def test_cli_supported_pack_reports_evidence_execution_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest_path = REPO_ROOT / "artifacts" / "capabilities" / "manifest_2014.json"
+    registry_path = tmp_path / "evidence.json"
+    pack_path = tmp_path / "pack.json"
+    registry_path.write_text(json.dumps(_evidence_registry_payload()), encoding="utf-8")
+    pack_path.write_text(json.dumps(_supported_pack_payload()), encoding="utf-8")
+
+    monkeypatch.setattr(
+        verify_completion_capabilities,
+        "verify_completion_capabilities",
+        lambda *_args, **_kwargs: [],
+    )
+    monkeypatch.setattr(
+        verify_completion_capabilities,
+        "run_exact_pytest_nodes",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            verify_completion_capabilities.CapabilityEvidenceError("synthetic test failure")
+        ),
+    )
+    monkeypatch.setattr(
+        verify_completion_capabilities,
+        "verify_supported_pack_capabilities",
+        lambda **_kwargs: (
+            verify_completion_capabilities.SupportedPackEvidencePlan(
+                pack_id="combat_primitives_v0",
+                ruleset="2014",
+                content_ids=("spell:acid_arrow",),
+                evidence_ids=("pytest.spell.acid_arrow.base_hit.v1",),
+                pytest_node_ids=("tests/test_spell_evidence.py::test_acid_arrow_base_hit",),
+            ),
+            [],
+        ),
+    )
+
+    exit_code = verify_completion_capabilities.main(
+        [
+            "--repo-root",
+            str(REPO_ROOT),
+            "--manifest-path",
+            str(manifest_path),
+            "--supported-pack",
+            str(pack_path),
+            "--evidence-registry",
+            str(registry_path),
+        ]
+    )
+
+    assert exit_code == 1
+    assert "CAP-PACK-004: synthetic test failure" in capsys.readouterr().out
 
 
 def test_capability_workflows_cover_canonical_content_and_current_pull_requests() -> None:
