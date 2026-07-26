@@ -35,6 +35,17 @@ CAPABILITY_STATE_KEYS = (
 )
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 FEATURE_SUPPORT_STATES = {"supported", "unsupported"}
+FEATURE_EXECUTABLE_EFFECT_TYPES = frozenset(
+    {
+        "damage_roll_floor",
+        "ignore_resistance",
+        "max_hp_increase",
+        "reaction_attack",
+        "reduce_damage_taken",
+        "sense",
+        "speed_increase",
+    }
+)
 
 
 class CapabilityStates(BaseModel):
@@ -372,23 +383,36 @@ def _feature_hook_family_and_state(payload: dict[str, Any]) -> tuple[str, str, s
     if not mechanics:
         return "narrative", "unsupported", "missing_runtime_hook_family", True
 
-    has_effect_type = False
-    has_meta_type = False
-    for row in mechanics:
-        if not isinstance(row, dict):
-            return "invalid", "unsupported", "malformed_mechanics_payload", False
-        if str(row.get("effect_type", "")).strip():
-            has_effect_type = True
-        if str(row.get("meta_type", "")).strip():
-            has_meta_type = True
+    has_effect_type = any(
+        isinstance(row, dict) and bool(str(row.get("effect_type", "")).strip()) for row in mechanics
+    )
+    has_meta_type = any(
+        isinstance(row, dict) and bool(str(row.get("meta_type", "")).strip()) for row in mechanics
+    )
 
     if has_effect_type and has_meta_type:
-        return "effect_meta", "supported", None, True
-    if has_effect_type:
-        return "effect", "supported", None, True
-    if has_meta_type:
-        return "meta", "supported", None, True
-    return "narrative", "unsupported", "missing_runtime_hook_family", True
+        hook_family = "effect_meta"
+    elif has_effect_type:
+        hook_family = "effect"
+    elif has_meta_type:
+        hook_family = "meta"
+    else:
+        hook_family = "narrative"
+
+    issues = validate_rule_mechanics_payload(kind="feature", payload=payload)
+    if issues:
+        if any("unsupported" in issue for issue in issues):
+            return hook_family, "unsupported", "unsupported_effect_type", False
+        return "invalid", "unsupported", "invalid_mechanics_schema", False
+
+    has_executable_effect = any(
+        isinstance(row, dict)
+        and str(row.get("effect_type", "")).strip().lower() in FEATURE_EXECUTABLE_EFFECT_TYPES
+        for row in mechanics
+    )
+    if not has_executable_effect:
+        return hook_family, "unsupported", "non_executable_mechanics", True
+    return hook_family, "supported", None, True
 
 
 def build_feature_capability_records(

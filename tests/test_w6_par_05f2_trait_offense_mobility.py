@@ -91,7 +91,7 @@ def _load_trait_payload(content_id: str) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def test_w6_par_05f2_trait_records_are_supported() -> None:
+def test_w6_par_05f2_trait_records_are_non_executable_feature_mechanics() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
@@ -109,10 +109,13 @@ def test_w6_par_05f2_trait_records_are_supported() -> None:
     for content_id, expected_family in W6_PAR_05F2_TRAIT_FAMILIES.items():
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
         assert record.runtime_hook_family == expected_family
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_w6_par_05f2_trait_mechanics_are_schema_valid() -> None:

@@ -50,7 +50,7 @@ def _w6_par_05g2_registry_ids() -> set[str]:
     return ids
 
 
-def test_w6_par_05g2_trait_records_are_supported() -> None:
+def test_w6_par_05g2_trait_records_are_non_executable_metadata() -> None:
     owned_ids = _w6_par_05g2_registry_ids()
 
     manifest = build_feature_capability_manifest()
@@ -70,12 +70,16 @@ def test_w6_par_05g2_trait_records_are_supported() -> None:
     for content_id in sorted(owned_ids):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
         assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
-def test_w6_par_05g2_trait_records_are_supported_in_canonical_capability_records() -> None:
+def test_w6_par_05g2_trait_records_are_non_executable_in_canonical_records() -> None:
     owned_ids = _w6_par_05g2_registry_ids()
 
     io._canonical_capability_records.cache_clear()
@@ -87,9 +91,13 @@ def test_w6_par_05g2_trait_records_are_supported_in_canonical_capability_records
     for content_id in sorted(owned_ids):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
         assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_w6_par_05g2_trait_files_use_meta_rows_only() -> None:

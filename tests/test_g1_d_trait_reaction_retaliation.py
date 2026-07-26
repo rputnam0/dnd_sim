@@ -56,7 +56,7 @@ def test_g1_d_registry_rows_match_owned_batch() -> None:
     assert statuses <= {"in_progress", "pr_open", "merged"}
 
 
-def test_g1_d_owned_trait_records_are_supported() -> None:
+def test_g1_d_owned_trait_records_are_non_executable_feature_mechanics() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
@@ -74,10 +74,13 @@ def test_g1_d_owned_trait_records_are_supported() -> None:
     for content_id in sorted(G1_D_IDS):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
         assert record.runtime_hook_family == EXPECTED_RUNTIME_FAMILIES[content_id]
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_g1_d_trait_files_use_canonical_mechanics_rows() -> None:
@@ -90,9 +93,9 @@ def test_g1_d_trait_files_use_canonical_mechanics_rows() -> None:
             assert isinstance(row, dict), f"{content_id} mechanics[{idx}] must be object"
             has_effect_type = str(row.get("effect_type", "")).strip()
             has_meta_type = str(row.get("meta_type", "")).strip()
-            assert has_effect_type or has_meta_type, (
-                f"{content_id} mechanics[{idx}] needs effect_type or meta_type"
-            )
+            assert (
+                has_effect_type or has_meta_type
+            ), f"{content_id} mechanics[{idx}] needs effect_type or meta_type"
         issues = validate_rule_mechanics_payload(kind="trait", payload=payload)
         assert issues == [], f"{content_id} has schema issues: {issues}"
 
@@ -167,8 +170,7 @@ def test_g1_d_rows_capture_reaction_retaliation_intent() -> None:
 
     blessing = _payload("trait:war_god_s_blessing")["mechanics"]
     assert any(
-        row.get("meta_type") == "resource_spend"
-        and row.get("resource") == "channel_divinity"
+        row.get("meta_type") == "resource_spend" and row.get("resource") == "channel_divinity"
         for row in blessing
         if isinstance(row, dict)
     )

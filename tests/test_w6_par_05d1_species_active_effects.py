@@ -49,7 +49,7 @@ def _load_trait(slug: str) -> dict[str, object]:
     return json.loads((TRAITS_DIR / f"{slug}.json").read_text(encoding="utf-8"))
 
 
-def test_w6_par_05d1_species_records_are_supported_in_feature_manifest() -> None:
+def test_w6_par_05d1_species_records_are_non_executable_in_feature_manifest() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
@@ -60,12 +60,15 @@ def test_w6_par_05d1_species_records_are_supported_in_feature_manifest() -> None
         record = by_id[content_id]
         assert record.content_type == "species"
         assert record.runtime_hook_family == expected_family
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
-def test_w6_par_05d1_species_records_are_supported_in_canonical_capability_records() -> None:
+def test_w6_par_05d1_species_records_are_non_executable_in_canonical_records() -> None:
     io._canonical_capability_records.cache_clear()
     by_id = {record.content_id: record for record in io._canonical_capability_records()}
 
@@ -76,9 +79,12 @@ def test_w6_par_05d1_species_records_are_supported_in_canonical_capability_recor
         record = by_id[content_id]
         assert record.content_type == "species"
         assert record.runtime_hook_family == expected_family
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_w6_par_05d1_species_traits_use_canonical_mechanics_shapes() -> None:
