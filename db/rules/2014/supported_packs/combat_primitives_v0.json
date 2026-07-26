@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "pack_id": "combat_primitives_v0",
+  "ruleset": "2014",
+  "support_contract": "verified_primary_combat_resolution_v1",
+  "entries": [
+    {
+      "content_id": "spell:acid_arrow",
+      "required_claims": [
+        "canonical_hydration",
+        "base_hit_damage_resolution",
+        "primary_effect_not_duplicated"
+      ]
+    },
+    {
+      "content_id": "spell:cure_wounds",
+      "required_claims": [
+        "canonical_hydration",
+        "base_healing_resolution",
+        "primary_effect_not_duplicated"
+      ]
+    },
+    {
+      "content_id": "spell:thunderwave",
+      "required_claims": [
+        "canonical_hydration",
+        "failed_save_damage_resolution",
+        "failed_save_forced_movement"
+      ]
+    }
+  ]
+}
