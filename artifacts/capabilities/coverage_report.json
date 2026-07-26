@@ -37,12 +37,12 @@
       "total_records": 10
     },
     {
-      "blocked_records": 0,
+      "blocked_records": 191,
       "content_type": "monster",
-      "executable_records": 191,
+      "executable_records": 0,
       "schema_valid_records": 191,
-      "supported_records": 191,
-      "tested_records": 191,
+      "supported_records": 0,
+      "tested_records": 0,
       "total_records": 191
     },
     {
@@ -4680,2674 +4680,2674 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_black_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_blue_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_brass_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_bronze_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_copper_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_gold_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_green_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_red_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_silver_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:adult_white_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_black_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_blue_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_brass_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_bronze_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_copper_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_gold_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_green_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_red_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_silver_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ancient_white_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:androsphinx",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:animated_armor",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ankheg",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:azer",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:balor",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:barbed_devil",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:basilisk",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:bearded_devil",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:black_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:black_pudding",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:blue_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:bone_devil",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:brass_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:bronze_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:bugbear",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:bulette",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:centaur",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:chain_devil",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:chimera",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:chuul",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:clay_golem",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:cloaker",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:cloud_giant",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:copper_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:couatl",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:darkmantle",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:deva",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:djinni",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:doppelganger",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:dragon_turtle",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:drider",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:dryad",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:duergar",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:dust_mephit",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:earth_elemental",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:efreeti",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:elf_drow",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:erinyes",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ettercap",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ettin",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:fire_elemental",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:fire_giant",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:flesh_golem",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:flying_sword",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:frost_giant",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:gargoyle",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:gelatinous_cube",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ghast",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ghost",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ghoul",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:gibbering_mouther",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:glabrezu",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:gnoll",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:gnome_deep_svirfneblin",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:goblin",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:gold_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:gorgon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:gray_ooze",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:green_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:green_hag",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:grick",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:griffon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:grimlock",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:guardian_naga",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:gynosphinx",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:half_red_dragon_veteran",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:harpy",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:hezrou",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:hill_giant",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:hippogriff",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:hobgoblin",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:homunculus",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:horned_devil",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:hydra",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ice_devil",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ice_mephit",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:imp",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:invisible_stalker",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:iron_golem",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:kobold",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:kraken",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:lamia",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:lemure",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:lich",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:lizardfolk",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:magma_mephit",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:magmin",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:manticore",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:marilith",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:medusa",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:merfolk",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:merrow",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:mimic",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:minotaur",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:minotaur_skeleton",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:mummy",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:mummy_lord",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:nalfeshnee",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:night_hag",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:nightmare",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ochre_jelly",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ogre",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:ogre_zombie",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:oni",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:orc",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:otyugh",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:pegasus",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:pit_fiend",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:planetar",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:plesiosaurus",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:pseudodragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:purple_worm",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:quasit",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:rakshasa",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:red_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:remorhaz",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:roc",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:roper",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:rug_of_smothering",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:rust_monster",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:sahuagin",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:salamander",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:satyr",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:sea_hag",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:shadow",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:shambling_mound",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:shield_guardian",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:shrieker",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:silver_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:skeleton",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:solar",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:specter",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:spirit_naga",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:sprite",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:stirge",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:stone_giant",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:stone_golem",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:storm_giant",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:succubus_incubus",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:tarrasque",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:treant",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:triceratops",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:troll",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:tyrannosaurus_rex",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:unicorn",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:vampire",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:vampire_spawn",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:violet_fungus",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:vrock",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:warhorse_skeleton",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:water_elemental",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:wereboar",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:wererat",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:weretiger",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:white_dragon_wyrmling",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:wight",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:will_o_wisp",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:wraith",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:wyvern",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:xorn",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:young_black_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:young_blue_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:young_brass_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:young_bronze_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:young_copper_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:young_gold_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:young_red_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:young_silver_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:young_white_dragon",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "monster:zombie",
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
-      "support_state": "supported"
+      "support_state": "unsupported"
     },
     {
       "content_id": "species:adrenaline_rush",
@@ -37522,12 +37522,17 @@
   ],
   "report_version": "1.0",
   "summary": {
-    "blocked_records": 0,
-    "executable_records": 2674,
+    "blocked_records": 191,
+    "executable_records": 2483,
     "schema_valid_records": 2674,
-    "supported_records": 2674,
-    "tested_records": 2674,
+    "supported_records": 2483,
+    "tested_records": 2483,
     "total_records": 2674
   },
-  "unsupported_reason_coverage": []
+  "unsupported_reason_coverage": [
+    {
+      "count": 191,
+      "unsupported_reason": "missing_executable_action_kit"
+    }
+  ]
 }

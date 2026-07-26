@@ -4599,12 +4599,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4613,12 +4613,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4627,12 +4627,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4641,12 +4641,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4655,12 +4655,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4669,12 +4669,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4683,12 +4683,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4697,12 +4697,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4711,12 +4711,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4725,12 +4725,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4739,12 +4739,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4753,12 +4753,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4767,12 +4767,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4781,12 +4781,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4795,12 +4795,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4809,12 +4809,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4823,12 +4823,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4837,12 +4837,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4851,12 +4851,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4865,12 +4865,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4879,12 +4879,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4893,12 +4893,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4907,12 +4907,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4921,12 +4921,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4935,12 +4935,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4949,12 +4949,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4963,12 +4963,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4977,12 +4977,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -4991,12 +4991,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5005,12 +5005,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5019,12 +5019,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5033,12 +5033,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5047,12 +5047,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5061,12 +5061,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5075,12 +5075,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5089,12 +5089,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5103,12 +5103,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5117,12 +5117,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5131,12 +5131,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5145,12 +5145,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5159,12 +5159,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5173,12 +5173,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5187,12 +5187,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5201,12 +5201,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5215,12 +5215,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5229,12 +5229,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5243,12 +5243,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5257,12 +5257,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5271,12 +5271,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5285,12 +5285,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5299,12 +5299,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5313,12 +5313,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5327,12 +5327,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5341,12 +5341,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5355,12 +5355,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5369,12 +5369,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5383,12 +5383,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5397,12 +5397,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5411,12 +5411,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5425,12 +5425,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5439,12 +5439,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5453,12 +5453,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5467,12 +5467,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5481,12 +5481,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5495,12 +5495,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5509,12 +5509,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5523,12 +5523,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5537,12 +5537,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5551,12 +5551,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5565,12 +5565,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5579,12 +5579,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5593,12 +5593,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5607,12 +5607,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5621,12 +5621,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5635,12 +5635,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5649,12 +5649,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5663,12 +5663,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5677,12 +5677,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5691,12 +5691,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5705,12 +5705,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5719,12 +5719,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5733,12 +5733,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5747,12 +5747,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5761,12 +5761,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5775,12 +5775,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5789,12 +5789,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5803,12 +5803,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5817,12 +5817,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5831,12 +5831,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5845,12 +5845,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5859,12 +5859,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5873,12 +5873,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5887,12 +5887,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5901,12 +5901,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5915,12 +5915,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5929,12 +5929,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5943,12 +5943,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5957,12 +5957,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5971,12 +5971,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5985,12 +5985,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -5999,12 +5999,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6013,12 +6013,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6027,12 +6027,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6041,12 +6041,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6055,12 +6055,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6069,12 +6069,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6083,12 +6083,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6097,12 +6097,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6111,12 +6111,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6125,12 +6125,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6139,12 +6139,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6153,12 +6153,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6167,12 +6167,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6181,12 +6181,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6195,12 +6195,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6209,12 +6209,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6223,12 +6223,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6237,12 +6237,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6251,12 +6251,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6265,12 +6265,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6279,12 +6279,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6293,12 +6293,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6307,12 +6307,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6321,12 +6321,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6335,12 +6335,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6349,12 +6349,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6363,12 +6363,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6377,12 +6377,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6391,12 +6391,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6405,12 +6405,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6419,12 +6419,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6433,12 +6433,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6447,12 +6447,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6461,12 +6461,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6475,12 +6475,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6489,12 +6489,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6503,12 +6503,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6517,12 +6517,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6531,12 +6531,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6545,12 +6545,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6559,12 +6559,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6573,12 +6573,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6587,12 +6587,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6601,12 +6601,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6615,12 +6615,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6629,12 +6629,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6643,12 +6643,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6657,12 +6657,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6671,12 +6671,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6685,12 +6685,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6699,12 +6699,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6713,12 +6713,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6727,12 +6727,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6741,12 +6741,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6755,12 +6755,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6769,12 +6769,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6783,12 +6783,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6797,12 +6797,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6811,12 +6811,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6825,12 +6825,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6839,12 +6839,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6853,12 +6853,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6867,12 +6867,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6881,12 +6881,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6895,12 +6895,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6909,12 +6909,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6923,12 +6923,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6937,12 +6937,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6951,12 +6951,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6965,12 +6965,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6979,12 +6979,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -6993,12 +6993,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7007,12 +7007,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7021,12 +7021,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7035,12 +7035,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7049,12 +7049,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7063,12 +7063,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7077,12 +7077,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7091,12 +7091,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7105,12 +7105,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7119,12 +7119,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7133,12 +7133,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7147,12 +7147,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7161,12 +7161,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7175,12 +7175,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7189,12 +7189,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7203,12 +7203,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7217,12 +7217,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7231,12 +7231,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7245,12 +7245,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
@@ -7259,12 +7259,12 @@
       "content_type": "monster",
       "runtime_hook_family": null,
       "states": {
-        "blocked": false,
+        "blocked": true,
         "cataloged": true,
-        "executable": true,
+        "executable": false,
         "schema_valid": true,
-        "tested": true,
-        "unsupported_reason": null
+        "tested": false,
+        "unsupported_reason": "missing_executable_action_kit"
       },
       "support_state": null
     },
