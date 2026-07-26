@@ -21,10 +21,15 @@
     "unsupported_action_type",
     "missing_action_cost",
     "unsupported_action_cost",
+    "unsupported_action_mechanic_effect_type",
+    "invalid_action_schema",
     "malformed_recharge_entry",
     "source_action_blocked",
     "missing_innate_spell_name",
+    "unknown_innate_spell_reference",
+    "invalid_innate_spell_schema",
     "malformed_innate_spellcasting_entry",
+    "invalid_monster_schema",
     "unsupported_action_payload"
   ]
 }

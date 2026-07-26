@@ -7,10 +7,11 @@ import re
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from dnd_sim.class_progression import DEFAULT_CLASSES_DIR, DEFAULT_SUBCLASSES_DIR
 from dnd_sim.items import DEFAULT_ITEMS_DIR, build_item_catalog
+from dnd_sim.io_models import ActionConfig, EnemyConfig, InnateSpellConfig
 from dnd_sim.mechanics_schema import (
     EXECUTABLE_EFFECT_TYPES,
     SPELL_METADATA_EFFECT_TYPES,
@@ -767,17 +768,37 @@ def _action_entry_states(
     if not action_name:
         return _blocked_states(reason="missing_action_name", schema_valid=False)
 
-    action_type = str(action_payload.get("action_type", "")).strip().lower()
+    action_type = str(action_payload.get("action_type", "attack")).strip().lower()
     if not action_type:
         return _blocked_states(reason="missing_action_type", schema_valid=False)
     if action_type not in policy.supported_action_types:
-        return _blocked_states(reason="unsupported_action_type", schema_valid=True)
+        return _blocked_states(reason="unsupported_action_type", schema_valid=False)
 
     action_cost = str(action_payload.get("action_cost", default_action_cost)).strip().lower()
     if not action_cost:
         return _blocked_states(reason="missing_action_cost", schema_valid=False)
     if action_cost not in policy.supported_action_costs:
-        return _blocked_states(reason="unsupported_action_cost", schema_valid=True)
+        return _blocked_states(reason="unsupported_action_cost", schema_valid=False)
+
+    normalized_payload = dict(action_payload)
+    normalized_payload["name"] = action_name
+    normalized_payload["action_type"] = action_type
+    normalized_payload["action_cost"] = action_cost
+    try:
+        ActionConfig.model_validate(normalized_payload)
+    except ValidationError as exc:
+        errors = exc.errors()
+        if any(error.get("type") == "unsupported_action_mechanic_effect_type" for error in errors):
+            reason = "unsupported_action_mechanic_effect_type"
+        elif any(tuple(error.get("loc", ()))[:1] == ("action_type",) for error in errors):
+            reason = "unsupported_action_type"
+        elif any(tuple(error.get("loc", ()))[:1] == ("action_cost",) for error in errors):
+            reason = "unsupported_action_cost"
+        elif any(tuple(error.get("loc", ()))[:1] == ("recharge",) for error in errors):
+            reason = "malformed_recharge_entry"
+        else:
+            reason = "invalid_action_schema"
+        return _blocked_states(reason=reason, schema_valid=False)
 
     return _supported_states()
 
@@ -791,7 +812,11 @@ def _monster_base_states(payload: dict[str, Any]) -> CapabilityStates:
         return _blocked_states(reason="missing_monster_identity", schema_valid=False)
     if not isinstance(stat_block, dict):
         return _blocked_states(reason="missing_monster_stat_block", schema_valid=False)
-    if not monster_has_executable_action_kit(payload):
+    try:
+        validated = EnemyConfig.model_validate(payload)
+    except ValidationError:
+        return _blocked_states(reason="invalid_monster_schema", schema_valid=False)
+    if not monster_has_executable_action_kit(validated.model_dump(mode="python")):
         return _blocked_states(reason="missing_executable_action_kit", schema_valid=True)
     return _supported_states()
 
@@ -876,7 +901,19 @@ def _add_innate_spellcasting_records(
             spell_name = str(entry.get("spell", "")).strip()
             token = _slug_token(spell_name, fallback)
             if spell_name:
-                states = _supported_states()
+                try:
+                    InnateSpellConfig.model_validate(entry)
+                except ValidationError as exc:
+                    if any(
+                        "Unknown innate spell reference" in str(error.get("msg", ""))
+                        for error in exc.errors()
+                    ):
+                        reason = "unknown_innate_spell_reference"
+                    else:
+                        reason = "invalid_innate_spell_schema"
+                    states = _blocked_states(reason=reason, schema_valid=False)
+                else:
+                    states = _supported_states()
             else:
                 states = _blocked_states(reason="missing_innate_spell_name", schema_valid=False)
         else:
@@ -922,6 +959,14 @@ def build_monster_capability_records(
             entries=list(payload.get("actions", [])),
             policy=active_policy,
             default_action_cost="action",
+        )
+        _add_action_family_records(
+            records=records,
+            monster_id=monster_id,
+            family="monster_bonus_action",
+            entries=list(payload.get("bonus_actions", [])),
+            policy=active_policy,
+            default_action_cost="bonus",
         )
         _add_action_family_records(
             records=records,

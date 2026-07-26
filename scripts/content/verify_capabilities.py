@@ -19,6 +19,7 @@ _SCOPE_MAP = {
     "monster": {
         "monster",
         "monster_action",
+        "monster_bonus_action",
         "monster_reaction",
         "monster_legendary_action",
         "monster_lair_action",

@@ -114,6 +114,7 @@ _CAPABILITY_MONSTER_CONTENT_TYPES = frozenset(
     {
         "monster",
         "monster_action",
+        "monster_bonus_action",
         "monster_reaction",
         "monster_legendary_action",
         "monster_lair_action",
