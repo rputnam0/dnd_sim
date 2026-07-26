@@ -648,6 +648,19 @@ def validate_capability_gate_records(
             continue
 
         states = record.states
+        if not states.cataloged:
+            issues.append(f"{record.content_id} record must set states.cataloged=true")
+        if states.executable == states.blocked:
+            issues.append(
+                f"{record.content_id} states.executable and states.blocked must be exact opposites"
+            )
+        if states.executable and not states.schema_valid:
+            issues.append(
+                f"{record.content_id} executable record requires states.schema_valid=true"
+            )
+        if states.tested and not states.executable:
+            issues.append(f"{record.content_id} tested record requires states.executable=true")
+
         if states.blocked:
             reason = str(states.unsupported_reason or "").strip()
             if not reason:

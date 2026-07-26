@@ -39,6 +39,86 @@ SHARD_B_SPECIES_IDS = {
 }
 
 
+def _capability_record(
+    *,
+    cataloged: bool = True,
+    schema_valid: bool = True,
+    executable: bool = True,
+    tested: bool = False,
+    blocked: bool = False,
+    unsupported_reason: str | None = None,
+) -> dict[str, object]:
+    return {
+        "content_id": "spell:state_fixture",
+        "content_type": "spell",
+        "states": {
+            "cataloged": cataloged,
+            "schema_valid": schema_valid,
+            "executable": executable,
+            "tested": tested,
+            "blocked": blocked,
+            "unsupported_reason": unsupported_reason,
+        },
+    }
+
+
+def test_capability_gate_rejects_record_that_is_both_blocked_and_executable() -> None:
+    issues = validate_capability_gate_records(
+        records=[
+            _capability_record(
+                executable=True,
+                blocked=True,
+                unsupported_reason="rules_not_implemented",
+            )
+        ]
+    )
+
+    assert any("executable and states.blocked must be exact opposites" in issue for issue in issues)
+
+
+@pytest.mark.parametrize(
+    ("record", "expected_issue"),
+    [
+        (_capability_record(cataloged=False), "cataloged=true"),
+        (
+            _capability_record(schema_valid=False, executable=True),
+            "executable record requires states.schema_valid=true",
+        ),
+        (
+            _capability_record(
+                executable=False,
+                tested=True,
+                blocked=True,
+                unsupported_reason="rules_not_implemented",
+            ),
+            "tested record requires states.executable=true",
+        ),
+    ],
+)
+def test_capability_gate_enforces_shared_state_invariants(
+    record: dict[str, object], expected_issue: str
+) -> None:
+    issues = validate_capability_gate_records(records=[record])
+
+    assert any(expected_issue in issue for issue in issues)
+
+
+def test_capability_gate_preserves_legitimate_blocked_record() -> None:
+    issues = validate_capability_gate_records(
+        records=[
+            _capability_record(
+                schema_valid=False,
+                executable=False,
+                tested=False,
+                blocked=True,
+                unsupported_reason="rules_not_implemented",
+            )
+        ]
+    )
+
+    assert issues == []
+
+
 def test_runtime_scope_requires_executable_content_but_not_test_evidence() -> None:
     executable_untested_issues = validate_capability_gate_records(
         records=[
