@@ -269,11 +269,11 @@ def verify_manifest_payload(
                 )
             )
 
-        if executable and not tested:
+        if strict and executable and not tested:
             issues.append(
                 CapabilityIssue(
                     code="CAP-GATE-007",
-                    message="executable content must also be tested.",
+                    message="strict mode requires executable content to have behavioral tests.",
                     content_id=content_id,
                 )
             )

@@ -208,12 +208,18 @@ def _slug_token(value: Any, fallback: str) -> str:
     return text or fallback
 
 
-def _supported_states() -> CapabilityStates:
+def _supported_states(*, tested: bool = False) -> CapabilityStates:
+    """Build executable states without inferring behavioral test evidence.
+
+    Callers may set ``tested=True`` only when they have independent conformance evidence for the
+    exact content record. Catalog shape or runtime dispatchability alone is not test evidence.
+    """
+
     return CapabilityStates(
         cataloged=True,
         schema_valid=True,
         executable=True,
-        tested=True,
+        tested=tested,
         blocked=False,
         unsupported_reason=None,
     )

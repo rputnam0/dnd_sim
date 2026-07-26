@@ -217,6 +217,15 @@ def render_markdown_report(
         "",
         f"- Machine-readable JSON: `{json_display}`",
         "",
+        "## Interpretation",
+        "",
+        "- `Executable` means the manifest builder found a runtime-dispatchable shape; "
+        "it does not by itself prove complete rules semantics.",
+        "- `Tested` is independent behavioral-conformance evidence and is never inferred "
+        "from catalog or schema validity.",
+        "- Blocked records remain cataloged so unsupported shipped content is visible "
+        "instead of silently degrading at runtime.",
+        "",
         "## Coverage Summary",
         "",
         "| Metric | Value |",

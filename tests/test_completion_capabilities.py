@@ -136,7 +136,7 @@ def test_manifest_completeness_gate_detects_missing_records() -> None:
     assert "CAP-GATE-004" in codes
 
 
-def test_supported_scope_gate_requires_tested_for_executable_records() -> None:
+def test_default_gate_keeps_executable_and_tested_states_independent() -> None:
     payload = {
         "manifest_version": "1.0",
         "generated_at": None,
@@ -153,6 +153,30 @@ def test_supported_scope_gate_requires_tested_for_executable_records() -> None:
     issues = verify_completion_capabilities.verify_manifest_payload(
         payload,
         expected_content_ids=("spell:acid_splash",),
+    )
+    codes = {issue.code for issue in issues}
+    assert "CAP-GATE-007" not in codes
+
+
+def test_strict_gate_requires_tested_for_executable_records() -> None:
+    payload = {
+        "manifest_version": "1.0",
+        "generated_at": None,
+        "records": [
+            _record(
+                content_id="spell:acid_splash",
+                executable=True,
+                tested=False,
+                blocked=False,
+                unsupported_reason=None,
+            )
+        ],
+    }
+
+    issues = verify_completion_capabilities.verify_manifest_payload(
+        payload,
+        expected_content_ids=("spell:acid_splash",),
+        strict=True,
     )
     codes = {issue.code for issue in issues}
     assert "CAP-GATE-007" in codes

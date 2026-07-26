@@ -12,6 +12,12 @@ Do not edit manually.
 
 - Machine-readable JSON: `artifacts/capabilities/coverage_report.json`
 
+## Interpretation
+
+- `Executable` means the manifest builder found a runtime-dispatchable shape; it does not by itself prove complete rules semantics.
+- `Tested` is independent behavioral-conformance evidence and is never inferred from catalog or schema validity.
+- Blocked records remain cataloged so unsupported shipped content is visible instead of silently degrading at runtime.
+
 ## Coverage Summary
 
 | Metric | Value |
@@ -21,21 +27,21 @@ Do not edit manually.
 | Blocked records | 191 |
 | Schema-valid records | 2674 |
 | Executable records | 2483 |
-| Tested records | 2483 |
+| Tested records | 0 |
 
 ## Coverage By Content Type
 
 | Content type | Total | Supported | Blocked | Schema valid | Executable | Tested |
 |---|---:|---:|---:|---:|---:|---:|
-| background | 86 | 86 | 0 | 86 | 86 | 86 |
-| class | 13 | 13 | 0 | 13 | 13 | 13 |
-| feat | 219 | 219 | 0 | 219 | 219 | 219 |
-| item | 10 | 10 | 0 | 10 | 10 | 10 |
+| background | 86 | 86 | 0 | 86 | 86 | 0 |
+| class | 13 | 13 | 0 | 13 | 13 | 0 |
+| feat | 219 | 219 | 0 | 219 | 219 | 0 |
+| item | 10 | 10 | 0 | 10 | 10 | 0 |
 | monster | 191 | 0 | 191 | 191 | 0 | 0 |
-| species | 256 | 256 | 0 | 256 | 256 | 256 |
-| spell | 593 | 593 | 0 | 593 | 593 | 593 |
-| subclass | 125 | 125 | 0 | 125 | 125 | 125 |
-| trait | 1181 | 1181 | 0 | 1181 | 1181 | 1181 |
+| species | 256 | 256 | 0 | 256 | 256 | 0 |
+| spell | 593 | 593 | 0 | 593 | 593 | 0 |
+| subclass | 125 | 125 | 0 | 125 | 125 | 0 |
+| trait | 1181 | 1181 | 0 | 1181 | 1181 | 0 |
 
 ## Unsupported Reason Coverage
 
