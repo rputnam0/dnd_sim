@@ -647,6 +647,24 @@ def _subclass_content_id(payload: dict[str, Any], *, index: int) -> str:
     return f"subclass:{subclass_id}_{class_id}|{source}"
 
 
+def _progression_feature_grants_are_valid(features: list[Any]) -> bool:
+    for feature in features:
+        if not isinstance(feature, dict):
+            return False
+        if not str(feature.get("name", "")).strip():
+            return False
+        raw_level = feature.get("level")
+        if isinstance(raw_level, bool):
+            return False
+        try:
+            level = int(raw_level)
+        except (TypeError, ValueError):
+            return False
+        if level < 1 or level > 20:
+            return False
+    return True
+
+
 def build_class_capability_records(
     *,
     class_payloads: list[dict[str, Any]],
@@ -665,9 +683,17 @@ def build_class_capability_records(
         elif not features:
             states = _blocked_states(reason="missing_class_features", schema_valid=True)
             support_state = "unsupported"
+        elif not _progression_feature_grants_are_valid(features):
+            states = _blocked_states(reason="invalid_class_feature_schema", schema_valid=False)
+            support_state = "unsupported"
         else:
-            states = _supported_states()
-            support_state = "supported"
+            # A progression list can grant feature names and spell-slot progression, but it does
+            # not prove that every granted class feature has executable 5e semantics.
+            states = _blocked_states(
+                reason="unverified_class_feature_semantics",
+                schema_valid=True,
+            )
+            support_state = "unsupported"
 
         records.append(
             CapabilityRecord(
@@ -722,9 +748,18 @@ def build_subclass_capability_records(
         elif not features:
             states = _blocked_states(reason="missing_subclass_features", schema_valid=True)
             support_state = "unsupported"
+        elif not _progression_feature_grants_are_valid(features):
+            states = _blocked_states(
+                reason="invalid_subclass_feature_schema",
+                schema_valid=False,
+            )
+            support_state = "unsupported"
         else:
-            states = _supported_states()
-            support_state = "supported"
+            states = _blocked_states(
+                reason="unverified_subclass_feature_semantics",
+                schema_valid=True,
+            )
+            support_state = "unsupported"
 
         records.append(
             CapabilityRecord(
