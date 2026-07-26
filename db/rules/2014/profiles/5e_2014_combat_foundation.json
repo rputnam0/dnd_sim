@@ -1,0 +1,13 @@
+{
+  "profile_id": "5e_2014_combat_foundation",
+  "profile_version": "1.0.0",
+  "ruleset": "5e-2014",
+  "schema_version": "1.0",
+  "zero_hit_point_policy": {
+    "allow_explicit_actor_override": true,
+    "construct": "dead",
+    "monster": "dead",
+    "player_character": "death_saves",
+    "summon": "dead"
+  }
+}
