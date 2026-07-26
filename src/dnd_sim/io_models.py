@@ -293,6 +293,7 @@ class SummonEffectConfig(BaseModel):
     controller: Literal["source", "target"] | None = None
     controller_id: str | None = None
     mount: bool = False
+    uses_death_saves: bool = False
 
     @model_validator(mode="after")
     def validate_summon_identity(self) -> "SummonEffectConfig":
@@ -409,6 +410,7 @@ class EnemyConfig(BaseModel):
     identity: EnemyIdentityConfig
     stat_block: EnemyStatBlockConfig
     actions: list[ActionConfig]
+    uses_death_saves: bool = False
     bonus_actions: list[ActionConfig] = Field(default_factory=list)
     reactions: list[ActionConfig] = Field(default_factory=list)
     legendary_actions: list[ActionConfig] = Field(default_factory=list)

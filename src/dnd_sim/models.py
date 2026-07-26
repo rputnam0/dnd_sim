@@ -297,6 +297,7 @@ class ActorRuntimeState:
     hidden: bool = False
     detected_by: set[str] = field(default_factory=set)
     surprised: bool = False
+    uses_death_saves: bool | None = None
 
     def is_active(self) -> bool:
         return not self.dead
@@ -338,6 +339,9 @@ class TrialResult:
     telemetry: list[dict[str, Any]] = field(default_factory=list)
     encounter_outcomes: list[dict[str, Any]] = field(default_factory=list)
     state_snapshots: list[dict[str, Any]] = field(default_factory=list)
+    outcome: str | None = None
+    termination_reason: str | None = None
+    censored: bool = False
 
 
 @dataclass(slots=True)
@@ -363,6 +367,10 @@ class SimulationSummary:
     per_actor_downed: dict[str, SummaryMetric]
     per_actor_deaths: dict[str, SummaryMetric]
     per_actor_remaining_hp: dict[str, SummaryMetric]
+    draw_rate: float = 0.0
+    timeout_rate: float = 0.0
+    censored_rate: float = 0.0
+    resolved_rate: float = 1.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -371,6 +379,10 @@ class SimulationSummary:
             "trials": self.trials,
             "party_win_rate": self.party_win_rate,
             "enemy_win_rate": self.enemy_win_rate,
+            "draw_rate": self.draw_rate,
+            "timeout_rate": self.timeout_rate,
+            "censored_rate": self.censored_rate,
+            "resolved_rate": self.resolved_rate,
             "rounds": asdict(self.rounds),
             "per_actor_damage_taken": {
                 actor: asdict(metric) for actor, metric in self.per_actor_damage_taken.items()

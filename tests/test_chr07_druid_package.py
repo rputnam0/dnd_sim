@@ -244,7 +244,11 @@ def test_chr07_integration_wild_shape_spend_is_deterministic_across_short_rest(
     )
     raw = json.loads(scenario_path.read_text(encoding="utf-8"))
     raw["encounters"] = [
-        {"enemies": ["skeleton_a"], "short_rest_after": True},
+        {
+            "enemies": ["skeleton_a"],
+            "short_rest_after": True,
+            "branches": {"timeout": 1},
+        },
         {"enemies": ["skeleton_b"], "short_rest_after": False},
     ]
     raw["enemies"] = []

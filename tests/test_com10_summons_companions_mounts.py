@@ -9,7 +9,12 @@ from pydantic import ValidationError
 
 from dnd_sim.engine import run_simulation
 from dnd_sim.engine_runtime import _execute_action, _reorder_initiative_for_construct_companions
-from dnd_sim.io import ActionConfig, load_character_db, load_runtime_scenario, load_strategy_registry
+from dnd_sim.io import (
+    ActionConfig,
+    load_character_db,
+    load_runtime_scenario,
+    load_strategy_registry,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import BaseStrategy, DeclaredAction, TargetRef, TurnDeclaration
 from tests.helpers import build_character, build_enemy, write_json
@@ -131,12 +136,13 @@ def _setup_env(
             "enemy_defeat": "all_dead",
             "max_rounds": 5,
         },
-        "internal_harness": {"strategy_modules": [
-            {
-                "name": "boss_highest_threat_target",
-                "source": "builtin",
-                "class_name": "BossHighestThreatTargetStrategy",
-            }
+        "internal_harness": {
+            "strategy_modules": [
+                {
+                    "name": "boss_highest_threat_target",
+                    "source": "builtin",
+                    "class_name": "BossHighestThreatTargetStrategy",
+                }
             ]
         },
         "resource_policy": {
@@ -330,6 +336,7 @@ def test_com10_action_schema_accepts_summon_command_and_mount_effects() -> None:
                     "name": "Spirit Wolf",
                     "max_hp": 20,
                     "ac": 13,
+                    "uses_death_saves": True,
                 },
                 {"effect_type": "command_allied", "target": "target"},
                 {"effect_type": "mount", "target": "target"},
@@ -342,6 +349,30 @@ def test_com10_action_schema_accepts_summon_command_and_mount_effects() -> None:
         "command_allied",
         "mount",
     ]
+    summon_effect = action.effects[0].model_dump(mode="json")
+    assert summon_effect["uses_death_saves"] is True
+
+    summoner = _actor("summoner", "party")
+    actors = {summoner.actor_id: summoner}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(summoner)
+    _execute_action(
+        rng=random.Random(11),
+        actor=summoner,
+        action=ActionDefinition(
+            name="coordinated_call",
+            action_type="utility",
+            effects=[summon_effect],
+        ),
+        targets=[summoner],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert actors["spirit_wolf"].uses_death_saves is True
 
 
 def test_com10_summon_effect_schema_requires_actor_id_or_name() -> None:

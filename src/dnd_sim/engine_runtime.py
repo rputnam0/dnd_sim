@@ -1982,6 +1982,7 @@ def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRunt
         cha_mod=cha_mod,
         save_mods=save_mods,
         actions=[attack] + _get_standard_actions(),
+        uses_death_saves=False,
         resources={},
         max_resources={},
         traits=traits,
@@ -6306,6 +6307,11 @@ def _build_actor_from_character(
         cha_mod=ability_mods.get("cha", 0),
         save_mods=save_mods,
         actions=_build_character_actions(character) + _get_standard_actions(),
+        uses_death_saves=(
+            character["uses_death_saves"]
+            if isinstance(character.get("uses_death_saves"), bool)
+            else True
+        ),
         proficiencies={str(v).lower() for v in character.get("proficiencies", [])},
         expertise={str(v).lower() for v in character.get("expertise", [])},
         resources=_extract_flat_resources(character),
@@ -6625,6 +6631,7 @@ def _build_actor_from_enemy(
         cha_mod=_enemy_ability_mod("cha"),
         save_mods=dict(enemy.stat_block.save_mods),
         actions=actions,
+        uses_death_saves=bool(getattr(enemy, "uses_death_saves", False)),
         damage_resistances={v.lower() for v in enemy.damage_resistances},
         damage_immunities={v.lower() for v in enemy.damage_immunities},
         damage_vulnerabilities={v.lower() for v in enemy.damage_vulnerabilities},
@@ -6951,6 +6958,22 @@ def _actor_defeated(actor: ActorRuntimeState) -> bool:
     return actor.dead or actor.hp <= 0
 
 
+def _actor_uses_death_saves(actor: ActorRuntimeState) -> bool:
+    if actor.uses_death_saves is not None:
+        return actor.uses_death_saves
+    return actor.team == "party"
+
+
+def _finalize_zero_hp_without_death_saves(actor: ActorRuntimeState) -> None:
+    if actor.hp > 0 or actor.dead or _actor_uses_death_saves(actor):
+        return
+    actor.hp = 0
+    actor.dead = True
+    actor.stable = False
+    actor.death_failures = max(3, actor.death_failures)
+    actor.update_manual_conditions({"dead", "unconscious", "incapacitated"})
+
+
 def _team_actors(actors: dict[str, ActorRuntimeState], *, team: str) -> list[ActorRuntimeState]:
     if team == "party":
         return [actor for actor in actors.values() if actor.team == "party"]
@@ -7025,6 +7048,8 @@ def _team_defeated(
     team_members = _team_actors(actors, team=team)
     if not team_members:
         return False
+    for actor in team_members:
+        _finalize_zero_hp_without_death_saves(actor)
 
     rule = rule_spec if rule_spec is not None else default_rule
     if isinstance(rule, dict):
@@ -10196,6 +10221,11 @@ def _apply_effect(
             cha_mod=0,
             save_mods={"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
             actions=summon_actions + _get_standard_actions(),
+            uses_death_saves=(
+                effect["uses_death_saves"]
+                if isinstance(effect.get("uses_death_saves"), bool)
+                else False
+            ),
             speed_ft=summon_speed,
             position=_to_position3(effect.get("position")) or actor.position,
             requires_command=requires_command,
@@ -14522,6 +14552,9 @@ def _flatten_trial(trial: TrialResult) -> dict[str, Any]:
         "trial_index": trial.trial_index,
         "rounds": trial.rounds,
         "winner": trial.winner,
+        "outcome": trial.outcome,
+        "termination_reason": trial.termination_reason,
+        "censored": trial.censored,
         "damage_taken": json.dumps(trial.damage_taken, sort_keys=True),
         "damage_dealt": json.dumps(trial.damage_dealt, sort_keys=True),
         "resources_spent": json.dumps(trial.resources_spent, sort_keys=True),
@@ -14686,6 +14719,9 @@ def run_simulation_core(
 
         total_rounds = 0
         overall_winner = "draw"
+        overall_outcome = "draw"
+        overall_termination_reason: str | None = None
+        overall_censored = False
         encounter_idx: int | None = 0
         encounter_step = 0
 
@@ -15175,14 +15211,18 @@ def run_simulation_core(
             if party_is_defeated:
                 encounter_winner = "enemy"
                 encounter_outcome = "party_defeat"
+                encounter_termination_reason = "party_defeated"
+                encounter_censored = False
             elif enemies_are_defeated:
                 encounter_winner = "party"
                 encounter_outcome = "enemy_defeat"
+                encounter_termination_reason = "enemy_defeated"
+                encounter_censored = False
             else:
-                party_hp = sum(a.hp for a in actors.values() if a.team == "party" and not a.dead)
-                enemy_hp = sum(a.hp for a in actors.values() if a.team != "party" and not a.dead)
-                encounter_winner = "party" if party_hp >= enemy_hp else "enemy"
-                encounter_outcome = encounter_winner
+                encounter_winner = "draw"
+                encounter_outcome = "timeout"
+                encounter_termination_reason = "max_rounds"
+                encounter_censored = True
 
             next_encounter_idx, branch_key = _resolve_next_encounter_index(
                 encounter=encounter,
@@ -15192,15 +15232,25 @@ def run_simulation_core(
                 encounter_count=len(encounter_plan),
             )
 
+            # A max-rounds timeout is censored rather than a resolved combat
+            # result. Do not silently discard the unresolved actors and advance
+            # through a sequential campaign. Scenario authors can opt into that
+            # behavior with an explicit timeout/draw/default branch.
+            if encounter_censored and branch_key is None:
+                next_encounter_idx = None
+
             continue_campaign = next_encounter_idx is not None
             if party_is_defeated:
                 overall_winner = "enemy"
+                overall_outcome = "enemy_victory"
+                overall_termination_reason = "party_defeated"
                 continue_campaign = False
                 next_encounter_idx = None
-            elif encounter_winner == "enemy" and branch_key is None:
-                overall_winner = "enemy"
-                continue_campaign = False
-                next_encounter_idx = None
+            elif encounter_censored and not continue_campaign:
+                overall_censored = True
+                overall_winner = "draw"
+                overall_outcome = "timeout"
+                overall_termination_reason = encounter_termination_reason
 
             if continue_campaign:
                 for actor in actors.values():
@@ -15238,6 +15288,8 @@ def run_simulation_core(
                     "encounter_step": step_index,
                     "outcome": encounter_outcome,
                     "winner": encounter_winner,
+                    "termination_reason": encounter_termination_reason,
+                    "censored": encounter_censored,
                     "next_encounter_index": next_encounter_idx,
                     "party": party_snapshot,
                     "enemies": enemy_snapshot,
@@ -15249,23 +15301,40 @@ def run_simulation_core(
                     "encounter_step": step_index,
                     "outcome": encounter_outcome,
                     "winner": encounter_winner,
+                    "termination_reason": encounter_termination_reason,
+                    "censored": encounter_censored,
                     "branch_key": branch_key,
                     "next_encounter_index": next_encounter_idx,
                 }
             )
 
             if not continue_campaign:
-                if overall_winner == "draw":
+                if (
+                    overall_termination_reason is None
+                    and encounter_winner == "party"
+                    and not encounter_censored
+                ):
                     overall_winner = encounter_winner
+                    overall_outcome = "party_victory"
+                    overall_termination_reason = encounter_termination_reason
                 break
 
             encounter_idx = next_encounter_idx
 
-        if overall_winner == "draw":
+        if overall_termination_reason is None:
             if _party_defeated(actors, party_defeat_rule):
                 overall_winner = "enemy"
+                overall_outcome = "enemy_victory"
+                overall_termination_reason = "party_defeated"
             elif _enemies_defeated(actors, enemy_defeat_rule):
                 overall_winner = "party"
+                overall_outcome = "party_victory"
+                overall_termination_reason = "enemy_defeated"
+            else:
+                overall_winner = "draw"
+                overall_outcome = "censored"
+                overall_termination_reason = "unresolved"
+                overall_censored = True
 
         for aid, actor in actors.items():
             downed_counts[aid] = actor.downed_count
@@ -15285,6 +15354,9 @@ def run_simulation_core(
             telemetry=trial_telemetry,
             encounter_outcomes=encounter_outcomes,
             state_snapshots=state_snapshots,
+            outcome=overall_outcome,
+            termination_reason=overall_termination_reason,
+            censored=overall_censored,
         )
         trial_results.append(trial)
 
