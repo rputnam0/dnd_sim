@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Collection, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -137,12 +138,17 @@ def _canonical_effect_type(effect_type: str) -> str:
     return str(effect_type).strip().lower()
 
 
-def _iter_json_payloads(path: Path) -> list[tuple[Path, dict[str, Any]]]:
+def _iter_json_payloads(
+    path: Path,
+    *,
+    included_files: Collection[Path] | None = None,
+) -> list[tuple[Path, dict[str, Any]]]:
     payloads: list[tuple[Path, dict[str, Any]]] = []
     if not path.exists():
         return payloads
 
-    for file_path in sorted(path.glob("*.json")):
+    candidates = path.glob("*.json") if included_files is None else included_files
+    for file_path in sorted(candidates):
         try:
             raw = json.loads(file_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -336,6 +342,7 @@ def build_mechanics_coverage_report(
     traits_dir: Path,
     spells_dir: Path,
     monsters_dir: Path,
+    included_files_by_kind: Mapping[str, Collection[Path]] | None = None,
 ) -> dict[str, Any]:
     """Build mechanics coverage report across canonical rule JSON directories."""
 
@@ -346,11 +353,31 @@ def build_mechanics_coverage_report(
     }
     unsupported_effect_types: set[str] = set()
 
-    sources = [
-        ("trait", _iter_json_payloads(traits_dir), _collect_rule_mechanics),
-        ("spell", _iter_json_payloads(spells_dir), _collect_rule_mechanics),
-        ("monster", _iter_json_payloads(monsters_dir), _collect_monster_mechanics),
-    ]
+    source_directories = {
+        "trait": traits_dir,
+        "spell": spells_dir,
+        "monster": monsters_dir,
+    }
+    collectors = {
+        "trait": _collect_rule_mechanics,
+        "spell": _collect_rule_mechanics,
+        "monster": _collect_monster_mechanics,
+    }
+    sources = []
+    for kind in ("trait", "spell", "monster"):
+        included_files = (
+            None if included_files_by_kind is None else included_files_by_kind.get(kind, ())
+        )
+        sources.append(
+            (
+                kind,
+                _iter_json_payloads(
+                    source_directories[kind],
+                    included_files=included_files,
+                ),
+                collectors[kind],
+            )
+        )
 
     for kind, payloads, collector in sources:
         ingested = 0
@@ -389,22 +416,36 @@ def validate_mechanics_directories(
     traits_dir: Path,
     spells_dir: Path,
     monsters_dir: Path,
+    included_files_by_kind: Mapping[str, Collection[Path]] | None = None,
 ) -> dict[str, dict[str, list[str]]]:
     """Validate mechanics JSON entries and return file-scoped issues."""
 
     out: dict[str, dict[str, list[str]]] = {"trait": {}, "spell": {}, "monster": {}}
 
-    for file_path, payload in _iter_json_payloads(traits_dir):
+    trait_files = (
+        None if included_files_by_kind is None else included_files_by_kind.get("trait", ())
+    )
+    spell_files = (
+        None if included_files_by_kind is None else included_files_by_kind.get("spell", ())
+    )
+    monster_files = (
+        None if included_files_by_kind is None else included_files_by_kind.get("monster", ())
+    )
+
+    for file_path, payload in _iter_json_payloads(traits_dir, included_files=trait_files):
         issues = validate_rule_mechanics_payload(kind="trait", payload=payload)
         if issues:
             out["trait"][str(file_path)] = issues
 
-    for file_path, payload in _iter_json_payloads(spells_dir):
+    for file_path, payload in _iter_json_payloads(spells_dir, included_files=spell_files):
         issues = validate_rule_mechanics_payload(kind="spell", payload=payload)
         if issues:
             out["spell"][str(file_path)] = issues
 
-    for file_path, payload in _iter_json_payloads(monsters_dir):
+    for file_path, payload in _iter_json_payloads(
+        monsters_dir,
+        included_files=monster_files,
+    ):
         issues = validate_monster_mechanics_payload(payload)
         if issues:
             out["monster"][str(file_path)] = issues
