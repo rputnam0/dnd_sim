@@ -130,6 +130,7 @@ _ACTION_GROUPS = (
     "legendary_actions",
     "lair_actions",
 )
+_SUPPORTED_MONSTER_ACTION_TYPES = {"attack", "save", "utility"}
 
 
 def _canonical_effect_type(effect_type: str) -> str:
@@ -239,8 +240,39 @@ def validate_rule_mechanics_payload(*, kind: str, payload: dict[str, Any]) -> li
     return _validate_mechanics_list(payload.get("mechanics"), prefix="mechanics")
 
 
+def monster_has_executable_action_kit(payload: dict[str, Any]) -> bool:
+    """Return whether a monster declares at least one runtime-dispatchable action.
+
+    This is intentionally a minimum integrity check. Detailed action/effect validation remains
+    responsible for proving that each declared action's payload is executable.
+    """
+
+    for group in _ACTION_GROUPS:
+        actions = payload.get(group, [])
+        if not isinstance(actions, list):
+            continue
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            name = str(action.get("name", "")).strip()
+            action_type = str(action.get("action_type", "")).strip().lower()
+            if name and action_type in _SUPPORTED_MONSTER_ACTION_TYPES:
+                return True
+
+    innate_spells = payload.get("innate_spellcasting", [])
+    if isinstance(innate_spells, list):
+        return any(
+            isinstance(entry, dict) and bool(str(entry.get("spell", "")).strip())
+            for entry in innate_spells
+        )
+    return False
+
+
 def validate_monster_mechanics_payload(payload: dict[str, Any]) -> list[str]:
     issues: list[str] = []
+
+    if not monster_has_executable_action_kit(payload):
+        issues.append("monster must define at least one executable action or innate spell")
 
     for group in _ACTION_GROUPS:
         actions = payload.get(group, [])

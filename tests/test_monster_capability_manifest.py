@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from dnd_sim.capability_manifest import (
+    DEFAULT_MONSTERS_DIR,
     build_monster_capability_manifest,
 )
 from dnd_sim.parse_monsters import parse_monsters
@@ -107,3 +108,36 @@ def test_monster_action_unsupported_reasons_are_explicit() -> None:
     missing_spell = by_id["monster_innate_spellcasting:void_howler:innate_spell_1:1"]
     assert missing_spell.states.blocked is True
     assert missing_spell.states.unsupported_reason == "missing_innate_spell_name"
+
+
+def test_monster_base_record_blocks_stat_shell_without_executable_action_kit() -> None:
+    payload = {
+        "identity": {"enemy_id": "ancient_shell", "name": "Ancient Shell", "team": "enemy"},
+        "stat_block": {"max_hp": 546, "ac": 22},
+        "actions": [],
+        "bonus_actions": [],
+        "reactions": [],
+        "legendary_actions": [],
+        "lair_actions": [],
+        "innate_spellcasting": [],
+    }
+
+    manifest = build_monster_capability_manifest(monster_payloads=[payload])
+    monster = next(record for record in manifest.records if record.content_type == "monster")
+
+    assert monster.states.schema_valid is True
+    assert monster.states.executable is False
+    assert monster.states.tested is False
+    assert monster.states.blocked is True
+    assert monster.states.unsupported_reason == "missing_executable_action_kit"
+
+
+def test_canonical_monster_manifest_does_not_claim_stat_shells_are_executable() -> None:
+    manifest = build_monster_capability_manifest(monsters_dir=DEFAULT_MONSTERS_DIR)
+    monster_records = [record for record in manifest.records if record.content_type == "monster"]
+
+    assert len(monster_records) == 191
+    assert all(record.states.blocked for record in monster_records)
+    assert {
+        record.states.unsupported_reason for record in monster_records
+    } == {"missing_executable_action_kit"}

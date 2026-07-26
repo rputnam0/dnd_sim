@@ -14,6 +14,7 @@ from dnd_sim.items import DEFAULT_ITEMS_DIR, build_item_catalog
 from dnd_sim.mechanics_schema import (
     EXECUTABLE_EFFECT_TYPES,
     SPELL_METADATA_EFFECT_TYPES,
+    monster_has_executable_action_kit,
     validate_rule_mechanics_payload,
 )
 from dnd_sim.spells import canonicalize_spell_payload, slugify_spell_name
@@ -760,6 +761,8 @@ def _monster_base_states(payload: dict[str, Any]) -> CapabilityStates:
         return _blocked_states(reason="missing_monster_identity", schema_valid=False)
     if not isinstance(stat_block, dict):
         return _blocked_states(reason="missing_monster_stat_block", schema_valid=False)
+    if not monster_has_executable_action_kit(payload):
+        return _blocked_states(reason="missing_executable_action_kit", schema_valid=True)
     return _supported_states()
 
 
