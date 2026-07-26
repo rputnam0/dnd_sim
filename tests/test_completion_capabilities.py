@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,7 @@ from dnd_sim.capability_manifest import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts/content/verify_completion_capabilities.py"
+REBUILD_SCRIPT_PATH = REPO_ROOT / "scripts/content/rebuild_capability_artifacts.py"
 
 spec = importlib.util.spec_from_file_location("verify_completion_capabilities", SCRIPT_PATH)
 if spec is None or spec.loader is None:  # pragma: no cover
@@ -27,6 +29,15 @@ if spec is None or spec.loader is None:  # pragma: no cover
 verify_completion_capabilities = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = verify_completion_capabilities
 spec.loader.exec_module(verify_completion_capabilities)
+
+rebuild_spec = importlib.util.spec_from_file_location(
+    "rebuild_capability_artifacts", REBUILD_SCRIPT_PATH
+)
+if rebuild_spec is None or rebuild_spec.loader is None:  # pragma: no cover
+    raise RuntimeError(f"Unable to load module from {REBUILD_SCRIPT_PATH}")
+rebuild_capability_artifacts = importlib.util.module_from_spec(rebuild_spec)
+sys.modules[rebuild_spec.name] = rebuild_capability_artifacts
+rebuild_spec.loader.exec_module(rebuild_capability_artifacts)
 
 
 def _record(
@@ -286,6 +297,65 @@ def test_default_mode_allows_blocked_records_with_reason_code() -> None:
     assert issues == []
 
 
+def test_default_structural_mode_allows_schema_invalid_content_when_blocked() -> None:
+    payload = {
+        "manifest_version": "1.0",
+        "generated_at": None,
+        "records": [
+            _record(
+                content_id="trait:unsupported_shape",
+                schema_valid=False,
+                executable=False,
+                tested=False,
+                blocked=True,
+                unsupported_reason="invalid_mechanics_schema",
+            )
+        ],
+    }
+
+    issues = verify_completion_capabilities.verify_manifest_payload(
+        payload,
+        expected_content_ids=("trait:unsupported_shape",),
+    )
+
+    assert issues == []
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        _record(
+            content_id="trait:bad_executable",
+            schema_valid=False,
+            executable=True,
+            blocked=False,
+            unsupported_reason=None,
+        ),
+        _record(
+            content_id="trait:bad_tested",
+            executable=False,
+            tested=True,
+            blocked=True,
+            unsupported_reason="runtime_hook_missing",
+        ),
+    ],
+)
+def test_default_structural_mode_rejects_contradictory_state_dependencies(
+    record: dict[str, object],
+) -> None:
+    content_id = str(record["content_id"])
+    issues = verify_completion_capabilities.verify_manifest_payload(
+        {
+            "manifest_version": "1.0",
+            "generated_at": None,
+            "records": [record],
+        },
+        expected_content_ids=(content_id,),
+    )
+
+    assert any(issue.code == "CAP-GATE-010" for issue in issues)
+
+
 def test_strict_mode_rejects_blocked_record_even_with_reason_code() -> None:
     payload = {
         "manifest_version": "1.0",
@@ -372,3 +442,40 @@ def test_cli_strict_returns_nonzero_for_blocked_manifest(tmp_path: Path) -> None
         ]
     )
     assert exit_code == 1
+
+
+def test_capability_workflows_cover_canonical_content_and_current_pull_requests() -> None:
+    completion_workflow = (
+        REPO_ROOT / ".github/workflows/completion-capability-gate.yml"
+    ).read_text(encoding="utf-8")
+    content_workflow = (REPO_ROOT / ".github/workflows/content-capability-gate.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'branches:\n      - "int/5i-completion-gates"' not in completion_workflow
+    for required_path in (
+        '"db/rules/2014/**"',
+        '"src/dnd_sim/capability_manifest.py"',
+        '"src/dnd_sim/mechanics_schema.py"',
+    ):
+        assert required_path in completion_workflow
+        assert required_path in content_workflow
+
+
+def test_rebuild_report_uses_the_regeneration_date(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[list[str]] = []
+
+    class FixedDate(date):
+        @classmethod
+        def today(cls) -> "FixedDate":
+            return cls(2026, 7, 26)
+
+    def _record_call(args, **_kwargs) -> None:
+        calls.append([str(value) for value in args])
+
+    monkeypatch.setattr(rebuild_capability_artifacts, "date", FixedDate)
+    monkeypatch.setattr(rebuild_capability_artifacts.subprocess, "run", _record_call)
+
+    rebuild_capability_artifacts.rebuild_report()
+
+    assert calls[0][-2:] == ["--last-updated", "2026-07-26"]

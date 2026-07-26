@@ -251,20 +251,27 @@ def verify_manifest_payload(
                     content_id=content_id,
                 )
             )
-        if not schema_valid:
-            issues.append(
-                CapabilityIssue(
-                    code="CAP-GATE-008",
-                    message="schema_valid must be true for shipped scope.",
-                    content_id=content_id,
-                )
-            )
-
         if executable == blocked:
             issues.append(
                 CapabilityIssue(
                     code="CAP-GATE-010",
                     message="exactly one of executable or blocked must be true.",
+                    content_id=content_id,
+                )
+            )
+        if executable and not schema_valid:
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-010",
+                    message="executable content requires schema_valid=true.",
+                    content_id=content_id,
+                )
+            )
+        if tested and not executable:
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-010",
+                    message="tested content requires executable=true.",
                     content_id=content_id,
                 )
             )
@@ -369,8 +376,8 @@ def verify_completion_capabilities(
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Verify that shipped 2014 content is fully cataloged in the capability manifest "
-            "and satisfies FIN-02 green gate rules."
+            "Verify structural integrity and complete catalog coverage for shipped 2014 "
+            "capability records. Use --strict only for a declared fully supported pack."
         )
     )
     parser.add_argument(
@@ -408,7 +415,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(f"{issue.code} [{issue.content_id}]: {issue.message}")
         return 1
 
-    print("Capability manifest completion gate passed.")
+    if args.strict:
+        print("Strict capability support gate passed.")
+    else:
+        print(
+            "Capability catalog structural integrity gate passed; "
+            "blocked and untested records are permitted."
+        )
     return 0
 
 

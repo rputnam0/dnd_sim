@@ -1,31 +1,33 @@
-name: completion-capability-gate
+name: capability-catalog-integrity
 
 on:
   pull_request:
-    branches:
-      - "int/5i-completion-gates"
     paths:
+      - "db/rules/2014/**"
+      - "src/dnd_sim/capability_manifest.py"
+      - "src/dnd_sim/mechanics_schema.py"
+      - "src/dnd_sim/io_models.py"
       - "artifacts/capabilities/**"
-      - "scripts/content/verify_completion_capabilities.py"
-      - "tests/test_completion_capabilities.py"
+      - "scripts/content/**"
+      - "tests/*capability*.py"
       - "docs/program/capability_report.md"
-      - "docs/program/status_board.md"
-      - "docs/program/backlog.csv"
       - ".github/workflows/completion-capability-gate.yml"
   push:
     branches:
-      - "codex/feat/fin-02-enforce-full-capability-manifest-green-gate-for-sh"
+      - "main"
     paths:
+      - "db/rules/2014/**"
+      - "src/dnd_sim/capability_manifest.py"
+      - "src/dnd_sim/mechanics_schema.py"
+      - "src/dnd_sim/io_models.py"
       - "artifacts/capabilities/**"
-      - "scripts/content/verify_completion_capabilities.py"
-      - "tests/test_completion_capabilities.py"
+      - "scripts/content/**"
+      - "tests/*capability*.py"
       - "docs/program/capability_report.md"
-      - "docs/program/status_board.md"
-      - "docs/program/backlog.csv"
       - ".github/workflows/completion-capability-gate.yml"
 
 jobs:
-  verify-completion-capabilities:
+  verify-capability-catalog-integrity:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -37,8 +39,8 @@ jobs:
       - name: Sync dependencies
         run: uv sync --frozen --extra dev
 
-      - name: Run completion capability gate
+      - name: Run structural capability catalog gate
         run: uv run python scripts/content/verify_completion_capabilities.py
 
-      - name: Run completion capability tests
+      - name: Run capability catalog tests
         run: uv run python -m pytest tests/test_completion_capabilities.py

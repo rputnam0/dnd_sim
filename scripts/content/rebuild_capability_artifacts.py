@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -50,7 +51,7 @@ def rebuild_report() -> None:
             sys.executable,
             str(REPO_ROOT / "scripts" / "content" / "render_capability_report.py"),
             "--last-updated",
-            "2026-03-08",
+            date.today().isoformat(),
         ],
         check=True,
         cwd=REPO_ROOT,
