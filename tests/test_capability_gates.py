@@ -200,7 +200,7 @@ def test_verify_capabilities_cli_accepts_item_and_class_scopes(
     assert verify_capabilities.main(["--scope", "class"]) == 0
 
 
-def test_species_hook_shard_a_ids_are_supported_in_canonical_capability_records() -> None:
+def test_species_hook_shard_a_invalid_effects_are_blocked_in_canonical_records() -> None:
     io._canonical_capability_records.cache_clear()
     by_id = {record.content_id: record for record in io._canonical_capability_records()}
 
@@ -210,12 +210,15 @@ def test_species_hook_shard_a_ids_are_supported_in_canonical_capability_records(
     for content_id in sorted(SHARD_A_SPECIES_IDS):
         record = by_id[content_id]
         assert record.content_type == "species"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
+        assert record.support_state == "unsupported"
+        assert record.states.schema_valid is False
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "unsupported_effect_type"
+        assert record.runtime_hook_family == "effect"
 
 
-def test_species_hook_shard_b_ids_are_supported_in_canonical_capability_records() -> None:
+def test_species_hook_shard_b_metadata_is_blocked_in_canonical_records() -> None:
     io._canonical_capability_records.cache_clear()
     by_id = {record.content_id: record for record in io._canonical_capability_records()}
 
@@ -225,6 +228,9 @@ def test_species_hook_shard_b_ids_are_supported_in_canonical_capability_records(
     for content_id in sorted(SHARD_B_SPECIES_IDS):
         record = by_id[content_id]
         assert record.content_type == "species"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
+        assert record.support_state == "unsupported"
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
+        assert record.runtime_hook_family == "meta"
