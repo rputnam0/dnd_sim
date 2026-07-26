@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from dnd_sim.rules_profiles import (
     DEFAULT_RULES_PROFILE_ID,
     DEFAULT_RULES_PROFILE_VERSION,
+    RULES_RUNTIME_API_VERSION,
     ActorKind,
     SupportedRulesProfile,
     load_supported_rules_profile,
@@ -21,6 +22,7 @@ def _profile_payload(**overrides: object) -> dict[str, object]:
         "profile_id": "test_combat_profile",
         "profile_version": "1.2.3",
         "ruleset": "5e-2014",
+        "compatibility": {"rules_runtime_api": "1.0"},
         "zero_hit_point_policy": {
             "player_character": "death_saves",
             "monster": "dead",
@@ -40,7 +42,9 @@ def test_canonical_rules_profile_is_version_pinned_and_strict() -> None:
     assert profile.profile_version == DEFAULT_RULES_PROFILE_VERSION
     assert profile.ruleset == "5e-2014"
     assert profile.schema_version == "1.0"
+    assert profile.compatibility.rules_runtime_api == RULES_RUNTIME_API_VERSION
     assert profile.model_config["extra"] == "forbid"
+    assert SupportedRulesProfile.model_validate_json(profile.model_dump_json()) == profile
 
 
 @pytest.mark.parametrize(
@@ -78,7 +82,8 @@ def test_explicit_actor_override_is_resolved_by_profile_policy() -> None:
 
 
 def test_profile_loader_rejects_unknown_mismatched_and_unsafe_references(tmp_path: Path) -> None:
-    profile_path = tmp_path / "test_combat_profile.json"
+    profile_path = tmp_path / "test_combat_profile" / "1.2.3.json"
+    profile_path.parent.mkdir()
     profile_path.write_text(json.dumps(_profile_payload()), encoding="utf-8")
 
     loaded = load_supported_rules_profile(
@@ -87,6 +92,11 @@ def test_profile_loader_rejects_unknown_mismatched_and_unsafe_references(tmp_pat
         profiles_dir=tmp_path,
     )
     assert loaded.profile_id == "test_combat_profile"
+
+    (profile_path.parent / "9.9.9.json").write_text(
+        json.dumps(_profile_payload()),
+        encoding="utf-8",
+    )
 
     with pytest.raises(ValueError, match="version mismatch"):
         load_supported_rules_profile(
@@ -116,3 +126,35 @@ def test_rules_profile_schema_rejects_unknown_fields_and_invalid_versions() -> N
 
     with pytest.raises(ValidationError, match="profile_version"):
         SupportedRulesProfile.model_validate(_profile_payload(profile_version="latest"))
+
+    with pytest.raises(ValidationError, match="rules_runtime_api"):
+        SupportedRulesProfile.model_validate(
+            _profile_payload(compatibility={"rules_runtime_api": "2.0"})
+        )
+
+
+def test_loader_can_retain_multiple_exact_profile_versions(tmp_path: Path) -> None:
+    profile_dir = tmp_path / "test_combat_profile"
+    profile_dir.mkdir()
+    (profile_dir / "1.2.3.json").write_text(
+        json.dumps(_profile_payload(profile_version="1.2.3")),
+        encoding="utf-8",
+    )
+    (profile_dir / "1.2.4.json").write_text(
+        json.dumps(_profile_payload(profile_version="1.2.4")),
+        encoding="utf-8",
+    )
+
+    first = load_supported_rules_profile(
+        profile_id="test_combat_profile",
+        profile_version="1.2.3",
+        profiles_dir=tmp_path,
+    )
+    second = load_supported_rules_profile(
+        profile_id="test_combat_profile",
+        profile_version="1.2.4",
+        profiles_dir=tmp_path,
+    )
+
+    assert first.profile_version == "1.2.3"
+    assert second.profile_version == "1.2.4"

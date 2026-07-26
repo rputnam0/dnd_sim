@@ -7,9 +7,10 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal, TypeAlias
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 RULES_PROFILE_SCHEMA_VERSION = "1.0"
+RULES_RUNTIME_API_VERSION = "1.0"
 DEFAULT_RULES_PROFILE_ID = "5e_2014_combat_foundation"
 DEFAULT_RULES_PROFILE_VERSION = "1.0.0"
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -23,7 +24,13 @@ _SEMVER_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 
 
 class _StrictProfileModel(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        strict=True,
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
 
 
 class ZeroHitPointPolicy(_StrictProfileModel):
@@ -54,14 +61,41 @@ class ZeroHitPointPolicy(_StrictProfileModel):
         return mode_by_kind[actor_kind] == "death_saves"
 
 
+class RulesProfileCompatibility(_StrictProfileModel):
+    """Engine-facing API contract required to interpret a rules profile."""
+
+    rules_runtime_api: str
+
+    @field_validator("rules_runtime_api")
+    @classmethod
+    def validate_rules_runtime_api(cls, value: str) -> str:
+        if value != RULES_RUNTIME_API_VERSION:
+            raise ValueError(
+                "rules_runtime_api must equal the supported runtime API "
+                f"{RULES_RUNTIME_API_VERSION}"
+            )
+        return value
+
+
 class SupportedRulesProfile(_StrictProfileModel):
     """Pinned, validated rules policy selected by a scenario."""
 
-    schema_version: Literal["1.0"]
+    schema_version: str
     profile_id: str
     profile_version: str
     ruleset: Literal["5e-2014"]
+    compatibility: RulesProfileCompatibility
     zero_hit_point_policy: ZeroHitPointPolicy
+
+    @field_validator("schema_version")
+    @classmethod
+    def validate_schema_version(cls, value: str) -> str:
+        if value != RULES_PROFILE_SCHEMA_VERSION:
+            raise ValueError(
+                "schema_version must equal the supported profile schema "
+                f"{RULES_PROFILE_SCHEMA_VERSION}"
+            )
+        return value
 
     @field_validator("profile_id")
     @classmethod
@@ -110,11 +144,14 @@ def load_supported_rules_profile(
     if _SEMVER_RE.fullmatch(profile_version) is None:
         raise ValueError("profile_version must be semantic version X.Y.Z")
 
-    source = profiles_dir.resolve() / f"{profile_id}.json"
+    source = profiles_dir.resolve() / profile_id / f"{profile_version}.json"
     if not source.is_file():
         raise ValueError(f"rules profile not found: {profile_id}@{profile_version}")
 
-    profile = SupportedRulesProfile.model_validate_json(source.read_text(encoding="utf-8"))
+    try:
+        profile = SupportedRulesProfile.model_validate_json(source.read_text(encoding="utf-8"))
+    except (OSError, ValidationError) as exc:
+        raise ValueError(f"invalid rules profile {source}: {exc}") from exc
     if profile.profile_id != profile_id:
         raise ValueError(
             f"rules profile ID mismatch: requested {profile_id}, found {profile.profile_id}"
@@ -133,6 +170,8 @@ __all__ = [
     "DEFAULT_RULES_PROFILE_VERSION",
     "DEFAULT_RULES_PROFILES_DIR",
     "RULES_PROFILE_SCHEMA_VERSION",
+    "RULES_RUNTIME_API_VERSION",
+    "RulesProfileCompatibility",
     "SupportedRulesProfile",
     "ZeroHitPointMode",
     "ZeroHitPointPolicy",
