@@ -127,6 +127,19 @@ def expand_path_points(
     return expanded
 
 
+def path_prefix_through_position(
+    path: list[tuple[float, float, float]],
+    position: tuple[float, float, float],
+) -> list[tuple[float, float, float]]:
+    """Return the expanded path through an interrupt position on that path."""
+
+    expanded = expand_path_points(path)
+    for index, point in enumerate(expanded):
+        if distance_chebyshev(point, position) <= 1e-6:
+            return expanded[: index + 1]
+    return expanded
+
+
 def prepare_voluntary_movement(
     actor: ActorRuntimeState,
     *,
