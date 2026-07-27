@@ -12,6 +12,7 @@ from dnd_sim.interactive.session import EngineSession, EngineSessionDriver
 from .contracts import (
     VTTCommand,
     VTTCommitResponse,
+    VTTEvent,
     VTTPreviewResponse,
     VTTResponse,
     VTTVersionInfo,
@@ -115,6 +116,16 @@ class VTTSessionService:
                 revision=self._session.revision,
                 versions=VTTVersionInfo.from_engine(self._session.version_pins),
                 projection=self._session.projection,
+            )
+
+    def events_after(self, sequence: int) -> tuple[VTTEvent, ...]:
+        """Return detached public events with sequence IDs strictly after the cursor."""
+
+        if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
+            raise ValueError("sequence must be a non-negative integer")
+        with self._lock:
+            return tuple(
+                VTTEvent.from_engine(event) for event in self._session.events_since(sequence)
             )
 
     def execute(self, command: VTTCommand) -> VTTResponse:

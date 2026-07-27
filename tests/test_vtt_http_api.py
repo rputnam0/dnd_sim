@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import asyncio
+import json
 import random
 import sqlite3
 import threading
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import pytest
 from fastapi.testclient import TestClient
@@ -33,6 +36,7 @@ from dnd_sim.vtt import (
     VTTCommand,
     create_vtt_app,
 )
+from dnd_sim.vtt import http_api
 
 SCENE = SquareGridScene(
     schema_version=SCENE_SCHEMA_VERSION,
@@ -166,6 +170,83 @@ def _assert_vtt_error(response, *, status_code: int, code: str) -> dict[str, Any
     assert isinstance(payload["details"], dict)
     assert "traceback" not in response.text.lower()
     return payload
+
+
+async def _capture_sse(
+    app,
+    path: str,
+    *,
+    data_event_count: int | None = None,
+    stop_on_heartbeat: bool = False,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, dict[str, str], str]:
+    parsed = urlsplit(path)
+    request_sent = False
+    disconnected = asyncio.Event()
+    response_start: dict[str, Any] | None = None
+    response_body: list[str] = []
+    encoded_headers = [
+        (name.lower().encode("latin-1"), value.encode("latin-1"))
+        for name, value in (headers or {}).items()
+    ]
+    scope = {
+        "type": "http",
+        "asgi": {"version": "3.0", "spec_version": "2.3"},
+        "http_version": "1.1",
+        "method": "GET",
+        "scheme": "http",
+        "path": parsed.path,
+        "raw_path": parsed.path.encode("ascii"),
+        "query_string": parsed.query.encode("ascii"),
+        "headers": encoded_headers,
+        "client": ("127.0.0.1", 43123),
+        "server": ("testserver", 80),
+        "root_path": "",
+    }
+
+    async def receive() -> dict[str, Any]:
+        nonlocal request_sent
+        if not request_sent:
+            request_sent = True
+            return {"type": "http.request", "body": b"", "more_body": False}
+        await disconnected.wait()
+        return {"type": "http.disconnect"}
+
+    async def send(message: dict[str, Any]) -> None:
+        nonlocal response_start
+        if message["type"] == "http.response.start":
+            response_start = message
+            return
+        if message["type"] != "http.response.body":
+            return
+        response_body.append(bytes(message.get("body", b"")).decode("utf-8"))
+        rendered = "".join(response_body)
+        if data_event_count is not None and rendered.count("data: ") >= data_event_count:
+            disconnected.set()
+        if stop_on_heartbeat and ": heartbeat\n\n" in rendered:
+            disconnected.set()
+
+    await asyncio.wait_for(app(scope, receive, send), timeout=1.0)
+    assert response_start is not None
+    response_headers = {
+        bytes(name).decode("latin-1").lower(): bytes(value).decode("latin-1")
+        for name, value in response_start["headers"]
+    }
+    return int(response_start["status"]), response_headers, "".join(response_body)
+
+
+def _sse_data_events(payload: str) -> list[tuple[int, dict[str, Any]]]:
+    events: list[tuple[int, dict[str, Any]]] = []
+    for block in payload.split("\n\n"):
+        fields = {}
+        for line in block.splitlines():
+            if ": " in line:
+                name, value = line.split(": ", 1)
+                fields[name] = value
+        if "id" in fields and "data" in fields:
+            assert fields["event"] == "vtt.event"
+            events.append((int(fields["id"]), json.loads(fields["data"])))
+    return events
 
 
 def test_health_and_session_view_use_only_the_public_projection(api_client) -> None:
@@ -482,3 +563,131 @@ def test_atomic_service_read_cannot_interleave_with_a_commit(tmp_path: Path) -> 
     assert commit_results[0].revision == 1
     assert service.read_view().projection == {"counter": {"value": 1}}
     connection.close()
+
+
+def test_service_event_cursor_is_exclusive_and_previews_emit_nothing(api_client) -> None:
+    client, service = api_client
+
+    preview = client.post(
+        "/api/v1/commands",
+        json=_command_payload(
+            command_id="preview-no-event",
+            expected_revision=0,
+            mode="preview",
+        ),
+    )
+
+    assert preview.status_code == 200
+    assert service.events_after(0) == ()
+
+    first = client.post(
+        "/api/v1/commands",
+        json=_command_payload(command_id="event-1", expected_revision=0),
+    )
+    second = client.post(
+        "/api/v1/commands",
+        json=_command_payload(command_id="event-2", expected_revision=1),
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    all_events = service.events_after(0)
+    assert [event.sequence for event in all_events] == [1, 2]
+    assert [event.schema_version for event in all_events] == ["vtt.event.v1"] * 2
+    assert service.events_after(1) == (all_events[1],)
+    assert service.events_after(2) == ()
+    with pytest.raises(ValueError, match="non-negative integer"):
+        service.events_after(-1)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        service.events_after(True)
+
+
+def test_sse_reconnect_replays_only_missed_projected_events(
+    api_client,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, _service = api_client
+    for revision in range(2):
+        response = client.post(
+            "/api/v1/commands",
+            json=_command_payload(
+                command_id=f"initial-{revision + 1}",
+                expected_revision=revision,
+            ),
+        )
+        assert response.status_code == 200
+
+    status, headers, initial_payload = asyncio.run(
+        _capture_sse(
+            client.app,
+            "/api/v1/events?after=0",
+            data_event_count=2,
+            headers={"origin": "http://127.0.0.1:3000"},
+        )
+    )
+    initial_events = _sse_data_events(initial_payload)
+
+    assert status == 200
+    assert headers["content-type"].startswith("text/event-stream")
+    assert headers["cache-control"] == "no-cache"
+    assert headers["access-control-allow-origin"] == "http://127.0.0.1:3000"
+    assert [event_id for event_id, _event in initial_events] == [1, 2]
+    assert all(event["schema_version"] == "vtt.event.v1" for _, event in initial_events)
+    assert "canonical_secret" not in initial_payload
+    assert "engine.event.v1" not in initial_payload
+
+    committed = client.post(
+        "/api/v1/commands",
+        json=_command_payload(command_id="missed-3", expected_revision=2),
+    )
+    assert committed.status_code == 200
+
+    reconnect_status, _reconnect_headers, reconnect_payload = asyncio.run(
+        _capture_sse(
+            client.app,
+            "/api/v1/events",
+            data_event_count=1,
+            headers={"last-event-id": "2"},
+        )
+    )
+    reconnect_events = _sse_data_events(reconnect_payload)
+
+    assert reconnect_status == 200
+    assert [event_id for event_id, _event in reconnect_events] == [3]
+
+    monkeypatch.setattr(http_api, "SSE_POLL_INTERVAL_SECONDS", 0.001)
+    monkeypatch.setattr(http_api, "SSE_HEARTBEAT_INTERVAL_SECONDS", 0.01)
+    both_status, _both_headers, both_payload = asyncio.run(
+        _capture_sse(
+            client.app,
+            "/api/v1/events?after=3",
+            stop_on_heartbeat=True,
+            headers={"last-event-id": "1"},
+        )
+    )
+
+    assert both_status == 200
+    assert _sse_data_events(both_payload) == []
+    assert ": heartbeat\n\n" in both_payload
+
+
+@pytest.mark.parametrize(
+    ("path", "headers", "field"),
+    [
+        ("/api/v1/events?after=-1", {}, "after"),
+        ("/api/v1/events?after=01", {}, "after"),
+        ("/api/v1/events?after=" + ("9" * 5_000), {}, "after"),
+        ("/api/v1/events", {"last-event-id": "not-a-number"}, "Last-Event-ID"),
+    ],
+)
+def test_sse_rejects_noncanonical_event_cursors(api_client, path, headers, field) -> None:
+    client, _service = api_client
+
+    response = client.get(path, headers=headers)
+
+    error = _assert_vtt_error(
+        response,
+        status_code=400,
+        code="invalid_event_cursor",
+    )
+    assert error["details"] == {"field": field}

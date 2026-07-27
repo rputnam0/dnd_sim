@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
+from collections.abc import AsyncIterator
 from typing import Annotated, Any, Literal
 from urllib.parse import urlsplit
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -17,6 +20,7 @@ from dnd_sim.interactive.session import EngineSessionError
 from .contracts import (
     VTTCommand,
     VTTCommitResponse,
+    VTTEvent,
     VTTPreviewResponse,
     VTTResponse,
     VTTVersionInfo,
@@ -31,6 +35,8 @@ DEFAULT_VTT_ALLOWED_ORIGINS = (
     "http://127.0.0.1:3000",
     "http://localhost:3000",
 )
+SSE_POLL_INTERVAL_SECONDS = 0.25
+SSE_HEARTBEAT_INTERVAL_SECONDS = 15.0
 
 NonNegativeInt = Annotated[int, Field(strict=True, ge=0)]
 
@@ -100,6 +106,14 @@ class VTTError(_StrictHTTPModel):
         return normalized
 
 
+class VTTEventCursorError(ValueError):
+    """Raised when a reconnect cursor is not a canonical non-negative integer."""
+
+    def __init__(self, field: str) -> None:
+        super().__init__(f"{field} must be a canonical non-negative integer")
+        self.field = field
+
+
 def _error_response(
     *,
     status_code: int,
@@ -132,6 +146,66 @@ def _validation_issues(exc: RequestValidationError) -> list[JsonValue]:
             }
         )
     return issues
+
+
+def _event_cursor(value: str | None, *, field: str) -> int | None:
+    if value is None:
+        return None
+    if not value or any(character not in "0123456789" for character in value):
+        raise VTTEventCursorError(field)
+    try:
+        cursor = int(value)
+    except (ValueError, OverflowError) as exc:
+        raise VTTEventCursorError(field) from exc
+    if str(cursor) != value:
+        raise VTTEventCursorError(field)
+    return cursor
+
+
+def _resume_after(*, after: str | None, last_event_id: str | None) -> int:
+    query_cursor = _event_cursor(after, field="after")
+    header_cursor = _event_cursor(last_event_id, field="Last-Event-ID")
+    return max(cursor for cursor in (0, query_cursor, header_cursor) if cursor is not None)
+
+
+def _render_sse_event(event: VTTEvent) -> str:
+    payload = json.dumps(
+        event.model_dump(mode="json"),
+        allow_nan=False,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return f"id: {event.sequence}\nevent: vtt.event\ndata: {payload}\n\n"
+
+
+async def _stream_events(
+    *,
+    request: Request,
+    service: VTTSessionService,
+    after: int,
+) -> AsyncIterator[str]:
+    cursor = after
+    event_loop = asyncio.get_running_loop()
+    next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
+
+    while True:
+        if await request.is_disconnected():
+            return
+
+        events = service.events_after(cursor)
+        if events:
+            for event in events:
+                if await request.is_disconnected():
+                    return
+                yield _render_sse_event(event)
+                cursor = event.sequence
+            next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
+        elif event_loop.time() >= next_heartbeat:
+            yield ": heartbeat\n\n"
+            next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
+
+        await asyncio.sleep(SSE_POLL_INTERVAL_SECONDS)
 
 
 def _validate_allowed_origins(origins: tuple[str, ...]) -> tuple[str, ...]:
@@ -204,6 +278,18 @@ def create_vtt_app(
             code="session_mismatch",
             message="The command belongs to a different VTT session.",
             details={"expected_session_id": service.session_id},
+        )
+
+    @app.exception_handler(VTTEventCursorError)
+    async def event_cursor_error(
+        _request: Request,
+        exc: VTTEventCursorError,
+    ) -> JSONResponse:
+        return _error_response(
+            status_code=400,
+            code="invalid_event_cursor",
+            message="The event cursor must be a canonical non-negative integer.",
+            details={"field": exc.field},
         )
 
     @app.exception_handler(CommandConflictError)
@@ -285,6 +371,25 @@ def create_vtt_app(
             versions=session.versions,
             scene=configured_scene,
             projection=session.projection,
+        )
+
+    @app.get("/api/v1/events", response_class=StreamingResponse)
+    async def get_events(
+        request: Request,
+        after: Annotated[str | None, Query()] = None,
+        last_event_id: Annotated[str | None, Header(alias="Last-Event-ID")] = None,
+    ) -> StreamingResponse:
+        cursor = _resume_after(
+            after=after,
+            last_event_id=last_event_id,
+        )
+        return StreamingResponse(
+            _stream_events(request=request, service=service, after=cursor),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
         )
 
     @app.post(
