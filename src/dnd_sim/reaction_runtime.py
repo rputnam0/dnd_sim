@@ -12,6 +12,7 @@ from dnd_sim.models import (
     SpellCastRequest,
 )
 from dnd_sim.spatial import AABB, distance_chebyshev
+from dnd_sim.rules_2014 import AttackResolvedEvent, sentinel_speed_reduction_applies_on_hit
 from dnd_sim.strategy_api import (
     BattleStateView,
     ReactionDecision,
@@ -81,6 +82,9 @@ def build_opportunity_attack_window(
     round_number: int | None,
     turn_token: str | None,
     window_ordinal: int,
+    movement_source: str,
+    mover_disengaged: bool,
+    on_hit_effects: tuple[str, ...] = (),
 ) -> ReactionWindowView:
     options: list[ReactionOptionView] = []
     for option_index, (action, reach_ft) in enumerate(candidates):
@@ -109,6 +113,7 @@ def build_opportunity_attack_window(
                 damage_expression=action.damage,
                 damage_type=action.damage_type,
                 reach_ft=float(reach_ft),
+                on_hit_effects=on_hit_effects,
             )
         )
     window_id = ":".join(
@@ -132,6 +137,8 @@ def build_opportunity_attack_window(
             target_actor_id=reactor.actor_id,
             movement_point=trigger_point,
             distance_ft=float(trigger_distance),
+            movement_source=movement_source,
+            mover_disengaged=mover_disengaged,
         ),
         options=tuple(options),
     )
@@ -676,12 +683,25 @@ def run_opportunity_attacks_for_movement(
 
     if mover.dead or mover.hp <= 0:
         return
-    if not engine_module._movement_triggers_opportunity_attacks(
+    standard_opportunity_trigger = engine_module._movement_triggers_opportunity_attacks(
         movement_kind=movement_kind,
         mover_conditions=set(mover.conditions),
         start_pos=start_pos,
         end_pos=end_pos,
-    ):
+    )
+    sentinel_disengage_trigger = (
+        movement_kind == "voluntary"
+        and start_pos != end_pos
+        and engine_module.has_condition(mover, "disengaging")
+        and any(
+            enemy.team != mover.team
+            and not enemy.dead
+            and enemy.hp > 0
+            and engine_module._has_trait(enemy, "sentinel")
+            for enemy in actors.values()
+        )
+    )
+    if not standard_opportunity_trigger and not sentinel_disengage_trigger:
         return
 
     path_points = engine_module._expand_path_points(movement_path or [start_pos, end_pos])
@@ -689,11 +709,13 @@ def run_opportunity_attacks_for_movement(
         return
 
     hooks = movement_trigger_hooks or []
+    movement_stopped = False
     for enemy in actors.values():
         if enemy.team == mover.team or enemy.dead or enemy.hp <= 0:
             continue
         if not can_take_reaction(enemy):
             continue
+        sentinel_reactor = engine_module._has_trait(enemy, "sentinel")
         readied_reach_entry = readied_reach_entry_point(
             responder=enemy,
             path_points=path_points,
@@ -724,6 +746,8 @@ def run_opportunity_attacks_for_movement(
                 break
 
         if not can_take_reaction(enemy):
+            continue
+        if engine_module.has_condition(mover, "disengaging") and not sentinel_reactor:
             continue
         opportunity_candidates = engine_module._opportunity_attack_candidates(enemy)
         if not opportunity_candidates:
@@ -780,6 +804,9 @@ def run_opportunity_attacks_for_movement(
                 round_number=round_number,
                 turn_token=turn_token,
                 window_ordinal=window_ordinal,
+                movement_source=movement_source,
+                mover_disengaged=engine_module.has_condition(mover, "disengaging"),
+                on_hit_effects=(("speed_zero_for_turn",) if sentinel_reactor else ()),
             )
             _reaction_window_telemetry(telemetry, window=window)
             decision = (
@@ -843,6 +870,29 @@ def run_opportunity_attacks_for_movement(
                 enemy.recharge_ready[selected_action.name] = False
             original_position = mover.position
             mover.position = trigger_point
+            sentinel_hit = False
+            timing_engine = None
+            if sentinel_reactor:
+                timing_engine = engine_module._create_combat_timing_engine()
+
+                def _capture_sentinel_hit(event: AttackResolvedEvent) -> None:
+                    nonlocal sentinel_hit
+                    if (
+                        event.attacker.actor_id == enemy.actor_id
+                        and event.target.actor_id == mover.actor_id
+                        and event.action is reaction_attack
+                    ):
+                        sentinel_hit = sentinel_speed_reduction_applies_on_hit(
+                            hit=event.roll.hit,
+                            opportunity_attack=True,
+                        )
+
+                timing_engine.subscribe(
+                    AttackResolvedEvent,
+                    _capture_sentinel_hit,
+                    priority=-100,
+                    name="rule:sentinel_opportunity_speed",
+                )
             engine_module._execute_action(
                 rng=rng,
                 actor=enemy,
@@ -858,13 +908,49 @@ def run_opportunity_attacks_for_movement(
                 light_level=light_level,
                 round_number=round_number,
                 turn_token=turn_token,
+                timing_engine=timing_engine,
                 spell_cast_request=spell_cast_request,
                 allow_auto_movement=False,
                 zero_hp_intent=zero_hp_intent,
                 rule_trace=rule_trace,
                 telemetry=telemetry,
             )
-            mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
+            if sentinel_hit:
+                mover.position = trigger_point
+                mover.movement_remaining = 0.0
+                engine_module._apply_condition(
+                    mover,
+                    "sentinel_speed_zero",
+                    duration_rounds=1,
+                )
+                movement_stopped = True
+                if telemetry is not None:
+                    telemetry.append(
+                        {
+                            "telemetry_type": "reaction_effect_applied",
+                            "window_id": window.window_id,
+                            "reaction_kind": window.trigger.kind,
+                            "round": round_number,
+                            "turn_token": turn_token,
+                            "reactor_id": enemy.actor_id,
+                            "target_actor_id": mover.actor_id,
+                            "effect": "speed_zero_for_turn",
+                        }
+                    )
+                if rule_trace is not None:
+                    rule_trace.append(
+                        {
+                            "event": "opportunity_attack",
+                            "round": round_number,
+                            "turn": turn_token,
+                            "handler": "trait:sentinel_speed_zero",
+                            "actor_id": enemy.actor_id,
+                            "target_id": mover.actor_id,
+                            "result": "applied",
+                        }
+                    )
+            else:
+                mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
             _reaction_window_closed_telemetry(
                 telemetry,
                 window=window,
@@ -872,7 +958,7 @@ def run_opportunity_attacks_for_movement(
                 option_id=selected_option.option_id,
             )
             break
-        if mover.dead or mover.hp <= 0:
+        if movement_stopped or mover.dead or mover.hp <= 0:
             break
 
 
@@ -992,9 +1078,6 @@ def run_trait_event_handlers(
                 continue
 
             reactor.reaction_available = False
-            if hook.trigger == "creature_attacks_ally_within_5ft":
-                trigger_actor.movement_remaining = 0.0
-
             engine_module._execute_action(
                 rng=rng,
                 actor=reactor,

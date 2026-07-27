@@ -117,7 +117,7 @@ def test_sentinel_window_rejects_without_required_trait() -> None:
 
 
 def test_sentinel_opportunity_window_obeys_reach_and_forced_movement_rules() -> None:
-    sentinel = _actor(actor_id="sentinel", team="party")
+    sentinel = _actor(actor_id="sentinel", team="party", traits=("sentinel",))
     mover = _actor(actor_id="mover", team="enemy")
 
     allowed = evaluate_sentinel_opportunity_window(
@@ -151,6 +151,23 @@ def test_sentinel_opportunity_window_obeys_reach_and_forced_movement_rules() -> 
     assert forced.reason == "forced_movement"
     assert too_far.allowed is False
     assert too_far.reason == "out_of_reach"
+
+
+def test_sentinel_opportunity_window_rejects_actor_without_sentinel() -> None:
+    reactor = _actor(actor_id="reactor", team="party")
+    mover = _actor(actor_id="mover", team="enemy")
+
+    result = evaluate_sentinel_opportunity_window(
+        reactor=reactor,
+        trigger_actor=mover,
+        trigger_distance_ft=5.0,
+        reach_ft=5.0,
+        mover_disengaged=True,
+        forced_movement=False,
+    )
+
+    assert result.allowed is False
+    assert result.reason == "missing_trait"
 
 
 def test_reaction_lockout_prevents_illegal_stacking_across_features() -> None:

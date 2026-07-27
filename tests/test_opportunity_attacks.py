@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from dnd_sim.engine_runtime import _run_opportunity_attacks_for_movement
+from dnd_sim.engine_runtime import (
+    _apply_declared_movement_or_error,
+    _execute_action,
+    _run_opportunity_attacks_for_movement,
+    _tick_conditions_for_actor,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 
@@ -109,6 +114,210 @@ def test_disengage_suppresses_opportunity_attack() -> None:
 
     assert guard.reaction_available is True
     assert mover.hp == mover.max_hp
+
+
+def test_sentinel_opportunity_attack_ignores_disengage_and_stops_movement_on_hit() -> None:
+    rng = _DeterministicRng()
+    mover = _base_actor(actor_id="mover", team="party")
+    sentinel = _base_actor(actor_id="sentinel", team="enemy")
+    mover.position = (0.0, 0.0, 0.0)
+    mover.movement_remaining = 30.0
+    mover.conditions.add("disengaging")
+    sentinel.position = (5.0, 0.0, 0.0)
+    sentinel.traits = {"sentinel": {}}
+    sentinel.actions = [_melee_attack()]
+    telemetry: list[dict] = []
+    rule_trace: list[dict] = []
+
+    actors = {mover.actor_id: mover, sentinel.actor_id: sentinel}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(mover, sentinel)
+
+    _run_opportunity_attacks_for_movement(
+        rng=rng,
+        mover=mover,
+        start_pos=(0.0, 0.0, 0.0),
+        end_pos=(15.0, 0.0, 0.0),
+        movement_path=[(0.0, 0.0, 0.0), (15.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        telemetry=telemetry,
+        rule_trace=rule_trace,
+    )
+
+    assert sentinel.reaction_available is False
+    assert mover.hp < mover.max_hp
+    assert mover.movement_remaining == 0.0
+    assert mover.position == (10.0, 0.0, 0.0)
+    assert "sentinel_speed_zero" in mover.conditions
+    assert any(
+        row.get("telemetry_type") == "reaction_effect_applied"
+        and row.get("effect") == "speed_zero_for_turn"
+        for row in telemetry
+    )
+    assert any(row.get("handler") == "trait:sentinel_speed_zero" for row in rule_trace)
+
+    _execute_action(
+        rng=rng,
+        actor=mover,
+        action=ActionDefinition(
+            name="dash",
+            action_type="utility",
+            action_cost="action",
+            target_mode="self",
+            tags=["utility_dash"],
+        ),
+        targets=[mover],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert mover.movement_remaining == 0.0
+    _tick_conditions_for_actor(rng, mover)
+    assert "sentinel_speed_zero" not in mover.conditions
+
+
+def test_sentinel_opportunity_attack_miss_does_not_stop_movement() -> None:
+    rng = _DeterministicRng()
+    mover = _base_actor(actor_id="mover", team="party")
+    sentinel = _base_actor(actor_id="sentinel", team="enemy")
+    mover.position = (0.0, 0.0, 0.0)
+    mover.movement_remaining = 30.0
+    sentinel.position = (5.0, 0.0, 0.0)
+    sentinel.traits = {"sentinel": {}}
+    missed_attack = _melee_attack()
+    missed_attack.to_hit = -100
+    sentinel.actions = [missed_attack]
+
+    actors = {mover.actor_id: mover, sentinel.actor_id: sentinel}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(mover, sentinel)
+
+    _run_opportunity_attacks_for_movement(
+        rng=rng,
+        mover=mover,
+        start_pos=(0.0, 0.0, 0.0),
+        end_pos=(15.0, 0.0, 0.0),
+        movement_path=[(0.0, 0.0, 0.0), (15.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert sentinel.reaction_available is False
+    assert mover.hp == mover.max_hp
+    assert mover.movement_remaining == 30.0
+    assert mover.position == (15.0, 0.0, 0.0)
+
+
+def test_sentinel_opportunity_hit_stops_a_damage_immune_mover() -> None:
+    rng = _DeterministicRng()
+    mover = _base_actor(actor_id="mover", team="party")
+    sentinel = _base_actor(actor_id="sentinel", team="enemy")
+    mover.position = (0.0, 0.0, 0.0)
+    mover.movement_remaining = 30.0
+    mover.damage_immunities.add("piercing")
+    sentinel.position = (5.0, 0.0, 0.0)
+    sentinel.traits = {"sentinel": {}}
+    sentinel.actions = [_melee_attack()]
+
+    actors = {mover.actor_id: mover, sentinel.actor_id: sentinel}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(mover, sentinel)
+
+    _run_opportunity_attacks_for_movement(
+        rng=rng,
+        mover=mover,
+        start_pos=(0.0, 0.0, 0.0),
+        end_pos=(15.0, 0.0, 0.0),
+        movement_path=[(0.0, 0.0, 0.0), (15.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert mover.hp == mover.max_hp
+    assert mover.movement_remaining == 0.0
+    assert mover.position == (10.0, 0.0, 0.0)
+
+
+def test_declared_movement_commits_sentinel_interrupt_position() -> None:
+    rng = _DeterministicRng()
+    mover = _base_actor(actor_id="mover", team="party")
+    sentinel = _base_actor(actor_id="sentinel", team="enemy")
+    mover.position = (0.0, 0.0, 0.0)
+    mover.movement_remaining = 30.0
+    sentinel.position = (5.0, 0.0, 0.0)
+    sentinel.traits = {"sentinel": {}}
+    sentinel.actions = [_melee_attack()]
+    actors = {mover.actor_id: mover, sentinel.actor_id: sentinel}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(mover, sentinel)
+
+    _apply_declared_movement_or_error(
+        rng=rng,
+        actor=mover,
+        movement_path=[(0.0, 0.0, 0.0), (15.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert mover.position == (10.0, 0.0, 0.0)
+    assert mover.movement_remaining == 0.0
+
+
+def test_sentinel_stop_prevents_later_reactors_from_using_abandoned_path() -> None:
+    rng = _DeterministicRng()
+    mover = _base_actor(actor_id="mover", team="party")
+    sentinel = _base_actor(actor_id="sentinel", team="enemy")
+    other_guard = _base_actor(actor_id="other_guard", team="enemy")
+    mover.position = (0.0, 0.0, 0.0)
+    mover.movement_remaining = 30.0
+    sentinel.position = (5.0, 0.0, 0.0)
+    other_guard.position = (5.0, 0.0, 0.0)
+    sentinel.traits = {"sentinel": {}}
+    sentinel.actions = [_melee_attack("sentinel_spear")]
+    other_guard.actions = [_melee_attack("guard_spear")]
+    actors = {
+        mover.actor_id: mover,
+        sentinel.actor_id: sentinel,
+        other_guard.actor_id: other_guard,
+    }
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(
+        mover, sentinel, other_guard
+    )
+
+    _run_opportunity_attacks_for_movement(
+        rng=rng,
+        mover=mover,
+        start_pos=(0.0, 0.0, 0.0),
+        end_pos=(15.0, 0.0, 0.0),
+        movement_path=[(0.0, 0.0, 0.0), (15.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert mover.position == (10.0, 0.0, 0.0)
+    assert sentinel.reaction_available is False
+    assert other_guard.reaction_available is True
 
 
 def test_forced_movement_does_not_provoke_opportunity_attack() -> None:

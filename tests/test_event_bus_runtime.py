@@ -179,6 +179,7 @@ def test_dispatch_combat_event_enforces_duration_per_turn_and_round_locks() -> N
 def test_dispatch_combat_event_runs_trait_handler_for_sentinel_reaction() -> None:
     rng = random.Random(12)
     attacker = _base_actor(actor_id="attacker", team="enemy")
+    attacker.movement_remaining = 30.0
     ally_target = _base_actor(actor_id="ally_target", team="party")
     sentinel = _base_actor(actor_id="sentinel", team="party")
     sentinel.actions = [
@@ -227,6 +228,7 @@ def test_dispatch_combat_event_runs_trait_handler_for_sentinel_reaction() -> Non
     )
 
     assert attacker.hp < attacker.max_hp
+    assert attacker.movement_remaining == 30.0
     assert sentinel.reaction_available is False
     hp_after_first_reaction = attacker.hp
 

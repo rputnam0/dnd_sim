@@ -482,6 +482,8 @@ def evaluate_sentinel_opportunity_window(
     )
     if gate is not None:
         return gate
+    if not _has_trait(reactor, "sentinel"):
+        return ReactionWindowResult(allowed=False, reason="missing_trait")
     if trigger_actor is None:
         return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
     if trigger_actor.team == reactor.team:

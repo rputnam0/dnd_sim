@@ -134,6 +134,8 @@ def prepare_voluntary_movement(
 ) -> tuple[float, bool]:
     if actor.movement_remaining <= 0:
         return 0.0, False
+    if "sentinel_speed_zero" in actor.conditions:
+        return 0.0, False
     if actor.conditions.intersection({"grappled", "restrained"}):
         return 0.0, False
     if "prone" not in actor.conditions:

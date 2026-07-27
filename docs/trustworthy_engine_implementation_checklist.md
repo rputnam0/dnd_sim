@@ -104,10 +104,14 @@ Active stack:
 - Draft PR `#257`, `codex/reaction-refresh-timing`: turn-start reaction refresh, removal of
   incorrect global-round locks, preservation of explicit content cooldowns, and live candidate
   revalidation after reaction spend.
+- Draft PR `#258`, `codex/sentinel-reaction-decisions`: per-reactor Disengage bypass, typed
+  Sentinel opportunity effects, confirmed-hit speed zero, committed interrupt position, and
+  downstream reaction cancellation.
 
-The next rules slice migrates special, trait, and spell reactions onto the same typed decision
-surface, beginning with Sentinel and the movement-trigger feature hooks. Broader content and
-session APIs follow after the authoritative combat core is complete.
+The next rules slice makes movement paths commit through interrupt boundaries so hazards and
+zones cannot resolve beyond a Sentinel stop, then migrates trait and spell reactions onto the same
+typed decision surface. Broader content and session APIs follow after the authoritative combat
+core is complete.
 
 ## Required verification for Milestone 0
 
