@@ -667,6 +667,10 @@ function parseEvent(value: unknown, path: string): VttEvent {
   };
 }
 
+export function parseVttEvent(value: unknown): VttEvent {
+  return parseEvent(value, "event");
+}
+
 export function parseCommandResponse(value: unknown): VttCommandResponse {
   const base = objectValue(value, "response");
   if (base.response_type === "preview") {
@@ -1007,6 +1011,13 @@ export async function getSessionView(signal?: AbortSignal): Promise<VttSessionVi
     signal,
   });
   return parseSessionView(await responseJson(response));
+}
+
+export function vttEventsUrl(after: number): string {
+  if (!Number.isInteger(after) || after < 0) {
+    throw new Error("Event cursor must be a non-negative integer");
+  }
+  return `${VTT_API_BASE_URL}/api/v1/events?after=${after}`;
 }
 
 export async function postCommand(

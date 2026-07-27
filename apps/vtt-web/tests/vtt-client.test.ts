@@ -8,7 +8,9 @@ import {
   feetToCell,
   parseCommandResponse,
   parseSessionView,
+  parseVttEvent,
   planGridMovement,
+  vttEventsUrl,
 } from "../app/vtt-client";
 
 const sessionView = {
@@ -265,6 +267,34 @@ test("strictly parses preview receipts without advancing the revision", () => {
         ...parsed,
         canonical_state: { actors: {} },
       }),
+    /unexpected field.*canonical_state/i,
+  );
+});
+
+test("builds a reconnect cursor URL and strictly parses streamed events", () => {
+  assert.equal(
+    vttEventsUrl(17),
+    "http://127.0.0.1:8000/api/v1/events?after=17",
+  );
+  assert.throws(() => vttEventsUrl(-1), /non-negative integer/i);
+
+  const event = {
+    schema_version: "vtt.event.v1",
+    event_id: "echo-vault-session:2:1",
+    session_id: "echo-vault-session",
+    sequence: 7,
+    revision: 2,
+    kind: "dnd.encounter.completed",
+    command_id: "turn-1",
+    versions: sessionView.versions,
+    causation_id: null,
+    audience: ["all"],
+    payload: { outcome: "party_victory" },
+  } as const;
+
+  assert.deepEqual(parseVttEvent(event), event);
+  assert.throws(
+    () => parseVttEvent({ ...event, canonical_state: { actors: {} } }),
     /unexpected field.*canonical_state/i,
   );
 });

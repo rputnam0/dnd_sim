@@ -215,6 +215,17 @@ button:disabled {
   box-shadow: 0 0 0 4px rgb(103 209 173 / 0.08), 0 0 12px rgb(103 209 173 / 0.4);
 }
 
+.signal-dot.stream-connecting,
+.signal-dot.stream-reconnecting {
+  background: var(--coral);
+  box-shadow: 0 0 0 4px rgb(239 112 94 / 0.08), 0 0 12px rgb(239 112 94 / 0.4);
+}
+
+.signal-dot.stream-invalid {
+  background: var(--danger);
+  box-shadow: 0 0 0 4px rgb(180 62 53 / 0.1);
+}
+
 .topbar-round {
   display: flex;
   align-items: baseline;

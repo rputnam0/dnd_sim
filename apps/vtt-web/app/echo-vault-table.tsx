@@ -14,9 +14,11 @@ import {
   buildStartCommand,
   feetToCell,
   getSessionView,
+  parseVttEvent,
   planGridMovement,
   postCommand,
   VttApiError,
+  vttEventsUrl,
   type ActorAction,
   type ActorProjection,
   type DisplayEvent,
@@ -36,13 +38,27 @@ type PendingOperation = "start" | "preview" | "commit" | null;
 
 interface LoggedEvent {
   id: string;
-  source: "preview" | "commit";
+  source: "preview" | "commit" | "stream";
   event: DisplayEvent;
 }
 
 interface PreviewState {
   fingerprint: string;
   response: VttPreviewResponse;
+}
+
+function appendUniqueEvents(
+  current: LoggedEvent[],
+  incoming: LoggedEvent[],
+): LoggedEvent[] {
+  const known = new Set(current.map((entry) => entry.id));
+  const merged = [...current];
+  for (const entry of incoming) {
+    if (known.has(entry.id)) continue;
+    known.add(entry.id);
+    merged.push(entry);
+  }
+  return merged.slice(-80);
 }
 
 function titleCase(value: string): string {
@@ -815,12 +831,20 @@ export function EchoVaultTable() {
   const [selectedDestination, setSelectedDestination] = useState<GridCell | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [events, setEvents] = useState<LoggedEvent[]>([]);
+  const [streamStatus, setStreamStatus] = useState<
+    "connecting" | "live" | "reconnecting" | "invalid"
+  >("connecting");
+  const latestRevisionRef = useRef(0);
+  const sessionIdRef = useRef<string | null>(null);
+  const eventCursorRef = useRef(0);
 
   const adoptView = useCallback((nextView: VttSessionView) => {
     const projection = nextView.projection;
     const actorId = projection.active_actor_id ?? projection.initiative_order[0];
     const actor = projection.actors[actorId];
     const firstAction = actor?.actions[0];
+    latestRevisionRef.current = nextView.revision;
+    sessionIdRef.current = nextView.session_id;
     setView(nextView);
     setSelectedActorId(actorId);
     setSelectedActionName(firstAction?.name ?? "");
@@ -870,12 +894,60 @@ export function EchoVaultTable() {
   const appendEvents = useCallback((response: VttCommandResponse) => {
     const source = response.response_type;
     const nextEvents = response.events.map((event, index) => ({
-      id: `${response.command_id}:${source}:${index}`,
+      id:
+        "event_id" in event
+          ? event.event_id
+          : `${response.command_id}:${source}:${index}`,
       source,
       event,
     }));
-    setEvents((current) => [...current, ...nextEvents].slice(-80));
+    setEvents((current) => appendUniqueEvents(current, nextEvents));
   }, []);
+
+  useEffect(() => {
+    let closed = false;
+    const stream = new EventSource(vttEventsUrl(eventCursorRef.current));
+
+    const receiveEvent = (rawEvent: Event) => {
+      try {
+        const message = rawEvent as MessageEvent<string>;
+        const event = parseVttEvent(JSON.parse(message.data));
+        if (
+          sessionIdRef.current !== null &&
+          event.session_id !== sessionIdRef.current
+        ) {
+          throw new Error("Live event belongs to another VTT session");
+        }
+        if (event.sequence <= eventCursorRef.current) return;
+        eventCursorRef.current = event.sequence;
+        setEvents((current) =>
+          appendUniqueEvents(current, [
+            { id: event.event_id, source: "stream", event },
+          ]),
+        );
+        if (event.revision > latestRevisionRef.current) {
+          void refresh().catch(() => undefined);
+        }
+      } catch {
+        setStreamStatus("invalid");
+        setLoadError("The live event stream returned invalid public data.");
+        stream.close();
+      }
+    };
+
+    stream.addEventListener("vtt.event", receiveEvent);
+    stream.onopen = () => {
+      if (!closed) setStreamStatus("live");
+    };
+    stream.onerror = () => {
+      if (!closed) setStreamStatus("reconnecting");
+    };
+    return () => {
+      closed = true;
+      stream.removeEventListener("vtt.event", receiveEvent);
+      stream.close();
+    };
+  }, [refresh]);
 
   const projection = view?.projection;
   const scene = view?.scene ?? null;
@@ -1112,8 +1184,19 @@ export function EchoVaultTable() {
 
         <div className="session-strip" aria-label="Session status">
           <div>
-            <span className="signal-dot" aria-hidden="true" />
-            <span>Session live</span>
+            <span
+              className={`signal-dot stream-${streamStatus}`}
+              aria-hidden="true"
+            />
+            <span>
+              {streamStatus === "live"
+                ? "Events live"
+                : streamStatus === "invalid"
+                  ? "Stream invalid"
+                  : streamStatus === "reconnecting"
+                    ? "Reconnecting"
+                    : "Connecting"}
+            </span>
           </div>
           <i aria-hidden="true" />
           <div><span>Revision</span><strong>{view.revision}</strong></div>

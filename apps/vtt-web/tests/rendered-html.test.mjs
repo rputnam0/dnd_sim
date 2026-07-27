@@ -65,6 +65,9 @@ test("replaces the starter with the projection-only tactical product", async () 
   assert.match(table, /Choose destination/);
   assert.match(table, /onCellSelect/);
   assert.match(table, /movementPath/);
+  assert.match(table, /new EventSource/);
+  assert.match(table, /"vtt\.event"/);
+  assert.match(table, /parseVttEvent/);
   assert.match(table, /Preview turn/);
   assert.match(table, /Commit turn/);
   assert.match(table, /Start encounter/);
