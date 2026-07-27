@@ -111,6 +111,7 @@ from dnd_sim.strategy_api import (
     ReadyDeclaration,
     TargetRef,
     TurnDeclaration,
+    ZeroHPIntent,
 )
 from dnd_sim.action_legality import (
     TurnDeclarationValidationError,
@@ -120,6 +121,7 @@ from dnd_sim.action_legality import (
     declared_movement_path_or_error as _declared_movement_path_or_error_impl,
     declared_spell_request_or_error as _declared_spell_request_or_error_impl,
     declared_targets_or_error as _declared_targets_or_error_impl,
+    declared_zero_hp_intent_or_error as _declared_zero_hp_intent_or_error_impl,
     raise_turn_declaration_error as _raise_turn_declaration_error_impl,
     validate_declared_ready_or_error as _validate_declared_ready_or_error_impl,
 )
@@ -8652,6 +8654,33 @@ def _declared_targets_or_error(
     )
 
 
+def _declared_zero_hp_intent_or_error(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    declaration: DeclaredAction,
+    *,
+    field_prefix: str,
+) -> ZeroHPIntent:
+    attack_deliveries = None
+    raw_intent = getattr(declaration, "zero_hp_intent", "normal")
+    if (
+        isinstance(raw_intent, str)
+        and raw_intent.strip().lower() == "knock_out"
+        and _action_uses_attack_instance_framework(action)
+    ):
+        attack_deliveries = [
+            attack_instance.attack_delivery
+            for attack_instance in _build_attack_action_instances(actor, action)
+        ]
+    return _declared_zero_hp_intent_or_error_impl(
+        actor=actor,
+        action=action,
+        declaration=declaration,
+        field_prefix=field_prefix,
+        attack_deliveries=attack_deliveries,
+    )
+
+
 def _declared_extra_resource_cost_or_error(
     actor: ActorRuntimeState,
     declaration: DeclaredAction,
@@ -8895,6 +8924,12 @@ def _execute_declared_action_step_or_error(
         field_prefix=field_prefix,
         expected_cost=expected_cost,
     )
+    zero_hp_intent = _declared_zero_hp_intent_or_error(
+        actor,
+        action,
+        declaration,
+        field_prefix=field_prefix,
+    )
     requested_targets = _declared_targets_or_error(actor, declaration, field_prefix=field_prefix)
     spell_cast_request = _declared_spell_request_or_error(
         actor,
@@ -9007,6 +9042,7 @@ def _execute_declared_action_step_or_error(
         allow_auto_movement=False,
         ready_declaration=ready_declaration,
         reserved_bonus_smite=reserved_bonus_smite,
+        zero_hp_intent=zero_hp_intent,
     )
     return action, resolved_targets
 
@@ -9074,6 +9110,14 @@ def _execute_declared_turn_or_error(
                 ),
                 "bonus_action_plan": (
                     declaration.bonus_action.action_name
+                    if declaration.bonus_action is not None
+                    else None
+                ),
+                "zero_hp_intent": (
+                    declaration.action.zero_hp_intent if declaration.action is not None else None
+                ),
+                "bonus_zero_hp_intent": (
+                    declaration.bonus_action.zero_hp_intent
                     if declaration.bonus_action is not None
                     else None
                 ),
@@ -13245,6 +13289,7 @@ def _execute_action(
     ready_declaration: ReadyDeclaration | None = None,
     attack_once_per_action_used: set[tuple[str, int]] | None = None,
     reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
+    zero_hp_intent: ZeroHPIntent = "normal",
 ) -> None:
     def _run_impl(
         resolved_action: ActionDefinition,
@@ -13274,6 +13319,7 @@ def _execute_action(
             ready_declaration=ready_declaration,
             attack_once_per_action_used=attack_once_per_action_used,
             reserved_bonus_smite=reserved_bonus_smite,
+            zero_hp_intent=zero_hp_intent,
         )
 
     def _run_item_action(
@@ -13327,6 +13373,7 @@ def _execute_action_impl(
     ready_declaration: ReadyDeclaration | None = None,
     attack_once_per_action_used: set[tuple[str, int]] | None = None,
     reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
+    zero_hp_intent: ZeroHPIntent = "normal",
 ) -> None:
     if not targets:
         return
@@ -13534,6 +13581,7 @@ def _execute_action_impl(
                 ready_declaration=ready_declaration,
                 attack_once_per_action_used=shared_once_per_action,
                 reserved_bonus_smite=reserved_bonus_smite,
+                zero_hp_intent=zero_hp_intent,
             )
         return
 
@@ -13624,6 +13672,7 @@ def _execute_action_impl(
                 telemetry=telemetry,
                 strategy_name=strategy_name,
                 allow_auto_movement=allow_auto_movement,
+                zero_hp_intent=zero_hp_intent,
             )
         return
 
@@ -14167,7 +14216,26 @@ def _execute_action_impl(
                     damage_bundle,
                     is_critical=roll.crit,
                     source=actor,
+                    knock_out_at_zero=zero_hp_intent == "knock_out",
+                    knockout_recovery_rng=(rng if zero_hp_intent == "knock_out" else None),
                 )
+                if telemetry is not None and zero_hp_intent == "knock_out":
+                    telemetry.append(
+                        {
+                            "telemetry_type": "knockout_resolution",
+                            "round": round_number,
+                            "strategy": strategy_name,
+                            "actor_id": actor.actor_id,
+                            "target_id": target.actor_id,
+                            "action_name": action.name,
+                            "attack_delivery": action.attack_delivery,
+                            "requested": True,
+                            "applied": resolution.knocked_out,
+                            "stable_recovery_hours_remaining": (
+                                target.stable_recovery_hours_remaining
+                            ),
+                        }
+                    )
                 applied = resolution.applied_total
                 active_timing_engine.emit(
                     DamageResolvedEvent(

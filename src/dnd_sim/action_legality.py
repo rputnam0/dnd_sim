@@ -3,9 +3,15 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from dnd_sim.models import ActionDefinition, ActorRuntimeState, SpellCastRequest
+from dnd_sim.models import AttackDelivery, ActionDefinition, ActorRuntimeState, SpellCastRequest
 from dnd_sim.spatial import distance_chebyshev
-from dnd_sim.strategy_api import DeclaredAction, ReadyDeclaration, TargetRef, TurnDeclaration
+from dnd_sim.strategy_api import (
+    DeclaredAction,
+    ReadyDeclaration,
+    TargetRef,
+    TurnDeclaration,
+    ZeroHPIntent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +105,54 @@ def declared_action_or_error(
             details={"action_cost": selected.action_cost},
         )
     return selected
+
+
+def declared_zero_hp_intent_or_error(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    declaration: DeclaredAction,
+    *,
+    field_prefix: str,
+    attack_deliveries: list[AttackDelivery | None] | None = None,
+) -> ZeroHPIntent:
+    raw_intent = getattr(declaration, "zero_hp_intent", "normal")
+    if not isinstance(raw_intent, str):
+        normalized = ""
+    else:
+        normalized = raw_intent.strip().lower()
+    if normalized not in {"normal", "knock_out"}:
+        raise_turn_declaration_error(
+            actor=actor,
+            code="invalid_zero_hp_intent",
+            field=f"{field_prefix}.zero_hp_intent",
+            message="zero_hp_intent must be 'normal' or 'knock_out'.",
+            details={"zero_hp_intent": raw_intent},
+        )
+
+    if normalized == "knock_out":
+        deliveries = (
+            list(attack_deliveries) if attack_deliveries is not None else [action.attack_delivery]
+        )
+        permitted = {"melee_weapon_attack", "melee_spell_attack"}
+        if (
+            action.action_type != "attack"
+            or not deliveries
+            or any(delivery not in permitted for delivery in deliveries)
+        ):
+            raise_turn_declaration_error(
+                actor=actor,
+                code="illegal_knockout_intent",
+                field=f"{field_prefix}.zero_hp_intent",
+                message=(
+                    "Nonlethal knockout can only be declared for an explicitly "
+                    "classified melee attack."
+                ),
+                details={
+                    "action_type": action.action_type,
+                    "attack_deliveries": list(deliveries),
+                },
+            )
+    return normalized
 
 
 def declared_targets_or_error(
