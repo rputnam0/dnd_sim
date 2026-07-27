@@ -107,11 +107,13 @@ Active stack:
 - Draft PR `#258`, `codex/sentinel-reaction-decisions`: per-reactor Disengage bypass, typed
   Sentinel opportunity effects, confirmed-hit speed zero, committed interrupt position, and
   downstream reaction cancellation.
+- Draft PR `#259`, `codex/interruptible-movement-paths`: committed movement prefixes shared with
+  zone and hazard consumers after declared or automatically planned movement is interrupted.
 
-The next rules slice makes movement paths commit through interrupt boundaries so hazards and
-zones cannot resolve beyond a Sentinel stop, then migrates trait and spell reactions onto the same
-typed decision surface. Broader content and session APIs follow after the authoritative combat
-core is complete.
+The next rules slice migrates Sentinel ally-defense, Mage Slayer, and generic trait reaction
+attacks onto the typed decision surface with exact range, action, and bookkeeping rules. Spell
+reactions follow after that shared path. Broader content and session APIs follow after the
+authoritative combat core is complete.
 
 ## Required verification for Milestone 0
 
