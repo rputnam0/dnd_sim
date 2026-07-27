@@ -26,6 +26,8 @@ from .annotation_api import (
     install_annotation_routes,
 )
 from .annotation_store import SQLiteAnnotationBoard
+from .chat_api import CHAT_PROTECTED_ROUTES, ChatAPIError, install_chat_routes
+from .chat_store import SQLiteChatLog
 from .contracts import (
     VTTCommand,
     VTTCommitResponse,
@@ -369,6 +371,8 @@ def create_vtt_app(
     access_policy: TableAccessPolicy | None = None,
     annotation_board: SQLiteAnnotationBoard | None = None,
     annotation_table_id: str | None = None,
+    chat_log: SQLiteChatLog | None = None,
+    chat_table_id: str | None = None,
 ) -> FastAPI:
     """Create a JSON-only VTT app around one already-owned session service."""
 
@@ -384,6 +388,10 @@ def create_vtt_app(
         raise ValueError("annotation_table_id requires an annotation_board")
     if annotation_board is not None and scene is None:
         raise ValueError("annotation_board requires a configured scene")
+    if chat_log is not None and not isinstance(chat_log, SQLiteChatLog):
+        raise TypeError("chat_log must be a SQLiteChatLog or None")
+    if chat_log is None and chat_table_id is not None:
+        raise ValueError("chat_table_id requires a chat_log")
     configured_scene = None if scene is None else scene.model_copy(deep=True)
     configured_origins = _validate_allowed_origins(allowed_origins)
     configured_annotation_table_id: str | None = None
@@ -398,18 +406,30 @@ def create_vtt_app(
             and configured_annotation_table_id != access_policy.roster.table_id
         ):
             raise ValueError("annotation_table_id must match the access-policy table")
+    configured_chat_table_id: str | None = None
+    if chat_log is not None:
+        configured_chat_table_id = chat_table_id
+        if configured_chat_table_id is None:
+            configured_chat_table_id = (
+                access_policy.roster.table_id if access_policy is not None else service.session_id
+            )
+        if access_policy is not None and configured_chat_table_id != access_policy.roster.table_id:
+            raise ValueError("chat_table_id must match the access-policy table")
 
     app = FastAPI(title="dnd-sim VTT API", version="1")
     app.state.vtt_access_policy = access_policy
     app.state.vtt_annotation_board = annotation_board
+    app.state.vtt_chat_log = chat_log
     if access_policy is not None:
-        protected_routes = _PROTECTED_TABLE_ROUTES
+        protected_routes = set(_PROTECTED_TABLE_ROUTES)
         if annotation_board is not None:
-            protected_routes = frozenset((*_PROTECTED_TABLE_ROUTES, *ANNOTATION_PROTECTED_ROUTES))
+            protected_routes.update(ANNOTATION_PROTECTED_ROUTES)
+        if chat_log is not None:
+            protected_routes.update(CHAT_PROTECTED_ROUTES)
         app.add_middleware(
             _TableAuthenticationMiddleware,
             access_policy=access_policy,
-            protected_routes=protected_routes,
+            protected_routes=frozenset(protected_routes),
         )
     app.add_middleware(
         CORSMiddleware,
@@ -430,6 +450,18 @@ def create_vtt_app(
     async def annotation_api_error(
         _request: Request,
         exc: AnnotationAPIError,
+    ) -> JSONResponse:
+        return _error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+        )
+
+    @app.exception_handler(ChatAPIError)
+    async def chat_api_error(
+        _request: Request,
+        exc: ChatAPIError,
     ) -> JSONResponse:
         return _error_response(
             status_code=exc.status_code,
@@ -604,6 +636,17 @@ def create_vtt_app(
             session_id=service.session_id,
             table_id=configured_annotation_table_id,
             scene=configured_scene,
+            access_policy=access_policy,
+        )
+
+    if chat_log is not None:
+        if configured_chat_table_id is None:
+            raise RuntimeError("chat route configuration was not normalized")
+        install_chat_routes(
+            app,
+            log=chat_log,
+            session_id=service.session_id,
+            table_id=configured_chat_table_id,
             access_policy=access_policy,
         )
 
