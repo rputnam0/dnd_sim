@@ -29,6 +29,7 @@ from .dnd_state_codec import (
 )
 from .dnd_turn_driver import (
     DND_TURN_STATE_SCHEMA_VERSION,
+    PREPARE_TURN_COMMAND_KIND,
     DndCombatTurnDriver,
     DndCombatTurnState,
 )
@@ -40,6 +41,7 @@ __all__ = [
     "DECLARATION_COMMAND_KIND",
     "DND_TURN_STATE_SCHEMA_VERSION",
     "EVENT_SCHEMA_VERSION",
+    "PREPARE_TURN_COMMAND_KIND",
     "REACTION_SCHEMA_VERSION",
     "RECEIPT_SCHEMA_VERSION",
     "RNG_ALGORITHM",

@@ -53,6 +53,7 @@ from dnd_sim.interactive import (
     DndCombatTurnDriver,
     EngineSession,
     EngineVersionPins,
+    PREPARE_TURN_COMMAND_KIND,
     SessionCommand,
     TurnDeclarationPayload,
 )
@@ -67,12 +68,25 @@ turn_payload = TurnDeclarationPayload.from_domain(turn_declaration).model_dump(m
 
 session = EngineSession("encounter-7", initial_state, driver, seed=20260726)
 
+session.execute(
+    SessionCommand(
+        command_id="prepare-1",
+        session_id="encounter-7",
+        actor_id="fighter-1",
+        expected_revision=0,
+        mode="admin",
+        kind=PREPARE_TURN_COMMAND_KIND,
+        version_pins=version_pins,
+        payload={},
+    )
+)
+
 preview = session.execute(
     SessionCommand(
         command_id="preview-1",
         session_id="encounter-7",
         actor_id="fighter-1",
-        expected_revision=0,
+        expected_revision=1,
         mode="preview",
         kind=DECLARATION_COMMAND_KIND,
         version_pins=version_pins,
@@ -85,7 +99,7 @@ receipt = session.execute(
         command_id="commit-1",
         session_id="encounter-7",
         actor_id="fighter-1",
-        expected_revision=0,
+        expected_revision=1,
         mode="commit",
         kind=DECLARATION_COMMAND_KIND,
         version_pins=version_pins,
@@ -110,9 +124,13 @@ all turn metrics. Set-valued fields are sorted so snapshots remain deterministic
 seeds. Preview, failed commit, restore, and retry therefore exercise real D&D state without relying
 on the reporting-only actor snapshot.
 
-The driver currently represents exactly one synchronous actor turn: state is `ready` before the
-command and `complete` afterward. Start-of-turn automation occurs inside that transaction, and
-reactions remain explicitly auto-resolved. The next extraction must add a prompt-bound encounter
-cursor that automatically advances rounds, lair actions, turn starts, death saves, hazards, and
-forced paths until it reaches `awaiting_declaration` or `terminal`. That encounter state—not this
-one-turn adapter—will back the Solo Table service and browser UI.
+The driver currently represents exactly one actor turn. A versioned prepare command advances
+start-of-turn automation from `unprepared` to a durable `awaiting_declaration` prompt (or directly
+to `complete` for an automatic path). The declaration command resumes from that prompt without
+rerunning recharge, hazards, ready triggers, or other start hooks. Reactions remain explicitly
+auto-resolved.
+
+The next extraction must add an encounter cursor that automatically advances rounds, lair actions,
+and successive actor turns until it reaches the next `awaiting_declaration` prompt or a terminal
+outcome. That encounter state—not this one-turn adapter—will back the Solo Table service and browser
+UI.

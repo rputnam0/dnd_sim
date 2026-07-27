@@ -15055,6 +15055,40 @@ def _combat_has_ended(context: CombatTurnContext) -> bool:
     )
 
 
+def build_combat_turn_prompt(
+    *,
+    context: CombatTurnContext,
+    actor_id: str,
+) -> CombatTurnPrompt:
+    """Build the read-only decision view for an already-prepared actor turn."""
+
+    actor = context.actors.get(actor_id)
+    if actor is None:
+        raise ValueError(f"Unknown combat-turn actor: {actor_id}")
+    metadata = _build_round_metadata(
+        actors=context.actors,
+        threat_scores=context.threat_scores,
+        burst_round_threshold=context.burst_round_threshold,
+        active_hazards=context.active_hazards,
+        obstacles=context.obstacles,
+        light_level=context.light_level,
+        strategy_overrides=context.strategy_overrides,
+    )
+    state_view = _build_actor_views(
+        context.actors,
+        context.initiative_order,
+        context.round_number,
+        metadata,
+    )
+    return CombatTurnPrompt(
+        actor_id=actor.actor_id,
+        round_number=context.round_number,
+        turn_token=f"{context.round_number}:{actor.actor_id}",
+        actor_view=state_view.actors[actor.actor_id],
+        state_view=state_view,
+    )
+
+
 def prepare_combat_turn(
     *,
     rng: random.Random,
@@ -15280,28 +15314,9 @@ def prepare_combat_turn(
                 strategy_name="forced_dodge",
             )
 
-        metadata = _build_round_metadata(
-            actors=context.actors,
-            threat_scores=context.threat_scores,
-            burst_round_threshold=context.burst_round_threshold,
-            active_hazards=context.active_hazards,
-            obstacles=context.obstacles,
-            light_level=context.light_level,
-            strategy_overrides=context.strategy_overrides,
-        )
-        state_view = _build_actor_views(
-            context.actors,
-            context.initiative_order,
-            context.round_number,
-            metadata,
-        )
-        actor_view = state_view.actors[actor.actor_id]
-        return CombatTurnPrompt(
+        return build_combat_turn_prompt(
+            context=context,
             actor_id=actor.actor_id,
-            round_number=context.round_number,
-            turn_token=turn_token,
-            actor_view=actor_view,
-            state_view=state_view,
         )
 
 

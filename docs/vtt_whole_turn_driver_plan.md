@@ -24,7 +24,7 @@ and VTT must resolve a declared turn through the same domain function.
       forced dodge, turn end, legendary actions) around the prompted turn.
 - [x] Keep reactions explicitly auto-resolved until a resumable reaction
       continuation is implemented.
-- [ ] Make batch strategy selection and interactive commands call the same
+- [x] Make batch strategy selection and interactive commands call the same
       prompted-turn resolver.
 
 ## Milestone 3: D&D interactive driver

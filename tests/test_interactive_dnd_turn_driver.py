@@ -17,6 +17,7 @@ from dnd_sim.interactive.dnd_contracts import (
     TurnDeclarationPayload,
 )
 from dnd_sim.interactive.dnd_turn_driver import (
+    PREPARE_TURN_COMMAND_KIND,
     DndCombatTurnDriver,
     DndCombatTurnState,
 )
@@ -117,16 +118,30 @@ def _command(
     command_id: str,
     mode: str,
     declaration: TurnDeclaration,
+    expected_revision: int,
 ) -> SessionCommand:
     return SessionCommand(
         command_id=command_id,
         session_id=session_id,
         actor_id="hero",
-        expected_revision=0,
+        expected_revision=expected_revision,
         mode=mode,
         kind=DECLARATION_COMMAND_KIND,
         version_pins=VERSION_PINS,
         payload=TurnDeclarationPayload.from_domain(declaration).model_dump(mode="json"),
+    )
+
+
+def _prepare_command(*, session_id: str) -> SessionCommand:
+    return SessionCommand(
+        command_id="prepare-1",
+        session_id=session_id,
+        actor_id="hero",
+        expected_revision=0,
+        mode="admin",
+        kind=PREPARE_TURN_COMMAND_KIND,
+        version_pins=VERSION_PINS,
+        payload={},
     )
 
 
@@ -135,19 +150,27 @@ def test_real_dnd_driver_preview_matches_commit_without_mutating_session() -> No
     session = EngineSession("table-1", _turn_state(), driver, seed=13)
     declaration = _declaration()
 
+    prepared = session.execute(_prepare_command(session_id="table-1"))
+
+    assert prepared.revision == 1
+    assert prepared.events[0].kind == "dnd.turn.prepared"
+    assert session.state["phase"] == "awaiting_declaration"
+    assert session.state["actors"]["hero"]["movement_remaining"] == 30.0
+
     preview = session.execute(
         _command(
             session_id="table-1",
             command_id="turn-1-preview",
             mode="preview",
             declaration=declaration,
+            expected_revision=1,
         )
     )
 
     assert preview.projection["phase"] == "complete"
     assert preview.projection["actors"]["enemy"]["hp"] == 26
-    assert session.revision == 0
-    assert session.state["phase"] == "ready"
+    assert session.revision == 1
+    assert session.state["phase"] == "awaiting_declaration"
     assert session.state["actors"]["enemy"]["hp"] == 30
 
     receipt = session.execute(
@@ -156,10 +179,11 @@ def test_real_dnd_driver_preview_matches_commit_without_mutating_session() -> No
             command_id="turn-1",
             mode="commit",
             declaration=declaration,
+            expected_revision=1,
         )
     )
 
-    assert receipt.revision == 1
+    assert receipt.revision == 2
     assert receipt.events[0].kind == "dnd.turn.resolved"
     assert receipt.events[0].payload["status"] == "resolved"
     assert session.state["phase"] == "complete"
@@ -180,6 +204,8 @@ def test_invalid_late_bonus_rolls_back_real_dnd_state_and_rng() -> None:
         driver,
         seed=41,
     )
+    failed.execute(_prepare_command(session_id="table-rollback"))
+    control.execute(_prepare_command(session_id="table-rollback"))
     before = failed.snapshot_json()
 
     with pytest.raises(EngineSessionError) as exc_info:
@@ -189,6 +215,7 @@ def test_invalid_late_bonus_rolls_back_real_dnd_state_and_rng() -> None:
                 command_id="invalid",
                 mode="commit",
                 declaration=_declaration(invalid_bonus=True, move=True),
+                expected_revision=1,
             )
         )
 
@@ -201,6 +228,7 @@ def test_invalid_late_bonus_rolls_back_real_dnd_state_and_rng() -> None:
         command_id="legal",
         mode="commit",
         declaration=_declaration(move=True),
+        expected_revision=1,
     )
     failed_receipt = failed.execute(legal)
     control_receipt = control.execute(legal)
@@ -212,11 +240,13 @@ def test_invalid_late_bonus_rolls_back_real_dnd_state_and_rng() -> None:
 def test_real_dnd_driver_snapshot_restore_and_idempotent_retry_are_exact() -> None:
     driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
     session = EngineSession("table-restore", _turn_state(), driver, seed=19)
+    session.execute(_prepare_command(session_id="table-restore"))
     command = _command(
         session_id="table-restore",
         command_id="turn-1",
         mode="commit",
         declaration=_declaration(),
+        expected_revision=1,
     )
     original_receipt = session.execute(command)
     snapshot = session.snapshot()
@@ -230,6 +260,37 @@ def test_real_dnd_driver_snapshot_restore_and_idempotent_retry_are_exact() -> No
     assert replayed_receipt.model_copy(update={"replayed": False}) == original_receipt
 
 
+def test_real_dnd_driver_restores_at_prompt_without_rerunning_turn_start(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    uninterrupted = EngineSession("table-prompt", _turn_state(), driver, seed=37)
+    uninterrupted.execute(_prepare_command(session_id="table-prompt"))
+    restored = EngineSession.restore(uninterrupted.snapshot(), driver)
+    command = _command(
+        session_id="table-prompt",
+        command_id="turn-1",
+        mode="commit",
+        declaration=_declaration(),
+        expected_revision=1,
+    )
+    lifecycle: list[str] = []
+    real_dispatch = engine_runtime._dispatch_combat_event
+
+    def observing_dispatch(**kwargs):
+        lifecycle.append(str(kwargs["event"]))
+        return real_dispatch(**kwargs)
+
+    monkeypatch.setattr(engine_runtime, "_dispatch_combat_event", observing_dispatch)
+
+    uninterrupted_receipt = uninterrupted.execute(command)
+    restored_receipt = restored.execute(command)
+
+    assert restored.state == uninterrupted.state
+    assert restored_receipt.events == uninterrupted_receipt.events
+    assert "turn_start" not in lifecycle
+
+
 def test_real_dnd_driver_fixed_seed_command_replay_is_byte_identical() -> None:
     driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
     command = _command(
@@ -237,6 +298,7 @@ def test_real_dnd_driver_fixed_seed_command_replay_is_byte_identical() -> None:
         command_id="turn-1",
         mode="commit",
         declaration=_declaration(),
+        expected_revision=1,
     )
 
     first = EngineSession.replay(
@@ -244,14 +306,14 @@ def test_real_dnd_driver_fixed_seed_command_replay_is_byte_identical() -> None:
         initial_state=_turn_state(),
         driver=driver,
         seed=71,
-        commands=[command],
+        commands=[_prepare_command(session_id="table-replay"), command],
     )
     second = EngineSession.replay(
         session_id="table-replay",
         initial_state=_turn_state(),
         driver=driver,
         seed=71,
-        commands=[command],
+        commands=[_prepare_command(session_id="table-replay"), command],
     )
 
     assert first.snapshot_json() == second.snapshot_json()

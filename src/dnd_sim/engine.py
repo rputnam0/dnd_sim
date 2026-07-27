@@ -6,6 +6,7 @@ from dnd_sim.action_legality import TurnDeclarationValidationError
 from dnd_sim.engine_runtime import (
     SimulationArtifacts,
     SimulationCoreResult,
+    build_combat_turn_prompt,
     create_declared_turn_runtime_state,
     prepare_combat_turn,
     resolve_combat_turn,
@@ -90,6 +91,7 @@ __all__ = [
     "DeclaredTurnRuntimeState",
     "SimulationArtifacts",
     "TurnDeclarationValidationError",
+    "build_combat_turn_prompt",
     "create_declared_turn_runtime_state",
     "prepare_combat_turn",
     "resolve_combat_turn",
