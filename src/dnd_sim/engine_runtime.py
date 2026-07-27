@@ -14796,7 +14796,8 @@ def _execute_action_impl(
             _apply_condition(actor, "disengaging", duration_rounds=1)
             return
         if _is_dash_utility_action(action):
-            actor.movement_remaining += actor.speed_ft
+            if not has_condition(actor, "sentinel_speed_zero"):
+                actor.movement_remaining += actor.speed_ft
             return
         if _is_hide_utility_action(action):
             return

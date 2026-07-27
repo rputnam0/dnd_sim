@@ -49,6 +49,7 @@ class ReactionOptionView:
     damage_expression: str | None = None
     damage_type: str | None = None
     reach_ft: float | None = None
+    on_hit_effects: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +62,8 @@ class ReactionTriggerView:
     attack_total: int | None = None
     movement_point: tuple[float, float, float] | None = None
     distance_ft: float | None = None
+    movement_source: str | None = None
+    mover_disengaged: bool = False
 
 
 @dataclass(frozen=True, slots=True)

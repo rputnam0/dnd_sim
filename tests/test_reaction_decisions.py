@@ -164,6 +164,34 @@ def test_explicit_reaction_pass_has_no_state_or_rng_side_effects() -> None:
     assert telemetry[-1]["status"] == "passed"
 
 
+def test_sentinel_still_receives_typed_opportunity_window_against_disengage() -> None:
+    mover = _actor("mover", team="party")
+    reactor = _actor("reactor", team="enemy")
+    _position_for_opportunity_attack(mover, reactor)
+    mover.conditions.add("disengaging")
+    reactor.traits = {"sentinel": {}}
+    reactor.actions = [_attack("spear")]
+    windows: list[ReactionWindowView] = []
+
+    def pass_provider(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        return ReactionDecision(window_id=window.window_id, choice="pass")
+
+    _run(
+        rng=_SequenceRng([]),
+        mover=mover,
+        reactor=reactor,
+        provider=pass_provider,
+    )
+
+    assert len(windows) == 1
+    assert windows[0].trigger.kind == "opportunity_attack"
+    assert windows[0].trigger.mover_disengaged is True
+    assert windows[0].options[0].on_hit_effects == ("speed_zero_for_turn",)
+    assert reactor.reaction_available is True
+    assert mover.hp == mover.max_hp
+
+
 def test_reaction_decision_selects_an_explicit_attack_option() -> None:
     mover = _actor("mover", team="party")
     reactor = _actor("reactor", team="enemy")
