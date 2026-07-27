@@ -63,7 +63,8 @@ in a separate append-only board log. Preview commands are never written. On star
 - retrying a previously committed command with the same command ID and identical content returns
   its original receipt with `replayed: true` and does not mutate the encounter again;
 - reusing a command ID for different content is a conflict;
-- shared ping markers restore with their annotation revision and exact-retry receipts;
+- shared pings and area templates restore with their annotation revision and
+  exact-retry receipts, while explicit deletions remain deleted;
 - incompatible schema or version pins fail rather than silently migrating or resetting state.
 
 To start a genuinely fresh table, stop the backend first and move the SQLite file aside, then
@@ -138,8 +139,15 @@ projection.
 - **Ping** or `P` starts shared-marker mode. Choose any cell, including one occupied by a token.
   The browser sends feet-space coordinates, adopts the server receipt, and follows the separate
   reconnectable annotation stream.
+- **Template** or `T` starts shared area-template mode. Circle and cube use one center cell; line
+  and cone use two cells. All dimensions are posted in canonical feet, while cone direction and
+  length are derived from its origin and direction endpoint.
+- The annotation selector removes one open-local marker or clears all open-local markers through
+  revision-checked server deletes. A stale clear stops, rehydrates, and leaves the remaining
+  markers for review. Markers owned by another participant cannot be deleted from this open-local
+  browser surface.
 - Ping markers currently persist across reloads and backend restarts. `duration_ms` controls the
-  arrival pulse only; the solo UI does not yet expose deletion or automatic expiry.
+  arrival pulse only; there is no automatic expiry.
 
 ## HTTP and event-stream contracts
 

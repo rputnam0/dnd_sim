@@ -97,9 +97,10 @@ Goal: cover the core DM/player jobs advertised by AboveVTT.
 - [ ] Token ownership, nameplate, HP bar, conditions, aura, elevation, and
       footprint.
 - [ ] Ruler, waypoints, movement cost, ping, and area templates.
-      A local 5e grid ruler, durable shared ping vertical slice, and strict
-      renderer-neutral ruler/template contracts are implemented; shared
-      waypoints, template UI, annotation cleanup, and terrain costs remain.
+      A local 5e grid ruler, durable shared pings, strict renderer-neutral
+      geometry, persisted circle/cone/line/cube placement, and revision-checked
+      annotation removal are implemented. Shared ruler waypoints, automatic
+      ping expiry, template editing, and terrain costs remain.
 - [ ] Freehand drawing, shapes, text labels, colors, opacity, and erase.
 - [ ] Manual fog reveal/hide plus per-participant fog projection.
 - [ ] Walls, doors, windows, terrain barriers, and line-of-sight geometry.
@@ -198,3 +199,5 @@ optional media features.
    browser-driven automation.
 7. Build P1 vertically, beginning with participant-scoped access and shared,
    renderer-neutral map annotations before fog and visibility depend on them.
+   Durable pings plus circle, cone, line, and cube templates now complete the
+   first browser-facing annotation lifecycle, including explicit deletion.
