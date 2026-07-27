@@ -46,8 +46,16 @@ import {
 import {
   useVttAnnotations,
   type AnnotationConnectionStatus,
+  type AnnotationMutationOperation,
 } from "./use-vtt-annotations";
-import type { PingAnnotation } from "./vtt-annotations";
+import type { PingAnnotation, VttAnnotation } from "./vtt-annotations";
+import {
+  buildAreaTemplateAnnotation,
+  projectAreaTemplateToGrid,
+  type AreaTemplateAnnotation,
+  type AreaTemplateGridGeometry,
+  type AreaTemplateKind,
+} from "./vtt-template-geometry";
 
 type PendingOperation = "start" | "preview" | "commit" | null;
 
@@ -98,18 +106,66 @@ function phaseLabel(phase: EncounterProjection["phase"]): string {
   return "Encounter complete";
 }
 
-function pingStatusLabel(
+function annotationStatusLabel(
   status: AnnotationConnectionStatus,
   count: number,
-  pending: boolean,
+  operation: AnnotationMutationOperation,
 ): string {
-  if (pending) return "Placing shared ping…";
-  if (status === "loading") return "Loading shared pings…";
-  if (status === "connecting") return "Connecting shared pings…";
-  if (status === "reconnecting") return "Shared pings reconnecting…";
-  if (status === "unavailable") return "Shared pings unavailable";
-  if (status === "error") return "Shared ping sync interrupted";
-  return `${count} shared ${count === 1 ? "ping" : "pings"} synced`;
+  if (operation === "placing") return "Saving shared annotation…";
+  if (operation === "removing") return "Removing shared annotation…";
+  if (operation === "clearing") return "Clearing local annotations…";
+  if (status === "loading") return "Loading shared annotations…";
+  if (status === "connecting") return "Connecting shared annotations…";
+  if (status === "reconnecting") return "Shared annotations reconnecting…";
+  if (status === "unavailable") return "Shared annotations unavailable";
+  if (status === "error") return "Shared annotation sync interrupted";
+  return `${count} shared ${count === 1 ? "annotation" : "annotations"} synced`;
+}
+
+function annotationLabel(annotation: VttAnnotation): string {
+  const kind = titleCase(annotation.annotation_type.replace("_template", ""));
+  const dimensions =
+    annotation.annotation_type === "circle_template"
+      ? `radius ${annotation.radius_ft} ft`
+      : annotation.annotation_type === "cube_template"
+        ? `${annotation.size_ft} ft side`
+        : annotation.annotation_type === "line_template"
+          ? `${annotation.width_ft} ft wide`
+          : annotation.annotation_type === "cone_template"
+            ? `${annotation.length_ft.toFixed(1)} ft · ${annotation.direction_degrees.toFixed(1)}° · ${annotation.angle_degrees}° arc`
+            : annotation.annotation_type === "ping"
+              ? `${annotation.duration_ms} ms pulse`
+              : `${annotation.total_distance_ft} ft`;
+  return `${kind} · ${dimensions} · ${annotation.author_id}`;
+}
+
+function templateControlLabel(kind: AreaTemplateKind): string {
+  if (kind === "circle") return "Radius";
+  if (kind === "cube") return "Side length";
+  if (kind === "line") return "Width";
+  return "Angle";
+}
+
+function templatePrompt(
+  kind: AreaTemplateKind,
+  start: GridCell | null,
+): string {
+  if (kind === "circle" || kind === "cube") {
+    return `Template mode · choose the ${kind} center`;
+  }
+  if (start === null) {
+    return `Template mode · choose ${kind === "line" ? "line start" : "cone origin"}`;
+  }
+  return `Start ${cellLabel(start)} · choose ${kind === "line" ? "line end" : "direction endpoint"}`;
+}
+
+function conePath(geometry: Extract<AreaTemplateGridGeometry, { kind: "cone" }>): string {
+  return [
+    `M ${geometry.originX} ${geometry.originY}`,
+    `L ${geometry.startX} ${geometry.startY}`,
+    `A ${geometry.radius} ${geometry.radius} 0 0 1 ${geometry.endX} ${geometry.endY}`,
+    "Z",
+  ].join(" ");
 }
 
 function outcomeCopy(outcome: EncounterOutcome | null): {
@@ -403,18 +459,35 @@ function TacticalMap({
   measureMode,
   measurement,
   pingMode,
+  templateMode,
+  templateKind,
+  templateStart,
+  templateDimensionFt,
+  templateAngleDegrees,
   pings,
-  pingStatus,
-  pingError,
-  pingPending,
-  pingCanPlace,
+  templates,
+  annotations,
+  selectedAnnotationId,
+  annotationStatus,
+  annotationError,
+  annotationOperation,
+  annotationCanMutate,
+  templatePlacementError,
   onTokenSelect,
   onTargetSelect,
   onCellSelect,
   onMeasureToggle,
   onMeasureClear,
   onPingToggle,
-  onPingRetry,
+  onTemplateToggle,
+  onTemplateKindChange,
+  onTemplateDimensionChange,
+  onTemplateAngleChange,
+  onTemplateCancelStart,
+  onAnnotationSelect,
+  onRemoveSelected,
+  onClearLocal,
+  onAnnotationRetry,
 }: {
   scene: SquareGridScene;
   projection: EncounterProjection;
@@ -426,18 +499,35 @@ function TacticalMap({
   measureMode: boolean;
   measurement: GridMeasurement;
   pingMode: boolean;
+  templateMode: boolean;
+  templateKind: AreaTemplateKind;
+  templateStart: GridCell | null;
+  templateDimensionFt: number;
+  templateAngleDegrees: number;
   pings: PingAnnotation[];
-  pingStatus: AnnotationConnectionStatus;
-  pingError: string | null;
-  pingPending: boolean;
-  pingCanPlace: boolean;
+  templates: AreaTemplateAnnotation[];
+  annotations: VttAnnotation[];
+  selectedAnnotationId: string;
+  annotationStatus: AnnotationConnectionStatus;
+  annotationError: string | null;
+  annotationOperation: AnnotationMutationOperation;
+  annotationCanMutate: boolean;
+  templatePlacementError: string | null;
   onTokenSelect: (actorId: string) => void;
   onTargetSelect: (actorId: string) => void;
   onCellSelect: (cell: GridCell) => void;
   onMeasureToggle: () => void;
   onMeasureClear: () => void;
   onPingToggle: () => void;
-  onPingRetry: () => void;
+  onTemplateToggle: () => void;
+  onTemplateKindChange: (kind: AreaTemplateKind) => void;
+  onTemplateDimensionChange: (value: number) => void;
+  onTemplateAngleChange: (value: number) => void;
+  onTemplateCancelStart: () => void;
+  onAnnotationSelect: (annotationId: string) => void;
+  onRemoveSelected: () => void;
+  onClearLocal: () => void;
+  onAnnotationRetry: () => void;
 }) {
   const mapStyle = {
     "--grid-columns": scene.columns,
@@ -452,6 +542,20 @@ function TacticalMap({
       return [];
     }
   });
+  const renderedTemplates = templates.flatMap((template) => {
+    try {
+      return [{ template, geometry: projectAreaTemplateToGrid(scene, template) }];
+    } catch {
+      return [];
+    }
+  });
+  const selectedAnnotation = annotations.find(
+    (annotation) => annotation.annotation_id === selectedAnnotationId,
+  );
+  const selectedIsLocal = selectedAnnotation?.author_id === "local";
+  const localAnnotationCount = annotations.filter(
+    (annotation) => annotation.author_id === "local",
+  ).length;
 
   return (
     <section className="map-panel" aria-labelledby="map-title">
@@ -493,27 +597,148 @@ function TacticalMap({
               aria-pressed={pingMode}
               aria-keyshortcuts="P"
               aria-controls="echo-vault-grid"
-              disabled={!pingCanPlace}
+              disabled={!annotationCanMutate}
               onClick={onPingToggle}
             >
               <span aria-hidden="true">◎</span>
               Ping
               <kbd>P</kbd>
             </button>
+            <button
+              type="button"
+              className={`template-toggle ${templateMode ? "is-active" : ""}`}
+              aria-pressed={templateMode}
+              aria-keyshortcuts="T"
+              aria-controls="echo-vault-grid template-controls"
+              disabled={!annotationCanMutate}
+              onClick={onTemplateToggle}
+            >
+              <span aria-hidden="true">◇</span>
+              Template
+              <kbd>T</kbd>
+            </button>
           </div>
+          {templateMode ? (
+            <fieldset className="template-controls" id="template-controls">
+              <legend>Shared area template</legend>
+              <label>
+                Shape
+                <select
+                  value={templateKind}
+                  onChange={(event) =>
+                    onTemplateKindChange(event.target.value as AreaTemplateKind)
+                  }
+                >
+                  <option value="circle">Circle</option>
+                  <option value="cone">Cone</option>
+                  <option value="line">Line</option>
+                  <option value="cube">Cube</option>
+                </select>
+              </label>
+              <label>
+                {templateControlLabel(templateKind)}
+                <span className="template-number-control">
+                  <input
+                    type="number"
+                    min={templateKind === "cone" ? 1 : 0.1}
+                    max={templateKind === "cone" ? 180 : 100000}
+                    step={templateKind === "cone" ? 1 : 0.5}
+                    value={
+                      templateKind === "cone"
+                        ? templateAngleDegrees
+                        : templateDimensionFt
+                    }
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      if (templateKind === "cone") onTemplateAngleChange(value);
+                      else onTemplateDimensionChange(value);
+                    }}
+                  />
+                  <span>{templateKind === "cone" ? "°" : "ft"}</span>
+                </span>
+              </label>
+              {templateStart ? (
+                <button type="button" onClick={onTemplateCancelStart}>
+                  Cancel {templateKind === "line" ? "start" : "origin"}
+                </button>
+              ) : null}
+              <small>
+                {templateKind === "cone"
+                  ? "The second cell sets cone length and world-space direction."
+                  : templateKind === "line"
+                    ? "Choose two cell centers; width stays in feet."
+                    : "Choose one cell center; dimensions stay in feet."}
+              </small>
+            </fieldset>
+          ) : null}
           <output className="measure-output" aria-live="polite">
-            {pingMode
+            {templateMode
+              ? templatePrompt(templateKind, templateStart)
+              : pingMode
               ? "Ping mode · choose any map cell"
               : measurePrompt}
           </output>
-          <div className="ping-sync-state" role="status" aria-live="polite">
-            <span className={`ping-sync-dot ping-${pingStatus}`} aria-hidden="true" />
-            <span>{pingStatusLabel(pingStatus, pings.length, pingPending)}</span>
-            {pingStatus === "error" || pingStatus === "unavailable" ? (
-              <button type="button" onClick={onPingRetry}>Retry</button>
+          <div className="annotation-sync-state" role="status" aria-live="polite">
+            <span className={`annotation-sync-dot annotation-${annotationStatus}`} aria-hidden="true" />
+            <span>
+              {annotationStatusLabel(
+                annotationStatus,
+                annotations.length,
+                annotationOperation,
+              )}
+            </span>
+            {annotationStatus === "error" || annotationStatus === "unavailable" ? (
+              <button type="button" onClick={onAnnotationRetry}>Retry</button>
             ) : null}
           </div>
-          {pingError ? <p className="ping-error" role="alert">{pingError}</p> : null}
+          <div className="annotation-manager">
+            <label>
+              Persisted annotation
+              <select
+                value={selectedAnnotationId}
+                disabled={annotations.length === 0}
+                onChange={(event) => onAnnotationSelect(event.target.value)}
+              >
+                {annotations.length === 0 ? (
+                  <option value="">No annotations</option>
+                ) : (
+                  annotations.map((annotation) => (
+                    <option
+                      value={annotation.annotation_id}
+                      key={annotation.annotation_id}
+                    >
+                      {annotationLabel(annotation)}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
+            <button
+              type="button"
+              disabled={!selectedIsLocal || !annotationCanMutate}
+              onClick={onRemoveSelected}
+            >
+              Remove selected
+            </button>
+            <button
+              type="button"
+              disabled={localAnnotationCount === 0 || !annotationCanMutate}
+              onClick={onClearLocal}
+            >
+              Clear local ({localAnnotationCount})
+            </button>
+          </div>
+          {selectedAnnotation && !selectedIsLocal ? (
+            <p className="annotation-owner-note">
+              This marker belongs to {selectedAnnotation.author_id}; removal is disabled.
+            </p>
+          ) : null}
+          {templatePlacementError ? (
+            <p className="annotation-error" role="alert">{templatePlacementError}</p>
+          ) : null}
+          {annotationError ? (
+            <p className="annotation-error" role="alert">{annotationError}</p>
+          ) : null}
         </div>
       </div>
 
@@ -544,19 +769,23 @@ function TacticalMap({
               movementPlan.destination.row === row;
             const measureStart = sameCell(measurement.start, cell);
             const measureEnd = sameCell(measurement.end, cell);
+            const isTemplateStart = sameCell(templateStart, cell);
             const measureAction =
               measurement.start !== null && measurement.end === null
                 ? "select measure end"
                 : "select measure start";
             const pingAction = pingMode ? ", place shared ping" : "";
+            const templateAction = templateMode
+              ? `, ${templatePrompt(templateKind, templateStart).toLowerCase()}`
+              : "";
             return (
               <button
                 type="button"
-                className={`grid-cell ${reachable ? "is-reachable" : ""} ${selected ? "is-destination" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""} ${measureStart ? "is-measure-start" : ""} ${measureEnd ? "is-measure-end" : ""}`}
+                className={`grid-cell ${reachable ? "is-reachable" : ""} ${selected ? "is-destination" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""} ${templateMode ? "is-templating" : ""} ${isTemplateStart ? "is-template-start" : ""} ${measureStart ? "is-measure-start" : ""} ${measureEnd ? "is-measure-end" : ""}`}
                 role="gridcell"
-                aria-label={`Cell ${cellLabel(cell)}${reachable ? ", reachable destination" : ", not a reachable destination"}${selected ? ", selected destination" : ""}${measureStart ? ", measure start" : ""}${measureEnd ? ", measure end" : ""}${measureMode ? `, ${measureAction}` : ""}${pingAction}`}
+                aria-label={`Cell ${cellLabel(cell)}${reachable ? ", reachable destination" : ", not a reachable destination"}${selected ? ", selected destination" : ""}${measureStart ? ", measure start" : ""}${measureEnd ? ", measure end" : ""}${isTemplateStart ? ", template start" : ""}${measureMode ? `, ${measureAction}` : ""}${pingAction}${templateAction}`}
                 aria-selected={selected}
-                disabled={!pingMode && !measureMode && !reachable}
+                disabled={!templateMode && !pingMode && !measureMode && !reachable}
                 onClick={() => onCellSelect(cell)}
                 key={`${column}-${row}`}
               >
@@ -566,6 +795,62 @@ function TacticalMap({
               </button>
             );
           })}
+
+          {renderedTemplates.length > 0 ? (
+            <svg
+              className="template-overlay"
+              viewBox={`0 0 ${scene.columns} ${scene.rows}`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              {renderedTemplates.map(({ template, geometry }) => {
+                const className = `template-shape template-${geometry.kind} ${template.annotation_id === selectedAnnotationId ? "is-selected" : ""}`;
+                if (geometry.kind === "circle") {
+                  return (
+                    <circle
+                      className={className}
+                      cx={geometry.centerX}
+                      cy={geometry.centerY}
+                      r={geometry.radius}
+                      key={template.annotation_id}
+                    />
+                  );
+                }
+                if (geometry.kind === "cube") {
+                  return (
+                    <rect
+                      className={className}
+                      x={geometry.x}
+                      y={geometry.y}
+                      width={geometry.width}
+                      height={geometry.height}
+                      key={template.annotation_id}
+                    />
+                  );
+                }
+                if (geometry.kind === "line") {
+                  return (
+                    <line
+                      className={className}
+                      x1={geometry.startX}
+                      y1={geometry.startY}
+                      x2={geometry.endX}
+                      y2={geometry.endY}
+                      strokeWidth={geometry.width}
+                      key={template.annotation_id}
+                    />
+                  );
+                }
+                return (
+                  <path
+                    className={className}
+                    d={conePath(geometry)}
+                    key={template.annotation_id}
+                  />
+                );
+              })}
+            </svg>
+          ) : null}
 
           {renderedPings.map(({ ping, cell }) => (
             <span
@@ -596,10 +881,10 @@ function TacticalMap({
               <button
                 key={actorId}
                 type="button"
-                className={`map-token team-${actor.team} ${active ? "is-active" : ""} ${selected ? "is-selected" : ""} ${targetable ? "is-targetable" : ""} ${targeted ? "is-targeted" : ""} ${actor.dead ? "is-defeated" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""}`}
+                className={`map-token team-${actor.team} ${active ? "is-active" : ""} ${selected ? "is-selected" : ""} ${targetable ? "is-targetable" : ""} ${targeted ? "is-targeted" : ""} ${actor.dead ? "is-defeated" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""} ${templateMode ? "is-templating" : ""}`}
                 style={{ gridColumn: cell.column + 1, gridRow: cell.row + 1 }}
                 onClick={() => {
-                  if (pingMode || measureMode) {
+                  if (pingMode || measureMode || templateMode) {
                     onCellSelect(cell);
                     return;
                   }
@@ -607,7 +892,7 @@ function TacticalMap({
                   if (targetable) onTargetSelect(actorId);
                 }}
                 aria-pressed={selected || targeted}
-                aria-label={`${actor.name}, ${actor.hp} of ${actor.max_hp} hit points${active ? ", active turn" : ""}${targetable ? ", server-selectable target" : ""}${measureMode ? `, ${measurement.start !== null && measurement.end === null ? "select measure end" : "select measure start"} at ${cellLabel(cell)}` : ""}${pingMode ? `, place shared ping at ${cellLabel(cell)}` : ""}`}
+                aria-label={`${actor.name}, ${actor.hp} of ${actor.max_hp} hit points${active ? ", active turn" : ""}${targetable ? ", server-selectable target" : ""}${measureMode ? `, ${measurement.start !== null && measurement.end === null ? "select measure end" : "select measure start"} at ${cellLabel(cell)}` : ""}${pingMode ? `, place shared ping at ${cellLabel(cell)}` : ""}${templateMode ? `, ${templatePrompt(templateKind, templateStart).toLowerCase()} at ${cellLabel(cell)}` : ""}`}
               >
                 <span className="token-orbit" aria-hidden="true" />
                 <span className="token-face">{initials(actor.name)}</span>
@@ -674,7 +959,9 @@ function TacticalMap({
         <span><i className="legend-dot legend-enemy" /> Hostile</span>
         <span><i className="legend-ring" /> Active</span>
         <p>
-          {pingMode
+          {templateMode
+            ? `Template mode · ${titleCase(templateKind)} · persisted shared area`
+            : pingMode
             ? "Ping mode · shared server annotation"
             : measureMode
             ? "Measure mode · local presentation only"
@@ -1070,6 +1357,16 @@ export function EchoVaultTable() {
   const [selectedDestination, setSelectedDestination] = useState<GridCell | null>(null);
   const [measureMode, setMeasureMode] = useState(false);
   const [pingMode, setPingMode] = useState(false);
+  const [templateMode, setTemplateMode] = useState(false);
+  const [templateKind, setTemplateKind] =
+    useState<AreaTemplateKind>("circle");
+  const [templateStart, setTemplateStart] = useState<GridCell | null>(null);
+  const [templateDimensionFt, setTemplateDimensionFt] = useState(10);
+  const [templateAngleDegrees, setTemplateAngleDegrees] = useState(90);
+  const [templatePlacementError, setTemplatePlacementError] = useState<
+    string | null
+  >(null);
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState("");
   const [measurement, setMeasurement] = useState<GridMeasurement>(
     EMPTY_GRID_MEASUREMENT,
   );
@@ -1086,17 +1383,48 @@ export function EchoVaultTable() {
     sceneId: view?.scene?.scene_id ?? null,
   });
   const activePingMode = pingMode && sharedAnnotations.available;
+  const activeTemplateMode = templateMode && sharedAnnotations.available;
+  const resolvedSelectedAnnotationId =
+    sharedAnnotations.annotations.find(
+      (annotation) => annotation.annotation_id === selectedAnnotationId,
+    )?.annotation_id ??
+    sharedAnnotations.annotations.find(
+      (annotation) => annotation.author_id === "local",
+    )?.annotation_id ??
+    sharedAnnotations.annotations[0]?.annotation_id ??
+    "";
 
   const toggleMeasureMode = useCallback(() => {
     setMeasureMode((current) => !current);
     setPingMode(false);
+    setTemplateMode(false);
+    setTemplateStart(null);
+    setTemplatePlacementError(null);
   }, []);
 
   const togglePingMode = useCallback(() => {
     if (!sharedAnnotations.canPlace) return;
     setPingMode((current) => !current);
     setMeasureMode(false);
+    setTemplateMode(false);
+    setTemplateStart(null);
+    setTemplatePlacementError(null);
   }, [sharedAnnotations.canPlace]);
+
+  const toggleTemplateMode = useCallback(() => {
+    if (!sharedAnnotations.canMutate) return;
+    setTemplateMode((current) => !current);
+    setMeasureMode(false);
+    setPingMode(false);
+    setTemplateStart(null);
+    setTemplatePlacementError(null);
+  }, [sharedAnnotations.canMutate]);
+
+  const selectTemplateKind = useCallback((kind: AreaTemplateKind) => {
+    setTemplateKind(kind);
+    setTemplateStart(null);
+    setTemplatePlacementError(null);
+  }, []);
 
   useEffect(() => {
     const handleMeasureShortcut = (event: KeyboardEvent) => {
@@ -1134,13 +1462,39 @@ export function EchoVaultTable() {
       togglePingMode();
     };
 
+    const handleTemplateShortcut = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.repeat ||
+        event.key.toLowerCase() !== "t" ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        !sharedAnnotations.canMutate ||
+        isInteractiveControl(event.target) ||
+        isInteractiveControl(document.activeElement)
+      ) {
+        return;
+      }
+      event.preventDefault();
+      toggleTemplateMode();
+    };
+
     window.addEventListener("keydown", handleMeasureShortcut);
     window.addEventListener("keydown", handlePingShortcut);
+    window.addEventListener("keydown", handleTemplateShortcut);
     return () => {
       window.removeEventListener("keydown", handleMeasureShortcut);
       window.removeEventListener("keydown", handlePingShortcut);
+      window.removeEventListener("keydown", handleTemplateShortcut);
     };
-  }, [sharedAnnotations.canPlace, toggleMeasureMode, togglePingMode]);
+  }, [
+    sharedAnnotations.canMutate,
+    sharedAnnotations.canPlace,
+    toggleMeasureMode,
+    togglePingMode,
+    toggleTemplateMode,
+  ]);
 
   const adoptView = useCallback((nextView: VttSessionView) => {
     const projection = nextView.projection;
@@ -1381,6 +1735,63 @@ export function EchoVaultTable() {
   };
 
   const handleMapCellSelect = (cell: GridCell) => {
+    if (activeTemplateMode) {
+      if (!scene || !sharedAnnotations.canMutate) return;
+      try {
+        const needsEndpoint = templateKind === "line" || templateKind === "cone";
+        if (needsEndpoint && templateStart === null) {
+          setTemplateStart(cell);
+          setTemplatePlacementError(null);
+          return;
+        }
+        const identity = {
+          scene,
+          authorId: "local",
+          audience: ["all"],
+        } as const;
+        const annotation =
+          templateKind === "circle"
+            ? buildAreaTemplateAnnotation({
+                ...identity,
+                kind: "circle",
+                center: cell,
+                radiusFt: templateDimensionFt,
+              })
+            : templateKind === "cube"
+              ? buildAreaTemplateAnnotation({
+                  ...identity,
+                  kind: "cube",
+                  center: cell,
+                  sizeFt: templateDimensionFt,
+                })
+              : templateKind === "line" && templateStart
+                ? buildAreaTemplateAnnotation({
+                    ...identity,
+                    kind: "line",
+                    start: templateStart,
+                    end: cell,
+                    widthFt: templateDimensionFt,
+                  })
+                : templateStart
+                  ? buildAreaTemplateAnnotation({
+                      ...identity,
+                      kind: "cone",
+                      origin: templateStart,
+                      directionEnd: cell,
+                      angleDegrees: templateAngleDegrees,
+                    })
+                  : null;
+        if (annotation === null) return;
+        setTemplatePlacementError(null);
+        void sharedAnnotations
+          .placeAnnotation(annotation)
+          .then(() => setTemplateStart(null))
+          .catch(() => undefined);
+      } catch (placementError) {
+        setTemplatePlacementError(errorMessage(placementError));
+      }
+      return;
+    }
     if (activePingMode) {
       if (scene && sharedAnnotations.canPlace) {
         void sharedAnnotations
@@ -1579,11 +1990,20 @@ export function EchoVaultTable() {
             measureMode={measureMode}
             measurement={measurement}
             pingMode={activePingMode}
+            templateMode={activeTemplateMode}
+            templateKind={templateKind}
+            templateStart={templateStart}
+            templateDimensionFt={templateDimensionFt}
+            templateAngleDegrees={templateAngleDegrees}
             pings={sharedAnnotations.pings}
-            pingStatus={sharedAnnotations.status}
-            pingError={sharedAnnotations.error}
-            pingPending={sharedAnnotations.pending}
-            pingCanPlace={sharedAnnotations.canPlace}
+            templates={sharedAnnotations.templates}
+            annotations={sharedAnnotations.annotations}
+            selectedAnnotationId={resolvedSelectedAnnotationId}
+            annotationStatus={sharedAnnotations.status}
+            annotationError={sharedAnnotations.error}
+            annotationOperation={sharedAnnotations.operation}
+            annotationCanMutate={sharedAnnotations.canMutate}
+            templatePlacementError={templatePlacementError}
             onTokenSelect={setSelectedActorId}
             onTargetSelect={handleTargetSelect}
             onCellSelect={handleMapCellSelect}
@@ -1592,7 +2012,27 @@ export function EchoVaultTable() {
               setMeasurement({ ...EMPTY_GRID_MEASUREMENT })
             }
             onPingToggle={togglePingMode}
-            onPingRetry={sharedAnnotations.retry}
+            onTemplateToggle={toggleTemplateMode}
+            onTemplateKindChange={selectTemplateKind}
+            onTemplateDimensionChange={setTemplateDimensionFt}
+            onTemplateAngleChange={setTemplateAngleDegrees}
+            onTemplateCancelStart={() => {
+              setTemplateStart(null);
+              setTemplatePlacementError(null);
+            }}
+            onAnnotationSelect={setSelectedAnnotationId}
+            onRemoveSelected={() => {
+              if (!resolvedSelectedAnnotationId) return;
+              void sharedAnnotations
+                .removeAnnotation(resolvedSelectedAnnotationId)
+                .catch(() => undefined);
+            }}
+            onClearLocal={() => {
+              void sharedAnnotations
+                .clearLocalAnnotations()
+                .catch(() => undefined);
+            }}
+            onAnnotationRetry={sharedAnnotations.retry}
           />
           <EventLog events={events} />
         </div>

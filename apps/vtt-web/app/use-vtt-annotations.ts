@@ -3,15 +3,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { VttApiError, type Position3 } from "./vtt-client";
+import type { AreaTemplateAnnotation } from "./vtt-template-geometry";
 import {
+  annotationEventForRequest,
   applyAnnotationEvent,
+  buildAnnotationDeleteRequest,
+  buildAnnotationPutRequest,
   buildPingPutRequest,
   getAnnotationsView,
   postAnnotationRequest,
   streamAnnotationEvents,
   type AnnotationEvent,
+  type AnnotationMutationRequest,
+  type AnnotationResponse,
   type AnnotationsView,
   type PingAnnotation,
+  type VttAnnotation,
 } from "./vtt-annotations";
 
 export type AnnotationConnectionStatus =
@@ -22,10 +29,16 @@ export type AnnotationConnectionStatus =
   | "unavailable"
   | "error";
 
+export type AnnotationMutationOperation =
+  | "placing"
+  | "removing"
+  | "clearing"
+  | null;
+
 function annotationErrorMessage(error: unknown): string {
   if (error instanceof VttApiError) return error.message;
   if (error instanceof Error && error.message) return error.message;
-  return "Shared pings could not be synchronized.";
+  return "Shared annotations could not be synchronized.";
 }
 
 function isAbort(error: unknown): boolean {
@@ -55,10 +68,13 @@ export function useVttAnnotations(input: {
   const [view, setView] = useState<AnnotationsView | null>(null);
   const [status, setStatus] = useState<AnnotationConnectionStatus>("loading");
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const [operation, setOperation] =
+    useState<AnnotationMutationOperation>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const viewRef = useRef<AnnotationsView | null>(null);
   const cursorRef = useRef(0);
+  const mutationInFlightRef = useRef(false);
+  const preserveErrorRef = useRef(false);
 
   const adoptEvent = useCallback((event: AnnotationEvent) => {
     if (event.sequence <= cursorRef.current) return;
@@ -79,7 +95,7 @@ export function useVttAnnotations(input: {
 
     const synchronize = async () => {
       setStatus("loading");
-      setError(null);
+      if (!preserveErrorRef.current) setError(null);
       let hydrated: AnnotationsView;
       try {
         hydrated = await getAnnotationsView(controller.signal);
@@ -100,7 +116,7 @@ export function useVttAnnotations(input: {
           viewRef.current = null;
           setView(null);
           setStatus("unavailable");
-          setError("Shared pings are not enabled on this table.");
+          setError("Shared annotations are not enabled on this table.");
           return;
         }
         setStatus("error");
@@ -120,7 +136,10 @@ export function useVttAnnotations(input: {
             after: cursorRef.current,
             signal: controller.signal,
             onOpen: () => {
-              if (active) setStatus("live");
+              if (active) {
+                setStatus("live");
+                if (!preserveErrorRef.current) setError(null);
+              }
             },
             onEvent: adoptEvent,
           });
@@ -135,11 +154,11 @@ export function useVttAnnotations(input: {
           }
           if (!(streamError instanceof TypeError)) {
             setStatus("error");
-            setError("The shared ping stream returned invalid data.");
+            setError("The shared annotation stream returned invalid data.");
             return;
           }
           setStatus("reconnecting");
-          setError("Shared pings are reconnecting.");
+          setError("Shared annotations are reconnecting.");
         }
         await waitForReconnect(controller.signal);
       }
@@ -152,49 +171,190 @@ export function useVttAnnotations(input: {
     };
   }, [adoptEvent, input.sceneId, input.sessionId, refreshKey]);
 
+  const requireCurrentView = useCallback((): AnnotationsView => {
+    const current = viewRef.current;
+    if (
+      current === null ||
+      input.sessionId === null ||
+      input.sceneId === null
+    ) {
+      throw new Error("Shared annotations are not available for this scene.");
+    }
+    return current;
+  }, [input.sceneId, input.sessionId]);
+
+  const submitMutation = useCallback(
+    async (request: AnnotationMutationRequest): Promise<AnnotationResponse> => {
+      const response = await postAnnotationRequest(request);
+      adoptEvent(annotationEventForRequest(request, response));
+      return response;
+    },
+    [adoptEvent],
+  );
+
+  const beginMutation = useCallback(
+    (nextOperation: Exclude<AnnotationMutationOperation, null>) => {
+      if (mutationInFlightRef.current) {
+        throw new Error("Another annotation change is still being saved.");
+      }
+      mutationInFlightRef.current = true;
+      preserveErrorRef.current = false;
+      setError(null);
+      setOperation(nextOperation);
+    },
+    [],
+  );
+
+  const finishMutation = useCallback(() => {
+    mutationInFlightRef.current = false;
+    setOperation(null);
+  }, []);
+
+  const reportMutationError = useCallback(
+    (mutationError: unknown, retryGuidance: string) => {
+      preserveErrorRef.current = true;
+      if (
+        mutationError instanceof VttApiError &&
+        mutationError.code === "annotation_stale_revision"
+      ) {
+        setError(
+          `The shared map changed. Refreshing annotations; ${retryGuidance}.`,
+        );
+        setStatus("loading");
+        setRefreshKey((currentKey) => currentKey + 1);
+      } else if (
+        mutationError instanceof VttApiError &&
+        mutationError.code === "annotation_forbidden"
+      ) {
+        setError(
+          "The server refused this deletion because the annotation belongs to another participant.",
+        );
+      } else {
+        setError(annotationErrorMessage(mutationError));
+      }
+    },
+    [],
+  );
+
   const placePing = useCallback(
     async (position: Position3) => {
-      const current = viewRef.current;
-      if (current === null || input.sessionId === null || input.sceneId === null) {
-        throw new Error("Shared pings are not available for this scene.");
-      }
-      setPending(true);
-      setError(null);
+      beginMutation("placing");
       try {
+        const current = requireCurrentView();
         const request = buildPingPutRequest({
-          sessionId: input.sessionId,
+          sessionId: current.session_id,
           tableId: current.table_id,
-          sceneId: input.sceneId,
+          sceneId: current.scene_id,
           authorId: "local",
           expectedRevision: current.revision,
           position,
         });
-        const response = await postAnnotationRequest(request);
-        if (
-          response.session_id !== input.sessionId ||
-          response.receipt.table_id !== current.table_id ||
-          response.receipt.command_id !== request.command.command_id
-        ) {
-          throw new Error("The shared ping receipt does not match its request.");
-        }
-        adoptEvent(response.receipt.event);
+        await submitMutation(request);
       } catch (placementError) {
-        if (
-          placementError instanceof VttApiError &&
-          placementError.code === "annotation_stale_revision"
-        ) {
-          setError("The shared map changed. Refreshing pings; place it again.");
-          setRefreshKey((currentKey) => currentKey + 1);
-        } else {
-          setError(annotationErrorMessage(placementError));
-        }
+        reportMutationError(placementError, "place it again");
         throw placementError;
       } finally {
-        setPending(false);
+        finishMutation();
       }
     },
-    [adoptEvent, input.sceneId, input.sessionId],
+    [beginMutation, finishMutation, reportMutationError, requireCurrentView, submitMutation],
   );
+
+  const placeAnnotation = useCallback(
+    async (annotation: VttAnnotation) => {
+      beginMutation("placing");
+      try {
+        const current = requireCurrentView();
+        if (annotation.scene_id !== current.scene_id) {
+          throw new Error("The template belongs to another scene.");
+        }
+        const request = buildAnnotationPutRequest({
+          sessionId: current.session_id,
+          tableId: current.table_id,
+          expectedRevision: current.revision,
+          annotation,
+        });
+        await submitMutation(request);
+      } catch (placementError) {
+        reportMutationError(placementError, "place it again");
+        throw placementError;
+      } finally {
+        finishMutation();
+      }
+    },
+    [beginMutation, finishMutation, reportMutationError, requireCurrentView, submitMutation],
+  );
+
+  const removeAnnotation = useCallback(
+    async (annotationId: string) => {
+      beginMutation("removing");
+      try {
+        const current = requireCurrentView();
+        const target = current.annotations.find(
+          (annotation) => annotation.annotation_id === annotationId,
+        );
+        if (!target) throw new Error("The selected annotation no longer exists.");
+        if (target.author_id !== "local") {
+          throw new Error(
+            "Only annotations authored by this open-local table can be removed here.",
+          );
+        }
+        const request = buildAnnotationDeleteRequest({
+          sessionId: current.session_id,
+          tableId: current.table_id,
+          expectedRevision: current.revision,
+          annotationId,
+        });
+        await submitMutation(request);
+      } catch (removalError) {
+        reportMutationError(removalError, "select it and remove it again");
+        throw removalError;
+      } finally {
+        finishMutation();
+      }
+    },
+    [beginMutation, finishMutation, reportMutationError, requireCurrentView, submitMutation],
+  );
+
+  const clearLocalAnnotations = useCallback(async () => {
+    beginMutation("clearing");
+    try {
+      const initial = requireCurrentView();
+      const annotationIds = initial.annotations
+        .filter((annotation) => annotation.author_id === "local")
+        .map((annotation) => annotation.annotation_id);
+      for (const annotationId of annotationIds) {
+        const current = requireCurrentView();
+        const target = current.annotations.find(
+          (annotation) => annotation.annotation_id === annotationId,
+        );
+        if (!target) continue;
+        if (target.author_id !== "local") {
+          throw new Error(
+            "An annotation owner changed while the local markers were being cleared.",
+          );
+        }
+        const request = buildAnnotationDeleteRequest({
+          sessionId: current.session_id,
+          tableId: current.table_id,
+          expectedRevision: current.revision,
+          annotationId,
+        });
+        await submitMutation(request);
+      }
+    } catch (clearError) {
+      reportMutationError(clearError, "review the remaining markers and clear again");
+      throw clearError;
+    } finally {
+      finishMutation();
+    }
+  }, [
+    beginMutation,
+    finishMutation,
+    reportMutationError,
+    requireCurrentView,
+    submitMutation,
+  ]);
 
   const pings = useMemo(
     () =>
@@ -204,21 +364,42 @@ export function useVttAnnotations(input: {
       ) ?? []),
     [view],
   );
+  const templates = useMemo(
+    () =>
+      (view?.annotations.filter(
+        (annotation): annotation is AreaTemplateAnnotation =>
+          annotation.annotation_type !== "ping" &&
+          annotation.annotation_type !== "ruler",
+      ) ?? []),
+    [view],
+  );
   const available =
     view !== null &&
     status !== "loading" &&
     status !== "unavailable" &&
     status !== "error";
+  const pending = operation !== null;
 
   return {
     view,
+    annotations: view?.annotations ?? [],
     pings,
+    templates,
     status,
     error,
     pending,
+    operation,
     available,
     canPlace: available && !pending,
+    canMutate: available && !pending,
     placePing,
-    retry: () => setRefreshKey((currentKey) => currentKey + 1),
+    placeAnnotation,
+    removeAnnotation,
+    clearLocalAnnotations,
+    retry: () => {
+      preserveErrorRef.current = false;
+      setError(null);
+      setRefreshKey((currentKey) => currentKey + 1);
+    },
   };
 }

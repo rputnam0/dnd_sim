@@ -85,11 +85,34 @@ export interface AnnotationPutCommand {
   annotation: VttAnnotation;
 }
 
+export interface AnnotationDeleteCommand {
+  schema_version: "vtt.annotation_command.v1";
+  table_id: string;
+  command_id: string;
+  expected_revision: number;
+  command_type: "delete";
+  annotation_id: string;
+}
+
+export type AnnotationMutationCommand =
+  | AnnotationPutCommand
+  | AnnotationDeleteCommand;
+
 export interface AnnotationPutRequest {
   schema_version: "vtt.annotation_request.v1";
   session_id: string;
   command: AnnotationPutCommand;
 }
+
+export interface AnnotationDeleteRequest {
+  schema_version: "vtt.annotation_request.v1";
+  session_id: string;
+  command: AnnotationDeleteCommand;
+}
+
+export type AnnotationMutationRequest =
+  | AnnotationPutRequest
+  | AnnotationDeleteRequest;
 
 interface AnnotationEventBase {
   schema_version: "vtt.annotation_event.v1";
@@ -502,6 +525,10 @@ function parseAnnotation(value: unknown, path: string): VttAnnotation {
   };
 }
 
+export function parseVttAnnotation(value: unknown): VttAnnotation {
+  return parseAnnotation(value, "annotation");
+}
+
 export function parseAnnotationsView(value: unknown): AnnotationsView {
   const data = exactObject(
     value,
@@ -670,6 +697,26 @@ export function parseAnnotationResponse(value: unknown): AnnotationResponse {
   };
 }
 
+export function annotationEventForRequest(
+  request: AnnotationMutationRequest,
+  response: AnnotationResponse,
+): AnnotationEvent {
+  const expectedAnnotationId =
+    request.command.command_type === "put"
+      ? request.command.annotation.annotation_id
+      : request.command.annotation_id;
+  if (
+    response.session_id !== request.session_id ||
+    response.receipt.table_id !== request.command.table_id ||
+    response.receipt.command_id !== request.command.command_id ||
+    response.receipt.event.event_type !== request.command.command_type ||
+    response.receipt.event.annotation_id !== expectedAnnotationId
+  ) {
+    throw new Error("The shared annotation receipt does not match its request.");
+  }
+  return response.receipt.event;
+}
+
 function requireText(value: string, field: string): string {
   return canonicalText(value, field);
 }
@@ -716,35 +763,81 @@ export function buildPingPutRequest(input: {
   if (duration > MAX_PING_DURATION_MS) {
     throw new Error("durationMs exceeds the supported maximum");
   }
+  return buildAnnotationPutRequest({
+    sessionId: input.sessionId,
+    tableId: input.tableId,
+    commandId: input.commandId,
+    expectedRevision: input.expectedRevision,
+    annotation: {
+      schema_version: "vtt.annotation.v1",
+      annotation_id: requireText(
+        input.annotationId ?? crypto.randomUUID(),
+        "annotationId",
+      ),
+      scene_id: requireText(input.sceneId, "sceneId"),
+      author_id: requireText(input.authorId, "authorId"),
+      audience: ["all"],
+      annotation_type: "ping",
+      position: {
+        x_ft: position[0],
+        y_ft: position[1],
+        z_ft: position[2],
+      },
+      duration_ms: duration,
+    },
+  });
+}
+
+export function buildAnnotationPutRequest(input: {
+  sessionId: string;
+  tableId: string;
+  expectedRevision: number;
+  annotation: unknown;
+  commandId?: string;
+}): AnnotationPutRequest {
   return {
     schema_version: "vtt.annotation_request.v1",
     session_id: requireText(input.sessionId, "sessionId"),
     command: {
       schema_version: "vtt.annotation_command.v1",
       table_id: requireText(input.tableId, "tableId"),
-      command_id: requireText(input.commandId ?? crypto.randomUUID(), "commandId"),
+      command_id: requireText(
+        input.commandId ?? crypto.randomUUID(),
+        "commandId",
+      ),
       expected_revision: integerValue(
         input.expectedRevision,
         "expectedRevision",
       ),
       command_type: "put",
-      annotation: {
-        schema_version: "vtt.annotation.v1",
-        annotation_id: requireText(
-          input.annotationId ?? crypto.randomUUID(),
-          "annotationId",
-        ),
-        scene_id: requireText(input.sceneId, "sceneId"),
-        author_id: requireText(input.authorId, "authorId"),
-        audience: ["all"],
-        annotation_type: "ping",
-        position: {
-          x_ft: position[0],
-          y_ft: position[1],
-          z_ft: position[2],
-        },
-        duration_ms: duration,
-      },
+      annotation: parseVttAnnotation(input.annotation),
+    },
+  };
+}
+
+export function buildAnnotationDeleteRequest(input: {
+  sessionId: string;
+  tableId: string;
+  expectedRevision: number;
+  annotationId: string;
+  commandId?: string;
+}): AnnotationDeleteRequest {
+  return {
+    schema_version: "vtt.annotation_request.v1",
+    session_id: requireText(input.sessionId, "sessionId"),
+    command: {
+      schema_version: "vtt.annotation_command.v1",
+      table_id: requireText(input.tableId, "tableId"),
+      command_id: requireText(
+        input.commandId ?? crypto.randomUUID(),
+        "commandId",
+      ),
+      expected_revision: integerValue(
+        input.expectedRevision,
+        "expectedRevision",
+      ),
+      command_type: "delete",
+      annotation_id: requireText(input.annotationId, "annotationId"),
     },
   };
 }
@@ -878,7 +971,7 @@ export async function getAnnotationsView(
 }
 
 export async function postAnnotationRequest(
-  request: AnnotationPutRequest,
+  request: AnnotationMutationRequest,
   signal?: AbortSignal,
 ): Promise<AnnotationResponse> {
   const response = await fetch(

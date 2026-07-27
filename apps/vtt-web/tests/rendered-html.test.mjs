@@ -105,7 +105,7 @@ test("ships an accessible local-only tactical ruler", async () => {
   assert.match(table, /is-measure-start/);
   assert.match(table, /is-measure-end/);
   assert.match(table, /measurement-line/);
-  assert.match(table, /disabled=\{!pingMode && !measureMode && !reachable\}/);
+  assert.match(table, /disabled=\{!templateMode && !pingMode && !measureMode && !reachable\}/);
   assert.match(
     table,
     /if \(measureMode\) \{\s*setMeasurement\([\s\S]+?nextGridMeasurement[\s\S]+?return;\s*\}\s*handleMovementCellSelect\(cell\)/,
@@ -162,7 +162,7 @@ test("ships a persisted collaborative ping tool without stealing ruler or moveme
   assert.match(table, /ping-marker/);
   assert.match(table, /if \(activePingMode\)[\s\S]+?placePing[\s\S]+?return/);
   assert.match(table, /if \(measureMode\)[\s\S]+?nextGridMeasurement[\s\S]+?return/);
-  assert.match(table, /disabled=\{!pingMode && !measureMode && !reachable\}/);
+  assert.match(table, /disabled=\{!templateMode && !pingMode && !measureMode && !reachable\}/);
   assert.match(hook, /getAnnotationsView/);
   assert.match(hook, /streamAnnotationEvents/);
   assert.match(hook, /applyAnnotationEvent/);
@@ -174,4 +174,38 @@ test("ships a persisted collaborative ping tool without stealing ruler or moveme
   assert.match(css, /\.ping-marker/);
   assert.match(readme, /shared ping/i);
   assert.match(readme, /optional annotation API/i);
+});
+
+test("ships shared area templates with explicit server-backed removal", async () => {
+  const [table, annotations, hook, geometry, css, readme] = await Promise.all([
+    readFile(new URL("../app/echo-vault-table.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-annotations.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/use-vtt-annotations.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-template-geometry.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(table, /\bTemplate\b/);
+  assert.match(table, /aria-keyshortcuts="T"/);
+  assert.match(table, /circle|Circle/);
+  assert.match(table, /cone|Cone/);
+  assert.match(table, /line|Line/);
+  assert.match(table, /cube|Cube/);
+  assert.match(table, /type="number"/);
+  assert.match(table, /if \(activeTemplateMode\)[\s\S]+?buildAreaTemplateAnnotation[\s\S]+?return/);
+  assert.match(table, /if \(pingMode \|\| measureMode \|\| templateMode\)/);
+  assert.match(table, /disabled=\{!templateMode && !pingMode && !measureMode && !reachable\}/);
+  assert.match(table, /template-overlay/);
+  assert.match(hook, /removeAnnotation/);
+  assert.match(hook, /clearLocalAnnotations/);
+  assert.match(hook, /annotation_stale_revision/);
+  assert.match(annotations, /buildAnnotationDeleteRequest/);
+  assert.match(annotations, /command_type: "delete"/);
+  assert.match(geometry, /cellToFeet/);
+  assert.match(css, /\.template-toggle:focus-visible/);
+  assert.match(css, /\.template-overlay/);
+  assert.match(readme, /area templates/i);
+  assert.match(readme, /server-backed deletion/i);
+  assert.doesNotMatch(readme, /protected browser auth(?:entication)? (?:is )?supported/i);
 });

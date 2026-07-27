@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  annotationEventForRequest,
   applyAnnotationEvent,
+  buildAnnotationDeleteRequest,
+  buildAnnotationPutRequest,
   buildPingPutRequest,
   parseAnnotationEvent,
   parseAnnotationsView,
@@ -47,6 +50,104 @@ const putEvent = {
     position: { x_ft: 22.5, y_ft: 17.5, z_ft: 0 },
   },
 } as const;
+
+const circle = {
+  schema_version: "vtt.annotation.v1",
+  annotation_id: "circle-a",
+  scene_id: "echo-vault",
+  author_id: "local",
+  audience: ["all"],
+  annotation_type: "circle_template",
+  center: { x_ft: 17.5, y_ft: 12.5, z_ft: 0 },
+  radius_ft: 10,
+} as const;
+
+test("builds exact generic annotation put and delete requests", () => {
+  assert.deepEqual(
+    buildAnnotationPutRequest({
+      sessionId: "echo-vault-session",
+      tableId: "echo-vault-table",
+      expectedRevision: 4,
+      commandId: "command-circle",
+      annotation: circle,
+    }),
+    {
+      schema_version: "vtt.annotation_request.v1",
+      session_id: "echo-vault-session",
+      command: {
+        schema_version: "vtt.annotation_command.v1",
+        table_id: "echo-vault-table",
+        command_id: "command-circle",
+        expected_revision: 4,
+        command_type: "put",
+        annotation: circle,
+      },
+    },
+  );
+  assert.deepEqual(
+    buildAnnotationDeleteRequest({
+      sessionId: "echo-vault-session",
+      tableId: "echo-vault-table",
+      expectedRevision: 5,
+      commandId: "command-delete-circle",
+      annotationId: "circle-a",
+    }),
+    {
+      schema_version: "vtt.annotation_request.v1",
+      session_id: "echo-vault-session",
+      command: {
+        schema_version: "vtt.annotation_command.v1",
+        table_id: "echo-vault-table",
+        command_id: "command-delete-circle",
+        expected_revision: 5,
+        command_type: "delete",
+        annotation_id: "circle-a",
+      },
+    },
+  );
+});
+
+test("matches mutation receipts to the exact originating request", () => {
+  const request = buildAnnotationDeleteRequest({
+    sessionId: "echo-vault-session",
+    tableId: "echo-vault-table",
+    expectedRevision: 2,
+    commandId: "command-delete",
+    annotationId: "ping-a",
+  });
+  const response = parseAnnotationResponse({
+    schema_version: "vtt.annotation_response.v1",
+    session_id: "echo-vault-session",
+    replayed: false,
+    receipt: {
+      schema_version: "vtt.annotation_receipt.v1",
+      table_id: "echo-vault-table",
+      command_id: "command-delete",
+      revision: 3,
+      event: {
+        schema_version: "vtt.annotation_event.v1",
+        table_id: "echo-vault-table",
+        event_id: "echo-vault-table:annotation:3",
+        sequence: 3,
+        revision: 3,
+        command_id: "command-delete",
+        annotation_id: "ping-a",
+        event_type: "delete",
+        scene_id: "echo-vault",
+        audience: ["all"],
+      },
+    },
+  });
+  assert.equal(annotationEventForRequest(request, response).event_type, "delete");
+  assert.throws(
+    () =>
+      annotationEventForRequest(request, {
+        ...response,
+        session_id: "another-session",
+      }),
+    /does not match its request/i,
+  );
+});
 
 test("builds an exact public ping put request", () => {
   assert.deepEqual(

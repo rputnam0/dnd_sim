@@ -51,9 +51,31 @@ endpoints.
 
 This first slice treats pings as persisted shared markers. `duration_ms` controls the
 arrival pulse animation, but the durable board currently has no timestamp, expiry, or
-browser delete interaction, so markers remain until a later server-side deletion. If
-the optional annotation API is absent, the table leaves movement and ruler controls
-available and shows ping sync as unavailable.
+automatic expiry, so markers remain until explicit deletion. If the optional annotation
+API is absent, the table leaves movement and ruler controls available and shows shared
+annotation sync as unavailable.
+
+## Shared area templates and deletion
+
+Toggle **Template** or press `T` to place persisted circle, cone, line, and cube area
+templates using the existing renderer-neutral `vtt.annotation.v1` contracts. Circle and
+cube templates use one center cell. Line templates use two cell centers and an explicit
+width in feet. Cone templates use an origin and direction endpoint; those cells derive
+world-space length and direction while the bounded angle control remains explicit. The
+SVG presentation converts server-returned feet to grid coordinates and never becomes
+engine authority.
+
+The persisted annotation selector can remove one open-local marker, including a ping,
+or clear all open-local annotations. Both actions use server-backed deletion. Clear is
+implemented as revision-safe sequential delete commands and stops on the first stale
+revision or ownership failure; the UI then rehydrates and asks the user to review and
+retry instead of guessing at server state. Markers owned by another author stay visible
+but cannot be removed from this open-local browser surface.
+
+The bundled solo table uses open-local author identity. Protected browser authentication
+is not implemented by this web app yet; deployments that enable participant-scoped
+access need a credential source and request-header integration before these controls can
+mutate protected tables.
 
 ## Verification
 
