@@ -54,8 +54,9 @@ The expected response is `{"status":"ok"}`.
 ### Database and restart behavior
 
 The SQLite file stores every committed engine command, its public receipt, and the resulting
-complete engine snapshot in one transaction. It also stores map-annotation commands and receipts
-in a separate append-only board log. Preview commands are never written. On startup:
+complete engine snapshot in one transaction. It also stores map-annotation commands and table-chat
+commands in separate append-only logs with independently owned SQLite connections. Preview
+commands are never written. On startup:
 
 - an empty or new database creates `echo-vault-session` at revision 0;
 - the same database path restores the latest stored snapshot, RNG state, command records, and
@@ -65,6 +66,8 @@ in a separate append-only board log. Preview commands are never written. On star
 - reusing a command ID for different content is a conflict;
 - shared pings and area templates restore with their annotation revision and
   exact-retry receipts, while explicit deletions remain deleted;
+- plain-text chat messages and deletion tombstones restore in durable sequence
+  order with a cursor independent from encounter and annotation revisions;
 - incompatible schema or version pins fail rather than silently migrating or resetting state.
 
 To start a genuinely fresh table, stop the backend first and move the SQLite file aside, then
@@ -149,6 +152,20 @@ projection.
 - Ping markers currently persist across reloads and backend restarts. `duration_ms` controls the
   arrival pulse only; there is no automatic expiry.
 
+### Table chat
+
+The optional chat panel hydrates the current table-wide message view, follows its own reconnectable
+event stream, and posts public messages through revision-checked commands. Messages are plain text:
+HTML and Markdown-looking input is preserved literally, rendered as text, and never interpreted.
+The v1 contract intentionally has no wall-clock timestamp, so the panel presents durable server
+order rather than inventing client time.
+
+The bundled solo table is open-local: the server replaces the untrusted request author with
+`local`, and the panel may delete only `local` messages. The same backend supports authenticated
+GM moderation, player-owned deletion, spectator read-only access, and public/role/participant/actor
+audience selectors. The current browser does not yet provide protected-table credentials or a
+private-audience composer, so those deployments must add both before using the panel.
+
 ## HTTP and event-stream contracts
 
 All client payloads are strict, versioned JSON. Unknown fields, coercive values, stale revisions,
@@ -163,6 +180,9 @@ and malformed event cursors are rejected with a `vtt.error.v1` envelope.
 | `GET` | `/api/v1/annotations` | Current scene-bound `vtt.annotations_view.v1` board projection. |
 | `POST` | `/api/v1/annotation-commands` | Revision-checked `vtt.annotation_request.v1` put/delete endpoint. |
 | `GET` | `/api/v1/annotation-events` | Reconnectable stream of committed `vtt.annotation_event.v1` records. |
+| `GET` | `/api/v1/chat` | Current table-bound `vtt.chat_view.v1` plain-text message projection. |
+| `POST` | `/api/v1/chat-commands` | Revision-checked `vtt.chat_request.v1` post/delete endpoint. |
+| `GET` | `/api/v1/chat-events` | Reconnectable stream of committed `vtt.chat_event.v1` records. |
 
 Command previews return `vtt.preview_response.v1`; admin and commit commands return
 `vtt.commit_response.v1`.
@@ -198,6 +218,11 @@ cursor belongs only to the annotation board. The current annotation `revision` i
 event sequence, so the browser hydrates the board and resumes after that value without mixing it
 with the encounter-event cursor.
 
+Chat uses a third independent cursor with the same exclusive reconnect rule. Hidden events advance
+the server-side stream cursor without exposing their payload; later visible events may therefore
+have sequence gaps. An authenticated message author is an implicit viewer of their own outbound
+record across refresh and reconnect, even when its explicit audience names only another participant.
+
 Inspect the stream manually with:
 
 ```bash
@@ -216,6 +241,8 @@ uv run python -m pytest \
   tests/test_vtt_session_service.py \
   tests/test_vtt_http_api.py \
   tests/test_vtt_annotation_http_api.py \
+  tests/test_vtt_chat_store.py \
+  tests/test_vtt_chat_http_api.py \
   tests/test_vtt_solo_table.py \
   tests/test_vtt_solo_app.py \
   tests/test_interactive_dnd_encounter_driver.py \
@@ -246,8 +273,9 @@ curl -fsS http://127.0.0.1:8000/api/v1/session | uv run python -m json.tool
 ## Honest P0 limitations
 
 - One fixed original scene, seed, rules/content pins, roster, initiative order, and session ID.
-- One local operator. There is no authentication, player ownership, authorization, presence,
-  invitation flow, or multiplayer concurrency UX.
+- One local browser operator. Participant ownership, bearer authorization, and audience-filtered
+  annotation/chat services exist on the backend, but this client has no protected credential,
+  invitation, presence, or multiplayer-concurrency UX.
 - Square-grid cell-center movement with one direct two-waypoint path only. There is no arbitrary
   multi-waypoint routing, drag-and-drop ruler, difficult terrain tool, wall/door authoring,
   collision editor, dynamic lighting, fog of war, or map asset pipeline.
@@ -256,11 +284,11 @@ curl -fsS http://127.0.0.1:8000/api/v1/session | uv run python -m json.tool
   interactive reaction prompt.
 - The action surface covers what the fixed encounter projects; it is not a general character
   sheet, spellbook, inventory, encounter builder, campaign journal, or rules compendium.
-- SSE carries committed public events only. It is not a bidirectional WebSocket transport, and it
-  does not stream previews or canonical snapshots.
+- SSE carries committed audience-filtered events only. It is not a bidirectional WebSocket
+  transport, and it does not stream previews or canonical snapshots.
 - No reset/session-creation API, database administration UI, schema migration UI, or recovery UI.
-- No chat, manual dice tray, voice/video, file upload, shared notes, persisted ruler waypoints,
-  area-template UI, freehand drawing, or annotation deletion/expiry UI. The current map tools are
-  a local ruler and durable shared ping markers.
+- No manual dice tray, voice/video, file upload, shared notes, persisted ruler waypoints, freehand
+  drawing, template editing, or automatic ping expiry. Current shared tools are durable pings,
+  four area-template shapes with explicit cleanup, and public open-local plain-text chat.
 - Local HTTP and an exact development CORS allowlist only; this composition is not production
   deployment, TLS termination, rate limiting, or security hardening.

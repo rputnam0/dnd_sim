@@ -83,8 +83,10 @@ Goal: cover the core DM/player jobs advertised by AboveVTT.
       Encounter and annotation streams reconnect independently, and annotation
       mutations use optimistic revisions; presence remains.
 - [ ] Public, GM-only, player-private, and blind roll/chat audiences.
-      Annotation reads/events enforce public, role, participant, and owned-actor
-      audiences; roll/chat surfaces and blind-roll semantics remain.
+      Annotation and durable plain-text chat reads/events enforce public, role,
+      participant, and owned-actor audiences. Chat authors retain access to
+      their own outbound private messages, GMs can moderate, and spectators are
+      read-only. Private/blind authoritative roll presentation remains.
 - [ ] Dice tray and structured roll cards tied to rules events.
       This requires the engine-owned, no-reroll journal defined in
       [`vtt_roll_journal_plan.md`](vtt_roll_journal_plan.md); current totals do
@@ -201,3 +203,7 @@ optional media features.
    renderer-neutral map annotations before fog and visibility depend on them.
    Durable pings plus circle, cone, line, and cube templates now complete the
    first browser-facing annotation lifecycle, including explicit deletion.
+8. Add durable participant-scoped table chat before structured roll cards.
+   The append-only chat log, HTTP/SSE boundary, moderation policy, and
+   open-local solo composition are implemented; protected browser credentials
+   and private-audience composition remain.
