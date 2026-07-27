@@ -105,7 +105,7 @@ test("ships an accessible local-only tactical ruler", async () => {
   assert.match(table, /is-measure-start/);
   assert.match(table, /is-measure-end/);
   assert.match(table, /measurement-line/);
-  assert.match(table, /disabled=\{!measureMode && !reachable\}/);
+  assert.match(table, /disabled=\{!pingMode && !measureMode && !reachable\}/);
   assert.match(
     table,
     /if \(measureMode\) \{\s*setMeasurement\([\s\S]+?nextGridMeasurement[\s\S]+?return;\s*\}\s*handleMovementCellSelect\(cell\)/,
@@ -144,4 +144,34 @@ test("drives action and target controls from authoritative turn choices", async 
   assert.match(css, /\.target-list button\.needs-movement/);
   assert.match(css, /\.target-list button\.is-legal-now/);
   assert.match(css, /\.target-guidance/);
+});
+
+test("ships a persisted collaborative ping tool without stealing ruler or movement clicks", async () => {
+  const [table, annotations, hook, css, readme] = await Promise.all([
+    readFile(new URL("../app/echo-vault-table.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-annotations.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/use-vtt-annotations.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(table, /\bPing\b/);
+  assert.match(table, /aria-keyshortcuts="P"/);
+  assert.match(table, /event\.key\.toLowerCase\(\) !== "p"/);
+  assert.match(table, /pingMode/);
+  assert.match(table, /ping-marker/);
+  assert.match(table, /if \(activePingMode\)[\s\S]+?placePing[\s\S]+?return/);
+  assert.match(table, /if \(measureMode\)[\s\S]+?nextGridMeasurement[\s\S]+?return/);
+  assert.match(table, /disabled=\{!pingMode && !measureMode && !reachable\}/);
+  assert.match(hook, /getAnnotationsView/);
+  assert.match(hook, /streamAnnotationEvents/);
+  assert.match(hook, /applyAnnotationEvent/);
+  assert.match(annotations, /vtt\.annotations_view\.v1/);
+  assert.match(annotations, /vtt\.annotation_request\.v1/);
+  assert.match(annotations, /vtt\.annotation_event/);
+  assert.doesNotMatch(table + annotations + hook, /localStorage|sessionStorage/);
+  assert.match(css, /\.ping-toggle:focus-visible/);
+  assert.match(css, /\.ping-marker/);
+  assert.match(readme, /shared ping/i);
+  assert.match(readme, /optional annotation API/i);
 });

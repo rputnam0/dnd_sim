@@ -569,7 +569,8 @@ button:disabled {
 }
 
 .measure-toggle,
-.measure-clear {
+.measure-clear,
+.ping-toggle {
   display: inline-flex;
   min-height: 34px;
   align-items: center;
@@ -590,7 +591,8 @@ button:disabled {
 }
 
 .measure-toggle:hover,
-.measure-clear:not(:disabled):hover {
+.measure-clear:not(:disabled):hover,
+.ping-toggle:not(:disabled):hover {
   border-color: rgb(232 185 103 / 0.68);
   background: rgb(232 185 103 / 0.11);
   color: #ffe2a9;
@@ -603,13 +605,22 @@ button:disabled {
   box-shadow: inset 0 0 0 1px rgb(232 185 103 / 0.16), 0 0 18px rgb(232 185 103 / 0.08);
 }
 
+.ping-toggle.is-active {
+  border-color: #ef8f7f;
+  background: rgb(239 112 94 / 0.18);
+  color: #ffd1c9;
+  box-shadow: inset 0 0 0 1px rgb(239 112 94 / 0.17), 0 0 18px rgb(239 112 94 / 0.1);
+}
+
 .measure-toggle:focus-visible,
-.measure-clear:focus-visible {
+.measure-clear:focus-visible,
+.ping-toggle:focus-visible {
   outline: 3px solid var(--aqua);
   outline-offset: 3px;
 }
 
-.measure-toggle kbd {
+.measure-toggle kbd,
+.ping-toggle kbd {
   min-width: 18px;
   padding: 2px 4px;
   border: 1px solid rgb(255 255 255 / 0.2);
@@ -626,12 +637,59 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.ping-toggle:disabled {
+  border-color: rgb(121 198 176 / 0.1);
+  background: transparent;
+  color: #577870;
+}
+
 .measure-output {
   min-height: 13px;
   color: #e8c687;
   font-family: var(--font-geist-mono), monospace;
   font-size: 8px;
   letter-spacing: 0.025em;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.ping-sync-state {
+  display: flex;
+  min-height: 18px;
+  align-items: center;
+  gap: 6px;
+  color: #94b9b0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 8px;
+  line-height: 1.3;
+}
+
+.ping-sync-state button {
+  padding: 2px 5px;
+  border: 1px solid rgb(239 112 94 / 0.55);
+  border-radius: 4px;
+  background: transparent;
+  color: #ffc3b8;
+  cursor: pointer;
+}
+
+.ping-sync-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #e8b967;
+}
+
+.ping-sync-dot.ping-live { background: #67d1ad; box-shadow: 0 0 7px rgb(103 209 173 / 0.5); }
+.ping-sync-dot.ping-error,
+.ping-sync-dot.ping-unavailable { background: #ef705e; }
+
+.ping-error {
+  max-width: 330px;
+  margin: 0;
+  color: #ffc0b5;
+  font-size: 9px;
   line-height: 1.35;
   text-align: right;
 }
@@ -708,14 +766,27 @@ button:disabled {
   cursor: crosshair;
 }
 
+.grid-cell.is-pinging {
+  background: radial-gradient(circle, rgb(239 112 94 / 0.12), transparent 64%);
+  cursor: crosshair;
+}
+
 .grid-cell.is-reachable:hover,
 .grid-cell.is-reachable:focus-visible,
 .grid-cell.is-measuring:hover,
-.grid-cell.is-measuring:focus-visible {
+.grid-cell.is-measuring:focus-visible,
+.grid-cell.is-pinging:hover,
+.grid-cell.is-pinging:focus-visible {
   z-index: 3;
   outline: 1px solid rgb(103 209 173 / 0.62);
   outline-offset: -4px;
   background: rgb(103 209 173 / 0.16);
+}
+
+.grid-cell.is-pinging:hover,
+.grid-cell.is-pinging:focus-visible {
+  outline-color: rgb(239 112 94 / 0.88);
+  background: rgb(239 112 94 / 0.17);
 }
 
 .grid-cell.is-measuring:hover,
@@ -824,6 +895,45 @@ button:disabled {
   background: #c2823e;
 }
 
+.ping-marker {
+  --ping-duration: 1500ms;
+
+  position: relative;
+  z-index: 16;
+  display: grid;
+  align-self: center;
+  justify-self: center;
+  width: clamp(24px, 48%, 42px);
+  aspect-ratio: 1;
+  place-items: center;
+  pointer-events: none;
+  filter: drop-shadow(0 0 7px rgb(239 112 94 / 0.75));
+}
+
+.ping-marker i,
+.ping-marker b {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.ping-marker i {
+  inset: 0;
+  border: 2px solid #ff9a89;
+  animation: shared-ping-wave var(--ping-duration) ease-out 1;
+}
+
+.ping-marker i:nth-child(2) {
+  animation-delay: calc(var(--ping-duration) * 0.18);
+}
+
+.ping-marker b {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #ffe0da;
+  background: #ef705e;
+  box-shadow: 0 0 0 3px rgb(239 112 94 / 0.24);
+}
+
 .vault-sigil {
   position: absolute;
   top: 50%;
@@ -910,6 +1020,10 @@ button:disabled {
 }
 
 .map-token.is-measuring {
+  cursor: crosshair;
+}
+
+.map-token.is-pinging {
   cursor: crosshair;
 }
 
@@ -1863,6 +1977,12 @@ button:disabled {
   50% { opacity: 1; transform: scale(1.04); }
 }
 
+@keyframes shared-ping-wave {
+  0% { opacity: 0.95; transform: scale(0.25); }
+  75% { opacity: 0.34; }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
 @media (max-width: 1320px) {
   .table-layout {
     grid-template-columns: 205px minmax(460px, 1fr) 315px;
@@ -1992,6 +2112,10 @@ button:disabled {
     text-align: left;
   }
 
+  .ping-error {
+    text-align: left;
+  }
+
   .map-token {
     width: min(64%, 46px);
   }
@@ -2073,7 +2197,8 @@ button:disabled {
   }
 
   .measure-toggle,
-  .measure-clear {
+  .measure-clear,
+  .ping-toggle {
     width: 100%;
   }
 

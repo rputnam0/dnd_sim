@@ -43,6 +43,11 @@ import {
   initialTurnSelection,
   selectedTargetIdsForChoice,
 } from "./turn-choice-selection";
+import {
+  useVttAnnotations,
+  type AnnotationConnectionStatus,
+} from "./use-vtt-annotations";
+import type { PingAnnotation } from "./vtt-annotations";
 
 type PendingOperation = "start" | "preview" | "commit" | null;
 
@@ -91,6 +96,20 @@ function phaseLabel(phase: EncounterProjection["phase"]): string {
   if (phase === "unstarted") return "Ready to begin";
   if (phase === "awaiting_declaration") return "Awaiting declaration";
   return "Encounter complete";
+}
+
+function pingStatusLabel(
+  status: AnnotationConnectionStatus,
+  count: number,
+  pending: boolean,
+): string {
+  if (pending) return "Placing shared ping…";
+  if (status === "loading") return "Loading shared pings…";
+  if (status === "connecting") return "Connecting shared pings…";
+  if (status === "reconnecting") return "Shared pings reconnecting…";
+  if (status === "unavailable") return "Shared pings unavailable";
+  if (status === "error") return "Shared ping sync interrupted";
+  return `${count} shared ${count === 1 ? "ping" : "pings"} synced`;
 }
 
 function outcomeCopy(outcome: EncounterOutcome | null): {
@@ -383,11 +402,19 @@ function TacticalMap({
   movementPlan,
   measureMode,
   measurement,
+  pingMode,
+  pings,
+  pingStatus,
+  pingError,
+  pingPending,
+  pingCanPlace,
   onTokenSelect,
   onTargetSelect,
   onCellSelect,
   onMeasureToggle,
   onMeasureClear,
+  onPingToggle,
+  onPingRetry,
 }: {
   scene: SquareGridScene;
   projection: EncounterProjection;
@@ -398,11 +425,19 @@ function TacticalMap({
   movementPlan: GridMovementPlan | null;
   measureMode: boolean;
   measurement: GridMeasurement;
+  pingMode: boolean;
+  pings: PingAnnotation[];
+  pingStatus: AnnotationConnectionStatus;
+  pingError: string | null;
+  pingPending: boolean;
+  pingCanPlace: boolean;
   onTokenSelect: (actorId: string) => void;
   onTargetSelect: (actorId: string) => void;
   onCellSelect: (cell: GridCell) => void;
   onMeasureToggle: () => void;
   onMeasureClear: () => void;
+  onPingToggle: () => void;
+  onPingRetry: () => void;
 }) {
   const mapStyle = {
     "--grid-columns": scene.columns,
@@ -410,6 +445,13 @@ function TacticalMap({
   } as CSSProperties;
   const cells = Array.from({ length: scene.columns * scene.rows });
   const measurePrompt = measurementStatus(scene, measurement, measureMode);
+  const renderedPings = pings.flatMap((ping) => {
+    try {
+      return [{ ping, cell: feetToCell(scene, [ping.position.x_ft, ping.position.y_ft, ping.position.z_ft]) }];
+    } catch {
+      return [];
+    }
+  });
 
   return (
     <section className="map-panel" aria-labelledby="map-title">
@@ -424,7 +466,7 @@ function TacticalMap({
             <span>{scene.cell_size_ft} ft / cell</span>
             <span>Z 0</span>
           </div>
-          <div className="measure-controls" role="group" aria-label="Presentation ruler">
+          <div className="measure-controls" role="group" aria-label="Map tools">
             <button
               type="button"
               className={`measure-toggle ${measureMode ? "is-active" : ""}`}
@@ -445,10 +487,33 @@ function TacticalMap({
             >
               Clear measure
             </button>
+            <button
+              type="button"
+              className={`ping-toggle ${pingMode ? "is-active" : ""}`}
+              aria-pressed={pingMode}
+              aria-keyshortcuts="P"
+              aria-controls="echo-vault-grid"
+              disabled={!pingCanPlace}
+              onClick={onPingToggle}
+            >
+              <span aria-hidden="true">◎</span>
+              Ping
+              <kbd>P</kbd>
+            </button>
           </div>
           <output className="measure-output" aria-live="polite">
-            {measurePrompt}
+            {pingMode
+              ? "Ping mode · choose any map cell"
+              : measurePrompt}
           </output>
+          <div className="ping-sync-state" role="status" aria-live="polite">
+            <span className={`ping-sync-dot ping-${pingStatus}`} aria-hidden="true" />
+            <span>{pingStatusLabel(pingStatus, pings.length, pingPending)}</span>
+            {pingStatus === "error" || pingStatus === "unavailable" ? (
+              <button type="button" onClick={onPingRetry}>Retry</button>
+            ) : null}
+          </div>
+          {pingError ? <p className="ping-error" role="alert">{pingError}</p> : null}
         </div>
       </div>
 
@@ -483,14 +548,15 @@ function TacticalMap({
               measurement.start !== null && measurement.end === null
                 ? "select measure end"
                 : "select measure start";
+            const pingAction = pingMode ? ", place shared ping" : "";
             return (
               <button
                 type="button"
-                className={`grid-cell ${reachable ? "is-reachable" : ""} ${selected ? "is-destination" : ""} ${measureMode ? "is-measuring" : ""} ${measureStart ? "is-measure-start" : ""} ${measureEnd ? "is-measure-end" : ""}`}
+                className={`grid-cell ${reachable ? "is-reachable" : ""} ${selected ? "is-destination" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""} ${measureStart ? "is-measure-start" : ""} ${measureEnd ? "is-measure-end" : ""}`}
                 role="gridcell"
-                aria-label={`Cell ${cellLabel(cell)}${reachable ? ", reachable destination" : ", not a reachable destination"}${selected ? ", selected destination" : ""}${measureStart ? ", measure start" : ""}${measureEnd ? ", measure end" : ""}${measureMode ? `, ${measureAction}` : ""}`}
+                aria-label={`Cell ${cellLabel(cell)}${reachable ? ", reachable destination" : ", not a reachable destination"}${selected ? ", selected destination" : ""}${measureStart ? ", measure start" : ""}${measureEnd ? ", measure end" : ""}${measureMode ? `, ${measureAction}` : ""}${pingAction}`}
                 aria-selected={selected}
-                disabled={!measureMode && !reachable}
+                disabled={!pingMode && !measureMode && !reachable}
                 onClick={() => onCellSelect(cell)}
                 key={`${column}-${row}`}
               >
@@ -500,6 +566,24 @@ function TacticalMap({
               </button>
             );
           })}
+
+          {renderedPings.map(({ ping, cell }) => (
+            <span
+              className="ping-marker"
+              style={{
+                gridColumn: cell.column + 1,
+                gridRow: cell.row + 1,
+                "--ping-duration": `${ping.duration_ms}ms`,
+              } as CSSProperties}
+              role="img"
+              aria-label={`Shared ping by ${ping.author_id} at cell ${cellLabel(cell)}`}
+              key={ping.annotation_id}
+            >
+              <i aria-hidden="true" />
+              <i aria-hidden="true" />
+              <b aria-hidden="true" />
+            </span>
+          ))}
 
           {projection.initiative_order.map((actorId) => {
             const actor = projection.actors[actorId];
@@ -512,10 +596,10 @@ function TacticalMap({
               <button
                 key={actorId}
                 type="button"
-                className={`map-token team-${actor.team} ${active ? "is-active" : ""} ${selected ? "is-selected" : ""} ${targetable ? "is-targetable" : ""} ${targeted ? "is-targeted" : ""} ${actor.dead ? "is-defeated" : ""} ${measureMode ? "is-measuring" : ""}`}
+                className={`map-token team-${actor.team} ${active ? "is-active" : ""} ${selected ? "is-selected" : ""} ${targetable ? "is-targetable" : ""} ${targeted ? "is-targeted" : ""} ${actor.dead ? "is-defeated" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""}`}
                 style={{ gridColumn: cell.column + 1, gridRow: cell.row + 1 }}
                 onClick={() => {
-                  if (measureMode) {
+                  if (pingMode || measureMode) {
                     onCellSelect(cell);
                     return;
                   }
@@ -523,7 +607,7 @@ function TacticalMap({
                   if (targetable) onTargetSelect(actorId);
                 }}
                 aria-pressed={selected || targeted}
-                aria-label={`${actor.name}, ${actor.hp} of ${actor.max_hp} hit points${active ? ", active turn" : ""}${targetable ? ", server-selectable target" : ""}${measureMode ? `, ${measurement.start !== null && measurement.end === null ? "select measure end" : "select measure start"} at ${cellLabel(cell)}` : ""}`}
+                aria-label={`${actor.name}, ${actor.hp} of ${actor.max_hp} hit points${active ? ", active turn" : ""}${targetable ? ", server-selectable target" : ""}${measureMode ? `, ${measurement.start !== null && measurement.end === null ? "select measure end" : "select measure start"} at ${cellLabel(cell)}` : ""}${pingMode ? `, place shared ping at ${cellLabel(cell)}` : ""}`}
               >
                 <span className="token-orbit" aria-hidden="true" />
                 <span className="token-face">{initials(actor.name)}</span>
@@ -590,7 +674,9 @@ function TacticalMap({
         <span><i className="legend-dot legend-enemy" /> Hostile</span>
         <span><i className="legend-ring" /> Active</span>
         <p>
-          {measureMode
+          {pingMode
+            ? "Ping mode · shared server annotation"
+            : measureMode
             ? "Measure mode · local presentation only"
             : movementPlan
               ? `Plan ${cellLabel(movementPlan.destination)} · ${movementPlan.distanceFt} ft`
@@ -983,6 +1069,7 @@ export function EchoVaultTable() {
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<GridCell | null>(null);
   const [measureMode, setMeasureMode] = useState(false);
+  const [pingMode, setPingMode] = useState(false);
   const [measurement, setMeasurement] = useState<GridMeasurement>(
     EMPTY_GRID_MEASUREMENT,
   );
@@ -994,6 +1081,22 @@ export function EchoVaultTable() {
   const latestRevisionRef = useRef(0);
   const sessionIdRef = useRef<string | null>(null);
   const eventCursorRef = useRef(0);
+  const sharedAnnotations = useVttAnnotations({
+    sessionId: view?.session_id ?? null,
+    sceneId: view?.scene?.scene_id ?? null,
+  });
+  const activePingMode = pingMode && sharedAnnotations.available;
+
+  const toggleMeasureMode = useCallback(() => {
+    setMeasureMode((current) => !current);
+    setPingMode(false);
+  }, []);
+
+  const togglePingMode = useCallback(() => {
+    if (!sharedAnnotations.canPlace) return;
+    setPingMode((current) => !current);
+    setMeasureMode(false);
+  }, [sharedAnnotations.canPlace]);
 
   useEffect(() => {
     const handleMeasureShortcut = (event: KeyboardEvent) => {
@@ -1010,12 +1113,34 @@ export function EchoVaultTable() {
         return;
       }
       event.preventDefault();
-      setMeasureMode((current) => !current);
+      toggleMeasureMode();
+    };
+
+    const handlePingShortcut = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.repeat ||
+        event.key.toLowerCase() !== "p" ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        !sharedAnnotations.canPlace ||
+        isInteractiveControl(event.target) ||
+        isInteractiveControl(document.activeElement)
+      ) {
+        return;
+      }
+      event.preventDefault();
+      togglePingMode();
     };
 
     window.addEventListener("keydown", handleMeasureShortcut);
-    return () => window.removeEventListener("keydown", handleMeasureShortcut);
-  }, []);
+    window.addEventListener("keydown", handlePingShortcut);
+    return () => {
+      window.removeEventListener("keydown", handleMeasureShortcut);
+      window.removeEventListener("keydown", handlePingShortcut);
+    };
+  }, [sharedAnnotations.canPlace, toggleMeasureMode, togglePingMode]);
 
   const adoptView = useCallback((nextView: VttSessionView) => {
     const projection = nextView.projection;
@@ -1256,6 +1381,14 @@ export function EchoVaultTable() {
   };
 
   const handleMapCellSelect = (cell: GridCell) => {
+    if (activePingMode) {
+      if (scene && sharedAnnotations.canPlace) {
+        void sharedAnnotations
+          .placePing(cellToFeet(scene, cell))
+          .catch(() => undefined);
+      }
+      return;
+    }
     if (measureMode) {
       setMeasurement((current) => nextGridMeasurement(current, cell));
       return;
@@ -1445,13 +1578,21 @@ export function EchoVaultTable() {
             movementPlan={movementPlan}
             measureMode={measureMode}
             measurement={measurement}
+            pingMode={activePingMode}
+            pings={sharedAnnotations.pings}
+            pingStatus={sharedAnnotations.status}
+            pingError={sharedAnnotations.error}
+            pingPending={sharedAnnotations.pending}
+            pingCanPlace={sharedAnnotations.canPlace}
             onTokenSelect={setSelectedActorId}
             onTargetSelect={handleTargetSelect}
             onCellSelect={handleMapCellSelect}
-            onMeasureToggle={() => setMeasureMode((current) => !current)}
+            onMeasureToggle={toggleMeasureMode}
             onMeasureClear={() =>
               setMeasurement({ ...EMPTY_GRID_MEASUREMENT })
             }
+            onPingToggle={togglePingMode}
+            onPingRetry={sharedAnnotations.retry}
           />
           <EventLog events={events} />
         </div>

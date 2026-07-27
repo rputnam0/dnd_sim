@@ -40,6 +40,21 @@ removes both markers.
 Ruler selections are browser-memory UI state. They do not change the planned movement,
 are never sent to the API or persisted, and have no effect on preview or commit commands.
 
+## Shared ping markers
+
+When the optional annotation API is composed into the table service, the map hydrates
+shared ping markers from `GET /api/v1/annotations` and follows the reconnectable
+annotation event stream. Toggle **Ping** or press `P`, then choose any map cell. The
+browser posts renderer-neutral feet coordinates and renders only server-returned ping
+annotations for the active scene; ping clicks never change planned movement or ruler
+endpoints.
+
+This first slice treats pings as persisted shared markers. `duration_ms` controls the
+arrival pulse animation, but the durable board currently has no timestamp, expiry, or
+browser delete interaction, so markers remain until a later server-side deletion. If
+the optional annotation API is absent, the table leaves movement and ruler controls
+available and shows ping sync as unavailable.
+
 ## Verification
 
 ```bash
