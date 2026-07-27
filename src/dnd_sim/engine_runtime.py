@@ -9,7 +9,7 @@ import statistics
 from dataclasses import dataclass, replace
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, TypedDict
 
 from dnd_sim.characters import (
     normalize_class_levels,
@@ -2351,6 +2351,16 @@ def _arm_pending_smite(actor: ActorRuntimeState, action: ActionDefinition) -> No
     }
 
 
+class _EffectDispatchContext(TypedDict):
+    action: ActionDefinition
+    round_number: int | None
+    turn_token: str | None
+    rule_trace: list[dict[str, Any]] | None
+    telemetry: list[dict[str, Any]] | None
+    strategy_name: str | None
+    reaction_decision_provider: ReactionDecisionProvider | None
+
+
 def _apply_pending_smite_on_hit(
     *,
     rng: random.Random,
@@ -2363,6 +2373,7 @@ def _apply_pending_smite_on_hit(
     resources_spent: dict[str, dict[str, int]],
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
+    effect_dispatch_context: _EffectDispatchContext | None = None,
 ) -> DamageBundle:
     pending = actor.pending_smite
     if not pending:
@@ -2407,24 +2418,10 @@ def _apply_pending_smite_on_hit(
     if save_gated_riders and save_dc is not None and isinstance(save_ability, str):
         save_mod = int(target.save_mods.get(save_ability, 0))
         rider_saved = (rng.randint(1, 20) + save_mod) >= int(save_dc)
+    applicable_riders = always_apply_riders
     if not rider_saved:
-        for effect in save_gated_riders:
-            _apply_effect(
-                effect=effect,
-                rng=rng,
-                actor=actor,
-                target=target,
-                damage_dealt=damage_dealt,
-                damage_taken=damage_taken,
-                threat_scores=threat_scores,
-                resources_spent=resources_spent,
-                actors=actors,
-                active_hazards=active_hazards,
-            )
-            applied_concentration_linked_rider = applied_concentration_linked_rider or bool(
-                effect.get("concentration_linked", False)
-            )
-    for effect in always_apply_riders:
+        applicable_riders = [*save_gated_riders, *always_apply_riders]
+    for effect in applicable_riders:
         _apply_effect(
             effect=effect,
             rng=rng,
@@ -2436,10 +2433,9 @@ def _apply_pending_smite_on_hit(
             resources_spent=resources_spent,
             actors=actors,
             active_hazards=active_hazards,
+            **(effect_dispatch_context or {}),
         )
-        applied_concentration_linked_rider = applied_concentration_linked_rider or bool(
-            effect.get("concentration_linked", False)
-        )
+        applied_concentration_linked_rider |= bool(effect.get("concentration_linked", False))
 
     actor.pending_smite = None
     if (
@@ -12253,6 +12249,7 @@ def _try_open_hand_technique(
     resources_spent: dict[str, dict[str, int]],
     actors: dict[str, ActorRuntimeState],
     active_hazards: list[dict[str, Any]],
+    effect_dispatch_context: _EffectDispatchContext,
 ) -> None:
     if not _has_trait(actor, "open hand technique"):
         return
@@ -12282,7 +12279,6 @@ def _try_open_hand_technique(
         ):
             return
         _apply_effect(
-            action=action,
             effect={
                 "effect_type": "forced_movement",
                 "target": "target",
@@ -12298,6 +12294,7 @@ def _try_open_hand_technique(
             resources_spent=resources_spent,
             actors=actors,
             active_hazards=active_hazards,
+            **effect_dispatch_context,
         )
         return
 
@@ -13994,6 +13991,15 @@ def _execute_action_impl(
                 continue
             roll = resolved_event.roll
             event = resolved_event.outcome
+            effect_dispatch_context: _EffectDispatchContext = {
+                "action": action,
+                "round_number": round_number,
+                "turn_token": turn_token,
+                "rule_trace": rule_trace,
+                "telemetry": telemetry,
+                "strategy_name": strategy_name,
+                "reaction_decision_provider": reaction_decision_provider,
+            }
             bundled_attack_effects = (
                 _bundled_attack_damage_effects(
                     action,
@@ -14253,6 +14259,7 @@ def _execute_action_impl(
                         resources_spent=resources_spent,
                         actors=actors,
                         active_hazards=active_hazards,
+                        effect_dispatch_context=effect_dispatch_context,
                     )
                     for packet in pending_bundle.packets:
                         damage_bundle.add_packet(packet)
@@ -14416,6 +14423,7 @@ def _execute_action_impl(
                     resources_spent=resources_spent,
                     actors=actors,
                     active_hazards=active_hazards,
+                    effect_dispatch_context=effect_dispatch_context,
                 )
             _apply_action_effects(
                 action=action,
