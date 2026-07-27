@@ -47,6 +47,15 @@ from .annotation_store import (
     parse_annotation_command,
     parse_annotation_command_json,
 )
+from .annotation_api import (
+    OPEN_LOCAL_ANNOTATION_AUTHOR_ID,
+    VTT_ANNOTATIONS_VIEW_SCHEMA_VERSION,
+    VTT_ANNOTATION_REQUEST_SCHEMA_VERSION,
+    VTT_ANNOTATION_RESPONSE_SCHEMA_VERSION,
+    VTTAnnotationRequest,
+    VTTAnnotationResponse,
+    VTTAnnotationsView,
+)
 from .contracts import (
     VTT_COMMAND_SCHEMA_VERSION,
     VTT_COMMIT_RESPONSE_SCHEMA_VERSION,
@@ -131,6 +140,7 @@ __all__ = [
     "ANNOTATION_RECEIPT_SCHEMA_VERSION",
     "ANNOTATION_SCHEMA_VERSION",
     "ANNOTATION_STORE_SCHEMA_VERSION",
+    "OPEN_LOCAL_ANNOTATION_AUTHOR_ID",
     "EVENT_STORE_SCHEMA_VERSION",
     "DEFAULT_VTT_ALLOWED_ORIGINS",
     "MAX_ABSOLUTE_COORDINATE_FT",
@@ -145,6 +155,9 @@ __all__ = [
     "VTT_EVENT_DRAFT_SCHEMA_VERSION",
     "VTT_EVENT_SCHEMA_VERSION",
     "VTT_ERROR_SCHEMA_VERSION",
+    "VTT_ANNOTATIONS_VIEW_SCHEMA_VERSION",
+    "VTT_ANNOTATION_REQUEST_SCHEMA_VERSION",
+    "VTT_ANNOTATION_RESPONSE_SCHEMA_VERSION",
     "VTT_PREVIEW_RESPONSE_SCHEMA_VERSION",
     "VTT_SESSION_VIEW_SCHEMA_VERSION",
     "VTT_VERSION_INFO_SCHEMA_VERSION",
@@ -211,6 +224,9 @@ __all__ = [
     "VTTSessionView",
     "VTTVersionInfo",
     "VTTAnnotation",
+    "VTTAnnotationRequest",
+    "VTTAnnotationResponse",
+    "VTTAnnotationsView",
     "annotation_bounds_ft",
     "audience_allows",
     "build_solo_table_fixture",

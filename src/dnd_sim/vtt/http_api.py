@@ -20,6 +20,12 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from dnd_sim.interactive.session import EngineSessionError
 
 from .access import TableAccessError, TableAccessPolicy
+from .annotation_api import (
+    ANNOTATION_PROTECTED_ROUTES,
+    AnnotationAPIError,
+    install_annotation_routes,
+)
+from .annotation_store import SQLiteAnnotationBoard
 from .contracts import (
     VTTCommand,
     VTTCommitResponse,
@@ -163,15 +169,22 @@ def _access_error_response(exc: TableAccessError) -> JSONResponse:
 class _TableAuthenticationMiddleware:
     """Authenticate protected routes before FastAPI reads a request body."""
 
-    def __init__(self, app: ASGIApp, *, access_policy: TableAccessPolicy) -> None:
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        access_policy: TableAccessPolicy,
+        protected_routes: frozenset[tuple[str, str]] = _PROTECTED_TABLE_ROUTES,
+    ) -> None:
         self._app = app
         self._access_policy = access_policy
+        self._protected_routes = protected_routes
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if (
             scope["type"] != "http"
             or (str(scope.get("method", "")), str(scope.get("path", "")))
-            not in _PROTECTED_TABLE_ROUTES
+            not in self._protected_routes
         ):
             await self._app(scope, receive, send)
             return
@@ -354,6 +367,8 @@ def create_vtt_app(
     scene: SquareGridScene | None = None,
     allowed_origins: tuple[str, ...] = DEFAULT_VTT_ALLOWED_ORIGINS,
     access_policy: TableAccessPolicy | None = None,
+    annotation_board: SQLiteAnnotationBoard | None = None,
+    annotation_table_id: str | None = None,
 ) -> FastAPI:
     """Create a JSON-only VTT app around one already-owned session service."""
 
@@ -363,15 +378,38 @@ def create_vtt_app(
         raise TypeError("scene must be a SquareGridScene or None")
     if access_policy is not None and not isinstance(access_policy, TableAccessPolicy):
         raise TypeError("access_policy must be a TableAccessPolicy or None")
+    if annotation_board is not None and not isinstance(annotation_board, SQLiteAnnotationBoard):
+        raise TypeError("annotation_board must be a SQLiteAnnotationBoard or None")
+    if annotation_board is None and annotation_table_id is not None:
+        raise ValueError("annotation_table_id requires an annotation_board")
+    if annotation_board is not None and scene is None:
+        raise ValueError("annotation_board requires a configured scene")
     configured_scene = None if scene is None else scene.model_copy(deep=True)
     configured_origins = _validate_allowed_origins(allowed_origins)
+    configured_annotation_table_id: str | None = None
+    if annotation_board is not None:
+        configured_annotation_table_id = annotation_table_id
+        if configured_annotation_table_id is None:
+            configured_annotation_table_id = (
+                access_policy.roster.table_id if access_policy is not None else service.session_id
+            )
+        if (
+            access_policy is not None
+            and configured_annotation_table_id != access_policy.roster.table_id
+        ):
+            raise ValueError("annotation_table_id must match the access-policy table")
 
     app = FastAPI(title="dnd-sim VTT API", version="1")
     app.state.vtt_access_policy = access_policy
+    app.state.vtt_annotation_board = annotation_board
     if access_policy is not None:
+        protected_routes = _PROTECTED_TABLE_ROUTES
+        if annotation_board is not None:
+            protected_routes = frozenset((*_PROTECTED_TABLE_ROUTES, *ANNOTATION_PROTECTED_ROUTES))
         app.add_middleware(
             _TableAuthenticationMiddleware,
             access_policy=access_policy,
+            protected_routes=protected_routes,
         )
     app.add_middleware(
         CORSMiddleware,
@@ -387,6 +425,18 @@ def create_vtt_app(
         exc: TableAccessError,
     ) -> JSONResponse:
         return _access_error_response(exc)
+
+    @app.exception_handler(AnnotationAPIError)
+    async def annotation_api_error(
+        _request: Request,
+        exc: AnnotationAPIError,
+    ) -> JSONResponse:
+        return _error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+        )
 
     @app.exception_handler(RequestValidationError)
     async def request_validation_error(
@@ -544,6 +594,18 @@ def create_vtt_app(
                 raise RuntimeError("a protected command is missing its principal")
             access_policy.authorize_command(participant, command)
         return _filter_response_events(service.execute(command), participant)
+
+    if annotation_board is not None:
+        if configured_scene is None or configured_annotation_table_id is None:
+            raise RuntimeError("annotation route configuration was not normalized")
+        install_annotation_routes(
+            app,
+            board=annotation_board,
+            session_id=service.session_id,
+            table_id=configured_annotation_table_id,
+            scene=configured_scene,
+            access_policy=access_policy,
+        )
 
     return app
 
