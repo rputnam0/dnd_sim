@@ -110,6 +110,8 @@ def trigger_readied_actions(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
 ) -> None:
     from dnd_sim import engine_runtime as engine_module
 
@@ -205,6 +207,9 @@ def trigger_readied_actions(
                                 round_number=round_number,
                                 turn_token=turn_token,
                                 spell_cast_request=spell_cast_request,
+                                zero_hp_intent=actor.readied_zero_hp_intent,
+                                rule_trace=rule_trace,
+                                telemetry=telemetry,
                             )
                             engine_module._remove_condition(actor, "readying")
             if trigger_actor.dead or trigger_actor.hp <= 0:

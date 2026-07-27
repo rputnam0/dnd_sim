@@ -12,6 +12,7 @@ AttackDelivery = Literal[
     "melee_spell_attack",
     "ranged_spell_attack",
 ]
+ZeroHPIntent = Literal["normal", "knock_out"]
 
 
 @dataclass(slots=True)
@@ -285,6 +286,7 @@ class ActorRuntimeState:
     concentrated_spell: str | None = None
     readied_action_name: str | None = None
     readied_trigger: str | None = None
+    readied_zero_hp_intent: ZeroHPIntent = "normal"
     readied_reaction_reserved: bool = False
     readied_spell_slot_level: int | None = None
     readied_spell_held: bool = False

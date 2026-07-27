@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 import statistics
+from typing import Any
 
-from dnd_sim.models import SimulationSummary, SummaryMetric, TrialResult
+from dnd_sim.models import ActorRuntimeState, SimulationSummary, SummaryMetric, TrialResult
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,36 @@ _TERMINAL_STATE_CONTRACT: dict[str, tuple[str, bool]] = {
     "timeout": ("draw", True),
     "censored": ("draw", True),
 }
+
+
+def actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
+    return {
+        "name": actor.name,
+        "hp": actor.hp,
+        "max_hp": actor.max_hp,
+        "temp_hp": actor.temp_hp,
+        "dead": actor.dead,
+        "stable": actor.stable,
+        "uses_death_saves": actor.uses_death_saves,
+        "death_successes": actor.death_successes,
+        "death_failures": actor.death_failures,
+        "stable_recovery_hours_remaining": actor.stable_recovery_hours_remaining,
+        "downed_count": actor.downed_count,
+        "was_downed": actor.was_downed,
+        "creature_type": actor.creature_type,
+        "conditions": sorted(actor.conditions),
+        "resources": dict(sorted(actor.resources.items())),
+        "reaction_available": actor.reaction_available,
+        "readied_action_name": actor.readied_action_name,
+        "readied_trigger": actor.readied_trigger,
+        "readied_zero_hp_intent": actor.readied_zero_hp_intent,
+        "readied_reaction_reserved": actor.readied_reaction_reserved,
+        "readied_spell_slot_level": actor.readied_spell_slot_level,
+        "readied_spell_held": actor.readied_spell_held,
+        "hidden": actor.hidden,
+        "detected_by": sorted(actor.detected_by),
+        "surprised": actor.surprised,
+    }
 
 
 def _normalized_trial_outcome(trial: TrialResult) -> str:

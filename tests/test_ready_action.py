@@ -6,9 +6,34 @@ import pytest
 
 import dnd_sim.engine_runtime as engine_module
 from dnd_sim.engine import TurnDeclarationValidationError
-from dnd_sim.engine_runtime import _execute_action, _validate_declared_ready_or_error
+from dnd_sim.engine_runtime import (
+    _actor_state_snapshot,
+    _build_actor_views,
+    _execute_action,
+    _execute_declared_turn_or_error,
+    _run_opportunity_attacks_for_movement,
+    _validate_declared_ready_or_error,
+    short_rest,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
-from dnd_sim.strategy_api import DeclaredAction, ReadyDeclaration, TurnDeclaration
+from dnd_sim.strategy_api import (
+    DeclaredAction,
+    ReactionPolicy,
+    ReadyDeclaration,
+    TurnDeclaration,
+)
+
+
+class _SequenceRng:
+    def __init__(self, values: list[int]) -> None:
+        self.values = list(values)
+
+    def randint(self, low: int, high: int) -> int:
+        if not self.values:
+            raise AssertionError("unexpected RNG consumption")
+        value = self.values.pop(0)
+        assert low <= value <= high
+        return value
 
 
 def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
@@ -364,3 +389,499 @@ def test_ready_declaration_rejects_bonus_action_wild_shape_response() -> None:
 
     assert exc_info.value.code == "illegal_ready_response"
     assert exc_info.value.field == "ready.response_action_name"
+
+
+def test_readied_melee_attack_honors_declared_knockout_intent() -> None:
+    ready_actor = _base_actor(actor_id="ready_actor", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    enemy.hp = 1
+    enemy.uses_death_saves = False
+    enemy.position = (5.0, 0.0, 0.0)
+    ready_action = ActionDefinition(
+        name="ready",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+    )
+    readied_attack = ActionDefinition(
+        name="club",
+        action_type="attack",
+        attack_delivery="melee_weapon_attack",
+        action_cost="action",
+        to_hit=5,
+        damage="1",
+        damage_type="bludgeoning",
+        reach_ft=5,
+    )
+    ready_actor.actions = [ready_action, readied_attack]
+    actors = {ready_actor.actor_id: ready_actor, enemy.actor_id: enemy}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(ready_actor, enemy)
+    telemetry: list[dict[str, object]] = []
+    rng = _SequenceRng([15, 2])
+
+    _execute_declared_turn_or_error(
+        rng=rng,
+        actor=ready_actor,
+        declaration=TurnDeclaration(
+            action=DeclaredAction(
+                action_name="ready",
+                targets=[],
+            ),
+            ready=ReadyDeclaration(
+                trigger=" enemy_turn_start ",
+                response_action_name=" club ",
+                zero_hp_intent=" KNOCK_OUT ",
+            ),
+        ),
+        strategy_name="test",
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        telemetry=telemetry,
+        round_number=1,
+        turn_token="1:ready_actor",
+    )
+
+    assert ready_actor.readied_zero_hp_intent == "knock_out"
+    snapshot = _actor_state_snapshot(ready_actor)
+    assert snapshot["readied_action_name"] == "club"
+    assert snapshot["readied_trigger"] == "enemy_turn_start"
+    assert snapshot["readied_zero_hp_intent"] == "knock_out"
+    assert snapshot["readied_reaction_reserved"] is True
+    actor_view = _build_actor_views(
+        actors,
+        actor_order=[ready_actor.actor_id, enemy.actor_id],
+        round_number=1,
+        metadata={},
+    ).actors[ready_actor.actor_id]
+    assert actor_view.reaction_available is True
+    assert actor_view.readied_action_name == "club"
+    assert actor_view.readied_zero_hp_intent == "knock_out"
+    trigger_ready = getattr(engine_module, "_trigger_readied_actions")
+    trigger_ready(
+        rng=rng,
+        trigger_actor=enemy,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:enemy",
+        telemetry=telemetry,
+    )
+
+    assert enemy.hp == 0
+    assert enemy.stable is True
+    assert enemy.dead is False
+    assert enemy.stable_recovery_hours_remaining == 2
+    assert ready_actor.readied_zero_hp_intent == "normal"
+    assert any(
+        row.get("telemetry_type") == "decision" and row.get("ready_zero_hp_intent") == "knock_out"
+        for row in telemetry
+    )
+    assert any(
+        row.get("telemetry_type") == "knockout_resolution"
+        and row.get("requested") is True
+        and row.get("applied") is True
+        for row in telemetry
+    )
+    assert rng.values == []
+
+
+@pytest.mark.parametrize("attack_delivery", ["ranged_weapon_attack", None])
+def test_ready_declaration_rejects_non_melee_knockout_intent(
+    attack_delivery: str | None,
+) -> None:
+    ready_actor = _base_actor(actor_id="ready_actor", team="party")
+    ready_action = ActionDefinition(name="ready", action_type="utility", action_cost="action")
+    readied_attack = ActionDefinition(
+        name="longbow",
+        action_type="attack",
+        attack_delivery=attack_delivery,
+        action_cost="action",
+        to_hit=5,
+        damage="1",
+        range_ft=150,
+    )
+    ready_actor.actions = [ready_action, readied_attack]
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        _validate_declared_ready_or_error(
+            ready_actor,
+            TurnDeclaration(
+                action=DeclaredAction(action_name="ready"),
+                ready=ReadyDeclaration(
+                    trigger="enemy_turn_start",
+                    response_action_name="longbow",
+                    zero_hp_intent="knock_out",
+                ),
+            ),
+        )
+
+    assert exc_info.value.code == "illegal_knockout_intent"
+    assert exc_info.value.field == "ready.zero_hp_intent"
+
+
+def test_ready_declaration_rejects_unknown_zero_hp_intent() -> None:
+    ready_actor = _base_actor(actor_id="ready_actor", team="party")
+    ready_actor.actions = [
+        ActionDefinition(name="ready", action_type="utility", action_cost="action"),
+        ActionDefinition(
+            name="club",
+            action_type="attack",
+            attack_delivery="melee_weapon_attack",
+            action_cost="action",
+            to_hit=5,
+            damage="1",
+            reach_ft=5,
+        ),
+    ]
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        _validate_declared_ready_or_error(
+            ready_actor,
+            TurnDeclaration(
+                action=DeclaredAction(action_name="ready"),
+                ready=ReadyDeclaration(
+                    trigger="enemy_turn_start",
+                    response_action_name="club",
+                    zero_hp_intent="maybe",
+                ),
+            ),
+        )
+
+    assert exc_info.value.code == "invalid_zero_hp_intent"
+    assert exc_info.value.field == "ready.zero_hp_intent"
+
+
+def test_ready_declaration_rejects_unsupported_trigger() -> None:
+    actor = _base_actor(actor_id="ready_actor", team="party")
+    actor.actions = [
+        ActionDefinition(name="ready", action_type="utility", action_cost="action"),
+        ActionDefinition(
+            name="club",
+            action_type="attack",
+            attack_delivery="melee_weapon_attack",
+            action_cost="action",
+            to_hit=5,
+            damage="1",
+            reach_ft=5,
+        ),
+    ]
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        _validate_declared_ready_or_error(
+            actor,
+            TurnDeclaration(
+                action=DeclaredAction(action_name="ready"),
+                ready=ReadyDeclaration(
+                    trigger="enemy_enter_reach",
+                    response_action_name="club",
+                ),
+            ),
+        )
+
+    assert exc_info.value.code == "unsupported_ready_trigger"
+    assert exc_info.value.field == "ready.trigger"
+
+
+def test_ready_declaration_accepts_all_melee_attack_sequence() -> None:
+    actor = _base_actor(actor_id="ready_actor", team="party")
+    actor.actions = [
+        ActionDefinition(name="ready", action_type="utility", action_cost="action"),
+        ActionDefinition(
+            name="club",
+            action_type="attack",
+            attack_delivery="melee_weapon_attack",
+            action_cost="action",
+            to_hit=5,
+            damage="1",
+        ),
+        ActionDefinition(
+            name="shocking_grasp",
+            action_type="attack",
+            attack_delivery="melee_spell_attack",
+            action_cost="action",
+            to_hit=5,
+            damage="1",
+        ),
+        ActionDefinition(
+            name="multiattack",
+            action_type="attack",
+            action_cost="action",
+            mechanics=[
+                {
+                    "effect_type": "attack_sequence",
+                    "sequence": [
+                        {"action_name": "club"},
+                        {"action_name": "shocking_grasp"},
+                    ],
+                }
+            ],
+        ),
+    ]
+
+    ready = _validate_declared_ready_or_error(
+        actor,
+        TurnDeclaration(
+            action=DeclaredAction(action_name="ready"),
+            ready=ReadyDeclaration(
+                trigger="enemy_turn_start",
+                response_action_name="multiattack",
+                zero_hp_intent="knock_out",
+            ),
+        ),
+    )
+
+    assert ready is not None
+    assert ready.zero_hp_intent == "knock_out"
+
+
+def test_ready_declaration_rejects_mixed_delivery_attack_sequence() -> None:
+    actor = _base_actor(actor_id="ready_actor", team="party")
+    actor.actions = [
+        ActionDefinition(name="ready", action_type="utility", action_cost="action"),
+        ActionDefinition(
+            name="club",
+            action_type="attack",
+            attack_delivery="melee_weapon_attack",
+            action_cost="action",
+            to_hit=5,
+            damage="1",
+        ),
+        ActionDefinition(
+            name="longbow",
+            action_type="attack",
+            attack_delivery="ranged_weapon_attack",
+            action_cost="action",
+            to_hit=5,
+            damage="1",
+        ),
+        ActionDefinition(
+            name="multiattack",
+            action_type="attack",
+            action_cost="action",
+            mechanics=[
+                {
+                    "effect_type": "attack_sequence",
+                    "sequence": [
+                        {"action_name": "club"},
+                        {"action_name": "longbow"},
+                    ],
+                }
+            ],
+        ),
+    ]
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        _validate_declared_ready_or_error(
+            actor,
+            TurnDeclaration(
+                action=DeclaredAction(action_name="ready"),
+                ready=ReadyDeclaration(
+                    trigger="enemy_turn_start",
+                    response_action_name="multiattack",
+                    zero_hp_intent="knock_out",
+                ),
+            ),
+        )
+
+    assert exc_info.value.code == "illegal_knockout_intent"
+    assert exc_info.value.field == "ready.zero_hp_intent"
+
+
+def test_short_rest_clears_readied_intent_and_held_spell_state() -> None:
+    actor = _base_actor(actor_id="ready_actor", team="party")
+    actor.add_manual_condition("readying")
+    actor.readied_action_name = "guiding_bolt"
+    actor.readied_trigger = "enemy_turn_start"
+    actor.readied_zero_hp_intent = "knock_out"
+    actor.readied_reaction_reserved = True
+    actor.readied_spell_slot_level = 1
+    actor.readied_spell_held = True
+    actor.concentrating = True
+    actor.concentrated_spell = "guiding_bolt"
+    actor.concentrated_spell_level = 1
+
+    short_rest(actor)
+
+    assert "readying" not in actor.conditions
+    assert actor.readied_action_name is None
+    assert actor.readied_trigger is None
+    assert actor.readied_zero_hp_intent == "normal"
+    assert actor.readied_reaction_reserved is False
+    assert actor.readied_spell_slot_level is None
+    assert actor.readied_spell_held is False
+    assert actor.concentrating is False
+    assert actor.concentrated_spell is None
+    assert actor.concentrated_spell_level is None
+
+
+def test_readied_reach_trigger_honors_knockout_intent() -> None:
+    ready_actor = _base_actor(actor_id="ready_actor", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    ready_actor.position = (0.0, 0.0, 0.0)
+    enemy.position = (0.0, 0.0, 0.0)
+    enemy.hp = 1
+    enemy.uses_death_saves = False
+    ready_actor.actions = [
+        ActionDefinition(
+            name="ready",
+            action_type="utility",
+            action_cost="action",
+            target_mode="self",
+        ),
+        ActionDefinition(
+            name="club",
+            action_type="attack",
+            attack_delivery="melee_weapon_attack",
+            action_cost="action",
+            to_hit=5,
+            damage="1",
+            damage_type="bludgeoning",
+            reach_ft=5,
+        ),
+    ]
+    actors = {ready_actor.actor_id: ready_actor, enemy.actor_id: enemy}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(ready_actor, enemy)
+    rng = _SequenceRng([15, 3])
+
+    _execute_declared_turn_or_error(
+        rng=rng,
+        actor=ready_actor,
+        declaration=TurnDeclaration(
+            action=DeclaredAction(action_name="ready"),
+            ready=ReadyDeclaration(
+                trigger="enemy_enters_reach",
+                response_action_name="club",
+                zero_hp_intent="knock_out",
+            ),
+        ),
+        strategy_name="test",
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    _run_opportunity_attacks_for_movement(
+        rng=rng,
+        mover=enemy,
+        start_pos=(20.0, 0.0, 0.0),
+        end_pos=(0.0, 0.0, 0.0),
+        movement_path=[(20.0, 0.0, 0.0), (0.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert enemy.hp == 0
+    assert enemy.stable is True
+    assert enemy.dead is False
+    assert enemy.stable_recovery_hours_remaining == 3
+    assert ready_actor.readied_zero_hp_intent == "normal"
+    assert rng.values == []
+
+
+def test_invalid_ready_declaration_is_rejected_before_movement() -> None:
+    actor = _base_actor(actor_id="ready_actor", team="party")
+    actor.movement_remaining = 30.0
+    actor.actions = [
+        ActionDefinition(
+            name="ready",
+            action_type="utility",
+            action_cost="action",
+            target_mode="self",
+        ),
+        ActionDefinition(
+            name="longbow",
+            action_type="attack",
+            attack_delivery="ranged_weapon_attack",
+            action_cost="action",
+            to_hit=5,
+            damage="1",
+            range_ft=150,
+        ),
+    ]
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(actor)
+
+    with pytest.raises(TurnDeclarationValidationError):
+        _execute_declared_turn_or_error(
+            rng=_SequenceRng([]),
+            actor=actor,
+            declaration=TurnDeclaration(
+                movement_path=[(0.0, 0.0, 0.0), (5.0, 0.0, 0.0)],
+                action=DeclaredAction(action_name="ready"),
+                ready=ReadyDeclaration(
+                    trigger="enemy_turn_start",
+                    response_action_name="longbow",
+                    zero_hp_intent="knock_out",
+                ),
+            ),
+            strategy_name="test",
+            actors={actor.actor_id: actor},
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=[],
+        )
+
+    assert actor.position == (0.0, 0.0, 0.0)
+    assert actor.movement_remaining == 30.0
+
+
+def test_conflicting_ready_policy_does_not_consume_reaction() -> None:
+    actor = _base_actor(actor_id="ready_actor", team="party")
+    actor.actions = [
+        ActionDefinition(
+            name="ready",
+            action_type="utility",
+            action_cost="action",
+            target_mode="self",
+        ),
+        ActionDefinition(
+            name="club",
+            action_type="attack",
+            attack_delivery="melee_weapon_attack",
+            action_cost="action",
+            to_hit=5,
+            damage="1",
+            reach_ft=5,
+        ),
+    ]
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(actor)
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        _execute_declared_turn_or_error(
+            rng=_SequenceRng([]),
+            actor=actor,
+            declaration=TurnDeclaration(
+                action=DeclaredAction(action_name="ready"),
+                reaction_policy=ReactionPolicy(mode="none"),
+                ready=ReadyDeclaration(
+                    trigger="enemy_turn_start",
+                    response_action_name="club",
+                ),
+            ),
+            strategy_name="test",
+            actors={actor.actor_id: actor},
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=[],
+        )
+
+    assert exc_info.value.code == "conflicting_reaction_policy"
+    assert actor.reaction_available is True

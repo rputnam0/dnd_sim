@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import logging
-from typing import Any
+from typing import Any, Callable
 
 from dnd_sim.models import AttackDelivery, ActionDefinition, ActorRuntimeState, SpellCastRequest
 from dnd_sim.spatial import distance_chebyshev
@@ -14,6 +15,14 @@ from dnd_sim.strategy_api import (
 )
 
 logger = logging.getLogger(__name__)
+_READY_TRIGGER_ALIASES = {
+    "enemy_turn_start": "enemy_turn_start",
+    "on_enemy_turn_start": "enemy_turn_start",
+    "enemy_enters_reach": "enemy_enters_reach",
+    "on_enemy_enters_reach": "enemy_enters_reach",
+    "enters_reach": "enemy_enters_reach",
+    "on_enters_reach": "enemy_enters_reach",
+}
 
 
 class TurnDeclarationValidationError(ValueError):
@@ -303,6 +312,10 @@ def declared_movement_path_or_error(
 def validate_declared_ready_or_error(
     actor: ActorRuntimeState,
     declaration: TurnDeclaration,
+    *,
+    attack_deliveries_resolver: (
+        Callable[[ActionDefinition], list[AttackDelivery | None] | None] | None
+    ) = None,
 ) -> ReadyDeclaration | None:
     ready = declaration.ready
     if ready is None:
@@ -324,13 +337,22 @@ def validate_declared_ready_or_error(
             message="ready metadata is only legal when action.action_name is 'ready'.",
         )
 
-    trigger = str(ready.trigger or "").strip()
+    trigger = str(ready.trigger or "").strip().lower()
     if not trigger:
         raise_turn_declaration_error(
             actor=actor,
             code="missing_ready_trigger",
             field="ready.trigger",
             message="Ready declaration trigger is required.",
+        )
+    canonical_trigger = _READY_TRIGGER_ALIASES.get(trigger)
+    if canonical_trigger is None:
+        raise_turn_declaration_error(
+            actor=actor,
+            code="unsupported_ready_trigger",
+            field="ready.trigger",
+            message=f"Ready trigger '{trigger}' is not supported by this engine.",
+            details={"supported_triggers": sorted(set(_READY_TRIGGER_ALIASES.values()))},
         )
     response_name = str(ready.response_action_name or "").strip()
     if not response_name:
@@ -357,10 +379,30 @@ def validate_declared_ready_or_error(
             message="Ready response must be a non-ready action that uses action or no cost.",
             details={"action_cost": response_action.action_cost},
         )
-    return ready
+    attack_deliveries = (
+        attack_deliveries_resolver(response_action)
+        if attack_deliveries_resolver is not None
+        else None
+    )
+    zero_hp_intent = declared_zero_hp_intent_or_error(
+        actor,
+        response_action,
+        DeclaredAction(
+            action_name=response_name,
+            zero_hp_intent=getattr(ready, "zero_hp_intent", "normal"),
+        ),
+        field_prefix="ready",
+        attack_deliveries=attack_deliveries,
+    )
+    return replace(
+        ready,
+        trigger=canonical_trigger,
+        response_action_name=response_name,
+        zero_hp_intent=zero_hp_intent,
+    )
 
 
-def apply_declared_reaction_policy_or_error(
+def declared_reaction_policy_mode_or_error(
     actor: ActorRuntimeState,
     declaration: TurnDeclaration,
     *,
@@ -378,6 +420,20 @@ def apply_declared_reaction_policy_or_error(
             message=f"Unsupported reaction policy mode: {mode}",
             details={"supported_modes": sorted(supported_modes)},
         )
+    return mode
+
+
+def apply_declared_reaction_policy_or_error(
+    actor: ActorRuntimeState,
+    declaration: TurnDeclaration,
+    *,
+    supported_modes: set[str],
+) -> str:
+    mode = declared_reaction_policy_mode_or_error(
+        actor,
+        declaration,
+        supported_modes=supported_modes,
+    )
     if mode == "none":
         actor.reaction_available = False
     return mode
