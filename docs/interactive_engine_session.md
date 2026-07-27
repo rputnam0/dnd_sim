@@ -1,9 +1,10 @@
 # Interactive Engine Session
 
 `dnd_sim.interactive` is the transport-independent command/event boundary for a future VTT. It
-does not implement D&D rules and it does not expose HTTP or WebSocket endpoints. A deterministic
-rules driver owns mechanical legality and resolution; `EngineSession` owns transactional execution,
-revisions, event ordering, idempotency, reactions, and recovery.
+does not expose HTTP or WebSocket endpoints. A deterministic rules driver owns mechanical legality
+and resolution; `EngineSession` owns transactional execution, revisions, event ordering,
+idempotency, reactions, and recovery. `DndCombatTurnDriver` now connects this boundary to the real
+D&D combat-turn kernel for one complete synchronous actor turn.
 
 ## Guarantees
 
@@ -47,14 +48,22 @@ causation, and audience policies.
 ## Command Flow
 
 ```python
-from dnd_sim.interactive import EngineSession, EngineVersionPins, SessionCommand
+from dnd_sim.interactive import (
+    DECLARATION_COMMAND_KIND,
+    DndCombatTurnDriver,
+    EngineSession,
+    EngineVersionPins,
+    SessionCommand,
+    TurnDeclarationPayload,
+)
 
 version_pins = EngineVersionPins(
     engine_version="dnd-sim@0.1.0",
-    rules_version="2014@1",
-    content_version="campaign-7@3",
+    rules_version="5e_2014_combat_foundation@1.0.0",
+    content_version="solo-table-fixture@1",
 )
-driver.version_pins = version_pins
+driver = DndCombatTurnDriver(version_pins=version_pins)
+turn_payload = TurnDeclarationPayload.from_domain(turn_declaration).model_dump(mode="json")
 
 session = EngineSession("encounter-7", initial_state, driver, seed=20260726)
 
@@ -65,9 +74,9 @@ preview = session.execute(
         actor_id="fighter-1",
         expected_revision=0,
         mode="preview",
-        kind="combat.turn",
+        kind=DECLARATION_COMMAND_KIND,
         version_pins=version_pins,
-        payload={"declaration": turn_payload},
+        payload=turn_payload,
     )
 )
 
@@ -78,9 +87,9 @@ receipt = session.execute(
         actor_id="fighter-1",
         expected_revision=0,
         mode="commit",
-        kind="combat.turn",
+        kind=DECLARATION_COMMAND_KIND,
         version_pins=version_pins,
-        payload={"declaration": turn_payload},
+        payload=turn_payload,
     )
 )
 
@@ -92,16 +101,18 @@ tail = restored.events_since(receipt.last_sequence or 0)
 The service layer must serialize commands for each session; `EngineSession` is intentionally a
 single-owner state machine rather than a lock manager or database transaction coordinator.
 
-## Current Integration Limit
+## D&D Driver Boundary and Current Limit
 
-The existing D&D runtime still owns a complete encounter inside one batch loop. Its declared-turn
-resolver can mutate movement before validating later action steps, its snapshots are reporting-only,
-and its reactions resolve synchronously. For that reason this module does not claim a live D&D
-driver yet. The next engine change is to extract a serializable whole-turn state machine that:
+`DndCombatTurnDriver` uses a strict `dnd.declare_turn.v1` payload, a versioned full-state codec, and
+the same `resolve_combat_turn` function used by batch simulation. Its codec preserves the complete
+95-field actor graph, inventory, spells, effects, wild-shape restoration data, timing sequence, and
+all turn metrics. Set-valued fields are sorted so snapshots remain deterministic across Python hash
+seeds. Preview, failed commit, restore, and retry therefore exercise real D&D state without relying
+on the reporting-only actor snapshot.
 
-1. advances automatic phases until an input prompt;
-2. resolves one existing `TurnDeclaration` on isolated state and RNG;
-3. makes the batch simulator and interactive driver call the same rules path; and
-4. initially keeps reactions explicitly auto-only until reaction continuations are extracted.
-
-This constraint prevents the VTT from becoming a second, subtly different rules engine.
+The driver currently represents exactly one synchronous actor turn: state is `ready` before the
+command and `complete` afterward. Start-of-turn automation occurs inside that transaction, and
+reactions remain explicitly auto-resolved. The next extraction must add a prompt-bound encounter
+cursor that automatically advances rounds, lair actions, turn starts, death saves, hazards, and
+forced paths until it reaches `awaiting_declaration` or `terminal`. That encounter state—not this
+one-turn adapter—will back the Solo Table service and browser UI.

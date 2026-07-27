@@ -29,10 +29,10 @@ and VTT must resolve a declared turn through the same domain function.
 
 ## Milestone 3: D&D interactive driver
 
-- [ ] Define a strict JSON turn-declaration command payload.
-- [ ] Implement a complete, versioned state codec rather than serializing
+- [x] Define a strict JSON turn-declaration command payload.
+- [x] Implement a complete, versioned state codec rather than serializing
       reporting snapshots or runtime objects directly.
-- [ ] Implement preview, commit, restore, idempotent retry, and fixed-seed replay
+- [x] Implement preview, commit, restore, idempotent retry, and fixed-seed replay
       through `EngineSession`.
 - [ ] Project legal movement, actions, targets, initiative, HP/effects, and rules
       events without exposing hidden engine state.
