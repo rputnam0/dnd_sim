@@ -337,6 +337,8 @@ def opportunity_attack_reach_ft(
 ) -> float | None:
     if action.action_type != "attack":
         return None
+    if action.attack_delivery not in {None, "melee_weapon_attack"}:
+        return None
     if is_ranged_weapon_action(action):
         return None
     if action.reach_ft is not None:
@@ -363,7 +365,9 @@ def opportunity_attack_candidates(
     for action in actor.actions:
         if action.action_type != "attack":
             continue
-        if action.action_cost in {"legendary", "lair"}:
+        if action.action_cost not in {"action", "none"}:
+            continue
+        if "spell" in {str(tag).strip().lower() for tag in action.tags}:
             continue
         if not can_pay_resource_cost(actor, action):
             continue

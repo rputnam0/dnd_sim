@@ -12,9 +12,357 @@ from dnd_sim.models import (
     SpellCastRequest,
 )
 from dnd_sim.spatial import AABB, distance_chebyshev
-from dnd_sim.strategy_api import TargetRef
+from dnd_sim.strategy_api import (
+    BattleStateView,
+    ReactionDecision,
+    ReactionDecisionProvider,
+    ReactionOptionView,
+    ReactionTriggerView,
+    ReactionWindowView,
+    TargetRef,
+    ZeroHPIntent,
+)
 
 logger = logging.getLogger(__name__)
+
+
+class ReactionDecisionValidationError(ValueError):
+    def __init__(
+        self,
+        *,
+        code: str,
+        field: str,
+        message: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        self.code = code
+        self.field = field
+        self.message = message
+        self.details = dict(details or {})
+        super().__init__(f"{code} [{field}] {message}")
+
+
+def _reaction_decision_error(
+    *,
+    code: str,
+    field: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+) -> None:
+    raise ReactionDecisionValidationError(
+        code=code,
+        field=field,
+        message=message,
+        details=details,
+    )
+
+
+def _position_token(position: tuple[float, float, float]) -> str:
+    return ",".join(f"{coordinate:g}" for coordinate in position)
+
+
+def _opportunity_option_id(
+    *,
+    reactor_id: str,
+    action: ActionDefinition,
+    option_index: int,
+) -> str:
+    action_key = str(action.attack_profile_id or action.name).strip() or "attack"
+    return f"{reactor_id}:opportunity_attack:{option_index}:{action_key}"
+
+
+def build_opportunity_attack_window(
+    *,
+    reactor: ActorRuntimeState,
+    mover: ActorRuntimeState,
+    candidates: list[tuple[ActionDefinition, float]],
+    trigger_point: tuple[float, float, float],
+    trigger_distance: float,
+    round_number: int | None,
+    turn_token: str | None,
+    window_ordinal: int,
+) -> ReactionWindowView:
+    options: list[ReactionOptionView] = []
+    for option_index, (action, reach_ft) in enumerate(candidates):
+        legal_zero_hp_intents: tuple[ZeroHPIntent, ...] = ("normal",)
+        if action.attack_delivery in {"melee_weapon_attack", "melee_spell_attack"}:
+            legal_zero_hp_intents = ("normal", "knock_out")
+        options.append(
+            ReactionOptionView(
+                option_id=_opportunity_option_id(
+                    reactor_id=reactor.actor_id,
+                    action=action,
+                    option_index=option_index,
+                ),
+                action_name=action.name,
+                fixed_target_ids=(mover.actor_id,),
+                legal_target_ids=(mover.actor_id,),
+                legal_zero_hp_intents=legal_zero_hp_intents,
+                resource_cost=tuple(
+                    sorted(
+                        (str(key), int(amount))
+                        for key, amount in action.resource_cost.items()
+                        if int(amount) > 0
+                    )
+                ),
+                attack_bonus=action.to_hit,
+                damage_expression=action.damage,
+                damage_type=action.damage_type,
+                reach_ft=float(reach_ft),
+            )
+        )
+    window_id = ":".join(
+        (
+            str(turn_token or "no_turn"),
+            "opportunity_attack",
+            reactor.actor_id,
+            mover.actor_id,
+            str(window_ordinal),
+            _position_token(trigger_point),
+        )
+    )
+    return ReactionWindowView(
+        window_id=window_id,
+        reactor_id=reactor.actor_id,
+        round_number=round_number,
+        turn_token=turn_token,
+        trigger=ReactionTriggerView(
+            kind="opportunity_attack",
+            source_actor_id=mover.actor_id,
+            target_actor_id=reactor.actor_id,
+            movement_point=trigger_point,
+            distance_ft=float(trigger_distance),
+        ),
+        options=tuple(options),
+    )
+
+
+def default_reaction_decision(window: ReactionWindowView) -> ReactionDecision:
+    if not window.options:
+        return ReactionDecision(window_id=window.window_id, choice="pass")
+    option = max(
+        window.options,
+        key=lambda value: (
+            value.attack_bonus if value.attack_bonus is not None else -999,
+            value.reach_ft if value.reach_ft is not None else 0.0,
+        ),
+    )
+    return ReactionDecision(
+        window_id=window.window_id,
+        choice="use",
+        option_id=option.option_id,
+    )
+
+
+def build_strategy_reaction_decision_provider(
+    *,
+    state_provider: Callable[[], BattleStateView],
+    strategy_registry: dict[str, Any],
+    actor_strategy_overrides: dict[str, str],
+    party_default_strategy: str,
+    enemy_default_strategy: str,
+) -> ReactionDecisionProvider:
+    """Resolve each reaction against the reactor's strategy and current battle view."""
+
+    def _decide(window: ReactionWindowView) -> ReactionDecision:
+        state = state_provider()
+        actor = state.actors.get(window.reactor_id)
+        if actor is None:
+            _reaction_decision_error(
+                code="missing_reaction_actor",
+                field="window.reactor_id",
+                message="Reaction actor is not present in the current battle state.",
+                details={"reactor_id": window.reactor_id},
+            )
+        strategy_name = actor_strategy_overrides.get(actor.actor_id)
+        if strategy_name is None:
+            strategy_name = (
+                party_default_strategy if actor.team == "party" else enemy_default_strategy
+            )
+        strategy = strategy_registry.get(strategy_name)
+        if strategy is None:
+            _reaction_decision_error(
+                code="missing_reaction_strategy",
+                field="strategy_registry",
+                message="No strategy is registered for the reacting actor.",
+                details={"reactor_id": actor.actor_id, "strategy_name": strategy_name},
+            )
+        decide_reaction = getattr(strategy, "decide_reaction", None)
+        if not callable(decide_reaction):
+            return default_reaction_decision(window)
+        return decide_reaction(actor, window, state)
+
+    return _decide
+
+
+def validate_reaction_decision(
+    window: ReactionWindowView,
+    decision: ReactionDecision,
+) -> tuple[ReactionOptionView | None, ZeroHPIntent]:
+    if not isinstance(decision, ReactionDecision):
+        _reaction_decision_error(
+            code="invalid_reaction_decision",
+            field="decision",
+            message="Reaction provider must return a ReactionDecision.",
+        )
+    if decision.window_id != window.window_id:
+        _reaction_decision_error(
+            code="stale_reaction_window",
+            field="decision.window_id",
+            message="Reaction decision does not match the open reaction window.",
+            details={"expected": window.window_id, "received": decision.window_id},
+        )
+    choice = str(decision.choice or "").strip().lower()
+    if choice not in {"use", "pass"}:
+        _reaction_decision_error(
+            code="invalid_reaction_choice",
+            field="decision.choice",
+            message="Reaction choice must be 'use' or 'pass'.",
+        )
+    raw_resource_spend = getattr(decision.resource_spend, "amounts", None)
+    if not isinstance(raw_resource_spend, dict):
+        _reaction_decision_error(
+            code="invalid_reaction_resource_spend",
+            field="decision.resource_spend",
+            message="Reaction resource_spend must be a mapping.",
+        )
+    if choice == "pass":
+        if (
+            decision.option_id is not None
+            or decision.targets
+            or raw_resource_spend
+            or decision.spell_slot_level is not None
+            or str(decision.zero_hp_intent).strip().lower() != "normal"
+        ):
+            _reaction_decision_error(
+                code="invalid_reaction_pass",
+                field="decision",
+                message="A pass decision cannot include an option or resolution choices.",
+            )
+        return None, "normal"
+
+    selected = next(
+        (option for option in window.options if option.option_id == decision.option_id),
+        None,
+    )
+    if selected is None:
+        _reaction_decision_error(
+            code="unknown_reaction_option",
+            field="decision.option_id",
+            message="Selected reaction option is not legal in this window.",
+        )
+    if raw_resource_spend:
+        _reaction_decision_error(
+            code="unsupported_reaction_resource_spend",
+            field="decision.resource_spend",
+            message="Opportunity attacks do not accept extra declared resource spend.",
+        )
+    if decision.spell_slot_level is not None:
+        _reaction_decision_error(
+            code="illegal_reaction_spell_slot",
+            field="decision.spell_slot_level",
+            message="Selected opportunity attack does not accept a spell-slot override.",
+        )
+    target_ids: list[str] = []
+    for index, target in enumerate(decision.targets):
+        if not isinstance(target, TargetRef):
+            _reaction_decision_error(
+                code="invalid_reaction_target",
+                field=f"decision.targets[{index}]",
+                message="Reaction targets must be TargetRef values.",
+            )
+        target_ids.append(target.actor_id)
+    if target_ids and tuple(target_ids) != selected.fixed_target_ids:
+        _reaction_decision_error(
+            code="illegal_reaction_target",
+            field="decision.targets",
+            message="Opportunity attack target is fixed by the movement trigger.",
+            details={"legal_target_ids": list(selected.fixed_target_ids)},
+        )
+    normalized_intent = str(decision.zero_hp_intent or "").strip().lower()
+    if normalized_intent not in selected.legal_zero_hp_intents:
+        _reaction_decision_error(
+            code="illegal_zero_hp_intent",
+            field="decision.zero_hp_intent",
+            message="Selected zero-HP intent is not legal for this reaction option.",
+            details={"legal_zero_hp_intents": list(selected.legal_zero_hp_intents)},
+        )
+    return selected, normalized_intent
+
+
+def _reaction_window_telemetry(
+    telemetry: list[dict[str, Any]] | None,
+    *,
+    window: ReactionWindowView,
+) -> None:
+    if telemetry is None:
+        return
+    telemetry.append(
+        {
+            "telemetry_type": "reaction_window_opened",
+            "window_id": window.window_id,
+            "reaction_kind": window.trigger.kind,
+            "round": window.round_number,
+            "turn_token": window.turn_token,
+            "reactor_id": window.reactor_id,
+            "source_actor_id": window.trigger.source_actor_id,
+            "target_actor_id": window.trigger.target_actor_id,
+            "option_ids": [option.option_id for option in window.options],
+        }
+    )
+
+
+def _reaction_decision_telemetry(
+    telemetry: list[dict[str, Any]] | None,
+    *,
+    window: ReactionWindowView,
+    decision: Any,
+) -> None:
+    if telemetry is None:
+        return
+    telemetry.append(
+        {
+            "telemetry_type": "reaction_decision",
+            "window_id": window.window_id,
+            "reaction_kind": window.trigger.kind,
+            "round": window.round_number,
+            "turn_token": window.turn_token,
+            "reactor_id": window.reactor_id,
+            "choice": str(getattr(decision, "choice", "")).strip().lower(),
+            "option_id": getattr(decision, "option_id", None),
+            "zero_hp_intent": str(getattr(decision, "zero_hp_intent", "normal")).strip().lower(),
+            "rationale": (
+                dict(decision.rationale)
+                if isinstance(getattr(decision, "rationale", None), dict)
+                else {}
+            ),
+        }
+    )
+
+
+def _reaction_window_closed_telemetry(
+    telemetry: list[dict[str, Any]] | None,
+    *,
+    window: ReactionWindowView,
+    status: str,
+    option_id: str | None = None,
+    reason: str | None = None,
+) -> None:
+    if telemetry is None:
+        return
+    telemetry.append(
+        {
+            "telemetry_type": "reaction_window_closed",
+            "window_id": window.window_id,
+            "reaction_kind": window.trigger.kind,
+            "round": window.round_number,
+            "turn_token": window.turn_token,
+            "reactor_id": window.reactor_id,
+            "status": status,
+            "option_id": option_id,
+            "reason": reason,
+        }
+    )
 
 
 def _normalize_event_trigger(trigger: str | None) -> str | None:
@@ -313,6 +661,9 @@ def run_opportunity_attacks_for_movement(
     movement_kind: str = "voluntary",
     movement_source: str = "movement",
     movement_trigger_hooks: list[Callable[[Any], None]] | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
 ) -> None:
     from dnd_sim import engine_runtime as engine_module
     from dnd_sim.spatial import can_see
@@ -359,6 +710,8 @@ def run_opportunity_attacks_for_movement(
                 active_hazards=active_hazards,
                 obstacles=obstacles,
                 light_level=light_level,
+                rule_trace=rule_trace,
+                telemetry=telemetry,
             )
             mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
             if mover.dead or mover.hp <= 0:
@@ -377,7 +730,7 @@ def run_opportunity_attacks_for_movement(
         )
         if not transitions:
             continue
-        for trigger, trigger_point, trigger_distance in transitions:
+        for window_ordinal, (trigger, trigger_point, trigger_distance) in enumerate(transitions):
             visible = can_see(
                 observer_pos=enemy.position,
                 target_pos=trigger_point,
@@ -405,13 +758,60 @@ def run_opportunity_attacks_for_movement(
             if not visible:
                 continue
 
-            reaction_result = engine_module._find_opportunity_attack_action(
-                enemy,
-                required_reach_ft=float(trigger_distance),
-            )
-            if reaction_result is None:
+            eligible_candidates = [
+                (action, reach_ft)
+                for action, reach_ft in opportunity_candidates
+                if reach_ft + 1e-9 >= float(trigger_distance)
+            ]
+            if not eligible_candidates:
                 continue
-            reaction_attack, _ = reaction_result
+            window = build_opportunity_attack_window(
+                reactor=enemy,
+                mover=mover,
+                candidates=eligible_candidates,
+                trigger_point=trigger_point,
+                trigger_distance=float(trigger_distance),
+                round_number=round_number,
+                turn_token=turn_token,
+                window_ordinal=window_ordinal,
+            )
+            _reaction_window_telemetry(telemetry, window=window)
+            decision = (
+                reaction_decision_provider(window)
+                if reaction_decision_provider is not None
+                else default_reaction_decision(window)
+            )
+            _reaction_decision_telemetry(telemetry, window=window, decision=decision)
+            try:
+                selected_option, zero_hp_intent = validate_reaction_decision(window, decision)
+            except ReactionDecisionValidationError as exc:
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="rejected",
+                    option_id=getattr(decision, "option_id", None),
+                    reason=exc.code,
+                )
+                raise
+            if selected_option is None:
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="passed",
+                )
+                continue
+
+            selected_index = next(
+                index
+                for index, option in enumerate(window.options)
+                if option.option_id == selected_option.option_id
+            )
+            selected_action, _ = eligible_candidates[selected_index]
+            reaction_attack = replace(
+                selected_action,
+                attack_count=1,
+                action_cost="reaction",
+            )
             spell_cast_request = SpellCastRequest() if "spell" in reaction_attack.tags else None
             if not engine_module._spend_action_resource_cost(
                 enemy,
@@ -420,9 +820,21 @@ def run_opportunity_attacks_for_movement(
                 spell_cast_request=spell_cast_request,
                 turn_token=turn_token,
             ):
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="unavailable",
+                    option_id=selected_option.option_id,
+                    reason="resource_cost",
+                )
                 continue
 
             enemy.reaction_available = False
+            enemy.per_action_uses[selected_action.name] = (
+                enemy.per_action_uses.get(selected_action.name, 0) + 1
+            )
+            if selected_action.recharge:
+                enemy.recharge_ready[selected_action.name] = False
             original_position = mover.position
             mover.position = trigger_point
             engine_module._execute_action(
@@ -441,8 +853,18 @@ def run_opportunity_attacks_for_movement(
                 round_number=round_number,
                 turn_token=turn_token,
                 spell_cast_request=spell_cast_request,
+                allow_auto_movement=False,
+                zero_hp_intent=zero_hp_intent,
+                rule_trace=rule_trace,
+                telemetry=telemetry,
             )
             mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
+            _reaction_window_closed_telemetry(
+                telemetry,
+                window=window,
+                status="resolved",
+                option_id=selected_option.option_id,
+            )
             break
         if mover.dead or mover.hp <= 0:
             break

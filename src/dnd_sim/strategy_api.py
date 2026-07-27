@@ -9,6 +9,16 @@ from dnd_sim.spatial import check_cover, distance_chebyshev, move_towards
 
 logger = logging.getLogger(__name__)
 ReadyTrigger = Literal["enemy_turn_start", "enemy_enters_reach"]
+ReactionChoice = Literal["use", "pass"]
+ReactionKind = Literal[
+    "opportunity_attack",
+    "readied_response",
+    "shield",
+    "counterspell",
+    "uncanny_dodge",
+    "triggered_action",
+    "trait",
+]
 _REMOVED_LEGACY_STRATEGY_METHODS = (
     "choose_action",
     "choose_targets",
@@ -26,6 +36,59 @@ class ResourceSpend:
     amounts: dict[str, int] = field(default_factory=dict)
 
 
+@dataclass(frozen=True, slots=True)
+class ReactionOptionView:
+    option_id: str
+    action_name: str | None
+    fixed_target_ids: tuple[str, ...] = ()
+    legal_target_ids: tuple[str, ...] = ()
+    legal_spell_slot_levels: tuple[int, ...] = ()
+    legal_zero_hp_intents: tuple[ZeroHPIntent, ...] = ("normal",)
+    resource_cost: tuple[tuple[str, int], ...] = ()
+    attack_bonus: int | None = None
+    damage_expression: str | None = None
+    damage_type: str | None = None
+    reach_ft: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ReactionTriggerView:
+    kind: ReactionKind
+    source_actor_id: str | None = None
+    target_actor_id: str | None = None
+    action_name: str | None = None
+    spell_level: int | None = None
+    attack_total: int | None = None
+    movement_point: tuple[float, float, float] | None = None
+    distance_ft: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ReactionWindowView:
+    window_id: str
+    reactor_id: str
+    round_number: int | None
+    turn_token: str | None
+    trigger: ReactionTriggerView
+    options: tuple[ReactionOptionView, ...]
+
+
+@dataclass(slots=True)
+class ReactionDecision:
+    window_id: str
+    choice: ReactionChoice
+    option_id: str | None = None
+    targets: list[TargetRef] = field(default_factory=list)
+    resource_spend: ResourceSpend = field(default_factory=ResourceSpend)
+    spell_slot_level: int | None = None
+    zero_hp_intent: ZeroHPIntent = "normal"
+    rationale: dict[str, Any] = field(default_factory=dict)
+
+
+class ReactionDecisionProvider(Protocol):
+    def __call__(self, window: ReactionWindowView) -> ReactionDecision: ...
+
+
 @dataclass(slots=True)
 class DeclaredAction:
     action_name: str | None
@@ -38,7 +101,7 @@ class DeclaredAction:
 
 @dataclass(slots=True)
 class ReactionPolicy:
-    mode: str = "auto"
+    mode: Literal["auto", "none"] = "auto"
     rationale: dict[str, Any] = field(default_factory=dict)
 
 
@@ -104,11 +167,45 @@ class BattleStateView:
 class StrategyModule(Protocol):
     def declare_turn(self, actor: ActorView, state: BattleStateView) -> TurnDeclaration | None: ...
 
+    def decide_reaction(
+        self,
+        actor: ActorView,
+        window: ReactionWindowView,
+        state: BattleStateView,
+    ) -> ReactionDecision: ...
+
     def on_round_start(self, state: BattleStateView) -> None: ...
 
 
 class BaseStrategy:
     """Declaration-only baseline behavior."""
+
+    def decide_reaction(
+        self,
+        actor: ActorView,
+        window: ReactionWindowView,
+        state: BattleStateView,
+    ) -> ReactionDecision:
+        del actor, state
+        if not window.options:
+            return ReactionDecision(
+                window_id=window.window_id,
+                choice="pass",
+                rationale={"reason": "no_reaction_options"},
+            )
+        option = max(
+            window.options,
+            key=lambda value: (
+                value.attack_bonus if value.attack_bonus is not None else -999,
+                value.reach_ft if value.reach_ft is not None else 0.0,
+            ),
+        )
+        return ReactionDecision(
+            window_id=window.window_id,
+            choice="use",
+            option_id=option.option_id,
+            rationale={"reason": "default_reaction_priority"},
+        )
 
     def declare_turn(self, actor: ActorView, state: BattleStateView) -> TurnDeclaration | None:
         available = state.metadata.get("available_actions", {}).get(actor.actor_id, [])
