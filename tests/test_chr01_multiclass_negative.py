@@ -8,9 +8,7 @@ from dnd_sim.io import load_character_db
 from tests.helpers import build_character, write_json
 
 
-def test_load_character_db_rejects_missing_class_levels_mapping(
-    tmp_path, monkeypatch
-) -> None:
+def test_load_character_db_rejects_missing_class_levels_mapping(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("dnd_sim.db_schema.execute_query", lambda *_args, **_kwargs: [])
 
     db_dir = tmp_path / "characters"

@@ -123,9 +123,9 @@ def test_j1_c_batch_uses_canonical_rows() -> None:
             for row in mechanics
             if isinstance(row, dict)
         }
-        assert EXPECTED_EFFECT_TYPES[slug].issubset(seen_effect_types), (
-            f"{slug} should include {EXPECTED_EFFECT_TYPES[slug]}"
-        )
+        assert EXPECTED_EFFECT_TYPES[slug].issubset(
+            seen_effect_types
+        ), f"{slug} should include {EXPECTED_EFFECT_TYPES[slug]}"
 
     enthrall_effect = _find_effects(_spell_payload("enthrall"), "apply_condition")[0]
     assert enthrall_effect["apply_on"] == "save_fail"

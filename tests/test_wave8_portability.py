@@ -9,7 +9,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 LIVE_PORTABLE_FILES = (
     REPO_ROOT / "river_line/encounters/ley_heart/scenarios/ley_heart_phase_1.json",
     REPO_ROOT / "river_line/encounters/ley_heart/scenarios/ley_heart_phase_1_proc_advantage.json",
-    REPO_ROOT / "river_line/encounters/ley_heart/scenarios/ley_heart_phase_1_double_monk_flurry.json",
+    REPO_ROOT
+    / "river_line/encounters/ley_heart/scenarios/ley_heart_phase_1_double_monk_flurry.json",
     REPO_ROOT / "river_line/encounters/ley_heart/scenarios/ley_heart_phase_1_boss_scalar_1.json",
     REPO_ROOT / "river_line/encounters/ley_heart/scenarios/ley_heart_phase_1_split_two_pylons.json",
     REPO_ROOT / "river_line/encounters/ley_heart/scenarios/ley_heart_phase_2.json",
@@ -26,9 +27,7 @@ def test_live_portable_content_contains_no_machine_local_absolute_paths() -> Non
 
 
 def test_public_phase2_scenario_loads_without_internal_harness_fields() -> None:
-    scenario_path = (
-        REPO_ROOT / "river_line/encounters/ley_heart/scenarios/ley_heart_phase_2.json"
-    )
+    scenario_path = REPO_ROOT / "river_line/encounters/ley_heart/scenarios/ley_heart_phase_2.json"
 
     loaded = load_public_scenario(scenario_path)
 

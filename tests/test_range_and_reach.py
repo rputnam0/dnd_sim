@@ -40,7 +40,9 @@ def _actor(actor_id: str, team: str) -> ActorRuntimeState:
     )
 
 
-def _resources_for(*actors: ActorRuntimeState) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, dict[str, int]]]:
+def _resources_for(
+    *actors: ActorRuntimeState,
+) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, dict[str, int]]]:
     damage_dealt = {actor.actor_id: 0 for actor in actors}
     damage_taken = {actor.actor_id: 0 for actor in actors}
     threat_scores = {actor.actor_id: 0 for actor in actors}

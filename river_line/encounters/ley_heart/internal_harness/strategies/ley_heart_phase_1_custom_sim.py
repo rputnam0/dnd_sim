@@ -563,6 +563,7 @@ def run_custom_simulation(
         int(druid_attack_profile.get("to_hit", 8)) if druid_attack_profile else 8,
         str(druid_attack_profile.get("damage", "2d10+5")) if druid_attack_profile else "2d10+5",
     )
+
     # Read monk attack stats from character JSON instead of hard-coding.
     def _find_attack(actor: dict[str, Any], name_hint: str) -> tuple[int, str]:
         for atk in actor.get("attacks", []):
@@ -972,7 +973,7 @@ def run_custom_simulation(
     def druid_turn(exposed: bool, target_ac: int, state: dict[str, Any]) -> int:
         if state["druid_hp"] <= 0:
             return 0
-            
+
         # C1: Call Lightning logic
         cl_level = state.get("druid_call_lightning_active", 0)
         if cl_level > 0:
@@ -981,13 +982,13 @@ def run_custom_simulation(
             if _roll_d20() + 0 >= 15:  # Pylons have +0 DEX save vs DC 15
                 damage //= 2
             return _apply_resistance(damage, exposed)
-            
+
         slot_level = 0
         for lvl in (3, 4):
             if state.get(f"druid_spell_slots_{lvl}", 0) > 0:
                 slot_level = lvl
                 break
-                
+
         if slot_level > 0:
             state[f"druid_spell_slots_{slot_level}"] -= 1
             state["druid_call_lightning_active"] = slot_level
@@ -1549,14 +1550,14 @@ def run_custom_simulation(
             return False
         if bool(state.get("druid_bonus_used", False)):
             return False
-            
+
         # C2: Healing Word upcasting
         slot_level = 0
         for lvl in (1, 2, 3, 4):
             if state.get(f"druid_spell_slots_{lvl}", 0) > 0:
                 slot_level = lvl
                 break
-        
+
         if slot_level == 0:
             return False
 

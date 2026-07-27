@@ -70,17 +70,18 @@ def _setup_benchmark_scenario(
             "enemy_defeat": "all_dead",
             "max_rounds": max_rounds,
         },
-        "internal_harness": {"strategy_modules": [
-            {
-                "name": "focus_fire_lowest_hp",
-                "source": "builtin",
-                "class_name": "FocusFireLowestHPStrategy",
-            },
-            {
-                "name": "boss_highest_threat_target",
-                "source": "builtin",
-                "class_name": "BossHighestThreatTargetStrategy",
-            },
+        "internal_harness": {
+            "strategy_modules": [
+                {
+                    "name": "focus_fire_lowest_hp",
+                    "source": "builtin",
+                    "class_name": "FocusFireLowestHPStrategy",
+                },
+                {
+                    "name": "boss_highest_threat_target",
+                    "source": "builtin",
+                    "class_name": "BossHighestThreatTargetStrategy",
+                },
             ]
         },
         "resource_policy": {"mode": "combat_and_utility", "burst_round_threshold": 3},

@@ -1,0 +1,49 @@
+name: engine-trust-gate
+
+on:
+  pull_request:
+    paths:
+      - "src/dnd_sim/**"
+      - "tests/**"
+      - "db/rules/**"
+      - "rules/**"
+      - "river_line/**"
+      - "scripts/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/engine-trust-gate.yml"
+  push:
+    branches:
+      - "main"
+    paths:
+      - "src/dnd_sim/**"
+      - "tests/**"
+      - "db/rules/**"
+      - "rules/**"
+      - "river_line/**"
+      - "scripts/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/engine-trust-gate.yml"
+
+jobs:
+  verify-engine-trust-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Verify formatting
+        run: uv run python -m black --check .
+
+      - name: Run public scenario and terminal-outcome contracts
+        run: uv run python -m pytest tests/test_shipped_phase2_simulation.py tests/test_terminal_outcomes.py
+
+      - name: Run full test suite
+        run: uv run python -m pytest

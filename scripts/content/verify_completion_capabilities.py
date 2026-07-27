@@ -7,8 +7,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from dnd_sim.capability_evidence import (
+    CapabilityEvidenceError,
+    CapabilityEvidenceTarget,
+    SupportedPackEvidencePlan,
+    build_supported_pack_evidence_plan,
+    load_supported_capability_pack,
+    load_test_evidence_registry,
+    run_exact_pytest_nodes,
+)
+
 DEFAULT_MANIFEST_PATH = Path("artifacts/capabilities/manifest_2014.json")
+DEFAULT_EVIDENCE_REGISTRY_PATH = Path("db/rules/2014/capability_test_evidence.json")
 _REASON_CODE_PATTERN = re.compile(r"^[a-z0-9_]+$")
+_EVIDENCE_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._:-]*$")
 _STATE_BOOL_FIELDS = (
     "cataloged",
     "schema_valid",
@@ -101,6 +113,48 @@ def _unsupported_reason_or_issue(
         )
     )
     return ""
+
+
+def _evidence_ids_or_issue(
+    raw_record: Mapping[str, Any], *, content_id: str, issues: list[CapabilityIssue]
+) -> tuple[str, ...]:
+    raw_evidence_ids = raw_record.get("evidence_ids")
+    if not isinstance(raw_evidence_ids, list):
+        issues.append(
+            CapabilityIssue(
+                code="CAP-GATE-003",
+                message="evidence_ids must be an array of evidence identifier strings.",
+                content_id=content_id,
+            )
+        )
+        return ()
+
+    evidence_ids: list[str] = []
+    malformed = False
+    for raw_evidence_id in raw_evidence_ids:
+        if (
+            not isinstance(raw_evidence_id, str)
+            or _EVIDENCE_ID_PATTERN.fullmatch(raw_evidence_id) is None
+        ):
+            malformed = True
+            continue
+        evidence_ids.append(raw_evidence_id)
+    if (
+        malformed
+        or len(set(evidence_ids)) != len(evidence_ids)
+        or evidence_ids != sorted(evidence_ids, key=str.casefold)
+    ):
+        issues.append(
+            CapabilityIssue(
+                code="CAP-GATE-003",
+                message=(
+                    "evidence_ids must contain unique, canonically sorted evidence identifier "
+                    "strings."
+                ),
+                content_id=content_id,
+            )
+        )
+    return tuple(evidence_ids)
 
 
 def verify_manifest_payload(
@@ -231,6 +285,11 @@ def verify_manifest_payload(
             content_id=content_id,
             issues=issues,
         )
+        evidence_ids = _evidence_ids_or_issue(
+            raw_record,
+            content_id=content_id,
+            issues=issues,
+        )
         blocked = _as_bool(
             raw_states.get("blocked"),
             field_name="states.blocked",
@@ -251,15 +310,6 @@ def verify_manifest_payload(
                     content_id=content_id,
                 )
             )
-        if not schema_valid:
-            issues.append(
-                CapabilityIssue(
-                    code="CAP-GATE-008",
-                    message="schema_valid must be true for shipped scope.",
-                    content_id=content_id,
-                )
-            )
-
         if executable == blocked:
             issues.append(
                 CapabilityIssue(
@@ -268,12 +318,36 @@ def verify_manifest_payload(
                     content_id=content_id,
                 )
             )
+        if executable and not schema_valid:
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-010",
+                    message="executable content requires schema_valid=true.",
+                    content_id=content_id,
+                )
+            )
+        if tested and not executable:
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-010",
+                    message="tested content requires executable=true.",
+                    content_id=content_id,
+                )
+            )
+        if tested != bool(evidence_ids):
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-GATE-010",
+                    message="states.tested must equal bool(evidence_ids).",
+                    content_id=content_id,
+                )
+            )
 
-        if executable and not tested:
+        if strict and executable and not tested:
             issues.append(
                 CapabilityIssue(
                     code="CAP-GATE-007",
-                    message="executable content must also be tested.",
+                    message="strict mode requires executable content to have behavioral tests.",
                     content_id=content_id,
                 )
             )
@@ -366,11 +440,187 @@ def verify_completion_capabilities(
     return verify_manifest_payload(payload, expected_content_ids=expected_ids, strict=strict)
 
 
+def _repo_relative_path(repo_root: Path, path: Path) -> Path:
+    return path if path.is_absolute() else repo_root / path
+
+
+def _supported_pack_manifest_targets(
+    payload: Mapping[str, Any],
+) -> tuple[
+    tuple[CapabilityEvidenceTarget, ...],
+    dict[str, Mapping[str, Any]],
+    list[CapabilityIssue],
+]:
+    raw_records = payload.get("records")
+    if not isinstance(raw_records, list):
+        return (
+            (),
+            {},
+            [
+                CapabilityIssue(
+                    code="CAP-PACK-001",
+                    message="manifest payload must contain a records array for supported-pack verification.",
+                )
+            ],
+        )
+
+    targets: list[CapabilityEvidenceTarget] = []
+    records_by_id: dict[str, Mapping[str, Any]] = {}
+    issues: list[CapabilityIssue] = []
+    for index, raw_record in enumerate(raw_records):
+        if not isinstance(raw_record, Mapping):
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-PACK-001",
+                    message=f"manifest record at index {index} is not a JSON object.",
+                )
+            )
+            continue
+        content_id = raw_record.get("content_id")
+        states = raw_record.get("states")
+        if (
+            not isinstance(content_id, str)
+            or not content_id.strip()
+            or not isinstance(states, Mapping)
+        ):
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-PACK-001",
+                    message=(
+                        f"manifest record at index {index} must have a content_id and states object."
+                    ),
+                )
+            )
+            continue
+        normalized_id = content_id.strip()
+        required_bools = {
+            field_name: states.get(field_name)
+            for field_name in ("schema_valid", "executable", "blocked")
+        }
+        if any(not isinstance(value, bool) for value in required_bools.values()):
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-PACK-001",
+                    message=(
+                        "supported-pack verification requires boolean schema_valid, "
+                        "executable, and blocked states."
+                    ),
+                    content_id=normalized_id,
+                )
+            )
+            continue
+        if normalized_id in records_by_id:
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-PACK-001",
+                    message="duplicate content_id found in manifest.",
+                    content_id=normalized_id,
+                )
+            )
+            continue
+        records_by_id[normalized_id] = raw_record
+        targets.append(
+            CapabilityEvidenceTarget(
+                content_id=normalized_id,
+                schema_valid=required_bools["schema_valid"],
+                executable=required_bools["executable"],
+                blocked=required_bools["blocked"],
+            )
+        )
+    return tuple(targets), records_by_id, issues
+
+
+def verify_supported_pack_capabilities(
+    *,
+    repo_root: Path,
+    manifest_path: Path,
+    supported_pack_path: Path,
+    evidence_registry_path: Path,
+) -> tuple[SupportedPackEvidencePlan | None, list[CapabilityIssue]]:
+    """Validate one declared support pack against manifest state and traceable evidence."""
+
+    resolved_manifest_path = _repo_relative_path(repo_root, manifest_path)
+    resolved_pack_path = _repo_relative_path(repo_root, supported_pack_path)
+    resolved_registry_path = _repo_relative_path(repo_root, evidence_registry_path)
+    try:
+        payload = _manifest_payload_from_file(resolved_manifest_path)
+        pack = load_supported_capability_pack(resolved_pack_path)
+        registry = load_test_evidence_registry(resolved_registry_path)
+    except (OSError, UnicodeError, ValueError) as exc:
+        return None, [CapabilityIssue(code="CAP-PACK-001", message=str(exc))]
+
+    targets, records_by_id, issues = _supported_pack_manifest_targets(payload)
+    if issues:
+        return None, issues
+
+    try:
+        plan = build_supported_pack_evidence_plan(
+            pack=pack,
+            registry=registry,
+            targets=targets,
+        )
+    except CapabilityEvidenceError as exc:
+        return None, [CapabilityIssue(code="CAP-PACK-001", message=str(exc))]
+
+    evidence_ids_by_content: dict[str, tuple[str, ...]] = {}
+    for evidence in registry.evidence:
+        evidence_ids_by_content.setdefault(evidence.content_id, ())
+        evidence_ids_by_content[evidence.content_id] = (
+            *evidence_ids_by_content[evidence.content_id],
+            evidence.evidence_id,
+        )
+
+    for entry in pack.entries:
+        raw_record = records_by_id[entry.content_id]
+        states = raw_record["states"]
+        assert isinstance(states, Mapping)  # established by _supported_pack_manifest_targets
+        state_violations: list[str] = []
+        for field_name in ("cataloged", "schema_valid", "executable", "tested"):
+            if states.get(field_name) is not True:
+                state_violations.append(f"{field_name}=true")
+        if states.get("blocked") is not False:
+            state_violations.append("blocked=false")
+        if states.get("unsupported_reason") is not None:
+            state_violations.append("unsupported_reason=null")
+        if state_violations:
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-PACK-002",
+                    message=(
+                        "supported-pack content requires green manifest state: "
+                        + ", ".join(state_violations)
+                    ),
+                    content_id=entry.content_id,
+                )
+            )
+
+        expected_evidence_ids = tuple(
+            sorted(evidence_ids_by_content.get(entry.content_id, ()), key=str.casefold)
+        )
+        raw_evidence_ids = raw_record.get("evidence_ids")
+        if raw_evidence_ids != list(expected_evidence_ids):
+            issues.append(
+                CapabilityIssue(
+                    code="CAP-PACK-003",
+                    message=(
+                        "manifest evidence_ids must exactly match the sorted evidence registry "
+                        f"entries for this content (expected: {list(expected_evidence_ids)!r})."
+                    ),
+                    content_id=entry.content_id,
+                )
+            )
+
+    if issues:
+        return None, issues
+    return plan, []
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Verify that shipped 2014 content is fully cataloged in the capability manifest "
-            "and satisfies FIN-02 green gate rules."
+            "Verify structural integrity and complete catalog coverage for shipped 2014 "
+            "capability records. Optionally execute traceable evidence for one declared "
+            "supported pack."
         )
     )
     parser.add_argument(
@@ -385,15 +635,38 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="Optional explicit path to manifest JSON file.",
     )
-    parser.add_argument(
+    verification_mode = parser.add_mutually_exclusive_group()
+    verification_mode.add_argument(
         "--strict",
         action="store_true",
         help=(
-            "Enable strict FIN-02 mode: every shipped record must be executable+tested and "
-            "must not remain blocked."
+            "Legacy all-shipped strict mode: every shipped record must be executable+tested "
+            "and must not remain blocked."
+        ),
+    )
+    verification_mode.add_argument(
+        "--supported-pack",
+        type=Path,
+        default=None,
+        help=(
+            "Path to a supported-pack JSON contract. Validate its manifest records and run "
+            "the registry's exact behavioral evidence tests."
+        ),
+    )
+    parser.add_argument(
+        "--evidence-registry",
+        type=Path,
+        default=None,
+        help=(
+            "Optional evidence registry path for --supported-pack (defaults to "
+            "db/rules/2014/capability_test_evidence.json below --repo-root)."
         ),
     )
     args = parser.parse_args(argv)
+
+    if args.evidence_registry is not None and args.supported_pack is None:
+        print("CAP-PACK-001: --evidence-registry requires --supported-pack.")
+        return 1
 
     issues = verify_completion_capabilities(
         args.repo_root,
@@ -408,7 +681,49 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(f"{issue.code} [{issue.content_id}]: {issue.message}")
         return 1
 
-    print("Capability manifest completion gate passed.")
+    if args.supported_pack is not None:
+        manifest_path = args.manifest_path or (args.repo_root / DEFAULT_MANIFEST_PATH)
+        evidence_registry_path = (
+            args.evidence_registry
+            if args.evidence_registry is not None
+            else DEFAULT_EVIDENCE_REGISTRY_PATH
+        )
+        plan, pack_issues = verify_supported_pack_capabilities(
+            repo_root=args.repo_root,
+            manifest_path=manifest_path,
+            supported_pack_path=args.supported_pack,
+            evidence_registry_path=evidence_registry_path,
+        )
+        if pack_issues:
+            for issue in pack_issues:
+                if issue.content_id is None:
+                    print(f"{issue.code}: {issue.message}")
+                else:
+                    print(f"{issue.code} [{issue.content_id}]: {issue.message}")
+            return 1
+        assert plan is not None
+        try:
+            evidence_run = run_exact_pytest_nodes(
+                plan.pytest_node_ids,
+                repo_root=args.repo_root,
+            )
+        except CapabilityEvidenceError as exc:
+            print(f"CAP-PACK-004: {exc}")
+            return 1
+        test_label = "test" if evidence_run.passed_count == 1 else "tests"
+        print(
+            f"Supported capability pack {plan.pack_id!r} passed with "
+            f"{evidence_run.passed_count} exact behavioral evidence {test_label}."
+        )
+        return 0
+
+    if args.strict:
+        print("Strict capability support gate passed.")
+    else:
+        print(
+            "Capability catalog structural integrity gate passed; "
+            "blocked and untested records are permitted."
+        )
     return 0
 
 

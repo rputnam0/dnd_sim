@@ -27,6 +27,7 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
         actions=[],
     )
 
+
 class _NoRollRng:
     def randint(self, _a: int, _b: int) -> int:
         raise AssertionError("Attack roll should not be made when no legal route exists")

@@ -14,6 +14,8 @@ def _build_simulation_artifacts(
     core_result: SimulationCoreResult,
     run_id: str,
     scenario_id: str,
+    rules_profile_id: str,
+    rules_profile_version: str,
     trials: int,
 ) -> SimulationArtifacts:
     trial_rows = build_trial_rows(core_result.trial_results)
@@ -23,6 +25,8 @@ def _build_simulation_artifacts(
         trials=trials,
         trial_results=core_result.trial_results,
         tracked_resource_names=core_result.tracked_resource_names,
+        rules_profile_id=rules_profile_id,
+        rules_profile_version=rules_profile_version,
     )
     return SimulationArtifacts(
         trial_results=core_result.trial_results,
@@ -56,6 +60,8 @@ def run_simulation(
         core_result=core_result,
         run_id=run_id,
         scenario_id=scenario.config.scenario_id,
+        rules_profile_id=scenario.rules_profile.profile_id,
+        rules_profile_version=scenario.rules_profile.profile_version,
         trials=trials,
     )
 

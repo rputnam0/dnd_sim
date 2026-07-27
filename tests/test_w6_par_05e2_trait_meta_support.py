@@ -58,7 +58,7 @@ def test_w6_par_05e2_registry_scope_matches_truthful_leaf_contract() -> None:
     assert set(OWNED_TRAIT_FAMILIES) == EXPECTED_E2_TRAIT_IDS
 
 
-def test_w6_par_05e2_registry_owned_trait_records_are_supported() -> None:
+def test_w6_par_05e2_registry_owned_trait_records_are_non_executable() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
@@ -76,10 +76,13 @@ def test_w6_par_05e2_registry_owned_trait_records_are_supported() -> None:
     for content_id in sorted(OWNED_TRAIT_FAMILIES):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
         assert record.runtime_hook_family == "meta"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_w6_par_05e2_owned_trait_files_use_canonical_meta_rows() -> None:
@@ -109,7 +112,13 @@ def test_w6_par_05e2_leaves_runtime_traits_out_of_scope() -> None:
     for content_id in sorted(OUT_OF_SCOPE_RUNTIME_TRAIT_IDS):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.states.blocked is False
+        assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
         trait_id = content_id.split(":", 1)[1]
         path = TRAITS_DIR / f"{trait_id}.json"

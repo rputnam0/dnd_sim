@@ -71,7 +71,7 @@ def test_j2_b_owned_spell_records_are_supported() -> None:
         assert record.states.blocked is False
         assert record.states.schema_valid is True
         assert record.states.executable is True
-        assert record.states.tested is True
+        assert record.states.tested is False
         assert record.states.unsupported_reason is None
 
 

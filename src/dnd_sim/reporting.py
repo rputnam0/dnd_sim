@@ -116,11 +116,20 @@ def build_report_markdown(
         f"- Run ID: `{summary.get('run_id', 'unknown')}`",
         f"- Trials: `{summary.get('trials', 0)}`",
         f"- Seed: `{run_config.get('seed', 'unknown')}`",
+        f"- Ruleset: `{run_config.get('ruleset', 'unknown')}`",
+        "- Rules profile: "
+        f"`{run_config.get('rules_profile_id', summary.get('rules_profile_id', 'unknown'))}"
+        "@"
+        f"{run_config.get('rules_profile_version', summary.get('rules_profile_version', 'unknown'))}`",
         "",
         "## Outcome Overview",
         "",
         f"- Party win rate: `{summary.get('party_win_rate', 0):.3f}`",
         f"- Enemy win rate: `{summary.get('enemy_win_rate', 0):.3f}`",
+        f"- Draw rate: `{summary.get('draw_rate', 0):.3f}`",
+        f"- Timeout rate: `{summary.get('timeout_rate', 0):.3f}`",
+        f"- Censored rate: `{summary.get('censored_rate', 0):.3f}`",
+        f"- Resolved rate: `{summary.get('resolved_rate', 1):.3f}`",
     ]
 
     rounds = summary.get("rounds", {})

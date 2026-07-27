@@ -34,6 +34,7 @@ EXPECTED_RUNTIME_FAMILIES = {
     "trait:invincible_conqueror": "meta",
     "trait:master_of_hexes": "meta",
 }
+EXECUTABLE_G1_B_TRAIT_IDS = {"trait:infiltrator"}
 
 
 def _payload(content_id: str) -> dict[str, object]:
@@ -41,7 +42,7 @@ def _payload(content_id: str) -> dict[str, object]:
     return json.loads((TRAITS_DIR / f"{slug}.json").read_text(encoding="utf-8"))
 
 
-def test_g1_b_owned_trait_records_are_supported() -> None:
+def test_g1_b_owned_trait_records_reflect_executable_effects() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
@@ -50,11 +51,17 @@ def test_g1_b_owned_trait_records_are_supported() -> None:
 
     for content_id in sorted(G1_B_TRAIT_IDS):
         record = by_id[content_id]
+        expected_executable = content_id in EXECUTABLE_G1_B_TRAIT_IDS
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
         assert record.runtime_hook_family == EXPECTED_RUNTIME_FAMILIES[content_id]
+        assert record.support_state == ("supported" if expected_executable else "unsupported")
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is expected_executable
+        assert record.states.blocked is (not expected_executable)
+        assert record.states.unsupported_reason == (
+            None if expected_executable else "non_executable_mechanics"
+        )
 
 
 def test_g1_b_trait_files_use_canonical_mechanics_rows() -> None:

@@ -902,7 +902,6 @@ W6-PAR-05I1,spell:snilloc_s_snowball_swarm,missing_runtime_mechanics,spell_damag
 W6-PAR-05I1,spell:songal_s_elemental_suffusion,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
 W6-PAR-05I1,spell:sorcerous_burst,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
 W6-PAR-05I1,spell:spare_the_dying,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
-W6-PAR-05I1,spell:spare_the_dying_necromancy,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
 W6-PAR-05I1,spell:speak_with_animals,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
 W6-PAR-05I1,spell:speak_with_dead,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"
 W6-PAR-05I1,spell:speak_with_plants,missing_runtime_mechanics,spell_damage_heal_conditions,hotspot,"direct damage, healing, temp hp, condition, or forced movement mechanics"

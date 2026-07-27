@@ -116,7 +116,7 @@ def test_j2_a_owned_spell_records_are_supported() -> None:
         assert record.states.blocked is False
         assert record.states.schema_valid is True
         assert record.states.executable is True
-        assert record.states.tested is True
+        assert record.states.tested is False
         assert record.states.unsupported_reason is None
 
 
@@ -231,7 +231,9 @@ def test_j2_a_darkness_and_antimagic_use_existing_runtime_shapes() -> None:
     )
     active_hazards: list[dict[str, object]] = []
 
-    antimagic_effect = dict(_find_effect(_load_payload(OWNED_SPELL_PATHS["spell:antimagic_field"]), "hazard"))
+    antimagic_effect = dict(
+        _find_effect(_load_payload(OWNED_SPELL_PATHS["spell:antimagic_field"]), "hazard")
+    )
     _apply_effect(
         effect=antimagic_effect,
         rng=random.Random(7),
@@ -250,7 +252,9 @@ def test_j2_a_darkness_and_antimagic_use_existing_runtime_shapes() -> None:
     assert caster.concentrating is False
     assert "antimagic_suppressed" in caster.conditions
 
-    darkness_effect = dict(_find_effect(_load_payload(OWNED_SPELL_PATHS["spell:darkness"]), "hazard"))
+    darkness_effect = dict(
+        _find_effect(_load_payload(OWNED_SPELL_PATHS["spell:darkness"]), "hazard")
+    )
     darkness_effect["position"] = (5.0, 0.0, 0.0)
     darkness_effect["radius_ft"] = 15
     _apply_effect(
@@ -269,13 +273,16 @@ def test_j2_a_darkness_and_antimagic_use_existing_runtime_shapes() -> None:
     darkness_hazard = next(
         zone for zone in active_hazards if zone.get("hazard_type") == "magical_darkness"
     )
-    assert can_see(
-        observer_pos=enemy.position,
-        target_pos=caster.position,
-        observer_traits={},
-        target_conditions=set(caster.conditions),
-        active_hazards=[darkness_hazard],
-    ) is False
+    assert (
+        can_see(
+            observer_pos=enemy.position,
+            target_pos=caster.position,
+            observer_traits={},
+            target_conditions=set(caster.conditions),
+            active_hazards=[darkness_hazard],
+        )
+        is False
+    )
 
 
 def test_j2_a_blight_canonical_damage_row_is_extractable_for_save_actions() -> None:
@@ -311,7 +318,9 @@ def test_j2_a_spell_hazards_preserve_save_for_half_on_trigger_damage_without_act
             caster, actor
         )
         active_hazards: list[dict[str, object]] = []
-        cloudkill_effect = dict(_find_effect(_load_payload(OWNED_SPELL_PATHS["spell:cloudkill"]), "hazard"))
+        cloudkill_effect = dict(
+            _find_effect(_load_payload(OWNED_SPELL_PATHS["spell:cloudkill"]), "hazard")
+        )
         cloudkill_effect["position"] = actor.position
         cloudkill_effect["save_dc"] = 15
 

@@ -22,7 +22,7 @@ HOOKS_C_BACKGROUND_IDS = {
 }
 
 
-def test_background_hooks_c_records_are_supported() -> None:
+def test_background_hooks_c_records_are_cataloged_but_non_executable() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
@@ -40,6 +40,10 @@ def test_background_hooks_c_records_are_supported() -> None:
     for content_id in sorted(HOOKS_C_BACKGROUND_IDS):
         record = by_id[content_id]
         assert record.content_type == "background"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
         assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
