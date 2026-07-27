@@ -39,6 +39,15 @@ from .scene import (
     project_scene,
 )
 from .session_service import VTTSessionService, VTTSessionServiceError
+from .solo_table import (
+    SOLO_TABLE_CONTENT_VERSION,
+    SOLO_TABLE_ENGINE_VERSION,
+    SOLO_TABLE_MAX_ROUNDS,
+    SOLO_TABLE_RULES_VERSION,
+    SOLO_TABLE_SEED,
+    SoloTableFixture,
+    build_solo_table_fixture,
+)
 
 __all__ = [
     "EVENT_STORE_SCHEMA_VERSION",
@@ -57,6 +66,11 @@ __all__ = [
     "StoredSessionSnapshot",
     "SCENE_PROJECTION_SCHEMA_VERSION",
     "SCENE_SCHEMA_VERSION",
+    "SOLO_TABLE_CONTENT_VERSION",
+    "SOLO_TABLE_ENGINE_VERSION",
+    "SOLO_TABLE_MAX_ROUNDS",
+    "SOLO_TABLE_RULES_VERSION",
+    "SOLO_TABLE_SEED",
     "FeetPosition",
     "GridCell",
     "GridPixelTransform",
@@ -64,6 +78,7 @@ __all__ = [
     "SceneProjection",
     "SceneToken",
     "SquareGridScene",
+    "SoloTableFixture",
     "VTTCommand",
     "VTTCommitResponse",
     "VTTEvent",
@@ -73,5 +88,6 @@ __all__ = [
     "VTTSessionService",
     "VTTSessionServiceError",
     "VTTVersionInfo",
+    "build_solo_table_fixture",
     "project_scene",
 ]

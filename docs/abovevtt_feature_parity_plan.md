@@ -52,9 +52,9 @@ then restart and recover it exactly.
 - [x] Complete actor runtime codec and deterministic RNG snapshot/restore.
 - [x] Shared batch/interactive turn resolution with a real declaration prompt.
 - [x] Append-only SQLite command, receipt, and snapshot store.
-- [ ] Fixed-roster initiative cursor with round, victory, defeat, and timeout.
-- [ ] Strict `vtt.command.v1` application boundary over engine sessions.
-- [ ] Versioned square-grid scene and token projection.
+- [x] Fixed-roster initiative cursor with round, victory, defeat, and timeout.
+- [x] Strict `vtt.command.v1` application boundary over engine sessions.
+- [x] Versioned square-grid scene and token projection.
 - [ ] Legal movement, action, target, initiative, HP, condition, and rules-event
       read model.
 - [ ] HTTP JSON endpoints for create/load/read/preview/commit.
@@ -174,4 +174,3 @@ optional media features.
 4. Build the legal-choice/table read model.
 5. Add a minimal HTTP/event-stream gateway.
 6. Ship the browser P0 loop and its end-to-end recovery test.
-

@@ -19,7 +19,7 @@ and VTT must resolve a declared turn through the same domain function.
 
 - [x] Extract one synchronous actor-turn kernel containing start automation,
       the decision seam, action/bonus resolution, turn end, and legendary actions.
-- [ ] Persist combat only at `awaiting_declaration` or `terminal` boundaries.
+- [x] Persist combat only at `awaiting_declaration` or `terminal` boundaries.
 - [x] Extract deterministic automatic phases (turn start, hazards, death saves,
       forced dodge, turn end, legendary actions) around the prompted turn.
 - [x] Keep reactions explicitly auto-resolved until a resumable reaction
@@ -40,10 +40,10 @@ and VTT must resolve a declared turn through the same domain function.
 ## Milestone 4: Solo Table v0
 
 - [x] Add an append-only SQLite command/receipt/snapshot store.
-- [ ] Add a single-session VTT application boundary over the engine session and store.
+- [x] Add a single-session VTT application boundary over the engine session and store.
 - [ ] Add an HTTP/WebSocket gateway with a separate `vtt.command.v1` transport
       contract.
-- [ ] Add an original fixed encounter with a square-grid scene and tokens.
+- [x] Add an original fixed encounter with a square-grid scene and tokens.
 - [ ] Add the browser table: selection, movement preview/commit, action palette,
       target selection, initiative, HP/effects, dice/rules log, and win/loss.
 - [ ] Add an end-to-end test that completes the encounter, restarts the service,
