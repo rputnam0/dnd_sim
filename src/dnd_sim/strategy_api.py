@@ -74,6 +74,13 @@ class ActorView:
     hidden: bool = False
     detected_by: set[str] = field(default_factory=set)
     surprised: bool = False
+    dead: bool = False
+    stable: bool = False
+    uses_death_saves: bool | None = None
+    death_successes: int = 0
+    death_failures: int = 0
+    stable_recovery_hours_remaining: int | None = None
+    creature_type: str = "unknown"
 
 
 @dataclass(slots=True)
@@ -123,15 +130,38 @@ class BaseStrategy:
                 )
             )
 
-        enemies = [
-            view for view in state.actors.values() if view.team != actor.team and view.hp > 0
+        stabilize_effects = [
+            effect
+            for key in ("effects", "mechanics")
+            for effect in action_info.get(key, [])
+            if isinstance(effect, dict)
+            and str(effect.get("effect_type", "")).strip().lower() == "stabilize"
         ]
-        allies = [view for view in state.actors.values() if view.team == actor.team and view.hp > 0]
-        everyone = [view for view in state.actors.values() if view.hp > 0]
+
+        def _eligible_stabilize_target(view: ActorView) -> bool:
+            if view.dead or view.hp != 0 or view.stable or view.uses_death_saves is False:
+                return False
+            creature_type = view.creature_type.strip().lower()
+            return any(
+                creature_type
+                not in {
+                    str(entry).strip().lower()
+                    for entry in effect.get("excluded_creature_types", [])
+                }
+                for effect in stabilize_effects
+            )
+
+        if stabilize_effects:
+            everyone = [view for view in state.actors.values() if _eligible_stabilize_target(view)]
+        else:
+            everyone = [view for view in state.actors.values() if view.hp > 0 and not view.dead]
+        enemies = [view for view in everyone if view.team != actor.team]
+        allies = [view for view in everyone if view.team == actor.team]
 
         explicit_modes = {
             "single_enemy",
             "single_ally",
+            "single_creature",
             "n_enemies",
             "n_allies",
             "random_enemy",
@@ -143,6 +173,8 @@ class BaseStrategy:
         elif mode == "all_allies":
             pool = allies
         elif mode == "all_creatures":
+            pool = everyone
+        elif mode == "single_creature":
             pool = everyone
         elif mode in {"single_ally", "n_allies", "random_ally"}:
             pool = allies

@@ -89,6 +89,7 @@ from dnd_sim.rules_2014 import (
     DamageRollEvent,
     ListenerSubscription,
     ReactionWindowOpenedEvent,
+    advance_stable_recovery,
     apply_damage,
     apply_damage_bundle,
     attack_roll,
@@ -100,7 +101,9 @@ from dnd_sim.rules_2014 import (
     roll_damage,
     roll_damage_packet,
     run_concentration_check,
+    stabilize_creature,
 )
+from dnd_sim.rules_profiles import ActorKind, SupportedRulesProfile
 from dnd_sim.strategy_api import (
     ActorView,
     BattleStateView,
@@ -1729,6 +1732,32 @@ def _normalize_attack_definition(raw_attack: Any, idx: int) -> dict[str, Any]:
         elif reach_ft is not None:
             range_ft = reach_ft
 
+    attack_delivery = str(attack.get("attack_delivery") or "").strip().lower() or None
+    supported_deliveries = {
+        "melee_weapon_attack",
+        "ranged_weapon_attack",
+        "melee_spell_attack",
+        "ranged_spell_attack",
+    }
+    if attack_delivery is not None and attack_delivery not in supported_deliveries:
+        raise ValueError(f"invalid attack_delivery: {attack_delivery!r}")
+    if attack_delivery is None:
+        property_set = set(weapon_properties)
+        name_lower = attack_name.lower()
+        ranged_by_property = bool(property_set.intersection({"ammunition", "ranged"}))
+        ranged_by_profile = (
+            range_normal_ft is not None
+            and range_normal_ft > 5
+            and reach_ft is None
+            and "reach" not in property_set
+        )
+        ranged_by_name = any(hint in name_lower for hint in _RANGED_WEAPON_HINTS)
+        attack_delivery = (
+            "ranged_weapon_attack"
+            if ranged_by_property or ranged_by_profile or ranged_by_name
+            else "melee_weapon_attack"
+        )
+
     normalized = dict(attack)
     normalized.update(
         {
@@ -1736,6 +1765,7 @@ def _normalize_attack_definition(raw_attack: Any, idx: int) -> dict[str, Any]:
             "weapon_id": weapon_id,
             "item_id": item_id,
             "weapon_properties": weapon_properties,
+            "attack_delivery": attack_delivery,
             "reach_ft": reach_ft,
             "range_ft": range_ft,
             "range_normal_ft": range_normal_ft,
@@ -1782,6 +1812,10 @@ def _is_weapon_attack_action(action: ActionDefinition) -> bool:
 
 
 def _is_ranged_weapon_action(action: ActionDefinition) -> bool:
+    if action.attack_delivery == "ranged_weapon_attack":
+        return True
+    if action.attack_delivery == "melee_weapon_attack":
+        return False
     if not _is_weapon_attack_action(action):
         return False
     has_ranged_property = _action_has_weapon_property(
@@ -1908,7 +1942,39 @@ def _apply_artificer_infusion_passives(actor: ActorRuntimeState) -> None:
         _ensure_action(actor, _construct_command_action())
 
 
-def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRuntimeState:
+def _resolve_actor_death_save_policy(
+    *,
+    actor_kind: ActorKind,
+    explicit: bool | None,
+    rules_profile: SupportedRulesProfile | None,
+    legacy_default: bool,
+) -> bool:
+    if rules_profile is not None:
+        return rules_profile.resolve_uses_death_saves(
+            actor_kind=actor_kind,
+            explicit=explicit,
+        )
+    return explicit if explicit is not None else legacy_default
+
+
+def _resolve_summon_death_save_policy(
+    source: ActorRuntimeState,
+    effect: dict[str, Any],
+) -> bool:
+    explicit = effect.get("uses_death_saves")
+    if not isinstance(explicit, bool):
+        return source.summon_uses_death_saves_default
+    if not source.death_save_overrides_allowed:
+        raise ValueError("rules profile does not allow explicit actor overrides")
+    return explicit
+
+
+def _build_construct_companion(
+    owner: ActorRuntimeState,
+    kind: str,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
+) -> ActorRuntimeState:
     proficiency = _calculate_proficiency_bonus(owner.level)
     if kind == "steel_defender":
         max_hp = max(1, 2 + owner.int_mod + (5 * owner.level))
@@ -1982,7 +2048,14 @@ def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRunt
         cha_mod=cha_mod,
         save_mods=save_mods,
         actions=[attack] + _get_standard_actions(),
-        uses_death_saves=False,
+        uses_death_saves=_resolve_actor_death_save_policy(
+            actor_kind="construct",
+            explicit=None,
+            rules_profile=rules_profile,
+            legacy_default=False,
+        ),
+        summon_uses_death_saves_default=owner.summon_uses_death_saves_default,
+        death_save_overrides_allowed=owner.death_save_overrides_allowed,
         resources={},
         max_resources={},
         traits=traits,
@@ -1992,16 +2065,21 @@ def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRunt
         allied_controller_id=owner.actor_id,
         requires_command=True,
         movement_modes={"walk": float(speed)},
+        creature_type="construct",
     )
     companion.position = owner.position
     companion.movement_remaining = float(speed)
     return companion
 
 
-def _build_construct_companions(owner: ActorRuntimeState) -> list[ActorRuntimeState]:
+def _build_construct_companions(
+    owner: ActorRuntimeState,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
+) -> list[ActorRuntimeState]:
     companions: list[ActorRuntimeState] = []
     for kind in sorted(_discover_construct_companion_kinds(owner)):
-        companions.append(_build_construct_companion(owner, kind))
+        companions.append(_build_construct_companion(owner, kind, rules_profile=rules_profile))
     return companions
 
 
@@ -3731,6 +3809,10 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 action_type_text = str(spell_def.get("action_type") or "").strip().lower()
                 if action_type_text:
                     hydrated["action_type"] = action_type_text
+            if "attack_delivery" in spell_def:
+                attack_delivery_text = str(spell_def.get("attack_delivery") or "").strip().lower()
+                if attack_delivery_text:
+                    hydrated["attack_delivery"] = attack_delivery_text
             if "target_mode" in spell_def:
                 target_mode_text = str(spell_def.get("target_mode") or "").strip().lower()
                 if target_mode_text:
@@ -3983,7 +4065,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             hydrated["tags"] = list(dict.fromkeys(tags))
 
         if (
-            target_mode in {"single_enemy", "single_ally"}
+            target_mode in {"single_enemy", "single_ally", "single_creature"}
             and not hydrated.get("aoe_type")
             and not non_single_target
         ):
@@ -4076,6 +4158,7 @@ def _clone_action(action: ActionDefinition, **overrides: Any) -> ActionDefinitio
     payload: dict[str, Any] = {
         "name": action.name,
         "action_type": action.action_type,
+        "attack_delivery": action.attack_delivery,
         "attack_profile_id": action.attack_profile_id,
         "weapon_id": action.weapon_id,
         "item_id": action.item_id,
@@ -4469,6 +4552,7 @@ def _build_spell_actions(
         is_ritual = _spell_is_ritual(spell) and spell_level > 0
         smite_setup = _is_smite_spell_name(name)
         action_type = str(spell.get("action_type", "attack"))
+        attack_delivery = str(spell.get("attack_delivery") or "").strip().lower() or None
         damage = spell.get("damage")
         damage_type = str(spell.get("damage_type", "fire"))
         to_hit = spell.get("to_hit")
@@ -4555,6 +4639,7 @@ def _build_spell_actions(
         action = ActionDefinition(
             name=name,
             action_type=action_type,
+            attack_delivery=attack_delivery,
             to_hit=int(to_hit) if to_hit is not None else None,
             damage=str(damage) if damage else None,
             damage_type=damage_type,
@@ -5110,6 +5195,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             "weapon_id": str(attack.get("weapon_id") or ""),
             "item_id": str(attack.get("item_id") or ""),
             "weapon_properties": list(attack.get("weapon_properties", [])),
+            "attack_delivery": attack.get("attack_delivery"),
             "reach_ft": _coerce_optional_int(attack.get("reach_ft")),
             "range_ft": _coerce_optional_int(attack.get("range_ft")),
             "range_normal_ft": _coerce_optional_int(attack.get("range_normal_ft")),
@@ -5594,6 +5680,28 @@ def _get_standard_actions() -> list[ActionDefinition]:
             tags=["standard_action"],
         ),
         ActionDefinition(
+            name="stabilize",
+            action_type="utility",
+            action_cost="action",
+            target_mode="single_creature",
+            reach_ft=5,
+            tags=[
+                "standard_action",
+                "medicine_check",
+                "requires_unstable_zero_hp",
+                "requires_line_of_effect",
+            ],
+            mechanics=[
+                {
+                    "effect_type": "stabilize",
+                    "target": "target",
+                    "apply_on": "always",
+                    "check_skill": "medicine",
+                    "check_dc": 10,
+                }
+            ],
+        ),
+        ActionDefinition(
             name="grapple",
             action_type="grapple",
             action_cost="action",
@@ -5874,6 +5982,7 @@ def _build_item_granted_action(
     return ActionDefinition(
         name=name,
         action_type=action_type,
+        attack_delivery=(str(payload.get("attack_delivery") or "").strip().lower() or None),
         to_hit=_coerce_optional_int(payload.get("to_hit")),
         damage=str(payload.get("damage")) if payload.get("damage") is not None else None,
         damage_type=str(payload.get("damage_type", "force")),
@@ -6276,6 +6385,8 @@ def _build_actor_from_character(
     character: dict[str, Any],
     traits_db: dict[str, dict[str, Any]] = None,
     item_catalog: dict[str, CanonicalItem] | None = None,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
 ) -> ActorRuntimeState:
     class_levels = _class_levels_from_character_payload(character)
     character_level = total_character_level(class_levels)
@@ -6307,13 +6418,32 @@ def _build_actor_from_character(
         cha_mod=ability_mods.get("cha", 0),
         save_mods=save_mods,
         actions=_build_character_actions(character) + _get_standard_actions(),
-        uses_death_saves=(
-            character["uses_death_saves"]
-            if isinstance(character.get("uses_death_saves"), bool)
+        uses_death_saves=_resolve_actor_death_save_policy(
+            actor_kind="player_character",
+            explicit=(
+                character["uses_death_saves"]
+                if isinstance(character.get("uses_death_saves"), bool)
+                else None
+            ),
+            rules_profile=rules_profile,
+            legacy_default=True,
+        ),
+        summon_uses_death_saves_default=(
+            rules_profile.resolve_uses_death_saves(actor_kind="summon")
+            if rules_profile is not None
+            else False
+        ),
+        death_save_overrides_allowed=(
+            rules_profile.zero_hit_point_policy.allow_explicit_actor_override
+            if rules_profile is not None
             else True
         ),
         proficiencies={str(v).lower() for v in character.get("proficiencies", [])},
         expertise={str(v).lower() for v in character.get("expertise", [])},
+        skill_mods={
+            str(key).strip().lower(): int(value)
+            for key, value in (character.get("skill_mods", {}) or {}).items()
+        },
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
         traits=_resolve_character_traits(character, traits_db),
@@ -6326,6 +6456,7 @@ def _build_actor_from_character(
         speed_ft=int(character.get("speed_ft", 30)),
         movement_modes={"walk": float(int(character.get("speed_ft", 30)))},
         exhaustion_level=max(0, min(6, int(character.get("exhaustion_level", 0) or 0))),
+        creature_type=str(character.get("creature_type", "humanoid")).strip().lower() or "humanoid",
     )
     actor.hidden = bool(character.get("hidden", False))
     actor.surprised = bool(character.get("surprised", False))
@@ -6370,6 +6501,7 @@ def _build_actor_from_character(
             actor.resources[resource_name] = max(
                 0, min(int(actor.max_resources[resource_name]), resource_amount)
             )
+    _materialize_actor_attack_deliveries(actor)
     actor.movement_remaining = float(actor.speed_ft)
     return actor
 
@@ -6507,6 +6639,9 @@ def _build_enemy_innate_spell_actions(enemy: EnemyConfig) -> list[ActionDefiniti
             ActionDefinition(
                 name=spell_name,
                 action_type=action_type,
+                attack_delivery=(
+                    str(spell_def.get("attack_delivery") or "").strip().lower() or None
+                ),
                 to_hit=to_hit,
                 damage=damage_expr,
                 damage_type=damage_type or "force",
@@ -6535,7 +6670,10 @@ def _build_enemy_innate_spell_actions(enemy: EnemyConfig) -> list[ActionDefiniti
 
 
 def _build_actor_from_enemy(
-    enemy: EnemyConfig, traits_db: dict[str, dict[str, Any]] = None
+    enemy: EnemyConfig,
+    traits_db: dict[str, dict[str, Any]] = None,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
 ) -> ActorRuntimeState:
     normalized_traits_db = {
         _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
@@ -6553,6 +6691,7 @@ def _build_actor_from_enemy(
                 ActionDefinition(
                     name=action.name,
                     action_type=action.action_type,
+                    attack_delivery=getattr(action, "attack_delivery", None),
                     attack_profile_id=getattr(action, "attack_profile_id", None),
                     weapon_id=getattr(action, "weapon_id", None),
                     item_id=getattr(action, "item_id", None),
@@ -6631,7 +6770,22 @@ def _build_actor_from_enemy(
         cha_mod=_enemy_ability_mod("cha"),
         save_mods=dict(enemy.stat_block.save_mods),
         actions=actions,
-        uses_death_saves=bool(getattr(enemy, "uses_death_saves", False)),
+        uses_death_saves=_resolve_actor_death_save_policy(
+            actor_kind="monster",
+            explicit=getattr(enemy, "uses_death_saves", None),
+            rules_profile=rules_profile,
+            legacy_default=False,
+        ),
+        summon_uses_death_saves_default=(
+            rules_profile.resolve_uses_death_saves(actor_kind="summon")
+            if rules_profile is not None
+            else False
+        ),
+        death_save_overrides_allowed=(
+            rules_profile.zero_hit_point_policy.allow_explicit_actor_override
+            if rules_profile is not None
+            else True
+        ),
         damage_resistances={v.lower() for v in enemy.damage_resistances},
         damage_immunities={v.lower() for v in enemy.damage_immunities},
         damage_vulnerabilities={v.lower() for v in enemy.damage_vulnerabilities},
@@ -6642,6 +6796,10 @@ def _build_actor_from_enemy(
         legendary_actions_remaining=legendary_pool,
         proficiencies={str(v).lower() for v in enemy.script_hooks.get("proficiencies", [])},
         expertise={str(v).lower() for v in enemy.script_hooks.get("expertise", [])},
+        skill_mods={
+            str(key).strip().lower(): int(value)
+            for key, value in (enemy.script_hooks.get("skill_mods", {}) or {}).items()
+        },
         traits={
             _normalize_trait_name(trait): _normalize_trait_payload_for_runtime(
                 _normalize_trait_name(trait),
@@ -6651,6 +6809,9 @@ def _build_actor_from_enemy(
         },
         speed_ft=enemy_speed_ft,
         movement_modes={"walk": float(enemy_speed_ft)},
+        creature_type=(
+            str(getattr(enemy.identity, "creature_type", "unknown")).strip().lower() or "unknown"
+        ),
     )
     actor.hidden = bool(enemy.script_hooks.get("hidden", False))
     actor.surprised = bool(enemy.script_hooks.get("surprised", False))
@@ -6674,10 +6835,12 @@ def _build_actor_from_enemy(
     actor.movement_remaining = float(actor.speed_ft)
     _apply_passive_traits(actor)
     _register_actor_feature_hooks(actor)
+    _materialize_actor_attack_deliveries(actor)
     return actor
 
 
 def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
+    advance_stable_recovery(actor, hours=1)
     if actor.hp > 0 and not actor.dead:
         actor.hp = min(actor.max_hp, actor.hp + healing)
 
@@ -6713,6 +6876,8 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
 
 
 def long_rest(actor: ActorRuntimeState) -> None:
+    if actor.dead:
+        return
     _revert_wild_shape(actor)
     actor.hp = actor.max_hp
     actor.temp_hp = 0
@@ -6725,7 +6890,9 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.effect_instance_seq = 0
     actor.death_failures = 0
     actor.death_successes = 0
-    actor.downed_count = 0
+    actor.stable = False
+    actor.was_downed = False
+    actor.stable_recovery_hours_remaining = None
     actor.concentrating = False
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
@@ -6860,7 +7027,15 @@ def _run_exploration_leg(
 
     travel_pace = _normalize_travel_pace(leg_config.get("travel_pace", "normal"))
     segments = _determine_exploration_segments(leg_config, travel_pace)
+    try:
+        elapsed_hours = max(0, int(leg_config.get("duration_hours", 0)))
+    except (TypeError, ValueError):
+        elapsed_hours = 0
     if segments <= 0:
+        if elapsed_hours > 0:
+            for actor in actors.values():
+                if actor.team == "party":
+                    advance_stable_recovery(actor, hours=elapsed_hours)
         return
 
     hazard_dc_modifier = _TRAVEL_PACE_HAZARD_DC_MODIFIER.get(travel_pace, 0)
@@ -6919,6 +7094,11 @@ def _run_exploration_leg(
                     resources_spent=resources_spent,
                 )
 
+    if elapsed_hours > 0:
+        for actor in actors.values():
+            if actor.team == "party":
+                advance_stable_recovery(actor, hours=elapsed_hours)
+
 
 def _build_actor_views(
     actors: dict[str, ActorRuntimeState],
@@ -6946,6 +7126,13 @@ def _build_actor_views(
                 hidden=actor.hidden,
                 detected_by=set(actor.detected_by),
                 surprised=actor.surprised,
+                dead=actor.dead,
+                stable=actor.stable,
+                uses_death_saves=actor.uses_death_saves,
+                death_successes=actor.death_successes,
+                death_failures=actor.death_failures,
+                stable_recovery_hours_remaining=actor.stable_recovery_hours_remaining,
+                creature_type=actor.creature_type,
             )
             for actor_id, actor in actors.items()
         },
@@ -6962,16 +7149,6 @@ def _actor_uses_death_saves(actor: ActorRuntimeState) -> bool:
     if actor.uses_death_saves is not None:
         return actor.uses_death_saves
     return actor.team == "party"
-
-
-def _finalize_zero_hp_without_death_saves(actor: ActorRuntimeState) -> None:
-    if actor.hp > 0 or actor.dead or _actor_uses_death_saves(actor):
-        return
-    actor.hp = 0
-    actor.dead = True
-    actor.stable = False
-    actor.death_failures = max(3, actor.death_failures)
-    actor.update_manual_conditions({"dead", "unconscious", "incapacitated"})
 
 
 def _team_actors(actors: dict[str, ActorRuntimeState], *, team: str) -> list[ActorRuntimeState]:
@@ -7048,8 +7225,6 @@ def _team_defeated(
     team_members = _team_actors(actors, team=team)
     if not team_members:
         return False
-    for actor in team_members:
-        _finalize_zero_hp_without_death_saves(actor)
 
     rule = rule_spec if rule_spec is not None else default_rule
     if isinstance(rule, dict):
@@ -7122,7 +7297,14 @@ def _actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
         "max_hp": actor.max_hp,
         "temp_hp": actor.temp_hp,
         "dead": actor.dead,
+        "stable": actor.stable,
+        "uses_death_saves": actor.uses_death_saves,
+        "death_successes": actor.death_successes,
+        "death_failures": actor.death_failures,
+        "stable_recovery_hours_remaining": actor.stable_recovery_hours_remaining,
         "downed_count": actor.downed_count,
+        "was_downed": actor.was_downed,
+        "creature_type": actor.creature_type,
         "conditions": sorted(actor.conditions),
         "resources": dict(sorted(actor.resources.items())),
         "hidden": actor.hidden,
@@ -7372,6 +7554,10 @@ def _has_action_tag(action: ActionDefinition, tag: str) -> bool:
 
 
 def _is_probably_ranged_attack(action: ActionDefinition) -> bool:
+    if action.attack_delivery in {"ranged_weapon_attack", "ranged_spell_attack"}:
+        return True
+    if action.attack_delivery in {"melee_weapon_attack", "melee_spell_attack"}:
+        return False
     has_ranged_property = _action_has_weapon_property(
         action, "ammunition"
     ) or _action_has_weapon_property(action, "ranged")
@@ -7416,6 +7602,10 @@ def _action_range_ft(action: ActionDefinition) -> float | None:
     if action.action_type in {"grapple", "shove"}:
         return 5.0
     if action.action_type == "attack":
+        if action.attack_delivery in {"ranged_weapon_attack", "ranged_spell_attack"}:
+            return 60.0
+        if action.attack_delivery in {"melee_weapon_attack", "melee_spell_attack"}:
+            return 5.0
         if _has_action_tag(action, "spell"):
             return 60.0
         if _is_probably_ranged_attack(action):
@@ -7431,6 +7621,10 @@ def _action_range_ft(action: ActionDefinition) -> float | None:
 def _is_ranged_attack_action(action: ActionDefinition) -> bool:
     if action.action_type != "attack":
         return False
+    if action.attack_delivery in {"ranged_weapon_attack", "ranged_spell_attack"}:
+        return True
+    if action.attack_delivery in {"melee_weapon_attack", "melee_spell_attack"}:
+        return False
     if _is_ranged_weapon_action(action):
         return True
     if _has_action_tag(action, "ranged") or _has_action_tag(action, "ranged_attack"):
@@ -7440,6 +7634,33 @@ def _is_ranged_attack_action(action: ActionDefinition) -> bool:
         return False
     inferred_range = _action_range_ft(action)
     return bool(inferred_range is not None and inferred_range > 5.0)
+
+
+def _materialize_attack_delivery(action: ActionDefinition) -> None:
+    if action.action_type != "attack" or action.attack_delivery is not None:
+        return
+    metadata_deliveries = {
+        str(row.get("effect_type", "")).strip().lower()
+        for row in [*action.effects, *action.mechanics]
+        if isinstance(row, dict)
+        and str(row.get("effect_type", "")).strip().lower()
+        in {"melee_spell_attack", "ranged_spell_attack"}
+    }
+    if len(metadata_deliveries) > 1:
+        raise ValueError(f"Action '{action.name}' has conflicting attack delivery metadata.")
+    if metadata_deliveries:
+        action.attack_delivery = next(iter(metadata_deliveries))
+        return
+    if _has_action_tag(action, "spell"):
+        return
+    action.attack_delivery = (
+        "ranged_weapon_attack" if _is_ranged_attack_action(action) else "melee_weapon_attack"
+    )
+
+
+def _materialize_actor_attack_deliveries(actor: ActorRuntimeState) -> None:
+    for action in actor.actions:
+        _materialize_attack_delivery(action)
 
 
 def _action_max_range_ft(action: ActionDefinition) -> float | None:
@@ -7934,9 +8155,52 @@ def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
             continue
         if effect.get("target") != "target":
             continue
-        if effect.get("effect_type") in {"heal", "temp_hp", "remove_condition", "resource_change"}:
+        if effect.get("effect_type") in {
+            "heal",
+            "temp_hp",
+            "stabilize",
+            "remove_condition",
+            "resource_change",
+        }:
             return True
     return False
+
+
+def _is_stabilize_action(action: ActionDefinition) -> bool:
+    return bool(_stabilize_effects(action))
+
+
+def _stabilize_effects(action: ActionDefinition) -> list[dict[str, Any]]:
+    return [
+        effect
+        for effect in [*action.effects, *action.mechanics]
+        if isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).strip().lower() == "stabilize"
+    ]
+
+
+def _can_be_stabilized(target: ActorRuntimeState) -> bool:
+    return (
+        target.hp == 0
+        and not target.dead
+        and not target.stable
+        and target.uses_death_saves is not False
+    )
+
+
+def _stabilize_effect_allows_target(
+    effect: dict[str, Any],
+    target: ActorRuntimeState,
+) -> bool:
+    excluded_creature_types = {
+        str(creature_type).strip().lower()
+        for creature_type in effect.get("excluded_creature_types", [])
+        if str(creature_type).strip()
+    }
+    return (
+        _can_be_stabilized(target)
+        and target.creature_type.strip().lower() not in excluded_creature_types
+    )
 
 
 def _target_pool(
@@ -8230,6 +8494,13 @@ def _resolve_targets_for_action(
             target
             for target in candidates
             if not any(_has_trait_marker(target, marker) for marker in excluded_target_traits)
+        ]
+    stabilize_effects = _stabilize_effects(action)
+    if stabilize_effects:
+        candidates = [
+            target
+            for target in candidates
+            if any(_stabilize_effect_allows_target(effect, target) for effect in stabilize_effects)
         ]
     if not candidates:
         return []
@@ -9602,6 +9873,7 @@ def _apply_healing(target: ActorRuntimeState, amount: int) -> None:
         target.death_failures = 0
         target.stable = False
         target.was_downed = False
+        target.stable_recovery_hours_remaining = None
         _remove_condition(target, "unconscious")
         _remove_condition(target, "incapacitated")
 
@@ -9924,6 +10196,53 @@ def _apply_effect(
             )
         return
 
+    if effect_type == "stabilize":
+        stabilized = False
+        check_skill = str(effect.get("check_skill") or "").strip().lower() or None
+        check_roll: int | None = None
+        check_modifier: int | None = None
+        check_dc: int | None = None
+        check_passed: bool | None = None
+        target_eligible = _stabilize_effect_allows_target(effect, recipient)
+        if target_eligible:
+            if check_skill is not None:
+                if check_skill != "medicine":
+                    raise ValueError(f"Unsupported stabilization check skill: {check_skill!r}")
+                check_roll = rng.randint(1, 20)
+                check_modifier = _medicine_check_mod(actor)
+                check_dc = int(effect.get("check_dc", 10))
+                check_passed = check_roll + check_modifier >= check_dc
+            else:
+                check_passed = True
+            if check_passed:
+                stabilized = stabilize_creature(
+                    recipient,
+                    recovery_hours=rng.randint(1, 4),
+                )
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "stabilize",
+                    "applied_amount": int(stabilized),
+                    "target_eligible": target_eligible,
+                    "check_skill": check_skill,
+                    "check_roll": check_roll,
+                    "check_modifier": check_modifier,
+                    "check_dc": check_dc,
+                    "check_passed": check_passed,
+                    "stable_recovery_hours_remaining": (recipient.stable_recovery_hours_remaining),
+                }
+            )
+        return
+
     if effect_type == "apply_condition":
         before_conditions = set(recipient.conditions)
         save_dc = effect.get("save_dc")
@@ -10221,11 +10540,9 @@ def _apply_effect(
             cha_mod=0,
             save_mods={"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
             actions=summon_actions + _get_standard_actions(),
-            uses_death_saves=(
-                effect["uses_death_saves"]
-                if isinstance(effect.get("uses_death_saves"), bool)
-                else False
-            ),
+            uses_death_saves=_resolve_summon_death_save_policy(actor, effect),
+            summon_uses_death_saves_default=actor.summon_uses_death_saves_default,
+            death_save_overrides_allowed=actor.death_save_overrides_allowed,
             speed_ft=summon_speed,
             position=_to_position3(effect.get("position")) or actor.position,
             requires_command=requires_command,
@@ -10233,6 +10550,7 @@ def _apply_effect(
             allied_controller_id=(controller_id or None) if summon_team == actor.team else None,
             mount_controller_id=(controller_id or None) if is_mount else None,
             movement_modes={"walk": float(summon_speed)},
+            creature_type=str(effect.get("creature_type", "unknown")).strip().lower() or "unknown",
         )
         summoned_actor.movement_remaining = float(summon_speed)
         summoned_actor.add_manual_condition("summoned")
@@ -10787,6 +11105,19 @@ def _acrobatics_check_mod(actor: ActorRuntimeState) -> int:
         if "acrobatics" in actor.expertise:
             mod += _calculate_proficiency_bonus(actor.level)
     return mod
+
+
+def _medicine_check_mod(actor: ActorRuntimeState) -> int:
+    explicit = actor.skill_mods.get("medicine")
+    if explicit is not None:
+        return int(explicit)
+    modifier = int(actor.wis_mod)
+    proficiency = _calculate_proficiency_bonus(actor.level)
+    if "medicine" in actor.expertise:
+        return modifier + (2 * proficiency)
+    if "medicine" in actor.proficiencies:
+        return modifier + proficiency
+    return modifier
 
 
 def _resolve_shove_mode(action: ActionDefinition, target: ActorRuntimeState) -> str:
@@ -14353,6 +14684,7 @@ def _build_round_metadata(
                 {
                     "name": action.name,
                     "action_type": action.action_type,
+                    "attack_delivery": action.attack_delivery,
                     "attack_profile_id": action.attack_profile_id,
                     "weapon_id": action.weapon_id,
                     "item_id": action.item_id,
@@ -14697,7 +15029,11 @@ def run_simulation_core(
         for character_id in scenario.config.party:
             if character_id not in character_db:
                 raise ValueError(f"Character ID missing from DB: {character_id}")
-            actor = _build_actor_from_character(character_db[character_id], traits_db)
+            actor = _build_actor_from_character(
+                character_db[character_id],
+                traits_db,
+                rules_profile=scenario.rules_profile,
+            )
             actors[actor.actor_id] = actor
             damage_taken[actor.actor_id] = 0
             damage_dealt[actor.actor_id] = 0
@@ -14706,7 +15042,10 @@ def run_simulation_core(
             downed_counts[actor.actor_id] = 0
             death_counts[actor.actor_id] = 0
 
-            for companion in _build_construct_companions(actor):
+            for companion in _build_construct_companions(
+                actor,
+                rules_profile=scenario.rules_profile,
+            ):
                 if companion.actor_id in actors:
                     continue
                 actors[companion.actor_id] = companion
@@ -14753,7 +15092,11 @@ def run_simulation_core(
                     else enemy_id
                 )
 
-                actor = _build_actor_from_enemy(scenario.enemies[enemy_id], traits_db)
+                actor = _build_actor_from_enemy(
+                    scenario.enemies[enemy_id],
+                    traits_db,
+                    rules_profile=scenario.rules_profile,
+                )
                 actor.actor_id = unique_enemy_id
                 actor.position = (0.0, 30.0, 0.0)
                 actors[actor.actor_id] = actor
@@ -14928,7 +15271,8 @@ def run_simulation_core(
                         continue
 
                     if actor.hp <= 0:
-                        resolve_death_save(rng, actor)
+                        if _actor_uses_death_saves(actor):
+                            resolve_death_save(rng, actor)
                         _resolve_turn_end(actor, f"{rounds}:{actor.actor_id}")
                         continue
 
@@ -15357,6 +15701,8 @@ def run_simulation_core(
             outcome=overall_outcome,
             termination_reason=overall_termination_reason,
             censored=overall_censored,
+            rules_profile_id=scenario.rules_profile.profile_id,
+            rules_profile_version=scenario.rules_profile.profile_version,
         )
         trial_results.append(trial)
 

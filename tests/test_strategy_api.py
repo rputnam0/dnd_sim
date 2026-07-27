@@ -100,3 +100,52 @@ def test_same_strategy_with_different_tactical_bonus_action_choices_produces_dis
 def test_turn_declaration_omitted_bonus_action_defaults_to_none() -> None:
     declaration = TurnDeclaration()
     assert declaration.bonus_action is None
+
+
+def test_base_strategy_can_declare_stabilization_for_a_downed_creature() -> None:
+    healer, state = _build_state()
+    downed = ActorView(
+        actor_id="downed",
+        team="party",
+        hp=0,
+        max_hp=20,
+        ac=12,
+        save_mods={},
+        resources={},
+        conditions={"unconscious"},
+        position=(5.0, 0.0, 0.0),
+        speed_ft=30,
+        movement_remaining=0.0,
+        traits={},
+        uses_death_saves=True,
+    )
+    state.actors[downed.actor_id] = downed
+    state.actor_order.append(downed.actor_id)
+    state.metadata = {
+        "available_actions": {healer.actor_id: ["stabilize"]},
+        "action_catalog": {
+            healer.actor_id: [
+                {
+                    "name": "stabilize",
+                    "action_type": "utility",
+                    "target_mode": "single_creature",
+                    "reach_ft": 5,
+                    "mechanics": [
+                        {
+                            "effect_type": "stabilize",
+                            "target": "target",
+                            "check_skill": "medicine",
+                            "check_dc": 10,
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+
+    declaration = BaseStrategy().declare_turn(healer, state)
+
+    assert declaration is not None
+    assert declaration.action is not None
+    assert declaration.action.action_name == "stabilize"
+    assert declaration.action.targets == [TargetRef(actor_id="downed")]

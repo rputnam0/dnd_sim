@@ -7,7 +7,16 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 from pydantic_core import PydanticCustomError
 
-from dnd_sim.mechanics_schema import KNOWN_EFFECT_TYPES
+from dnd_sim.mechanics_schema import (
+    KNOWN_EFFECT_TYPES,
+    validate_effect_specific_mechanic_fields,
+)
+from dnd_sim.models import AttackDelivery
+from dnd_sim.rules_profiles import (
+    DEFAULT_RULES_PROFILE_ID,
+    DEFAULT_RULES_PROFILE_VERSION,
+    SupportedRulesProfile,
+)
 from dnd_sim.spells import lookup_spell_definition as _lookup_spell_definition
 
 _RECHARGE_PATTERN = re.compile(
@@ -66,6 +75,7 @@ def _extract_action_reference_name(reference: Any) -> str | None:
 class ActionConfig(BaseModel):
     name: str
     action_type: Literal["attack", "save", "utility"] = "attack"
+    attack_delivery: AttackDelivery | None = None
     attack_profile_id: str | None = None
     weapon_id: str | None = None
     item_id: str | None = None
@@ -88,6 +98,7 @@ class ActionConfig(BaseModel):
     target_mode: Literal[
         "single_enemy",
         "single_ally",
+        "single_creature",
         "self",
         "all_enemies",
         "all_allies",
@@ -116,6 +127,12 @@ class ActionConfig(BaseModel):
         if value is not None and value <= 0:
             raise ValueError("max_targets must be >= 1")
         return value
+
+    @model_validator(mode="after")
+    def validate_attack_delivery(self) -> "ActionConfig":
+        if self.attack_delivery is not None and self.action_type != "attack":
+            raise ValueError("attack_delivery requires action_type='attack'")
+        return self
 
     @field_validator("trigger_duration_rounds", "trigger_limit_per_turn")
     @classmethod
@@ -182,6 +199,12 @@ class ActionConfig(BaseModel):
                 )
             payload = dict(row)
             payload["effect_type"] = effect_type
+            field_issues = validate_effect_specific_mechanic_fields(
+                payload,
+                path=f"mechanics[{index}]",
+            )
+            if field_issues:
+                raise ValueError("; ".join(field_issues))
             normalized.append(payload)
         return normalized
 
@@ -227,6 +250,15 @@ class TempHPEffectConfig(BaseModel):
     apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
     target: Literal["target", "source"] = "source"
     amount: str
+
+
+class StabilizeEffectConfig(BaseModel):
+    effect_type: Literal["stabilize"]
+    apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
+    target: Literal["target", "source"] = "target"
+    check_skill: Literal["medicine"] | None = None
+    check_dc: int = Field(default=10, ge=1)
+    excluded_creature_types: list[str] = Field(default_factory=list)
 
 
 class ApplyConditionEffectConfig(BaseModel):
@@ -293,7 +325,8 @@ class SummonEffectConfig(BaseModel):
     controller: Literal["source", "target"] | None = None
     controller_id: str | None = None
     mount: bool = False
-    uses_death_saves: bool = False
+    uses_death_saves: bool | None = None
+    creature_type: str = "unknown"
 
     @model_validator(mode="after")
     def validate_summon_identity(self) -> "SummonEffectConfig":
@@ -342,6 +375,7 @@ EffectConfig = Annotated[
     DamageEffectConfig
     | HealEffectConfig
     | TempHPEffectConfig
+    | StabilizeEffectConfig
     | ApplyConditionEffectConfig
     | RemoveConditionEffectConfig
     | ResourceChangeEffectConfig
@@ -361,6 +395,7 @@ class EnemyIdentityConfig(BaseModel):
     enemy_id: str
     name: str
     team: str = "enemy"
+    creature_type: str = "unknown"
 
 
 class EnemyStatBlockConfig(BaseModel):
@@ -410,7 +445,7 @@ class EnemyConfig(BaseModel):
     identity: EnemyIdentityConfig
     stat_block: EnemyStatBlockConfig
     actions: list[ActionConfig]
-    uses_death_saves: bool = False
+    uses_death_saves: bool | None = None
     bonus_actions: list[ActionConfig] = Field(default_factory=list)
     reactions: list[ActionConfig] = Field(default_factory=list)
     legendary_actions: list[ActionConfig] = Field(default_factory=list)
@@ -618,6 +653,8 @@ class ScenarioConfig(BaseModel):
     scenario_id: str
     encounter_id: str
     ruleset: str
+    rules_profile_id: str = DEFAULT_RULES_PROFILE_ID
+    rules_profile_version: str = DEFAULT_RULES_PROFILE_VERSION
     character_db_dir: str
     party: list[str]
     enemies: list[str] = Field(default_factory=list)
@@ -711,3 +748,4 @@ class LoadedScenario(BaseModel):
     scenario_path: str
     config: RuntimeScenarioConfig
     enemies: dict[str, EnemyConfig]
+    rules_profile: SupportedRulesProfile

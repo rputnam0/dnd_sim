@@ -16,6 +16,7 @@ from dnd_sim.telemetry import build_ai_action_rationale_trace, build_ai_candidat
 _EXPLICIT_TARGET_MODES = {
     "single_enemy",
     "single_ally",
+    "single_creature",
     "n_enemies",
     "n_allies",
     "random_enemy",
@@ -98,6 +99,48 @@ def _catalog_action_by_name(actor, state, action_name: str | None) -> dict[str, 
         if str(action.get("name", "")) == action_name:
             return action
     return None
+
+
+def _stabilize_effects(action: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        effect
+        for key in ("effects", "mechanics")
+        for effect in action.get(key, [])
+        if isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).strip().lower() == "stabilize"
+    ]
+
+
+def _eligible_stabilize_target(action: dict[str, Any], target: Any) -> bool:
+    effects = _stabilize_effects(action)
+    if (
+        not effects
+        or bool(getattr(target, "dead", False))
+        or target.hp != 0
+        or bool(getattr(target, "stable", False))
+        or getattr(target, "uses_death_saves", None) is False
+    ):
+        return False
+    creature_type = str(getattr(target, "creature_type", "unknown")).strip().lower()
+    return any(
+        creature_type
+        not in {str(entry).strip().lower() for entry in effect.get("excluded_creature_types", [])}
+        for effect in effects
+    )
+
+
+def _eligible_downed_support_target(action: dict[str, Any], target: Any) -> bool:
+    if bool(getattr(target, "dead", False)) or target.hp != 0:
+        return False
+    if _eligible_stabilize_target(action, target):
+        return True
+    return any(
+        isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).strip().lower() == "heal"
+        and str(effect.get("target", "target")).strip().lower() == "target"
+        for key in ("effects", "mechanics")
+        for effect in action.get(key, [])
+    )
 
 
 def _living_enemies(actor, state) -> list[Any]:
@@ -356,7 +399,9 @@ def _declare_turn_for_action(
         if ref.actor_id in seen:
             continue
         target = actors_by_id.get(ref.actor_id)
-        if target is None or target.hp <= 0:
+        if target is None or (
+            target.hp <= 0 and not _eligible_downed_support_target(action, target)
+        ):
             continue
         candidate_path = _movement_path_to_target(
             actor,
@@ -371,7 +416,13 @@ def _declare_turn_for_action(
             movement_path = candidate_path
         legal_targets.append(TargetRef(actor_id=ref.actor_id))
         seen.add(ref.actor_id)
-        if mode in {"single_enemy", "single_ally", "random_enemy", "random_ally"}:
+        if mode in {
+            "single_enemy",
+            "single_ally",
+            "single_creature",
+            "random_enemy",
+            "random_ally",
+        }:
             break
 
     if not legal_targets:
@@ -414,6 +465,28 @@ def _default_targets_for_action(actor, state, action_name: str | None) -> list[T
     if action and action.get("target_mode") == "all_creatures":
         everyone = [view for view in state.actors.values() if view.hp > 0]
         return [TargetRef(actor_id=entry.actor_id) for entry in everyone]
+    if action and action.get("target_mode") == "single_creature":
+        stabilize_targets = [
+            view for view in state.actors.values() if _eligible_stabilize_target(action, view)
+        ]
+        if stabilize_targets:
+            target = min(
+                stabilize_targets,
+                key=lambda entry: (
+                    entry.team != actor.team,
+                    entry.death_failures,
+                    entry.actor_id,
+                ),
+            )
+            return [TargetRef(actor_id=target.actor_id)]
+        living = [
+            view
+            for view in state.actors.values()
+            if view.actor_id != actor.actor_id and view.hp > 0 and not view.dead
+        ]
+        if living:
+            return [TargetRef(actor_id=living[0].actor_id)]
+        return []
     if action and action.get("target_mode") == "n_enemies":
         count = int(action.get("max_targets") or 1)
         ranked = sorted(enemies, key=lambda entry: (entry.hp, entry.max_hp))
@@ -1274,6 +1347,24 @@ class OptimalExpectedDamageStrategy(BaseStrategy):
         if action and action.get("target_mode") == "all_creatures":
             everyone = [view for view in state.actors.values() if view.hp > 0]
             return [TargetRef(actor_id=entry.actor_id) for entry in everyone]
+        if action and action.get("target_mode") == "single_creature":
+            stabilize_targets = [
+                view for view in state.actors.values() if _eligible_stabilize_target(action, view)
+            ]
+            if stabilize_targets:
+                reachable = [
+                    view for view in stabilize_targets if _can_reach_target(actor, action, view)
+                ]
+                pool = reachable if reachable else stabilize_targets
+                target = min(
+                    pool,
+                    key=lambda entry: (
+                        entry.team != actor.team,
+                        -entry.death_failures,
+                        entry.actor_id,
+                    ),
+                )
+                return [TargetRef(actor_id=target.actor_id)]
 
         def _can_reach(target) -> bool:
             return _can_reach_target(actor, action or {}, target)

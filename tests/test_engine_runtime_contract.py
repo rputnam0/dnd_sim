@@ -46,7 +46,13 @@ def test_engine_facade_delegates_to_engine_runtime(monkeypatch) -> None:
         lambda **_: sentinel_summary,
     )
 
-    scenario = SimpleNamespace(config=SimpleNamespace(scenario_id="fixture"))
+    scenario = SimpleNamespace(
+        config=SimpleNamespace(scenario_id="fixture"),
+        rules_profile=SimpleNamespace(
+            profile_id="5e_2014_combat_foundation",
+            profile_version="1.0.0",
+        ),
+    )
     character_db = {"hero": {"name": "Hero"}}
     traits_db = {"alert": {}}
     strategy_registry = {"focus": object()}

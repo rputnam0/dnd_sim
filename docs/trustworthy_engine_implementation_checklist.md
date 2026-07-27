@@ -96,9 +96,9 @@ in separate feature branches after this trust gate is reviewed.
 
 ```bash
 uv run python -m pytest <targeted regression paths>
-uv run python scripts/mechanics_coverage.py --strict --supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json
+uv run python scripts/mechanics_coverage.py --strict --supported-pack db/rules/2014/supported_packs/combat_primitives_v1.json
 uv run python scripts/content/verify_completion_capabilities.py
-uv run python scripts/content/verify_completion_capabilities.py --supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json
+uv run python scripts/content/verify_completion_capabilities.py --supported-pack db/rules/2014/supported_packs/combat_primitives_v1.json
 uv run python scripts/docs/verify_program_docs.py
 uv run python -m black --check .
 uv run python -m pytest

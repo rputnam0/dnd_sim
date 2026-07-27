@@ -4,7 +4,9 @@
   "level": 0,
   "school": "Necromancy",
   "casting_time": "action",
-  "range_ft": 0,
+  "action_type": "utility",
+  "target_mode": "single_creature",
+  "range_ft": 5,
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
@@ -13,10 +15,13 @@
   "damage_type": null,
   "mechanics": [
     {
-      "effect_type": "remove_condition",
+      "effect_type": "stabilize",
       "target": "target",
       "apply_on": "always",
-      "condition": "dying"
+      "excluded_creature_types": [
+        "undead",
+        "construct"
+      ]
     }
   ]
 }

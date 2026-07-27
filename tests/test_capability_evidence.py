@@ -346,7 +346,13 @@ def test_execution_requires_every_exact_node_to_pass(tmp_path: Path) -> None:
 def test_repository_seed_registry_and_pack_form_an_exact_supported_plan() -> None:
     registry = load_test_evidence_registry(DEFAULT_EVIDENCE_REGISTRY_PATH)
     pack = load_supported_capability_pack(DEFAULT_SUPPORTED_PACKS_DIR / "combat_primitives_v0.json")
-    targets = tuple(_target(entry.content_id) for entry in pack.entries)
+    targets = tuple(
+        _target(content_id)
+        for content_id in sorted(
+            {entry.content_id for entry in pack.entries}
+            | {record.content_id for record in registry.evidence}
+        )
+    )
 
     plan = build_supported_pack_evidence_plan(
         pack=pack,
@@ -361,6 +367,28 @@ def test_repository_seed_registry_and_pack_form_an_exact_supported_plan() -> Non
     )
     assert len(plan.evidence_ids) == 3
     assert len(plan.pytest_node_ids) == 3
+
+
+def test_repository_mortality_pack_has_exact_spare_the_dying_evidence() -> None:
+    registry = load_test_evidence_registry(DEFAULT_EVIDENCE_REGISTRY_PATH)
+    pack = load_supported_capability_pack(DEFAULT_SUPPORTED_PACKS_DIR / "combat_primitives_v1.json")
+    targets = tuple(_target(entry.content_id) for entry in pack.entries)
+
+    plan = build_supported_pack_evidence_plan(
+        pack=pack,
+        registry=registry,
+        targets=targets,
+    )
+
+    assert plan.content_ids == (
+        "spell:acid_arrow",
+        "spell:cure_wounds",
+        "spell:spare_the_dying",
+        "spell:thunderwave",
+    )
+    assert "pytest.spell.spare_the_dying.stabilization.v1" in plan.evidence_ids
+    assert len(plan.evidence_ids) == 4
+    assert len(plan.pytest_node_ids) == 6
 
 
 def test_registry_loader_rejects_non_json_object(tmp_path: Path) -> None:

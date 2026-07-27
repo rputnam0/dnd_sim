@@ -988,7 +988,7 @@ def test_w6_par_05i1_spiritual_weapon_uses_spellcasting_mod_damage_once() -> Non
     damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, target)
 
     _execute_action(
-        rng=FixedRng([10, 10, 4]),
+        rng=FixedRng([10, 4]),
         actor=caster,
         action=action,
         targets=[target],

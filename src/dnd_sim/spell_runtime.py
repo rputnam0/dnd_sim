@@ -50,6 +50,7 @@ def mode_requires_explicit_targets(mode: str) -> bool:
     return mode in {
         "single_enemy",
         "single_ally",
+        "single_creature",
         "n_enemies",
         "n_allies",
         "random_enemy",

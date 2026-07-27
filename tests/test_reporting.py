@@ -120,13 +120,19 @@ def test_report_contains_required_sections_and_pngs(tmp_path: Path) -> None:
 
     report = build_report_markdown(
         summary=summary,
-        run_config={"scenario_id": loaded.config.scenario_id, "seed": 5},
+        run_config={
+            "scenario_id": loaded.config.scenario_id,
+            "seed": 5,
+            **loaded.rules_profile.reference(),
+        },
         plot_paths=plot_paths,
     )
     assert "## Scenario Config Snapshot" in report
     assert "## Outcome Overview" in report
     assert "## Per-Combatant Metrics" in report
     assert "## Resource Consumption" in report
+    assert "5e-2014" in report
+    assert "5e_2014_combat_foundation@1.0.0" in report
 
 
 def test_report_cli_uses_trial_rows_path_from_run_config(tmp_path: Path, monkeypatch) -> None:

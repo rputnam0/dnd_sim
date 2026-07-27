@@ -730,12 +730,12 @@ def test_capability_workflows_cover_canonical_content_and_current_pull_requests(
 
     assert (
         "uv run python scripts/content/verify_completion_capabilities.py "
-        "--supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json"
+        "--supported-pack db/rules/2014/supported_packs/combat_primitives_v1.json"
         in completion_workflow
     )
     assert (
         "uv run python scripts/mechanics_coverage.py --strict "
-        "--supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json"
+        "--supported-pack db/rules/2014/supported_packs/combat_primitives_v1.json"
         in completion_workflow
     )
 

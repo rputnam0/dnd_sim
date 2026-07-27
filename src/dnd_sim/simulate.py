@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
+from typing import Any
 
 from dnd_sim.engine import run_simulation
 from dnd_sim.io import (
@@ -17,9 +18,46 @@ from dnd_sim.io import (
     write_trial_rows,
 )
 from dnd_sim.reporting import build_report_markdown, generate_plots_from_trials
+from dnd_sim.rules_profiles import SupportedRulesProfile
 from dnd_sim.telemetry import emit_event
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_custom_output_provenance(
+    *,
+    summary_payload: Any,
+    trial_rows: Any,
+    rules_profile: SupportedRulesProfile,
+) -> None:
+    """Reject custom-runner artifacts that cannot support their rules claim."""
+
+    expected = (rules_profile.profile_id, rules_profile.profile_version)
+    if not isinstance(summary_payload, dict):
+        raise ValueError("Custom simulation summary must be a dictionary payload.")
+    summary_profile = (
+        summary_payload.get("rules_profile_id"),
+        summary_payload.get("rules_profile_version"),
+    )
+    if summary_profile != expected:
+        raise ValueError(
+            f"Custom simulation summary rules profile {summary_profile} "
+            f"does not match loaded profile {expected}."
+        )
+    if not isinstance(trial_rows, list):
+        raise ValueError("Custom simulation trial_rows must be a list.")
+    for index, row in enumerate(trial_rows):
+        if not isinstance(row, dict):
+            raise ValueError(f"Custom simulation trial row {index} must be a dictionary.")
+        row_profile = (
+            row.get("rules_profile_id"),
+            row.get("rules_profile_version"),
+        )
+        if row_profile != expected:
+            raise ValueError(
+                f"Custom simulation trial row {index} rules profile {row_profile} "
+                f"does not match loaded profile {expected}."
+            )
 
 
 def _load_traits_db_for_run(character_db_dir: Path) -> dict:
@@ -78,6 +116,11 @@ def main() -> None:
 
         summary_payload = custom_output["summary"]
         trial_rows = custom_output["trial_rows"]
+        _validate_custom_output_provenance(
+            summary_payload=summary_payload,
+            trial_rows=trial_rows,
+            rules_profile=loaded.rules_profile,
+        )
         report_md = custom_output.get("report_markdown")
         plot_paths = custom_output.get("plot_paths", {})
         trial_path = write_trial_rows(run_dir / "trial_rows", trial_rows)
@@ -106,6 +149,8 @@ def main() -> None:
                 "trials": args.trials,
                 "trial_rows_path": str(trial_path),
                 "ruleset": loaded.config.ruleset,
+                "rules_profile_id": loaded.rules_profile.profile_id,
+                "rules_profile_version": loaded.rules_profile.profile_version,
                 "results_root": str(results_root),
                 "run_name": run_name,
             },
@@ -119,6 +164,8 @@ def main() -> None:
         "trials": args.trials,
         "trial_rows_path": str(trial_path),
         "ruleset": loaded.config.ruleset,
+        "rules_profile_id": loaded.rules_profile.profile_id,
+        "rules_profile_version": loaded.rules_profile.profile_version,
         "results_root": str(results_root),
         "run_name": run_name,
         "custom_simulation": bool(custom_runner),
@@ -143,6 +190,8 @@ def main() -> None:
             "report_path": str(run_dir / "report.md"),
             "trial_rows_path": str(trial_path),
             "custom_simulation": bool(custom_runner),
+            "rules_profile_id": loaded.rules_profile.profile_id,
+            "rules_profile_version": loaded.rules_profile.profile_version,
         },
     )
 

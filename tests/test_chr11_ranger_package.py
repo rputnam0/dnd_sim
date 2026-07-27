@@ -137,6 +137,7 @@ def test_colossus_slayer_applies_once_per_turn_and_resets_next_turn() -> None:
     )
     target = _enemy("ogre")
     target.hp = 40
+    target.position = (30.0, 0.0, 0.0)
     basic = next(action for action in ranger.actions if action.name == "basic")
     single_attack = replace(basic, attack_count=1)
 
@@ -192,6 +193,7 @@ def test_colossus_slayer_does_not_proc_off_turn_attack() -> None:
     )
     target = _enemy("ogre")
     target.hp = 40
+    target.position = (30.0, 0.0, 0.0)
     basic = next(action for action in ranger.actions if action.name == "basic")
     reaction_attack = replace(basic, attack_count=1, action_cost="reaction")
 
@@ -226,6 +228,7 @@ def test_colossus_slayer_does_not_proc_against_full_hp_target() -> None:
         traits_db={},
     )
     target = _enemy("ogre")
+    target.position = (30.0, 0.0, 0.0)
     basic = next(action for action in ranger.actions if action.name == "basic")
     single_attack = replace(basic, attack_count=1)
 
@@ -261,11 +264,13 @@ def test_colossus_slayer_does_not_proc_for_spell_tagged_attack() -> None:
     )
     target = _enemy("ogre")
     target.hp = 40
+    target.position = (5.0, 0.0, 0.0)
     basic = next(action for action in ranger.actions if action.name == "basic")
     single_attack = replace(basic, attack_count=1)
     spell_tagged_attack = replace(
         single_attack,
         tags=[*single_attack.tags, "spell"],
+        attack_delivery="melee_spell_attack",
         range_ft=5,
         range_normal_ft=None,
         range_long_ft=None,
