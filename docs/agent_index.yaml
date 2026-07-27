@@ -139,6 +139,7 @@ subsystems:
       - "Session setup, initiative ordering, and round progression stay deterministic under fixed seeds."
       - "engine.py remains a stable facade that delegates orchestration into engine_runtime."
       - "Round transition semantics preserve existing combat lifecycle hooks."
+      - "Event-triggered actions skip self or cyclic re-entry within the active causal chain before further state mutation."
     safe_edit_boundaries:
       - "Safe: extracting helper methods and tightening orchestration-level contracts."
       - "Caution: round start/end ordering and initiative tie-breaking behavior."
@@ -210,6 +211,9 @@ subsystems:
       - "Opportunity reactions expose deterministic typed windows and validate explicit use/pass decisions before resource, RNG, or combat-state mutation."
       - "Reaction strategy callbacks receive the reacting actor and a freshly assembled battle-state view."
       - "Sentinel opportunity windows bypass Disengage per reactor and reduce speed only after a confirmed opportunity hit, stopping downstream reactions against the abandoned path."
+      - "Trait reactions expose per-attack typed use/pass windows, validate before mutation, execute exactly one selected melee attack without off-turn movement, and preserve resource/use/recharge bookkeeping."
+      - "Reaction window and option IDs are deterministic opaque identities that bind trigger, hook, candidate, and fixed-target context without delimiter collisions."
+      - "Readied spells complete declaration, component, Counterspell, and cast-trigger reactions when armed; release resolves the held spell without casting it again."
     safe_edit_boundaries:
       - "Safe: trigger matcher decomposition and additive reaction hooks."
       - "Caution: reaction lockout state transitions and timing edge cases."

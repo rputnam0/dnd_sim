@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import random
 from dataclasses import replace
@@ -58,18 +60,80 @@ def _reaction_decision_error(
     )
 
 
-def _position_token(position: tuple[float, float, float]) -> str:
-    return ",".join(f"{coordinate:g}" for coordinate in position)
+_REACTION_ID_SCHEMA = "dnd_sim.reaction_id.v1"
 
 
-def _opportunity_option_id(
+def _opaque_reaction_id(
     *,
-    reactor_id: str,
-    action: ActionDefinition,
-    option_index: int,
+    entity: str,
+    kind: str,
+    identity: dict[str, Any],
 ) -> str:
-    action_key = str(action.attack_profile_id or action.name).strip() or "attack"
-    return f"{reactor_id}:opportunity_attack:{option_index}:{action_key}"
+    """Return a stable opaque ID from a canonical, typed identity payload."""
+
+    encoded = json.dumps(
+        {
+            "schema": _REACTION_ID_SCHEMA,
+            "entity": entity,
+            "kind": kind,
+            "identity": identity,
+        },
+        allow_nan=False,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    digest = hashlib.sha256(encoded).hexdigest()
+    prefix = "rw1" if entity == "window" else "ro1"
+    return f"{prefix}_{digest}"
+
+
+def _reaction_action_identity(
+    *,
+    action: ActionDefinition,
+    reach_ft: float,
+) -> dict[str, Any]:
+    return {
+        "attack_profile_id": (
+            str(action.attack_profile_id).strip() if action.attack_profile_id is not None else None
+        ),
+        "name": str(action.name),
+        "action_type": str(action.action_type),
+        "attack_delivery": action.attack_delivery,
+        "target_mode": str(action.target_mode),
+        "attack_bonus": action.to_hit,
+        "damage_expression": action.damage,
+        "damage_type": str(action.damage_type),
+        "reach_ft": float(reach_ft),
+        "resource_cost": [
+            [str(key), int(amount)]
+            for key, amount in sorted(action.resource_cost.items())
+            if int(amount) > 0
+        ],
+    }
+
+
+def _reaction_option_id(
+    *,
+    kind: str,
+    window_id: str,
+    reactor_id: str,
+    fixed_target_ids: tuple[str, ...],
+    option_index: int,
+    action: ActionDefinition,
+    reach_ft: float,
+) -> str:
+    return _opaque_reaction_id(
+        entity="option",
+        kind=kind,
+        identity={
+            "window_id": window_id,
+            "reactor_id": reactor_id,
+            "fixed_target_ids": list(fixed_target_ids),
+            "option_index": int(option_index),
+            "action": _reaction_action_identity(action=action, reach_ft=reach_ft),
+        },
+    )
 
 
 def build_opportunity_attack_window(
@@ -86,21 +150,47 @@ def build_opportunity_attack_window(
     mover_disengaged: bool,
     on_hit_effects: tuple[str, ...] = (),
 ) -> ReactionWindowView:
+    candidate_identities = [
+        _reaction_action_identity(action=action, reach_ft=reach_ft)
+        for action, reach_ft in candidates
+    ]
+    window_id = _opaque_reaction_id(
+        entity="window",
+        kind="opportunity_attack",
+        identity={
+            "round_number": round_number,
+            "turn_token": turn_token,
+            "reactor_id": reactor.actor_id,
+            "mover_id": mover.actor_id,
+            "window_ordinal": int(window_ordinal),
+            "trigger_point": [float(coordinate) for coordinate in trigger_point],
+            "trigger_distance": float(trigger_distance),
+            "movement_source": str(movement_source),
+            "mover_disengaged": bool(mover_disengaged),
+            "on_hit_effects": list(on_hit_effects),
+            "candidates": candidate_identities,
+        },
+    )
     options: list[ReactionOptionView] = []
     for option_index, (action, reach_ft) in enumerate(candidates):
         legal_zero_hp_intents: tuple[ZeroHPIntent, ...] = ("normal",)
         if action.attack_delivery in {"melee_weapon_attack", "melee_spell_attack"}:
             legal_zero_hp_intents = ("normal", "knock_out")
+        fixed_target_ids = (mover.actor_id,)
         options.append(
             ReactionOptionView(
-                option_id=_opportunity_option_id(
+                option_id=_reaction_option_id(
+                    kind="opportunity_attack",
+                    window_id=window_id,
                     reactor_id=reactor.actor_id,
+                    fixed_target_ids=fixed_target_ids,
                     action=action,
                     option_index=option_index,
+                    reach_ft=reach_ft,
                 ),
                 action_name=action.name,
-                fixed_target_ids=(mover.actor_id,),
-                legal_target_ids=(mover.actor_id,),
+                fixed_target_ids=fixed_target_ids,
+                legal_target_ids=fixed_target_ids,
                 legal_zero_hp_intents=legal_zero_hp_intents,
                 resource_cost=tuple(
                     sorted(
@@ -116,16 +206,6 @@ def build_opportunity_attack_window(
                 on_hit_effects=on_hit_effects,
             )
         )
-    window_id = ":".join(
-        (
-            str(turn_token or "no_turn"),
-            "opportunity_attack",
-            reactor.actor_id,
-            mover.actor_id,
-            str(window_ordinal),
-            _position_token(trigger_point),
-        )
-    )
     return ReactionWindowView(
         window_id=window_id,
         reactor_id=reactor.actor_id,
@@ -139,6 +219,111 @@ def build_opportunity_attack_window(
             distance_ft=float(trigger_distance),
             movement_source=movement_source,
             mover_disengaged=mover_disengaged,
+        ),
+        options=tuple(options),
+    )
+
+
+def build_trait_reaction_window(
+    *,
+    reactor: ActorRuntimeState,
+    trigger_actor: ActorRuntimeState,
+    trigger_target: ActorRuntimeState | None,
+    trigger_action: ActionDefinition,
+    trigger_ordinal: int,
+    trigger_event_ordinal: int,
+    hook: FeatureHookRegistration,
+    candidates: list[tuple[ActionDefinition, float]],
+    distance_ft: float,
+    round_number: int,
+    turn_token: str,
+) -> ReactionWindowView:
+    candidate_identities = [
+        _reaction_action_identity(action=action, reach_ft=reach_ft)
+        for action, reach_ft in candidates
+    ]
+    window_id = _opaque_reaction_id(
+        entity="window",
+        kind="trait",
+        identity={
+            "round_number": int(round_number),
+            "turn_token": turn_token,
+            "reactor_id": reactor.actor_id,
+            "trigger_actor_id": trigger_actor.actor_id,
+            "trigger_target_id": (trigger_target.actor_id if trigger_target is not None else None),
+            "trigger_action": {
+                "attack_profile_id": (
+                    str(trigger_action.attack_profile_id).strip()
+                    if trigger_action.attack_profile_id is not None
+                    else None
+                ),
+                "name": str(trigger_action.name),
+                "action_type": str(trigger_action.action_type),
+                "attack_delivery": trigger_action.attack_delivery,
+            },
+            "trigger_ordinal": int(trigger_ordinal),
+            "trigger_event_ordinal": int(trigger_event_ordinal),
+            "distance_ft": float(distance_ft),
+            "hook": {
+                "feature_name": hook.feature_name,
+                "source_type": hook.source_type,
+                "hook_type": hook.hook_type,
+                "trigger": hook.trigger,
+                "trait_key": hook.trait_key,
+                "mechanic_index": int(hook.mechanic_index),
+                "registration_order": int(hook.registration_order),
+            },
+            "candidates": candidate_identities,
+        },
+    )
+    options: list[ReactionOptionView] = []
+    for option_index, (action, reach_ft) in enumerate(candidates):
+        legal_zero_hp_intents: tuple[ZeroHPIntent, ...] = ("normal",)
+        if action.attack_delivery in {"melee_weapon_attack", "melee_spell_attack"}:
+            legal_zero_hp_intents = ("normal", "knock_out")
+        fixed_target_ids = (trigger_actor.actor_id,)
+        options.append(
+            ReactionOptionView(
+                option_id=_reaction_option_id(
+                    kind="trait",
+                    window_id=window_id,
+                    reactor_id=reactor.actor_id,
+                    fixed_target_ids=fixed_target_ids,
+                    action=action,
+                    option_index=option_index,
+                    reach_ft=reach_ft,
+                ),
+                action_name=action.name,
+                fixed_target_ids=fixed_target_ids,
+                legal_target_ids=fixed_target_ids,
+                legal_zero_hp_intents=legal_zero_hp_intents,
+                resource_cost=tuple(
+                    sorted(
+                        (str(key), int(amount))
+                        for key, amount in action.resource_cost.items()
+                        if int(amount) > 0
+                    )
+                ),
+                attack_bonus=action.to_hit,
+                damage_expression=action.damage,
+                damage_type=action.damage_type,
+                reach_ft=float(reach_ft),
+            )
+        )
+    return ReactionWindowView(
+        window_id=window_id,
+        reactor_id=reactor.actor_id,
+        round_number=round_number,
+        turn_token=turn_token,
+        trigger=ReactionTriggerView(
+            kind="trait",
+            source_actor_id=trigger_actor.actor_id,
+            target_actor_id=(trigger_target.actor_id if trigger_target is not None else None),
+            action_name=trigger_action.name,
+            distance_ft=float(distance_ft),
+            feature_name=hook.feature_name,
+            feature_trigger=hook.trigger,
+            feature_source_type=hook.source_type,
         ),
         options=tuple(options),
     )
@@ -196,6 +381,18 @@ def build_strategy_reaction_decision_provider(
             )
         decide_reaction = getattr(strategy, "decide_reaction", None)
         if not callable(decide_reaction):
+            if window.trigger.kind == "trait":
+                safe_options = tuple(
+                    option
+                    for option in window.options
+                    if not any(
+                        target_id in state.actors and state.actors[target_id].team == actor.team
+                        for target_id in option.fixed_target_ids
+                    )
+                )
+                if not safe_options:
+                    return ReactionDecision(window_id=window.window_id, choice="pass")
+                return default_reaction_decision(replace(window, options=safe_options))
             return default_reaction_decision(window)
         return decide_reaction(actor, window, state)
 
@@ -262,13 +459,13 @@ def validate_reaction_decision(
         _reaction_decision_error(
             code="unsupported_reaction_resource_spend",
             field="decision.resource_spend",
-            message="Opportunity attacks do not accept extra declared resource spend.",
+            message="This reaction option does not accept extra declared resource spend.",
         )
     if decision.spell_slot_level is not None:
         _reaction_decision_error(
             code="illegal_reaction_spell_slot",
             field="decision.spell_slot_level",
-            message="Selected opportunity attack does not accept a spell-slot override.",
+            message="Selected reaction option does not accept a spell-slot override.",
         )
     target_ids: list[str] = []
     for index, target in enumerate(decision.targets):
@@ -283,7 +480,7 @@ def validate_reaction_decision(
         _reaction_decision_error(
             code="illegal_reaction_target",
             field="decision.targets",
-            message="Opportunity attack target is fixed by the movement trigger.",
+            message="Reaction target is fixed by the trigger.",
             details={"legal_target_ids": list(selected.fixed_target_ids)},
         )
     normalized_intent = str(decision.zero_hp_intent or "").strip().lower()
@@ -314,6 +511,10 @@ def _reaction_window_telemetry(
             "reactor_id": window.reactor_id,
             "source_actor_id": window.trigger.source_actor_id,
             "target_actor_id": window.trigger.target_actor_id,
+            "trigger_action": window.trigger.action_name,
+            "feature_name": window.trigger.feature_name,
+            "feature_trigger": window.trigger.feature_trigger,
+            "feature_source_type": window.trigger.feature_source_type,
             "option_ids": [option.option_id for option in window.options],
         }
     )
@@ -473,6 +674,7 @@ def trigger_readied_actions(
     light_level: str = "bright",
     rule_trace: list[dict[str, Any]] | None = None,
     telemetry: list[dict[str, Any]] | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
 ) -> None:
     from dnd_sim import engine_runtime as engine_module
 
@@ -490,7 +692,7 @@ def trigger_readied_actions(
             continue
         if actor.dead or actor.hp <= 0:
             continue
-        if not actor.reaction_available:
+        if not can_take_reaction(actor):
             continue
 
         if "readying" in actor.conditions and actor.readied_reaction_reserved:
@@ -510,12 +712,17 @@ def trigger_readied_actions(
                     )
                     if held_readied_spell:
                         reaction_action = replace(reaction_action, resource_cost={})
-                    if engine_module._action_available(
-                        actor,
-                        reaction_action,
-                        spell_cast_request=spell_cast_request,
-                        turn_token=turn_token,
-                    ):
+                    action_available = (
+                        not engine_module.has_condition(actor, "antimagic_suppressed")
+                        if held_readied_spell
+                        else engine_module._action_available(
+                            actor,
+                            reaction_action,
+                            spell_cast_request=spell_cast_request,
+                            turn_token=turn_token,
+                        )
+                    )
+                    if action_available:
                         targets = engine_module._resolve_targets_for_action(
                             rng=rng,
                             actor=actor,
@@ -548,6 +755,13 @@ def trigger_readied_actions(
                                 turn_token=turn_token,
                             )
                         if targets and paid_reaction_cost:
+                            readied_zero_hp_intent = actor.readied_zero_hp_intent
+                            if not held_readied_spell:
+                                actor.per_action_uses[readied.name] = (
+                                    actor.per_action_uses.get(readied.name, 0) + 1
+                                )
+                                if readied.recharge:
+                                    actor.recharge_ready[readied.name] = False
                             actor.reaction_available = False
                             if held_readied_spell:
                                 actor.readied_spell_held = False
@@ -568,9 +782,14 @@ def trigger_readied_actions(
                                 round_number=round_number,
                                 turn_token=turn_token,
                                 spell_cast_request=spell_cast_request,
-                                zero_hp_intent=actor.readied_zero_hp_intent,
+                                zero_hp_intent=readied_zero_hp_intent,
                                 rule_trace=rule_trace,
                                 telemetry=telemetry,
+                                reaction_decision_provider=reaction_decision_provider,
+                                spell_already_declared=held_readied_spell,
+                                after_action_spell_cast_occurred=(
+                                    False if held_readied_spell else None
+                                ),
                             )
                             engine_module._remove_condition(actor, "readying")
             if trigger_actor.dead or trigger_actor.hp <= 0:
@@ -647,6 +866,9 @@ def trigger_readied_actions(
                 round_number=round_number,
                 turn_token=turn_token,
                 spell_cast_request=spell_cast_request,
+                reaction_decision_provider=reaction_decision_provider,
+                rule_trace=rule_trace,
+                telemetry=telemetry,
             )
             break
 
@@ -740,6 +962,7 @@ def run_opportunity_attacks_for_movement(
                 light_level=light_level,
                 rule_trace=rule_trace,
                 telemetry=telemetry,
+                reaction_decision_provider=reaction_decision_provider,
             )
             mover.position = end_pos if mover.hp > 0 and not mover.dead else original_position
             if mover.dead or mover.hp <= 0:
@@ -749,7 +972,12 @@ def run_opportunity_attacks_for_movement(
             continue
         if engine_module.has_condition(mover, "disengaging") and not sentinel_reactor:
             continue
-        opportunity_candidates = engine_module._opportunity_attack_candidates(enemy)
+        opportunity_candidates = [
+            (action, reach_ft)
+            for action, reach_ft in engine_module._opportunity_attack_candidates(enemy)
+            if action.to_hit is not None
+            and engine_module._action_available(enemy, action, turn_token=turn_token)
+        ]
         if not opportunity_candidates:
             continue
         max_reach = max(reach_ft for _, reach_ft in opportunity_candidates)
@@ -841,8 +1069,7 @@ def run_opportunity_attacks_for_movement(
             )
             selected_action, _ = eligible_candidates[selected_index]
             reaction_attack = replace(
-                selected_action,
-                attack_count=1,
+                engine_module._clone_attack_instance_action(selected_action),
                 action_cost="reaction",
             )
             spell_cast_request = SpellCastRequest() if "spell" in reaction_attack.tags else None
@@ -914,6 +1141,7 @@ def run_opportunity_attacks_for_movement(
                 zero_hp_intent=zero_hp_intent,
                 rule_trace=rule_trace,
                 telemetry=telemetry,
+                reaction_decision_provider=reaction_decision_provider,
             )
             if sentinel_hit:
                 mover.position = trigger_point
@@ -970,35 +1198,44 @@ def reaction_attack_hook_matches(
     trigger_actor: ActorRuntimeState | None,
     trigger_target: ActorRuntimeState | None,
     trigger_action: ActionDefinition | None,
+    spell_cast_occurred: bool | None = None,
 ) -> bool:
     from dnd_sim import engine_runtime as engine_module
 
-    if event != "after_action" or trigger_actor is None or trigger_action is None:
+    if (
+        event not in {"after_action", "on_hit", "on_miss"}
+        or trigger_actor is None
+        or trigger_action is None
+    ):
+        return False
+    if trigger_actor.actor_id == reactor.actor_id:
+        return False
+    if distance_chebyshev(reactor.position, trigger_actor.position) > 5.0 + 1e-9:
         return False
 
     trigger = hook.trigger
     if trigger == "creature_attacks_ally_within_5ft":
+        if event not in {"on_hit", "on_miss"}:
+            return False
         if trigger_action.action_type != "attack" or trigger_target is None:
             return False
-        if trigger_actor.team == reactor.team:
+        if reactor.actor_id == trigger_target.actor_id:
             return False
-        if reactor.team != trigger_target.team or reactor.actor_id == trigger_target.actor_id:
-            return False
-        if engine_module._trait_lookup_key(
-            hook.feature_name
-        ) == "sentinel" and engine_module._has_trait(trigger_target, "sentinel"):
-            return False
-        return True
+        if engine_module._trait_lookup_key(hook.feature_name) == "sentinel":
+            return not engine_module._has_trait(trigger_target, "sentinel")
+        return trigger_actor.team != reactor.team and trigger_target.team == reactor.team
 
     if trigger == "spell_cast_within_5ft":
-        if trigger_actor.team == reactor.team:
+        if event != "after_action":
             return False
+        if spell_cast_occurred is not None:
+            return spell_cast_occurred
         return "spell" in trigger_action.tags
 
     if trigger == "hit_by_melee_attack_within_5ft":
-        if trigger_action.action_type != "attack" or trigger_target is None:
+        if event != "on_hit":
             return False
-        if trigger_actor.team == reactor.team:
+        if trigger_action.action_type != "attack" or trigger_target is None:
             return False
         if trigger_target.actor_id != reactor.actor_id:
             return False
@@ -1025,14 +1262,24 @@ def run_trait_event_handlers(
     rule_trace: list[dict[str, Any]],
     obstacles: list[AABB],
     light_level: str,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
+    trigger_event_ordinal: int,
+    spell_cast_occurred: bool | None = None,
 ) -> None:
     from dnd_sim import engine_runtime as engine_module
 
-    if event != "after_action" or trigger_actor is None or trigger_action is None:
+    if (
+        event not in {"after_action", "on_hit", "on_miss"}
+        or trigger_actor is None
+        or trigger_action is None
+    ):
+        return
+    if trigger_actor.dead or trigger_actor.hp <= 0:
         return
     reactors = sorted(actors.values(), key=lambda value: value.actor_id)
     for reactor in reactors:
-        if reactor.dead or reactor.hp <= 0:
+        if not can_take_reaction(reactor):
             continue
         engine_module._register_actor_feature_hooks(reactor)
         if not reactor.feature_hooks:
@@ -1067,21 +1314,138 @@ def run_trait_event_handlers(
                 trigger_actor=trigger_actor,
                 trigger_target=trigger_target,
                 trigger_action=trigger_action,
+                spell_cast_occurred=spell_cast_occurred,
             ):
                 continue
 
-            if not reactor.reaction_available:
+            if not can_take_reaction(reactor):
                 continue
 
-            attack_action = engine_module._fallback_action(reactor)
-            if attack_action is None or attack_action.action_type != "attack":
+            distance_ft = distance_chebyshev(reactor.position, trigger_actor.position)
+            candidates = [
+                (action, reach_ft)
+                for action, reach_ft in engine_module._opportunity_attack_candidates(reactor)
+                if reach_ft + 1e-9 >= distance_ft
+                and action.to_hit is not None
+                and action.target_mode in {"single_enemy", "single_creature"}
+                and engine_module._target_matches_action_constraints(action, trigger_actor)
+                and engine_module._action_available(reactor, action, turn_token=turn_token)
+                and engine_module._filter_targets_in_range(
+                    reactor,
+                    action,
+                    [trigger_actor],
+                    active_hazards=active_hazards,
+                    obstacles=obstacles,
+                    light_level=light_level,
+                )
+            ]
+            if not candidates:
+                rule_trace.append(
+                    {
+                        "event": event,
+                        "round": round_number,
+                        "turn": turn_token,
+                        "handler": handler_name,
+                        "actor_id": reactor.actor_id,
+                        "hook_feature": hook.feature_name,
+                        "hook_source": hook.source_type,
+                        "hook_trigger": hook.trigger,
+                        "result": "skipped",
+                        "reason": "no_legal_attacks",
+                    }
+                )
+                continue
+
+            window = build_trait_reaction_window(
+                reactor=reactor,
+                trigger_actor=trigger_actor,
+                trigger_target=trigger_target,
+                trigger_action=trigger_action,
+                trigger_ordinal=int(trigger_actor.per_action_uses.get(trigger_action.name, 0)),
+                trigger_event_ordinal=trigger_event_ordinal,
+                hook=hook,
+                candidates=candidates,
+                distance_ft=distance_ft,
+                round_number=round_number,
+                turn_token=turn_token,
+            )
+            _reaction_window_telemetry(telemetry, window=window)
+            if reaction_decision_provider is not None:
+                decision = reaction_decision_provider(window)
+            elif trigger_actor.team == reactor.team:
+                decision = ReactionDecision(window_id=window.window_id, choice="pass")
+            else:
+                decision = default_reaction_decision(window)
+            _reaction_decision_telemetry(telemetry, window=window, decision=decision)
+            try:
+                selected_option, zero_hp_intent = validate_reaction_decision(window, decision)
+            except ReactionDecisionValidationError as exc:
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="rejected",
+                    option_id=getattr(decision, "option_id", None),
+                    reason=exc.code,
+                )
+                raise
+            if selected_option is None:
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="passed",
+                )
+                rule_trace.append(
+                    {
+                        "event": event,
+                        "round": round_number,
+                        "turn": turn_token,
+                        "handler": handler_name,
+                        "actor_id": reactor.actor_id,
+                        "hook_feature": hook.feature_name,
+                        "hook_source": hook.source_type,
+                        "hook_trigger": hook.trigger,
+                        "result": "passed",
+                    }
+                )
+                continue
+
+            selected_index = next(
+                index
+                for index, option in enumerate(window.options)
+                if option.option_id == selected_option.option_id
+            )
+            selected_action, _ = candidates[selected_index]
+            reaction_attack = replace(
+                engine_module._clone_attack_instance_action(selected_action),
+                action_cost="reaction",
+            )
+            spell_cast_request = SpellCastRequest() if "spell" in reaction_attack.tags else None
+            if not engine_module._spend_action_resource_cost(
+                reactor,
+                reaction_attack,
+                resources_spent,
+                spell_cast_request=spell_cast_request,
+                turn_token=turn_token,
+            ):
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="unavailable",
+                    option_id=selected_option.option_id,
+                    reason="resource_cost",
+                )
                 continue
 
             reactor.reaction_available = False
+            reactor.per_action_uses[selected_action.name] = (
+                reactor.per_action_uses.get(selected_action.name, 0) + 1
+            )
+            if selected_action.recharge:
+                reactor.recharge_ready[selected_action.name] = False
             engine_module._execute_action(
                 rng=rng,
                 actor=reactor,
-                action=attack_action,
+                action=reaction_attack,
                 targets=[trigger_actor],
                 actors=actors,
                 damage_dealt=damage_dealt,
@@ -1094,6 +1458,17 @@ def run_trait_event_handlers(
                 round_number=round_number,
                 turn_token=turn_token,
                 rule_trace=rule_trace,
+                telemetry=telemetry,
+                spell_cast_request=spell_cast_request,
+                allow_auto_movement=False,
+                zero_hp_intent=zero_hp_intent,
+                reaction_decision_provider=reaction_decision_provider,
+            )
+            _reaction_window_closed_telemetry(
+                telemetry,
+                window=window,
+                status="resolved",
+                option_id=selected_option.option_id,
             )
             rule_trace.append(
                 {
@@ -1111,3 +1486,4 @@ def run_trait_event_handlers(
             )
             if trigger_actor.dead or trigger_actor.hp <= 0:
                 return
+            break

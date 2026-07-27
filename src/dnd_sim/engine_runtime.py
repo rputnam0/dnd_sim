@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import json
 import logging
 import math
 import random
@@ -7769,75 +7768,12 @@ def _path_distance(path: list[tuple[float, float, float]]) -> float:
     return _movement_path_distance(path)
 
 
-def _path_prefix_for_distance(
-    path: list[tuple[float, float, float]],
-    distance_ft: float,
-) -> list[tuple[float, float, float]]:
-    if not path:
-        return []
-    if len(path) == 1 or distance_ft <= 0:
-        return [path[0]]
-
-    traveled: list[tuple[float, float, float]] = [path[0]]
-    remaining = distance_ft
-    current = path[0]
-    for waypoint in path[1:]:
-        segment = distance_chebyshev(current, waypoint)
-        if segment <= 0:
-            current = waypoint
-            continue
-        if segment <= remaining:
-            traveled.append(waypoint)
-            remaining -= segment
-            current = waypoint
-            if remaining <= 0:
-                break
-            continue
-        ratio = remaining / segment
-        traveled.append(
-            (
-                current[0] + (waypoint[0] - current[0]) * ratio,
-                current[1] + (waypoint[1] - current[1]) * ratio,
-                current[2] + (waypoint[2] - current[2]) * ratio,
-            )
-        )
-        break
-    return traveled
-
-
 def _expand_path_points(
     path: list[tuple[float, float, float]],
     *,
     step_ft: float = 5.0,
 ) -> list[tuple[float, float, float]]:
     return _movement_expand_path_points(path, step_ft=step_ft)
-
-
-def _advance_along_path(
-    path: list[tuple[float, float, float]], distance_ft: float
-) -> tuple[float, float, float]:
-    if not path:
-        return (0.0, 0.0, 0.0)
-    if len(path) == 1 or distance_ft <= 0:
-        return path[0]
-    remaining = distance_ft
-    current = path[0]
-    for waypoint in path[1:]:
-        segment = distance_chebyshev(current, waypoint)
-        if segment <= 0:
-            current = waypoint
-            continue
-        if segment <= remaining:
-            remaining -= segment
-            current = waypoint
-            continue
-        ratio = remaining / segment
-        return (
-            current[0] + (waypoint[0] - current[0]) * ratio,
-            current[1] + (waypoint[1] - current[1]) * ratio,
-            current[2] + (waypoint[2] - current[2]) * ratio,
-        )
-    return current
 
 
 def _prepare_voluntary_movement(actor: ActorRuntimeState) -> tuple[float, bool]:
@@ -7944,6 +7880,9 @@ def _move_actor_for_action_range(
     light_level: str = "bright",
     round_number: int | None = None,
     turn_token: str | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
 ) -> bool:
     if not targets:
         return False
@@ -8043,6 +7982,9 @@ def _move_actor_for_action_range(
         round_number=round_number,
         turn_token=turn_token,
         movement_source="action",
+        reaction_decision_provider=reaction_decision_provider,
+        rule_trace=rule_trace,
+        telemetry=telemetry,
     )
 
     committed_path = _movement_path_prefix_through_position(movement_path, actor.position)
@@ -8416,6 +8358,37 @@ def _filter_targets_by_line_of_effect(
     ]
 
 
+def _target_matches_action_constraints(
+    action: ActionDefinition,
+    target: ActorRuntimeState,
+) -> bool:
+    tags = {str(tag).strip().lower() for tag in action.tags}
+    required_conditions = {
+        tag.split(":", 1)[1] for tag in tags if tag.startswith("requires_condition:")
+    }
+    excluded_conditions = {
+        tag.split(":", 1)[1] for tag in tags if tag.startswith("excludes_condition:")
+    }
+    required_traits = {
+        tag.split(":", 1)[1] for tag in tags if tag.startswith("requires_target_trait:")
+    }
+    excluded_traits = {
+        tag.split(":", 1)[1] for tag in tags if tag.startswith("excludes_target_trait:")
+    }
+    if not required_conditions.issubset(target.conditions):
+        return False
+    if excluded_conditions.intersection(target.conditions):
+        return False
+    if any(not _has_trait_marker(target, marker) for marker in required_traits):
+        return False
+    if any(_has_trait_marker(target, marker) for marker in excluded_traits):
+        return False
+    stabilize_effects = _stabilize_effects(action)
+    return not stabilize_effects or any(
+        _stabilize_effect_allows_target(effect, target) for effect in stabilize_effects
+    )
+
+
 def _resolve_targets_for_action(
     *,
     rng: random.Random,
@@ -8439,52 +8412,9 @@ def _resolve_targets_for_action(
     if not candidates:
         return []
 
-    required_conditions: set[str] = set()
-    excluded_conditions: set[str] = set()
-    required_target_traits: set[str] = set()
-    excluded_target_traits: set[str] = set()
-    for tag in getattr(action, "tags", []) or []:
-        text = str(tag)
-        if text.startswith("requires_condition:"):
-            required_conditions.add(text.split(":", 1)[1].strip().lower())
-        elif text.startswith("excludes_condition:"):
-            excluded_conditions.add(text.split(":", 1)[1].strip().lower())
-        elif text.startswith("requires_target_trait:"):
-            required_target_traits.add(text.split(":", 1)[1].strip().lower())
-        elif text.startswith("excludes_target_trait:"):
-            excluded_target_traits.add(text.split(":", 1)[1].strip().lower())
-
-    if required_conditions:
-        candidates = [
-            target
-            for target in candidates
-            if all(cond in target.conditions for cond in required_conditions)
-        ]
-    if excluded_conditions:
-        candidates = [
-            target
-            for target in candidates
-            if not any(cond in target.conditions for cond in excluded_conditions)
-        ]
-    if required_target_traits:
-        candidates = [
-            target
-            for target in candidates
-            if all(_has_trait_marker(target, marker) for marker in required_target_traits)
-        ]
-    if excluded_target_traits:
-        candidates = [
-            target
-            for target in candidates
-            if not any(_has_trait_marker(target, marker) for marker in excluded_target_traits)
-        ]
-    stabilize_effects = _stabilize_effects(action)
-    if stabilize_effects:
-        candidates = [
-            target
-            for target in candidates
-            if any(_stabilize_effect_allows_target(effect, target) for effect in stabilize_effects)
-        ]
+    candidates = [
+        target for target in candidates if _target_matches_action_constraints(action, target)
+    ]
     if not candidates:
         return []
     by_id = {target.actor_id: target for target in candidates}
@@ -8908,6 +8838,7 @@ def _execute_declared_action_step_or_error(
     rule_trace: list[dict[str, Any]] | None = None,
     telemetry: list[dict[str, Any]] | None = None,
     strategy_name: str | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
     ready_declaration: ReadyDeclaration | None = None,
     reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
 ) -> tuple[ActionDefinition, list[ActorRuntimeState]]:
@@ -9031,6 +8962,7 @@ def _execute_declared_action_step_or_error(
         rule_trace=rule_trace,
         telemetry=telemetry,
         strategy_name=strategy_name,
+        reaction_decision_provider=reaction_decision_provider,
         spell_cast_request=spell_cast_request,
         allow_auto_movement=False,
         ready_declaration=ready_declaration,
@@ -9070,6 +9002,27 @@ def _execute_declared_turn_or_error(
             field="reaction_policy.mode",
             message="reaction_policy.mode='none' conflicts with declaring a ready response.",
         )
+    if ready_declaration is not None:
+        readied_response = _resolve_named_action(
+            actor,
+            ready_declaration.response_action_name,
+        )
+        if (
+            readied_response is not None
+            and _has_tag(readied_response, "spell")
+            and not _action_available(
+                actor,
+                readied_response,
+                spell_cast_request=SpellCastRequest(),
+                turn_token=turn_token,
+            )
+        ):
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="unavailable_ready_spell",
+                field="ready.response_action_name",
+                message=(f"Readied spell '{readied_response.name}' is not currently legal."),
+            )
 
     _apply_declared_movement_or_error(
         rng=rng,
@@ -9140,9 +9093,8 @@ def _execute_declared_turn_or_error(
         turn_token=turn_token,
     )
 
-    executed_primary: tuple[ActionDefinition, list[ActorRuntimeState]] | None = None
     if declaration.action is not None:
-        executed_primary = _execute_declared_action_step_or_error(
+        _execute_declared_action_step_or_error(
             rng=rng,
             actor=actor,
             declaration=declaration.action,
@@ -9161,31 +9113,12 @@ def _execute_declared_turn_or_error(
             rule_trace=rule_trace,
             telemetry=telemetry,
             strategy_name=strategy_name,
+            reaction_decision_provider=reaction_decision_provider,
             ready_declaration=ready_declaration,
             reserved_bonus_smite=reserved_bonus_smite,
         )
-        if round_number is not None and turn_token is not None:
-            primary_action, primary_targets = executed_primary
-            _dispatch_combat_event(
-                rng=rng,
-                event="after_action",
-                trigger_actor=actor,
-                trigger_target=primary_targets[0] if primary_targets else None,
-                trigger_action=primary_action,
-                actors=actors,
-                round_number=round_number,
-                turn_token=turn_token,
-                damage_dealt=damage_dealt,
-                damage_taken=damage_taken,
-                threat_scores=threat_scores,
-                resources_spent=resources_spent,
-                active_hazards=active_hazards,
-                rule_trace=rule_trace,
-                obstacles=obstacles,
-                light_level=light_level,
-            )
     if declaration.bonus_action is not None and actor.hp > 0 and not actor.dead and _can_act(actor):
-        bonus_action, bonus_targets = _execute_declared_action_step_or_error(
+        _execute_declared_action_step_or_error(
             rng=rng,
             actor=actor,
             declaration=declaration.bonus_action,
@@ -9204,28 +9137,8 @@ def _execute_declared_turn_or_error(
             rule_trace=rule_trace,
             telemetry=telemetry,
             strategy_name=strategy_name,
+            reaction_decision_provider=reaction_decision_provider,
         )
-        if round_number is not None and turn_token is not None:
-            _dispatch_combat_event(
-                rng=rng,
-                event="after_action",
-                trigger_actor=actor,
-                trigger_target=bonus_targets[0] if bonus_targets else None,
-                trigger_action=bonus_action,
-                actors=actors,
-                round_number=round_number,
-                turn_token=turn_token,
-                damage_dealt=damage_dealt,
-                damage_taken=damage_taken,
-                threat_scores=threat_scores,
-                resources_spent=resources_spent,
-                active_hazards=active_hazards,
-                rule_trace=rule_trace,
-                obstacles=obstacles,
-                light_level=light_level,
-            )
-
-    _ = executed_primary
 
 
 def _disadvantaged(actor: ActorRuntimeState) -> bool:
@@ -10179,6 +10092,7 @@ def _apply_effect(
     turn_token: str | None = None,
     rule_trace: list[dict[str, Any]] | None = None,
     effect_context: dict[str, Any] | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
 ) -> None:
     recipient = _resolve_effect_target(effect, actor=actor, target=target)
     effect_type = str(effect.get("effect_type", "")).strip().lower()
@@ -10891,6 +10805,7 @@ def _apply_effect(
             rule_trace=rule_trace,
             telemetry=telemetry,
             strategy_name=strategy_name,
+            reaction_decision_provider=reaction_decision_provider,
             source_bucket=source_bucket,
             trigger_event=trigger_event,
             effect_context=effect_context,
@@ -10945,6 +10860,8 @@ def _apply_effect(
                 resources_spent=resources_spent,
                 active_hazards=active_hazards,
                 rule_trace=rule_trace,
+                reaction_decision_provider=reaction_decision_provider,
+                telemetry=telemetry,
             )
         return
 
@@ -10977,6 +10894,7 @@ def _apply_action_effects(
     once_per_action_used: set[tuple[str, int]] | None = None,
     effect_context: dict[str, Any] | None = None,
     pre_resolved_damage: dict[tuple[str, int], int] | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
 ) -> None:
     shared_effect_context = effect_context if effect_context is not None else {}
     bundled_damage = pre_resolved_damage if pre_resolved_damage is not None else {}
@@ -11062,6 +10980,7 @@ def _apply_action_effects(
                 turn_token=turn_token,
                 rule_trace=rule_trace,
                 effect_context=shared_effect_context,
+                reaction_decision_provider=reaction_decision_provider,
             )
 
 
@@ -11557,64 +11476,6 @@ def _feature_hook_handler_name(hook: FeatureHookRegistration) -> str:
     return f"feature_hook:{hook.hook_type}"
 
 
-def _reaction_attack_hook_matches(
-    *,
-    hook: FeatureHookRegistration,
-    event: str,
-    reactor: ActorRuntimeState,
-    trigger_actor: ActorRuntimeState | None,
-    trigger_target: ActorRuntimeState | None,
-    trigger_action: ActionDefinition | None,
-) -> bool:
-    return _reaction_runtime.reaction_attack_hook_matches(
-        hook=hook,
-        event=event,
-        reactor=reactor,
-        trigger_actor=trigger_actor,
-        trigger_target=trigger_target,
-        trigger_action=trigger_action,
-    )
-
-
-def _run_trait_event_handlers(
-    *,
-    rng: random.Random,
-    event: str,
-    trigger_actor: ActorRuntimeState | None,
-    trigger_target: ActorRuntimeState | None,
-    trigger_action: ActionDefinition | None,
-    actors: dict[str, ActorRuntimeState],
-    round_number: int,
-    turn_token: str,
-    damage_dealt: dict[str, int],
-    damage_taken: dict[str, int],
-    threat_scores: dict[str, int],
-    resources_spent: dict[str, dict[str, int]],
-    active_hazards: list[dict[str, Any]],
-    rule_trace: list[dict[str, Any]],
-    obstacles: list[AABB],
-    light_level: str,
-) -> None:
-    _reaction_runtime.run_trait_event_handlers(
-        rng=rng,
-        event=event,
-        trigger_actor=trigger_actor,
-        trigger_target=trigger_target,
-        trigger_action=trigger_action,
-        actors=actors,
-        round_number=round_number,
-        turn_token=turn_token,
-        damage_dealt=damage_dealt,
-        damage_taken=damage_taken,
-        threat_scores=threat_scores,
-        resources_spent=resources_spent,
-        active_hazards=active_hazards,
-        rule_trace=rule_trace,
-        obstacles=obstacles,
-        light_level=light_level,
-    )
-
-
 def _dispatch_combat_event(
     *,
     rng: random.Random,
@@ -11633,9 +11494,17 @@ def _dispatch_combat_event(
     rule_trace: list[dict[str, Any]] | None = None,
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
+    include_event_actions: bool = True,
+    spell_cast_occurred: bool | None = None,
 ) -> list[dict[str, Any]]:
     if obstacles is None:
         obstacles = []
+    event_ordinal = 0
+    if trigger_actor is not None:
+        event_ordinal = trigger_actor.next_combat_event_ordinal
+        trigger_actor.next_combat_event_ordinal += 1
     trace = rule_trace if rule_trace is not None else []
     if event in {"turn_start", "turn_end"} and trigger_actor is not None:
         boundary_actor = actors.get(trigger_actor.actor_id)
@@ -11668,6 +11537,8 @@ def _dispatch_combat_event(
             )
 
     candidates.sort(key=lambda item: (-item[0], item[1], item[2]))
+    if not include_event_actions:
+        candidates = []
     for _priority, actor_id, action_name, actor, action in candidates:
         if not _action_available(actor, action, turn_token=turn_token):
             continue
@@ -11727,6 +11598,21 @@ def _dispatch_combat_event(
             )
             continue
 
+        event_action_key = f"{event}\0{action_name}"
+        if event_action_key in actor.active_event_action_keys:
+            trace.append(
+                {
+                    "event": event,
+                    "round": round_number,
+                    "turn": turn_token,
+                    "actor_id": actor_id,
+                    "action": action_name,
+                    "result": "skipped",
+                    "reason": "recursive_event_action",
+                }
+            )
+            continue
+
         targets = _resolve_event_targets(
             rng=rng,
             actor=actor,
@@ -11765,36 +11651,42 @@ def _dispatch_combat_event(
         if action.action_cost == "reaction" and _event_trigger_once_per_round(action):
             actor.per_action_uses[lock_key] = actor.per_action_uses.get(lock_key, 0) + 1
 
-        _execute_action(
-            rng=rng,
-            actor=actor,
-            action=action,
-            targets=targets,
-            actors=actors,
-            damage_dealt=damage_dealt,
-            damage_taken=damage_taken,
-            threat_scores=threat_scores,
-            resources_spent=resources_spent,
-            active_hazards=active_hazards,
-            obstacles=obstacles,
-            light_level=light_level,
-            round_number=round_number,
-            turn_token=turn_token,
-            rule_trace=trace,
-            spell_cast_request=spell_cast_request,
-        )
-        trace.append(
-            {
-                "event": event,
-                "round": round_number,
-                "turn": turn_token,
-                "actor_id": actor_id,
-                "action": action_name,
-                "result": "executed",
-            }
-        )
+        trace_entry = {
+            "event": event,
+            "round": round_number,
+            "turn": turn_token,
+            "actor_id": actor_id,
+            "action": action_name,
+            "result": "started",
+        }
+        trace.append(trace_entry)
+        actor.active_event_action_keys.add(event_action_key)
+        try:
+            _execute_action(
+                rng=rng,
+                actor=actor,
+                action=action,
+                targets=targets,
+                actors=actors,
+                damage_dealt=damage_dealt,
+                damage_taken=damage_taken,
+                threat_scores=threat_scores,
+                resources_spent=resources_spent,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=light_level,
+                round_number=round_number,
+                turn_token=turn_token,
+                rule_trace=trace,
+                telemetry=telemetry,
+                reaction_decision_provider=reaction_decision_provider,
+                spell_cast_request=spell_cast_request,
+            )
+        finally:
+            actor.active_event_action_keys.discard(event_action_key)
+        trace_entry["result"] = "executed"
 
-    _run_trait_event_handlers(
+    _reaction_runtime.run_trait_event_handlers(
         rng=rng,
         event=event,
         trigger_actor=trigger_actor,
@@ -11811,6 +11703,10 @@ def _dispatch_combat_event(
         rule_trace=trace,
         obstacles=obstacles,
         light_level=light_level,
+        reaction_decision_provider=reaction_decision_provider,
+        telemetry=telemetry,
+        trigger_event_ordinal=event_ordinal,
+        spell_cast_occurred=spell_cast_occurred,
     )
     if event == "turn_start" and trigger_actor is not None and trigger_actor.actor_id in actors:
         start_actor = actors[trigger_actor.actor_id]
@@ -11854,6 +11750,8 @@ def _run_event_triggered_actions(
     rule_trace: list[dict[str, Any]] | None = None,
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     turn_token = (
         f"{round_number}:{trigger_actor.actor_id if trigger_actor is not None else 'global'}"
@@ -11875,6 +11773,8 @@ def _run_event_triggered_actions(
         rule_trace=rule_trace,
         obstacles=obstacles,
         light_level=light_level,
+        reaction_decision_provider=reaction_decision_provider,
+        telemetry=telemetry,
     )
 
 
@@ -12073,6 +11973,7 @@ def _trigger_readied_actions(
     light_level: str = "bright",
     rule_trace: list[dict[str, Any]] | None = None,
     telemetry: list[dict[str, Any]] | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
 ) -> None:
     _reaction_runtime.trigger_readied_actions(
         rng=rng,
@@ -12091,6 +11992,7 @@ def _trigger_readied_actions(
         light_level=light_level,
         rule_trace=rule_trace,
         telemetry=telemetry,
+        reaction_decision_provider=reaction_decision_provider,
     )
 
 
@@ -13193,28 +13095,43 @@ def _mode_requires_explicit_targets(mode: str) -> bool:
     return _spell_runtime.mode_requires_explicit_targets(mode)
 
 
-def _resolve_spell_cast_request(
-    *,
-    actor: ActorRuntimeState,
-    action: ActionDefinition,
-    targets: list[ActorRuntimeState],
-    provided: SpellCastRequest | None,
-) -> SpellCastRequest:
-    return _spell_runtime.resolve_spell_cast_request(
-        actor=actor,
-        action=action,
-        targets=targets,
-        provided=provided,
-        required_spell_slot_level=_required_spell_slot_level,
-        preferred_spell_slot_level=_preferred_spell_slot_level,
-    )
-
-
 def _record_spell_cast_for_turn(actor: ActorRuntimeState, action: ActionDefinition) -> None:
     _spell_runtime.record_spell_cast_for_turn(
         actor,
         action,
         is_action_cantrip_spell=_is_action_cantrip_spell,
+    )
+
+
+def _spell_pipeline_adapters() -> _spell_runtime.SpellPipelineAdapters:
+    return _spell_runtime.SpellPipelineAdapters(
+        has_condition=has_condition,
+        ritual_casting_legal_for_context=(
+            lambda action, token: _ritual_casting_legal_for_context(action, turn_token=token)
+        ),
+        spell_casting_legal_this_turn=(
+            lambda actor, action, token: _spell_casting_legal_this_turn(
+                actor, action, turn_token=token
+            )
+        ),
+        can_cast_spell_with_components=_can_cast_spell_with_components,
+        required_spell_slot_level=_required_spell_slot_level,
+        preferred_spell_slot_level=_preferred_spell_slot_level,
+        apply_upcast_scaling_for_slot=(
+            lambda action, slot_level: _apply_upcast_scaling_for_slot(action, slot_level=slot_level)
+        ),
+        can_take_reaction=_can_take_reaction,
+        action_matches_reaction_spell_id=(
+            lambda action, spell_id: _action_matches_reaction_spell_id(action, spell_id=spell_id)
+        ),
+        counterspell_slot_if_legal=_counterspell_slot_if_legal,
+        split_spell_slot_cost=_split_spell_slot_cost,
+        spend_resources=_spend_resources,
+        mark_action_cost_used=_mark_action_cost_used,
+        spellcasting_ability_mod=_spellcasting_ability_mod,
+        is_action_cantrip_spell=_is_action_cantrip_spell,
+        break_concentration=_break_concentration,
+        is_smite_setup_action=_is_smite_setup_action,
     )
 
 
@@ -13396,6 +13313,7 @@ def _execute_action(
     rule_trace: list[dict[str, Any]] | None = None,
     telemetry: list[dict[str, Any]] | None = None,
     strategy_name: str | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
     timing_engine: CombatTimingEngine | None = None,
     spell_cast_request: SpellCastRequest | None = None,
     allow_auto_movement: bool = True,
@@ -13403,6 +13321,10 @@ def _execute_action(
     attack_once_per_action_used: set[tuple[str, int]] | None = None,
     reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
     zero_hp_intent: ZeroHPIntent = "normal",
+    dispatch_after_action: bool = True,
+    after_action_spell_cast_occurred: bool | None = None,
+    spell_already_declared: bool = False,
+    spell_result_state_applied: bool = False,
 ) -> None:
     def _run_impl(
         resolved_action: ActionDefinition,
@@ -13426,6 +13348,7 @@ def _execute_action(
             rule_trace=rule_trace,
             telemetry=telemetry,
             strategy_name=strategy_name,
+            reaction_decision_provider=reaction_decision_provider,
             timing_engine=timing_engine,
             spell_cast_request=spell_cast_request,
             allow_auto_movement=allow_auto_movement,
@@ -13433,6 +13356,8 @@ def _execute_action(
             attack_once_per_action_used=attack_once_per_action_used,
             reserved_bonus_smite=reserved_bonus_smite,
             zero_hp_intent=zero_hp_intent,
+            spell_already_declared=spell_already_declared,
+            spell_result_state_applied=spell_result_state_applied,
         )
 
     def _run_item_action(
@@ -13459,6 +13384,32 @@ def _execute_action(
             fallback=_run_impl,
         ),
     )
+    if dispatch_after_action and round_number is not None and turn_token is not None and targets:
+        _dispatch_combat_event(
+            rng=rng,
+            event="after_action",
+            trigger_actor=actor,
+            trigger_target=targets[0],
+            trigger_action=action,
+            actors=actors,
+            round_number=round_number,
+            turn_token=turn_token,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            rule_trace=rule_trace,
+            obstacles=obstacles,
+            light_level=light_level,
+            reaction_decision_provider=reaction_decision_provider,
+            telemetry=telemetry,
+            spell_cast_occurred=(
+                after_action_spell_cast_occurred
+                if after_action_spell_cast_occurred is not None
+                else "spell" in action.tags
+            ),
+        )
 
 
 def _execute_action_impl(
@@ -13480,6 +13431,7 @@ def _execute_action_impl(
     rule_trace: list[dict[str, Any]] | None = None,
     telemetry: list[dict[str, Any]] | None = None,
     strategy_name: str | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
     timing_engine: CombatTimingEngine | None = None,
     spell_cast_request: SpellCastRequest | None = None,
     allow_auto_movement: bool = True,
@@ -13487,6 +13439,8 @@ def _execute_action_impl(
     attack_once_per_action_used: set[tuple[str, int]] | None = None,
     reserved_bonus_smite: tuple[ActionDefinition, SpellCastRequest | None] | None = None,
     zero_hp_intent: ZeroHPIntent = "normal",
+    spell_already_declared: bool = False,
+    spell_result_state_applied: bool = False,
 ) -> None:
     if not targets:
         return
@@ -13538,6 +13492,8 @@ def _execute_action_impl(
             rule_trace=rule_trace,
             obstacles=line_of_effect_obstacles,
             light_level=light_level,
+            reaction_decision_provider=reaction_decision_provider,
+            telemetry=telemetry,
         )
 
     if _requires_range_resolution(action):
@@ -13558,6 +13514,9 @@ def _execute_action_impl(
                 light_level=light_level,
                 round_number=round_number,
                 turn_token=turn_token,
+                reaction_decision_provider=reaction_decision_provider,
+                rule_trace=rule_trace,
+                telemetry=telemetry,
             )
             if not in_range:
                 if (
@@ -13599,7 +13558,23 @@ def _execute_action_impl(
                 return
 
     # Spell declaration and counterspell check
-    if is_spell_action:
+    if is_spell_action and spell_already_declared:
+        resolved_spell_cast_request = spell_cast_request or SpellCastRequest()
+        if resolved_spell_cast_request.slot_level is not None:
+            spell_level = int(resolved_spell_cast_request.slot_level)
+            action = _apply_upcast_scaling_for_slot(action, slot_level=spell_level)
+        spell_declared_for_resolution = True
+        if not spell_result_state_applied:
+            _spell_runtime.apply_spell_result_state(
+                actor=actor,
+                action=action,
+                spell_level=spell_level,
+                actors=actors,
+                active_hazards=active_hazards,
+                break_concentration=_break_concentration,
+                is_smite_setup_action=_is_smite_setup_action,
+            )
+    elif is_spell_action:
         spell_runtime_result = _spell_runtime.run_spell_declaration_pipeline(
             rng=rng,
             actor=actor,
@@ -13615,46 +13590,7 @@ def _execute_action_impl(
             antimagic_suppression_condition=_ANTIMAGIC_SUPPRESSION_CONDITION,
             subtle_spell=subtle_spell,
             light_level=light_level,
-            adapters=_spell_runtime.SpellPipelineAdapters(
-                has_condition=has_condition,
-                ritual_casting_legal_for_context=(
-                    lambda spell_action, token: _ritual_casting_legal_for_context(
-                        spell_action,
-                        turn_token=token,
-                    )
-                ),
-                spell_casting_legal_this_turn=(
-                    lambda caster, spell_action, token: _spell_casting_legal_this_turn(
-                        caster,
-                        spell_action,
-                        turn_token=token,
-                    )
-                ),
-                can_cast_spell_with_components=_can_cast_spell_with_components,
-                required_spell_slot_level=_required_spell_slot_level,
-                preferred_spell_slot_level=_preferred_spell_slot_level,
-                apply_upcast_scaling_for_slot=(
-                    lambda spell_action, slot_level: _apply_upcast_scaling_for_slot(
-                        spell_action,
-                        slot_level=slot_level,
-                    )
-                ),
-                can_take_reaction=_can_take_reaction,
-                action_matches_reaction_spell_id=(
-                    lambda reaction_action, spell_id: _action_matches_reaction_spell_id(
-                        reaction_action,
-                        spell_id=spell_id,
-                    )
-                ),
-                counterspell_slot_if_legal=_counterspell_slot_if_legal,
-                split_spell_slot_cost=_split_spell_slot_cost,
-                spend_resources=_spend_resources,
-                mark_action_cost_used=_mark_action_cost_used,
-                spellcasting_ability_mod=_spellcasting_ability_mod,
-                is_action_cantrip_spell=_is_action_cantrip_spell,
-                break_concentration=_break_concentration,
-                is_smite_setup_action=_is_smite_setup_action,
-            ),
+            adapters=_spell_pipeline_adapters(),
         )
         if spell_runtime_result is None:
             return
@@ -13689,12 +13625,16 @@ def _execute_action_impl(
                 rule_trace=rule_trace,
                 telemetry=telemetry,
                 strategy_name=strategy_name,
+                reaction_decision_provider=reaction_decision_provider,
                 timing_engine=active_timing_engine,
                 allow_auto_movement=allow_auto_movement,
                 ready_declaration=ready_declaration,
                 attack_once_per_action_used=shared_once_per_action,
                 reserved_bonus_smite=reserved_bonus_smite,
                 zero_hp_intent=zero_hp_intent,
+                dispatch_after_action=False,
+                spell_already_declared=spell_declared_for_resolution,
+                spell_result_state_applied=True,
             )
         return
 
@@ -13745,6 +13685,7 @@ def _execute_action_impl(
                         rule_trace=rule_trace,
                         telemetry=telemetry,
                         strategy_name=strategy_name,
+                        reaction_decision_provider=reaction_decision_provider,
                     )
                 else:
                     _apply_condition(target, "prone", duration_rounds=100)
@@ -13784,8 +13725,10 @@ def _execute_action_impl(
                 rule_trace=rule_trace,
                 telemetry=telemetry,
                 strategy_name=strategy_name,
+                reaction_decision_provider=reaction_decision_provider,
                 allow_auto_movement=allow_auto_movement,
                 zero_hp_intent=zero_hp_intent,
+                dispatch_after_action=False,
             )
         return
 
@@ -13809,6 +13752,8 @@ def _execute_action_impl(
             attack_once_per_action_used if attack_once_per_action_used is not None else set()
         )
         for i in range(attack_iterations):
+            if not _can_act(actor):
+                break
             # Find a living target: try current, then preferred list, then any enemy
             if per_target_attack:
                 current_target = None
@@ -13961,6 +13906,7 @@ def _execute_action_impl(
                         telemetry=telemetry,
                         strategy_name=strategy_name,
                         once_per_action_used=once_per_action_used,
+                        reaction_decision_provider=reaction_decision_provider,
                     )
                     emit_event("on_miss", trigger_target=target)
                     continue
@@ -14491,6 +14437,7 @@ def _execute_action_impl(
                 once_per_action_used=once_per_action_used,
                 effect_context=attack_effect_context,
                 pre_resolved_damage=pre_resolved_damage,
+                reaction_decision_provider=reaction_decision_provider,
             )
             emit_event(f"on_{event}", trigger_target=target)
         return
@@ -14708,6 +14655,7 @@ def _execute_action_impl(
                 rule_trace=rule_trace,
                 telemetry=telemetry,
                 strategy_name=strategy_name,
+                reaction_decision_provider=reaction_decision_provider,
             )
             emit_event("on_save", trigger_target=target)
         return
@@ -14823,28 +14771,86 @@ def _execute_action_impl(
 
             if "spell" in readied_response.tags:
                 held_spell_request = SpellCastRequest()
+                if not _action_available(
+                    actor,
+                    readied_response,
+                    spell_cast_request=held_spell_request,
+                    turn_token=turn_token,
+                ):
+                    _remove_condition(actor, "readying")
+                    return
                 if not _spend_action_resource_cost(
                     actor,
                     readied_response,
                     resources_spent,
                     spell_cast_request=held_spell_request,
+                    turn_token=turn_token,
                 ):
                     _remove_condition(actor, "readying")
                     return
-                _break_concentration(actor, actors, active_hazards)
-                actor.readied_spell_held = True
-                actor.readied_spell_slot_level = held_spell_request.slot_level
-                actor.concentrating = True
-                actor.concentrated_spell = readied_response.name
-                held_level = (
-                    int(held_spell_request.slot_level)
-                    if held_spell_request.slot_level is not None
-                    else _spell_level_from_action(readied_response)
+                actor.per_action_uses[readied_response.name] = (
+                    actor.per_action_uses.get(readied_response.name, 0) + 1
                 )
-                actor.concentrated_spell_level = held_level if held_level > 0 else None
-                actor.concentrated_targets.clear()
-                actor.concentration_conditions.clear()
-                actor.concentration_effect_instance_ids.clear()
+                if readied_response.recharge:
+                    actor.recharge_ready[readied_response.name] = False
+                held_outcome = _spell_runtime.run_spell_declaration_pipeline_outcome(
+                    rng=rng,
+                    actor=actor,
+                    action=readied_response,
+                    targets=[],
+                    actors=actors,
+                    resources_spent=resources_spent,
+                    active_hazards=active_hazards,
+                    round_number=round_number,
+                    turn_token=turn_token,
+                    timing_engine=active_timing_engine,
+                    spell_cast_request=held_spell_request,
+                    antimagic_suppression_condition=_ANTIMAGIC_SUPPRESSION_CONDITION,
+                    subtle_spell=_has_tag(readied_response, "metamagic:subtle"),
+                    light_level=light_level,
+                    adapters=_spell_pipeline_adapters(),
+                    allow_deferred_targets=True,
+                    apply_result_state=False,
+                )
+                held_result = held_outcome.result
+                prepared_spell = held_result.action if held_result is not None else readied_response
+                if held_result is not None:
+                    _break_concentration(actor, actors, active_hazards)
+                    actor.readied_spell_held = True
+                    actor.readied_spell_slot_level = held_result.spell_cast_request.slot_level
+                    actor.concentrating = True
+                    actor.concentrated_spell = prepared_spell.name
+                    actor.concentrated_spell_level = (
+                        held_result.spell_level if held_result.spell_level > 0 else None
+                    )
+                    actor.concentrated_targets.clear()
+                    actor.concentration_conditions.clear()
+                    actor.concentration_effect_instance_ids.clear()
+                if held_outcome.spell_cast_occurred and has_turn_context:
+                    _dispatch_combat_event(
+                        rng=rng,
+                        event="after_action",
+                        trigger_actor=actor,
+                        trigger_target=None,
+                        trigger_action=prepared_spell,
+                        actors=actors,
+                        round_number=round_number,
+                        turn_token=turn_token,
+                        damage_dealt=damage_dealt,
+                        damage_taken=damage_taken,
+                        threat_scores=threat_scores,
+                        resources_spent=resources_spent,
+                        active_hazards=active_hazards,
+                        rule_trace=rule_trace,
+                        obstacles=obstacles,
+                        light_level=light_level,
+                        reaction_decision_provider=reaction_decision_provider,
+                        telemetry=telemetry,
+                        include_event_actions=False,
+                        spell_cast_occurred=True,
+                    )
+                if held_result is None:
+                    _remove_condition(actor, "readying")
             return
         if action.name == "bardic_inspiration":
             die_sides = _bardic_inspiration_die_sides(actor)
@@ -14873,6 +14879,7 @@ def _execute_action_impl(
                 rule_trace=rule_trace,
                 telemetry=telemetry,
                 strategy_name=strategy_name,
+                reaction_decision_provider=reaction_decision_provider,
             )
         if (
             gained_rage_from_action
@@ -14992,6 +14999,7 @@ def _run_lair_actions(
     light_level: str = "bright",
     telemetry: list[dict[str, Any]] | None = None,
     round_number: int | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
 ) -> None:
     lair_turn_token = f"{round_number}:global" if round_number is not None else "global"
     for actor in actors.values():
@@ -15051,6 +15059,7 @@ def _run_lair_actions(
             round_number=round_number,
             turn_token=lair_turn_token,
             strategy_name="lair_action",
+            reaction_decision_provider=reaction_decision_provider,
             spell_cast_request=spell_cast_request,
         )
 
@@ -15070,6 +15079,7 @@ def _run_legendary_actions(
     telemetry: list[dict[str, Any]] | None = None,
     round_number: int | None = None,
     turn_token: str | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
 ) -> None:
     for actor in actors.values():
         if actor.actor_id == trigger_actor.actor_id:
@@ -15128,28 +15138,9 @@ def _run_legendary_actions(
             round_number=round_number,
             turn_token=turn_token,
             strategy_name="legendary_action",
+            reaction_decision_provider=reaction_decision_provider,
             spell_cast_request=spell_cast_request,
         )
-
-
-def _flatten_trial(trial: TrialResult) -> dict[str, Any]:
-    return {
-        "trial_index": trial.trial_index,
-        "rounds": trial.rounds,
-        "winner": trial.winner,
-        "outcome": trial.outcome,
-        "termination_reason": trial.termination_reason,
-        "censored": trial.censored,
-        "damage_taken": json.dumps(trial.damage_taken, sort_keys=True),
-        "damage_dealt": json.dumps(trial.damage_dealt, sort_keys=True),
-        "resources_spent": json.dumps(trial.resources_spent, sort_keys=True),
-        "downed_counts": json.dumps(trial.downed_counts, sort_keys=True),
-        "death_counts": json.dumps(trial.death_counts, sort_keys=True),
-        "remaining_hp": json.dumps(trial.remaining_hp, sort_keys=True),
-        "telemetry": json.dumps(trial.telemetry, sort_keys=True),
-        "encounter_outcomes": json.dumps(trial.encounter_outcomes, sort_keys=True),
-        "state_snapshots": json.dumps(trial.state_snapshots, sort_keys=True),
-    }
 
 
 def _declared_target_ids(declaration: TurnDeclaration) -> list[str]:
@@ -15443,6 +15434,8 @@ def run_simulation_core(
                         rule_trace=trial_rule_trace,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
+                        reaction_decision_provider=reaction_decision_provider,
+                        telemetry=trial_telemetry,
                     )
                     _run_legendary_actions(
                         rng=rng,
@@ -15458,6 +15451,7 @@ def run_simulation_core(
                         telemetry=trial_telemetry,
                         round_number=rounds,
                         turn_token=turn_token,
+                        reaction_decision_provider=reaction_decision_provider,
                     )
                     if actor.surprised:
                         actor.surprised = False
@@ -15489,6 +15483,7 @@ def run_simulation_core(
                                 light_level=light_level,
                                 telemetry=trial_telemetry,
                                 round_number=rounds,
+                                reaction_decision_provider=reaction_decision_provider,
                             )
                             lair_actions_resolved = True
                             if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
@@ -15577,6 +15572,8 @@ def run_simulation_core(
                         rule_trace=trial_rule_trace,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
+                        reaction_decision_provider=reaction_decision_provider,
+                        telemetry=trial_telemetry,
                     )
 
                     _trigger_readied_actions(
@@ -15594,6 +15591,7 @@ def run_simulation_core(
                         light_level=light_level,
                         rule_trace=trial_rule_trace,
                         telemetry=trial_telemetry,
+                        reaction_decision_provider=reaction_decision_provider,
                     )
 
                     if actor.dead or actor.hp <= 0:
@@ -15799,6 +15797,7 @@ def run_simulation_core(
                         light_level=light_level,
                         telemetry=trial_telemetry,
                         round_number=rounds,
+                        reaction_decision_provider=reaction_decision_provider,
                     )
 
                 if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(

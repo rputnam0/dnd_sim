@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from dnd_sim.models import ActionDefinition, ActorRuntimeState, SpellCastRequest
 from dnd_sim.rules_2014 import ActionDeclaredEvent, CombatTimingEngine, ReactionWindowOpenedEvent
@@ -46,6 +46,19 @@ class SpellPipelineResult:
     spell_declared_for_resolution: bool
 
 
+SpellPipelineStatus = Literal["blocked", "cancelled", "countered", "resolved"]
+
+
+@dataclass(slots=True)
+class SpellPipelineOutcome:
+    status: SpellPipelineStatus
+    result: SpellPipelineResult | None = None
+
+    @property
+    def spell_cast_occurred(self) -> bool:
+        return self.status in {"countered", "resolved"}
+
+
 def mode_requires_explicit_targets(mode: str) -> bool:
     return mode in {
         "single_enemy",
@@ -66,6 +79,7 @@ def resolve_spell_cast_request(
     provided: SpellCastRequest | None,
     required_spell_slot_level: Callable[[ActionDefinition], int],
     preferred_spell_slot_level: Callable[[ActionDefinition], int | None],
+    allow_deferred_targets: bool = False,
 ) -> SpellCastRequest:
     if provided is None:
         request = SpellCastRequest()
@@ -93,7 +107,11 @@ def resolve_spell_cast_request(
         raise ValueError("Spell cast request requires a target mode.")
     if request.mode != action.target_mode:
         raise ValueError("Spell cast request mode must match action target mode.")
-    if mode_requires_explicit_targets(request.mode) and not request.target_actor_ids:
+    if (
+        not allow_deferred_targets
+        and mode_requires_explicit_targets(request.mode)
+        and not request.target_actor_ids
+    ):
         raise ValueError("Spell cast request requires at least one target.")
     if action.aoe_type and request.origin is None:
         raise ValueError("Spell cast request requires an origin for area spell templates.")
@@ -184,7 +202,7 @@ def apply_spell_result_state(
         actor.concentration_effect_instance_ids.clear()
 
 
-def run_spell_declaration_pipeline(
+def run_spell_declaration_pipeline_outcome(
     *,
     rng: random.Random,
     actor: ActorRuntimeState,
@@ -201,17 +219,19 @@ def run_spell_declaration_pipeline(
     subtle_spell: bool,
     light_level: str,
     adapters: SpellPipelineAdapters,
-) -> SpellPipelineResult | None:
-    if not targets:
-        return None
+    allow_deferred_targets: bool = False,
+    apply_result_state: bool = True,
+) -> SpellPipelineOutcome:
+    if not targets and not allow_deferred_targets:
+        return SpellPipelineOutcome(status="blocked")
     if adapters.has_condition(actor, antimagic_suppression_condition):
-        return None
+        return SpellPipelineOutcome(status="blocked")
     if not adapters.ritual_casting_legal_for_context(action, turn_token):
-        return None
+        return SpellPipelineOutcome(status="blocked")
     if not adapters.spell_casting_legal_this_turn(actor, action, turn_token):
-        return None
+        return SpellPipelineOutcome(status="blocked")
     if not adapters.can_cast_spell_with_components(actor, action):
-        return None
+        return SpellPipelineOutcome(status="blocked")
 
     try:
         resolved_spell_cast_request = resolve_spell_cast_request(
@@ -221,9 +241,10 @@ def run_spell_declaration_pipeline(
             provided=spell_cast_request,
             required_spell_slot_level=adapters.required_spell_slot_level,
             preferred_spell_slot_level=adapters.preferred_spell_slot_level,
+            allow_deferred_targets=allow_deferred_targets,
         )
     except ValueError:
-        return None
+        return SpellPipelineOutcome(status="blocked")
 
     spell_level = max(0, int(adapters.required_spell_slot_level(action)))
     if resolved_spell_cast_request.slot_level is not None:
@@ -233,14 +254,14 @@ def run_spell_declaration_pipeline(
     declaration_event = timing_engine.emit(
         ActionDeclaredEvent(
             attacker=actor,
-            target=targets[0],
+            target=targets[0] if targets else None,
             action=action,
             round_number=round_number,
             turn_token=turn_token,
         )
     )
     if declaration_event.cancelled:
-        return None
+        return SpellPipelineOutcome(status="cancelled")
 
     record_spell_cast_for_turn(
         actor,
@@ -291,7 +312,7 @@ def run_spell_declaration_pipeline(
                     window="counterspell",
                     reactor=enemy,
                     attacker=actor,
-                    target=targets[0],
+                    target=targets[0] if targets else actor,
                     action=action,
                     round_number=round_number,
                     turn_token=turn_token,
@@ -320,25 +341,66 @@ def run_spell_declaration_pipeline(
             )
 
             if counter_level >= spell_level:
-                return None
+                return SpellPipelineOutcome(status="countered")
             check_dc = 10 + spell_level
             check_total = rng.randint(1, 20) + adapters.spellcasting_ability_mod(enemy)
             if check_total >= check_dc:
-                return None
+                return SpellPipelineOutcome(status="countered")
 
-    apply_spell_result_state(
+    if apply_result_state:
+        apply_spell_result_state(
+            actor=actor,
+            action=action,
+            spell_level=spell_level,
+            actors=actors,
+            active_hazards=active_hazards,
+            break_concentration=adapters.break_concentration,
+            is_smite_setup_action=adapters.is_smite_setup_action,
+        )
+
+    return SpellPipelineOutcome(
+        status="resolved",
+        result=SpellPipelineResult(
+            action=action,
+            spell_level=spell_level,
+            spell_cast_request=resolved_spell_cast_request,
+            spell_declared_for_resolution=True,
+        ),
+    )
+
+
+def run_spell_declaration_pipeline(
+    *,
+    rng: random.Random,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    targets: list[ActorRuntimeState],
+    actors: dict[str, ActorRuntimeState],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    round_number: int | None,
+    turn_token: str | None,
+    timing_engine: CombatTimingEngine,
+    spell_cast_request: SpellCastRequest | None,
+    antimagic_suppression_condition: str,
+    subtle_spell: bool,
+    light_level: str,
+    adapters: SpellPipelineAdapters,
+) -> SpellPipelineResult | None:
+    return run_spell_declaration_pipeline_outcome(
+        rng=rng,
         actor=actor,
         action=action,
-        spell_level=spell_level,
+        targets=targets,
         actors=actors,
+        resources_spent=resources_spent,
         active_hazards=active_hazards,
-        break_concentration=adapters.break_concentration,
-        is_smite_setup_action=adapters.is_smite_setup_action,
-    )
-
-    return SpellPipelineResult(
-        action=action,
-        spell_level=spell_level,
-        spell_cast_request=resolved_spell_cast_request,
-        spell_declared_for_resolution=True,
-    )
+        round_number=round_number,
+        turn_token=turn_token,
+        timing_engine=timing_engine,
+        spell_cast_request=spell_cast_request,
+        antimagic_suppression_condition=antimagic_suppression_condition,
+        subtle_spell=subtle_spell,
+        light_level=light_level,
+        adapters=adapters,
+    ).result

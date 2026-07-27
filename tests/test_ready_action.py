@@ -15,10 +15,12 @@ from dnd_sim.engine_runtime import (
     _validate_declared_ready_or_error,
     short_rest,
 )
-from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.models import ActionDefinition, ActorRuntimeState, SpellDefinition, SpellScaling
 from dnd_sim.strategy_api import (
     DeclaredAction,
+    ReactionDecision,
     ReactionPolicy,
+    ReactionWindowView,
     ReadyDeclaration,
     TurnDeclaration,
 )
@@ -151,10 +153,13 @@ def test_readied_spell_consumes_slot_immediately_and_holds_concentration() -> No
         damage_type="radiant",
         range_ft=120,
         resource_cost={"spell_slot_1": 1},
-        tags=["spell"],
+        max_uses=1,
+        recharge="6",
+        tags=["spell", "component:verbal"],
     )
     ready_actor.actions = [ready_action, readied_spell]
     ready_actor.resources["spell_slot_1"] = 1
+    ready_actor.recharge_ready[readied_spell.name] = True
 
     actors = {ready_actor.actor_id: ready_actor, enemy.actor_id: enemy}
     damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(ready_actor, enemy)
@@ -180,6 +185,415 @@ def test_readied_spell_consumes_slot_immediately_and_holds_concentration() -> No
     assert resources_spent[ready_actor.actor_id]["spell_slot_1"] == 1
     assert ready_actor.concentrating is True
     assert ready_actor.concentrated_spell == "guiding_bolt"
+    assert ready_actor.per_action_uses[readied_spell.name] == 1
+    assert ready_actor.recharge_ready[readied_spell.name] is False
+
+
+def test_readied_spell_opens_mage_slayer_when_cast_not_when_released() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    mage_slayer = _base_actor(actor_id="mage_slayer", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    mage_slayer.position = (5.0, 0.0, 0.0)
+    ready_action = ActionDefinition(
+        name="ready",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+    )
+    readied_spell = ActionDefinition(
+        name="guiding_bolt",
+        action_type="attack",
+        attack_delivery="ranged_spell_attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=100,
+        damage="1",
+        damage_type="radiant",
+        range_ft=120,
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell", "component:verbal"],
+    )
+    caster.actions = [ready_action, readied_spell]
+    caster.resources["spell_slot_1"] = 1
+    mage_slayer.actions = [
+        ActionDefinition(
+            name="sword",
+            action_type="attack",
+            attack_delivery="melee_weapon_attack",
+            action_cost="action",
+            target_mode="single_enemy",
+            to_hit=5,
+            damage="1",
+            reach_ft=5,
+        )
+    ]
+    mage_slayer.traits = {
+        "mage_slayer": {
+            "name": "Mage Slayer",
+            "source_type": "feat",
+            "mechanics": [
+                {
+                    "effect_type": "reaction_attack",
+                    "trigger": "spell_cast_within_5ft",
+                }
+            ],
+        }
+    }
+    actors = {caster.actor_id: caster, mage_slayer.actor_id: mage_slayer}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, mage_slayer)
+    windows: list[ReactionWindowView] = []
+
+    def pass_reaction(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        return ReactionDecision(window_id=window.window_id, choice="pass")
+
+    rng = _SequenceRng([10, 10])
+    _execute_action(
+        rng=rng,
+        actor=caster,
+        action=ready_action,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name=readied_spell.name,
+        ),
+        reaction_decision_provider=pass_reaction,
+    )
+
+    assert len(windows) == 1
+    assert windows[0].trigger.feature_name == "Mage Slayer"
+    assert caster.readied_spell_held is True
+
+    caster.add_manual_condition("silenced")
+    mage_slayer.actions.append(
+        ActionDefinition(
+            name="counterspell",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="single_enemy",
+            tags=["spell", "counterspell"],
+        )
+    )
+    mage_slayer.resources["spell_slot_3"] = 1
+
+    trigger_ready = getattr(engine_module, "_trigger_readied_actions")
+    trigger_ready(
+        rng=rng,
+        trigger_actor=mage_slayer,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:mage_slayer",
+        reaction_decision_provider=pass_reaction,
+    )
+
+    assert len(windows) == 1
+    assert mage_slayer.hp == mage_slayer.max_hp - 1
+    assert mage_slayer.resources["spell_slot_3"] == 1
+    assert mage_slayer.reaction_available is True
+    assert rng.values == []
+
+
+def test_counterspell_stops_readied_spell_during_setup() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    counterspeller = _base_actor(actor_id="counterspeller", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    counterspeller.position = (5.0, 0.0, 0.0)
+    ready_action = ActionDefinition(
+        name="ready",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+    )
+    readied_spell = ActionDefinition(
+        name="guiding_bolt",
+        action_type="attack",
+        attack_delivery="ranged_spell_attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=100,
+        damage="1",
+        range_ft=120,
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell", "component:verbal"],
+    )
+    counterspell = ActionDefinition(
+        name="counterspell",
+        action_type="utility",
+        action_cost="reaction",
+        target_mode="single_enemy",
+        tags=["spell", "counterspell"],
+    )
+    caster.actions = [ready_action, readied_spell]
+    caster.resources["spell_slot_1"] = 1
+    counterspeller.actions = [counterspell]
+    counterspeller.resources["spell_slot_3"] = 1
+    actors = {caster.actor_id: caster, counterspeller.actor_id: counterspeller}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, counterspeller)
+    rng = _SequenceRng([])
+
+    _execute_action(
+        rng=rng,
+        actor=caster,
+        action=ready_action,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name=readied_spell.name,
+        ),
+    )
+
+    assert caster.resources["spell_slot_1"] == 0
+    assert counterspeller.resources["spell_slot_3"] == 0
+    assert counterspeller.reaction_available is False
+    assert caster.readied_spell_held is False
+    assert "readying" not in caster.conditions
+
+    trigger_ready = getattr(engine_module, "_trigger_readied_actions")
+    trigger_ready(
+        rng=rng,
+        trigger_actor=counterspeller,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:counterspeller",
+    )
+
+    assert counterspeller.hp == counterspeller.max_hp
+    assert rng.values == []
+
+
+def test_readied_concentration_spell_transitions_to_effect_concentration() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    enemy.position = (5.0, 0.0, 0.0)
+    ready_action = ActionDefinition(
+        name="ready",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+    )
+    binding_spell = ActionDefinition(
+        name="binding_spell",
+        action_type="utility",
+        action_cost="action",
+        target_mode="single_enemy",
+        range_ft=30,
+        concentration=True,
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell", "component:verbal"],
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "target": "target",
+                "condition": "restrained",
+            }
+        ],
+    )
+    caster.actions = [ready_action, binding_spell]
+    caster.resources["spell_slot_1"] = 1
+    actors = {caster.actor_id: caster, enemy.actor_id: enemy}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, enemy)
+    rng = _SequenceRng([])
+
+    _execute_action(
+        rng=rng,
+        actor=caster,
+        action=ready_action,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name=binding_spell.name,
+        ),
+    )
+
+    assert caster.readied_spell_held is True
+    assert caster.concentrating is True
+    assert caster.concentrated_spell == binding_spell.name
+
+    trigger_ready = getattr(engine_module, "_trigger_readied_actions")
+    trigger_ready(
+        rng=rng,
+        trigger_actor=enemy,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert caster.readied_spell_held is False
+    assert "readying" not in caster.conditions
+    assert caster.concentrating is True
+    assert caster.concentrated_spell == binding_spell.name
+    assert "restrained" in enemy.conditions
+    assert caster.resources["spell_slot_1"] == 0
+    assert resources_spent[caster.actor_id]["spell_slot_1"] == 1
+    assert rng.values == []
+
+
+def test_readied_spell_preserves_upcast_scaling_and_spends_slot_once() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    enemy.position = (30.0, 0.0, 0.0)
+    ready_action = ActionDefinition(
+        name="ready",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+    )
+    readied_spell = ActionDefinition(
+        name="upcast_bolt",
+        action_type="attack",
+        attack_delivery="ranged_spell_attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=100,
+        damage="1d1",
+        range_ft=120,
+        resource_cost={"spell_slot_1": 1},
+        spell=SpellDefinition(
+            name="upcast_bolt",
+            level=1,
+            scaling=SpellScaling(upcast_dice_per_level="1d1"),
+        ),
+        tags=["spell", "upcast_level:2"],
+    )
+    caster.actions = [ready_action, readied_spell]
+    caster.resources["spell_slot_2"] = 1
+    actors = {caster.actor_id: caster, enemy.actor_id: enemy}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, enemy)
+    rng = _SequenceRng([10, 1, 1])
+
+    _execute_action(
+        rng=rng,
+        actor=caster,
+        action=ready_action,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name=readied_spell.name,
+        ),
+    )
+
+    assert caster.readied_spell_slot_level == 2
+    assert caster.resources["spell_slot_2"] == 0
+    assert resources_spent[caster.actor_id] == {"spell_slot_2": 1}
+
+    trigger_ready = getattr(engine_module, "_trigger_readied_actions")
+    trigger_ready(
+        rng=rng,
+        trigger_actor=enemy,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert enemy.hp == enemy.max_hp - 2
+    assert resources_spent[caster.actor_id] == {"spell_slot_2": 1}
+    assert rng.values == []
+
+
+def test_readied_spell_is_not_released_while_caster_is_in_antimagic() -> None:
+    caster = _base_actor(actor_id="caster", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    ready_action = ActionDefinition(
+        name="ready",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+    )
+    readied_spell = ActionDefinition(
+        name="held_bolt",
+        action_type="attack",
+        attack_delivery="ranged_spell_attack",
+        action_cost="action",
+        target_mode="single_enemy",
+        to_hit=100,
+        damage="1",
+        range_ft=120,
+        resource_cost={"spell_slot_1": 1},
+        tags=["spell"],
+    )
+    caster.actions = [ready_action, readied_spell]
+    caster.resources["spell_slot_1"] = 1
+    actors = {caster.actor_id: caster, enemy.actor_id: enemy}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, enemy)
+
+    _execute_action(
+        rng=_SequenceRng([]),
+        actor=caster,
+        action=ready_action,
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name=readied_spell.name,
+        ),
+    )
+    caster.add_manual_condition("antimagic_suppressed")
+
+    getattr(engine_module, "_trigger_readied_actions")(
+        rng=_SequenceRng([]),
+        trigger_actor=enemy,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert enemy.hp == enemy.max_hp
+    assert caster.reaction_available is True
+    assert caster.readied_spell_held is True
+    assert "readying" in caster.conditions
 
 
 def test_readied_response_cannot_fire_without_reaction() -> None:
@@ -391,6 +805,35 @@ def test_ready_declaration_rejects_bonus_action_wild_shape_response() -> None:
     assert exc_info.value.field == "ready.response_action_name"
 
 
+def test_ready_declaration_rejects_spell_without_one_action_casting_time() -> None:
+    ready_actor = _base_actor(actor_id="ready_actor", team="party")
+    ready_actor.actions = [
+        ActionDefinition(name="ready", action_type="utility", action_cost="action"),
+        ActionDefinition(
+            name="long_cast_spell",
+            action_type="utility",
+            action_cost="none",
+            target_mode="single_enemy",
+            tags=["spell"],
+        ),
+    ]
+
+    with pytest.raises(TurnDeclarationValidationError) as exc_info:
+        _validate_declared_ready_or_error(
+            ready_actor,
+            TurnDeclaration(
+                action=DeclaredAction(action_name="ready"),
+                ready=ReadyDeclaration(
+                    trigger="enemy_turn_start",
+                    response_action_name="long_cast_spell",
+                ),
+            ),
+        )
+
+    assert exc_info.value.code == "illegal_ready_spell_casting_time"
+    assert exc_info.value.field == "ready.response_action_name"
+
+
 def test_readied_melee_attack_honors_declared_knockout_intent() -> None:
     ready_actor = _base_actor(actor_id="ready_actor", team="party")
     enemy = _base_actor(actor_id="enemy", team="enemy")
@@ -480,6 +923,7 @@ def test_readied_melee_attack_honors_declared_knockout_intent() -> None:
     assert enemy.dead is False
     assert enemy.stable_recovery_hours_remaining == 2
     assert ready_actor.readied_zero_hp_intent == "normal"
+    assert ready_actor.per_action_uses[readied_attack.name] == 1
     assert any(
         row.get("telemetry_type") == "decision" and row.get("ready_zero_hp_intent") == "knock_out"
         for row in telemetry
