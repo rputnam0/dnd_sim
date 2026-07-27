@@ -11,6 +11,7 @@ from dnd_sim.mechanics_schema import (
     KNOWN_EFFECT_TYPES,
     validate_effect_specific_mechanic_fields,
 )
+from dnd_sim.models import AttackDelivery
 from dnd_sim.rules_profiles import (
     DEFAULT_RULES_PROFILE_ID,
     DEFAULT_RULES_PROFILE_VERSION,
@@ -74,6 +75,7 @@ def _extract_action_reference_name(reference: Any) -> str | None:
 class ActionConfig(BaseModel):
     name: str
     action_type: Literal["attack", "save", "utility"] = "attack"
+    attack_delivery: AttackDelivery | None = None
     attack_profile_id: str | None = None
     weapon_id: str | None = None
     item_id: str | None = None
@@ -125,6 +127,12 @@ class ActionConfig(BaseModel):
         if value is not None and value <= 0:
             raise ValueError("max_targets must be >= 1")
         return value
+
+    @model_validator(mode="after")
+    def validate_attack_delivery(self) -> "ActionConfig":
+        if self.attack_delivery is not None and self.action_type != "attack":
+            raise ValueError("attack_delivery requires action_type='attack'")
+        return self
 
     @field_validator("trigger_duration_rounds", "trigger_limit_per_turn")
     @classmethod

@@ -1732,6 +1732,32 @@ def _normalize_attack_definition(raw_attack: Any, idx: int) -> dict[str, Any]:
         elif reach_ft is not None:
             range_ft = reach_ft
 
+    attack_delivery = str(attack.get("attack_delivery") or "").strip().lower() or None
+    supported_deliveries = {
+        "melee_weapon_attack",
+        "ranged_weapon_attack",
+        "melee_spell_attack",
+        "ranged_spell_attack",
+    }
+    if attack_delivery is not None and attack_delivery not in supported_deliveries:
+        raise ValueError(f"invalid attack_delivery: {attack_delivery!r}")
+    if attack_delivery is None:
+        property_set = set(weapon_properties)
+        name_lower = attack_name.lower()
+        ranged_by_property = bool(property_set.intersection({"ammunition", "ranged"}))
+        ranged_by_profile = (
+            range_normal_ft is not None
+            and range_normal_ft > 5
+            and reach_ft is None
+            and "reach" not in property_set
+        )
+        ranged_by_name = any(hint in name_lower for hint in _RANGED_WEAPON_HINTS)
+        attack_delivery = (
+            "ranged_weapon_attack"
+            if ranged_by_property or ranged_by_profile or ranged_by_name
+            else "melee_weapon_attack"
+        )
+
     normalized = dict(attack)
     normalized.update(
         {
@@ -1739,6 +1765,7 @@ def _normalize_attack_definition(raw_attack: Any, idx: int) -> dict[str, Any]:
             "weapon_id": weapon_id,
             "item_id": item_id,
             "weapon_properties": weapon_properties,
+            "attack_delivery": attack_delivery,
             "reach_ft": reach_ft,
             "range_ft": range_ft,
             "range_normal_ft": range_normal_ft,
@@ -1785,6 +1812,10 @@ def _is_weapon_attack_action(action: ActionDefinition) -> bool:
 
 
 def _is_ranged_weapon_action(action: ActionDefinition) -> bool:
+    if action.attack_delivery == "ranged_weapon_attack":
+        return True
+    if action.attack_delivery == "melee_weapon_attack":
+        return False
     if not _is_weapon_attack_action(action):
         return False
     has_ranged_property = _action_has_weapon_property(
@@ -3778,6 +3809,10 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
                 action_type_text = str(spell_def.get("action_type") or "").strip().lower()
                 if action_type_text:
                     hydrated["action_type"] = action_type_text
+            if "attack_delivery" in spell_def:
+                attack_delivery_text = str(spell_def.get("attack_delivery") or "").strip().lower()
+                if attack_delivery_text:
+                    hydrated["attack_delivery"] = attack_delivery_text
             if "target_mode" in spell_def:
                 target_mode_text = str(spell_def.get("target_mode") or "").strip().lower()
                 if target_mode_text:
@@ -4123,6 +4158,7 @@ def _clone_action(action: ActionDefinition, **overrides: Any) -> ActionDefinitio
     payload: dict[str, Any] = {
         "name": action.name,
         "action_type": action.action_type,
+        "attack_delivery": action.attack_delivery,
         "attack_profile_id": action.attack_profile_id,
         "weapon_id": action.weapon_id,
         "item_id": action.item_id,
@@ -4516,6 +4552,7 @@ def _build_spell_actions(
         is_ritual = _spell_is_ritual(spell) and spell_level > 0
         smite_setup = _is_smite_spell_name(name)
         action_type = str(spell.get("action_type", "attack"))
+        attack_delivery = str(spell.get("attack_delivery") or "").strip().lower() or None
         damage = spell.get("damage")
         damage_type = str(spell.get("damage_type", "fire"))
         to_hit = spell.get("to_hit")
@@ -4602,6 +4639,7 @@ def _build_spell_actions(
         action = ActionDefinition(
             name=name,
             action_type=action_type,
+            attack_delivery=attack_delivery,
             to_hit=int(to_hit) if to_hit is not None else None,
             damage=str(damage) if damage else None,
             damage_type=damage_type,
@@ -5157,6 +5195,7 @@ def _build_character_actions(character: dict[str, Any]) -> list[ActionDefinition
             "weapon_id": str(attack.get("weapon_id") or ""),
             "item_id": str(attack.get("item_id") or ""),
             "weapon_properties": list(attack.get("weapon_properties", [])),
+            "attack_delivery": attack.get("attack_delivery"),
             "reach_ft": _coerce_optional_int(attack.get("reach_ft")),
             "range_ft": _coerce_optional_int(attack.get("range_ft")),
             "range_normal_ft": _coerce_optional_int(attack.get("range_normal_ft")),
@@ -5943,6 +5982,7 @@ def _build_item_granted_action(
     return ActionDefinition(
         name=name,
         action_type=action_type,
+        attack_delivery=(str(payload.get("attack_delivery") or "").strip().lower() or None),
         to_hit=_coerce_optional_int(payload.get("to_hit")),
         damage=str(payload.get("damage")) if payload.get("damage") is not None else None,
         damage_type=str(payload.get("damage_type", "force")),
@@ -6461,6 +6501,7 @@ def _build_actor_from_character(
             actor.resources[resource_name] = max(
                 0, min(int(actor.max_resources[resource_name]), resource_amount)
             )
+    _materialize_actor_attack_deliveries(actor)
     actor.movement_remaining = float(actor.speed_ft)
     return actor
 
@@ -6598,6 +6639,9 @@ def _build_enemy_innate_spell_actions(enemy: EnemyConfig) -> list[ActionDefiniti
             ActionDefinition(
                 name=spell_name,
                 action_type=action_type,
+                attack_delivery=(
+                    str(spell_def.get("attack_delivery") or "").strip().lower() or None
+                ),
                 to_hit=to_hit,
                 damage=damage_expr,
                 damage_type=damage_type or "force",
@@ -6647,6 +6691,7 @@ def _build_actor_from_enemy(
                 ActionDefinition(
                     name=action.name,
                     action_type=action.action_type,
+                    attack_delivery=getattr(action, "attack_delivery", None),
                     attack_profile_id=getattr(action, "attack_profile_id", None),
                     weapon_id=getattr(action, "weapon_id", None),
                     item_id=getattr(action, "item_id", None),
@@ -6790,6 +6835,7 @@ def _build_actor_from_enemy(
     actor.movement_remaining = float(actor.speed_ft)
     _apply_passive_traits(actor)
     _register_actor_feature_hooks(actor)
+    _materialize_actor_attack_deliveries(actor)
     return actor
 
 
@@ -7508,6 +7554,10 @@ def _has_action_tag(action: ActionDefinition, tag: str) -> bool:
 
 
 def _is_probably_ranged_attack(action: ActionDefinition) -> bool:
+    if action.attack_delivery in {"ranged_weapon_attack", "ranged_spell_attack"}:
+        return True
+    if action.attack_delivery in {"melee_weapon_attack", "melee_spell_attack"}:
+        return False
     has_ranged_property = _action_has_weapon_property(
         action, "ammunition"
     ) or _action_has_weapon_property(action, "ranged")
@@ -7552,6 +7602,10 @@ def _action_range_ft(action: ActionDefinition) -> float | None:
     if action.action_type in {"grapple", "shove"}:
         return 5.0
     if action.action_type == "attack":
+        if action.attack_delivery in {"ranged_weapon_attack", "ranged_spell_attack"}:
+            return 60.0
+        if action.attack_delivery in {"melee_weapon_attack", "melee_spell_attack"}:
+            return 5.0
         if _has_action_tag(action, "spell"):
             return 60.0
         if _is_probably_ranged_attack(action):
@@ -7567,6 +7621,10 @@ def _action_range_ft(action: ActionDefinition) -> float | None:
 def _is_ranged_attack_action(action: ActionDefinition) -> bool:
     if action.action_type != "attack":
         return False
+    if action.attack_delivery in {"ranged_weapon_attack", "ranged_spell_attack"}:
+        return True
+    if action.attack_delivery in {"melee_weapon_attack", "melee_spell_attack"}:
+        return False
     if _is_ranged_weapon_action(action):
         return True
     if _has_action_tag(action, "ranged") or _has_action_tag(action, "ranged_attack"):
@@ -7576,6 +7634,33 @@ def _is_ranged_attack_action(action: ActionDefinition) -> bool:
         return False
     inferred_range = _action_range_ft(action)
     return bool(inferred_range is not None and inferred_range > 5.0)
+
+
+def _materialize_attack_delivery(action: ActionDefinition) -> None:
+    if action.action_type != "attack" or action.attack_delivery is not None:
+        return
+    metadata_deliveries = {
+        str(row.get("effect_type", "")).strip().lower()
+        for row in [*action.effects, *action.mechanics]
+        if isinstance(row, dict)
+        and str(row.get("effect_type", "")).strip().lower()
+        in {"melee_spell_attack", "ranged_spell_attack"}
+    }
+    if len(metadata_deliveries) > 1:
+        raise ValueError(f"Action '{action.name}' has conflicting attack delivery metadata.")
+    if metadata_deliveries:
+        action.attack_delivery = next(iter(metadata_deliveries))
+        return
+    if _has_action_tag(action, "spell"):
+        return
+    action.attack_delivery = (
+        "ranged_weapon_attack" if _is_ranged_attack_action(action) else "melee_weapon_attack"
+    )
+
+
+def _materialize_actor_attack_deliveries(actor: ActorRuntimeState) -> None:
+    for action in actor.actions:
+        _materialize_attack_delivery(action)
 
 
 def _action_max_range_ft(action: ActionDefinition) -> float | None:
@@ -14599,6 +14684,7 @@ def _build_round_metadata(
                 {
                     "name": action.name,
                     "action_type": action.action_type,
+                    "attack_delivery": action.attack_delivery,
                     "attack_profile_id": action.attack_profile_id,
                     "weapon_id": action.weapon_id,
                     "item_id": action.item_id,

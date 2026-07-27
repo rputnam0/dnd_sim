@@ -7,6 +7,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from dnd_sim.models import AttackDelivery
+
 DuplicatePolicy = Literal["fail_fast", "prefer_richest"]
 
 _SPELL_NORMALIZE_RE = re.compile(r"[\s_-]+")
@@ -65,6 +67,7 @@ class CanonicalSpellRecord(BaseModel):
     school: str | None = None
     casting_time: str
     action_type: Literal["attack", "save", "utility"] | None = None
+    attack_delivery: AttackDelivery | None = None
     target_mode: (
         Literal[
             "single_enemy",
@@ -300,13 +303,42 @@ def canonicalize_spell_payload(
 
     casting_time = str(payload.get("casting_time", "")).strip() or "action"
 
+    mechanics = _coerce_mechanics(payload.get("mechanics"))
+    declared_delivery = str(payload.get("attack_delivery") or "").strip().lower() or None
+    inferred_deliveries = {
+        str(row.get("effect_type", "")).strip().lower()
+        for row in mechanics
+        if str(row.get("effect_type", "")).strip().lower()
+        in {"melee_spell_attack", "ranged_spell_attack"}
+    }
+    description_lower = description.lower()
+    if "melee spell attack" in description_lower:
+        inferred_deliveries.add("melee_spell_attack")
+    if "ranged spell attack" in description_lower:
+        inferred_deliveries.add("ranged_spell_attack")
+    if declared_delivery is not None:
+        inferred_deliveries.add(declared_delivery)
+    if len(inferred_deliveries) > 1:
+        raise SpellDatabaseValidationError(
+            f"Invalid spell schema in {source}: conflicting attack delivery metadata"
+        )
+    attack_delivery = next(iter(inferred_deliveries), None)
+    action_type = str(payload.get("action_type", "")).strip().lower() or None
+    if attack_delivery is not None:
+        if action_type not in {None, "attack"}:
+            raise SpellDatabaseValidationError(
+                f"Invalid spell schema in {source}: attack delivery requires attack action_type"
+            )
+        action_type = "attack"
+
     normalized = {
         "name": name,
         "type": str(payload.get("type", "spell") or "spell").strip().lower(),
         "level": int(level_raw),
         "school": school_raw,
         "casting_time": casting_time,
-        "action_type": str(payload.get("action_type", "")).strip().lower() or None,
+        "action_type": action_type,
+        "attack_delivery": attack_delivery,
         "target_mode": str(payload.get("target_mode", "")).strip().lower() or None,
         "range_ft": _parse_range_ft(payload.get("range_ft", payload.get("range"))),
         "concentration": bool(concentration_raw),
@@ -318,7 +350,7 @@ def canonicalize_spell_payload(
         "save_dc": int(payload["save_dc"]) if payload.get("save_dc") is not None else None,
         "save_ability": save_ability,
         "damage_type": payload.get("damage_type"),
-        "mechanics": _coerce_mechanics(payload.get("mechanics")),
+        "mechanics": mechanics,
     }
 
     try:

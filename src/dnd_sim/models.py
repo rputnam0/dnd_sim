@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from dnd_sim.inventory import InventoryState
 
 ABILITY_KEYS = ("str", "dex", "con", "int", "wis", "cha")
+AttackDelivery = Literal[
+    "melee_weapon_attack",
+    "ranged_weapon_attack",
+    "melee_spell_attack",
+    "ranged_spell_attack",
+]
 
 
 @dataclass(slots=True)
@@ -21,6 +27,7 @@ class AttackProfile:
     to_hit: int
     damage: str
     damage_type: str
+    attack_delivery: AttackDelivery | None = None
     attack_profile_id: str | None = None
     weapon_id: str | None = None
     item_id: str | None = None
@@ -68,6 +75,7 @@ class CharacterRecord:
                     "to_hit": attack.to_hit,
                     "damage": attack.damage,
                     "damage_type": attack.damage_type,
+                    "attack_delivery": attack.attack_delivery,
                     "weapon_properties": list(attack.weapon_properties),
                     "reach_ft": attack.reach_ft,
                     "range_ft": attack.range_ft,
@@ -136,6 +144,7 @@ class SpellCastRequest:
 class ActionDefinition:
     name: str
     action_type: str  # "attack", "spell", "heal", "buff", "dodge", "dash", "disengage", "ready", "grapple", "shove", "none" = None
+    attack_delivery: AttackDelivery | None = None
     to_hit: int | None = None
     damage: str | None = None
     damage_type: str = "bludgeoning"
