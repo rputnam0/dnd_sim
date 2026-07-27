@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+from dataclasses import dataclass
 from typing import Any
 
 from dnd_sim.interactive.contracts import CommandReceipt, JSONValue, PreviewReceipt
@@ -20,6 +21,16 @@ from .event_store import SQLiteSessionEventStore
 
 class VTTSessionServiceError(ValueError):
     """Raised when a command cannot be routed to this service's session."""
+
+
+@dataclass(frozen=True, slots=True)
+class VTTSessionReadView:
+    """One atomic client-safe read of the open session."""
+
+    session_id: str
+    revision: int
+    versions: VTTVersionInfo
+    projection: dict[str, JSONValue]
 
 
 class VTTSessionService:
@@ -84,9 +95,27 @@ class VTTSessionService:
             return self._session.state
 
     @property
+    def projection(self) -> dict[str, JSONValue]:
+        """Return the driver's detached client-safe projection under the service lock."""
+
+        with self._lock:
+            return self._session.projection
+
+    @property
     def versions(self) -> VTTVersionInfo:
         with self._lock:
             return VTTVersionInfo.from_engine(self._session.version_pins)
+
+    def read_view(self) -> VTTSessionReadView:
+        """Read identity, revision, versions, and projection under one service lock."""
+
+        with self._lock:
+            return VTTSessionReadView(
+                session_id=self._session.session_id,
+                revision=self._session.revision,
+                versions=VTTVersionInfo.from_engine(self._session.version_pins),
+                projection=self._session.projection,
+            )
 
     def execute(self, command: VTTCommand) -> VTTResponse:
         """Execute a translated command and durably append each successful commit."""
@@ -130,4 +159,4 @@ class VTTSessionService:
             return durable_response
 
 
-__all__ = ["VTTSessionService", "VTTSessionServiceError"]
+__all__ = ["VTTSessionReadView", "VTTSessionService", "VTTSessionServiceError"]
