@@ -1,0 +1,56 @@
+# VTT Whole-Turn Driver Plan
+
+This checklist turns the generic interactive session kernel into a real D&D
+turn driver before browser transport or rendering is added. The batch simulator
+and VTT must resolve a declared turn through the same domain function.
+
+## Milestone 1: Atomic declared-turn kernel
+
+- [x] Add a complete in-memory state boundary for declared-turn resolution.
+- [x] Prove rejected declarations do not mutate actors, metrics, hazards,
+      telemetry, rule trace, timing state, or RNG state.
+- [x] Prove preview and commit from identical state and RNG produce identical
+      candidates.
+- [x] Route batch `TurnDeclaration` execution through the public atomic kernel.
+- [x] Prove fixed-seed batch replay remains deterministic.
+
+## Milestone 2: Prompt-bound combat state
+
+- [ ] Persist combat only at `awaiting_declaration` or `terminal` boundaries.
+- [ ] Extract deterministic automatic phases (turn start, hazards, death saves,
+      forced dodge, turn end, legendary actions) around the prompted turn.
+- [ ] Keep reactions explicitly auto-resolved until a resumable reaction
+      continuation is implemented.
+- [ ] Make batch strategy selection and interactive commands call the same
+      prompted-turn resolver.
+
+## Milestone 3: D&D interactive driver
+
+- [ ] Define a strict JSON turn-declaration command payload.
+- [ ] Implement a complete, versioned state codec rather than serializing
+      reporting snapshots or runtime objects directly.
+- [ ] Implement preview, commit, restore, idempotent retry, and fixed-seed replay
+      through `EngineSession`.
+- [ ] Project legal movement, actions, targets, initiative, HP/effects, and rules
+      events without exposing hidden engine state.
+
+## Milestone 4: Solo Table v0
+
+- [ ] Add a single-session VTT application boundary and append-only SQLite
+      command/event store.
+- [ ] Add an HTTP/WebSocket gateway with a separate `vtt.command.v1` transport
+      contract.
+- [ ] Add an original fixed encounter with a square-grid scene and tokens.
+- [ ] Add the browser table: selection, movement preview/commit, action palette,
+      target selection, initiative, HP/effects, dice/rules log, and win/loss.
+- [ ] Add an end-to-end test that completes the encounter, restarts the service,
+      reloads the same state, retries without duplicate mutation, and verifies
+      byte-identical deterministic replay.
+
+## Verification gates
+
+- Targeted tests must pass after each TDD increment.
+- `uv run python -m black .` must pass before review.
+- `uv run python -m pytest` must pass before this branch is published.
+- New turn-driver commits will be re-stacked onto merged foundation branches so
+  the eventual pull request contains only this milestone's changes.

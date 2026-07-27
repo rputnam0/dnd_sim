@@ -7,6 +7,8 @@ import math
 import random
 import re
 import statistics
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from functools import lru_cache
 from pathlib import Path
@@ -161,6 +163,7 @@ from dnd_sim.spells import (
     spell_lookup_key as _canonical_spell_lookup_key,
 )
 from dnd_sim.telemetry import build_event_envelope
+from dnd_sim.turn_kernel import DeclaredTurnRuntimeState
 
 logger = logging.getLogger(__name__)
 
@@ -9097,6 +9100,89 @@ def _execute_declared_turn_or_error(
     _ = executed_primary
 
 
+def create_declared_turn_runtime_state(
+    *,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    telemetry: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    timing_engine: CombatTimingEngine | None = None,
+) -> DeclaredTurnRuntimeState:
+    """Collect the complete mutable boundary used by one declared turn."""
+
+    return DeclaredTurnRuntimeState(
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        telemetry=telemetry if telemetry is not None else [],
+        obstacles=obstacles if obstacles is not None else [],
+        light_level=light_level,
+        round_number=round_number,
+        turn_token=turn_token,
+        rule_trace=rule_trace if rule_trace is not None else [],
+        timing_engine=(
+            timing_engine if timing_engine is not None else _create_combat_timing_engine()
+        ),
+    )
+
+
+def resolve_declared_turn_atomic(
+    *,
+    state: DeclaredTurnRuntimeState,
+    rng: random.Random,
+    actor_id: str,
+    declaration: TurnDeclaration,
+    strategy_name: str,
+) -> DeclaredTurnRuntimeState:
+    """Resolve a declaration on a detached candidate and commit only RNG state.
+
+    The caller adopts the returned state on success. Any exception leaves both
+    the supplied state and RNG unchanged, including failures discovered after
+    movement or a primary action has already been evaluated on the candidate.
+    """
+
+    if actor_id not in state.actors:
+        raise ValueError(f"Unknown declared-turn actor: {actor_id}")
+
+    candidate = copy.deepcopy(state)
+    candidate_rng = random.Random()
+    candidate_rng.setstate(copy.deepcopy(rng.getstate()))
+
+    with _combat_timing_engine_scope(candidate.timing_engine):
+        _execute_declared_turn_or_error(
+            rng=candidate_rng,
+            actor=candidate.actors[actor_id],
+            declaration=declaration,
+            strategy_name=strategy_name,
+            actors=candidate.actors,
+            damage_dealt=candidate.damage_dealt,
+            damage_taken=candidate.damage_taken,
+            threat_scores=candidate.threat_scores,
+            resources_spent=candidate.resources_spent,
+            active_hazards=candidate.active_hazards,
+            telemetry=candidate.telemetry,
+            obstacles=candidate.obstacles,
+            light_level=candidate.light_level,
+            round_number=candidate.round_number,
+            turn_token=candidate.turn_token,
+            rule_trace=candidate.rule_trace,
+        )
+
+    rng.setstate(candidate_rng.getstate())
+    return candidate
+
+
 def _disadvantaged(actor: ActorRuntimeState) -> bool:
     return any(has_condition(actor, condition) for condition in _DISADVANTAGE_CONDITIONS)
 
@@ -12938,10 +13024,26 @@ def _create_combat_timing_engine(*, include_default_rules: bool = True) -> Comba
 
 
 _DEFAULT_COMBAT_TIMING_ENGINE: CombatTimingEngine | None = None
+_ACTIVE_COMBAT_TIMING_ENGINE: ContextVar[CombatTimingEngine | None] = ContextVar(
+    "dnd_sim_active_combat_timing_engine",
+    default=None,
+)
+
+
+@contextmanager
+def _combat_timing_engine_scope(timing_engine: CombatTimingEngine):
+    token = _ACTIVE_COMBAT_TIMING_ENGINE.set(timing_engine)
+    try:
+        yield timing_engine
+    finally:
+        _ACTIVE_COMBAT_TIMING_ENGINE.reset(token)
 
 
 def _get_default_combat_timing_engine() -> CombatTimingEngine:
     global _DEFAULT_COMBAT_TIMING_ENGINE
+    active_timing_engine = _ACTIVE_COMBAT_TIMING_ENGINE.get()
+    if active_timing_engine is not None:
+        return active_timing_engine
     if _DEFAULT_COMBAT_TIMING_ENGINE is None:
         _DEFAULT_COMBAT_TIMING_ENGINE = _create_combat_timing_engine()
     return _DEFAULT_COMBAT_TIMING_ENGINE
@@ -14939,6 +15041,7 @@ def run_simulation_core(
         trial_telemetry: list[dict[str, Any]] = []
         encounter_outcomes: list[dict[str, Any]] = []
         state_snapshots: list[dict[str, Any]] = []
+        trial_timing_engine = _create_combat_timing_engine()
 
         for character_id in scenario.config.party:
             if character_id not in character_db:
@@ -15359,11 +15462,7 @@ def run_simulation_core(
                         else None
                     )
                     try:
-                        _execute_declared_turn_or_error(
-                            rng=rng,
-                            actor=actor,
-                            declaration=turn_declaration,
-                            strategy_name=strategy_name,
+                        declared_turn_state = create_declared_turn_runtime_state(
                             actors=actors,
                             damage_dealt=damage_dealt,
                             damage_taken=damage_taken,
@@ -15376,7 +15475,25 @@ def run_simulation_core(
                             round_number=rounds,
                             turn_token=turn_token,
                             rule_trace=trial_rule_trace,
+                            timing_engine=trial_timing_engine,
                         )
+                        declared_turn_state = resolve_declared_turn_atomic(
+                            state=declared_turn_state,
+                            rng=rng,
+                            actor_id=actor.actor_id,
+                            declaration=turn_declaration,
+                            strategy_name=strategy_name,
+                        )
+                        actors = declared_turn_state.actors
+                        damage_dealt = declared_turn_state.damage_dealt
+                        damage_taken = declared_turn_state.damage_taken
+                        threat_scores = declared_turn_state.threat_scores
+                        resources_spent = declared_turn_state.resources_spent
+                        active_hazards = declared_turn_state.active_hazards
+                        trial_telemetry = declared_turn_state.telemetry
+                        trial_rule_trace = declared_turn_state.rule_trace
+                        trial_timing_engine = declared_turn_state.timing_engine
+                        actor = actors[actor_id]
                     except TurnDeclarationValidationError as exc:
                         _emit_turn_trace_event(
                             trial_telemetry,

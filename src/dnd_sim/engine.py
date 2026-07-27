@@ -3,10 +3,16 @@ from __future__ import annotations
 from typing import Any
 
 from dnd_sim.action_legality import TurnDeclarationValidationError
-from dnd_sim.engine_runtime import SimulationArtifacts, SimulationCoreResult
+from dnd_sim.engine_runtime import (
+    SimulationArtifacts,
+    SimulationCoreResult,
+    create_declared_turn_runtime_state,
+    resolve_declared_turn_atomic,
+)
 from dnd_sim.io import LoadedScenario
 from dnd_sim.replay import build_trial_rows
 from dnd_sim.reporting_runtime import build_simulation_summary
+from dnd_sim.turn_kernel import DeclaredTurnRuntimeState
 
 
 def _build_simulation_artifacts(
@@ -66,4 +72,11 @@ def run_simulation(
     )
 
 
-__all__ = ["SimulationArtifacts", "TurnDeclarationValidationError", "run_simulation"]
+__all__ = [
+    "DeclaredTurnRuntimeState",
+    "SimulationArtifacts",
+    "TurnDeclarationValidationError",
+    "create_declared_turn_runtime_state",
+    "resolve_declared_turn_atomic",
+    "run_simulation",
+]
