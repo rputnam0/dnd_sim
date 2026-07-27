@@ -20,6 +20,12 @@ from .contracts import (
     SessionSnapshot,
 )
 from .dnd_contracts import DECLARATION_COMMAND_KIND, TurnDeclarationPayload
+from .dnd_encounter_driver import (
+    DND_ENCOUNTER_STATE_SCHEMA_VERSION,
+    START_ENCOUNTER_COMMAND_KIND,
+    DndCombatEncounterDriver,
+    DndCombatEncounterState,
+)
 from .dnd_state_codec import (
     ActorStateCodecError,
     decode_actor_runtime_state,
@@ -39,6 +45,7 @@ __all__ = [
     "ActorStateCodecError",
     "COMMAND_SCHEMA_VERSION",
     "DECLARATION_COMMAND_KIND",
+    "DND_ENCOUNTER_STATE_SCHEMA_VERSION",
     "DND_TURN_STATE_SCHEMA_VERSION",
     "EVENT_SCHEMA_VERSION",
     "PREPARE_TURN_COMMAND_KIND",
@@ -46,10 +53,13 @@ __all__ = [
     "RECEIPT_SCHEMA_VERSION",
     "RNG_ALGORITHM",
     "SNAPSHOT_SCHEMA_VERSION",
+    "START_ENCOUNTER_COMMAND_KIND",
     "CommandReceipt",
     "CommandRecord",
     "DndCombatTurnDriver",
     "DndCombatTurnState",
+    "DndCombatEncounterDriver",
+    "DndCombatEncounterState",
     "EngineSession",
     "EngineSessionDriver",
     "EngineSessionError",
