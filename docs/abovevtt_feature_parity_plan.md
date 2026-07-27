@@ -86,6 +86,9 @@ Goal: cover the core DM/player jobs advertised by AboveVTT.
       Annotation reads/events enforce public, role, participant, and owned-actor
       audiences; roll/chat surfaces and blind-roll semantics remain.
 - [ ] Dice tray and structured roll cards tied to rules events.
+      This requires the engine-owned, no-reroll journal defined in
+      [`vtt_roll_journal_plan.md`](vtt_roll_journal_plan.md); current totals do
+      not retain enough authoritative dice facts for an honest card.
 - [ ] Scene create, duplicate, activate, archive, import, and export.
 - [ ] Map image/video metadata, crop, scale, offset, grid calibration, and
       gridless mode.
