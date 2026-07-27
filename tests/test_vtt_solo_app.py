@@ -79,6 +79,50 @@ def _stored_command_count(database_path: Path) -> int:
     return int(row[0])
 
 
+def _complete_fresh_solo_table(database_path: Path) -> dict[str, Any]:
+    """Play the canonical encounter once and return its public terminal view."""
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as client:
+        initial = client.get("/api/v1/session")
+        assert initial.status_code == 200
+        session_id = initial.json()["session_id"]
+
+        started = client.post(
+            "/api/v1/commands",
+            json=_wire_command(
+                command_id="fresh-replay-start",
+                session_id=session_id,
+                actor_id=None,
+                expected_revision=0,
+                mode="admin",
+                kind=START_ENCOUNTER_COMMAND_KIND,
+                payload={},
+            ),
+        )
+        assert started.status_code == 200
+
+        completed = client.post(
+            "/api/v1/commands",
+            json=_wire_command(
+                command_id="fresh-replay-winning-turn",
+                session_id=session_id,
+                actor_id="vela_quill",
+                expected_revision=1,
+                mode="commit",
+                kind=DECLARATION_COMMAND_KIND,
+                payload=_winning_declaration_payload(),
+            ),
+        )
+        assert completed.status_code == 200
+
+        terminal = client.get("/api/v1/session")
+        assert terminal.status_code == 200
+        return terminal.json()
+
+
 def test_solo_table_app_restarts_terminal_session_and_replays_exact_command(
     tmp_path: Path,
 ) -> None:
@@ -180,6 +224,19 @@ def test_solo_table_app_uses_a_fresh_fixture_for_a_separate_database(
     assert payload["projection"]["phase"] == "unstarted"
     assert payload["projection"]["outcome"] is None
     assert _stored_command_count(database_path) == 0
+
+
+def test_solo_table_replay_matches_on_two_independent_fresh_databases(
+    tmp_path: Path,
+) -> None:
+    first = _complete_fresh_solo_table(tmp_path / "first-replay.sqlite3")
+    second = _complete_fresh_solo_table(tmp_path / "second-replay.sqlite3")
+
+    assert first["projection"]["phase"] == "terminal"
+    assert first["projection"]["outcome"] == "party_victory"
+    assert _canonical_json(second) == _canonical_json(first)
+    assert _stored_command_count(tmp_path / "first-replay.sqlite3") == 2
+    assert _stored_command_count(tmp_path / "second-replay.sqlite3") == 2
 
 
 def test_solo_table_main_passes_explicit_server_options(monkeypatch, tmp_path: Path) -> None:
