@@ -89,6 +89,13 @@ class EngineSessionDriver(Protocol):
     ) -> EngineTransition: ...
 
 
+@runtime_checkable
+class EngineSessionProjectionDriver(Protocol):
+    """Optional read-model capability exposed by an engine session driver."""
+
+    def project_state(self, state: Any) -> Mapping[str, Any]: ...
+
+
 def _canonical_json(value: Any) -> str:
     return json.dumps(
         value,
@@ -162,6 +169,34 @@ class EngineSession:
     def state(self) -> dict[str, JSONValue]:
         with self._lock:
             return _json_clone(self._encode_state(self._state))
+
+    @property
+    def projection(self) -> dict[str, JSONValue]:
+        """Return a detached public read model without exposing canonical state."""
+
+        with self._lock:
+            if not isinstance(self._driver, EngineSessionProjectionDriver):
+                raise EngineSessionError(
+                    "projection_unsupported",
+                    "The engine driver does not expose a public state projection.",
+                )
+            working_state = self._decode_state(self._encode_state(self._state))
+            try:
+                projected = normalize_json(
+                    self._driver.project_state(working_state),
+                    path="projection",
+                )
+            except Exception as exc:
+                raise EngineSessionError(
+                    "invalid_projection",
+                    "The engine driver could not project state as a JSON object.",
+                ) from exc
+            if not isinstance(projected, dict):
+                raise EngineSessionError(
+                    "invalid_projection",
+                    "The engine driver must project state as a JSON object.",
+                )
+            return _json_clone(projected)
 
     @property
     def events(self) -> tuple[SessionEvent, ...]:

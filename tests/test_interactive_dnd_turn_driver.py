@@ -8,6 +8,7 @@ import pytest
 import dnd_sim.engine_runtime as engine_runtime
 from dnd_sim.interactive import (
     EngineSession,
+    EngineSessionProjectionDriver,
     EngineSessionError,
     EngineVersionPins,
     SessionCommand,
@@ -188,6 +189,25 @@ def test_real_dnd_driver_preview_matches_commit_without_mutating_session() -> No
     assert receipt.events[0].payload["status"] == "resolved"
     assert session.state["phase"] == "complete"
     assert session.state["actors"]["enemy"]["hp"] == 26
+
+
+def test_turn_session_projection_is_a_safe_public_view() -> None:
+    state = _turn_state()
+    state.context.rule_trace.append({"internal": "hidden"})
+    state.context.resources_spent["hero"]["spell_slot"] = 1
+    state.context.actors["hero"].traits["secret"] = {"value": 99}
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    assert isinstance(driver, EngineSessionProjectionDriver)
+    session = EngineSession("turn-projection", state, driver, seed=13)
+
+    projection = session.projection
+
+    assert projection["active_actor_id"] == "hero"
+    assert projection["actors"]["hero"]["hp"] == 30
+    assert "schema_version" not in projection
+    assert "rule_trace" not in projection
+    assert "resources_spent" not in projection
+    assert "traits" not in projection["actors"]["hero"]
 
 
 def test_invalid_late_bonus_rolls_back_real_dnd_state_and_rng() -> None:

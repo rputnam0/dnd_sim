@@ -39,7 +39,13 @@ from .dnd_turn_driver import (
     DndCombatTurnDriver,
     DndCombatTurnState,
 )
-from .session import EngineSession, EngineSessionDriver, EngineSessionError, EngineTransition
+from .session import (
+    EngineSession,
+    EngineSessionDriver,
+    EngineSessionError,
+    EngineSessionProjectionDriver,
+    EngineTransition,
+)
 
 __all__ = [
     "ActorStateCodecError",
@@ -63,6 +69,7 @@ __all__ = [
     "EngineSession",
     "EngineSessionDriver",
     "EngineSessionError",
+    "EngineSessionProjectionDriver",
     "EngineTransition",
     "EngineVersionPins",
     "EventDraft",

@@ -153,7 +153,7 @@ class DndCombatEncounterDriver:
     ) -> PreviewOutcome:
         events = self._apply_command(state, command, rng)
         return PreviewOutcome(
-            projection=self._project_state(state),
+            projection=self.project_state(state),
             events=tuple(events),
         )
 
@@ -258,12 +258,12 @@ class DndCombatEncounterDriver:
         rng: random.Random,
     ) -> list[EventDraft]:
         before_roster = self._roster_signature(state.turn.context)
-        result = self._turn_driver._apply_declaration(state.turn, command, rng)
+        result = self._turn_driver.resolve_declaration(state.turn, command, rng)
         self._require_roster(state.turn.context, before_roster)
         events = [
             EventDraft(
                 kind="dnd.turn.resolved",
-                payload=self._turn_driver._result_payload(result),
+                payload=self._turn_driver.result_payload(result),
             )
         ]
         self._drive_to_prompt_or_terminal(state, command, rng, events)
@@ -287,7 +287,7 @@ class DndCombatEncounterDriver:
                     }
                 )
                 before_roster = self._roster_signature(state.turn.context)
-                prepared = self._turn_driver._apply_prepare(
+                prepared = self._turn_driver.prepare_turn(
                     state.turn,
                     prepare_command,
                     rng,
@@ -297,14 +297,14 @@ class DndCombatEncounterDriver:
                     events.append(
                         EventDraft(
                             kind="dnd.turn.prepared",
-                            payload=self._turn_driver._prompt_payload(prepared),
+                            payload=self._turn_driver.prompt_payload(prepared),
                         )
                     )
                     return
                 events.append(
                     EventDraft(
                         kind="dnd.turn.completed_automatically",
-                        payload=self._turn_driver._result_payload(prepared),
+                        payload=self._turn_driver.result_payload(prepared),
                     )
                 )
 
@@ -438,7 +438,7 @@ class DndCombatEncounterDriver:
             "current_index": state.current_index,
         }
 
-    def _project_state(self, state: DndCombatEncounterState) -> dict[str, JSONValue]:
+    def project_state(self, state: DndCombatEncounterState) -> dict[str, JSONValue]:
         context = state.turn.context
         if state.outcome is not None:
             phase = "terminal"
@@ -451,12 +451,12 @@ class DndCombatEncounterDriver:
             active_actor_id = state.turn.actor_id
         winner = self._completion_payload(state)["winner"]
         prompt = (
-            self._turn_driver._prompt_payload(state.turn.prompt)
+            self._turn_driver.prompt_payload(state.turn.prompt)
             if state.turn.prompt is not None
             else None
         )
         result = (
-            self._turn_driver._result_payload(state.turn.last_result)
+            self._turn_driver.result_payload(state.turn.last_result)
             if state.turn.last_result is not None
             else None
         )
@@ -470,7 +470,7 @@ class DndCombatEncounterDriver:
             "max_rounds": state.max_rounds,
             "initiative_order": list(context.initiative_order),
             "actors": {
-                actor_id: self._turn_driver._project_actor(context.actors[actor_id])
+                actor_id: self._turn_driver.project_actor(context.actors[actor_id])
                 for actor_id in sorted(context.actors)
             },
             "prompt": prompt,

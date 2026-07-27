@@ -8,6 +8,7 @@ import dnd_sim.engine_runtime as engine_runtime
 from dnd_sim.interactive import (
     EngineSession,
     EngineSessionError,
+    EngineSessionProjectionDriver,
     EngineVersionPins,
     SessionCommand,
 )
@@ -201,6 +202,27 @@ def test_start_prepares_first_durable_prompt_and_declaration_advances_cursor() -
     assert session.state["turn"]["actor_id"] == "enemy"
     assert session.state["turn"]["phase"] == "awaiting_declaration"
     assert session.state["turn"]["actors"]["enemy"]["hp"] == 26
+
+
+def test_encounter_session_projection_omits_the_canonical_turn_snapshot() -> None:
+    state = _encounter_state()
+    state.turn.context.rule_trace.append({"internal": "hidden"})
+    state.turn.context.resources_spent["hero"]["spell_slot"] = 1
+    state.turn.context.actors["hero"].traits["secret"] = {"value": 99}
+    driver = DndCombatEncounterDriver(version_pins=VERSION_PINS)
+    assert isinstance(driver, EngineSessionProjectionDriver)
+    session = EngineSession("encounter-projection", state, driver, seed=13)
+    session.execute(_start_command(session_id="encounter-projection"))
+
+    projection = session.projection
+
+    assert projection["phase"] == "awaiting_declaration"
+    assert projection["active_actor_id"] == "hero"
+    assert "turn" not in projection
+    assert "schema_version" not in projection
+    assert "rule_trace" not in projection
+    assert "resources_spent" not in projection
+    assert "traits" not in projection["actors"]["hero"]
 
 
 def test_encounter_auto_prepares_successive_automatic_slots_until_prompt() -> None:

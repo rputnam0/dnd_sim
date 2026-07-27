@@ -544,7 +544,7 @@ class DndCombatTurnDriver:
     ) -> PreviewOutcome:
         transition_kind, payload = self._apply_command(state, command, rng)
         return PreviewOutcome(
-            projection=self._project_state(state),
+            projection=self.project_state(state),
             events=(
                 EventDraft(
                     kind="dnd.turn.previewed",
@@ -590,20 +590,20 @@ class DndCombatTurnDriver:
         rng: random.Random,
     ) -> tuple[str, dict[str, JSONValue]]:
         if command.kind == PREPARE_TURN_COMMAND_KIND:
-            prepared = self._apply_prepare(state, command, rng)
+            prepared = self.prepare_turn(state, command, rng)
             if isinstance(prepared, CombatTurnPrompt):
-                return "dnd.turn.prepared", self._prompt_payload(prepared)
-            return "dnd.turn.completed_automatically", self._result_payload(prepared)
+                return "dnd.turn.prepared", self.prompt_payload(prepared)
+            return "dnd.turn.completed_automatically", self.result_payload(prepared)
         if command.kind == DECLARATION_COMMAND_KIND:
-            result = self._apply_declaration(state, command, rng)
-            return "dnd.turn.resolved", self._result_payload(result)
+            result = self.resolve_declaration(state, command, rng)
+            return "dnd.turn.resolved", self.result_payload(result)
         raise EngineSessionError(
             "unsupported_command",
             "The D&D turn driver only accepts prepare or declaration commands.",
             details={"kind": command.kind},
         )
 
-    def _apply_prepare(
+    def prepare_turn(
         self,
         state: DndCombatTurnState,
         command: SessionCommand,
@@ -643,7 +643,7 @@ class DndCombatTurnDriver:
             state.last_result = prepared
         return prepared
 
-    def _apply_declaration(
+    def resolve_declaration(
         self,
         state: DndCombatTurnState,
         command: SessionCommand,
@@ -722,7 +722,7 @@ class DndCombatTurnDriver:
             )
 
     @staticmethod
-    def _prompt_payload(prompt: CombatTurnPrompt) -> dict[str, JSONValue]:
+    def prompt_payload(prompt: CombatTurnPrompt) -> dict[str, JSONValue]:
         return {
             "actor_id": prompt.actor_id,
             "round_number": prompt.round_number,
@@ -730,7 +730,7 @@ class DndCombatTurnDriver:
         }
 
     @staticmethod
-    def _result_payload(result: CombatTurnResult) -> dict[str, JSONValue]:
+    def result_payload(result: CombatTurnResult) -> dict[str, JSONValue]:
         return {
             "actor_id": result.actor_id,
             "round_number": result.round_number,
@@ -740,7 +740,7 @@ class DndCombatTurnDriver:
         }
 
     @staticmethod
-    def _project_actor(actor: ActorRuntimeState) -> dict[str, JSONValue]:
+    def project_actor(actor: ActorRuntimeState) -> dict[str, JSONValue]:
         return {
             "actor_id": actor.actor_id,
             "team": actor.team,
@@ -770,14 +770,14 @@ class DndCombatTurnDriver:
             ],
         }
 
-    def _project_state(self, state: DndCombatTurnState) -> dict[str, JSONValue]:
+    def project_state(self, state: DndCombatTurnState) -> dict[str, JSONValue]:
         return {
             "phase": state.phase,
             "active_actor_id": state.actor_id,
             "round_number": state.context.round_number,
             "initiative_order": list(state.context.initiative_order),
             "actors": {
-                actor_id: self._project_actor(state.context.actors[actor_id])
+                actor_id: self.project_actor(state.context.actors[actor_id])
                 for actor_id in sorted(state.context.actors)
             },
             "result": _encode_result(state.last_result),
