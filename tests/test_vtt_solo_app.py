@@ -5,6 +5,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from dnd_sim.interactive.dnd_contracts import DECLARATION_COMMAND_KIND
@@ -104,9 +106,44 @@ def _public_ping_request(
     }
 
 
+def _public_chat_request(
+    *,
+    session_id: str,
+    command_id: str,
+    message_id: str,
+    expected_revision: int,
+    text: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": "vtt.chat_request.v1",
+        "session_id": session_id,
+        "command": {
+            "schema_version": "vtt.chat_command.v1",
+            "table_id": session_id,
+            "command_id": command_id,
+            "expected_revision": expected_revision,
+            "command_type": "post",
+            "message": {
+                "schema_version": "vtt.chat_message.v1",
+                "message_id": message_id,
+                "author_id": "untrusted-browser-author",
+                "audience": ["all"],
+                "text": text,
+            },
+        },
+    }
+
+
 def _stored_command_count(database_path: Path) -> int:
     with sqlite3.connect(database_path) as connection:
         row = connection.execute("SELECT COUNT(*) FROM vtt_committed_commands").fetchone()
+    assert row is not None
+    return int(row[0])
+
+
+def _stored_chat_event_count(database_path: Path) -> int:
+    with sqlite3.connect(database_path) as connection:
+        row = connection.execute("SELECT COUNT(*) FROM _vtt_chat_event_log").fetchone()
     assert row is not None
     return int(row[0])
 
@@ -322,6 +359,139 @@ def test_solo_table_persists_browser_ping_across_restart_and_exact_retry(
         assert replayed.status_code == 200
         assert replayed.json()["replayed"] is True
         assert replayed.json()["receipt"] == created.json()["receipt"]
+
+
+def test_solo_table_persists_open_local_plain_text_chat_across_restart_and_retry(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "solo-chat.sqlite3"
+    literal_text = "<b>literal HTML</b> & <script>alert('still text')</script>\n**plain text**"
+    request = _public_chat_request(
+        session_id="echo-vault-session",
+        command_id="local-chat-once",
+        message_id="local-message",
+        expected_revision=0,
+        text=literal_text,
+    )
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as first_client:
+        empty = first_client.get("/api/v1/chat")
+        session_before = first_client.get("/api/v1/session")
+
+        assert empty.status_code == 200
+        assert empty.json() == {
+            "schema_version": "vtt.chat_view.v1",
+            "session_id": "echo-vault-session",
+            "table_id": "echo-vault-session",
+            "revision": 0,
+            "messages": [],
+        }
+        assert session_before.status_code == 200
+        assert session_before.json()["revision"] == 0
+
+        created = first_client.post("/api/v1/chat-commands", json=request)
+
+        assert created.status_code == 200
+        created_payload = created.json()
+        assert created_payload["schema_version"] == "vtt.chat_response.v1"
+        assert created_payload["revision"] == 1
+        assert created_payload["replayed"] is False
+        assert created_payload["event"]["message"]["author_id"] == "local"
+        assert created_payload["event"]["message"]["audience"] == ["all"]
+        assert created_payload["event"]["message"]["text"] == literal_text
+        assert first_client.get("/api/v1/session").json()["revision"] == 0
+
+    assert _stored_chat_event_count(database_path) == 1
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as restored_client:
+        restored = restored_client.get("/api/v1/chat")
+
+        assert restored.status_code == 200
+        restored_payload = restored.json()
+        assert restored_payload["revision"] == 1
+        assert restored_payload["messages"] == [created_payload["event"]["message"]]
+        assert restored_payload["messages"][0]["author_id"] == "local"
+        assert restored_payload["messages"][0]["text"] == literal_text
+        assert restored_client.get("/api/v1/session").json()["revision"] == 0
+
+        replayed = restored_client.post("/api/v1/chat-commands", json=request)
+
+        assert replayed.status_code == 200
+        assert replayed.json()["replayed"] is True
+        assert replayed.json()["revision"] == 1
+        after_retry = restored_client.get("/api/v1/chat").json()
+        assert after_retry["revision"] == 1
+        assert after_retry["messages"] == restored_payload["messages"]
+
+    assert _stored_chat_event_count(database_path) == 1
+
+
+def test_solo_table_owns_three_independent_sqlite_connections_and_closes_them(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured_connections: list[sqlite3.Connection] = []
+
+    def capture_composition(service, *, annotation_board, chat_log, **_kwargs):
+        captured_connections.extend(
+            [
+                service._event_store._connection,
+                annotation_board._connection,
+                chat_log._connection,
+            ]
+        )
+        return FastAPI()
+
+    monkeypatch.setattr(solo_app, "create_vtt_app", capture_composition)
+
+    app = create_solo_table_app(tmp_path / "owned-connections.sqlite3")
+
+    assert len(captured_connections) == 3
+    assert len({id(connection) for connection in captured_connections}) == 3
+    assert [
+        connection.execute("PRAGMA busy_timeout").fetchone()[0]
+        for connection in captured_connections
+    ] == [30_000, 30_000, 30_000]
+
+    with TestClient(app):
+        pass
+
+    for connection in captured_connections:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            connection.execute("SELECT 1")
+
+
+def test_solo_table_closes_all_connections_when_http_composition_fails(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured_connections: list[sqlite3.Connection] = []
+
+    def fail_composition(service, *, annotation_board, chat_log, **_kwargs):
+        captured_connections.extend(
+            [
+                service._event_store._connection,
+                annotation_board._connection,
+                chat_log._connection,
+            ]
+        )
+        raise RuntimeError("HTTP composition failed")
+
+    monkeypatch.setattr(solo_app, "create_vtt_app", fail_composition)
+
+    with pytest.raises(RuntimeError, match="HTTP composition failed"):
+        create_solo_table_app(tmp_path / "failed-composition.sqlite3")
+
+    assert len(captured_connections) == 3
+    for connection in captured_connections:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            connection.execute("SELECT 1")
 
 
 def test_solo_table_main_passes_explicit_server_options(monkeypatch, tmp_path: Path) -> None:

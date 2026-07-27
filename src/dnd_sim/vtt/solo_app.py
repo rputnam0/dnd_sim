@@ -13,12 +13,29 @@ from fastapi import FastAPI
 from dnd_sim.interactive.dnd_encounter_driver import DndCombatEncounterDriver
 
 from .annotation_store import SQLiteAnnotationBoard
+from .chat_store import SQLiteChatLog
 from .event_store import SQLiteSessionEventStore
 from .http_api import create_vtt_app
 from .session_service import VTTSessionService
 from .solo_table import build_solo_table_fixture
 
 _SOLO_TABLE_SESSION_ID = "echo-vault-session"
+
+
+def _close_connections(*connections: sqlite3.Connection | None) -> None:
+    """Attempt every close and report the first cleanup failure afterward."""
+
+    first_error: Exception | None = None
+    for connection in connections:
+        if connection is None:
+            continue
+        try:
+            connection.close()
+        except Exception as exc:  # pragma: no cover - sqlite close is normally infallible
+            if first_error is None:
+                first_error = exc
+    if first_error is not None:
+        raise first_error
 
 
 def create_solo_table_app(database_path: str | Path) -> FastAPI:
@@ -36,6 +53,7 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
         check_same_thread=False,
     )
     annotation_connection: sqlite3.Connection | None = None
+    chat_connection: sqlite3.Connection | None = None
     try:
         connection.execute("PRAGMA busy_timeout = 30000")
         fixture = build_solo_table_fixture()
@@ -58,22 +76,37 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
         )
         annotation_connection.execute("PRAGMA busy_timeout = 30000")
         annotation_board = SQLiteAnnotationBoard(annotation_connection)
+
+        # Chat owns a third transaction boundary so a long-lived chat read or
+        # write cannot accidentally share session or annotation transactions.
+        chat_connection = sqlite3.connect(
+            normalized_path,
+            timeout=30.0,
+            check_same_thread=False,
+        )
+        chat_connection.execute("PRAGMA busy_timeout = 30000")
+        chat_log = SQLiteChatLog(chat_connection)
         app = create_vtt_app(
             service,
             scene=fixture.scene,
             annotation_board=annotation_board,
+            chat_log=chat_log,
         )
     except Exception:
-        if annotation_connection is not None:
-            annotation_connection.close()
-        connection.close()
+        try:
+            _close_connections(chat_connection, annotation_connection, connection)
+        except Exception:
+            pass
         raise
 
-    if annotation_connection is None:  # pragma: no cover - guarded by composition above
-        connection.close()
-        raise RuntimeError("the solo annotation connection was not initialized")
-    app.router.add_event_handler("shutdown", annotation_connection.close)
-    app.router.add_event_handler("shutdown", connection.close)
+    if annotation_connection is None or chat_connection is None:  # pragma: no cover
+        _close_connections(chat_connection, annotation_connection, connection)
+        raise RuntimeError("the solo durable connections were not initialized")
+
+    def close_owned_connections() -> None:
+        _close_connections(chat_connection, annotation_connection, connection)
+
+    app.router.add_event_handler("shutdown", close_owned_connections)
     return app
 
 
