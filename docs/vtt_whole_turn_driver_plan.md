@@ -37,7 +37,8 @@ and VTT must resolve a declared turn through the same domain function.
 - [x] Project public action metadata, initiative, HP/effects, and rules events
       without exposing hidden engine state.
 - [ ] Add an authoritative legal-choice read model for movement, actions, and
-      targets rather than deriving candidates in the browser.
+      targets rather than deriving candidates in the browser. Implemented and
+      verified on `codex/vtt-whole-turn-driver`; pending pull-request review.
 
 ## Milestone 4: Solo Table v0
 
@@ -55,6 +56,11 @@ and VTT must resolve a declared turn through the same domain function.
       mutation.
 - [ ] Add a browser-driven end-to-end test and a second fresh-database replay
       comparison.
+
+Current branch note: the service and strict browser client now expose and
+consume `dnd.turn-choices.v1`. Structural targets can be staged before movement,
+current-position legality is labeled separately, and preview remains the final
+authority for the proposed movement-plus-action declaration.
 
 ## Verification gates
 

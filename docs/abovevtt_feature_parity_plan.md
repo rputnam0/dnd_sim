@@ -58,6 +58,8 @@ then restart and recover it exactly.
 - [x] Public action metadata, initiative, HP, condition, and rules-event read
       model.
 - [ ] Authoritative legal movement, action, and target choice read model.
+      Implemented and verified on `codex/vtt-whole-turn-driver`; pending
+      pull-request review.
 - [x] HTTP JSON endpoints for singleton load/read/preview/commit.
 - [x] Server-sent event stream with reconnect cursor and heartbeat.
 - [x] Browser table with map, token selection, movement preview, action palette,
@@ -169,9 +171,17 @@ optional media features.
 
 ## Current implementation sequence
 
-1. Finish the fixed-roster encounter cursor and terminal outcomes.
-2. Put it behind the restart-safe VTT session service.
-3. Add strict scene coordinates and public actor/token projection.
-4. Build the legal-choice/table read model.
-5. Add a minimal HTTP/event-stream gateway.
-6. Ship the browser P0 loop and its end-to-end recovery test.
+1. Finish the fixed-roster encounter cursor and terminal outcomes. Done on the
+   active implementation branch.
+2. Put it behind the restart-safe VTT session service. Done on the active
+   implementation branch.
+3. Add strict scene coordinates and public actor/token projection. Done on the
+   active implementation branch.
+4. Build and consume the legal-choice/table read model. Done on the active
+   implementation branch; pull-request review remains.
+5. Add the HTTP and reconnectable event-stream gateway. Done on the active
+   implementation branch.
+6. Ship the browser P0 loop and its deterministic restart test. Done except for
+   browser-driven automation.
+7. Build P1 vertically, beginning with participant-scoped access and shared,
+   renderer-neutral map annotations before fog and visibility depend on them.
