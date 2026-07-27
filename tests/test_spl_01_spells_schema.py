@@ -150,3 +150,13 @@ def test_engine_spell_lookup_uses_validated_canonical_records(
     assert spell["level"] == 1
     assert spell["range_ft"] == 30
     assert spell["concentration"] is True
+
+
+def test_repository_spell_database_has_one_canonical_spare_the_dying_record() -> None:
+    spells_dir = Path(__file__).resolve().parents[1] / "db" / "rules" / "2014" / "spells"
+
+    database = load_spell_database(spells_dir)
+    matching = [spell for spell in database.values() if spell["name"].lower() == "spare the dying"]
+
+    assert len(matching) == 1
+    assert all(spell["name"] != "Spare the Dying Necromancy" for spell in database.values())

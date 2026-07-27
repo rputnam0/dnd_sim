@@ -71,6 +71,7 @@ MONSTER_ACTION_RUNTIME_EFFECT_TYPES = frozenset(
         "remove_condition",
         "remove_wild_shape",
         "resource_change",
+        "stabilize",
         "summon",
         "temp_hp",
         "transform",

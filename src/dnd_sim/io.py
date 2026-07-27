@@ -54,6 +54,7 @@ from dnd_sim.io_models import (
     ResourceChangeEffectConfig,
     RuntimeScenarioConfig,
     ScenarioConfig,
+    StabilizeEffectConfig,
     StrategyModuleConfig,
     SummonEffectConfig,
     TempHPEffectConfig,

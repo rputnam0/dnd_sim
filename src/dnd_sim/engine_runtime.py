@@ -89,6 +89,7 @@ from dnd_sim.rules_2014 import (
     DamageRollEvent,
     ListenerSubscription,
     ReactionWindowOpenedEvent,
+    advance_stable_recovery,
     apply_damage,
     apply_damage_bundle,
     attack_roll,
@@ -100,6 +101,7 @@ from dnd_sim.rules_2014 import (
     roll_damage,
     roll_damage_packet,
     run_concentration_check,
+    stabilize_creature,
 )
 from dnd_sim.rules_profiles import ActorKind, SupportedRulesProfile
 from dnd_sim.strategy_api import (
@@ -2032,6 +2034,7 @@ def _build_construct_companion(
         allied_controller_id=owner.actor_id,
         requires_command=True,
         movement_modes={"walk": float(speed)},
+        creature_type="construct",
     )
     companion.position = owner.position
     companion.movement_remaining = float(speed)
@@ -4027,7 +4030,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             hydrated["tags"] = list(dict.fromkeys(tags))
 
         if (
-            target_mode in {"single_enemy", "single_ally"}
+            target_mode in {"single_enemy", "single_ally", "single_creature"}
             and not hydrated.get("aoe_type")
             and not non_single_target
         ):
@@ -5638,6 +5641,28 @@ def _get_standard_actions() -> list[ActionDefinition]:
             tags=["standard_action"],
         ),
         ActionDefinition(
+            name="stabilize",
+            action_type="utility",
+            action_cost="action",
+            target_mode="single_creature",
+            reach_ft=5,
+            tags=[
+                "standard_action",
+                "medicine_check",
+                "requires_unstable_zero_hp",
+                "requires_line_of_effect",
+            ],
+            mechanics=[
+                {
+                    "effect_type": "stabilize",
+                    "target": "target",
+                    "apply_on": "always",
+                    "check_skill": "medicine",
+                    "check_dc": 10,
+                }
+            ],
+        ),
+        ActionDefinition(
             name="grapple",
             action_type="grapple",
             action_cost="action",
@@ -6375,6 +6400,10 @@ def _build_actor_from_character(
         ),
         proficiencies={str(v).lower() for v in character.get("proficiencies", [])},
         expertise={str(v).lower() for v in character.get("expertise", [])},
+        skill_mods={
+            str(key).strip().lower(): int(value)
+            for key, value in (character.get("skill_mods", {}) or {}).items()
+        },
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
         traits=_resolve_character_traits(character, traits_db),
@@ -6387,6 +6416,7 @@ def _build_actor_from_character(
         speed_ft=int(character.get("speed_ft", 30)),
         movement_modes={"walk": float(int(character.get("speed_ft", 30)))},
         exhaustion_level=max(0, min(6, int(character.get("exhaustion_level", 0) or 0))),
+        creature_type=str(character.get("creature_type", "humanoid")).strip().lower() or "humanoid",
     )
     actor.hidden = bool(character.get("hidden", False))
     actor.surprised = bool(character.get("surprised", False))
@@ -6721,6 +6751,10 @@ def _build_actor_from_enemy(
         legendary_actions_remaining=legendary_pool,
         proficiencies={str(v).lower() for v in enemy.script_hooks.get("proficiencies", [])},
         expertise={str(v).lower() for v in enemy.script_hooks.get("expertise", [])},
+        skill_mods={
+            str(key).strip().lower(): int(value)
+            for key, value in (enemy.script_hooks.get("skill_mods", {}) or {}).items()
+        },
         traits={
             _normalize_trait_name(trait): _normalize_trait_payload_for_runtime(
                 _normalize_trait_name(trait),
@@ -6730,6 +6764,9 @@ def _build_actor_from_enemy(
         },
         speed_ft=enemy_speed_ft,
         movement_modes={"walk": float(enemy_speed_ft)},
+        creature_type=(
+            str(getattr(enemy.identity, "creature_type", "unknown")).strip().lower() or "unknown"
+        ),
     )
     actor.hidden = bool(enemy.script_hooks.get("hidden", False))
     actor.surprised = bool(enemy.script_hooks.get("surprised", False))
@@ -6757,6 +6794,7 @@ def _build_actor_from_enemy(
 
 
 def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
+    advance_stable_recovery(actor, hours=1)
     if actor.hp > 0 and not actor.dead:
         actor.hp = min(actor.max_hp, actor.hp + healing)
 
@@ -6808,6 +6846,7 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.death_successes = 0
     actor.stable = False
     actor.was_downed = False
+    actor.stable_recovery_hours_remaining = None
     actor.concentrating = False
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
@@ -6942,7 +6981,15 @@ def _run_exploration_leg(
 
     travel_pace = _normalize_travel_pace(leg_config.get("travel_pace", "normal"))
     segments = _determine_exploration_segments(leg_config, travel_pace)
+    try:
+        elapsed_hours = max(0, int(leg_config.get("duration_hours", 0)))
+    except (TypeError, ValueError):
+        elapsed_hours = 0
     if segments <= 0:
+        if elapsed_hours > 0:
+            for actor in actors.values():
+                if actor.team == "party":
+                    advance_stable_recovery(actor, hours=elapsed_hours)
         return
 
     hazard_dc_modifier = _TRAVEL_PACE_HAZARD_DC_MODIFIER.get(travel_pace, 0)
@@ -7001,6 +7048,11 @@ def _run_exploration_leg(
                     resources_spent=resources_spent,
                 )
 
+    if elapsed_hours > 0:
+        for actor in actors.values():
+            if actor.team == "party":
+                advance_stable_recovery(actor, hours=elapsed_hours)
+
 
 def _build_actor_views(
     actors: dict[str, ActorRuntimeState],
@@ -7028,6 +7080,13 @@ def _build_actor_views(
                 hidden=actor.hidden,
                 detected_by=set(actor.detected_by),
                 surprised=actor.surprised,
+                dead=actor.dead,
+                stable=actor.stable,
+                uses_death_saves=actor.uses_death_saves,
+                death_successes=actor.death_successes,
+                death_failures=actor.death_failures,
+                stable_recovery_hours_remaining=actor.stable_recovery_hours_remaining,
+                creature_type=actor.creature_type,
             )
             for actor_id, actor in actors.items()
         },
@@ -7192,7 +7251,14 @@ def _actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
         "max_hp": actor.max_hp,
         "temp_hp": actor.temp_hp,
         "dead": actor.dead,
+        "stable": actor.stable,
+        "uses_death_saves": actor.uses_death_saves,
+        "death_successes": actor.death_successes,
+        "death_failures": actor.death_failures,
+        "stable_recovery_hours_remaining": actor.stable_recovery_hours_remaining,
         "downed_count": actor.downed_count,
+        "was_downed": actor.was_downed,
+        "creature_type": actor.creature_type,
         "conditions": sorted(actor.conditions),
         "resources": dict(sorted(actor.resources.items())),
         "hidden": actor.hidden,
@@ -8004,9 +8070,52 @@ def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
             continue
         if effect.get("target") != "target":
             continue
-        if effect.get("effect_type") in {"heal", "temp_hp", "remove_condition", "resource_change"}:
+        if effect.get("effect_type") in {
+            "heal",
+            "temp_hp",
+            "stabilize",
+            "remove_condition",
+            "resource_change",
+        }:
             return True
     return False
+
+
+def _is_stabilize_action(action: ActionDefinition) -> bool:
+    return bool(_stabilize_effects(action))
+
+
+def _stabilize_effects(action: ActionDefinition) -> list[dict[str, Any]]:
+    return [
+        effect
+        for effect in [*action.effects, *action.mechanics]
+        if isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).strip().lower() == "stabilize"
+    ]
+
+
+def _can_be_stabilized(target: ActorRuntimeState) -> bool:
+    return (
+        target.hp == 0
+        and not target.dead
+        and not target.stable
+        and target.uses_death_saves is not False
+    )
+
+
+def _stabilize_effect_allows_target(
+    effect: dict[str, Any],
+    target: ActorRuntimeState,
+) -> bool:
+    excluded_creature_types = {
+        str(creature_type).strip().lower()
+        for creature_type in effect.get("excluded_creature_types", [])
+        if str(creature_type).strip()
+    }
+    return (
+        _can_be_stabilized(target)
+        and target.creature_type.strip().lower() not in excluded_creature_types
+    )
 
 
 def _target_pool(
@@ -8300,6 +8409,13 @@ def _resolve_targets_for_action(
             target
             for target in candidates
             if not any(_has_trait_marker(target, marker) for marker in excluded_target_traits)
+        ]
+    stabilize_effects = _stabilize_effects(action)
+    if stabilize_effects:
+        candidates = [
+            target
+            for target in candidates
+            if any(_stabilize_effect_allows_target(effect, target) for effect in stabilize_effects)
         ]
     if not candidates:
         return []
@@ -9672,6 +9788,7 @@ def _apply_healing(target: ActorRuntimeState, amount: int) -> None:
         target.death_failures = 0
         target.stable = False
         target.was_downed = False
+        target.stable_recovery_hours_remaining = None
         _remove_condition(target, "unconscious")
         _remove_condition(target, "incapacitated")
 
@@ -9994,6 +10111,53 @@ def _apply_effect(
             )
         return
 
+    if effect_type == "stabilize":
+        stabilized = False
+        check_skill = str(effect.get("check_skill") or "").strip().lower() or None
+        check_roll: int | None = None
+        check_modifier: int | None = None
+        check_dc: int | None = None
+        check_passed: bool | None = None
+        target_eligible = _stabilize_effect_allows_target(effect, recipient)
+        if target_eligible:
+            if check_skill is not None:
+                if check_skill != "medicine":
+                    raise ValueError(f"Unsupported stabilization check skill: {check_skill!r}")
+                check_roll = rng.randint(1, 20)
+                check_modifier = _medicine_check_mod(actor)
+                check_dc = int(effect.get("check_dc", 10))
+                check_passed = check_roll + check_modifier >= check_dc
+            else:
+                check_passed = True
+            if check_passed:
+                stabilized = stabilize_creature(
+                    recipient,
+                    recovery_hours=rng.randint(1, 4),
+                )
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "stabilize",
+                    "applied_amount": int(stabilized),
+                    "target_eligible": target_eligible,
+                    "check_skill": check_skill,
+                    "check_roll": check_roll,
+                    "check_modifier": check_modifier,
+                    "check_dc": check_dc,
+                    "check_passed": check_passed,
+                    "stable_recovery_hours_remaining": (recipient.stable_recovery_hours_remaining),
+                }
+            )
+        return
+
     if effect_type == "apply_condition":
         before_conditions = set(recipient.conditions)
         save_dc = effect.get("save_dc")
@@ -10301,6 +10465,7 @@ def _apply_effect(
             allied_controller_id=(controller_id or None) if summon_team == actor.team else None,
             mount_controller_id=(controller_id or None) if is_mount else None,
             movement_modes={"walk": float(summon_speed)},
+            creature_type=str(effect.get("creature_type", "unknown")).strip().lower() or "unknown",
         )
         summoned_actor.movement_remaining = float(summon_speed)
         summoned_actor.add_manual_condition("summoned")
@@ -10855,6 +11020,19 @@ def _acrobatics_check_mod(actor: ActorRuntimeState) -> int:
         if "acrobatics" in actor.expertise:
             mod += _calculate_proficiency_bonus(actor.level)
     return mod
+
+
+def _medicine_check_mod(actor: ActorRuntimeState) -> int:
+    explicit = actor.skill_mods.get("medicine")
+    if explicit is not None:
+        return int(explicit)
+    modifier = int(actor.wis_mod)
+    proficiency = _calculate_proficiency_bonus(actor.level)
+    if "medicine" in actor.expertise:
+        return modifier + (2 * proficiency)
+    if "medicine" in actor.proficiencies:
+        return modifier + proficiency
+    return modifier
 
 
 def _resolve_shove_mode(action: ActionDefinition, target: ActorRuntimeState) -> str:

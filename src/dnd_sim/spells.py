@@ -69,6 +69,7 @@ class CanonicalSpellRecord(BaseModel):
         Literal[
             "single_enemy",
             "single_ally",
+            "single_creature",
             "self",
             "all_enemies",
             "all_allies",

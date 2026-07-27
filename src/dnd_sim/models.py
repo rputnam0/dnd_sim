@@ -300,6 +300,9 @@ class ActorRuntimeState:
     uses_death_saves: bool | None = None
     summon_uses_death_saves_default: bool = False
     death_save_overrides_allowed: bool = True
+    stable_recovery_hours_remaining: int | None = None
+    skill_mods: dict[str, int] = field(default_factory=dict)
+    creature_type: str = "unknown"
 
     def is_active(self) -> bool:
         return not self.dead

@@ -7,7 +7,10 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 from pydantic_core import PydanticCustomError
 
-from dnd_sim.mechanics_schema import KNOWN_EFFECT_TYPES
+from dnd_sim.mechanics_schema import (
+    KNOWN_EFFECT_TYPES,
+    validate_effect_specific_mechanic_fields,
+)
 from dnd_sim.rules_profiles import (
     DEFAULT_RULES_PROFILE_ID,
     DEFAULT_RULES_PROFILE_VERSION,
@@ -93,6 +96,7 @@ class ActionConfig(BaseModel):
     target_mode: Literal[
         "single_enemy",
         "single_ally",
+        "single_creature",
         "self",
         "all_enemies",
         "all_allies",
@@ -187,6 +191,12 @@ class ActionConfig(BaseModel):
                 )
             payload = dict(row)
             payload["effect_type"] = effect_type
+            field_issues = validate_effect_specific_mechanic_fields(
+                payload,
+                path=f"mechanics[{index}]",
+            )
+            if field_issues:
+                raise ValueError("; ".join(field_issues))
             normalized.append(payload)
         return normalized
 
@@ -232,6 +242,15 @@ class TempHPEffectConfig(BaseModel):
     apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
     target: Literal["target", "source"] = "source"
     amount: str
+
+
+class StabilizeEffectConfig(BaseModel):
+    effect_type: Literal["stabilize"]
+    apply_on: Literal["always", "hit", "miss", "save_fail", "save_success"] = "always"
+    target: Literal["target", "source"] = "target"
+    check_skill: Literal["medicine"] | None = None
+    check_dc: int = Field(default=10, ge=1)
+    excluded_creature_types: list[str] = Field(default_factory=list)
 
 
 class ApplyConditionEffectConfig(BaseModel):
@@ -299,6 +318,7 @@ class SummonEffectConfig(BaseModel):
     controller_id: str | None = None
     mount: bool = False
     uses_death_saves: bool | None = None
+    creature_type: str = "unknown"
 
     @model_validator(mode="after")
     def validate_summon_identity(self) -> "SummonEffectConfig":
@@ -347,6 +367,7 @@ EffectConfig = Annotated[
     DamageEffectConfig
     | HealEffectConfig
     | TempHPEffectConfig
+    | StabilizeEffectConfig
     | ApplyConditionEffectConfig
     | RemoveConditionEffectConfig
     | ResourceChangeEffectConfig
@@ -366,6 +387,7 @@ class EnemyIdentityConfig(BaseModel):
     enemy_id: str
     name: str
     team: str = "enemy"
+    creature_type: str = "unknown"
 
 
 class EnemyStatBlockConfig(BaseModel):

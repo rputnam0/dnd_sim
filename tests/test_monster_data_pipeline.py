@@ -87,6 +87,54 @@ def test_validate_rule_mechanics_payload_accepts_known_effect_types() -> None:
     assert issues == []
 
 
+def test_validate_rule_mechanics_payload_accepts_typed_stabilization_fields() -> None:
+    issues = validate_rule_mechanics_payload(
+        kind="spell",
+        payload={
+            "name": "Spare the Dying",
+            "type": "spell",
+            "mechanics": [
+                {
+                    "effect_type": "stabilize",
+                    "target": "target",
+                    "apply_on": "always",
+                    "excluded_creature_types": ["undead", "construct"],
+                }
+            ],
+        },
+    )
+
+    assert issues == []
+
+
+def test_validate_rule_mechanics_payload_rejects_invalid_stabilization_fields() -> None:
+    issues = validate_rule_mechanics_payload(
+        kind="spell",
+        payload={
+            "name": "Broken Stabilizer",
+            "type": "spell",
+            "mechanics": [
+                {
+                    "effect_type": "stabilize",
+                    "target": "everyone",
+                    "apply_on": "sometimes",
+                    "check_skill": "arcana",
+                    "check_dc": 0,
+                    "excluded_creature_types": "undead",
+                }
+            ],
+        },
+    )
+
+    assert issues == [
+        "mechanics[0].target 'everyone' is unsupported for stabilize",
+        "mechanics[0].apply_on 'sometimes' is unsupported for stabilize",
+        "mechanics[0].check_skill 'arcana' is unsupported for stabilize",
+        "mechanics[0].check_dc must be an integer greater than or equal to 1",
+        "mechanics[0].excluded_creature_types must be a list of strings",
+    ]
+
+
 def test_validate_rule_mechanics_payload_accepts_apply_condition_runtime_fields() -> None:
     issues = validate_rule_mechanics_payload(
         kind="spell",

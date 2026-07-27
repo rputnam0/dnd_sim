@@ -62,6 +62,7 @@ def test_mode_requires_explicit_targets_map() -> None:
     explicit = {
         "single_enemy",
         "single_ally",
+        "single_creature",
         "n_enemies",
         "n_allies",
         "random_enemy",

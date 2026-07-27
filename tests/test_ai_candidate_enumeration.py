@@ -13,6 +13,10 @@ def _actor_view(
     position: tuple[float, float, float] = (0.0, 0.0, 0.0),
     resources: dict[str, int] | None = None,
     concentrating: bool = False,
+    stable: bool = False,
+    dead: bool = False,
+    uses_death_saves: bool | None = None,
+    creature_type: str = "humanoid",
 ) -> ActorView:
     return ActorView(
         actor_id=actor_id,
@@ -28,7 +32,119 @@ def _actor_view(
         movement_remaining=30.0,
         traits={},
         concentrating=concentrating,
+        stable=stable,
+        dead=dead,
+        uses_death_saves=uses_death_saves,
+        creature_type=creature_type,
     )
+
+
+def test_stabilize_candidates_include_only_eligible_zero_hp_creatures() -> None:
+    actor = _actor_view(actor_id="healer", team="party")
+    ally = _actor_view(
+        actor_id="ally",
+        team="party",
+        hp=0,
+        uses_death_saves=True,
+        position=(5.0, 0.0, 0.0),
+    )
+    enemy = _actor_view(
+        actor_id="enemy",
+        team="enemy",
+        hp=0,
+        uses_death_saves=True,
+        position=(5.0, 5.0, 0.0),
+    )
+    construct = _actor_view(
+        actor_id="construct",
+        team="party",
+        hp=0,
+        uses_death_saves=True,
+        creature_type="construct",
+        position=(0.0, 5.0, 0.0),
+    )
+    stable_ally = _actor_view(
+        actor_id="stable_ally",
+        team="party",
+        hp=0,
+        stable=True,
+        uses_death_saves=True,
+        position=(4.0, 0.0, 0.0),
+    )
+    action = {
+        "name": "spare_the_dying",
+        "action_type": "utility",
+        "target_mode": "single_creature",
+        "range_ft": 5,
+        "resource_cost": {},
+        "action_cost": "action",
+        "mechanics": [
+            {
+                "effect_type": "stabilize",
+                "target": "target",
+                "excluded_creature_types": ["undead", "construct"],
+            }
+        ],
+    }
+    state = BattleStateView(
+        round_number=1,
+        actors={view.actor_id: view for view in (actor, ally, enemy, construct, stable_ally)},
+        actor_order=[actor.actor_id, ally.actor_id, enemy.actor_id, construct.actor_id],
+        metadata={
+            "available_actions": {actor.actor_id: ["spare_the_dying"]},
+            "action_catalog": {actor.actor_id: [action]},
+        },
+    )
+
+    candidates = enumerate_legal_action_candidates(actor, state)
+
+    assert {(row.action_name, row.target_ids) for row in candidates} == {
+        ("spare_the_dying", ("ally",)),
+        ("spare_the_dying", ("enemy",)),
+    }
+
+
+def test_healing_candidate_includes_a_downed_but_not_dead_ally() -> None:
+    actor = _actor_view(actor_id="healer", team="party", resources={"spell_slot_1": 1})
+    downed = _actor_view(
+        actor_id="downed",
+        team="party",
+        hp=0,
+        uses_death_saves=True,
+        position=(5.0, 0.0, 0.0),
+    )
+    dead = _actor_view(
+        actor_id="dead",
+        team="party",
+        hp=0,
+        dead=True,
+        uses_death_saves=True,
+        position=(5.0, 5.0, 0.0),
+    )
+    action = {
+        "name": "healing_word",
+        "action_type": "utility",
+        "target_mode": "single_ally",
+        "range_ft": 60,
+        "resource_cost": {"spell_slot_1": 1},
+        "action_cost": "bonus",
+        "effects": [{"effect_type": "heal", "target": "target", "amount": "1d4+3"}],
+    }
+    state = BattleStateView(
+        round_number=1,
+        actors={view.actor_id: view for view in (actor, downed, dead)},
+        actor_order=[actor.actor_id, downed.actor_id, dead.actor_id],
+        metadata={
+            "available_actions": {actor.actor_id: ["healing_word"]},
+            "action_catalog": {actor.actor_id: [action]},
+        },
+    )
+
+    candidates = enumerate_legal_action_candidates(actor, state)
+
+    assert {(row.action_name, row.target_ids) for row in candidates} == {
+        ("healing_word", ("downed",)),
+    }
 
 
 def test_candidate_completeness_for_legal_target_modes() -> None:

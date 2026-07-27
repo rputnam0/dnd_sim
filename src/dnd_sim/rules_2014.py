@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Callable, TypeVar
 
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.mortality import advance_stable_recovery, stabilize_creature
 from dnd_sim.noncombat_checks import resolve_contest
 
 _DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
@@ -1327,6 +1328,7 @@ def apply_damage_bundle(
         target.hp = 0
         target.dead = True
         target.stable = False
+        target.stable_recovery_hours_remaining = None
         target.death_failures = max(3, target.death_failures)
         target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         _end_rage_if_active()
@@ -1342,6 +1344,7 @@ def apply_damage_bundle(
             if target.stable:
                 target.stable = False
                 target.death_successes = 0
+                target.stable_recovery_hours_remaining = None
             # Failed death save from taking damage while at 0.
             target.death_failures += 2 if is_critical else 1
             if target.death_failures >= 3:
@@ -1355,6 +1358,7 @@ def apply_damage_bundle(
     if target.hp <= 0 and not target.dead:
         overflow = max(0, remaining - max(0, hp_before))
         target.hp = 0
+        target.stable_recovery_hours_remaining = None
         downed_conditions = {"unconscious", "incapacitated"}
         if "prone" not in target.condition_immunities and "all" not in target.condition_immunities:
             downed_conditions.add("prone")
@@ -1444,6 +1448,7 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
     if target.uses_death_saves is False:
         target.dead = True
         target.stable = False
+        target.stable_recovery_hours_remaining = None
         target.death_failures = max(3, target.death_failures)
         target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         return DeathSaveResult(False, True, False)
@@ -1457,6 +1462,7 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
         target.death_failures = 0
         target.stable = False
         target.was_downed = False
+        target.stable_recovery_hours_remaining = None
         _remove_condition_everywhere(target, "unconscious")
         _remove_condition_everywhere(target, "incapacitated")
         return DeathSaveResult(False, False, True)
@@ -1471,10 +1477,12 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
         target.stable = True
         target.death_successes = 0
         target.death_failures = 0
+        target.stable_recovery_hours_remaining = rng.randint(1, 4)
         became_stable = True
     if target.death_failures >= 3:
         target.dead = True
         target.stable = False
+        target.stable_recovery_hours_remaining = None
         target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         became_dead = True
 

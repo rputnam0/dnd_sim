@@ -41,10 +41,10 @@ jobs:
         run: uv run python scripts/content/verify_completion_capabilities.py
 
       - name: Run declared supported-pack evidence gate
-        run: uv run python scripts/content/verify_completion_capabilities.py --supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json
+        run: uv run python scripts/content/verify_completion_capabilities.py --supported-pack db/rules/2014/supported_packs/combat_primitives_v1.json
 
       - name: Run strict mechanics gate for declared support
-        run: uv run python scripts/mechanics_coverage.py --strict --supported-pack db/rules/2014/supported_packs/combat_primitives_v0.json
+        run: uv run python scripts/mechanics_coverage.py --strict --supported-pack db/rules/2014/supported_packs/combat_primitives_v1.json
 
       - name: Run capability catalog tests
         run: uv run python -m pytest tests/test_completion_capabilities.py tests/test_capability_evidence.py tests/test_mechanics_coverage_cli.py

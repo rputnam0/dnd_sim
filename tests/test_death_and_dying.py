@@ -4,9 +4,14 @@ from dataclasses import asdict
 
 import pytest
 
-from dnd_sim.engine_runtime import _party_defeated, long_rest
+from dnd_sim.engine_runtime import _party_defeated, long_rest, short_rest
 from dnd_sim.models import ActorRuntimeState
-from dnd_sim.rules_2014 import apply_damage, resolve_death_save
+from dnd_sim.rules_2014 import (
+    advance_stable_recovery,
+    apply_damage,
+    resolve_death_save,
+    stabilize_creature,
+)
 
 
 def _actor(
@@ -143,7 +148,7 @@ def test_third_success_stabilizes_and_resets_both_death_save_counters() -> None:
 
     class _Success:
         def randint(self, _low: int, _high: int) -> int:
-            return 10
+            return 3 if _high == 4 else 10
 
     result = resolve_death_save(_Success(), actor)
 
@@ -151,6 +156,7 @@ def test_third_success_stabilizes_and_resets_both_death_save_counters() -> None:
     assert actor.stable is True
     assert actor.death_successes == 0
     assert actor.death_failures == 0
+    assert actor.stable_recovery_hours_remaining == 3
 
 
 def test_natural_twenty_resets_downed_lifecycle_for_a_future_drop() -> None:
@@ -215,6 +221,17 @@ def test_long_rest_does_not_resurrect_a_dead_actor() -> None:
     assert asdict(actor) == before
 
 
+def test_short_rest_advances_stable_recovery_by_one_hour() -> None:
+    actor = _actor(uses_death_saves=True, hp=0)
+    stabilize_creature(actor, recovery_hours=1)
+
+    short_rest(actor)
+
+    assert actor.hp == 1
+    assert actor.stable is False
+    assert actor.stable_recovery_hours_remaining is None
+
+
 def test_team_defeat_evaluation_is_pure() -> None:
     actor = _actor(uses_death_saves=False, hp=0)
     before = asdict(actor)
@@ -222,3 +239,52 @@ def test_team_defeat_evaluation_is_pure() -> None:
     assert _party_defeated({actor.actor_id: actor}) is True
     assert _party_defeated({actor.actor_id: actor}) is True
     assert asdict(actor) == before
+
+
+def test_stabilize_creature_resets_counters_and_schedules_recovery() -> None:
+    actor = _actor(uses_death_saves=True, hp=0)
+    actor.death_successes = 2
+    actor.death_failures = 2
+    actor.update_manual_conditions({"unconscious", "incapacitated", "prone"})
+
+    assert stabilize_creature(actor, recovery_hours=3) is True
+    assert actor.stable is True
+    assert actor.death_successes == 0
+    assert actor.death_failures == 0
+    assert actor.stable_recovery_hours_remaining == 3
+
+    assert advance_stable_recovery(actor, hours=2) is False
+    assert actor.hp == 0
+    assert actor.stable_recovery_hours_remaining == 1
+
+    assert advance_stable_recovery(actor, hours=1) is True
+    assert actor.hp == 1
+    assert actor.stable is False
+    assert actor.was_downed is False
+    assert actor.stable_recovery_hours_remaining is None
+    assert "unconscious" not in actor.conditions
+    assert "incapacitated" not in actor.conditions
+    assert "prone" in actor.conditions
+
+
+def test_damage_to_stable_creature_cancels_recovery_and_causes_failure() -> None:
+    actor = _actor(uses_death_saves=True, hp=0)
+    stabilize_creature(actor, recovery_hours=4)
+
+    apply_damage(actor, 1, "piercing")
+
+    assert actor.stable is False
+    assert actor.stable_recovery_hours_remaining is None
+    assert actor.death_successes == 0
+    assert actor.death_failures == 1
+
+
+@pytest.mark.parametrize(
+    "actor",
+    [
+        _actor(uses_death_saves=True, hp=1),
+        _actor(uses_death_saves=False, hp=0),
+    ],
+)
+def test_stabilization_rejects_inapplicable_targets(actor: ActorRuntimeState) -> None:
+    assert stabilize_creature(actor, recovery_hours=1) is False

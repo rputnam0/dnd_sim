@@ -22,12 +22,12 @@ Do not edit manually.
 
 | Metric | Value |
 |---|---:|
-| Total records | 2674 |
-| Supported records | 614 |
+| Total records | 2673 |
+| Supported records | 613 |
 | Blocked records | 2060 |
-| Schema-valid records | 2399 |
-| Executable records | 614 |
-| Tested records | 3 |
+| Schema-valid records | 2398 |
+| Executable records | 613 |
+| Tested records | 4 |
 
 ## Coverage By Content Type
 
@@ -39,7 +39,7 @@ Do not edit manually.
 | item | 10 | 10 | 0 | 10 | 10 | 0 |
 | monster | 191 | 0 | 191 | 191 | 0 | 0 |
 | species | 256 | 1 | 255 | 239 | 1 | 0 |
-| spell | 593 | 593 | 0 | 593 | 593 | 3 |
+| spell | 592 | 592 | 0 | 592 | 592 | 4 |
 | subclass | 125 | 0 | 125 | 125 | 0 | 0 |
 | trait | 1181 | 8 | 1173 | 1137 | 8 | 0 |
 

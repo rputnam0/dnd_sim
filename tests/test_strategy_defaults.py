@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from dnd_sim.strategies.defaults import (
+    HealerStrategy,
     OptimalExpectedDamageStrategy,
     _evaluate_action_score,
     _expected_damage_against,
 )
-from dnd_sim.strategy_api import ActorView, BattleStateView
+from dnd_sim.strategy_api import ActorView, BattleStateView, TargetRef
 
 
 class _Target:
@@ -44,6 +45,9 @@ def _actor_view(
     save_mods: dict[str, int] | None = None,
     position: tuple[float, float, float] = (0.0, 0.0, 0.0),
     concentrating: bool = False,
+    stable: bool = False,
+    dead: bool = False,
+    uses_death_saves: bool | None = None,
 ) -> ActorView:
     return ActorView(
         actor_id=actor_id,
@@ -59,7 +63,83 @@ def _actor_view(
         movement_remaining=30.0,
         traits={},
         concentrating=concentrating,
+        stable=stable,
+        dead=dead,
+        uses_death_saves=uses_death_saves,
     )
+
+
+def _rescue_state(*, include_healing: bool) -> tuple[ActorView, BattleStateView]:
+    healer = _actor_view(actor_id="healer", team="party")
+    downed = _actor_view(
+        actor_id="downed",
+        team="party",
+        hp=0,
+        max_hp=20,
+        uses_death_saves=True,
+        position=(5.0, 0.0, 0.0),
+    )
+    enemy = _actor_view(actor_id="enemy", team="enemy", position=(5.0, 5.0, 0.0))
+    stabilize = {
+        "name": "stabilize",
+        "action_type": "utility",
+        "target_mode": "single_creature",
+        "reach_ft": 5,
+        "resource_cost": {},
+        "action_cost": "action",
+        "mechanics": [
+            {
+                "effect_type": "stabilize",
+                "target": "target",
+                "check_skill": "medicine",
+                "check_dc": 10,
+            }
+        ],
+    }
+    actions = [stabilize]
+    if include_healing:
+        actions.insert(
+            0,
+            {
+                "name": "healing_word",
+                "action_type": "utility",
+                "target_mode": "single_ally",
+                "range_ft": 60,
+                "resource_cost": {"spell_slot_1": 1},
+                "action_cost": "bonus",
+                "effects": [{"effect_type": "heal", "target": "target", "amount": "1d4+3"}],
+            },
+        )
+        healer.resources["spell_slot_1"] = 1
+    return healer, BattleStateView(
+        round_number=1,
+        actors={view.actor_id: view for view in (healer, downed, enemy)},
+        actor_order=[healer.actor_id, downed.actor_id, enemy.actor_id],
+        metadata={
+            "available_actions": {healer.actor_id: [str(action["name"]) for action in actions]},
+            "action_catalog": {healer.actor_id: actions},
+        },
+    )
+
+
+def test_healer_strategy_prefers_healing_a_downed_ally() -> None:
+    healer, state = _rescue_state(include_healing=True)
+
+    declaration = HealerStrategy().declare_turn(healer, state)
+
+    assert declaration.action is not None
+    assert declaration.action.action_name == "healing_word"
+    assert declaration.action.targets == [TargetRef(actor_id="downed")]
+
+
+def test_healer_strategy_stabilizes_downed_ally_when_healing_is_unavailable() -> None:
+    healer, state = _rescue_state(include_healing=False)
+
+    declaration = HealerStrategy().declare_turn(healer, state)
+
+    assert declaration.action is not None
+    assert declaration.action.action_name == "stabilize"
+    assert declaration.action.targets == [TargetRef(actor_id="downed")]
 
 
 def test_optimal_strategy_prioritizes_high_threat_target_when_policy_enabled() -> None:
