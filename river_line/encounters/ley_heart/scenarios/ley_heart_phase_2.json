@@ -20,7 +20,7 @@
   },
   "termination_rules": {
     "party_defeat": "all_unconscious_or_dead",
-    "enemy_defeat": "all_dead",
+    "enemy_defeat": "all_unconscious_or_dead",
     "max_rounds": 20
   },
   "resource_policy": {

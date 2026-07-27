@@ -6,7 +6,13 @@ from dataclasses import dataclass, field
 from typing import Callable, TypeVar
 
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
-from dnd_sim.mortality import advance_stable_recovery, stabilize_creature
+from dnd_sim.mortality import (
+    DeathSaveResult,
+    advance_stable_recovery,
+    knock_out_creature,
+    resolve_death_save,
+    stabilize_creature,
+)
 from dnd_sim.noncombat_checks import resolve_contest
 
 _DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
@@ -262,13 +268,6 @@ class AttackRollResult:
     total: int
 
 
-@dataclass(slots=True)
-class DeathSaveResult:
-    became_stable: bool
-    became_dead: bool
-    regained_consciousness: bool
-
-
 @dataclass(frozen=True, slots=True)
 class PowerAttackToggleState:
     active: bool
@@ -381,6 +380,7 @@ class DamageBundleResolution:
     packets: list[ResolvedDamagePacket]
     raw_total: int
     applied_total: int
+    knocked_out: bool = False
 
 
 def _normalize_trait_name(name: str) -> str:
@@ -1283,6 +1283,8 @@ def apply_damage_bundle(
     *,
     is_critical: bool = False,
     source: ActorRuntimeState | None = None,
+    knock_out_at_zero: bool = False,
+    knockout_recovery_rng: random.Random | None = None,
 ) -> DamageBundleResolution:
     _sync_rage_state(target)
     resolution = resolve_damage_bundle(target, bundle, source=source)
@@ -1315,13 +1317,23 @@ def apply_damage_bundle(
             overflow_damage_type = (
                 resolution.packets[0].damage_type if resolution.packets else "bludgeoning"
             )
-            apply_damage(
+            nested_resolution = apply_damage_bundle(
                 target,
-                overflow,
-                overflow_damage_type,
+                DamageBundle(
+                    packets=[
+                        DamagePacket(
+                            amount=overflow,
+                            damage_type=overflow_damage_type,
+                            source="direct",
+                        )
+                    ]
+                ),
                 is_critical=is_critical,
                 source=source,
+                knock_out_at_zero=knock_out_at_zero,
+                knockout_recovery_rng=knockout_recovery_rng,
             )
+            resolution.knocked_out = nested_resolution.knocked_out
         return resolution
 
     def _mark_dead() -> None:
@@ -1369,6 +1381,13 @@ def apply_damage_bundle(
             target.was_downed = True
         if overflow >= target.max_hp:
             _mark_dead()
+        elif knock_out_at_zero:
+            if knockout_recovery_rng is None:
+                raise ValueError("knockout_recovery_rng is required when knockout is applied")
+            resolution.knocked_out = knock_out_creature(
+                target,
+                recovery_hours=knockout_recovery_rng.randint(1, 4),
+            )
         elif target.uses_death_saves is False:
             _mark_dead()
 
@@ -1388,6 +1407,8 @@ def apply_damage(
     is_critical: bool = False,
     is_magical: bool = False,
     source: ActorRuntimeState | None = None,
+    knock_out_at_zero: bool = False,
+    knockout_recovery_rng: random.Random | None = None,
 ) -> int:
     packet = DamagePacket(
         amount=max(0, int(amount)),
@@ -1402,6 +1423,8 @@ def apply_damage(
         bundle,
         is_critical=is_critical,
         source=source,
+        knock_out_at_zero=knock_out_at_zero,
+        knockout_recovery_rng=knockout_recovery_rng,
     )
     return resolution.applied_total
 
@@ -1440,50 +1463,3 @@ def run_concentration_check(
     if not success:
         target.concentrating = False
     return success
-
-
-def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSaveResult:
-    if target.hp > 0 or target.stable or target.dead:
-        return DeathSaveResult(False, target.dead, False)
-    if target.uses_death_saves is False:
-        target.dead = True
-        target.stable = False
-        target.stable_recovery_hours_remaining = None
-        target.death_failures = max(3, target.death_failures)
-        target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
-        return DeathSaveResult(False, True, False)
-
-    roll = rng.randint(1, 20)
-    if roll == 1:
-        target.death_failures += 2
-    elif roll == 20:
-        target.hp = 1
-        target.death_successes = 0
-        target.death_failures = 0
-        target.stable = False
-        target.was_downed = False
-        target.stable_recovery_hours_remaining = None
-        _remove_condition_everywhere(target, "unconscious")
-        _remove_condition_everywhere(target, "incapacitated")
-        return DeathSaveResult(False, False, True)
-    elif roll >= 10:
-        target.death_successes += 1
-    else:
-        target.death_failures += 1
-
-    became_stable = False
-    became_dead = False
-    if target.death_successes >= 3:
-        target.stable = True
-        target.death_successes = 0
-        target.death_failures = 0
-        target.stable_recovery_hours_remaining = rng.randint(1, 4)
-        became_stable = True
-    if target.death_failures >= 3:
-        target.dead = True
-        target.stable = False
-        target.stable_recovery_hours_remaining = None
-        target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
-        became_dead = True
-
-    return DeathSaveResult(became_stable, became_dead, False)

@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import logging
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from dnd_sim.spatial import check_cover, distance_chebyshev, move_towards
 
 logger = logging.getLogger(__name__)
+ZeroHPIntent = Literal["normal", "knock_out"]
 _REMOVED_LEGACY_STRATEGY_METHODS = (
     "choose_action",
     "choose_targets",
@@ -30,6 +31,7 @@ class DeclaredAction:
     targets: list[TargetRef] = field(default_factory=list)
     resource_spend: ResourceSpend = field(default_factory=ResourceSpend)
     spell_slot_level: int | None = None
+    zero_hp_intent: ZeroHPIntent = "normal"
     rationale: dict[str, Any] = field(default_factory=dict)
 
 
