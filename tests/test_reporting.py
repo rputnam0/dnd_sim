@@ -63,7 +63,7 @@ def _setup_reporting_fixture(tmp_path: Path) -> Path:
         "battlefield": {},
         "termination_rules": {
             "party_defeat": "all_unconscious_or_dead",
-            "enemy_defeat": "all_dead",
+            "enemy_defeat": "all_unconscious_or_dead",
             "max_rounds": 20,
         },
         "internal_harness": {

@@ -55,7 +55,7 @@ def _setup_env(
         "battlefield": {},
         "termination_rules": {
             "party_defeat": "all_unconscious_or_dead",
-            "enemy_defeat": "all_dead",
+            "enemy_defeat": "all_unconscious_or_dead",
             "max_rounds": 10,
         },
         "internal_harness": {

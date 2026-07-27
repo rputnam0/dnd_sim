@@ -139,7 +139,7 @@ def _setup_env(tmp_path: Path) -> Path:
         "battlefield": {},
         "termination_rules": {
             "party_defeat": "all_unconscious_or_dead",
-            "enemy_defeat": "all_dead",
+            "enemy_defeat": "all_unconscious_or_dead",
             "max_rounds": 1,
         },
         "internal_harness": {"strategy_modules": []},

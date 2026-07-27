@@ -61,7 +61,7 @@ def _setup_campaign_env(
         "termination_rules": termination_rules
         or {
             "party_defeat": "all_unconscious_or_dead",
-            "enemy_defeat": "all_dead",
+            "enemy_defeat": "all_unconscious_or_dead",
             "max_rounds": 1,
         },
         "internal_harness": {
@@ -392,7 +392,7 @@ def test_long_rest_after_does_not_restore_dead_party_members(tmp_path: Path) -> 
     assert first_snapshot["party"]["survivor"]["hp"] == 30
 
 
-def test_party_defeat_rule_variant_any_unconscious_changes_outcome(tmp_path: Path) -> None:
+def test_party_defeat_rule_variant_can_produce_mutual_defeat(tmp_path: Path) -> None:
     party = [
         build_character("low", "Low", 5, 15, 6, "1d8+3"),
         build_character("high", "High", 30, 15, 6, "1d8+3"),
@@ -459,7 +459,7 @@ def test_party_defeat_rule_variant_any_unconscious_changes_outcome(tmp_path: Pat
         encounters=[{"enemies": ["reaper"]}],
         termination_rules={
             "party_defeat": "any_unconscious_or_dead",
-            "enemy_defeat": "all_dead",
+            "enemy_defeat": "all_unconscious_or_dead",
             "max_rounds": 1,
         },
     )
@@ -469,7 +469,9 @@ def test_party_defeat_rule_variant_any_unconscious_changes_outcome(tmp_path: Pat
     ).trial_results[0]
 
     assert default_trial.winner == "party"
-    assert any_down_trial.winner == "enemy"
+    assert any_down_trial.winner == "draw"
+    assert any_down_trial.outcome == "draw"
+    assert any_down_trial.termination_reason == "mutual_defeat"
 
 
 def test_custom_enemy_defeat_predicate_drives_branching_and_checkpoints(tmp_path: Path) -> None:

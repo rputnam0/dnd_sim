@@ -4,7 +4,13 @@ from dataclasses import asdict
 
 import pytest
 
-from dnd_sim.engine_runtime import _party_defeated, long_rest, short_rest
+from dnd_sim.engine_runtime import (
+    _enemies_defeated,
+    _party_defeated,
+    _team_metric_value,
+    long_rest,
+    short_rest,
+)
 from dnd_sim.models import ActorRuntimeState
 from dnd_sim.rules_2014 import (
     advance_stable_recovery,
@@ -239,6 +245,42 @@ def test_team_defeat_evaluation_is_pure() -> None:
     assert _party_defeated({actor.actor_id: actor}) is True
     assert _party_defeated({actor.actor_id: actor}) is True
     assert asdict(actor) == before
+
+
+def test_stable_knockout_is_alive_but_not_conscious_or_active() -> None:
+    actor = _actor(uses_death_saves=False, hp=0)
+    actor.team = "enemy"
+    actor.stable = True
+    actor.update_manual_conditions({"unconscious", "incapacitated", "prone"})
+
+    assert _team_metric_value([actor], "alive_count") == 1
+    assert _team_metric_value([actor], "conscious_count") == 0
+    assert _team_metric_value([actor], "active_count") == 0
+    assert _team_metric_value([actor], "downed_count") == 1
+    assert _team_metric_value([actor], "dead_count") == 0
+
+
+def test_default_enemy_defeat_neutralizes_knockouts_but_explicit_all_dead_does_not() -> None:
+    actor = _actor(uses_death_saves=False, hp=0)
+    actor.team = "enemy"
+    actor.stable = True
+    actor.update_manual_conditions({"unconscious", "incapacitated", "prone"})
+    actors = {actor.actor_id: actor}
+
+    assert _enemies_defeated(actors) is True
+    assert _enemies_defeated(actors, "all_unconscious_or_dead") is True
+    assert _enemies_defeated(actors, "all_dead") is False
+
+
+def test_positive_hp_unconscious_creature_is_not_conscious_or_active() -> None:
+    actor = _actor(uses_death_saves=True, hp=5)
+    actor.update_manual_conditions({"unconscious", "incapacitated"})
+
+    assert _team_metric_value([actor], "alive_count") == 1
+    assert _team_metric_value([actor], "conscious_count") == 0
+    assert _team_metric_value([actor], "active_count") == 0
+    assert _party_defeated({actor.actor_id: actor}, "all_unconscious_or_dead") is True
+    assert _party_defeated({actor.actor_id: actor}, "all_downed") is False
 
 
 def test_stabilize_creature_resets_counters_and_schedules_recovery() -> None:

@@ -12,13 +12,20 @@ from dnd_sim.models import TrialResult
 from dnd_sim.reporting import build_report_markdown
 from dnd_sim.reporting_runtime import build_simulation_summary
 from dnd_sim.replay import flatten_trial_result
+from dnd_sim.strategy_api import BaseStrategy
 from tests.helpers import build_character, build_enemy
 from tests.runtime_test_support import _setup_env
 
 
-def _run_single_trial(scenario_path: Path, *, seed: int = 7) -> TrialResult:
+def _run_single_trial(
+    scenario_path: Path,
+    *,
+    seed: int = 7,
+    strategy_overrides: dict[str, object] | None = None,
+) -> TrialResult:
     loaded = load_runtime_scenario(scenario_path)
     registry = load_strategy_registry(loaded)
+    registry.update(strategy_overrides or {})
     character_db = load_character_db(Path(loaded.config.character_db_dir))
     return run_simulation(
         loaded,
@@ -29,6 +36,14 @@ def _run_single_trial(scenario_path: Path, *, seed: int = 7) -> TrialResult:
         seed=seed,
         run_id="terminal_outcome_regression",
     ).trial_results[0]
+
+
+class _KnockoutStrategy(BaseStrategy):
+    def declare_turn(self, actor, state):
+        declaration = super().declare_turn(actor, state)
+        if declaration is not None and declaration.action is not None:
+            declaration.action.zero_hp_intent = "knock_out"
+        return declaration
 
 
 def _configure_encounters(scenario_path: Path, encounters: list[dict]) -> None:
@@ -66,7 +81,7 @@ def _last_initiative_enemy(*, hp: int, damage: str) -> dict:
     return enemy
 
 
-def test_zero_hp_enemy_dies_without_death_save_unless_explicitly_configured(
+def test_enemy_death_save_policy_and_objective_control_zero_hp_resolution(
     tmp_path: Path, monkeypatch
 ) -> None:
     death_save_actor_ids: list[str] = []
@@ -112,12 +127,143 @@ def test_zero_hp_enemy_dies_without_death_save_unless_explicitly_configured(
     )
     special_trial = _run_single_trial(special_path)
 
-    assert death_save_actor_ids == ["npc"]
-    assert special_trial.winner == "draw"
-    assert special_trial.outcome == "timeout"
-    assert special_trial.termination_reason == "max_rounds"
-    assert special_trial.censored is True
+    assert death_save_actor_ids == []
+    assert special_trial.winner == "party"
+    assert special_trial.outcome == "party_victory"
+    assert special_trial.termination_reason == "enemy_defeated"
+    assert special_trial.censored is False
     assert special_trial.death_counts["npc"] == 0
+
+    kill_objective = json.loads(special_path.read_text(encoding="utf-8"))
+    kill_objective["termination_rules"]["enemy_defeat"] = "all_dead"
+    special_path.write_text(json.dumps(kill_objective, indent=2), encoding="utf-8")
+    kill_trial = _run_single_trial(special_path)
+
+    assert death_save_actor_ids == ["npc"]
+    assert kill_trial.winner == "draw"
+    assert kill_trial.outcome == "timeout"
+    assert kill_trial.termination_reason == "max_rounds"
+    assert kill_trial.censored is True
+    assert kill_trial.death_counts["npc"] == 0
+
+
+def test_nonlethal_knockout_is_a_resolved_party_victory_with_distinct_metrics(
+    tmp_path: Path,
+) -> None:
+    hero = _one_attack_character(hp=20, damage="10")
+    hero["attacks"][0]["attack_delivery"] = "melee_weapon_attack"
+    scenario_path = _setup_env(
+        tmp_path,
+        party=[hero],
+        enemies=[_last_initiative_enemy(hp=10, damage="0")],
+        assumption_overrides={
+            "party_strategy": "knock_out",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+        max_rounds=1,
+    )
+    scenario = json.loads(scenario_path.read_text(encoding="utf-8"))
+    scenario["termination_rules"].pop("enemy_defeat")
+    scenario_path.write_text(json.dumps(scenario, indent=2), encoding="utf-8")
+
+    trial = _run_single_trial(
+        scenario_path,
+        strategy_overrides={"knock_out": _KnockoutStrategy()},
+    )
+
+    assert trial.winner == "party"
+    assert trial.outcome == "party_victory"
+    assert trial.termination_reason == "enemy_defeated"
+    assert trial.censored is False
+    assert trial.downed_counts["npc"] == 1
+    assert trial.death_counts["npc"] == 0
+    assert trial.remaining_hp["npc"] == 0
+    enemy_state = trial.state_snapshots[-1]["enemies"]["npc"]
+    assert enemy_state["stable"] is True
+    assert enemy_state["dead"] is False
+    assert enemy_state["stable_recovery_hours_remaining"] in {1, 2, 3, 4}
+    assert {"unconscious", "incapacitated", "prone"} <= set(enemy_state["conditions"])
+    assert any(
+        event.get("telemetry_type") == "knockout_resolution"
+        and event.get("target_id") == "npc"
+        and event.get("applied") is True
+        for event in trial.telemetry
+    )
+
+
+def test_explicit_all_dead_objective_is_not_satisfied_by_knockout(tmp_path: Path) -> None:
+    hero = _one_attack_character(hp=20, damage="10")
+    hero["attacks"][0]["attack_delivery"] = "melee_weapon_attack"
+    scenario_path = _setup_env(
+        tmp_path,
+        party=[hero],
+        enemies=[_last_initiative_enemy(hp=10, damage="0")],
+        assumption_overrides={
+            "party_strategy": "knock_out",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+        max_rounds=1,
+    )
+    scenario = json.loads(scenario_path.read_text(encoding="utf-8"))
+    scenario["termination_rules"]["enemy_defeat"] = "all_dead"
+    scenario_path.write_text(json.dumps(scenario, indent=2), encoding="utf-8")
+
+    trial = _run_single_trial(
+        scenario_path,
+        strategy_overrides={"knock_out": _KnockoutStrategy()},
+    )
+
+    assert trial.winner == "draw"
+    assert trial.outcome == "timeout"
+    assert trial.termination_reason == "max_rounds"
+    assert trial.censored is True
+    assert trial.death_counts["npc"] == 0
+
+
+def test_simultaneous_party_and_enemy_defeat_is_a_resolved_draw(tmp_path: Path) -> None:
+    enemy = _last_initiative_enemy(hp=10, damage="0")
+    enemy["stat_block"]["initiative_mod"] = 1000
+    enemy["actions"] = [
+        {
+            "name": "self_destruct",
+            "action_type": "save",
+            "save_dc": 100,
+            "save_ability": "dex",
+            "half_on_save": False,
+            "damage": "10",
+            "damage_type": "force",
+            "target_mode": "single_enemy",
+            "effects": [
+                {
+                    "effect_type": "damage",
+                    "apply_on": "always",
+                    "target": "source",
+                    "damage": "10",
+                    "damage_type": "force",
+                }
+            ],
+            "resource_cost": {},
+        }
+    ]
+    scenario_path = _setup_env(
+        tmp_path,
+        party=[_one_attack_character(hp=10, damage="0")],
+        enemies=[enemy],
+        assumption_overrides={
+            "party_strategy": "focus_fire_lowest_hp",
+            "enemy_strategy": "boss_highest_threat_target",
+        },
+        max_rounds=1,
+    )
+
+    trial = _run_single_trial(scenario_path)
+
+    assert trial.winner == "draw"
+    assert trial.outcome == "draw"
+    assert trial.termination_reason == "mutual_defeat"
+    assert trial.censored is False
+    assert trial.encounter_outcomes[-1]["outcome"] == "mutual_defeat"
+    assert trial.encounter_outcomes[-1]["winner"] == "draw"
 
 
 def test_max_rounds_is_censored_timeout_not_remaining_hp_tiebreak(tmp_path: Path) -> None:

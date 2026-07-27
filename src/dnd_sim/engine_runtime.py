@@ -7147,6 +7147,16 @@ def _actor_defeated(actor: ActorRuntimeState) -> bool:
     return actor.dead or actor.hp <= 0
 
 
+def _actor_conscious(actor: ActorRuntimeState) -> bool:
+    return actor.hp > 0 and not actor.dead and "unconscious" not in actor.conditions
+
+
+def _actor_active(actor: ActorRuntimeState) -> bool:
+    return _actor_conscious(actor) and not actor.conditions.intersection(
+        _CONTROL_BLOCKING_CONDITIONS
+    )
+
+
 def _actor_uses_death_saves(actor: ActorRuntimeState) -> bool:
     if actor.uses_death_saves is not None:
         return actor.uses_death_saves
@@ -7177,13 +7187,15 @@ def _compare_numeric(lhs: float, op: str, rhs: float) -> bool:
 
 def _team_metric_value(team_actors: list[ActorRuntimeState], metric: str) -> float:
     key = str(metric).lower()
-    if key in {"alive_count", "conscious_count"}:
-        return float(sum(1 for actor in team_actors if actor.hp > 0 and not actor.dead))
-    if key in {"active_count"}:
+    if key == "alive_count":
         return float(sum(1 for actor in team_actors if not actor.dead))
-    if key in {"downed_count"}:
+    if key == "conscious_count":
+        return float(sum(1 for actor in team_actors if _actor_conscious(actor)))
+    if key == "active_count":
+        return float(sum(1 for actor in team_actors if _actor_active(actor)))
+    if key == "downed_count":
         return float(sum(1 for actor in team_actors if _actor_defeated(actor)))
-    if key in {"dead_count"}:
+    if key == "dead_count":
         return float(sum(1 for actor in team_actors if actor.dead))
     if key == "total_hp":
         return float(sum(max(0, int(actor.hp)) for actor in team_actors if not actor.dead))
@@ -7235,7 +7247,9 @@ def _team_defeated(
         raise ValueError(f"Unsupported termination rule type for team '{team}': {type(rule)}")
 
     key = rule.strip().lower()
-    if key in {"all_unconscious_or_dead", "all_downed", "all_defeated", "none_conscious"}:
+    if key in {"all_unconscious_or_dead", "none_conscious"}:
+        return all(not _actor_conscious(actor) for actor in team_members)
+    if key in {"all_downed", "all_defeated"}:
         return all(_actor_defeated(actor) for actor in team_members)
     if key in {"all_dead", "none_alive"}:
         return all(actor.dead for actor in team_members)
@@ -7260,7 +7274,7 @@ def _enemies_defeated(actors: dict[str, ActorRuntimeState], rule_spec: Any = Non
         actors,
         team="enemy",
         rule_spec=rule_spec,
-        default_rule="all_dead",
+        default_rule="all_unconscious_or_dead",
     )
 
 
@@ -15067,7 +15081,7 @@ def run_simulation_core(
         else {}
     )
     party_defeat_rule = termination_rules.get("party_defeat", "all_unconscious_or_dead")
-    enemy_defeat_rule = termination_rules.get("enemy_defeat", "all_dead")
+    enemy_defeat_rule = termination_rules.get("enemy_defeat", "all_unconscious_or_dead")
     max_rounds = int(termination_rules.get("max_rounds", 20))
     max_encounter_steps = int(
         termination_rules.get("max_encounter_steps", max(1, len(encounter_plan) * 3))
@@ -15620,7 +15634,12 @@ def run_simulation_core(
 
             party_is_defeated = _party_defeated(actors, party_defeat_rule)
             enemies_are_defeated = _enemies_defeated(actors, enemy_defeat_rule)
-            if party_is_defeated:
+            if party_is_defeated and enemies_are_defeated:
+                encounter_winner = "draw"
+                encounter_outcome = "mutual_defeat"
+                encounter_termination_reason = "mutual_defeat"
+                encounter_censored = False
+            elif party_is_defeated:
                 encounter_winner = "enemy"
                 encounter_outcome = "party_defeat"
                 encounter_termination_reason = "party_defeated"
@@ -15652,7 +15671,13 @@ def run_simulation_core(
                 next_encounter_idx = None
 
             continue_campaign = next_encounter_idx is not None
-            if party_is_defeated:
+            if party_is_defeated and enemies_are_defeated:
+                overall_winner = "draw"
+                overall_outcome = "draw"
+                overall_termination_reason = "mutual_defeat"
+                continue_campaign = False
+                next_encounter_idx = None
+            elif party_is_defeated:
                 overall_winner = "enemy"
                 overall_outcome = "enemy_victory"
                 overall_termination_reason = "party_defeated"
@@ -15734,11 +15759,17 @@ def run_simulation_core(
             encounter_idx = next_encounter_idx
 
         if overall_termination_reason is None:
-            if _party_defeated(actors, party_defeat_rule):
+            party_is_defeated = _party_defeated(actors, party_defeat_rule)
+            enemies_are_defeated = _enemies_defeated(actors, enemy_defeat_rule)
+            if party_is_defeated and enemies_are_defeated:
+                overall_winner = "draw"
+                overall_outcome = "draw"
+                overall_termination_reason = "mutual_defeat"
+            elif party_is_defeated:
                 overall_winner = "enemy"
                 overall_outcome = "enemy_victory"
                 overall_termination_reason = "party_defeated"
-            elif _enemies_defeated(actors, enemy_defeat_rule):
+            elif enemies_are_defeated:
                 overall_winner = "party"
                 overall_outcome = "party_victory"
                 overall_termination_reason = "enemy_defeated"
