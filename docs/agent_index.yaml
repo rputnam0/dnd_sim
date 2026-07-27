@@ -165,6 +165,7 @@ subsystems:
       - "Path legality reflects terrain, occupancy, and reach constraints consistently."
       - "Forced movement semantics remain distinct from voluntary movement for trigger handling."
       - "Declared movement path validation errors preserve deterministic code/field/details payloads."
+      - "Movement interrupts truncate the committed path before zone and hazard consumers receive it."
     safe_edit_boundaries:
       - "Safe: path scoring, route decomposition, and forced-movement vector helper extraction."
       - "Caution: opportunity-attack trigger points, movement budget math, and declared-movement legality codes."

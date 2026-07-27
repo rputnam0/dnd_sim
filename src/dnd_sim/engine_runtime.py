@@ -72,6 +72,7 @@ from dnd_sim.movement_runtime import (
     path_distance as _movement_path_distance,
     path_movement_cost as _movement_path_movement_cost,
     path_prefix_for_movement_budget as _movement_path_prefix_for_movement_budget,
+    path_prefix_through_position as _movement_path_prefix_through_position,
     prepare_voluntary_movement as _movement_prepare_voluntary_movement,
     resolve_forced_movement_destination as _movement_resolve_forced_movement_destination,
     validate_declared_movement_path as _movement_validate_declared_movement_path,
@@ -8025,20 +8026,6 @@ def _move_actor_for_action_range(
     actor.position = end_pos
     actor.movement_remaining = max(0.0, actor.movement_remaining - movement_spent)
 
-    _update_actor_zone_interactions_for_movement(
-        actor=actor,
-        path=movement_path,
-        rng=rng,
-        actors=actors,
-        damage_dealt=damage_dealt,
-        damage_taken=damage_taken,
-        threat_scores=threat_scores,
-        resources_spent=resources_spent,
-        active_hazards=active_hazards,
-    )
-    if actor.dead or actor.hp <= 0:
-        return False
-
     _run_opportunity_attacks_for_movement(
         rng=rng,
         mover=actor,
@@ -8058,6 +8045,18 @@ def _move_actor_for_action_range(
         movement_source="action",
     )
 
+    committed_path = _movement_path_prefix_through_position(movement_path, actor.position)
+    _update_actor_zone_interactions_for_movement(
+        actor=actor,
+        path=committed_path,
+        rng=rng,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
     if actor.dead or actor.hp <= 0:
         return False
     _process_hazard_movement_triggers(
@@ -8065,7 +8064,7 @@ def _move_actor_for_action_range(
         mover=actor,
         start_pos=start_pos,
         end_pos=actor.position,
-        movement_path=movement_path,
+        movement_path=committed_path,
         actors=actors,
         damage_dealt=damage_dealt,
         damage_taken=damage_taken,
@@ -8814,20 +8813,6 @@ def _apply_declared_movement_or_error(
     actor.position = end_pos
     actor.movement_remaining = max(0.0, actor.movement_remaining - declared_cost)
 
-    _update_actor_zone_interactions_for_movement(
-        actor=actor,
-        path=movement_path,
-        rng=rng,
-        actors=actors,
-        damage_dealt=damage_dealt,
-        damage_taken=damage_taken,
-        threat_scores=threat_scores,
-        resources_spent=resources_spent,
-        active_hazards=active_hazards,
-    )
-    if actor.dead or actor.hp <= 0:
-        return
-
     _run_opportunity_attacks_for_movement(
         rng=rng,
         mover=actor,
@@ -8849,6 +8834,18 @@ def _apply_declared_movement_or_error(
         rule_trace=rule_trace,
         telemetry=telemetry,
     )
+    committed_path = _movement_path_prefix_through_position(movement_path, actor.position)
+    _update_actor_zone_interactions_for_movement(
+        actor=actor,
+        path=committed_path,
+        rng=rng,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+    )
     if actor.dead or actor.hp <= 0:
         return
     _process_hazard_movement_triggers(
@@ -8856,7 +8853,7 @@ def _apply_declared_movement_or_error(
         mover=actor,
         start_pos=start_pos,
         end_pos=actor.position,
-        movement_path=movement_path,
+        movement_path=committed_path,
         actors=actors,
         damage_dealt=damage_dealt,
         damage_taken=damage_taken,

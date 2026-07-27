@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dnd_sim.engine_runtime as engine_module
 from dnd_sim.engine_runtime import (
     _apply_declared_movement_or_error,
     _execute_action,
@@ -278,6 +279,57 @@ def test_declared_movement_commits_sentinel_interrupt_position() -> None:
 
     assert mover.position == (10.0, 0.0, 0.0)
     assert mover.movement_remaining == 0.0
+
+
+def test_declared_movement_sends_only_committed_prefix_to_zones_and_hazards(
+    monkeypatch,
+) -> None:
+    rng = _DeterministicRng()
+    mover = _base_actor(actor_id="mover", team="party")
+    sentinel = _base_actor(actor_id="sentinel", team="enemy")
+    mover.position = (0.0, 0.0, 0.0)
+    mover.movement_remaining = 30.0
+    sentinel.position = (5.0, 0.0, 0.0)
+    sentinel.traits = {"sentinel": {}}
+    sentinel.actions = [_melee_attack()]
+    actors = {mover.actor_id: mover, sentinel.actor_id: sentinel}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(mover, sentinel)
+    seen_paths: dict[str, list[tuple[float, float, float]]] = {}
+
+    def capture_zone_path(**kwargs) -> None:
+        seen_paths["zones"] = list(kwargs["path"])
+        kwargs["actor"].position = kwargs["path"][-1]
+
+    def capture_hazard_path(**kwargs) -> None:
+        seen_paths["hazards"] = list(kwargs["movement_path"])
+
+    monkeypatch.setattr(
+        engine_module,
+        "_update_actor_zone_interactions_for_movement",
+        capture_zone_path,
+    )
+    monkeypatch.setattr(
+        engine_module,
+        "_process_hazard_movement_triggers",
+        capture_hazard_path,
+    )
+
+    _apply_declared_movement_or_error(
+        rng=rng,
+        actor=mover,
+        movement_path=[(0.0, 0.0, 0.0), (15.0, 0.0, 0.0)],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+    )
+
+    assert seen_paths["zones"][-1] == (10.0, 0.0, 0.0)
+    assert seen_paths["hazards"][-1] == (10.0, 0.0, 0.0)
+    assert all(point[0] <= 10.0 for point in seen_paths["zones"])
+    assert all(point[0] <= 10.0 for point in seen_paths["hazards"])
 
 
 def test_sentinel_stop_prevents_later_reactors_from_using_abandoned_path() -> None:

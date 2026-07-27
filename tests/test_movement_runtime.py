@@ -10,6 +10,7 @@ from dnd_sim.movement_runtime import (
     movement_triggers_opportunity_attacks,
     path_movement_cost_with_hazards,
     path_prefix_for_movement_budget,
+    path_prefix_through_position,
     prepare_voluntary_movement,
     resolve_forced_movement_destination,
     validate_declared_movement_path,
@@ -137,6 +138,18 @@ def test_reach_transitions_emit_enter_then_exit() -> None:
     )
 
     assert [row[0] for row in transitions] == ["enter_reach", "exit_reach"]
+
+
+def test_path_prefix_through_position_discards_uncommitted_tail() -> None:
+    path = [(0.0, 0.0, 0.0), (15.0, 0.0, 0.0)]
+
+    committed = path_prefix_through_position(path, (10.0, 0.0, 0.0))
+
+    assert committed == [
+        (0.0, 0.0, 0.0),
+        (5.0, 0.0, 0.0),
+        (10.0, 0.0, 0.0),
+    ]
 
 
 def test_resolve_forced_movement_destination_supports_toward_and_away() -> None:
