@@ -9937,8 +9937,86 @@ def _apply_healing(target: ActorRuntimeState, amount: int) -> None:
 
 
 def _effect_matches_event(effect: dict[str, Any], event: str) -> bool:
-    apply_on = str(effect.get("apply_on", "always"))
-    return apply_on == "always" or apply_on == event
+    apply_on = str(effect.get("apply_on", "always")).strip().lower()
+    return apply_on == "always" or apply_on == str(event).strip().lower()
+
+
+@dataclass(frozen=True, slots=True)
+class _BundledAttackDamageEffect:
+    source_bucket: str
+    effect_index: int
+    effect: dict[str, Any]
+
+    @property
+    def marker(self) -> tuple[str, int]:
+        return self.source_bucket, self.effect_index
+
+    @property
+    def packet_source(self) -> str:
+        return f"effect:{self.source_bucket}:{self.effect_index}"
+
+
+def _is_target_directed_damage_effect(effect: dict[str, Any]) -> bool:
+    if str(effect.get("effect_type", "")).strip().lower() != "damage":
+        return False
+    return str(effect.get("target", "target")).strip().lower() == "target"
+
+
+def _bundled_attack_damage_effects(
+    action: ActionDefinition,
+    *,
+    event: str,
+    once_per_action_used: set[tuple[str, int]],
+) -> list[_BundledAttackDamageEffect]:
+    if action.action_type != "attack" or str(event).strip().lower() != "hit":
+        return []
+
+    bundled: list[_BundledAttackDamageEffect] = []
+    delayed_keys = {
+        "timing_round",
+        "timing_round_start",
+        "timing_round_end",
+        "start_turn_effects",
+        "end_turn_effects",
+        "on_start_turn",
+        "on_end_turn",
+    }
+    for source_bucket, effect_list in (
+        ("effects", action.effects),
+        ("mechanics", action.mechanics),
+    ):
+        for effect_index, effect in enumerate(effect_list):
+            if not isinstance(effect, dict) or not _is_target_directed_damage_effect(effect):
+                continue
+            if str(effect.get("apply_on", "always")).strip().lower() != "hit":
+                continue
+            if any(key in effect for key in delayed_keys):
+                continue
+            if any(
+                key in effect
+                for key in (
+                    "save_ability",
+                    "save",
+                    "save_dc",
+                    "half_on_success",
+                    "half_on_save",
+                )
+            ):
+                continue
+            damage_expression = str(effect.get("damage", "")).strip()
+            if not damage_expression or "last_damage_applied" in damage_expression.lower():
+                continue
+            marker = (source_bucket, effect_index)
+            if effect.get("once_per_action") and marker in once_per_action_used:
+                continue
+            bundled.append(
+                _BundledAttackDamageEffect(
+                    source_bucket=source_bucket,
+                    effect_index=effect_index,
+                    effect=effect,
+                )
+            )
+    return bundled
 
 
 def _is_spell_effect_row(
@@ -10902,8 +10980,10 @@ def _apply_action_effects(
     strategy_name: str | None = None,
     once_per_action_used: set[tuple[str, int]] | None = None,
     effect_context: dict[str, Any] | None = None,
+    pre_resolved_damage: dict[tuple[str, int], int] | None = None,
 ) -> None:
     shared_effect_context = effect_context if effect_context is not None else {}
+    bundled_damage = pre_resolved_damage if pre_resolved_damage is not None else {}
     for source_bucket, effect_list in (
         ("effects", action.effects),
         ("mechanics", action.mechanics),
@@ -10913,9 +10993,14 @@ def _apply_action_effects(
                 continue
             if not _effect_matches_event(effect, event):
                 continue
+            marker = (source_bucket, index)
+            was_pre_resolved = marker in bundled_damage
             if effect.get("once_per_action"):
-                marker = (source_bucket, index)
-                if once_per_action_used is not None and marker in once_per_action_used:
+                if (
+                    once_per_action_used is not None
+                    and marker in once_per_action_used
+                    and not was_pre_resolved
+                ):
                     continue
                 if once_per_action_used is not None:
                     once_per_action_used.add(marker)
@@ -10936,6 +11021,29 @@ def _apply_action_effects(
                         "effect_type": str(effect.get("effect_type", "")),
                     }
                 )
+
+            if was_pre_resolved:
+                shared_effect_context["last_damage_applied"] = bundled_damage[marker]
+                if telemetry is not None:
+                    telemetry.append(
+                        {
+                            "telemetry_type": "effect_contribution",
+                            "round": round_number,
+                            "strategy": strategy_name,
+                            "actor_id": actor.actor_id,
+                            "target_id": recipient.actor_id,
+                            "action_name": action.name,
+                            "source_bucket": source_bucket,
+                            "effect_index": index,
+                            "trigger_event": event,
+                            "effect_type": "damage",
+                            "damage_type": str(
+                                effect.get("damage_type", action.damage_type)
+                            ).lower(),
+                            "applied_amount": bundled_damage[marker],
+                        }
+                    )
+                continue
 
             _apply_effect(
                 action=action,
@@ -13949,12 +14057,24 @@ def _execute_action_impl(
                 continue
             roll = resolved_event.roll
             event = resolved_event.outcome
-            if roll.hit and action.damage:
+            bundled_attack_effects = (
+                _bundled_attack_damage_effects(
+                    action,
+                    event=event,
+                    once_per_action_used=once_per_action_used,
+                )
+                if roll.hit
+                else []
+            )
+            pre_resolved_damage: dict[tuple[str, int], int] = {}
+            attack_effect_context: dict[str, Any] = {}
+            if roll.hit and (action.damage or bundled_attack_effects):
                 empowered_rerolls = 0
-                if is_spell_action and _has_tag(action, "metamagic:empowered"):
+                if action.damage and is_spell_action and _has_tag(action, "metamagic:empowered"):
                     empowered_rerolls = max(1, actor.cha_mod)
                 elif (
-                    is_spell_action
+                    action.damage
+                    and is_spell_action
                     and _has_trait(actor, "empowered spell")
                     and actor.resources.get("sorcery_points", 0) >= 1
                 ):
@@ -13963,7 +14083,7 @@ def _execute_action_impl(
                         resources_spent[actor.actor_id].get("sorcery_points", 0) + 1
                     )
                     empowered_rerolls = max(1, actor.cha_mod)
-                damage_expr = action.damage
+                damage_expr = action.damage or ""
                 sneak_damage_expr: str | None = None
                 colossus_damage_expr: str | None = None
 
@@ -13984,7 +14104,8 @@ def _execute_action_impl(
                     if sneak_attack_available:
                         actor.sneak_attack_used_this_turn = False
                 if (
-                    _has_trait(actor, "sneak attack")
+                    action.damage
+                    and _has_trait(actor, "sneak attack")
                     and sneak_attack_available
                     and not getattr(actor, "is_heavy", False)
                     and "spell" not in action.tags
@@ -14025,7 +14146,8 @@ def _execute_action_impl(
                             sneak_damage_expr = f"{sa_dice}d6"
 
                 if (
-                    _has_trait(actor, "colossus slayer")
+                    action.damage
+                    and _has_trait(actor, "colossus slayer")
                     and not actor.colossus_slayer_used_this_turn
                     and _is_same_turn_for_actor(actor, turn_token)
                     and "spell" not in action.tags
@@ -14038,24 +14160,30 @@ def _execute_action_impl(
                     damage_expr += f"{damage_bonus:+d}"
                 attack_is_magical = _is_magical_action(action)
                 damage_bundle = DamageBundle()
-                base_damage = _roll_damage_with_channel_divinity_hooks(
-                    rng=rng,
-                    actor=actor,
-                    expr=damage_expr,
-                    damage_type=action.damage_type,
-                    resources_spent=resources_spent,
-                    crit=roll.crit,
-                    empowered_rerolls=empowered_rerolls,
-                )
-                _append_damage_packet(
-                    bundle=damage_bundle,
-                    amount=base_damage,
-                    damage_type=action.damage_type,
-                    packet_source="attack",
-                    is_magical=attack_is_magical,
-                    crit_expanded=_damage_expr_was_crit_expanded(damage_expr, crit=roll.crit),
-                )
-                if roll.crit and _has_trait_marker(actor, "brutal critical") and not is_ranged:
+                if action.damage:
+                    base_damage = _roll_damage_with_channel_divinity_hooks(
+                        rng=rng,
+                        actor=actor,
+                        expr=damage_expr,
+                        damage_type=action.damage_type,
+                        resources_spent=resources_spent,
+                        crit=roll.crit,
+                        empowered_rerolls=empowered_rerolls,
+                    )
+                    _append_damage_packet(
+                        bundle=damage_bundle,
+                        amount=base_damage,
+                        damage_type=action.damage_type,
+                        packet_source="attack",
+                        is_magical=attack_is_magical,
+                        crit_expanded=_damage_expr_was_crit_expanded(damage_expr, crit=roll.crit),
+                    )
+                if (
+                    action.damage
+                    and roll.crit
+                    and _has_trait_marker(actor, "brutal critical")
+                    and not is_ranged
+                ):
                     brutal_extra = 0
                     if actor.level >= 17:
                         brutal_extra = 3
@@ -14117,7 +14245,7 @@ def _execute_action_impl(
                         ),
                     )
 
-                if _has_trait(actor, "improved divine smite") and not is_ranged:
+                if action.damage and _has_trait(actor, "improved divine smite") and not is_ranged:
                     damage_bundle.add_packet(
                         roll_damage_packet(
                             rng,
@@ -14131,7 +14259,12 @@ def _execute_action_impl(
                     )
 
                 # Divine Smite Logic
-                if _has_trait(actor, "divine smite") and not is_ranged and target.hp > 0:
+                if (
+                    action.damage
+                    and _has_trait(actor, "divine smite")
+                    and not is_ranged
+                    and target.hp > 0
+                ):
                     slot_level = 0
                     selected_slot = _select_divine_smite_slot(
                         actor,
@@ -14171,7 +14304,7 @@ def _execute_action_impl(
                         )
                         if _has_trait(actor, "smite of protection"):
                             _apply_condition(actor, "smite_of_protection_window", duration_rounds=1)
-                if actor.pending_smite and not is_ranged and target.hp > 0:
+                if action.damage and actor.pending_smite and not is_ranged and target.hp > 0:
                     pending_bundle = _apply_pending_smite_on_hit(
                         rng=rng,
                         actor=actor,
@@ -14186,6 +14319,38 @@ def _execute_action_impl(
                     )
                     for packet in pending_bundle.packets:
                         damage_bundle.add_packet(packet)
+                for bundled_effect in bundled_attack_effects:
+                    effect = bundled_effect.effect
+                    effect_expression = _resolve_runtime_roll_expression(
+                        actor=actor,
+                        expr=effect.get("damage", "0"),
+                    )
+                    crit_eligible = bool(
+                        effect.get(
+                            "critical_hit_dice",
+                            effect.get("crit_eligible", True),
+                        )
+                    )
+                    effect_damage_type = str(effect.get("damage_type", action.damage_type)).lower()
+                    effect_damage = _roll_damage_with_channel_divinity_hooks(
+                        rng=rng,
+                        actor=actor,
+                        expr=effect_expression,
+                        damage_type=effect_damage_type,
+                        resources_spent=resources_spent,
+                        crit=roll.crit and crit_eligible,
+                    )
+                    _append_damage_packet(
+                        bundle=damage_bundle,
+                        amount=effect_damage,
+                        damage_type=effect_damage_type,
+                        packet_source=bundled_effect.packet_source,
+                        is_magical=bool(effect.get("is_magical", attack_is_magical)),
+                        crit_expanded=_damage_expr_was_crit_expanded(
+                            effect_expression,
+                            crit=roll.crit and crit_eligible,
+                        ),
+                    )
                 raw_damage = damage_bundle.raw_total
                 was_active_before_damage = target.hp > 0 and not target.dead
                 damage_roll_event = active_timing_engine.emit(
@@ -14251,6 +14416,15 @@ def _execute_action_impl(
                         }
                     )
                 applied = resolution.applied_total
+                attack_effect_context["last_damage_applied"] = applied
+                for bundled_effect in bundled_attack_effects:
+                    if bundled_effect.effect.get("once_per_action"):
+                        once_per_action_used.add(bundled_effect.marker)
+                    pre_resolved_damage[bundled_effect.marker] = sum(
+                        packet.applied_amount
+                        for packet in resolution.packets
+                        if packet.source == bundled_effect.packet_source
+                    )
                 active_timing_engine.emit(
                     DamageResolvedEvent(
                         attacker=actor,
@@ -14324,6 +14498,8 @@ def _execute_action_impl(
                 telemetry=telemetry,
                 strategy_name=strategy_name,
                 once_per_action_used=once_per_action_used,
+                effect_context=attack_effect_context,
+                pre_resolved_damage=pre_resolved_damage,
             )
             emit_event(f"on_{event}", trigger_target=target)
         return
