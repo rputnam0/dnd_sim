@@ -37,6 +37,7 @@ and their implementation is included in a pull request.
 - [ ] Complete class/subclass combat features by level.
 - [ ] Complete core conditions, creature size/space, movement modes, grappling, and cover.
 - [x] Model dying, stabilization, stable recovery, and NPC defeat policy.
+- [x] Resolve immediate attack damage and on-hit riders through one typed damage bundle.
 - [ ] Complete qualified defenses and the remaining rest semantics.
 - [ ] Add independently adjudicated rules-conformance and golden encounter tests.
 
@@ -93,10 +94,12 @@ Active stack:
   attack delivery, stabilization, stable recovery, and canonical supporting content.
 - Draft PR `#253`, `codex/nonlethal-knockout`: declared melee knockout intent, mortality
   disposition, neutralized encounter outcomes, distinct mortality metrics, and mutual-defeat draws.
+- Draft PR `#254`, `codex/unified-attack-damage`: one typed attack-damage bundle for primary
+  damage and immediate hit riders, including effect-only attacks and ordered effect telemetry.
 
-The next rules slice consolidates all immediate attack damage into one zero-HP disposition and
-then expands reaction/readied-action decision surfaces. Broader content and session APIs follow
-after the authoritative combat core is complete.
+The next rules slice expands reaction/readied-action command surfaces and their declared
+zero-HP disposition. Broader content and session APIs follow after the authoritative combat core
+is complete.
 
 ## Required verification for Milestone 0
 
