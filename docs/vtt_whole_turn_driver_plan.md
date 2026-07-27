@@ -54,8 +54,9 @@ and VTT must resolve a declared turn through the same domain function.
 - [x] Add an end-to-end service test that completes the encounter, restarts the
       service, reloads the exact terminal view, and retries without duplicate
       mutation.
-- [ ] Add a browser-driven end-to-end test and a second fresh-database replay
-      comparison.
+- [ ] Add a browser-driven end-to-end test. The second fresh-database replay
+      comparison is implemented and verified on `codex/vtt-whole-turn-driver`;
+      browser automation and pull-request review remain.
 
 Current branch note: the service and strict browser client now expose and
 consume `dnd.turn-choices.v1`. Structural targets can be staged before movement,

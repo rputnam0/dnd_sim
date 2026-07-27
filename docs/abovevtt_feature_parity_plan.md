@@ -76,8 +76,15 @@ service, and recover byte-identical state without duplicate mutation.
 Goal: cover the core DM/player jobs advertised by AboveVTT.
 
 - [ ] Campaign, table, participant, role, and token-ownership models.
+      Strict participant, roster, role, actor-ownership, bearer-access, and
+      annotation-audience foundations are implemented; campaign/table lifecycle
+      and browser credential UX remain.
 - [ ] Multi-client presence, reconnect, optimistic concurrency, and event deltas.
+      Encounter and annotation streams reconnect independently, and annotation
+      mutations use optimistic revisions; presence remains.
 - [ ] Public, GM-only, player-private, and blind roll/chat audiences.
+      Annotation reads/events enforce public, role, participant, and owned-actor
+      audiences; roll/chat surfaces and blind-roll semantics remain.
 - [ ] Dice tray and structured roll cards tied to rules events.
 - [ ] Scene create, duplicate, activate, archive, import, and export.
 - [ ] Map image/video metadata, crop, scale, offset, grid calibration, and
@@ -87,6 +94,9 @@ Goal: cover the core DM/player jobs advertised by AboveVTT.
 - [ ] Token ownership, nameplate, HP bar, conditions, aura, elevation, and
       footprint.
 - [ ] Ruler, waypoints, movement cost, ping, and area templates.
+      A local 5e grid ruler, durable shared ping vertical slice, and strict
+      renderer-neutral ruler/template contracts are implemented; shared
+      waypoints, template UI, annotation cleanup, and terrain costs remain.
 - [ ] Freehand drawing, shapes, text labels, colors, opacity, and erase.
 - [ ] Manual fog reveal/hide plus per-participant fog projection.
 - [ ] Walls, doors, windows, terrain barriers, and line-of-sight geometry.

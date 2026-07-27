@@ -53,8 +53,9 @@ The expected response is `{"status":"ok"}`.
 
 ### Database and restart behavior
 
-The SQLite file stores every committed command, its public receipt, and the resulting complete
-engine snapshot in one transaction. Preview commands are never written. On startup:
+The SQLite file stores every committed engine command, its public receipt, and the resulting
+complete engine snapshot in one transaction. It also stores map-annotation commands and receipts
+in a separate append-only board log. Preview commands are never written. On startup:
 
 - an empty or new database creates `echo-vault-session` at revision 0;
 - the same database path restores the latest stored snapshot, RNG state, command records, and
@@ -62,6 +63,7 @@ engine snapshot in one transaction. Preview commands are never written. On start
 - retrying a previously committed command with the same command ID and identical content returns
   its original receipt with `replayed: true` and does not mutate the encounter again;
 - reusing a command ID for different content is a conflict;
+- shared ping markers restore with their annotation revision and exact-retry receipts;
 - incompatible schema or version pins fail rather than silently migrating or resetting state.
 
 To start a genuinely fresh table, stop the backend first and move the SQLite file aside, then
@@ -111,7 +113,7 @@ the canonical engine snapshot.
    cell. Selecting the actor's current cell means hold position. Movement v0 sends a direct
    two-waypoint path from the current cell center to the selected cell center in canonical engine
    feet; preview and commit both revalidate it on the server. The movement allowance shown in the
-   inspector comes from the public projection.
+   inspector comes from the authoritative `dnd.turn-choices.v1` projection.
 3. **Choose an action and target.** Select an available action, then select a valid token either on
    the map or in the target control. The fixed Echo Vault opener supports **Lattice Lance** against
    the **Hushglass Sentry**.
@@ -129,6 +131,16 @@ preview. Preview again before committing. If another client advances the revisio
 command receives a conflict; reload `GET /api/v1/session` and rebuild the declaration from that
 projection.
 
+### Map tools
+
+- **Measure** or `M` starts the local presentation ruler. Choose a start and end cell to see
+  5e-style square-grid distance. The ruler never changes movement, calls the API, or persists.
+- **Ping** or `P` starts shared-marker mode. Choose any cell, including one occupied by a token.
+  The browser sends feet-space coordinates, adopts the server receipt, and follows the separate
+  reconnectable annotation stream.
+- Ping markers currently persist across reloads and backend restarts. `duration_ms` controls the
+  arrival pulse only; the solo UI does not yet expose deletion or automatic expiry.
+
 ## HTTP and event-stream contracts
 
 All client payloads are strict, versioned JSON. Unknown fields, coercive values, stale revisions,
@@ -140,6 +152,9 @@ and malformed event cursors are rejected with a `vtt.error.v1` envelope.
 | `GET` | `/api/v1/session` | Atomic `vtt.session_view.v1` public scene/projection read; no canonical snapshot. |
 | `POST` | `/api/v1/commands` | Strict `vtt.command.v1` endpoint for preview, admin, and commit modes. |
 | `GET` | `/api/v1/events` | Long-lived Server-Sent Events stream of committed public `vtt.event.v1` records. |
+| `GET` | `/api/v1/annotations` | Current scene-bound `vtt.annotations_view.v1` board projection. |
+| `POST` | `/api/v1/annotation-commands` | Revision-checked `vtt.annotation_request.v1` put/delete endpoint. |
+| `GET` | `/api/v1/annotation-events` | Reconnectable stream of committed `vtt.annotation_event.v1` records. |
 
 Command previews return `vtt.preview_response.v1`; admin and commit commands return
 `vtt.commit_response.v1`.
@@ -170,6 +185,11 @@ no new events, the server sends an SSE comment heartbeat approximately every 15 
 - After reconnecting, fetch `/api/v1/session` as the state authority. SSE events are a public
   ordered notification/log channel, not a replacement for the complete current projection.
 
+The annotation stream follows the same exclusive `after=N` and `Last-Event-ID` rules, but its
+cursor belongs only to the annotation board. The current annotation `revision` is also its latest
+event sequence, so the browser hydrates the board and resumes after that value without mixing it
+with the encounter-event cursor.
+
 Inspect the stream manually with:
 
 ```bash
@@ -187,6 +207,7 @@ uv run python -m pytest \
   tests/test_vtt_scene.py \
   tests/test_vtt_session_service.py \
   tests/test_vtt_http_api.py \
+  tests/test_vtt_annotation_http_api.py \
   tests/test_vtt_solo_table.py \
   tests/test_vtt_solo_app.py \
   tests/test_interactive_dnd_encounter_driver.py \
@@ -230,7 +251,8 @@ curl -fsS http://127.0.0.1:8000/api/v1/session | uv run python -m json.tool
 - SSE carries committed public events only. It is not a bidirectional WebSocket transport, and it
   does not stream previews or canonical snapshots.
 - No reset/session-creation API, database administration UI, schema migration UI, or recovery UI.
-- No chat, manual dice tray, voice/video, file upload, shared notes, measurement annotations, or
-  accessibility preferences beyond the responsive keyboard-visible and reduced-motion table UI.
+- No chat, manual dice tray, voice/video, file upload, shared notes, persisted ruler waypoints,
+  area-template UI, freehand drawing, or annotation deletion/expiry UI. The current map tools are
+  a local ruler and durable shared ping markers.
 - Local HTTP and an exact development CORS allowlist only; this composition is not production
   deployment, TLS termination, rate limiting, or security hardening.
