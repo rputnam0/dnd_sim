@@ -4,6 +4,7 @@ import random
 
 from dnd_sim.engine_runtime import _dispatch_combat_event
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.reaction_runtime import refresh_reaction_at_turn_start
 
 
 def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
@@ -115,7 +116,7 @@ def test_dispatch_combat_event_enforces_duration_per_turn_and_round_locks() -> N
     first_executed = [row for row in trace if row.get("result") == "executed"]
     assert len(first_executed) == 1
 
-    reactor.reaction_available = True
+    refresh_reaction_at_turn_start(reactor)
     _dispatch_combat_event(
         rng=rng,
         event="on_hit",
@@ -133,7 +134,7 @@ def test_dispatch_combat_event_enforces_duration_per_turn_and_round_locks() -> N
         rule_trace=trace,
     )
 
-    reactor.reaction_available = True
+    refresh_reaction_at_turn_start(reactor)
     _dispatch_combat_event(
         rng=rng,
         event="on_hit",
@@ -151,7 +152,7 @@ def test_dispatch_combat_event_enforces_duration_per_turn_and_round_locks() -> N
         rule_trace=trace,
     )
 
-    reactor.reaction_available = True
+    refresh_reaction_at_turn_start(reactor)
     _dispatch_combat_event(
         rng=rng,
         event="on_hit",
@@ -227,5 +228,28 @@ def test_dispatch_combat_event_runs_trait_handler_for_sentinel_reaction() -> Non
 
     assert attacker.hp < attacker.max_hp
     assert sentinel.reaction_available is False
+    hp_after_first_reaction = attacker.hp
+
+    # The sentinel's turn starts later in the same combat round and refreshes its reaction.
+    refresh_reaction_at_turn_start(sentinel)
+    _dispatch_combat_event(
+        rng=rng,
+        event="after_action",
+        trigger_actor=attacker,
+        trigger_target=ally_target,
+        trigger_action=trigger_action,
+        actors=actors,
+        round_number=1,
+        turn_token="1:attacker_2",
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        rule_trace=trace,
+    )
+
+    assert attacker.hp < hp_after_first_reaction
+    assert sentinel.reaction_available is False
     trait_events = [row for row in trace if row.get("handler") == "trait:sentinel_reaction"]
-    assert trait_events
+    assert len(trait_events) == 2
