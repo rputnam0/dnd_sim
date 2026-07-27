@@ -19,6 +19,20 @@ export interface FeetPosition {
   z_ft: number;
 }
 
+export type Position3 = [number, number, number];
+
+export interface GridCell {
+  column: number;
+  row: number;
+}
+
+export interface GridMovementPlan {
+  destination: GridCell;
+  distanceFt: number;
+  end: Position3;
+  path: Position3[];
+}
+
 export interface SquareGridScene {
   schema_version: "vtt.scene.v1";
   scene_id: string;
@@ -48,7 +62,7 @@ export interface ActorProjection {
   max_hp: number;
   temp_hp: number;
   ac: number;
-  position: [number, number, number];
+  position: Position3;
   movement_remaining: number;
   conditions: string[];
   dead: boolean;
@@ -780,6 +794,7 @@ export function buildDeclarationCommand(input: {
   actorId: string;
   actionName: string;
   targetIds: string[];
+  movementPath: Position3[];
   mode: "preview" | "commit";
   commandId?: string;
 }): VttCommand {
@@ -788,6 +803,20 @@ export function buildDeclarationCommand(input: {
   const targetIds = input.targetIds.map((targetId) =>
     requireCommandText(targetId, "targetId"),
   );
+  const movementPath = input.movementPath.map((waypoint, index) => {
+    if (!Array.isArray(waypoint) || waypoint.length !== 3) {
+      throw new Error(`movementPath[${index}] must contain three coordinates`);
+    }
+    if (
+      waypoint.some(
+        (coordinate) =>
+          typeof coordinate !== "number" || !Number.isFinite(coordinate),
+      )
+    ) {
+      throw new Error(`movementPath[${index}] coordinates must be finite numbers`);
+    }
+    return [...waypoint] as Position3;
+  });
   return {
     schema_version: "vtt.command.v1",
     command_id: commandId(input.commandId),
@@ -797,7 +826,7 @@ export function buildDeclarationCommand(input: {
     mode: input.mode,
     kind: "dnd.declare_turn.v1",
     payload: {
-      movement_path: [],
+      movement_path: movementPath,
       action: {
         action_name: actionName,
         targets: targetIds.map((targetId) => ({ actor_id: targetId })),
@@ -812,6 +841,7 @@ export function buildDeclarationCommand(input: {
     },
     intent_metadata: {
       surface: "echo-vault-web",
+      movement_waypoints: movementPath.length,
       selected_action: actionName,
       selected_targets: targetIds,
     },
@@ -820,8 +850,8 @@ export function buildDeclarationCommand(input: {
 
 export function feetToCell(
   scene: SquareGridScene,
-  position: [number, number, number],
-): { column: number; row: number } {
+  position: Position3,
+): GridCell {
   const column = Math.floor(
     (position[0] - scene.origin_ft.x_ft) / scene.cell_size_ft,
   );
@@ -837,6 +867,80 @@ export function feetToCell(
     throw new Error("Token position is outside the scene bounds");
   }
   return { column, row };
+}
+
+function validateGridCell(scene: SquareGridScene, cell: GridCell): GridCell {
+  if (
+    !Number.isInteger(cell.column) ||
+    !Number.isInteger(cell.row) ||
+    cell.column < 0 ||
+    cell.row < 0 ||
+    cell.column >= scene.columns ||
+    cell.row >= scene.rows
+  ) {
+    throw new Error("Grid cell is outside the scene bounds");
+  }
+  return { column: cell.column, row: cell.row };
+}
+
+export function cellToFeet(
+  scene: SquareGridScene,
+  destination: GridCell,
+): Position3 {
+  const cell = validateGridCell(scene, destination);
+  const halfCell = scene.cell_size_ft / 2;
+  return [
+    scene.origin_ft.x_ft + cell.column * scene.cell_size_ft + halfCell,
+    scene.origin_ft.y_ft + cell.row * scene.cell_size_ft + halfCell,
+    scene.origin_ft.z_ft,
+  ];
+}
+
+export function planGridMovement(input: {
+  scene: SquareGridScene;
+  start: Position3;
+  destination: GridCell;
+  movementRemaining: number;
+}): GridMovementPlan {
+  if (
+    !Array.isArray(input.start) ||
+    input.start.length !== 3 ||
+    input.start.some(
+      (coordinate) =>
+        typeof coordinate !== "number" || !Number.isFinite(coordinate),
+    )
+  ) {
+    throw new Error("Movement start must contain three finite coordinates");
+  }
+  if (
+    typeof input.movementRemaining !== "number" ||
+    !Number.isFinite(input.movementRemaining) ||
+    input.movementRemaining < 0
+  ) {
+    throw new Error("movementRemaining must be a non-negative finite number");
+  }
+
+  const destination = validateGridCell(input.scene, input.destination);
+  const projectedEnd = cellToFeet(input.scene, destination);
+  const end: Position3 = [projectedEnd[0], projectedEnd[1], input.start[2]];
+  const distanceFt = Math.max(
+    Math.abs(end[0] - input.start[0]),
+    Math.abs(end[1] - input.start[1]),
+    Math.abs(end[2] - input.start[2]),
+  );
+  if (distanceFt > input.movementRemaining + 1e-6) {
+    throw new Error(
+      `Destination exceeds remaining movement (${distanceFt} ft > ${input.movementRemaining} ft)`,
+    );
+  }
+
+  const start = [...input.start] as Position3;
+  return {
+    destination,
+    distanceFt,
+    end,
+    path: distanceFt <= 1e-6 ? [] : [start, end],
+  };
 }
 
 export class VttApiError extends Error {

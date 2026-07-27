@@ -14,6 +14,7 @@ import {
   buildStartCommand,
   feetToCell,
   getSessionView,
+  planGridMovement,
   postCommand,
   VttApiError,
   type ActorAction,
@@ -21,7 +22,10 @@ import {
   type DisplayEvent,
   type EncounterOutcome,
   type EncounterProjection,
+  type GridCell,
+  type GridMovementPlan,
   type JsonValue,
+  type Position3,
   type SquareGridScene,
   type VttCommandResponse,
   type VttPreviewResponse,
@@ -133,8 +137,23 @@ function selectionFingerprint(
   actorId: string,
   actionName: string,
   targetIds: string[],
+  movementPath: Position3[],
 ): string {
-  return JSON.stringify([revision, actorId, actionName, targetIds]);
+  return JSON.stringify([
+    revision,
+    actorId,
+    actionName,
+    targetIds,
+    movementPath,
+  ]);
+}
+
+function cellKey(cell: GridCell): string {
+  return `${cell.column}:${cell.row}`;
+}
+
+function cellLabel(cell: GridCell): string {
+  return `${String.fromCharCode(65 + cell.row)}${cell.column + 1}`;
 }
 
 function errorMessage(error: unknown): string {
@@ -332,16 +351,22 @@ function TacticalMap({
   selectedActorId,
   eligibleTargetIds,
   selectedTargetId,
+  reachableCells,
+  movementPlan,
   onTokenSelect,
   onTargetSelect,
+  onCellSelect,
 }: {
   scene: SquareGridScene;
   projection: EncounterProjection;
   selectedActorId: string;
   eligibleTargetIds: Set<string>;
   selectedTargetId: string | null;
+  reachableCells: Set<string>;
+  movementPlan: GridMovementPlan | null;
   onTokenSelect: (actorId: string) => void;
   onTargetSelect: (actorId: string) => void;
+  onCellSelect: (cell: GridCell) => void;
 }) {
   const mapStyle = {
     "--grid-columns": scene.columns,
@@ -382,17 +407,26 @@ function TacticalMap({
           {cells.map((_, index) => {
             const column = index % scene.columns;
             const row = Math.floor(index / scene.columns);
+            const cell = { column, row };
+            const reachable = reachableCells.has(cellKey(cell));
+            const selected =
+              movementPlan?.destination.column === column &&
+              movementPlan.destination.row === row;
             return (
-              <div
-                className="grid-cell"
+              <button
+                type="button"
+                className={`grid-cell ${reachable ? "is-reachable" : ""} ${selected ? "is-destination" : ""}`}
                 role="gridcell"
-                aria-label={`Cell ${String.fromCharCode(65 + row)}${column + 1}`}
+                aria-label={`Cell ${cellLabel(cell)}${reachable ? ", reachable destination" : ""}${selected ? ", selected destination" : ""}`}
+                aria-selected={selected}
+                disabled={!reachable}
+                onClick={() => onCellSelect(cell)}
                 key={`${column}-${row}`}
               >
                 <span aria-hidden="true">
                   {row === scene.rows - 1 ? column + 1 : ""}
                 </span>
-              </div>
+              </button>
             );
           })}
 
@@ -440,7 +474,11 @@ function TacticalMap({
         <span><i className="legend-dot legend-party" /> Party</span>
         <span><i className="legend-dot legend-enemy" /> Hostile</span>
         <span><i className="legend-ring" /> Active</span>
-        <p>Authoritative positions · engine feet</p>
+        <p>
+          {movementPlan
+            ? `Plan ${cellLabel(movementPlan.destination)} · ${movementPlan.distanceFt} ft`
+            : "Authoritative positions · engine feet"}
+        </p>
       </div>
     </section>
   );
@@ -490,6 +528,7 @@ function CommandPanel({
   selectedActor,
   selectedActionName,
   selectedTargetId,
+  movementPlan,
   preview,
   fingerprint,
   pending,
@@ -504,6 +543,7 @@ function CommandPanel({
   selectedActor: ActorProjection;
   selectedActionName: string;
   selectedTargetId: string | null;
+  movementPlan: GridMovementPlan | null;
   preview: PreviewState | null;
   fingerprint: string;
   pending: PendingOperation;
@@ -526,6 +566,7 @@ function CommandPanel({
   const canPreview = Boolean(
     activeActor &&
       selectedAction &&
+      movementPlan &&
       (!targetRequired || selectedTargetId || selectedAction.target_mode === "self"),
   );
   const canCommit = preview?.fingerprint === fingerprint;
@@ -581,11 +622,33 @@ function CommandPanel({
               <p className="eyebrow">Active instrument</p>
               <h2 id="command-title">Declare {activeActor?.name ?? "turn"}</h2>
             </div>
-            <span className="step-count">01—03</span>
+            <span className="step-count">01—04</span>
           </div>
 
+          <fieldset className="choice-group movement-group">
+            <legend>1. Choose destination</legend>
+            <div className="movement-choice">
+              <span className="movement-symbol" aria-hidden="true">⌖</span>
+              <span>
+                <strong>
+                  {movementPlan
+                    ? `Cell ${cellLabel(movementPlan.destination)}`
+                    : "Select a reachable cell"}
+                </strong>
+                <small>
+                  {movementPlan
+                    ? movementPlan.distanceFt === 0
+                      ? "Hold position"
+                      : `${movementPlan.distanceFt} ft · direct path`
+                    : "Use the highlighted cells on the tactical map"}
+                </small>
+              </span>
+              <i aria-hidden="true" />
+            </div>
+          </fieldset>
+
           <fieldset className="choice-group">
-            <legend>1. Select action</legend>
+            <legend>2. Select action</legend>
             <div className="action-list">
               {activeActor?.actions.map((action) => (
                 <button
@@ -607,7 +670,7 @@ function CommandPanel({
           </fieldset>
 
           <fieldset className="choice-group target-group">
-            <legend>2. Select target</legend>
+            <legend>3. Select target</legend>
             <div className="target-list">
               {targets.length > 0 ? (
                 targets.map((target) => (
@@ -632,7 +695,7 @@ function CommandPanel({
           <div className="preview-module">
             <div className="preview-heading">
               <div>
-                <p className="eyebrow">3. Verify & commit</p>
+                <p className="eyebrow">4. Verify & commit</p>
                 <h3>{preview ? "Preview resolved" : "Stage a safe preview"}</h3>
               </div>
               {preview ? <span className="verified-badge">Verified</span> : null}
@@ -640,6 +703,14 @@ function CommandPanel({
 
             {preview ? (
               <div className="preview-result" aria-live="polite">
+                {movementPlan && movementPlan.distanceFt > 0 ? (
+                  <div>
+                    <span>Movement</span>
+                    <strong>
+                      {cellLabel(movementPlan.destination)} · {movementPlan.distanceFt} ft
+                    </strong>
+                  </div>
+                ) : null}
                 {previewDeltas.length > 0 ? (
                   previewDeltas.map(({ actor, hpDelta }) => (
                     <div key={actor.actor_id}>
@@ -741,6 +812,7 @@ export function EchoVaultTable() {
   const [selectedActorId, setSelectedActorId] = useState("");
   const [selectedActionName, setSelectedActionName] = useState("");
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
+  const [selectedDestination, setSelectedDestination] = useState<GridCell | null>(null);
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [events, setEvents] = useState<LoggedEvent[]>([]);
 
@@ -754,6 +826,9 @@ export function EchoVaultTable() {
     setSelectedActionName(firstAction?.name ?? "");
     setSelectedTargetId(
       eligibleTargets(firstAction, actor, projection.actors)[0]?.actor_id ?? null,
+    );
+    setSelectedDestination(
+      nextView.scene && actor ? feetToCell(nextView.scene, actor.position) : null,
     );
     setPreview(null);
     setCommandError(null);
@@ -803,6 +878,7 @@ export function EchoVaultTable() {
   }, []);
 
   const projection = view?.projection;
+  const scene = view?.scene ?? null;
   const activeActor =
     projection?.active_actor_id
       ? projection.actors[projection.active_actor_id]
@@ -815,12 +891,62 @@ export function EchoVaultTable() {
     activeActor,
     selectedTargetId,
   );
+  const movementPlan = useMemo(() => {
+    if (!scene || !activeActor || !selectedDestination) return null;
+    try {
+      return planGridMovement({
+        scene,
+        start: activeActor.position,
+        destination: selectedDestination,
+        movementRemaining: activeActor.movement_remaining,
+      });
+    } catch {
+      return null;
+    }
+  }, [activeActor, scene, selectedDestination]);
+  const reachableCells = useMemo(() => {
+    const reachable = new Set<string>();
+    if (
+      !scene ||
+      !activeActor ||
+      projection?.phase !== "awaiting_declaration"
+    ) {
+      return reachable;
+    }
+    const occupied = new Set(
+      Object.values(projection.actors)
+        .filter(
+          (actor) =>
+            actor.actor_id !== activeActor.actor_id && !actor.dead,
+        )
+        .map((actor) => cellKey(feetToCell(scene, actor.position))),
+    );
+    for (let row = 0; row < scene.rows; row += 1) {
+      for (let column = 0; column < scene.columns; column += 1) {
+        const destination = { column, row };
+        if (occupied.has(cellKey(destination))) continue;
+        try {
+          planGridMovement({
+            scene,
+            start: activeActor.position,
+            destination,
+            movementRemaining: activeActor.movement_remaining,
+          });
+          reachable.add(cellKey(destination));
+        } catch {
+          // The authoritative preview remains the final legality check.
+        }
+      }
+    }
+    return reachable;
+  }, [activeActor, projection, scene]);
   const fingerprint = view && activeActor
     ? selectionFingerprint(
         view.revision,
         activeActor.actor_id,
         selectedActionName,
         targetIds,
+        movementPlan?.path ?? [],
       )
     : "";
   const targetOptions = useMemo(
@@ -848,6 +974,14 @@ export function EchoVaultTable() {
 
   const handleTargetSelect = (actorId: string) => {
     setSelectedTargetId(actorId);
+    setPreview(null);
+    setCommandError(null);
+  };
+
+  const handleCellSelect = (destination: GridCell) => {
+    if (!reachableCells.has(cellKey(destination))) return;
+    setSelectedDestination(destination);
+    setSelectedActorId(activeActor?.actor_id ?? selectedActorId);
     setPreview(null);
     setCommandError(null);
   };
@@ -884,6 +1018,7 @@ export function EchoVaultTable() {
           actorId: activeActor.actor_id,
           actionName: selectedActionName,
           targetIds,
+          movementPath: movementPlan?.path ?? [],
           mode: "preview",
         }),
       );
@@ -919,6 +1054,7 @@ export function EchoVaultTable() {
           actorId: activeActor.actor_id,
           actionName: selectedActionName,
           targetIds,
+          movementPath: movementPlan?.path ?? [],
           mode: "commit",
         }),
       );
@@ -1016,8 +1152,11 @@ export function EchoVaultTable() {
             selectedActorId={selectedActor.actor_id}
             eligibleTargetIds={targetOptions}
             selectedTargetId={selectedTargetId}
+            reachableCells={reachableCells}
+            movementPlan={movementPlan}
             onTokenSelect={setSelectedActorId}
             onTargetSelect={handleTargetSelect}
+            onCellSelect={handleCellSelect}
           />
           <EventLog events={events} />
         </div>
@@ -1027,6 +1166,7 @@ export function EchoVaultTable() {
           selectedActor={selectedActor}
           selectedActionName={selectedActionName}
           selectedTargetId={selectedTargetId}
+          movementPlan={movementPlan}
           preview={preview}
           fingerprint={fingerprint}
           pending={pending}

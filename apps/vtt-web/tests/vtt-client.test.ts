@@ -4,9 +4,11 @@ import test from "node:test";
 import {
   buildDeclarationCommand,
   buildStartCommand,
+  cellToFeet,
   feetToCell,
   parseCommandResponse,
   parseSessionView,
+  planGridMovement,
 } from "../app/vtt-client";
 
 const sessionView = {
@@ -17,7 +19,7 @@ const sessionView = {
     schema_version: "vtt.version_info.v1",
     engine: "dnd-sim@0.1.0",
     rules: "5e_2014_combat_foundation@1.0.0",
-    content: "solo-table.echo-vault@1.0.0",
+    content: "solo-table.echo-vault@1.1.0",
   },
   scene: {
     schema_version: "vtt.scene.v1",
@@ -74,7 +76,7 @@ const sessionView = {
         max_hp: 7,
         temp_hp: 0,
         ac: 12,
-        position: [17.5, 12.5, 0],
+        position: [22.5, 12.5, 0],
         movement_remaining: 30,
         conditions: [],
         dead: false,
@@ -111,6 +113,10 @@ test("builds the complete canonical D&D declaration command", () => {
     actorId: "vela_quill",
     actionName: "Lattice Lance",
     targetIds: ["hushglass_sentry"],
+    movementPath: [
+      [12.5, 12.5, 0],
+      [17.5, 12.5, 0],
+    ],
     mode: "preview",
   });
 
@@ -123,7 +129,10 @@ test("builds the complete canonical D&D declaration command", () => {
     mode: "preview",
     kind: "dnd.declare_turn.v1",
     payload: {
-      movement_path: [],
+      movement_path: [
+        [12.5, 12.5, 0],
+        [17.5, 12.5, 0],
+      ],
       action: {
         action_name: "Lattice Lance",
         targets: [{ actor_id: "hushglass_sentry" }],
@@ -138,6 +147,7 @@ test("builds the complete canonical D&D declaration command", () => {
     },
     intent_metadata: {
       surface: "echo-vault-web",
+      movement_waypoints: 2,
       selected_action: "Lattice Lance",
       selected_targets: ["hushglass_sentry"],
     },
@@ -171,8 +181,8 @@ test("strictly parses the public session view and rejects snapshot leakage", () 
   const parsed = parseSessionView(sessionView);
 
   assert.equal(parsed.projection.actors.vela_quill.name, "Vela Quill");
-  assert.deepEqual(feetToCell(parsed.scene!, [17.5, 12.5, 0]), {
-    column: 3,
+  assert.deepEqual(feetToCell(parsed.scene!, [22.5, 12.5, 0]), {
+    column: 4,
     row: 2,
   });
 
@@ -187,6 +197,43 @@ test("strictly parses the public session view and rejects snapshot leakage", () 
         projection: { ...sessionView.projection, phase: "running" },
       }),
     /projection\.phase/i,
+  );
+});
+
+test("plans a grid-centered authoritative movement path within the actor budget", () => {
+  const scene = parseSessionView(sessionView).scene!;
+
+  assert.deepEqual(cellToFeet(scene, { column: 3, row: 2 }), [
+    17.5,
+    12.5,
+    0,
+  ]);
+  assert.deepEqual(
+    planGridMovement({
+      scene,
+      start: [12.5, 12.5, 0],
+      destination: { column: 3, row: 2 },
+      movementRemaining: 30,
+    }),
+    {
+      destination: { column: 3, row: 2 },
+      distanceFt: 5,
+      end: [17.5, 12.5, 0],
+      path: [
+        [12.5, 12.5, 0],
+        [17.5, 12.5, 0],
+      ],
+    },
+  );
+  assert.throws(
+    () =>
+      planGridMovement({
+        scene,
+        start: [12.5, 12.5, 0],
+        destination: { column: 0, row: 0 },
+        movementRemaining: 5,
+      }),
+    /exceeds.*movement/i,
   );
 });
 
