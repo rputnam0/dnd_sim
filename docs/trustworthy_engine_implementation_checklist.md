@@ -109,11 +109,15 @@ Active stack:
   downstream reaction cancellation.
 - Draft PR `#259`, `codex/interruptible-movement-paths`: committed movement prefixes shared with
   zone and hazard consumers after declared or automatically planned movement is interrupted.
+- Draft PR `#260`, `codex/typed-trait-reaction-decisions`: typed per-attack trait reactions,
+  collision-safe reaction identities, exact target/range/resource bookkeeping, bounded causal
+  event propagation, and rules-correct readied-spell cast/hold/release timing.
 
-The next rules slice migrates Sentinel ally-defense, Mage Slayer, and generic trait reaction
-attacks onto the typed decision surface with exact range, action, and bookkeeping rules. Spell
-reactions follow after that shared path. Broader content and session APIs follow after the
-authoritative combat core is complete.
+The next rules slice completes `on_move` propagation for Open Hand and pending-smite forced
+movement, then moves Counterspell and Shield onto the typed use/pass decision surface with
+deterministic timing and target choices. War Caster and the remaining reaction-modifying features
+follow on that shared kernel. Once the combat reaction boundary is stable, the D&D combat driver
+can integrate with the atomic interactive session contract in draft PR `#250`.
 
 ## Required verification for Milestone 0
 
