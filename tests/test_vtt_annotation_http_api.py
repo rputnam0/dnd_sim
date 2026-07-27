@@ -513,6 +513,87 @@ def test_browser_integral_annotation_numbers_are_canonicalized_at_the_http_bound
     assert type(stored.position.z_ft) is float
 
 
+@pytest.mark.parametrize(
+    ("annotation_type", "geometry", "float_paths"),
+    [
+        (
+            "circle_template",
+            {"center": {"x_ft": 10, "y_ft": 15, "z_ft": 0}, "radius_ft": 10},
+            (("center", "x_ft"), ("center", "y_ft"), ("radius_ft",)),
+        ),
+        (
+            "cone_template",
+            {
+                "origin": {"x_ft": 10, "y_ft": 15, "z_ft": 0},
+                "direction_degrees": 45,
+                "length_ft": 15,
+                "angle_degrees": 90,
+            },
+            (
+                ("origin", "x_ft"),
+                ("direction_degrees",),
+                ("length_ft",),
+                ("angle_degrees",),
+            ),
+        ),
+        (
+            "line_template",
+            {
+                "start": {"x_ft": 5, "y_ft": 5, "z_ft": 0},
+                "end": {"x_ft": 20, "y_ft": 15, "z_ft": 0},
+                "width_ft": 5,
+            },
+            (("start", "x_ft"), ("end", "y_ft"), ("width_ft",)),
+        ),
+        (
+            "cube_template",
+            {"center": {"x_ft": 10, "y_ft": 15, "z_ft": 0}, "size_ft": 10},
+            (("center", "x_ft"), ("center", "y_ft"), ("size_ft",)),
+        ),
+    ],
+)
+def test_browser_integral_template_geometry_is_normalized_without_schema_drift(
+    annotation_api_client,
+    annotation_type: str,
+    geometry: dict[str, Any],
+    float_paths: tuple[tuple[str, ...], ...],
+) -> None:
+    client, _board, _service = annotation_api_client
+    request_payload = _put_request(
+        f"browser-{annotation_type}",
+        expected_revision=0,
+        annotation_id=f"browser-{annotation_type}",
+    )
+    annotation = request_payload["command"]["annotation"]
+    annotation.pop("position")
+    annotation.pop("duration_ms")
+    annotation["annotation_type"] = annotation_type
+    annotation.update(geometry)
+
+    response = client.post(
+        "/api/v1/annotation-commands",
+        json=request_payload,
+        headers=_authorization("player-1"),
+    )
+
+    assert response.status_code == 200
+    stored = response.json()["receipt"]["event"]["annotation"]
+    assert set(stored) == {
+        "schema_version",
+        "annotation_id",
+        "scene_id",
+        "author_id",
+        "audience",
+        "annotation_type",
+        *geometry,
+    }
+    for path in float_paths:
+        value: Any = stored
+        for part in path:
+            value = value[part]
+        assert type(value) is float
+
+
 def test_annotation_mutations_enforce_ownership_roles_and_preserve_author(
     annotation_api_client,
 ) -> None:
