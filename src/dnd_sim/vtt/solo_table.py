@@ -20,7 +20,7 @@ from .scene import SCENE_SCHEMA_VERSION, FeetPosition, GridCell, SquareGridScene
 
 SOLO_TABLE_ENGINE_VERSION = "dnd-sim@0.1.0"
 SOLO_TABLE_RULES_VERSION = "5e_2014_combat_foundation@1.0.0"
-SOLO_TABLE_CONTENT_VERSION = "solo-table.echo-vault@1.0.0"
+SOLO_TABLE_CONTENT_VERSION = "solo-table.echo-vault@1.1.0"
 SOLO_TABLE_SEED = 24_681_357
 SOLO_TABLE_MAX_ROUNDS = 4
 
@@ -118,7 +118,7 @@ def _build_actors(scene: SquareGridScene) -> dict[str, ActorRuntimeState]:
         name="Hushglass Sentry",
         hp=7,
         ac=12,
-        position=scene.grid_cell_to_feet(GridCell(column=3, row=2)),
+        position=scene.grid_cell_to_feet(GridCell(column=4, row=2)),
         action=ActionDefinition(
             name="Quietus Needle",
             action_type="attack",

@@ -54,7 +54,10 @@ def _wire_command(
 
 def _winning_declaration_payload() -> dict[str, Any]:
     return {
-        "movement_path": [],
+        "movement_path": [
+            [12.5, 12.5, 0.0],
+            [17.5, 12.5, 0.0],
+        ],
         "action": {
             "action_name": "Lattice Lance",
             "targets": [{"actor_id": "hushglass_sentry"}],

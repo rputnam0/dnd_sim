@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 
-from dnd_sim.interactive import EngineSession, SessionCommand
+import pytest
+
+from dnd_sim.interactive import EngineSession, EngineSessionError, SessionCommand
 from dnd_sim.interactive.dnd_contracts import (
     DECLARATION_COMMAND_KIND,
     TurnDeclarationPayload,
@@ -48,12 +50,14 @@ def test_solo_table_fixture_has_stable_original_grid_aligned_content() -> None:
     assert fixture.version_pins.model_dump(mode="json") == {
         "engine_version": "dnd-sim@0.1.0",
         "rules_version": "5e_2014_combat_foundation@1.0.0",
-        "content_version": "solo-table.echo-vault@1.0.0",
+        "content_version": "solo-table.echo-vault@1.1.0",
     }
     assert fixture.scene.scene_id == "echo-vault"
     assert fixture.scene.name == "Echo Vault"
     assert context.initiative_order == ["vela_quill", "hushglass_sentry"]
     assert set(context.actors) == set(context.initiative_order)
+    assert context.actors["vela_quill"].position == (12.5, 12.5, 0.0)
+    assert context.actors["hushglass_sentry"].position == (22.5, 12.5, 0.0)
 
     for actor in context.actors.values():
         assert actor.actions
@@ -154,10 +158,11 @@ def test_solo_table_reaches_terminal_outcome_through_real_encounter_driver() -> 
     assert session.state["turn"]["actor_id"] == "vela_quill"
 
     declaration = TurnDeclaration(
+        movement_path=[(12.5, 12.5, 0.0), (17.5, 12.5, 0.0)],
         action=DeclaredAction(
             action_name="Lattice Lance",
             targets=[TargetRef(actor_id="hushglass_sentry")],
-        )
+        ),
     )
     completed = session.execute(
         SessionCommand(
@@ -176,3 +181,51 @@ def test_solo_table_reaches_terminal_outcome_through_real_encounter_driver() -> 
     assert completed.events[-1].payload["outcome"] == "party_victory"
     assert session.state["outcome"] == "party_victory"
     assert session.state["turn"]["phase"] == "complete"
+
+
+def test_solo_table_rejects_an_opening_melee_attack_without_movement() -> None:
+    fixture = build_solo_table_fixture()
+    driver = DndCombatEncounterDriver(version_pins=fixture.version_pins)
+    session = EngineSession(
+        "echo-vault-session",
+        fixture.encounter_state,
+        driver,
+        seed=fixture.seed,
+    )
+    session.execute(
+        SessionCommand(
+            command_id="start-echo-vault",
+            session_id="echo-vault-session",
+            actor_id=None,
+            expected_revision=0,
+            mode="admin",
+            kind=START_ENCOUNTER_COMMAND_KIND,
+            version_pins=fixture.version_pins,
+            payload={},
+        )
+    )
+    before = session.snapshot()
+    declaration = TurnDeclaration(
+        action=DeclaredAction(
+            action_name="Lattice Lance",
+            targets=[TargetRef(actor_id="hushglass_sentry")],
+        )
+    )
+
+    with pytest.raises(EngineSessionError) as exc_info:
+        session.execute(
+            SessionCommand(
+                command_id="vela-out-of-range",
+                session_id="echo-vault-session",
+                actor_id="vela_quill",
+                expected_revision=1,
+                mode="commit",
+                kind=DECLARATION_COMMAND_KIND,
+                version_pins=fixture.version_pins,
+                payload=TurnDeclarationPayload.from_domain(declaration).model_dump(mode="json"),
+            )
+        )
+
+    assert exc_info.value.code == "invalid_turn_declaration"
+    assert exc_info.value.details["rule_error_code"] == "no_legal_targets"
+    assert session.snapshot() == before
