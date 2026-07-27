@@ -39,8 +39,8 @@ and VTT must resolve a declared turn through the same domain function.
 
 ## Milestone 4: Solo Table v0
 
-- [ ] Add a single-session VTT application boundary and append-only SQLite
-      command/event store.
+- [x] Add an append-only SQLite command/receipt/snapshot store.
+- [ ] Add a single-session VTT application boundary over the engine session and store.
 - [ ] Add an HTTP/WebSocket gateway with a separate `vtt.command.v1` transport
       contract.
 - [ ] Add an original fixed encounter with a square-grid scene and tokens.
