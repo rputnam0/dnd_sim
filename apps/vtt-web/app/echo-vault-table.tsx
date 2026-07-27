@@ -39,6 +39,10 @@ import {
   nextGridMeasurement,
   type GridMeasurement,
 } from "./grid-ruler";
+import {
+  initialTurnSelection,
+  selectedTargetIdsForChoice,
+} from "./turn-choice-selection";
 
 type PendingOperation = "start" | "preview" | "commit" | null;
 
@@ -123,35 +127,6 @@ function rangeLabel(action: ActorAction): string {
       : `${action.range_normal_ft}/${action.range_long_ft} ft`;
   }
   return titleCase(action.target_mode);
-}
-
-function eligibleTargets(
-  action: ActorAction | undefined,
-  activeActor: ActorProjection | undefined,
-  actors: Record<string, ActorProjection>,
-): ActorProjection[] {
-  if (!action || !activeActor) return [];
-  const living = Object.values(actors).filter((actor) => !actor.dead);
-  if (action.target_mode === "self") return [activeActor];
-  if (action.target_mode.includes("enemy")) {
-    return living.filter((actor) => actor.team !== activeActor.team);
-  }
-  if (action.target_mode.includes("ally")) {
-    return living.filter((actor) => actor.team === activeActor.team);
-  }
-  if (action.target_mode === "none") return [];
-  return living.filter((actor) => actor.actor_id !== activeActor.actor_id);
-}
-
-function selectedTargetsForAction(
-  action: ActorAction | undefined,
-  activeActor: ActorProjection | undefined,
-  selectedTargetId: string | null,
-): string[] {
-  if (!action || !activeActor) return [];
-  if (action.target_mode === "self") return [activeActor.actor_id];
-  if (action.target_mode === "none") return [];
-  return selectedTargetId ? [selectedTargetId] : [];
 }
 
 function selectionFingerprint(
@@ -402,7 +377,7 @@ function TacticalMap({
   scene,
   projection,
   selectedActorId,
-  eligibleTargetIds,
+  selectableTargetIds,
   selectedTargetId,
   reachableCells,
   movementPlan,
@@ -417,7 +392,7 @@ function TacticalMap({
   scene: SquareGridScene;
   projection: EncounterProjection;
   selectedActorId: string;
-  eligibleTargetIds: Set<string>;
+  selectableTargetIds: Set<string>;
   selectedTargetId: string | null;
   reachableCells: Set<string>;
   movementPlan: GridMovementPlan | null;
@@ -531,7 +506,7 @@ function TacticalMap({
             const cell = feetToCell(scene, actor.position);
             const active = actorId === projection.active_actor_id;
             const selected = actorId === selectedActorId;
-            const targetable = eligibleTargetIds.has(actorId);
+            const targetable = selectableTargetIds.has(actorId);
             const targeted = actorId === selectedTargetId;
             return (
               <button
@@ -548,7 +523,7 @@ function TacticalMap({
                   if (targetable) onTargetSelect(actorId);
                 }}
                 aria-pressed={selected || targeted}
-                aria-label={`${actor.name}, ${actor.hp} of ${actor.max_hp} hit points${active ? ", active turn" : ""}${targetable ? ", valid target" : ""}${measureMode ? `, ${measurement.start !== null && measurement.end === null ? "select measure end" : "select measure start"} at ${cellLabel(cell)}` : ""}`}
+                aria-label={`${actor.name}, ${actor.hp} of ${actor.max_hp} hit points${active ? ", active turn" : ""}${targetable ? ", server-selectable target" : ""}${measureMode ? `, ${measurement.start !== null && measurement.end === null ? "select measure end" : "select measure start"} at ${cellLabel(cell)}` : ""}`}
               >
                 <span className="token-orbit" aria-hidden="true" />
                 <span className="token-face">{initials(actor.name)}</span>
@@ -700,18 +675,35 @@ function CommandPanel({
   const activeActor = projection.active_actor_id
     ? projection.actors[projection.active_actor_id]
     : undefined;
-  const selectedAction = activeActor?.actions.find(
-    (action) => action.name === selectedActionName,
+  const choices = projection.choices;
+  const selectedChoice = choices?.actions.find(
+    (choice) => choice.action_name === selectedActionName,
   );
-  const targets = eligibleTargets(selectedAction, activeActor, projection.actors);
-  const targetRequired = selectedAction?.target_mode !== "none";
+  const targets = (selectedChoice?.selectable_target_ids ?? []).map(
+    (actorId) => projection.actors[actorId],
+  );
+  const selectedTargetIsSelectable = Boolean(
+    selectedTargetId &&
+      selectedChoice?.selectable_target_ids.includes(selectedTargetId),
+  );
+  const selectedTargetIsLegalNow = Boolean(
+    selectedTargetId &&
+      selectedChoice?.legal_target_ids.includes(selectedTargetId),
+  );
+  const requiresMovement = Boolean(
+    selectedChoice?.requires_explicit_targets &&
+      selectedTargetIsSelectable &&
+      !selectedTargetIsLegalNow,
+  );
   const canPreview = Boolean(
     activeActor &&
-      selectedAction &&
+      choices &&
+      selectedChoice &&
       movementPlan &&
-      (!targetRequired || selectedTargetId || selectedAction.target_mode === "self"),
+      (!selectedChoice.requires_explicit_targets || selectedTargetIsSelectable) &&
+      (!requiresMovement || movementPlan.distanceFt > 0),
   );
-  const canCommit = preview?.fingerprint === fingerprint;
+  const canCommit = canPreview && preview?.fingerprint === fingerprint;
   const previewDeltas = preview
     ? Object.values(projection.actors)
         .map((actor) => {
@@ -792,46 +784,81 @@ function CommandPanel({
           <fieldset className="choice-group">
             <legend>2. Select action</legend>
             <div className="action-list">
-              {activeActor?.actions.map((action) => (
-                <button
-                  type="button"
-                  key={action.name}
-                  className={`action-choice ${action.name === selectedActionName ? "is-selected" : ""}`}
-                  onClick={() => onActionSelect(action.name)}
-                  aria-pressed={action.name === selectedActionName}
-                >
-                  <span className="action-symbol" aria-hidden="true">✦</span>
-                  <span>
-                    <strong>{action.name}</strong>
-                    <small>{titleCase(action.action_type)} · {rangeLabel(action)}</small>
-                  </span>
-                  <i aria-hidden="true" />
-                </button>
-              ))}
+              {choices && choices.actions.length > 0 ? (
+                choices.actions.map((choice) => {
+                  const action = activeActor?.actions.find(
+                    (candidate) => candidate.name === choice.action_name,
+                  );
+                  if (!action) return null;
+                  const unavailable =
+                    choice.requires_explicit_targets &&
+                    choice.selectable_target_ids.length === 0;
+                  return (
+                    <button
+                      type="button"
+                      key={choice.action_name}
+                      className={`action-choice ${choice.action_name === selectedActionName ? "is-selected" : ""}`}
+                      onClick={() => onActionSelect(choice.action_name)}
+                      aria-pressed={choice.action_name === selectedActionName}
+                      disabled={unavailable}
+                    >
+                      <span className="action-symbol" aria-hidden="true">✦</span>
+                      <span>
+                        <strong>{choice.action_name}</strong>
+                        <small>
+                          {titleCase(action.action_type)} · {rangeLabel(action)}
+                        </small>
+                      </span>
+                      <i aria-hidden="true" />
+                    </button>
+                  );
+                })
+              ) : (
+                <p className="no-targets">No available actions for this turn.</p>
+              )}
             </div>
           </fieldset>
 
           <fieldset className="choice-group target-group">
             <legend>3. Select target</legend>
             <div className="target-list">
-              {targets.length > 0 ? (
+              {selectedChoice?.requires_explicit_targets && targets.length > 0 ? (
                 targets.map((target) => (
                   <button
                     type="button"
                     key={target.actor_id}
-                    className={target.actor_id === selectedTargetId ? "is-selected" : ""}
+                    className={`${target.actor_id === selectedTargetId ? "is-selected" : ""} ${selectedChoice.legal_target_ids.includes(target.actor_id) ? "is-legal-now" : "needs-movement"}`}
                     onClick={() => onTargetSelect(target.actor_id)}
                     aria-pressed={target.actor_id === selectedTargetId}
+                    title={`${target.hp} hit points`}
                   >
                     <span className={`target-reticle team-${target.team}`} aria-hidden="true" />
                     <span>{target.name}</span>
-                    <small>{target.hp} HP</small>
+                    <small>
+                      {selectedChoice.legal_target_ids.includes(target.actor_id)
+                        ? "Legal now"
+                        : "Requires movement"}
+                    </small>
                   </button>
                 ))
+              ) : selectedChoice?.requires_explicit_targets ? (
+                <p className="no-targets">
+                  No selectable targets are available for this action.
+                </p>
+              ) : selectedChoice ? (
+                <p className="no-targets">
+                  No target selection required. The engine resolves recipients.
+                </p>
               ) : (
-                <p className="no-targets">This action needs no external target.</p>
+                <p className="no-targets">Choose an available action first.</p>
               )}
             </div>
+            {requiresMovement ? (
+              <p className="target-guidance" role="status">
+                Requires movement from the current position. Choose a destination,
+                then preview for the authoritative legality result.
+              </p>
+            ) : null}
           </fieldset>
 
           <div className="preview-module">
@@ -992,19 +1019,26 @@ export function EchoVaultTable() {
 
   const adoptView = useCallback((nextView: VttSessionView) => {
     const projection = nextView.projection;
-    const actorId = projection.active_actor_id ?? projection.initiative_order[0];
+    const choices = projection.choices;
+    const actorId =
+      choices?.actor_id ??
+      projection.active_actor_id ??
+      projection.initiative_order[0];
     const actor = projection.actors[actorId];
-    const firstAction = actor?.actions[0];
+    const selection = initialTurnSelection(choices);
     latestRevisionRef.current = nextView.revision;
     sessionIdRef.current = nextView.session_id;
     setView(nextView);
     setSelectedActorId(actorId);
-    setSelectedActionName(firstAction?.name ?? "");
-    setSelectedTargetId(
-      eligibleTargets(firstAction, actor, projection.actors)[0]?.actor_id ?? null,
-    );
+    setSelectedActionName(selection.actionName);
+    setSelectedTargetId(selection.targetId);
     setSelectedDestination(
-      nextView.scene && actor ? feetToCell(nextView.scene, actor.position) : null,
+      nextView.scene && actor
+        ? feetToCell(
+            nextView.scene,
+            choices?.movement.origin ?? actor.position,
+          )
+        : null,
     );
     setPreview(null);
     setCommandError(null);
@@ -1107,32 +1141,33 @@ export function EchoVaultTable() {
     projection?.active_actor_id
       ? projection.actors[projection.active_actor_id]
       : undefined;
-  const selectedAction = activeActor?.actions.find(
-    (action) => action.name === selectedActionName,
+  const choices = projection?.choices ?? null;
+  const selectedChoice = choices?.actions.find(
+    (choice) => choice.action_name === selectedActionName,
   );
-  const targetIds = selectedTargetsForAction(
-    selectedAction,
-    activeActor,
+  const targetIds = selectedTargetIdsForChoice(
+    selectedChoice,
     selectedTargetId,
   );
   const movementPlan = useMemo(() => {
-    if (!scene || !activeActor || !selectedDestination) return null;
+    if (!scene || !choices || !selectedDestination) return null;
     try {
       return planGridMovement({
         scene,
-        start: activeActor.position,
+        start: choices.movement.origin,
         destination: selectedDestination,
-        movementRemaining: activeActor.movement_remaining,
+        movementRemaining: choices.movement.remaining_ft,
       });
     } catch {
       return null;
     }
-  }, [activeActor, scene, selectedDestination]);
+  }, [choices, scene, selectedDestination]);
   const reachableCells = useMemo(() => {
     const reachable = new Set<string>();
     if (
       !scene ||
       !activeActor ||
+      !choices ||
       projection?.phase !== "awaiting_declaration"
     ) {
       return reachable;
@@ -1152,9 +1187,9 @@ export function EchoVaultTable() {
         try {
           planGridMovement({
             scene,
-            start: activeActor.position,
+            start: choices.movement.origin,
             destination,
-            movementRemaining: activeActor.movement_remaining,
+            movementRemaining: choices.movement.remaining_ft,
           });
           reachable.add(cellKey(destination));
         } catch {
@@ -1163,8 +1198,8 @@ export function EchoVaultTable() {
       }
     }
     return reachable;
-  }, [activeActor, projection, scene]);
-  const fingerprint = view && activeActor
+  }, [activeActor, choices, projection, scene]);
+  const fingerprint = view && activeActor && choices
     ? selectionFingerprint(
         view.revision,
         activeActor.actor_id,
@@ -1174,29 +1209,39 @@ export function EchoVaultTable() {
       )
     : "";
   const targetOptions = useMemo(
-    () =>
-      new Set(
-        projection && activeActor
-          ? eligibleTargets(selectedAction, activeActor, projection.actors).map(
-              (actor) => actor.actor_id,
-            )
-          : [],
-      ),
-    [activeActor, projection, selectedAction],
+    () => new Set(selectedChoice?.selectable_target_ids ?? []),
+    [selectedChoice],
+  );
+  const selectedTargetNeedsMovement = Boolean(
+    selectedChoice?.requires_explicit_targets &&
+      selectedTargetId &&
+      !selectedChoice.legal_target_ids.includes(selectedTargetId),
+  );
+  const declarationReady = Boolean(
+    activeActor &&
+      selectedChoice &&
+      movementPlan &&
+      (!selectedChoice.requires_explicit_targets || targetIds.length === 1) &&
+      (!selectedTargetNeedsMovement || movementPlan.distanceFt > 0),
   );
 
   const handleActionSelect = (name: string) => {
-    if (!projection || !activeActor) return;
-    const action = activeActor.actions.find((candidate) => candidate.name === name);
+    const choice = choices?.actions.find(
+      (candidate) => candidate.action_name === name,
+    );
+    if (!choice) return;
     setSelectedActionName(name);
     setSelectedTargetId(
-      eligibleTargets(action, activeActor, projection.actors)[0]?.actor_id ?? null,
+      choice.requires_explicit_targets
+        ? choice.selectable_target_ids[0] ?? null
+        : null,
     );
     setPreview(null);
     setCommandError(null);
   };
 
   const handleTargetSelect = (actorId: string) => {
+    if (!selectedChoice?.selectable_target_ids.includes(actorId)) return;
     setSelectedTargetId(actorId);
     setPreview(null);
     setCommandError(null);
@@ -1239,7 +1284,7 @@ export function EchoVaultTable() {
   };
 
   const handlePreview = async () => {
-    if (!view || !activeActor || !selectedActionName) return;
+    if (!view || !activeActor || !selectedChoice || !declarationReady) return;
     setPending("preview");
     setCommandError(null);
     try {
@@ -1271,7 +1316,8 @@ export function EchoVaultTable() {
     if (
       !view ||
       !activeActor ||
-      !selectedActionName ||
+      !selectedChoice ||
+      !declarationReady ||
       preview?.fingerprint !== fingerprint
     ) {
       return;
@@ -1393,7 +1439,7 @@ export function EchoVaultTable() {
             scene={view.scene}
             projection={view.projection}
             selectedActorId={selectedActor.actor_id}
-            eligibleTargetIds={targetOptions}
+            selectableTargetIds={targetOptions}
             selectedTargetId={selectedTargetId}
             reachableCells={reachableCells}
             movementPlan={movementPlan}

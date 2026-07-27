@@ -1433,6 +1433,13 @@ button:disabled {
   background: var(--ivory-50);
 }
 
+.action-choice:disabled {
+  border-style: dashed;
+  background: rgb(230 224 213 / 0.5);
+  color: #766f65;
+  opacity: 0.72;
+}
+
 .action-choice.is-selected {
   border-color: rgb(239 112 94 / 0.72);
   background: var(--coral-soft);
@@ -1504,6 +1511,22 @@ button:disabled {
   background: rgb(255 213 204 / 0.62);
 }
 
+.target-list button.is-legal-now small {
+  color: #176b58;
+  font-weight: 700;
+}
+
+.target-list button.needs-movement {
+  border-style: dashed;
+  border-color: #b66d43;
+  background: rgb(255 241 218 / 0.46);
+}
+
+.target-list button.needs-movement small {
+  color: #85451f;
+  font-weight: 700;
+}
+
 .target-list button > span:nth-child(2) {
   font-size: 10px;
   font-weight: 680;
@@ -1546,6 +1569,17 @@ button:disabled {
   border-radius: 8px;
   color: var(--ink-faint);
   font-size: 9px;
+}
+
+.target-guidance {
+  margin: 8px 0 0;
+  padding: 8px 9px;
+  border-left: 3px solid #b85d38;
+  border-radius: 0 6px 6px 0;
+  background: #fff0dc;
+  color: #65341e;
+  font-size: 9px;
+  line-height: 1.45;
 }
 
 .preview-module {

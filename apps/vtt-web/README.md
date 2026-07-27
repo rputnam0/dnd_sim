@@ -21,6 +21,14 @@ NEXT_PUBLIC_VTT_API_BASE_URL=http://127.0.0.1:8000
 The API must expose `GET /api/v1/session` and `POST /api/v1/commands` and allow the
 frontend origin through its exact CORS allowlist.
 
+## Authoritative turn choices
+
+Action and target controls come from the projection's strict `dnd.turn-choices.v1`
+read model. `selectable_target_ids` identifies structural candidates the player may
+stage, while `legal_target_ids` reports exact legality at the actor's current position.
+The table labels candidates that need movement and relies on preview for final legality
+after the planned path; it does not infer targets from actor teams in the browser.
+
 ## Presentation ruler
 
 The map includes a presentation-only ruler. Toggle **Measure** or press `M` while focus

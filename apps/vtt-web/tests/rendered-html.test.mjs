@@ -117,3 +117,31 @@ test("ships an accessible local-only tactical ruler", async () => {
   assert.match(readme, /presentation-only ruler/i);
   assert.match(readme, /never sent to the API or persisted/i);
 });
+
+test("drives action and target controls from authoritative turn choices", async () => {
+  const [table, client, selection, css] = await Promise.all([
+    readFile(new URL("../app/echo-vault-table.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-client.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/turn-choice-selection.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(client, /dnd\.turn-choices\.v1/);
+  assert.match(client, /selectable_target_ids/);
+  assert.match(client, /legal_target_ids/);
+  assert.match(table, /projection\.choices/);
+  assert.match(table, /selectable_target_ids/);
+  assert.match(table, /legal_target_ids/);
+  assert.match(table, /Requires movement/);
+  assert.match(table, /No available actions/);
+  assert.match(table, /initialTurnSelection/);
+  assert.match(table, /selectedTargetIdsForChoice/);
+  assert.doesNotMatch(table, /function eligibleTargets/);
+  assert.doesNotMatch(selection, /\.team|includes\("enemy"\)|includes\("ally"\)/);
+  assert.match(css, /\.target-list button\.needs-movement/);
+  assert.match(css, /\.target-list button\.is-legal-now/);
+  assert.match(css, /\.target-guidance/);
+});

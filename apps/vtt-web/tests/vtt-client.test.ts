@@ -104,6 +104,26 @@ const sessionView = {
       turn_token: "round:1:actor:vela_quill",
     },
     result: null,
+    choices: {
+      schema_version: "dnd.turn-choices.v1",
+      actor_id: "vela_quill",
+      movement: {
+        origin: [12.5, 12.5, 0],
+        remaining_ft: 30,
+      },
+      actions: [
+        {
+          action_name: "Lattice Lance",
+          action_cost: "action",
+          target_mode: "single_enemy",
+          requires_explicit_targets: true,
+          selectable_target_ids: ["hushglass_sentry"],
+          legal_target_ids: [],
+          reason: "no_legal_targets",
+        },
+      ],
+      reason: null,
+    },
   },
 } as const;
 
@@ -183,6 +203,15 @@ test("strictly parses the public session view and rejects snapshot leakage", () 
   const parsed = parseSessionView(sessionView);
 
   assert.equal(parsed.projection.actors.vela_quill.name, "Vela Quill");
+  assert.deepEqual(parsed.projection.choices?.actions[0], {
+    action_name: "Lattice Lance",
+    action_cost: "action",
+    target_mode: "single_enemy",
+    requires_explicit_targets: true,
+    selectable_target_ids: ["hushglass_sentry"],
+    legal_target_ids: [],
+    reason: "no_legal_targets",
+  });
   assert.deepEqual(feetToCell(parsed.scene!, [22.5, 12.5, 0]), {
     column: 4,
     row: 2,
@@ -199,6 +228,194 @@ test("strictly parses the public session view and rejects snapshot leakage", () 
         projection: { ...sessionView.projection, phase: "running" },
       }),
     /projection\.phase/i,
+  );
+});
+
+test("rejects malformed or internally inconsistent turn-choice projections", () => {
+  const choices = sessionView.projection.choices;
+  const action = choices.actions[0];
+  const parseWithChoices = (nextChoices: unknown) =>
+    parseSessionView({
+      ...sessionView,
+      projection: { ...sessionView.projection, choices: nextChoices },
+    });
+
+  assert.throws(
+    () => parseWithChoices({ ...choices, leaked_rule_state: true }),
+    /choices.*unexpected field.*leaked_rule_state/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        actions: [action, action],
+      }),
+    /duplicate action names/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        actions: [
+          {
+            ...action,
+            selectable_target_ids: ["vela_quill", "hushglass_sentry"],
+          },
+        ],
+      }),
+    /selectable_target_ids.*sorted/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        actions: [
+          {
+            ...action,
+            selectable_target_ids: ["hushglass_sentry", "hushglass_sentry"],
+          },
+        ],
+      }),
+    /selectable_target_ids.*unique/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        actions: [
+          {
+            ...action,
+            selectable_target_ids: ["hushglass_sentry", "vela_quill"],
+            legal_target_ids: ["vela_quill", "hushglass_sentry"],
+            reason: null,
+          },
+        ],
+      }),
+    /legal_target_ids.*sorted/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        actions: [
+          {
+            ...action,
+            selectable_target_ids: ["hushglass_sentry", "vela_quill"],
+            legal_target_ids: ["hushglass_sentry", "hushglass_sentry"],
+            reason: null,
+          },
+        ],
+      }),
+    /legal_target_ids.*unique/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        actions: [
+          {
+            ...action,
+            legal_target_ids: ["vela_quill"],
+            reason: null,
+          },
+        ],
+      }),
+    /legal_target_ids.*subset/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        actions: [
+          {
+            ...action,
+            legal_target_ids: ["hushglass_sentry"],
+            reason: "no_legal_targets",
+          },
+        ],
+      }),
+    /reason.*legal targets/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        actions: [{ ...action, reason: null }],
+      }),
+    /reason.*no_legal_targets/i,
+  );
+  assert.throws(
+    () => parseWithChoices({ ...choices, actor_id: "hushglass_sentry" }),
+    /choices\.actor_id.*active_actor_id/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        movement: { ...choices.movement, origin: [17.5, 12.5, 0] },
+      }),
+    /choices\.movement\.origin.*actor position/i,
+  );
+  assert.throws(
+    () =>
+      parseWithChoices({
+        ...choices,
+        movement: { ...choices.movement, remaining_ft: 25 },
+      }),
+    /choices\.movement\.remaining_ft.*actor movement/i,
+  );
+  assert.throws(
+    () => parseWithChoices({ ...choices, reason: "no_available_actions" }),
+    /reason.*actions/i,
+  );
+
+  assert.doesNotThrow(() =>
+    parseSessionView({
+      ...sessionView,
+      projection: {
+        ...sessionView.projection,
+        actors: {
+          ...sessionView.projection.actors,
+          vela_quill: {
+            ...sessionView.projection.actors.vela_quill,
+            actions: [
+              ...sessionView.projection.actors.vela_quill.actions,
+              {
+                ...sessionView.projection.actors.vela_quill.actions[0],
+                action_cost: "bonus",
+              },
+            ],
+          },
+        },
+      },
+    }),
+  );
+});
+
+test("requires choices exactly while an actor is awaiting declaration", () => {
+  assert.throws(
+    () =>
+      parseSessionView({
+        ...sessionView,
+        projection: { ...sessionView.projection, choices: null },
+      }),
+    /choices.*required.*awaiting/i,
+  );
+
+  assert.throws(
+    () =>
+      parseSessionView({
+        ...sessionView,
+        projection: {
+          ...sessionView.projection,
+          phase: "terminal",
+          outcome: "party_victory",
+          winner: "party",
+          active_actor_id: null,
+          prompt: null,
+        },
+      }),
+    /choices.*null.*terminal/i,
   );
 });
 

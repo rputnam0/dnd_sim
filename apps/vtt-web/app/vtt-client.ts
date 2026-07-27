@@ -86,6 +86,29 @@ export interface TurnResult {
   strategy_name: string | null;
 }
 
+export interface TurnMovementChoice {
+  origin: Position3;
+  remaining_ft: number;
+}
+
+export interface TurnActionChoice {
+  action_name: string;
+  action_cost: "action" | "bonus" | "none";
+  target_mode: string;
+  requires_explicit_targets: boolean;
+  selectable_target_ids: string[];
+  legal_target_ids: string[];
+  reason: "no_legal_targets" | null;
+}
+
+export interface TurnChoices {
+  schema_version: "dnd.turn-choices.v1";
+  actor_id: string;
+  movement: TurnMovementChoice;
+  actions: TurnActionChoice[];
+  reason: "no_available_actions" | null;
+}
+
 export type EncounterOutcome =
   | "party_victory"
   | "enemy_victory"
@@ -104,6 +127,7 @@ export interface EncounterProjection {
   actors: Record<string, ActorProjection>;
   prompt: TurnPrompt | null;
   result: TurnResult | null;
+  choices: TurnChoices | null;
 }
 
 export interface VttSessionView {
@@ -298,6 +322,28 @@ function stringArray(value: unknown, path: string): string[] {
   return value.map((item, index) => stringValue(item, `${path}[${index}]`));
 }
 
+function sortedUniqueStringArray(value: unknown, path: string): string[] {
+  const items = stringArray(value, path);
+  if (new Set(items).size !== items.length) {
+    throw new Error(`${path} must contain unique actor IDs`);
+  }
+  if (items.some((item, index) => index > 0 && item < items[index - 1])) {
+    throw new Error(`${path} must use sorted actor-ID order`);
+  }
+  return items;
+}
+
+function parsePosition(value: unknown, path: string): Position3 {
+  if (!Array.isArray(value) || value.length !== 3) {
+    throw new Error(`${path} must contain exactly three coordinates`);
+  }
+  return [
+    finiteNumber(value[0], `${path}[0]`),
+    finiteNumber(value[1], `${path}[1]`),
+    finiteNumber(value[2], `${path}[2]`),
+  ];
+}
+
 function parseVersions(value: unknown, path: string): VttVersionInfo {
   const data = exactObject(
     value,
@@ -413,14 +459,7 @@ function parseActor(value: unknown, path: string): ActorProjection {
     ],
     path,
   );
-  if (!Array.isArray(data.position) || data.position.length !== 3) {
-    throw new Error(`${path}.position must contain exactly three coordinates`);
-  }
-  const position: [number, number, number] = [
-    finiteNumber(data.position[0], `${path}.position[0]`),
-    finiteNumber(data.position[1], `${path}.position[1]`),
-    finiteNumber(data.position[2], `${path}.position[2]`),
-  ];
+  const position = parsePosition(data.position, `${path}.position`);
   const conditions = stringArray(data.conditions, `${path}.conditions`);
   if (
     conditions.some((condition, index) => condition !== [...conditions].sort()[index]) ||
@@ -498,6 +537,153 @@ function parseResult(value: unknown, path: string): TurnResult | null {
   };
 }
 
+const EXPLICIT_TARGET_MODES = new Set([
+  "single_enemy",
+  "single_ally",
+  "single_creature",
+  "n_enemies",
+  "n_allies",
+  "random_enemy",
+  "random_ally",
+]);
+
+function parseTurnActionChoice(
+  value: unknown,
+  path: string,
+): TurnActionChoice {
+  const data = exactObject(
+    value,
+    [
+      "action_name",
+      "action_cost",
+      "target_mode",
+      "requires_explicit_targets",
+      "selectable_target_ids",
+      "legal_target_ids",
+      "reason",
+    ],
+    path,
+  );
+  const targetMode = stringValue(data.target_mode, `${path}.target_mode`);
+  const requiresExplicitTargets = booleanValue(
+    data.requires_explicit_targets,
+    `${path}.requires_explicit_targets`,
+  );
+  if (requiresExplicitTargets !== EXPLICIT_TARGET_MODES.has(targetMode)) {
+    throw new Error(
+      `${path}.requires_explicit_targets must match target_mode`,
+    );
+  }
+  const selectableTargetIds = sortedUniqueStringArray(
+    data.selectable_target_ids,
+    `${path}.selectable_target_ids`,
+  );
+  const legalTargetIds = sortedUniqueStringArray(
+    data.legal_target_ids,
+    `${path}.legal_target_ids`,
+  );
+  const selectable = new Set(selectableTargetIds);
+  if (legalTargetIds.some((actorId) => !selectable.has(actorId))) {
+    throw new Error(
+      `${path}.legal_target_ids must be a subset of selectable_target_ids`,
+    );
+  }
+  const reason =
+    data.reason === null
+      ? null
+      : literalValue(
+          data.reason,
+          ["no_legal_targets"],
+          `${path}.reason`,
+        );
+  if (legalTargetIds.length > 0 && reason !== null) {
+    throw new Error(`${path}.reason must be null when legal targets exist`);
+  }
+  if (legalTargetIds.length === 0 && reason !== "no_legal_targets") {
+    throw new Error(
+      `${path}.reason must be no_legal_targets when no targets are legal now`,
+    );
+  }
+  return {
+    action_name: stringValue(data.action_name, `${path}.action_name`),
+    action_cost: literalValue(
+      data.action_cost,
+      ["action", "bonus", "none"],
+      `${path}.action_cost`,
+    ),
+    target_mode: targetMode,
+    requires_explicit_targets: requiresExplicitTargets,
+    selectable_target_ids: selectableTargetIds,
+    legal_target_ids: legalTargetIds,
+    reason,
+  };
+}
+
+function parseTurnChoices(value: unknown, path: string): TurnChoices | null {
+  if (value === null) return null;
+  const data = exactObject(
+    value,
+    ["schema_version", "actor_id", "movement", "actions", "reason"],
+    path,
+  );
+  const movementData = exactObject(
+    data.movement,
+    ["origin", "remaining_ft"],
+    `${path}.movement`,
+  );
+  const remainingFt = finiteNumber(
+    movementData.remaining_ft,
+    `${path}.movement.remaining_ft`,
+  );
+  if (remainingFt < 0) {
+    throw new Error(`${path}.movement.remaining_ft must be non-negative`);
+  }
+  if (!Array.isArray(data.actions)) {
+    throw new Error(`${path}.actions must be an array`);
+  }
+  const actions = data.actions.map((action, index) =>
+    parseTurnActionChoice(action, `${path}.actions[${index}]`),
+  );
+  const names = actions.map((choice) => choice.action_name);
+  if (new Set(names).size !== names.length) {
+    throw new Error(`${path}.actions must not contain duplicate action names`);
+  }
+  const reason =
+    data.reason === null
+      ? null
+      : literalValue(
+          data.reason,
+          ["no_available_actions"],
+          `${path}.reason`,
+        );
+  if (actions.length > 0 && reason !== null) {
+    throw new Error(`${path}.reason must be null when actions are available`);
+  }
+  if (actions.length === 0 && reason !== "no_available_actions") {
+    throw new Error(
+      `${path}.reason must be no_available_actions when actions are empty`,
+    );
+  }
+  return {
+    schema_version: literalValue(
+      data.schema_version,
+      ["dnd.turn-choices.v1"],
+      `${path}.schema_version`,
+    ),
+    actor_id: stringValue(data.actor_id, `${path}.actor_id`),
+    movement: {
+      origin: parsePosition(movementData.origin, `${path}.movement.origin`),
+      remaining_ft: remainingFt,
+    },
+    actions,
+    reason,
+  };
+}
+
+function samePosition(left: Position3, right: Position3): boolean {
+  return left.every((coordinate, index) => coordinate === right[index]);
+}
+
 function parseProjection(value: unknown, path: string): EncounterProjection {
   const data = exactObject(
     value,
@@ -513,6 +699,7 @@ function parseProjection(value: unknown, path: string): EncounterProjection {
       "actors",
       "prompt",
       "result",
+      "choices",
     ],
     path,
   );
@@ -559,6 +746,7 @@ function parseProjection(value: unknown, path: string): EncounterProjection {
   }
   const prompt = parsePrompt(data.prompt, `${path}.prompt`);
   const result = parseResult(data.result, `${path}.result`);
+  const choices = parseTurnChoices(data.choices, `${path}.choices`);
   if (phase === "terminal") {
     if (activeActorId !== null || outcome === null || prompt !== null) {
       throw new Error(`${path} has inconsistent terminal fields`);
@@ -568,6 +756,72 @@ function parseProjection(value: unknown, path: string): EncounterProjection {
   }
   if (phase === "awaiting_declaration" && prompt === null) {
     throw new Error(`${path}.prompt is required while awaiting a declaration`);
+  }
+  if (phase === "awaiting_declaration") {
+    if (choices === null) {
+      throw new Error(`${path}.choices is required while awaiting a declaration`);
+    }
+    if (
+      choices.actor_id !== activeActorId ||
+      prompt?.actor_id !== activeActorId
+    ) {
+      throw new Error(
+        `${path}.choices.actor_id and prompt.actor_id must match active_actor_id`,
+      );
+    }
+    const activeActor = actors[choices.actor_id];
+    if (!activeActor) {
+      throw new Error(`${path}.choices.actor_id must identify a projected actor`);
+    }
+    if (!samePosition(choices.movement.origin, activeActor.position)) {
+      throw new Error(
+        `${path}.choices.movement.origin must match the active actor position`,
+      );
+    }
+    if (choices.movement.remaining_ft !== activeActor.movement_remaining) {
+      throw new Error(
+        `${path}.choices.movement.remaining_ft must match the active actor movement`,
+      );
+    }
+    const actionIndexes = new Map<string, number>();
+    for (const [index, action] of activeActor.actions.entries()) {
+      if (!actionIndexes.has(action.name)) {
+        actionIndexes.set(action.name, index);
+      }
+    }
+    let previousIndex = -1;
+    for (const [choiceIndex, choice] of choices.actions.entries()) {
+      const actorActionIndex = actionIndexes.get(choice.action_name);
+      if (actorActionIndex === undefined) {
+        throw new Error(
+          `${path}.choices.actions[${choiceIndex}] must identify an active actor action`,
+        );
+      }
+      if (actorActionIndex <= previousIndex) {
+        throw new Error(
+          `${path}.choices.actions must preserve canonical actor action order`,
+        );
+      }
+      previousIndex = actorActionIndex;
+      const actorAction = activeActor.actions[actorActionIndex];
+      if (
+        choice.action_cost !== actorAction.action_cost ||
+        choice.target_mode !== actorAction.target_mode
+      ) {
+        throw new Error(
+          `${path}.choices.actions[${choiceIndex}] must match active actor action metadata`,
+        );
+      }
+      for (const targetId of choice.selectable_target_ids) {
+        if (!(targetId in actors)) {
+          throw new Error(
+            `${path}.choices.actions[${choiceIndex}].selectable_target_ids must identify projected actors`,
+          );
+        }
+      }
+    }
+  } else if (choices !== null) {
+    throw new Error(`${path}.choices must be null during the ${phase} phase`);
   }
   return {
     phase,
@@ -581,6 +835,7 @@ function parseProjection(value: unknown, path: string): EncounterProjection {
     actors,
     prompt,
     result,
+    choices,
   };
 }
 
