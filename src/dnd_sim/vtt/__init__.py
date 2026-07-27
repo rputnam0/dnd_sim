@@ -1,4 +1,20 @@
-"""Transport-independent persistence and contracts for the future VTT runtime."""
+"""Transport contracts and durable single-session ownership for the VTT runtime."""
+
+from .contracts import (
+    VTT_COMMAND_SCHEMA_VERSION,
+    VTT_COMMIT_RESPONSE_SCHEMA_VERSION,
+    VTT_EVENT_DRAFT_SCHEMA_VERSION,
+    VTT_EVENT_SCHEMA_VERSION,
+    VTT_PREVIEW_RESPONSE_SCHEMA_VERSION,
+    VTT_VERSION_INFO_SCHEMA_VERSION,
+    VTTCommand,
+    VTTCommitResponse,
+    VTTEvent,
+    VTTEventDraft,
+    VTTPreviewResponse,
+    VTTResponse,
+    VTTVersionInfo,
+)
 
 from .event_store import (
     EVENT_STORE_SCHEMA_VERSION,
@@ -22,9 +38,16 @@ from .scene import (
     SquareGridScene,
     project_scene,
 )
+from .session_service import VTTSessionService, VTTSessionServiceError
 
 __all__ = [
     "EVENT_STORE_SCHEMA_VERSION",
+    "VTT_COMMAND_SCHEMA_VERSION",
+    "VTT_COMMIT_RESPONSE_SCHEMA_VERSION",
+    "VTT_EVENT_DRAFT_SCHEMA_VERSION",
+    "VTT_EVENT_SCHEMA_VERSION",
+    "VTT_PREVIEW_RESPONSE_SCHEMA_VERSION",
+    "VTT_VERSION_INFO_SCHEMA_VERSION",
     "AppendCommitResult",
     "CommandConflictError",
     "EventStoreError",
@@ -41,5 +64,14 @@ __all__ = [
     "SceneProjection",
     "SceneToken",
     "SquareGridScene",
+    "VTTCommand",
+    "VTTCommitResponse",
+    "VTTEvent",
+    "VTTEventDraft",
+    "VTTPreviewResponse",
+    "VTTResponse",
+    "VTTSessionService",
+    "VTTSessionServiceError",
+    "VTTVersionInfo",
     "project_scene",
 ]
