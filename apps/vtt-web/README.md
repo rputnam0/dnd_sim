@@ -21,6 +21,17 @@ NEXT_PUBLIC_VTT_API_BASE_URL=http://127.0.0.1:8000
 The API must expose `GET /api/v1/session` and `POST /api/v1/commands` and allow the
 frontend origin through its exact CORS allowlist.
 
+## Presentation ruler
+
+The map includes a presentation-only ruler. Toggle **Measure** or press `M` while focus
+is not in an input or control, then choose any two grid cells. The readout uses direct
+Chebyshev distance for the 5e square-grid diagonal rule: the larger of the horizontal and
+vertical cell counts, multiplied by the scene's feet-per-cell value. **Clear measure**
+removes both markers.
+
+Ruler selections are browser-memory UI state. They do not change the planned movement,
+are never sent to the API or persisted, and have no effect on preview or commit commands.
+
 ## Verification
 
 ```bash

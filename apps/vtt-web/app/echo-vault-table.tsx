@@ -33,6 +33,12 @@ import {
   type VttPreviewResponse,
   type VttSessionView,
 } from "./vtt-client";
+import {
+  EMPTY_GRID_MEASUREMENT,
+  gridMeasurementDistanceFeet,
+  nextGridMeasurement,
+  type GridMeasurement,
+} from "./grid-ruler";
 
 type PendingOperation = "start" | "preview" | "commit" | null;
 
@@ -170,6 +176,37 @@ function cellKey(cell: GridCell): string {
 
 function cellLabel(cell: GridCell): string {
   return `${String.fromCharCode(65 + cell.row)}${cell.column + 1}`;
+}
+
+function sameCell(left: GridCell | null, right: GridCell): boolean {
+  return left?.column === right.column && left.row === right.row;
+}
+
+function isInteractiveControl(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      "input, textarea, select, button, a[href], summary, [contenteditable]:not([contenteditable='false']), [role='textbox'], [role='button'], [role='combobox']",
+    ),
+  );
+}
+
+function measurementStatus(
+  scene: SquareGridScene,
+  measurement: GridMeasurement,
+  measureMode: boolean,
+): string {
+  if (measurement.start === null) {
+    return measureMode ? "Choose any start cell" : "Ruler ready";
+  }
+  if (measurement.end === null) {
+    return measureMode
+      ? `Start ${cellLabel(measurement.start)} · choose any end cell`
+      : `Start ${cellLabel(measurement.start)} saved`;
+  }
+  const distance = gridMeasurementDistanceFeet(scene, measurement);
+  const resetHint = measureMode ? " · choose a cell to start again" : "";
+  return `${cellLabel(measurement.start)} → ${cellLabel(measurement.end)} · ${distance} ft${resetHint}`;
 }
 
 function errorMessage(error: unknown): string {
@@ -369,9 +406,13 @@ function TacticalMap({
   selectedTargetId,
   reachableCells,
   movementPlan,
+  measureMode,
+  measurement,
   onTokenSelect,
   onTargetSelect,
   onCellSelect,
+  onMeasureToggle,
+  onMeasureClear,
 }: {
   scene: SquareGridScene;
   projection: EncounterProjection;
@@ -380,15 +421,20 @@ function TacticalMap({
   selectedTargetId: string | null;
   reachableCells: Set<string>;
   movementPlan: GridMovementPlan | null;
+  measureMode: boolean;
+  measurement: GridMeasurement;
   onTokenSelect: (actorId: string) => void;
   onTargetSelect: (actorId: string) => void;
   onCellSelect: (cell: GridCell) => void;
+  onMeasureToggle: () => void;
+  onMeasureClear: () => void;
 }) {
   const mapStyle = {
     "--grid-columns": scene.columns,
     "--grid-rows": scene.rows,
   } as CSSProperties;
   const cells = Array.from({ length: scene.columns * scene.rows });
+  const measurePrompt = measurementStatus(scene, measurement, measureMode);
 
   return (
     <section className="map-panel" aria-labelledby="map-title">
@@ -397,10 +443,37 @@ function TacticalMap({
           <p className="eyebrow">Tactical surface</p>
           <h2 id="map-title">{scene.name}</h2>
         </div>
-        <div className="map-readouts" aria-label="Map measurements">
-          <span>{scene.columns} × {scene.rows}</span>
-          <span>{scene.cell_size_ft} ft / cell</span>
-          <span>Z 0</span>
+        <div className="map-toolbar-tools">
+          <div className="map-readouts" aria-label="Map measurements">
+            <span>{scene.columns} × {scene.rows}</span>
+            <span>{scene.cell_size_ft} ft / cell</span>
+            <span>Z 0</span>
+          </div>
+          <div className="measure-controls" role="group" aria-label="Presentation ruler">
+            <button
+              type="button"
+              className={`measure-toggle ${measureMode ? "is-active" : ""}`}
+              aria-pressed={measureMode}
+              aria-keyshortcuts="M"
+              aria-controls="echo-vault-grid"
+              onClick={onMeasureToggle}
+            >
+              <span aria-hidden="true">↗</span>
+              Measure
+              <kbd>M</kbd>
+            </button>
+            <button
+              type="button"
+              className="measure-clear"
+              disabled={measurement.start === null}
+              onClick={onMeasureClear}
+            >
+              Clear measure
+            </button>
+          </div>
+          <output className="measure-output" aria-live="polite">
+            {measurePrompt}
+          </output>
         </div>
       </div>
 
@@ -415,6 +488,7 @@ function TacticalMap({
           <i />
         </div>
         <div
+          id="echo-vault-grid"
           className="square-grid"
           style={mapStyle}
           role="grid"
@@ -428,18 +502,24 @@ function TacticalMap({
             const selected =
               movementPlan?.destination.column === column &&
               movementPlan.destination.row === row;
+            const measureStart = sameCell(measurement.start, cell);
+            const measureEnd = sameCell(measurement.end, cell);
+            const measureAction =
+              measurement.start !== null && measurement.end === null
+                ? "select measure end"
+                : "select measure start";
             return (
               <button
                 type="button"
-                className={`grid-cell ${reachable ? "is-reachable" : ""} ${selected ? "is-destination" : ""}`}
+                className={`grid-cell ${reachable ? "is-reachable" : ""} ${selected ? "is-destination" : ""} ${measureMode ? "is-measuring" : ""} ${measureStart ? "is-measure-start" : ""} ${measureEnd ? "is-measure-end" : ""}`}
                 role="gridcell"
-                aria-label={`Cell ${cellLabel(cell)}${reachable ? ", reachable destination" : ""}${selected ? ", selected destination" : ""}`}
+                aria-label={`Cell ${cellLabel(cell)}${reachable ? ", reachable destination" : ", not a reachable destination"}${selected ? ", selected destination" : ""}${measureStart ? ", measure start" : ""}${measureEnd ? ", measure end" : ""}${measureMode ? `, ${measureAction}` : ""}`}
                 aria-selected={selected}
-                disabled={!reachable}
+                disabled={!measureMode && !reachable}
                 onClick={() => onCellSelect(cell)}
                 key={`${column}-${row}`}
               >
-                <span aria-hidden="true">
+                <span className="grid-coordinate" aria-hidden="true">
                   {row === scene.rows - 1 ? column + 1 : ""}
                 </span>
               </button>
@@ -457,14 +537,18 @@ function TacticalMap({
               <button
                 key={actorId}
                 type="button"
-                className={`map-token team-${actor.team} ${active ? "is-active" : ""} ${selected ? "is-selected" : ""} ${targetable ? "is-targetable" : ""} ${targeted ? "is-targeted" : ""} ${actor.dead ? "is-defeated" : ""}`}
+                className={`map-token team-${actor.team} ${active ? "is-active" : ""} ${selected ? "is-selected" : ""} ${targetable ? "is-targetable" : ""} ${targeted ? "is-targeted" : ""} ${actor.dead ? "is-defeated" : ""} ${measureMode ? "is-measuring" : ""}`}
                 style={{ gridColumn: cell.column + 1, gridRow: cell.row + 1 }}
                 onClick={() => {
+                  if (measureMode) {
+                    onCellSelect(cell);
+                    return;
+                  }
                   onTokenSelect(actorId);
                   if (targetable) onTargetSelect(actorId);
                 }}
                 aria-pressed={selected || targeted}
-                aria-label={`${actor.name}, ${actor.hp} of ${actor.max_hp} hit points${active ? ", active turn" : ""}${targetable ? ", valid target" : ""}`}
+                aria-label={`${actor.name}, ${actor.hp} of ${actor.max_hp} hit points${active ? ", active turn" : ""}${targetable ? ", valid target" : ""}${measureMode ? `, ${measurement.start !== null && measurement.end === null ? "select measure end" : "select measure start"} at ${cellLabel(cell)}` : ""}`}
               >
                 <span className="token-orbit" aria-hidden="true" />
                 <span className="token-face">{initials(actor.name)}</span>
@@ -475,6 +559,46 @@ function TacticalMap({
               </button>
             );
           })}
+
+          {measurement.start !== null && measurement.end !== null ? (
+            <svg
+              className="measurement-line"
+              viewBox={`0 0 ${scene.columns} ${scene.rows}`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <line
+                x1={measurement.start.column + 0.5}
+                y1={measurement.start.row + 0.5}
+                x2={measurement.end.column + 0.5}
+                y2={measurement.end.row + 0.5}
+              />
+            </svg>
+          ) : null}
+          {measurement.start !== null ? (
+            <span
+              className="measure-marker measure-marker-start"
+              style={{
+                gridColumn: measurement.start.column + 1,
+                gridRow: measurement.start.row + 1,
+              }}
+              aria-hidden="true"
+            >
+              S
+            </span>
+          ) : null}
+          {measurement.end !== null ? (
+            <span
+              className="measure-marker measure-marker-end"
+              style={{
+                gridColumn: measurement.end.column + 1,
+                gridRow: measurement.end.row + 1,
+              }}
+              aria-hidden="true"
+            >
+              E
+            </span>
+          ) : null}
         </div>
 
         {projection.phase === "terminal" ? (
@@ -491,9 +615,11 @@ function TacticalMap({
         <span><i className="legend-dot legend-enemy" /> Hostile</span>
         <span><i className="legend-ring" /> Active</span>
         <p>
-          {movementPlan
-            ? `Plan ${cellLabel(movementPlan.destination)} · ${movementPlan.distanceFt} ft`
-            : "Authoritative positions · engine feet"}
+          {measureMode
+            ? "Measure mode · local presentation only"
+            : movementPlan
+              ? `Plan ${cellLabel(movementPlan.destination)} · ${movementPlan.distanceFt} ft`
+              : "Authoritative positions · engine feet"}
         </p>
       </div>
     </section>
@@ -829,6 +955,10 @@ export function EchoVaultTable() {
   const [selectedActionName, setSelectedActionName] = useState("");
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<GridCell | null>(null);
+  const [measureMode, setMeasureMode] = useState(false);
+  const [measurement, setMeasurement] = useState<GridMeasurement>(
+    EMPTY_GRID_MEASUREMENT,
+  );
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [events, setEvents] = useState<LoggedEvent[]>([]);
   const [streamStatus, setStreamStatus] = useState<
@@ -837,6 +967,28 @@ export function EchoVaultTable() {
   const latestRevisionRef = useRef(0);
   const sessionIdRef = useRef<string | null>(null);
   const eventCursorRef = useRef(0);
+
+  useEffect(() => {
+    const handleMeasureShortcut = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.repeat ||
+        event.key.toLowerCase() !== "m" ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        isInteractiveControl(event.target) ||
+        isInteractiveControl(document.activeElement)
+      ) {
+        return;
+      }
+      event.preventDefault();
+      setMeasureMode((current) => !current);
+    };
+
+    window.addEventListener("keydown", handleMeasureShortcut);
+    return () => window.removeEventListener("keydown", handleMeasureShortcut);
+  }, []);
 
   const adoptView = useCallback((nextView: VttSessionView) => {
     const projection = nextView.projection;
@@ -1050,12 +1202,20 @@ export function EchoVaultTable() {
     setCommandError(null);
   };
 
-  const handleCellSelect = (destination: GridCell) => {
+  const handleMovementCellSelect = (destination: GridCell) => {
     if (!reachableCells.has(cellKey(destination))) return;
     setSelectedDestination(destination);
     setSelectedActorId(activeActor?.actor_id ?? selectedActorId);
     setPreview(null);
     setCommandError(null);
+  };
+
+  const handleMapCellSelect = (cell: GridCell) => {
+    if (measureMode) {
+      setMeasurement((current) => nextGridMeasurement(current, cell));
+      return;
+    }
+    handleMovementCellSelect(cell);
   };
 
   const handleStart = async () => {
@@ -1237,9 +1397,15 @@ export function EchoVaultTable() {
             selectedTargetId={selectedTargetId}
             reachableCells={reachableCells}
             movementPlan={movementPlan}
+            measureMode={measureMode}
+            measurement={measurement}
             onTokenSelect={setSelectedActorId}
             onTargetSelect={handleTargetSelect}
-            onCellSelect={handleCellSelect}
+            onCellSelect={handleMapCellSelect}
+            onMeasureToggle={() => setMeasureMode((current) => !current)}
+            onMeasureClear={() =>
+              setMeasurement({ ...EMPTY_GRID_MEASUREMENT })
+            }
           />
           <EventLog events={events} />
         </div>

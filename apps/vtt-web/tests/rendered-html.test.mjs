@@ -87,3 +87,33 @@ test("replaces the starter with the projection-only tactical product", async () 
     ),
   ]);
 });
+
+test("ships an accessible local-only tactical ruler", async () => {
+  const [table, ruler, css, readme] = await Promise.all([
+    readFile(new URL("../app/echo-vault-table.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/grid-ruler.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(table, /\bMeasure\b/);
+  assert.match(table, /aria-keyshortcuts="M"/);
+  assert.match(table, /aria-pressed=\{measureMode\}/);
+  assert.match(table, /Clear measure/);
+  assert.match(table, /addEventListener\("keydown"/);
+  assert.match(table, /isInteractiveControl/);
+  assert.match(table, /is-measure-start/);
+  assert.match(table, /is-measure-end/);
+  assert.match(table, /measurement-line/);
+  assert.match(table, /disabled=\{!measureMode && !reachable\}/);
+  assert.match(
+    table,
+    /if \(measureMode\) \{\s*setMeasurement\([\s\S]+?nextGridMeasurement[\s\S]+?return;\s*\}\s*handleMovementCellSelect\(cell\)/,
+  );
+  assert.match(ruler, /Math\.max\(columnDistance, rowDistance\)/);
+  assert.doesNotMatch(ruler, /fetch|postCommand|localStorage|sessionStorage/);
+  assert.match(css, /\.measure-toggle:focus-visible/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(readme, /presentation-only ruler/i);
+  assert.match(readme, /never sent to the API or persisted/i);
+});
