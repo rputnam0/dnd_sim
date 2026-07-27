@@ -12,6 +12,7 @@ from fastapi import FastAPI
 
 from dnd_sim.interactive.dnd_encounter_driver import DndCombatEncounterDriver
 
+from .annotation_store import SQLiteAnnotationBoard
 from .event_store import SQLiteSessionEventStore
 from .http_api import create_vtt_app
 from .session_service import VTTSessionService
@@ -34,6 +35,7 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
         timeout=30.0,
         check_same_thread=False,
     )
+    annotation_connection: sqlite3.Connection | None = None
     try:
         connection.execute("PRAGMA busy_timeout = 30000")
         fixture = build_solo_table_fixture()
@@ -46,11 +48,31 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
             seed=fixture.seed,
             event_store=event_store,
         )
-        app = create_vtt_app(service, scene=fixture.scene)
+        # The session store and annotation board use independent connections to
+        # the same durable database. This keeps their transaction ownership
+        # isolated while preserving one portable solo-table file.
+        annotation_connection = sqlite3.connect(
+            normalized_path,
+            timeout=30.0,
+            check_same_thread=False,
+        )
+        annotation_connection.execute("PRAGMA busy_timeout = 30000")
+        annotation_board = SQLiteAnnotationBoard(annotation_connection)
+        app = create_vtt_app(
+            service,
+            scene=fixture.scene,
+            annotation_board=annotation_board,
+        )
     except Exception:
+        if annotation_connection is not None:
+            annotation_connection.close()
         connection.close()
         raise
 
+    if annotation_connection is None:  # pragma: no cover - guarded by composition above
+        connection.close()
+        raise RuntimeError("the solo annotation connection was not initialized")
+    app.router.add_event_handler("shutdown", annotation_connection.close)
     app.router.add_event_handler("shutdown", connection.close)
     return app
 

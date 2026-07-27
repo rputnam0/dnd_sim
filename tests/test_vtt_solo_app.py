@@ -72,6 +72,38 @@ def _winning_declaration_payload() -> dict[str, Any]:
     }
 
 
+def _public_ping_request(
+    *,
+    session_id: str,
+    command_id: str,
+    annotation_id: str,
+    expected_revision: int,
+) -> dict[str, Any]:
+    return {
+        "schema_version": "vtt.annotation_request.v1",
+        "session_id": session_id,
+        "command": {
+            "schema_version": "vtt.annotation_command.v1",
+            "table_id": session_id,
+            "command_id": command_id,
+            "expected_revision": expected_revision,
+            "command_type": "put",
+            "annotation": {
+                "schema_version": "vtt.annotation.v1",
+                "annotation_id": annotation_id,
+                "scene_id": "echo-vault",
+                "author_id": "untrusted-browser-author",
+                "audience": ["all"],
+                "annotation_type": "ping",
+                # JSON.stringify emits whole-valued JavaScript numbers without
+                # a decimal suffix. The HTTP boundary must still accept them.
+                "position": {"x_ft": 20, "y_ft": 15, "z_ft": 0},
+                "duration_ms": 1_500,
+            },
+        },
+    }
+
+
 def _stored_command_count(database_path: Path) -> int:
     with sqlite3.connect(database_path) as connection:
         row = connection.execute("SELECT COUNT(*) FROM vtt_committed_commands").fetchone()
@@ -237,6 +269,59 @@ def test_solo_table_replay_matches_on_two_independent_fresh_databases(
     assert _canonical_json(second) == _canonical_json(first)
     assert _stored_command_count(tmp_path / "first-replay.sqlite3") == 2
     assert _stored_command_count(tmp_path / "second-replay.sqlite3") == 2
+
+
+def test_solo_table_persists_browser_ping_across_restart_and_exact_retry(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "solo-annotations.sqlite3"
+    request = _public_ping_request(
+        session_id="echo-vault-session",
+        command_id="browser-ping-once",
+        annotation_id="browser-ping",
+        expected_revision=0,
+    )
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as first_client:
+        empty = first_client.get("/api/v1/annotations")
+        assert empty.status_code == 200
+        assert empty.json() == {
+            "schema_version": "vtt.annotations_view.v1",
+            "session_id": "echo-vault-session",
+            "table_id": "echo-vault-session",
+            "scene_id": "echo-vault",
+            "revision": 0,
+            "annotations": [],
+        }
+
+        created = first_client.post("/api/v1/annotation-commands", json=request)
+        assert created.status_code == 200
+        assert created.json()["replayed"] is False
+        assert created.json()["receipt"]["revision"] == 1
+        stored_annotation = created.json()["receipt"]["event"]["annotation"]
+        assert stored_annotation["author_id"] == "local"
+        assert stored_annotation["position"] == {
+            "x_ft": 20.0,
+            "y_ft": 15.0,
+            "z_ft": 0.0,
+        }
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as restored_client:
+        restored = restored_client.get("/api/v1/annotations")
+        assert restored.status_code == 200
+        assert restored.json()["revision"] == 1
+        assert restored.json()["annotations"] == [stored_annotation]
+
+        replayed = restored_client.post("/api/v1/annotation-commands", json=request)
+        assert replayed.status_code == 200
+        assert replayed.json()["replayed"] is True
+        assert replayed.json()["receipt"] == created.json()["receipt"]
 
 
 def test_solo_table_main_passes_explicit_server_options(monkeypatch, tmp_path: Path) -> None:
