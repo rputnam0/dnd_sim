@@ -11,15 +11,18 @@ and VTT must resolve a declared turn through the same domain function.
       telemetry, rule trace, timing state, or RNG state.
 - [x] Prove preview and commit from identical state and RNG produce identical
       candidates.
-- [x] Route batch `TurnDeclaration` execution through the public atomic kernel.
+- [x] Route batch and atomic session candidates through the same public
+      declared-turn resolver.
 - [x] Prove fixed-seed batch replay remains deterministic.
 
 ## Milestone 2: Prompt-bound combat state
 
+- [x] Extract one synchronous actor-turn kernel containing start automation,
+      the decision seam, action/bonus resolution, turn end, and legendary actions.
 - [ ] Persist combat only at `awaiting_declaration` or `terminal` boundaries.
 - [ ] Extract deterministic automatic phases (turn start, hazards, death saves,
       forced dodge, turn end, legendary actions) around the prompted turn.
-- [ ] Keep reactions explicitly auto-resolved until a resumable reaction
+- [x] Keep reactions explicitly auto-resolved until a resumable reaction
       continuation is implemented.
 - [ ] Make batch strategy selection and interactive commands call the same
       prompted-turn resolver.

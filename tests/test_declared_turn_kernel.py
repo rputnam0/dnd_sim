@@ -8,6 +8,7 @@ import pytest
 from dnd_sim.action_legality import TurnDeclarationValidationError
 from dnd_sim.engine import (
     create_declared_turn_runtime_state,
+    resolve_declared_turn,
     resolve_declared_turn_atomic,
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
@@ -175,3 +176,28 @@ def test_preview_and_commit_from_same_state_and_seed_are_identical() -> None:
 
     assert _state_observables(preview) == _state_observables(committed)
     assert preview_rng.getstate() == commit_rng.getstate()
+
+
+def test_atomic_wrapper_matches_mutating_shared_resolver() -> None:
+    mutating_state = _state()
+    atomic_source = _state()
+    mutating_rng = random.Random(113)
+    atomic_rng = random.Random(113)
+
+    resolve_declared_turn(
+        state=mutating_state,
+        rng=mutating_rng,
+        actor_id="hero",
+        declaration=_primary_declaration(),
+        strategy_name="interactive",
+    )
+    atomic_candidate = resolve_declared_turn_atomic(
+        state=atomic_source,
+        rng=atomic_rng,
+        actor_id="hero",
+        declaration=_primary_declaration(),
+        strategy_name="interactive",
+    )
+
+    assert _state_observables(mutating_state) == _state_observables(atomic_candidate)
+    assert mutating_rng.getstate() == atomic_rng.getstate()

@@ -163,7 +163,13 @@ from dnd_sim.spells import (
     spell_lookup_key as _canonical_spell_lookup_key,
 )
 from dnd_sim.telemetry import build_event_envelope
-from dnd_sim.turn_kernel import DeclaredTurnRuntimeState
+from dnd_sim.turn_kernel import (
+    CombatTurnContext,
+    CombatTurnDecision,
+    CombatTurnDecisionProvider,
+    CombatTurnResult,
+    DeclaredTurnRuntimeState,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -9137,6 +9143,40 @@ def create_declared_turn_runtime_state(
     )
 
 
+def resolve_declared_turn(
+    *,
+    state: DeclaredTurnRuntimeState,
+    rng: random.Random,
+    actor_id: str,
+    declaration: TurnDeclaration,
+    strategy_name: str,
+) -> None:
+    """Mutate one declared turn through the shared batch/interactive rules path."""
+
+    if actor_id not in state.actors:
+        raise ValueError(f"Unknown declared-turn actor: {actor_id}")
+
+    with _combat_timing_engine_scope(state.timing_engine):
+        _execute_declared_turn_or_error(
+            rng=rng,
+            actor=state.actors[actor_id],
+            declaration=declaration,
+            strategy_name=strategy_name,
+            actors=state.actors,
+            damage_dealt=state.damage_dealt,
+            damage_taken=state.damage_taken,
+            threat_scores=state.threat_scores,
+            resources_spent=state.resources_spent,
+            active_hazards=state.active_hazards,
+            telemetry=state.telemetry,
+            obstacles=state.obstacles,
+            light_level=state.light_level,
+            round_number=state.round_number,
+            turn_token=state.turn_token,
+            rule_trace=state.rule_trace,
+        )
+
+
 def resolve_declared_turn_atomic(
     *,
     state: DeclaredTurnRuntimeState,
@@ -9152,32 +9192,17 @@ def resolve_declared_turn_atomic(
     movement or a primary action has already been evaluated on the candidate.
     """
 
-    if actor_id not in state.actors:
-        raise ValueError(f"Unknown declared-turn actor: {actor_id}")
-
     candidate = copy.deepcopy(state)
     candidate_rng = random.Random()
     candidate_rng.setstate(copy.deepcopy(rng.getstate()))
 
-    with _combat_timing_engine_scope(candidate.timing_engine):
-        _execute_declared_turn_or_error(
-            rng=candidate_rng,
-            actor=candidate.actors[actor_id],
-            declaration=declaration,
-            strategy_name=strategy_name,
-            actors=candidate.actors,
-            damage_dealt=candidate.damage_dealt,
-            damage_taken=candidate.damage_taken,
-            threat_scores=candidate.threat_scores,
-            resources_spent=candidate.resources_spent,
-            active_hazards=candidate.active_hazards,
-            telemetry=candidate.telemetry,
-            obstacles=candidate.obstacles,
-            light_level=candidate.light_level,
-            round_number=candidate.round_number,
-            turn_token=candidate.turn_token,
-            rule_trace=candidate.rule_trace,
-        )
+    resolve_declared_turn(
+        state=candidate,
+        rng=candidate_rng,
+        actor_id=actor_id,
+        declaration=declaration,
+        strategy_name=strategy_name,
+    )
 
     rng.setstate(candidate_rng.getstate())
     return candidate
@@ -14974,6 +14999,451 @@ def _emit_turn_trace_event(
     )
 
 
+def _resolve_combat_turn_end(
+    *,
+    rng: random.Random,
+    context: CombatTurnContext,
+    actor: ActorRuntimeState,
+    turn_token: str,
+) -> None:
+    _dispatch_combat_event(
+        rng=rng,
+        event="turn_end",
+        trigger_actor=actor,
+        trigger_target=actor,
+        trigger_action=None,
+        actors=context.actors,
+        round_number=context.round_number,
+        turn_token=turn_token,
+        damage_dealt=context.damage_dealt,
+        damage_taken=context.damage_taken,
+        threat_scores=context.threat_scores,
+        resources_spent=context.resources_spent,
+        active_hazards=context.active_hazards,
+        rule_trace=context.rule_trace,
+        obstacles=context.obstacles,
+        light_level=context.light_level,
+    )
+    _run_legendary_actions(
+        rng=rng,
+        trigger_actor=actor,
+        actors=context.actors,
+        damage_dealt=context.damage_dealt,
+        damage_taken=context.damage_taken,
+        threat_scores=context.threat_scores,
+        resources_spent=context.resources_spent,
+        active_hazards=context.active_hazards,
+        obstacles=context.obstacles,
+        light_level=context.light_level,
+        telemetry=context.telemetry,
+        round_number=context.round_number,
+        turn_token=turn_token,
+    )
+    if actor.surprised:
+        actor.surprised = False
+        actor.discard_manual_condition("surprised")
+
+
+def _combat_has_ended(context: CombatTurnContext) -> bool:
+    return _party_defeated(
+        context.actors,
+        context.party_defeat_rule,
+    ) or _enemies_defeated(
+        context.actors,
+        context.enemy_defeat_rule,
+    )
+
+
+def resolve_combat_turn(
+    *,
+    rng: random.Random,
+    context: CombatTurnContext,
+    actor_id: str,
+    decision_provider: CombatTurnDecisionProvider,
+) -> CombatTurnResult:
+    """Resolve one actor's complete synchronous turn through a decision seam.
+
+    Automatic start/end phases stay inside this function so batch strategies
+    and interactive declarations share identical ordering. Reactions remain
+    automatic until the encounter state machine gains resumable continuations.
+    """
+
+    actor = context.actors.get(actor_id)
+    if actor is None:
+        raise ValueError(f"Unknown combat-turn actor: {actor_id}")
+    turn_token = f"{context.round_number}:{actor.actor_id}"
+
+    with _combat_timing_engine_scope(context.timing_engine):
+        _refresh_legendary_actions_for_turn(actor)
+        actor.movement_remaining = float(actor.speed_ft)
+        actor.took_attack_action_this_turn = False
+        actor.bonus_action_spell_restriction_active = False
+        actor.non_action_cantrip_spell_cast_this_turn = False
+        _roll_recharge_for_actor(rng, actor)
+        _tick_conditions_for_actor(
+            rng,
+            actor,
+            actors=context.actors,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+        )
+        _tick_hazards_for_actor_turn(
+            active_hazards=context.active_hazards,
+            actor=actor,
+            actors=context.actors,
+            boundary="turn_start",
+        )
+        _force_end_concentration_if_needed(
+            actor,
+            actors=context.actors,
+            active_hazards=context.active_hazards,
+        )
+        if "grappled" in actor.conditions:
+            actor.movement_remaining = 0.0
+        actor.bonus_available = True
+        actor.reaction_available = True
+        actor.sneak_attack_used_this_turn = False
+        actor.colossus_slayer_used_this_turn = False
+        actor.horde_breaker_used_this_turn = False
+        actor.gwm_bonus_trigger_available = False
+
+        if actor.dead:
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="dead",
+            )
+
+        if actor.hp <= 0:
+            if _actor_uses_death_saves(actor):
+                resolve_death_save(rng, actor)
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="death_save",
+            )
+
+        _process_hazard_start_turn_triggers(
+            rng=rng,
+            actor=actor,
+            actors=context.actors,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+        )
+        if actor.dead or actor.hp <= 0:
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="start_hazard_defeat",
+            )
+        if _combat_has_ended(context):
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="combat_ended",
+            )
+
+        _dispatch_combat_event(
+            rng=rng,
+            event="turn_start",
+            trigger_actor=actor,
+            trigger_target=actor,
+            trigger_action=None,
+            actors=context.actors,
+            round_number=context.round_number,
+            turn_token=turn_token,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+            rule_trace=context.rule_trace,
+            obstacles=context.obstacles,
+            light_level=context.light_level,
+        )
+        _trigger_readied_actions(
+            rng=rng,
+            trigger_actor=actor,
+            round_number=context.round_number,
+            turn_token=turn_token,
+            actors=context.actors,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+            obstacles=context.obstacles,
+            light_level=context.light_level,
+        )
+
+        if actor.dead or actor.hp <= 0:
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="readied_action_defeat",
+            )
+        if _combat_has_ended(context):
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="combat_ended",
+            )
+        if not _can_act(actor):
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="incapacitated",
+            )
+
+        controller_id = _controller_id_for_actor(actor)
+        controller = context.actors.get(controller_id) if controller_id else None
+        should_force_dodge = (
+            bool(getattr(actor, "requires_command", False))
+            and not bool(getattr(actor, "commanded_this_round", False))
+            and not _owner_is_incapacitated(controller)
+        )
+        if should_force_dodge:
+            action = _resolve_action_selection(actor, "dodge")
+            if _action_available(actor, action, turn_token=turn_token):
+                resolved_targets = _resolve_targets_for_action(
+                    rng=rng,
+                    actor=actor,
+                    action=action,
+                    actors=context.actors,
+                    requested=[],
+                    obstacles=context.obstacles,
+                )
+                if resolved_targets:
+                    actor.per_action_uses[action.name] = (
+                        actor.per_action_uses.get(action.name, 0) + 1
+                    )
+                    _mark_action_cost_used(actor, action)
+                    _execute_action(
+                        rng=rng,
+                        actor=actor,
+                        action=action,
+                        targets=resolved_targets,
+                        actors=context.actors,
+                        damage_dealt=context.damage_dealt,
+                        damage_taken=context.damage_taken,
+                        threat_scores=context.threat_scores,
+                        resources_spent=context.resources_spent,
+                        active_hazards=context.active_hazards,
+                        obstacles=context.obstacles,
+                        light_level=context.light_level,
+                        telemetry=context.telemetry,
+                        strategy_name="forced_dodge",
+                    )
+            if hasattr(actor, "commanded_this_round"):
+                actor.commanded_this_round = False
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="forced_dodge",
+                strategy_name="forced_dodge",
+            )
+
+        metadata = _build_round_metadata(
+            actors=context.actors,
+            threat_scores=context.threat_scores,
+            burst_round_threshold=context.burst_round_threshold,
+            active_hazards=context.active_hazards,
+            obstacles=context.obstacles,
+            light_level=context.light_level,
+            strategy_overrides=context.strategy_overrides,
+        )
+        state_view = _build_actor_views(
+            context.actors,
+            context.initiative_order,
+            context.round_number,
+            metadata,
+        )
+        actor_view = state_view.actors[actor.actor_id]
+        decision = decision_provider(actor_view, state_view)
+        if not isinstance(decision, CombatTurnDecision):
+            raise TypeError("decision_provider must return CombatTurnDecision")
+        strategy_name = decision.strategy_name
+        turn_declaration = decision.declaration
+
+        if turn_declaration is None:
+            context.telemetry.append(
+                {
+                    "telemetry_type": "decision",
+                    "round": context.round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "team": actor.team,
+                    "intent_action": None,
+                    "resolved_action": None,
+                    "fallback_reason": "declare_turn_none",
+                    "requested_targets": [],
+                    "resolved_targets": [],
+                    "rationale": {},
+                    "extra_resource_request": {},
+                    "resource_cost": {},
+                }
+            )
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="no_declaration",
+                strategy_name=strategy_name,
+            )
+        if not isinstance(turn_declaration, TurnDeclaration):
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="invalid_turn_declaration_type",
+                field="turn_declaration",
+                message="declare_turn(...) must return TurnDeclaration or None.",
+                details={"actual_type": type(turn_declaration).__name__},
+            )
+
+        requested_targets = _declared_target_ids(turn_declaration)
+        action_name = (
+            turn_declaration.action.action_name if turn_declaration.action is not None else None
+        )
+        declared_turn_state = create_declared_turn_runtime_state(
+            actors=context.actors,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+            telemetry=context.telemetry,
+            obstacles=context.obstacles,
+            light_level=context.light_level,
+            round_number=context.round_number,
+            turn_token=turn_token,
+            rule_trace=context.rule_trace,
+            timing_engine=context.timing_engine,
+        )
+        try:
+            resolve_declared_turn(
+                state=declared_turn_state,
+                rng=rng,
+                actor_id=actor.actor_id,
+                declaration=turn_declaration,
+                strategy_name=strategy_name,
+            )
+        except TurnDeclarationValidationError as exc:
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="action_selection",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                selection_state="illegal",
+                error_code=exc.code,
+                field=exc.field,
+            )
+            raise
+
+        if turn_declaration.action is not None:
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="declaration_validation",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                validation_state="valid",
+            )
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="action_selection",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                resolved_targets=requested_targets,
+                selection_state="selected",
+            )
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="action_resolution",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                resolved_targets=requested_targets,
+                resolution_state="resolved",
+            )
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="action_outcome",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                resolved_targets=requested_targets,
+                outcome_state="applied",
+            )
+        _resolve_combat_turn_end(
+            rng=rng,
+            context=context,
+            actor=actor,
+            turn_token=turn_token,
+        )
+        return CombatTurnResult(
+            actor_id=actor.actor_id,
+            round_number=context.round_number,
+            turn_token=turn_token,
+            status="resolved",
+            strategy_name=strategy_name,
+        )
+
+
 def run_simulation_core(
     scenario: LoadedScenario,
     character_db: dict[str, dict[str, Any]],
@@ -15176,44 +15646,6 @@ def run_simulation_core(
                 )
                 lair_actions_resolved = False
 
-                def _resolve_turn_end(actor: ActorRuntimeState, turn_token: str) -> None:
-                    _dispatch_combat_event(
-                        rng=rng,
-                        event="turn_end",
-                        trigger_actor=actor,
-                        trigger_target=actor,
-                        trigger_action=None,
-                        actors=actors,
-                        round_number=rounds,
-                        turn_token=turn_token,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        rule_trace=trial_rule_trace,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
-                    )
-                    _run_legendary_actions(
-                        rng=rng,
-                        trigger_actor=actor,
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
-                        telemetry=trial_telemetry,
-                        round_number=rounds,
-                        turn_token=turn_token,
-                    )
-                    if actor.surprised:
-                        actor.surprised = False
-                        actor.discard_manual_condition("surprised")
-
                 for actor_id in initiative_order:
                     if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
                         actors, enemy_defeat_rule
@@ -15249,311 +15681,67 @@ def run_simulation_core(
 
                     if actor_id not in actors:
                         continue
-                    actor = actors[actor_id]
-                    _refresh_legendary_actions_for_turn(actor)
-                    actor.movement_remaining = float(actor.speed_ft)
-                    actor.took_attack_action_this_turn = False
-                    actor.bonus_action_spell_restriction_active = False
-                    actor.non_action_cantrip_spell_cast_this_turn = False
-                    _roll_recharge_for_actor(rng, actor)
-                    _tick_conditions_for_actor(
-                        rng,
-                        actor,
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                    )
-                    _tick_hazards_for_actor_turn(
-                        active_hazards=active_hazards,
-                        actor=actor,
-                        actors=actors,
-                        boundary="turn_start",
-                    )
-                    _force_end_concentration_if_needed(
-                        actor, actors=actors, active_hazards=active_hazards
-                    )
-                    if "grappled" in actor.conditions:
-                        actor.movement_remaining = 0.0
-                    actor.bonus_available = True
-                    actor.reaction_available = True
-                    actor.sneak_attack_used_this_turn = False
-                    actor.colossus_slayer_used_this_turn = False
-                    actor.horde_breaker_used_this_turn = False
-                    actor.gwm_bonus_trigger_available = False
 
-                    if actor.dead:
-                        continue
+                    def _batch_decision_provider(
+                        actor_view: ActorView,
+                        state_view: BattleStateView,
+                    ) -> CombatTurnDecision:
+                        strategy_name = actor_strategy_overrides.get(actor_view.actor_id)
+                        if strategy_name is None:
+                            strategy_name = (
+                                party_default_strategy
+                                if actor_view.team == "party"
+                                else enemy_default_strategy
+                            )
+                        strategy = strategy_registry.get(strategy_name)
+                        if strategy is None:
+                            raise ValueError(
+                                f"No strategy registered for actor "
+                                f"{actor_view.actor_id}: {strategy_name}"
+                            )
+                        return CombatTurnDecision(
+                            strategy_name=strategy_name,
+                            declaration=strategy.declare_turn(actor_view, state_view),
+                        )
 
-                    if actor.hp <= 0:
-                        if _actor_uses_death_saves(actor):
-                            resolve_death_save(rng, actor)
-                        _resolve_turn_end(actor, f"{rounds}:{actor.actor_id}")
-                        continue
-
-                    _process_hazard_start_turn_triggers(
-                        rng=rng,
-                        actor=actor,
+                    turn_context = CombatTurnContext(
                         actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                    )
-                    if actor.dead or actor.hp <= 0:
-                        continue
-
-                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
-                        actors, enemy_defeat_rule
-                    ):
-                        break
-                    turn_token = f"{rounds}:{actor.actor_id}"
-                    _dispatch_combat_event(
-                        rng=rng,
-                        event="turn_start",
-                        trigger_actor=actor,
-                        trigger_target=actor,
-                        trigger_action=None,
-                        actors=actors,
+                        initiative_order=initiative_order,
                         round_number=rounds,
-                        turn_token=turn_token,
                         damage_dealt=damage_dealt,
                         damage_taken=damage_taken,
                         threat_scores=threat_scores,
                         resources_spent=resources_spent,
                         active_hazards=active_hazards,
+                        telemetry=trial_telemetry,
                         rule_trace=trial_rule_trace,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
-                    )
-
-                    _trigger_readied_actions(
-                        rng=rng,
-                        trigger_actor=actor,
-                        round_number=rounds,
-                        turn_token=turn_token,
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
-                    )
-
-                    if actor.dead or actor.hp <= 0:
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
-                        actors, enemy_defeat_rule
-                    ):
-                        break
-                    if not _can_act(actor):
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-
-                    controller_id = _controller_id_for_actor(actor)
-                    controller = actors.get(controller_id) if controller_id else None
-                    should_force_dodge = (
-                        bool(getattr(actor, "requires_command", False))
-                        and not bool(getattr(actor, "commanded_this_round", False))
-                        and not _owner_is_incapacitated(controller)
-                    )
-                    if should_force_dodge:
-                        action = _resolve_action_selection(actor, "dodge")
-                        if _action_available(actor, action, turn_token=turn_token):
-                            resolved_targets = _resolve_targets_for_action(
-                                rng=rng,
-                                actor=actor,
-                                action=action,
-                                actors=actors,
-                                requested=[],
-                                obstacles=battlefield_obstacles,
-                            )
-                            if resolved_targets:
-                                actor.per_action_uses[action.name] = (
-                                    actor.per_action_uses.get(action.name, 0) + 1
-                                )
-                                _mark_action_cost_used(actor, action)
-                                _execute_action(
-                                    rng=rng,
-                                    actor=actor,
-                                    action=action,
-                                    targets=resolved_targets,
-                                    actors=actors,
-                                    damage_dealt=damage_dealt,
-                                    damage_taken=damage_taken,
-                                    threat_scores=threat_scores,
-                                    resources_spent=resources_spent,
-                                    active_hazards=active_hazards,
-                                    obstacles=battlefield_obstacles,
-                                    light_level=light_level,
-                                    telemetry=trial_telemetry,
-                                    strategy_name="forced_dodge",
-                                )
-                        if hasattr(actor, "commanded_this_round"):
-                            actor.commanded_this_round = False
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-
-                    strategy_name = actor_strategy_overrides.get(actor.actor_id)
-                    if strategy_name is None:
-                        strategy_name = (
-                            party_default_strategy
-                            if actor.team == "party"
-                            else enemy_default_strategy
-                        )
-                    strategy = strategy_registry.get(strategy_name)
-                    if strategy is None:
-                        raise ValueError(
-                            f"No strategy registered for actor {actor.actor_id}: {strategy_name}"
-                        )
-
-                    metadata = _build_round_metadata(
-                        actors=actors,
-                        threat_scores=threat_scores,
                         burst_round_threshold=int(
                             scenario.config.resource_policy.get("burst_round_threshold", 3)
                         ),
-                        active_hazards=active_hazards,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
                         strategy_overrides=assumption_overrides,
+                        timing_engine=trial_timing_engine,
+                        party_defeat_rule=party_defeat_rule,
+                        enemy_defeat_rule=enemy_defeat_rule,
                     )
-                    state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
-                    actor_view = state_view.actors[actor.actor_id]
-                    turn_declaration = strategy.declare_turn(actor_view, state_view)
-                    if turn_declaration is None:
-                        trial_telemetry.append(
-                            {
-                                "telemetry_type": "decision",
-                                "round": rounds,
-                                "strategy": strategy_name,
-                                "actor_id": actor.actor_id,
-                                "team": actor.team,
-                                "intent_action": None,
-                                "resolved_action": None,
-                                "fallback_reason": "declare_turn_none",
-                                "requested_targets": [],
-                                "resolved_targets": [],
-                                "rationale": {},
-                                "extra_resource_request": {},
-                                "resource_cost": {},
-                            }
-                        )
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-                    if not isinstance(turn_declaration, TurnDeclaration):
-                        _raise_turn_declaration_error(
-                            actor=actor,
-                            code="invalid_turn_declaration_type",
-                            field="turn_declaration",
-                            message="declare_turn(...) must return TurnDeclaration or None.",
-                            details={"actual_type": type(turn_declaration).__name__},
-                        )
-                    requested_targets = _declared_target_ids(turn_declaration)
-                    action_name = (
-                        turn_declaration.action.action_name
-                        if turn_declaration.action is not None
-                        else None
+                    turn_result = resolve_combat_turn(
+                        rng=rng,
+                        context=turn_context,
+                        actor_id=actor_id,
+                        decision_provider=_batch_decision_provider,
                     )
-                    try:
-                        declared_turn_state = create_declared_turn_runtime_state(
-                            actors=actors,
-                            damage_dealt=damage_dealt,
-                            damage_taken=damage_taken,
-                            threat_scores=threat_scores,
-                            resources_spent=resources_spent,
-                            active_hazards=active_hazards,
-                            telemetry=trial_telemetry,
-                            obstacles=battlefield_obstacles,
-                            light_level=light_level,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            rule_trace=trial_rule_trace,
-                            timing_engine=trial_timing_engine,
-                        )
-                        declared_turn_state = resolve_declared_turn_atomic(
-                            state=declared_turn_state,
-                            rng=rng,
-                            actor_id=actor.actor_id,
-                            declaration=turn_declaration,
-                            strategy_name=strategy_name,
-                        )
-                        actors = declared_turn_state.actors
-                        damage_dealt = declared_turn_state.damage_dealt
-                        damage_taken = declared_turn_state.damage_taken
-                        threat_scores = declared_turn_state.threat_scores
-                        resources_spent = declared_turn_state.resources_spent
-                        active_hazards = declared_turn_state.active_hazards
-                        trial_telemetry = declared_turn_state.telemetry
-                        trial_rule_trace = declared_turn_state.rule_trace
-                        trial_timing_engine = declared_turn_state.timing_engine
-                        actor = actors[actor_id]
-                    except TurnDeclarationValidationError as exc:
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="action_selection",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            selection_state="illegal",
-                            error_code=exc.code,
-                            field=exc.field,
-                        )
-                        raise
-
-                    if turn_declaration.action is not None:
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="declaration_validation",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            validation_state="valid",
-                        )
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="action_selection",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            resolved_targets=requested_targets,
-                            selection_state="selected",
-                        )
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="action_resolution",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            resolved_targets=requested_targets,
-                            resolution_state="resolved",
-                        )
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="action_outcome",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            resolved_targets=requested_targets,
-                            outcome_state="applied",
-                        )
-                    _resolve_turn_end(actor, turn_token)
+                    actors = turn_context.actors
+                    damage_dealt = turn_context.damage_dealt
+                    damage_taken = turn_context.damage_taken
+                    threat_scores = turn_context.threat_scores
+                    resources_spent = turn_context.resources_spent
+                    active_hazards = turn_context.active_hazards
+                    trial_telemetry = turn_context.telemetry
+                    trial_rule_trace = turn_context.rule_trace
+                    trial_timing_engine = turn_context.timing_engine
+                    if turn_result.combat_ended:
+                        break
 
                 if (
                     not lair_actions_resolved

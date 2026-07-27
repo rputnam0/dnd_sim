@@ -327,21 +327,21 @@ def test_illegal_turn_plan_raises_structured_bonus_action_error(tmp_path: Path) 
     assert exc_info.value.field == "bonus_action.action_name"
 
 
-def test_batch_turn_loop_routes_declarations_through_atomic_kernel(
+def test_batch_turn_loop_routes_actionable_actors_through_combat_turn_kernel(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     scenario_path = _setup_env(tmp_path)
     loaded = load_runtime_scenario(scenario_path)
     db = load_character_db(Path(loaded.config.character_db_dir))
-    real_resolver = engine_runtime.resolve_declared_turn_atomic
+    real_resolver = engine_runtime.resolve_combat_turn
     resolved_actor_ids: list[str] = []
 
     def observing_resolver(**kwargs):
         resolved_actor_ids.append(kwargs["actor_id"])
         return real_resolver(**kwargs)
 
-    monkeypatch.setattr(engine_runtime, "resolve_declared_turn_atomic", observing_resolver)
+    monkeypatch.setattr(engine_runtime, "resolve_combat_turn", observing_resolver)
     registry = {
         "party_strategy": ExplicitBasicPlanStrategy(),
         "enemy_strategy": LegacyBasicStrategy(),
