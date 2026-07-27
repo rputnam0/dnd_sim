@@ -101,10 +101,13 @@ Active stack:
 - Draft PR `#256`, `codex/typed-reaction-decisions`: deterministic typed opportunity-reaction
   windows, validated use/pass decisions, explicit attack and knockout choices, strategy routing,
   and reaction lifecycle telemetry.
+- Draft PR `#257`, `codex/reaction-refresh-timing`: turn-start reaction refresh, removal of
+  incorrect global-round locks, preservation of explicit content cooldowns, and live candidate
+  revalidation after reaction spend.
 
-The next rules slice corrects reaction refresh timing and migrates special, trait, and spell
-reactions onto the same typed decision surface. Broader content and session APIs follow after the
-authoritative combat core is complete.
+The next rules slice migrates special, trait, and spell reactions onto the same typed decision
+surface, beginning with Sentinel and the movement-trigger feature hooks. Broader content and
+session APIs follow after the authoritative combat core is complete.
 
 ## Required verification for Milestone 0
 
