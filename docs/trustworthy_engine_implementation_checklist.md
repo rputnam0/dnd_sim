@@ -22,7 +22,7 @@ and their implementation is included in a pull request.
 - [x] Every shipped public scenario executes in CI.
 - [x] Tactical strategies and authoritative legality share one reachability contract.
 - [x] Encounter results distinguish victory, defeat, draw, and timeout/censored outcomes.
-- [ ] NPC and PC zero-hit-point policies are explicit and rules-profile driven.
+- [x] NPC and PC zero-hit-point policies are explicit and rules-profile driven.
 - [x] Unknown mechanic types fail validation with a path-specific diagnostic.
 - [x] Actionless production monsters fail validation instead of receiving a synthetic attack.
 - [x] Capability states are derived independently and `tested` links to behavioral evidence.
@@ -30,13 +30,14 @@ and their implementation is included in a pull request.
 
 ### Milestone 1 — Executable rules and content pack
 
-- [ ] Publish a versioned supported-rules profile for 5e-2014 combat.
+- [x] Publish a versioned supported-rules profile for 5e-2014 combat.
 - [ ] Populate executable monster actions, traits, defenses, spellcasting, and recharge behavior.
 - [ ] Implement typed triggers, conditions, auras, zones, summons, transformations, and choices.
 - [ ] Complete combat-relevant spell semantics and upcasting.
 - [ ] Complete class/subclass combat features by level.
 - [ ] Complete core conditions, creature size/space, movement modes, grappling, and cover.
-- [ ] Model qualified defenses, rests, dying, stabilization, and NPC defeat policy.
+- [x] Model dying, stabilization, stable recovery, and NPC defeat policy.
+- [ ] Complete qualified defenses and the remaining rest semantics.
 - [ ] Add independently adjudicated rules-conformance and golden encounter tests.
 
 ### Milestone 2 — Defensible encounter difficulty
@@ -84,13 +85,18 @@ and their implementation is included in a pull request.
 
 ## Current implementation slice
 
-Branch: `codex/trustworthy-engine-foundation`
+Active stack:
 
-Draft pull request: `#251`. This first pull request is limited to Milestone 0. It includes
-red/green regression evidence for the shipped scenario, terminal outcome semantics, strict
-mechanic validation, monster fallback removal, and truthful capability gates. A formal versioned
-rules profile for zero-hit-point policy remains open; broader rules content and session APIs follow
-in separate feature branches after this trust gate is reviewed.
+- Draft PR `#251`, `codex/trustworthy-engine-foundation`: deterministic trust gate, strict
+  mechanic validation, truthful capability evidence, and terminal-outcome vocabulary.
+- Draft PR `#252`, `codex/rules-profile-foundation`: versioned 5e-2014 rules profile, explicit
+  attack delivery, stabilization, stable recovery, and canonical supporting content.
+- Draft PR `#253`, `codex/nonlethal-knockout`: declared melee knockout intent, mortality
+  disposition, neutralized encounter outcomes, distinct mortality metrics, and mutual-defeat draws.
+
+The next rules slice consolidates all immediate attack damage into one zero-HP disposition and
+then expands reaction/readied-action decision surfaces. Broader content and session APIs follow
+after the authoritative combat core is complete.
 
 ## Required verification for Milestone 0
 
