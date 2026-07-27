@@ -212,6 +212,11 @@ def test_encounter_session_projection_omits_the_canonical_turn_snapshot() -> Non
     driver = DndCombatEncounterDriver(version_pins=VERSION_PINS)
     assert isinstance(driver, EngineSessionProjectionDriver)
     session = EngineSession("encounter-projection", state, driver, seed=13)
+    initial_projection = session.projection
+
+    assert initial_projection["phase"] == "unstarted"
+    assert initial_projection["choices"] is None
+
     session.execute(_start_command(session_id="encounter-projection"))
 
     projection = session.projection
@@ -223,6 +228,26 @@ def test_encounter_session_projection_omits_the_canonical_turn_snapshot() -> Non
     assert "rule_trace" not in projection
     assert "resources_spent" not in projection
     assert "traits" not in projection["actors"]["hero"]
+    assert projection["choices"] == {
+        "schema_version": "dnd.turn-choices.v1",
+        "actor_id": "hero",
+        "movement": {
+            "origin": [0.0, 0.0, 0.0],
+            "remaining_ft": 30.0,
+        },
+        "actions": [
+            {
+                "action_name": "strike",
+                "action_cost": "action",
+                "target_mode": "single_enemy",
+                "requires_explicit_targets": True,
+                "selectable_target_ids": ["enemy"],
+                "legal_target_ids": ["enemy"],
+                "reason": None,
+            }
+        ],
+        "reason": None,
+    }
 
 
 def test_encounter_auto_prepares_successive_automatic_slots_until_prompt() -> None:
@@ -317,6 +342,7 @@ def test_max_round_timeout_is_terminal_after_last_slot() -> None:
     assert session.state["outcome"] == "timeout"
     assert session.state["current_index"] == 1
     assert session.state["turn"]["phase"] == "complete"
+    assert session.projection["choices"] is None
 
 
 def test_party_victory_is_terminal_and_rejects_later_commands() -> None:

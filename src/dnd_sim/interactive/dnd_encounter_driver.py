@@ -475,4 +475,5 @@ class DndCombatEncounterDriver:
             },
             "prompt": prompt,
             "result": result,
+            "choices": self._turn_driver.project_choices(state.turn),
         }

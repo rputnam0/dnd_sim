@@ -117,7 +117,8 @@ from dnd_sim.strategy_api import (
 from dnd_sim.action_legality import (
     TurnDeclarationValidationError,
     apply_declared_reaction_policy_or_error as _apply_declared_reaction_policy_or_error_impl,
-    declared_action_or_error as _declared_action_or_error_impl,
+    bind_prompt_action_choice_enumerator as _bind_prompt_action_choice_enumerator,
+    declared_action_or_error as _declared_action_or_error,
     declared_extra_resource_cost_or_error as _declared_extra_resource_cost_or_error_impl,
     declared_movement_path_or_error as _declared_movement_path_or_error_impl,
     declared_spell_request_or_error as _declared_spell_request_or_error_impl,
@@ -8549,21 +8550,6 @@ def _raise_turn_declaration_error(
     )
 
 
-def _declared_action_or_error(
-    actor: ActorRuntimeState,
-    declaration: DeclaredAction,
-    *,
-    field_prefix: str,
-    expected_cost: str,
-) -> ActionDefinition:
-    return _declared_action_or_error_impl(
-        actor=actor,
-        declaration=declaration,
-        field_prefix=field_prefix,
-        expected_cost=expected_cost,
-    )
-
-
 def _declared_targets_or_error(
     actor: ActorRuntimeState,
     declaration: DeclaredAction,
@@ -15087,6 +15073,13 @@ def build_combat_turn_prompt(
         actor_view=state_view.actors[actor.actor_id],
         state_view=state_view,
     )
+
+
+enumerate_prompt_action_choices = _bind_prompt_action_choice_enumerator(
+    _action_available,
+    _resolve_targets_for_action,
+    _filter_targets_in_range,
+)
 
 
 def prepare_combat_turn(

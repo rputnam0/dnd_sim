@@ -31,7 +31,13 @@ from .contracts import (
     SessionCommand,
     normalize_json,
 )
-from .dnd_contracts import DECLARATION_COMMAND_KIND, TurnDeclarationPayload
+from .dnd_contracts import (
+    DECLARATION_COMMAND_KIND,
+    ActionChoicePayload,
+    MovementChoicePayload,
+    TurnChoicesPayload,
+    TurnDeclarationPayload,
+)
 from .dnd_state_codec import (
     decode_actor_runtime_state_map,
     encode_actor_runtime_state_map,
@@ -792,6 +798,36 @@ class DndCombatTurnDriver:
             ],
         }
 
+    def project_choices(self, state: DndCombatTurnState) -> dict[str, JSONValue] | None:
+        if state.phase != "awaiting_declaration" or state.prompt is None:
+            return None
+        actor = state.context.actors[state.actor_id]
+        action_choices = engine_runtime.enumerate_prompt_action_choices(
+            context=state.context,
+            prompt=state.prompt,
+        )
+        payload = TurnChoicesPayload(
+            actor_id=actor.actor_id,
+            movement=MovementChoicePayload(
+                origin=actor.position,
+                remaining_ft=actor.movement_remaining,
+            ),
+            actions=tuple(
+                ActionChoicePayload(
+                    action_name=choice.action_name,
+                    action_cost=choice.action_cost,
+                    target_mode=choice.target_mode,
+                    requires_explicit_targets=choice.requires_explicit_targets,
+                    selectable_target_ids=choice.selectable_target_ids,
+                    legal_target_ids=choice.legal_target_ids,
+                    reason=(None if choice.legal_target_ids else "no_legal_targets"),
+                )
+                for choice in action_choices
+            ),
+            reason=None if action_choices else "no_available_actions",
+        )
+        return _normalized_object(payload.model_dump(mode="json"), path="choices")
+
     def project_state(self, state: DndCombatTurnState) -> dict[str, JSONValue]:
         return {
             "phase": state.phase,
@@ -803,4 +839,5 @@ class DndCombatTurnDriver:
                 for actor_id in sorted(state.context.actors)
             },
             "result": _encode_result(state.last_result),
+            "choices": self.project_choices(state),
         }

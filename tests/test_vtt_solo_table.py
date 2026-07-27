@@ -156,6 +156,14 @@ def test_solo_table_reaches_terminal_outcome_through_real_encounter_driver() -> 
 
     assert started.events[-1].kind == "dnd.turn.prepared"
     assert session.state["turn"]["actor_id"] == "vela_quill"
+    lattice_lance_choice = next(
+        choice
+        for choice in session.projection["choices"]["actions"]
+        if choice["action_name"] == "Lattice Lance"
+    )
+    assert lattice_lance_choice["selectable_target_ids"] == ["hushglass_sentry"]
+    assert lattice_lance_choice["legal_target_ids"] == []
+    assert lattice_lance_choice["reason"] == "no_legal_targets"
 
     declaration = TurnDeclaration(
         movement_path=[(12.5, 12.5, 0.0), (17.5, 12.5, 0.0)],

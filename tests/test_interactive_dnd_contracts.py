@@ -5,7 +5,13 @@ import math
 import pytest
 from pydantic import ValidationError
 
-from dnd_sim.interactive.dnd_contracts import TurnDeclarationPayload
+from dnd_sim.interactive.dnd_contracts import (
+    TURN_CHOICES_SCHEMA_VERSION,
+    ActionChoicePayload,
+    MovementChoicePayload,
+    TurnChoicesPayload,
+    TurnDeclarationPayload,
+)
 from dnd_sim.strategy_api import (
     DeclaredAction,
     ReactionPolicy,
@@ -78,3 +84,102 @@ def test_turn_declaration_payload_rejects_noncanonical_or_unsupported_input(
 
     with pytest.raises((ValidationError, ValueError)):
         TurnDeclarationPayload.model_validate(source)
+
+
+def test_turn_choices_payload_is_versioned_strict_and_json_canonical() -> None:
+    choices = TurnChoicesPayload(
+        actor_id="hero",
+        movement=MovementChoicePayload(
+            origin=(0.0, 5.0, 0.0),
+            remaining_ft=25.0,
+        ),
+        actions=(
+            ActionChoicePayload(
+                action_name="strike",
+                action_cost="action",
+                target_mode="single_enemy",
+                requires_explicit_targets=True,
+                selectable_target_ids=("enemy-a", "enemy-b"),
+                legal_target_ids=("enemy-a", "enemy-b"),
+            ),
+        ),
+    )
+
+    assert choices.model_dump(mode="json") == {
+        "schema_version": TURN_CHOICES_SCHEMA_VERSION,
+        "actor_id": "hero",
+        "movement": {
+            "origin": [0.0, 5.0, 0.0],
+            "remaining_ft": 25.0,
+        },
+        "actions": [
+            {
+                "action_name": "strike",
+                "action_cost": "action",
+                "target_mode": "single_enemy",
+                "requires_explicit_targets": True,
+                "selectable_target_ids": ["enemy-a", "enemy-b"],
+                "legal_target_ids": ["enemy-a", "enemy-b"],
+                "reason": None,
+            }
+        ],
+        "reason": None,
+    }
+
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        TurnChoicesPayload.model_validate({**choices.model_dump(mode="json"), "unexpected": True})
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [
+        {"legal_target_ids": [], "reason": None},
+        {"selectable_target_ids": ["enemy-b", "enemy-a"]},
+        {"selectable_target_ids": ["enemy-a", "enemy-a"]},
+        {"selectable_target_ids": [], "legal_target_ids": ["enemy-a"]},
+        {"legal_target_ids": ["enemy-b", "enemy-a"], "reason": None},
+        {"legal_target_ids": ["enemy-a"], "reason": "no_legal_targets"},
+        {"requires_explicit_targets": False},
+    ],
+)
+def test_action_choice_payload_requires_consistent_target_reason(patch: dict) -> None:
+    source = {
+        "action_name": "strike",
+        "action_cost": "action",
+        "target_mode": "single_enemy",
+        "requires_explicit_targets": True,
+        "selectable_target_ids": ["enemy-a"],
+        "legal_target_ids": ["enemy-a"],
+        "reason": None,
+    }
+    source.update(patch)
+
+    with pytest.raises(ValidationError):
+        ActionChoicePayload.model_validate(source)
+
+
+def test_explicit_action_can_be_selectable_before_it_is_currently_legal() -> None:
+    choice = ActionChoicePayload(
+        action_name="strike",
+        action_cost="action",
+        target_mode="single_enemy",
+        requires_explicit_targets=True,
+        selectable_target_ids=("enemy-a",),
+        legal_target_ids=(),
+        reason="no_legal_targets",
+    )
+
+    assert choice.selectable_target_ids == ("enemy-a",)
+    assert choice.legal_target_ids == ()
+
+
+def test_empty_turn_choices_require_an_explicit_reason() -> None:
+    with pytest.raises(ValidationError):
+        TurnChoicesPayload(
+            actor_id="hero",
+            movement=MovementChoicePayload(
+                origin=(0.0, 0.0, 0.0),
+                remaining_ft=0.0,
+            ),
+            actions=(),
+        )

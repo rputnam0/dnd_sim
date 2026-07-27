@@ -26,7 +26,7 @@ from dnd_sim.interactive.dnd_turn_driver import (
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.strategy_api import DeclaredAction, TargetRef, TurnDeclaration
-from dnd_sim.turn_kernel import CombatTurnContext
+from dnd_sim.turn_kernel import CombatTurnContext, CombatTurnPrompt
 
 VERSION_PINS = EngineVersionPins(
     engine_version="dnd-sim@0.1.0",
@@ -191,6 +191,7 @@ def test_real_dnd_driver_preview_matches_commit_without_mutating_session() -> No
     assert receipt.events[0].payload["status"] == "resolved"
     assert session.state["phase"] == "complete"
     assert session.state["actors"]["enemy"]["hp"] == 26
+    assert session.projection["choices"] is None
 
 
 def test_real_dnd_driver_accepts_browser_integer_movement_coordinates() -> None:
@@ -290,6 +291,165 @@ def test_turn_session_projection_is_a_safe_public_view() -> None:
     assert "rule_trace" not in projection
     assert "resources_spent" not in projection
     assert "traits" not in projection["actors"]["hero"]
+    assert projection["choices"] is None
+
+
+def test_turn_projection_exposes_repeatable_authoritative_choices() -> None:
+    def choice_state() -> DndCombatTurnState:
+        state = _turn_state()
+        second_enemy = _actor(
+            "enemy-2",
+            team="enemy",
+            position=(5.0, 5.0, 0.0),
+        )
+        state.context.actors[second_enemy.actor_id] = second_enemy
+        state.context.initiative_order.append(second_enemy.actor_id)
+        state.context.damage_dealt[second_enemy.actor_id] = 0
+        state.context.damage_taken[second_enemy.actor_id] = 0
+        state.context.threat_scores[second_enemy.actor_id] = 0
+        state.context.resources_spent[second_enemy.actor_id] = {}
+        state.context.actors["hero"].actions.extend(
+            [
+                ActionDefinition(
+                    name="focus",
+                    action_type="buff",
+                    action_cost="bonus",
+                    target_mode="self",
+                ),
+                ActionDefinition(
+                    name="area_pulse",
+                    action_type="save",
+                    action_cost="action",
+                    target_mode="all_enemies",
+                    range_ft=5,
+                ),
+                ActionDefinition(
+                    name="short_reach",
+                    action_type="attack",
+                    action_cost="action",
+                    target_mode="single_enemy",
+                    reach_ft=1,
+                ),
+                ActionDefinition(
+                    name="spent_power",
+                    action_type="buff",
+                    action_cost="action",
+                    target_mode="self",
+                    resource_cost={"focus_points": 1},
+                ),
+            ]
+        )
+        return state
+
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    projected = EngineSession("choice-projection", choice_state(), driver, seed=29)
+    control = EngineSession("choice-projection", choice_state(), driver, seed=29)
+    projected.execute(_prepare_command(session_id="choice-projection"))
+    control.execute(_prepare_command(session_id="choice-projection"))
+    before = projected.snapshot_json()
+
+    first = projected.projection
+    second = projected.projection
+
+    assert first == second
+    assert projected.snapshot_json() == before
+    assert first["choices"] == {
+        "schema_version": "dnd.turn-choices.v1",
+        "actor_id": "hero",
+        "movement": {
+            "origin": [0.0, 0.0, 0.0],
+            "remaining_ft": 30.0,
+        },
+        "actions": [
+            {
+                "action_name": "strike",
+                "action_cost": "action",
+                "target_mode": "single_enemy",
+                "requires_explicit_targets": True,
+                "selectable_target_ids": ["enemy", "enemy-2"],
+                "legal_target_ids": ["enemy", "enemy-2"],
+                "reason": None,
+            },
+            {
+                "action_name": "focus",
+                "action_cost": "bonus",
+                "target_mode": "self",
+                "requires_explicit_targets": False,
+                "selectable_target_ids": ["hero"],
+                "legal_target_ids": ["hero"],
+                "reason": None,
+            },
+            {
+                "action_name": "area_pulse",
+                "action_cost": "action",
+                "target_mode": "all_enemies",
+                "requires_explicit_targets": False,
+                "selectable_target_ids": ["enemy", "enemy-2"],
+                "legal_target_ids": ["enemy", "enemy-2"],
+                "reason": None,
+            },
+            {
+                "action_name": "short_reach",
+                "action_cost": "action",
+                "target_mode": "single_enemy",
+                "requires_explicit_targets": True,
+                "selectable_target_ids": ["enemy", "enemy-2"],
+                "legal_target_ids": [],
+                "reason": "no_legal_targets",
+            },
+        ],
+        "reason": None,
+    }
+
+    command = _command(
+        session_id="choice-projection",
+        command_id="choice-strike",
+        mode="commit",
+        declaration=_declaration(),
+        expected_revision=1,
+    )
+    assert projected.execute(command).events == control.execute(command).events
+
+
+def test_turn_projection_explains_when_no_actions_are_available() -> None:
+    state = _turn_state()
+    state.context.actors["hero"].actions.clear()
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session = EngineSession("no-choice-projection", state, driver, seed=13)
+    session.execute(_prepare_command(session_id="no-choice-projection"))
+
+    choices = session.projection["choices"]
+
+    assert choices["actions"] == []
+    assert choices["reason"] == "no_available_actions"
+
+
+def test_turn_choice_projection_does_not_mutate_live_runtime_inputs() -> None:
+    state = _turn_state()
+    state.context.active_hazards.append(
+        {
+            "hazard_id": "far_fog",
+            "position": [100.0, 100.0, 0.0],
+            "radius_ft": 5.0,
+        }
+    )
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    rng = random.Random(43)
+    prepared = driver.prepare_turn(
+        state,
+        _prepare_command(session_id="live-choice-projection"),
+        rng,
+    )
+    assert isinstance(prepared, CombatTurnPrompt)
+    before_state = driver.encode_state(state)
+    before_rng = rng.getstate()
+
+    first = driver.project_choices(state)
+    second = driver.project_choices(state)
+
+    assert first == second
+    assert driver.encode_state(state) == before_state
+    assert rng.getstate() == before_rng
 
 
 def test_invalid_late_bonus_rolls_back_real_dnd_state_and_rng() -> None:

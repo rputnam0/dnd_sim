@@ -19,7 +19,14 @@ from .contracts import (
     SessionEvent,
     SessionSnapshot,
 )
-from .dnd_contracts import DECLARATION_COMMAND_KIND, TurnDeclarationPayload
+from .dnd_contracts import (
+    DECLARATION_COMMAND_KIND,
+    TURN_CHOICES_SCHEMA_VERSION,
+    ActionChoicePayload,
+    MovementChoicePayload,
+    TurnChoicesPayload,
+    TurnDeclarationPayload,
+)
 from .dnd_encounter_driver import (
     DND_ENCOUNTER_STATE_SCHEMA_VERSION,
     START_ENCOUNTER_COMMAND_KIND,
@@ -60,6 +67,8 @@ __all__ = [
     "RNG_ALGORITHM",
     "SNAPSHOT_SCHEMA_VERSION",
     "START_ENCOUNTER_COMMAND_KIND",
+    "TURN_CHOICES_SCHEMA_VERSION",
+    "ActionChoicePayload",
     "CommandReceipt",
     "CommandRecord",
     "DndCombatTurnDriver",
@@ -80,6 +89,8 @@ __all__ = [
     "SessionCommand",
     "SessionEvent",
     "SessionSnapshot",
+    "MovementChoicePayload",
+    "TurnChoicesPayload",
     "TurnDeclarationPayload",
     "decode_actor_runtime_state",
     "decode_actor_runtime_state_map",
