@@ -209,3 +209,40 @@ test("ships shared area templates with explicit server-backed removal", async ()
   assert.match(readme, /server-backed deletion/i);
   assert.doesNotMatch(readme, /protected browser auth(?:entication)? (?:is )?supported/i);
 });
+
+test("ships accessible durable plain-text chat without fabricated presentation data", async () => {
+  const [table, panel, client, hook, css, readme] = await Promise.all([
+    readFile(new URL("../app/echo-vault-table.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-chat-panel.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-chat.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/use-vtt-chat.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(table, /<VttChatPanel sessionId=\{view\.session_id\} \/>/);
+  assert.match(panel, /role="log"/);
+  assert.match(panel, /<form/);
+  assert.match(panel, /<textarea/);
+  assert.match(panel, /Array\.from\(draft\)\.length/);
+  assert.match(panel, /characterCount <= MAX_CHAT_TEXT_LENGTH/);
+  assert.doesNotMatch(panel, /maxLength=/);
+  assert.match(panel, /setDraft\(\(current\) =>[\s\S]+?current === submittedText/);
+  assert.match(panel, /message\.author_id === "local"/);
+  assert.match(panel, /deleteMessage/);
+  assert.match(panel, /\{message\.text\}/);
+  assert.match(client, /vtt\.chat_view\.v1/);
+  assert.match(client, /buildChatPostRequest/);
+  assert.match(client, /buildChatDeleteRequest/);
+  assert.match(hook, /getChatView/);
+  assert.match(hook, /streamChatEvents/);
+  assert.match(hook, /chat_stale_revision/);
+  assert.match(hook, /event === null/);
+  assert.match(css, /\.chat-message-text[\s\S]+?white-space:\s*pre-wrap/);
+  assert.match(readme, /plain-text chat/i);
+  assert.match(readme, /no timestamps/i);
+  assert.doesNotMatch(
+    panel + client + hook,
+    /dangerouslySetInnerHTML|\.innerHTML|\bmarked\b|markdown-it|new Date\(|Date\.now\(|timestamp/i,
+  );
+});

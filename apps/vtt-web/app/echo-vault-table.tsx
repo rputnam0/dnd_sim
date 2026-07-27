@@ -56,6 +56,7 @@ import {
   type AreaTemplateGridGeometry,
   type AreaTemplateKind,
 } from "./vtt-template-geometry";
+import { VttChatPanel } from "./vtt-chat-panel";
 
 type PendingOperation = "start" | "preview" | "commit" | null;
 
@@ -2034,6 +2035,7 @@ export function EchoVaultTable() {
             }}
             onAnnotationRetry={sharedAnnotations.retry}
           />
+          <VttChatPanel sessionId={view.session_id} />
           <EventLog events={events} />
         </div>
 

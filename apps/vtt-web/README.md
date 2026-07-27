@@ -72,6 +72,23 @@ revision or ownership failure; the UI then rehydrates and asks the user to revie
 retry instead of guessing at server state. Markers owned by another author stay visible
 but cannot be removed from this open-local browser surface.
 
+## Durable plain-text chat
+
+When the optional chat API is composed into the table service, the chat panel hydrates
+the authoritative ordered message view from `GET /api/v1/chat` and follows
+`GET /api/v1/chat-events` with its own reconnectable revision cursor. Sequence gaps are
+valid because audience filtering can hide intervening events; visible messages remain in
+server order. A stale mutation or a successful response without a visible event triggers
+an immediate authoritative rehydrate instead of a speculative browser update.
+
+The bundled open-local surface posts public messages through `POST /api/v1/chat-commands`
+and offers server-backed deletion only for messages whose `author_id` is `local`. Message
+text is preserved and rendered directly through React text nodes with whitespace retained.
+There is no HTML or Markdown interpretation and no timestamps are invented. The composer
+enforces the 2,000-character contract by Unicode code point, so multi-code-unit characters
+count the same way as they do in the Python service. If the optional chat API returns 404,
+the panel reports chat as unavailable while the tactical map and event log continue to work.
+
 The bundled solo table uses open-local author identity. Protected browser authentication
 is not implemented by this web app yet; deployments that enable participant-scoped
 access need a credential source and request-header integration before these controls can
