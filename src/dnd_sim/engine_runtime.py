@@ -65,7 +65,6 @@ from dnd_sim.movement_runtime import (
     MovementPathValidationError,
     difficult_terrain_positions_from_hazards as _movement_difficult_terrain_positions_from_hazards,
     expand_path_points as _movement_expand_path_points,
-    find_opportunity_attack_action as _movement_find_opportunity_attack_action,
     movement_reach_transitions as _movement_runtime_reach_transitions,
     movement_triggers_opportunity_attacks as _movement_triggers_opportunity_attacks,
     opportunity_attack_candidates as _movement_opportunity_attack_candidates,
@@ -108,6 +107,7 @@ from dnd_sim.strategy_api import (
     ActorView,
     BattleStateView,
     DeclaredAction,
+    ReactionDecisionProvider,
     ReadyDeclaration,
     TargetRef,
     TurnDeclaration,
@@ -7865,19 +7865,6 @@ def _opportunity_attack_candidates(
     )
 
 
-def _find_opportunity_attack_action(
-    actor: ActorRuntimeState,
-    *,
-    required_reach_ft: float = 0.0,
-) -> tuple[ActionDefinition, float] | None:
-    return _movement_find_opportunity_attack_action(
-        actor,
-        required_reach_ft=required_reach_ft,
-        can_pay_resource_cost=_can_pay_resource_cost,
-        reach_resolver=_opportunity_attack_reach_ft,
-    )
-
-
 def _movement_reach_transitions(
     *,
     reactor_position: tuple[float, float, float],
@@ -7888,21 +7875,6 @@ def _movement_reach_transitions(
         reactor_position=reactor_position,
         path_points=path_points,
         reach_ft=reach_ft,
-    )
-
-
-def _as_readied_reaction_action(action: ActionDefinition) -> ActionDefinition:
-    return _reaction_runtime.as_readied_reaction_action(action)
-
-
-def _readied_reach_entry_point(
-    *,
-    responder: ActorRuntimeState,
-    path_points: list[tuple[float, float, float]],
-) -> tuple[float, float, float] | None:
-    return _reaction_runtime.readied_reach_entry_point(
-        responder=responder,
-        path_points=path_points,
     )
 
 
@@ -7926,6 +7898,9 @@ def _run_opportunity_attacks_for_movement(
     movement_kind: str = "voluntary",
     movement_source: str = "movement",
     movement_trigger_hooks: list[Callable[[MovementReactionTrigger], None]] | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
 ) -> None:
     _reaction_runtime.run_opportunity_attacks_for_movement(
         rng=rng,
@@ -7946,6 +7921,9 @@ def _run_opportunity_attacks_for_movement(
         movement_kind=movement_kind,
         movement_source=movement_source,
         movement_trigger_hooks=movement_trigger_hooks,
+        reaction_decision_provider=reaction_decision_provider,
+        rule_trace=rule_trace,
+        telemetry=telemetry,
     )
 
 
@@ -8784,6 +8762,9 @@ def _apply_declared_movement_or_error(
     light_level: str = "bright",
     round_number: int | None = None,
     turn_token: str | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
 ) -> None:
     if not movement_path:
         return
@@ -8864,6 +8845,9 @@ def _apply_declared_movement_or_error(
         round_number=round_number,
         turn_token=turn_token,
         movement_source="movement",
+        reaction_decision_provider=reaction_decision_provider,
+        rule_trace=rule_trace,
+        telemetry=telemetry,
     )
     if actor.dead or actor.hp <= 0:
         return
@@ -9076,6 +9060,7 @@ def _execute_declared_turn_or_error(
     light_level: str = "bright",
     round_number: int | None = None,
     turn_token: str | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
     rule_trace: list[dict[str, Any]] | None = None,
 ) -> None:
     movement_path = _declared_movement_path_or_error(actor, declaration)
@@ -9103,6 +9088,9 @@ def _execute_declared_turn_or_error(
         light_level=light_level,
         round_number=round_number,
         turn_token=turn_token,
+        reaction_decision_provider=reaction_decision_provider,
+        rule_trace=rule_trace,
+        telemetry=telemetry,
     )
     if actor.dead or actor.hp <= 0:
         return
@@ -15404,19 +15392,32 @@ def run_simulation_core(
                     if hasattr(actor, "commanded_this_round"):
                         actor.commanded_this_round = False
 
-                metadata = _build_round_metadata(
-                    actors=actors,
-                    threat_scores=threat_scores,
-                    burst_round_threshold=int(
-                        scenario.config.resource_policy.get("burst_round_threshold", 3)
-                    ),
-                    active_hazards=active_hazards,
-                    light_level=light_level,
-                    strategy_overrides=assumption_overrides,
-                )
-                state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
+                def _current_state_view() -> BattleStateView:
+                    metadata = _build_round_metadata(
+                        actors=actors,
+                        threat_scores=threat_scores,
+                        burst_round_threshold=int(
+                            scenario.config.resource_policy.get("burst_round_threshold", 3)
+                        ),
+                        active_hazards=active_hazards,
+                        obstacles=battlefield_obstacles,
+                        light_level=light_level,
+                        strategy_overrides=assumption_overrides,
+                    )
+                    return _build_actor_views(actors, initiative_order, rounds, metadata)
+
+                state_view = _current_state_view()
                 for strategy in strategy_registry.values():
                     strategy.on_round_start(state_view)
+                reaction_decision_provider = (
+                    _reaction_runtime.build_strategy_reaction_decision_provider(
+                        state_provider=_current_state_view,
+                        strategy_registry=strategy_registry,
+                        actor_strategy_overrides=actor_strategy_overrides,
+                        party_default_strategy=party_default_strategy,
+                        enemy_default_strategy=enemy_default_strategy,
+                    )
+                )
 
                 initiative_order = _sync_initiative_order(initiative_order, actors)
                 initiative_order = _reorder_initiative_for_construct_companions(
@@ -15663,18 +15664,7 @@ def run_simulation_core(
                             f"No strategy registered for actor {actor.actor_id}: {strategy_name}"
                         )
 
-                    metadata = _build_round_metadata(
-                        actors=actors,
-                        threat_scores=threat_scores,
-                        burst_round_threshold=int(
-                            scenario.config.resource_policy.get("burst_round_threshold", 3)
-                        ),
-                        active_hazards=active_hazards,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
-                        strategy_overrides=assumption_overrides,
-                    )
-                    state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
+                    state_view = _current_state_view()
                     actor_view = state_view.actors[actor.actor_id]
                     turn_declaration = strategy.declare_turn(actor_view, state_view)
                     if turn_declaration is None:
@@ -15728,6 +15718,7 @@ def run_simulation_core(
                             light_level=light_level,
                             round_number=rounds,
                             turn_token=turn_token,
+                            reaction_decision_provider=reaction_decision_provider,
                             rule_trace=trial_rule_trace,
                         )
                     except TurnDeclarationValidationError as exc:

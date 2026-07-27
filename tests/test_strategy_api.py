@@ -5,6 +5,9 @@ from dnd_sim.strategy_api import (
     BaseStrategy,
     BattleStateView,
     DeclaredAction,
+    ReactionOptionView,
+    ReactionTriggerView,
+    ReactionWindowView,
     TargetRef,
     TurnDeclaration,
 )
@@ -149,3 +152,38 @@ def test_base_strategy_can_declare_stabilization_for_a_downed_creature() -> None
     assert declaration.action is not None
     assert declaration.action.action_name == "stabilize"
     assert declaration.action.targets == [TargetRef(actor_id="downed")]
+
+
+def test_base_strategy_uses_deterministic_reaction_option_priority() -> None:
+    actor, state = _build_state()
+    window = ReactionWindowView(
+        window_id="1:opportunity_attack:hero:enemy:0:5,0,0",
+        reactor_id=actor.actor_id,
+        round_number=1,
+        turn_token="1:enemy",
+        trigger=ReactionTriggerView(
+            kind="opportunity_attack",
+            source_actor_id="enemy",
+            target_actor_id=actor.actor_id,
+        ),
+        options=(
+            ReactionOptionView(
+                option_id="heavy",
+                action_name="heavy",
+                attack_bonus=5,
+                reach_ft=5,
+            ),
+            ReactionOptionView(
+                option_id="accurate",
+                action_name="accurate",
+                attack_bonus=8,
+                reach_ft=5,
+            ),
+        ),
+    )
+
+    decision = BaseStrategy().decide_reaction(actor, window, state)
+
+    assert decision.window_id == window.window_id
+    assert decision.choice == "use"
+    assert decision.option_id == "accurate"

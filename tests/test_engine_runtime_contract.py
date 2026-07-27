@@ -7,6 +7,13 @@ from types import SimpleNamespace
 import dnd_sim.engine as engine_module
 import dnd_sim.engine_runtime as engine_runtime
 from dnd_sim.io import load_character_db, load_runtime_scenario, load_strategy_registry
+from dnd_sim.strategy_api import (
+    BaseStrategy,
+    ReactionDecision,
+    ReactionOptionView,
+    ReactionTriggerView,
+    ReactionWindowView,
+)
 from tests.helpers import build_character, build_enemy
 from tests.runtime_test_support import _setup_env
 
@@ -209,3 +216,70 @@ def test_runtime_applies_configured_precombat_interaction_state(
     assert captured["rogue"]["hidden"] is True
     assert captured["rogue"]["detected_by"] == set()
     assert captured["guard"]["surprised"] is True
+
+
+def test_runtime_routes_reaction_window_to_reactor_strategy(tmp_path: Path, monkeypatch) -> None:
+    scenario_path = _setup_env(
+        tmp_path,
+        party=[build_character("hero", "Hero", 20, 14, 4, "1d6+2")],
+        enemies=[
+            build_enemy(enemy_id="enemy", name="Enemy", hp=20, ac=12, to_hit=4, damage="1d6+2")
+        ],
+        assumption_overrides={
+            "party_strategy": "party_strategy",
+            "enemy_strategy": "enemy_strategy",
+        },
+        max_rounds=1,
+    )
+    loaded = load_runtime_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    decisions: list[ReactionDecision] = []
+
+    class PassingReactionStrategy(BaseStrategy):
+        def decide_reaction(self, actor, window, state):
+            assert actor.actor_id == "hero"
+            assert state.actors[actor.actor_id].reaction_available is True
+            return ReactionDecision(window_id=window.window_id, choice="pass")
+
+    def capture_declared_turn(**kwargs):
+        if decisions:
+            return
+        provider = kwargs.get("reaction_decision_provider")
+        assert callable(provider)
+        window = ReactionWindowView(
+            window_id="1:opportunity_attack:hero:enemy:0:5,0,0",
+            reactor_id="hero",
+            round_number=1,
+            turn_token="1:enemy",
+            trigger=ReactionTriggerView(
+                kind="opportunity_attack",
+                source_actor_id="enemy",
+                target_actor_id="hero",
+            ),
+            options=(
+                ReactionOptionView(
+                    option_id="hero:opportunity_attack:0:basic",
+                    action_name="basic",
+                    attack_bonus=4,
+                ),
+            ),
+        )
+        decisions.append(provider(window))
+
+    monkeypatch.setattr(engine_runtime, "_execute_declared_turn_or_error", capture_declared_turn)
+
+    engine_runtime.run_simulation_core(
+        loaded,
+        db,
+        {},
+        {
+            "party_strategy": PassingReactionStrategy(),
+            "enemy_strategy": BaseStrategy(),
+        },
+        trials=1,
+        seed=31,
+        run_id="reaction_strategy_routing",
+    )
+
+    assert len(decisions) == 1
+    assert decisions[0].choice == "pass"

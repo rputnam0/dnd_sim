@@ -98,10 +98,13 @@ Active stack:
   damage and immediate hit riders, including effect-only attacks and ordered effect telemetry.
 - Draft PR `#255`, `codex/reaction-command-surface`: normalized readied-action triggers and
   zero-HP intent propagated through release, telemetry, actor views, snapshots, and cleanup.
+- Draft PR `#256`, `codex/typed-reaction-decisions`: deterministic typed opportunity-reaction
+  windows, validated use/pass decisions, explicit attack and knockout choices, strategy routing,
+  and reaction lifecycle telemetry.
 
-The next rules slice introduces typed reaction windows and explicit use/pass decisions, starting
-with opportunity attacks. Broader content and session APIs follow after the authoritative combat
-core is complete.
+The next rules slice corrects reaction refresh timing and migrates special, trait, and spell
+reactions onto the same typed decision surface. Broader content and session APIs follow after the
+authoritative combat core is complete.
 
 ## Required verification for Milestone 0
 

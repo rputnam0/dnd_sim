@@ -206,6 +206,8 @@ subsystems:
       - "Trigger matching preserves existing legality windows for opportunity and readied actions."
       - "Movement interrupts resolve readied reach triggers before exit-reach opportunity attacks for the same reactor."
       - "Readied response intent is preserved through release and cleared with all transient ready state."
+      - "Opportunity reactions expose deterministic typed windows and validate explicit use/pass decisions before resource, RNG, or combat-state mutation."
+      - "Reaction strategy callbacks receive the reacting actor and a freshly assembled battle-state view."
     safe_edit_boundaries:
       - "Safe: trigger matcher decomposition and additive reaction hooks."
       - "Caution: reaction lockout state transitions and timing edge cases."
