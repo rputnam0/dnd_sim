@@ -13,10 +13,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
+from starlette.datastructures import Headers
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from dnd_sim.interactive.session import EngineSessionError
 
+from .access import TableAccessError, TableAccessPolicy
 from .contracts import (
     VTTCommand,
     VTTCommitResponse,
@@ -26,6 +29,7 @@ from .contracts import (
     VTTVersionInfo,
 )
 from .event_store import CommandConflictError, EventStoreError
+from .participants import TableParticipant, audience_allows
 from .scene import SquareGridScene
 from .session_service import VTTSessionService, VTTSessionServiceError
 
@@ -37,6 +41,13 @@ DEFAULT_VTT_ALLOWED_ORIGINS = (
 )
 SSE_POLL_INTERVAL_SECONDS = 0.25
 SSE_HEARTBEAT_INTERVAL_SECONDS = 15.0
+_PROTECTED_TABLE_ROUTES = frozenset(
+    {
+        ("GET", "/api/v1/session"),
+        ("GET", "/api/v1/events"),
+        ("POST", "/api/v1/commands"),
+    }
+)
 
 NonNegativeInt = Annotated[int, Field(strict=True, ge=0)]
 
@@ -120,6 +131,7 @@ def _error_response(
     code: str,
     message: str,
     details: dict[str, JsonValue] | None = None,
+    headers: dict[str, str] | None = None,
 ) -> JSONResponse:
     error = VTTError(
         code=code,
@@ -129,6 +141,104 @@ def _error_response(
     return JSONResponse(
         status_code=status_code,
         content=error.model_dump(mode="json"),
+        headers=headers,
+    )
+
+
+def _access_error_response(exc: TableAccessError) -> JSONResponse:
+    if exc.code == "authentication_required":
+        return _error_response(
+            status_code=401,
+            code=exc.code,
+            message=str(exc),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return _error_response(
+        status_code=403,
+        code=exc.code,
+        message=str(exc),
+    )
+
+
+class _TableAuthenticationMiddleware:
+    """Authenticate protected routes before FastAPI reads a request body."""
+
+    def __init__(self, app: ASGIApp, *, access_policy: TableAccessPolicy) -> None:
+        self._app = app
+        self._access_policy = access_policy
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if (
+            scope["type"] != "http"
+            or (str(scope.get("method", "")), str(scope.get("path", "")))
+            not in _PROTECTED_TABLE_ROUTES
+        ):
+            await self._app(scope, receive, send)
+            return
+
+        authorization_values = Headers(scope=scope).getlist("authorization")
+        authorization = authorization_values[0] if len(authorization_values) == 1 else None
+        try:
+            participant = self._access_policy.authenticate(authorization)
+        except TableAccessError as exc:
+            await _access_error_response(exc)(scope, receive, send)
+            return
+
+        scope.setdefault("state", {})["vtt_participant"] = participant
+        await self._app(scope, receive, send)
+
+
+def _request_participant(request: Request) -> TableParticipant | None:
+    """Return the principal installed by the authentication middleware."""
+
+    policy = getattr(request.app.state, "vtt_access_policy", None)
+    if policy is None:
+        return None
+    if not isinstance(policy, TableAccessPolicy):
+        raise RuntimeError("the configured VTT access policy is invalid")
+    participant = getattr(request.state, "vtt_participant", None)
+    if not isinstance(participant, TableParticipant):
+        raise RuntimeError("a protected VTT request is missing its principal")
+    return participant
+
+
+def _audience_is_visible(
+    audience: tuple[str, ...],
+    participant: TableParticipant | None,
+) -> bool:
+    if participant is None:
+        return True
+    try:
+        return audience_allows(audience, participant)
+    except (TypeError, ValueError):
+        # Unknown/legacy audience syntax is never safe to expose from a
+        # protected table. Explicit selectors are the only supported policy.
+        return False
+
+
+def _filter_response_events(
+    response: VTTResponse,
+    participant: TableParticipant | None,
+) -> VTTResponse:
+    if participant is None:
+        return response
+    visible_events = tuple(
+        event for event in response.events if _audience_is_visible(event.audience, participant)
+    )
+    if isinstance(response, VTTPreviewResponse):
+        return VTTPreviewResponse.model_validate(
+            {
+                **response.model_dump(mode="json"),
+                "events": [event.model_dump(mode="json") for event in visible_events],
+            }
+        )
+    return VTTCommitResponse.model_validate(
+        {
+            **response.model_dump(mode="json"),
+            "events": [event.model_dump(mode="json") for event in visible_events],
+            "first_sequence": (visible_events[0].sequence if visible_events else None),
+            "last_sequence": (visible_events[-1].sequence if visible_events else None),
+        }
     )
 
 
@@ -184,6 +294,7 @@ async def _stream_events(
     request: Request,
     service: VTTSessionService,
     after: int,
+    participant: TableParticipant | None,
 ) -> AsyncIterator[str]:
     cursor = after
     event_loop = asyncio.get_running_loop()
@@ -195,12 +306,17 @@ async def _stream_events(
 
         events = service.events_after(cursor)
         if events:
+            yielded_visible_event = False
             for event in events:
                 if await request.is_disconnected():
                     return
-                yield _render_sse_event(event)
                 cursor = event.sequence
-            next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
+                if not _audience_is_visible(event.audience, participant):
+                    continue
+                yield _render_sse_event(event)
+                yielded_visible_event = True
+            if yielded_visible_event:
+                next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
         elif event_loop.time() >= next_heartbeat:
             yield ": heartbeat\n\n"
             next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
@@ -237,6 +353,7 @@ def create_vtt_app(
     *,
     scene: SquareGridScene | None = None,
     allowed_origins: tuple[str, ...] = DEFAULT_VTT_ALLOWED_ORIGINS,
+    access_policy: TableAccessPolicy | None = None,
 ) -> FastAPI:
     """Create a JSON-only VTT app around one already-owned session service."""
 
@@ -244,17 +361,32 @@ def create_vtt_app(
         raise TypeError("service must be a VTTSessionService")
     if scene is not None and not isinstance(scene, SquareGridScene):
         raise TypeError("scene must be a SquareGridScene or None")
+    if access_policy is not None and not isinstance(access_policy, TableAccessPolicy):
+        raise TypeError("access_policy must be a TableAccessPolicy or None")
     configured_scene = None if scene is None else scene.model_copy(deep=True)
     configured_origins = _validate_allowed_origins(allowed_origins)
 
     app = FastAPI(title="dnd-sim VTT API", version="1")
+    app.state.vtt_access_policy = access_policy
+    if access_policy is not None:
+        app.add_middleware(
+            _TableAuthenticationMiddleware,
+            access_policy=access_policy,
+        )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(configured_origins),
         allow_credentials=False,
         allow_methods=["GET", "POST"],
-        allow_headers=["content-type"],
+        allow_headers=["authorization", "content-type"],
     )
+
+    @app.exception_handler(TableAccessError)
+    async def table_access_error(
+        _request: Request,
+        exc: TableAccessError,
+    ) -> JSONResponse:
+        return _access_error_response(exc)
 
     @app.exception_handler(RequestValidationError)
     async def request_validation_error(
@@ -379,12 +511,18 @@ def create_vtt_app(
         after: Annotated[str | None, Query()] = None,
         last_event_id: Annotated[str | None, Header(alias="Last-Event-ID")] = None,
     ) -> StreamingResponse:
+        participant = _request_participant(request)
         cursor = _resume_after(
             after=after,
             last_event_id=last_event_id,
         )
         return StreamingResponse(
-            _stream_events(request=request, service=service, after=cursor),
+            _stream_events(
+                request=request,
+                service=service,
+                after=cursor,
+                participant=participant,
+            ),
             media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",
@@ -396,8 +534,16 @@ def create_vtt_app(
         "/api/v1/commands",
         response_model=VTTPreviewResponse | VTTCommitResponse,
     )
-    async def execute_command(command: VTTCommand) -> VTTResponse:
-        return service.execute(command)
+    async def execute_command(
+        command: VTTCommand,
+        request: Request,
+    ) -> VTTResponse:
+        participant = _request_participant(request)
+        if access_policy is not None:
+            if participant is None:
+                raise RuntimeError("a protected command is missing its principal")
+            access_policy.authorize_command(participant, command)
+        return _filter_response_events(service.execute(command), participant)
 
     return app
 

@@ -178,8 +178,9 @@ def audience_allows(
 ) -> bool:
     """Return whether ``participant`` may receive an audience-filtered record.
 
-    GMs are table authorities and can inspect every audience. Other roles must
-    match an explicit public, role, participant, or owned-actor selector.
+    GMs are table authorities and can inspect every valid audience. Players may
+    match public, player-role, participant-private, or owned-actor selectors.
+    Spectators receive only public or spectator-role records.
     """
 
     if not isinstance(participant, TableParticipant):
@@ -190,9 +191,9 @@ def audience_allows(
     for selector in selectors:
         if selector == f"role:{participant.role}":
             return True
-        if selector == f"participant:{participant.participant_id}":
+        if participant.role == "player" and selector == f"participant:{participant.participant_id}":
             return True
-        if selector.startswith("actor:"):
+        if participant.role == "player" and selector.startswith("actor:"):
             actor_id = selector.removeprefix("actor:")
             if actor_id in participant.owned_actor_ids:
                 return True

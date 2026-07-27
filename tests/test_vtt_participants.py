@@ -130,6 +130,8 @@ def test_explicit_audience_selectors_filter_without_inspecting_payloads() -> Non
     assert audience_allows(("actor:vela_quill",), other_player) is False
     assert audience_allows(("role:gm",), gm) is True
     assert audience_allows(("participant:player-1",), gm) is True
+    assert audience_allows(("participant:spectator-1",), spectator) is False
+    assert audience_allows(("role:spectator",), spectator) is True
 
 
 @pytest.mark.parametrize(
