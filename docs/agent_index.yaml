@@ -151,6 +151,7 @@ subsystems:
       - "Legality checks emit structured errors with deterministic error codes."
       - "Action economy validation is centralized and reused by engine and strategy API validation paths."
       - "Invalid declarations fail fast before action resolution side effects occur."
+      - "Readied responses normalize supported triggers, action identity, and zero-HP intent before movement or resource mutation."
     safe_edit_boundaries:
       - "Safe: adding new legality predicates and extracting declaration validators into dedicated helpers."
       - "Caution: error payload shape consumed by strategy and integration tests."
@@ -204,6 +205,7 @@ subsystems:
       - "Ready-action release and interrupt ordering are deterministic under fixed seeds."
       - "Trigger matching preserves existing legality windows for opportunity and readied actions."
       - "Movement interrupts resolve readied reach triggers before exit-reach opportunity attacks for the same reactor."
+      - "Readied response intent is preserved through release and cleared with all transient ready state."
     safe_edit_boundaries:
       - "Safe: trigger matcher decomposition and additive reaction hooks."
       - "Caution: reaction lockout state transitions and timing edge cases."
@@ -244,6 +246,7 @@ subsystems:
       - "Reporting emits derived views only and does not mutate authoritative runtime state."
       - "Summary/report output remains backward compatible with existing integration consumers."
       - "Simulation summary aggregation remains stable regardless of trial input ordering for equivalent values."
+      - "Actor snapshots expose deterministic reaction and readied-response state for replay consumers."
     safe_edit_boundaries:
       - "Safe: formatting helpers and additive summary fields with defaults."
       - "Caution: report key stability consumed by downstream docs and tooling."

@@ -115,10 +115,10 @@ from dnd_sim.strategy_api import (
 )
 from dnd_sim.action_legality import (
     TurnDeclarationValidationError,
-    apply_declared_reaction_policy_or_error as _apply_declared_reaction_policy_or_error_impl,
     declared_action_or_error as _declared_action_or_error_impl,
     declared_extra_resource_cost_or_error as _declared_extra_resource_cost_or_error_impl,
     declared_movement_path_or_error as _declared_movement_path_or_error_impl,
+    declared_reaction_policy_mode_or_error as _declared_reaction_policy_mode_or_error_impl,
     declared_spell_request_or_error as _declared_spell_request_or_error_impl,
     declared_targets_or_error as _declared_targets_or_error_impl,
     declared_zero_hp_intent_or_error as _declared_zero_hp_intent_or_error_impl,
@@ -163,6 +163,7 @@ from dnd_sim.spells import (
     spell_lookup_key as _canonical_spell_lookup_key,
 )
 from dnd_sim.telemetry import build_event_envelope
+from dnd_sim.reporting_runtime import actor_state_snapshot as _actor_state_snapshot_impl
 
 logger = logging.getLogger(__name__)
 
@@ -6842,6 +6843,7 @@ def _build_actor_from_enemy(
 
 
 def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
+    _expire_readied_action_state(actor)
     advance_stable_recovery(actor, hours=1)
     if actor.hp > 0 and not actor.dead:
         actor.hp = min(actor.max_hp, actor.hp + healing)
@@ -6903,6 +6905,7 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.concentrated_spell_level = None
     actor.readied_action_name = None
     actor.readied_trigger = None
+    actor.readied_zero_hp_intent = "normal"
     actor.readied_reaction_reserved = False
     actor.readied_spell_slot_level = None
     actor.readied_spell_held = False
@@ -7135,6 +7138,12 @@ def _build_actor_views(
                 death_failures=actor.death_failures,
                 stable_recovery_hours_remaining=actor.stable_recovery_hours_remaining,
                 creature_type=actor.creature_type,
+                reaction_available=actor.reaction_available,
+                readied_action_name=actor.readied_action_name,
+                readied_trigger=actor.readied_trigger,
+                readied_zero_hp_intent=actor.readied_zero_hp_intent,
+                readied_reaction_reserved=actor.readied_reaction_reserved,
+                readied_spell_held=actor.readied_spell_held,
             )
             for actor_id, actor in actors.items()
         },
@@ -7307,26 +7316,7 @@ def _resolve_next_encounter_index(
 
 
 def _actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
-    return {
-        "name": actor.name,
-        "hp": actor.hp,
-        "max_hp": actor.max_hp,
-        "temp_hp": actor.temp_hp,
-        "dead": actor.dead,
-        "stable": actor.stable,
-        "uses_death_saves": actor.uses_death_saves,
-        "death_successes": actor.death_successes,
-        "death_failures": actor.death_failures,
-        "stable_recovery_hours_remaining": actor.stable_recovery_hours_remaining,
-        "downed_count": actor.downed_count,
-        "was_downed": actor.was_downed,
-        "creature_type": actor.creature_type,
-        "conditions": sorted(actor.conditions),
-        "resources": dict(sorted(actor.resources.items())),
-        "hidden": actor.hidden,
-        "detected_by": sorted(actor.detected_by),
-        "surprised": actor.surprised,
-    }
+    return _actor_state_snapshot_impl(actor)
 
 
 def _build_initiative_order_with_scores(
@@ -8895,14 +8885,22 @@ def _apply_declared_movement_or_error(
 def _validate_declared_ready_or_error(
     actor: ActorRuntimeState, declaration: TurnDeclaration
 ) -> ReadyDeclaration | None:
-    return _validate_declared_ready_or_error_impl(actor=actor, declaration=declaration)
+    return _validate_declared_ready_or_error_impl(
+        actor=actor,
+        declaration=declaration,
+        attack_deliveries_resolver=lambda action: (
+            [instance.attack_delivery for instance in _build_attack_action_instances(actor, action)]
+            if _action_uses_attack_instance_framework(action)
+            else None
+        ),
+    )
 
 
-def _apply_declared_reaction_policy_or_error(
+def _declared_reaction_policy_mode_or_error(
     actor: ActorRuntimeState,
     declaration: TurnDeclaration,
 ) -> str:
-    return _apply_declared_reaction_policy_or_error_impl(
+    return _declared_reaction_policy_mode_or_error_impl(
         actor=actor,
         declaration=declaration,
         supported_modes=_SUPPORTED_REACTION_POLICY_MODES,
@@ -9081,6 +9079,16 @@ def _execute_declared_turn_or_error(
     rule_trace: list[dict[str, Any]] | None = None,
 ) -> None:
     movement_path = _declared_movement_path_or_error(actor, declaration)
+    reaction_mode = _declared_reaction_policy_mode_or_error(actor, declaration)
+    ready_declaration = _validate_declared_ready_or_error(actor, declaration)
+    if ready_declaration is not None and reaction_mode == "none":
+        _raise_turn_declaration_error(
+            actor=actor,
+            code="conflicting_reaction_policy",
+            field="reaction_policy.mode",
+            message="reaction_policy.mode='none' conflicts with declaring a ready response.",
+        )
+
     _apply_declared_movement_or_error(
         rng=rng,
         actor=actor,
@@ -9098,16 +9106,8 @@ def _execute_declared_turn_or_error(
     )
     if actor.dead or actor.hp <= 0:
         return
-
-    reaction_mode = _apply_declared_reaction_policy_or_error(actor, declaration)
-    ready_declaration = _validate_declared_ready_or_error(actor, declaration)
-    if ready_declaration is not None and reaction_mode == "none":
-        _raise_turn_declaration_error(
-            actor=actor,
-            code="conflicting_reaction_policy",
-            field="reaction_policy.mode",
-            message="reaction_policy.mode='none' conflicts with declaring a ready response.",
-        )
+    if reaction_mode == "none":
+        actor.reaction_available = False
 
     if telemetry is not None:
         telemetry.append(
@@ -9139,6 +9139,9 @@ def _execute_declared_turn_or_error(
                 "ready_trigger": ready_declaration.trigger if ready_declaration else None,
                 "ready_response": (
                     ready_declaration.response_action_name if ready_declaration else None
+                ),
+                "ready_zero_hp_intent": (
+                    ready_declaration.zero_hp_intent if ready_declaration else None
                 ),
                 "rationale": (
                     dict(declaration.rationale) if isinstance(declaration.rationale, dict) else {}
@@ -9667,9 +9670,17 @@ def _clear_readied_action_state(actor: ActorRuntimeState, *, clear_held_spell: b
         actor.concentration_effect_instance_ids.clear()
     actor.readied_action_name = None
     actor.readied_trigger = None
+    actor.readied_zero_hp_intent = "normal"
     actor.readied_reaction_reserved = False
     actor.readied_spell_slot_level = None
     actor.readied_spell_held = False
+
+
+def _expire_readied_action_state(actor: ActorRuntimeState) -> None:
+    if has_condition(actor, "readying"):
+        _remove_condition(actor, "readying")
+    else:
+        _clear_readied_action_state(actor, clear_held_spell=True)
 
 
 def _remove_effect_instance(
@@ -12057,17 +12068,6 @@ def _select_readied_action(actor: ActorRuntimeState) -> ActionDefinition | None:
     return None
 
 
-def _normalize_event_trigger(trigger: str | None) -> str | None:
-    if trigger is None:
-        return None
-    text = str(trigger).strip().lower()
-    return text or None
-
-
-def _readied_trigger_matches(readied_trigger: str | None, *, trigger_event: str) -> bool:
-    return _reaction_runtime.readied_trigger_matches(readied_trigger, trigger_event=trigger_event)
-
-
 def _trigger_readied_actions(
     *,
     rng: random.Random,
@@ -12084,6 +12084,8 @@ def _trigger_readied_actions(
     active_hazards: list[dict[str, Any]],
     obstacles: list[AABB] | None = None,
     light_level: str = "bright",
+    rule_trace: list[dict[str, Any]] | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
 ) -> None:
     _reaction_runtime.trigger_readied_actions(
         rng=rng,
@@ -12100,6 +12102,8 @@ def _trigger_readied_actions(
         active_hazards=active_hazards,
         obstacles=obstacles,
         light_level=light_level,
+        rule_trace=rule_trace,
+        telemetry=telemetry,
     )
 
 
@@ -14822,6 +14826,9 @@ def _execute_action_impl(
             _apply_condition(actor, "readying", duration_rounds=1)
             actor.readied_action_name = readied_action_name
             actor.readied_trigger = readied_trigger
+            actor.readied_zero_hp_intent = (
+                ready_declaration.zero_hp_intent if ready_declaration is not None else "normal"
+            )
             actor.readied_reaction_reserved = True
             actor.readied_spell_slot_level = None
             actor.readied_spell_held = False
@@ -15584,6 +15591,8 @@ def run_simulation_core(
                         active_hazards=active_hazards,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
+                        rule_trace=trial_rule_trace,
+                        telemetry=trial_telemetry,
                     )
 
                     if actor.dead or actor.hp <= 0:
@@ -15869,6 +15878,7 @@ def run_simulation_core(
                 for actor in actors.values():
                     if actor.team != "party" or actor.dead:
                         continue
+                    _expire_readied_action_state(actor)
                     if encounter.long_rest_after:
                         long_rest(actor)
                     elif encounter.short_rest_after:

@@ -4,10 +4,11 @@ from dataclasses import dataclass, field
 import logging
 from typing import Any, Literal, Protocol
 
+from dnd_sim.models import ZeroHPIntent
 from dnd_sim.spatial import check_cover, distance_chebyshev, move_towards
 
 logger = logging.getLogger(__name__)
-ZeroHPIntent = Literal["normal", "knock_out"]
+ReadyTrigger = Literal["enemy_turn_start", "enemy_enters_reach"]
 _REMOVED_LEGACY_STRATEGY_METHODS = (
     "choose_action",
     "choose_targets",
@@ -43,9 +44,10 @@ class ReactionPolicy:
 
 @dataclass(slots=True)
 class ReadyDeclaration:
-    trigger: str
+    trigger: ReadyTrigger
     response_action_name: str
     rationale: dict[str, Any] = field(default_factory=dict)
+    zero_hp_intent: ZeroHPIntent = "normal"
 
 
 @dataclass(slots=True)
@@ -83,6 +85,12 @@ class ActorView:
     death_failures: int = 0
     stable_recovery_hours_remaining: int | None = None
     creature_type: str = "unknown"
+    reaction_available: bool = True
+    readied_action_name: str | None = None
+    readied_trigger: str | None = None
+    readied_zero_hp_intent: ZeroHPIntent = "normal"
+    readied_reaction_reserved: bool = False
+    readied_spell_held: bool = False
 
 
 @dataclass(slots=True)

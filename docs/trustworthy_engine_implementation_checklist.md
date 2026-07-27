@@ -96,10 +96,12 @@ Active stack:
   disposition, neutralized encounter outcomes, distinct mortality metrics, and mutual-defeat draws.
 - Draft PR `#254`, `codex/unified-attack-damage`: one typed attack-damage bundle for primary
   damage and immediate hit riders, including effect-only attacks and ordered effect telemetry.
+- Draft PR `#255`, `codex/reaction-command-surface`: normalized readied-action triggers and
+  zero-HP intent propagated through release, telemetry, actor views, snapshots, and cleanup.
 
-The next rules slice expands reaction/readied-action command surfaces and their declared
-zero-HP disposition. Broader content and session APIs follow after the authoritative combat core
-is complete.
+The next rules slice introduces typed reaction windows and explicit use/pass decisions, starting
+with opportunity attacks. Broader content and session APIs follow after the authoritative combat
+core is complete.
 
 ## Required verification for Milestone 0
 
