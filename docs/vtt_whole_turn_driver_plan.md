@@ -34,21 +34,27 @@ and VTT must resolve a declared turn through the same domain function.
       reporting snapshots or runtime objects directly.
 - [x] Implement preview, commit, restore, idempotent retry, and fixed-seed replay
       through `EngineSession`.
-- [ ] Project legal movement, actions, targets, initiative, HP/effects, and rules
-      events without exposing hidden engine state.
+- [x] Project public action metadata, initiative, HP/effects, and rules events
+      without exposing hidden engine state.
+- [ ] Add an authoritative legal-choice read model for movement, actions, and
+      targets rather than deriving candidates in the browser.
 
 ## Milestone 4: Solo Table v0
 
 - [x] Add an append-only SQLite command/receipt/snapshot store.
 - [x] Add a single-session VTT application boundary over the engine session and store.
-- [ ] Add an HTTP/WebSocket gateway with a separate `vtt.command.v1` transport
+- [x] Add an HTTP JSON gateway with a separate `vtt.command.v1` transport
       contract.
+- [x] Add a reconnectable Server-Sent Events gateway with an exclusive event
+      cursor and heartbeat.
 - [x] Add an original fixed encounter with a square-grid scene and tokens.
-- [ ] Add the browser table: selection, movement preview/commit, action palette,
-      target selection, initiative, HP/effects, dice/rules log, and win/loss.
-- [ ] Add an end-to-end test that completes the encounter, restarts the service,
-      reloads the same state, retries without duplicate mutation, and verifies
-      byte-identical deterministic replay.
+- [x] Add the browser table: selection, movement preview/commit, action palette,
+      target selection, initiative, HP/effects, public rules log, and win/loss.
+- [x] Add an end-to-end service test that completes the encounter, restarts the
+      service, reloads the exact terminal view, and retries without duplicate
+      mutation.
+- [ ] Add a browser-driven end-to-end test and a second fresh-database replay
+      comparison.
 
 ## Verification gates
 

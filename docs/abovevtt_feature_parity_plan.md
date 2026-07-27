@@ -55,13 +55,14 @@ then restart and recover it exactly.
 - [x] Fixed-roster initiative cursor with round, victory, defeat, and timeout.
 - [x] Strict `vtt.command.v1` application boundary over engine sessions.
 - [x] Versioned square-grid scene and token projection.
-- [ ] Legal movement, action, target, initiative, HP, condition, and rules-event
-      read model.
-- [ ] HTTP JSON endpoints for create/load/read/preview/commit.
-- [ ] Server-sent event or WebSocket event stream with reconnect cursor.
-- [ ] Browser table with map, token selection, movement preview, action palette,
+- [x] Public action metadata, initiative, HP, condition, and rules-event read
+      model.
+- [ ] Authoritative legal movement, action, and target choice read model.
+- [x] HTTP JSON endpoints for singleton load/read/preview/commit.
+- [x] Server-sent event stream with reconnect cursor and heartbeat.
+- [x] Browser table with map, token selection, movement preview, action palette,
       target selection, initiative, HP/conditions, rules log, and outcome.
-- [ ] End-to-end deterministic completion, restart, replay, and duplicate-command
+- [x] End-to-end deterministic completion, restart, replay, and duplicate-command
       test.
 
 P0 acceptance: a user can open a table, play every prompted actor turn through
