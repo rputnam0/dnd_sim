@@ -64,7 +64,7 @@ class CombatEvent:
 @dataclass(slots=True)
 class ActionDeclaredEvent(CombatEvent):
     attacker: ActorRuntimeState
-    target: ActorRuntimeState
+    target: ActorRuntimeState | None
     action: ActionDefinition
     round_number: int | None = None
     turn_token: str | None = None
@@ -427,8 +427,8 @@ def evaluate_mage_slayer_reaction_window(
         return ReactionWindowResult(allowed=False, reason="missing_trait")
     if trigger_actor is None or trigger_action is None:
         return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
-    if trigger_actor.team == reactor.team:
-        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
+    if trigger_actor.actor_id == reactor.actor_id:
+        return ReactionWindowResult(allowed=False, reason="self_trigger")
     if "spell" not in {str(tag).strip().lower() for tag in trigger_action.tags}:
         return ReactionWindowResult(allowed=False, reason="invalid_trigger_action")
     if distance_ft is None or float(distance_ft) > 5.0 + 1e-9:
@@ -457,9 +457,9 @@ def evaluate_sentinel_reaction_window(
         return ReactionWindowResult(allowed=False, reason="invalid_trigger_payload")
     if trigger_action.action_type != "attack":
         return ReactionWindowResult(allowed=False, reason="invalid_trigger_action")
-    if trigger_actor.team == reactor.team:
-        return ReactionWindowResult(allowed=False, reason="non_hostile_trigger")
-    if trigger_target.actor_id == reactor.actor_id or trigger_target.team != reactor.team:
+    if trigger_actor.actor_id == reactor.actor_id:
+        return ReactionWindowResult(allowed=False, reason="self_trigger")
+    if trigger_target.actor_id == reactor.actor_id or _has_trait(trigger_target, "sentinel"):
         return ReactionWindowResult(allowed=False, reason="invalid_target_window")
     if distance_ft is None or float(distance_ft) > 5.0 + 1e-9:
         return ReactionWindowResult(allowed=False, reason="out_of_range")

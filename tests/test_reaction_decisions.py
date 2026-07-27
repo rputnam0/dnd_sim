@@ -6,10 +6,12 @@ from dnd_sim.engine_runtime import _run_opportunity_attacks_for_movement
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.reaction_runtime import (
     ReactionDecisionValidationError,
+    build_opportunity_attack_window,
     build_strategy_reaction_decision_provider,
 )
 from dnd_sim.strategy_api import (
     ActorView,
+    BaseStrategy,
     BattleStateView,
     ReactionDecision,
     ReactionOptionView,
@@ -90,6 +92,38 @@ def _trackers(
         {actor.actor_id: 0 for actor in actors},
         {actor.actor_id: {} for actor in actors},
     )
+
+
+def test_opportunity_reaction_ids_are_deterministic_and_bind_delimited_identities() -> None:
+    action = _attack("spear:guard")
+
+    def build(
+        *,
+        reactor_id: str,
+        mover_id: str,
+    ) -> ReactionWindowView:
+        return build_opportunity_attack_window(
+            reactor=_actor(reactor_id, team="party"),
+            mover=_actor(mover_id, team="enemy"),
+            candidates=[(action, 5.0)],
+            trigger_point=(5.0, 0.0, 0.0),
+            trigger_distance=5.0,
+            round_number=1,
+            turn_token="1:turn",
+            window_ordinal=0,
+            movement_source="movement",
+            mover_disengaged=False,
+        )
+
+    left = build(reactor_id="reactor:x", mover_id="y")
+    repeated = build(reactor_id="reactor:x", mover_id="y")
+    delimiter_collision = build(reactor_id="reactor", mover_id="x:y")
+    different_target = build(reactor_id="reactor:x", mover_id="other:y")
+
+    assert repeated.window_id == left.window_id
+    assert repeated.options[0].option_id == left.options[0].option_id
+    assert delimiter_collision.window_id != left.window_id
+    assert different_target.options[0].option_id != left.options[0].option_id
 
 
 def _run(
@@ -196,10 +230,9 @@ def test_reaction_decision_selects_an_explicit_attack_option() -> None:
     mover = _actor("mover", team="party")
     reactor = _actor("reactor", team="enemy")
     _position_for_opportunity_attack(mover, reactor)
-    reactor.actions = [
-        _attack("accurate", to_hit=10, damage="1"),
-        _attack("heavy", to_hit=5, damage="5"),
-    ]
+    heavy = _attack("heavy", to_hit=5, damage="5")
+    heavy.mechanics = [{"effect_type": "extra_attack", "count": 2}]
+    reactor.actions = [_attack("accurate", to_hit=10, damage="1"), heavy]
 
     def choose_heavy(window: ReactionWindowView) -> ReactionDecision:
         option = next(option for option in window.options if option.action_name == "heavy")
@@ -220,6 +253,31 @@ def test_reaction_decision_selects_an_explicit_attack_option() -> None:
     assert mover.hp == 15
     assert reactor.reaction_available is False
     assert reactor.per_action_uses["heavy"] == 1
+
+
+def test_opportunity_window_excludes_exhausted_limited_attacks() -> None:
+    mover = _actor("mover", team="party")
+    reactor = _actor("reactor", team="enemy")
+    _position_for_opportunity_attack(mover, reactor)
+    limited = _attack("limited")
+    limited.max_uses = 1
+    reactor.actions = [limited]
+    reactor.per_action_uses[limited.name] = 1
+    windows: list[ReactionWindowView] = []
+
+    def capture(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        return ReactionDecision(window_id=window.window_id, choice="pass")
+
+    _run(
+        rng=_SequenceRng([]),
+        mover=mover,
+        reactor=reactor,
+        provider=capture,
+    )
+
+    assert windows == []
+    assert reactor.reaction_available is True
 
 
 def test_opportunity_reaction_can_declare_a_melee_knockout() -> None:
@@ -421,3 +479,75 @@ def test_strategy_reaction_provider_uses_reactor_strategy_and_live_state() -> No
     assert legacy_fallback.choice == "use"
     assert legacy_fallback.option_id == "club"
     assert state_calls == 3
+
+
+def test_base_strategy_avoids_friendly_fire_for_trait_reactions() -> None:
+    reactor = ActorView(
+        actor_id="reactor",
+        team="party",
+        hp=20,
+        max_hp=20,
+        ac=15,
+        save_mods={},
+        resources={},
+        conditions=set(),
+        position=(0.0, 0.0, 0.0),
+        speed_ft=30,
+        movement_remaining=30.0,
+        traits={"sentinel": {}},
+    )
+    ally = ActorView(
+        actor_id="ally",
+        team="party",
+        hp=20,
+        max_hp=20,
+        ac=15,
+        save_mods={},
+        resources={},
+        conditions=set(),
+        position=(5.0, 0.0, 0.0),
+        speed_ft=30,
+        movement_remaining=30.0,
+        traits={},
+    )
+    state = BattleStateView(
+        round_number=1,
+        actors={reactor.actor_id: reactor, ally.actor_id: ally},
+        actor_order=[reactor.actor_id, ally.actor_id],
+        metadata={},
+    )
+    window = ReactionWindowView(
+        window_id="1:trait:reactor:ally",
+        reactor_id=reactor.actor_id,
+        round_number=1,
+        turn_token="1:ally",
+        trigger=ReactionTriggerView(
+            kind="trait",
+            source_actor_id=ally.actor_id,
+            target_actor_id="enemy",
+            feature_name="Sentinel",
+        ),
+        options=(
+            ReactionOptionView(
+                option_id="reactor:trait:spear",
+                action_name="spear",
+                fixed_target_ids=(ally.actor_id,),
+                legal_target_ids=(ally.actor_id,),
+            ),
+        ),
+    )
+
+    decision = BaseStrategy().decide_reaction(reactor, window, state)
+    legacy_decision = build_strategy_reaction_decision_provider(
+        state_provider=lambda: state,
+        strategy_registry={"party_default": object()},
+        actor_strategy_overrides={},
+        party_default_strategy="party_default",
+        enemy_default_strategy="enemy_default",
+    )(window)
+
+    assert decision.choice == "pass"
+    assert decision.option_id is None
+    assert decision.rationale == {"reason": "avoid_friendly_fire"}
+    assert legacy_decision.choice == "pass"
+    assert legacy_decision.option_id is None

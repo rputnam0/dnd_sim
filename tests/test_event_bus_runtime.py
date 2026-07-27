@@ -212,7 +212,7 @@ def test_dispatch_combat_event_runs_trait_handler_for_sentinel_reaction() -> Non
 
     _dispatch_combat_event(
         rng=rng,
-        event="after_action",
+        event="on_hit",
         trigger_actor=attacker,
         trigger_target=ally_target,
         trigger_action=trigger_action,
@@ -236,7 +236,7 @@ def test_dispatch_combat_event_runs_trait_handler_for_sentinel_reaction() -> Non
     refresh_reaction_at_turn_start(sentinel)
     _dispatch_combat_event(
         rng=rng,
-        event="after_action",
+        event="on_hit",
         trigger_actor=attacker,
         trigger_target=ally_target,
         trigger_action=trigger_action,
@@ -255,3 +255,148 @@ def test_dispatch_combat_event_runs_trait_handler_for_sentinel_reaction() -> Non
     assert sentinel.reaction_available is False
     trait_events = [row for row in trace if row.get("handler") == "trait:sentinel_reaction"]
     assert len(trait_events) == 2
+
+
+def test_event_action_self_loop_is_skipped_within_its_causal_chain() -> None:
+    reactor = _base_actor(actor_id="reactor", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    looping_attack = ActionDefinition(
+        name="looping_attack",
+        action_type="attack",
+        action_cost="none",
+        event_trigger="on_hit",
+        target_mode="single_enemy",
+        to_hit=100,
+        damage="1",
+    )
+    reactor.actions = [looping_attack]
+    actors = {reactor.actor_id: reactor, enemy.actor_id: enemy}
+    trace: list[dict[str, object]] = []
+
+    _dispatch_combat_event(
+        rng=random.Random(20),
+        event="on_hit",
+        trigger_actor=enemy,
+        trigger_target=reactor,
+        trigger_action=looping_attack,
+        actors=actors,
+        round_number=1,
+        turn_token="1:enemy",
+        damage_dealt={actor_id: 0 for actor_id in actors},
+        damage_taken={actor_id: 0 for actor_id in actors},
+        threat_scores={actor_id: 0 for actor_id in actors},
+        resources_spent={actor_id: {} for actor_id in actors},
+        active_hazards=[],
+        rule_trace=trace,
+    )
+
+    assert enemy.hp == enemy.max_hp - 1
+    assert reactor.per_action_uses[looping_attack.name] == 1
+    assert any(row.get("reason") == "recursive_event_action" for row in trace)
+
+
+def test_event_action_propagates_its_after_action_event_to_other_listeners() -> None:
+    striker = _base_actor(actor_id="striker", team="party")
+    listener = _base_actor(actor_id="listener", team="party")
+    enemy = _base_actor(actor_id="enemy", team="enemy")
+    triggered_strike = ActionDefinition(
+        name="triggered_strike",
+        action_type="attack",
+        action_cost="none",
+        event_trigger="on_hit",
+        target_mode="single_enemy",
+        to_hit=100,
+        damage="1",
+    )
+    after_action_listener = ActionDefinition(
+        name="after_action_listener",
+        action_type="utility",
+        action_cost="none",
+        event_trigger="after_action",
+        target_mode="self",
+    )
+    striker.actions = [triggered_strike]
+    listener.actions = [after_action_listener]
+    actors = {
+        striker.actor_id: striker,
+        listener.actor_id: listener,
+        enemy.actor_id: enemy,
+    }
+    trace: list[dict[str, object]] = []
+
+    _dispatch_combat_event(
+        rng=random.Random(22),
+        event="on_hit",
+        trigger_actor=enemy,
+        trigger_target=striker,
+        trigger_action=triggered_strike,
+        actors=actors,
+        round_number=1,
+        turn_token="1:enemy",
+        damage_dealt={actor_id: 0 for actor_id in actors},
+        damage_taken={actor_id: 0 for actor_id in actors},
+        threat_scores={actor_id: 0 for actor_id in actors},
+        resources_spent={actor_id: {} for actor_id in actors},
+        active_hazards=[],
+        rule_trace=trace,
+    )
+
+    assert listener.per_action_uses[after_action_listener.name] == 1
+    assert any(
+        row.get("event") == "after_action"
+        and row.get("action") == after_action_listener.name
+        and row.get("result") == "executed"
+        for row in trace
+    )
+
+
+def test_event_action_cycle_is_bounded_and_clears_active_guards() -> None:
+    first = _base_actor(actor_id="first", team="party")
+    second = _base_actor(actor_id="second", team="enemy")
+    first.actions = [
+        ActionDefinition(
+            name="first_counter",
+            action_type="attack",
+            action_cost="none",
+            event_trigger="on_hit",
+            target_mode="single_enemy",
+            to_hit=100,
+            damage="1",
+        )
+    ]
+    second.actions = [
+        ActionDefinition(
+            name="second_counter",
+            action_type="attack",
+            action_cost="none",
+            event_trigger="on_hit",
+            target_mode="single_enemy",
+            to_hit=100,
+            damage="1",
+        )
+    ]
+    actors = {first.actor_id: first, second.actor_id: second}
+    trace: list[dict[str, object]] = []
+
+    _dispatch_combat_event(
+        rng=random.Random(21),
+        event="on_hit",
+        trigger_actor=second,
+        trigger_target=first,
+        trigger_action=second.actions[0],
+        actors=actors,
+        round_number=1,
+        turn_token="1:second",
+        damage_dealt={actor_id: 0 for actor_id in actors},
+        damage_taken={actor_id: 0 for actor_id in actors},
+        threat_scores={actor_id: 0 for actor_id in actors},
+        resources_spent={actor_id: {} for actor_id in actors},
+        active_hazards=[],
+        rule_trace=trace,
+    )
+
+    assert first.hp == first.max_hp - 2
+    assert second.hp == second.max_hp - 2
+    assert first.active_event_action_keys == set()
+    assert second.active_event_action_keys == set()
+    assert any(row.get("reason") == "recursive_event_action" for row in trace)

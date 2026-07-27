@@ -55,6 +55,22 @@ def test_mage_slayer_window_requires_enemy_spell_cast_within_five_feet() -> None
     assert out_of_range.reason == "out_of_range"
 
 
+def test_mage_slayer_window_allows_a_spell_cast_by_any_other_creature() -> None:
+    reactor = _actor(actor_id="reactor", team="party", traits=("mage slayer",))
+    friendly_caster = _actor(actor_id="friendly_caster", team="party")
+    spell_action = ActionDefinition(name="fire_bolt", action_type="save", tags=["spell"])
+
+    result = evaluate_mage_slayer_reaction_window(
+        reactor=reactor,
+        trigger_actor=friendly_caster,
+        trigger_action=spell_action,
+        distance_ft=5.0,
+    )
+
+    assert result.allowed is True
+    assert result.reason is None
+
+
 def test_mage_slayer_window_rejects_without_required_trait() -> None:
     reactor = _actor(actor_id="reactor", team="party")
     enemy = _actor(actor_id="enemy", team="enemy")
@@ -96,6 +112,34 @@ def test_sentinel_window_requires_enemy_attacking_ally_within_five_feet() -> Non
     assert allowed.reason is None
     assert illegal_self_target.allowed is False
     assert illegal_self_target.reason == "invalid_target_window"
+
+
+def test_sentinel_window_uses_target_other_than_self_not_team_alignment() -> None:
+    sentinel = _actor(actor_id="sentinel", team="party", traits=("sentinel",))
+    friendly_attacker = _actor(actor_id="friendly_attacker", team="party")
+    enemy_target = _actor(actor_id="enemy_target", team="enemy")
+    sentinel_target = _actor(actor_id="sentinel_target", team="enemy", traits=("sentinel",))
+    attack_action = ActionDefinition(name="slash", action_type="attack")
+
+    allowed = evaluate_sentinel_reaction_window(
+        reactor=sentinel,
+        trigger_actor=friendly_attacker,
+        trigger_target=enemy_target,
+        trigger_action=attack_action,
+        distance_ft=5.0,
+    )
+    target_has_feat = evaluate_sentinel_reaction_window(
+        reactor=sentinel,
+        trigger_actor=friendly_attacker,
+        trigger_target=sentinel_target,
+        trigger_action=attack_action,
+        distance_ft=5.0,
+    )
+
+    assert allowed.allowed is True
+    assert allowed.reason is None
+    assert target_has_feat.allowed is False
+    assert target_has_feat.reason == "invalid_target_window"
 
 
 def test_sentinel_window_rejects_without_required_trait() -> None:

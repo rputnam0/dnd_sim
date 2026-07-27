@@ -142,6 +142,23 @@ def test_resolve_spell_cast_request_requires_explicit_target_ids_for_targeted_mo
         )
 
 
+def test_resolve_spell_cast_request_can_defer_target_selection_without_binding_caster() -> None:
+    caster = _actor(actor_id="caster", team="party")
+    action = _base_spell_action(target_mode="single_enemy")
+
+    request = resolve_spell_cast_request(
+        actor=caster,
+        action=action,
+        targets=[],
+        provided=SpellCastRequest(mode="single_enemy"),
+        required_spell_slot_level=lambda _action: 3,
+        preferred_spell_slot_level=lambda _action: 3,
+        allow_deferred_targets=True,
+    )
+
+    assert request.target_actor_ids == []
+
+
 def test_resolve_action_targets_filters_requested_ids_for_declared_spell_targets() -> None:
     caster = _actor(actor_id="caster", team="party")
     enemy_a = _actor(actor_id="enemy_a", team="enemy")

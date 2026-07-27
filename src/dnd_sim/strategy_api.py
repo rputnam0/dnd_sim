@@ -64,6 +64,9 @@ class ReactionTriggerView:
     distance_ft: float | None = None
     movement_source: str | None = None
     mover_disengaged: bool = False
+    feature_name: str | None = None
+    feature_trigger: str | None = None
+    feature_source_type: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -189,15 +192,30 @@ class BaseStrategy:
         window: ReactionWindowView,
         state: BattleStateView,
     ) -> ReactionDecision:
-        del actor, state
         if not window.options:
             return ReactionDecision(
                 window_id=window.window_id,
                 choice="pass",
                 rationale={"reason": "no_reaction_options"},
             )
+        options = window.options
+        if window.trigger.kind == "trait":
+            options = tuple(
+                option
+                for option in options
+                if not any(
+                    target_id in state.actors and state.actors[target_id].team == actor.team
+                    for target_id in option.fixed_target_ids
+                )
+            )
+            if not options:
+                return ReactionDecision(
+                    window_id=window.window_id,
+                    choice="pass",
+                    rationale={"reason": "avoid_friendly_fire"},
+                )
         option = max(
-            window.options,
+            options,
             key=lambda value: (
                 value.attack_bonus if value.attack_bonus is not None else -999,
                 value.reach_ft if value.reach_ft is not None else 0.0,

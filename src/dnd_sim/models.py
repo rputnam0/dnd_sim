@@ -256,6 +256,8 @@ class ActorRuntimeState:
     reaction_available: bool = True
     bonus_available: bool = True
     per_action_uses: dict[str, int] = field(default_factory=dict)
+    next_combat_event_ordinal: int = 0
+    active_event_action_keys: set[str] = field(default_factory=set)
     recharge_ready: dict[str, bool] = field(default_factory=dict)
     legendary_actions_remaining: int = 0
     lair_action_used_this_round: bool = False

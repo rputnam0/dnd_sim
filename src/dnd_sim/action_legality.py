@@ -379,6 +379,17 @@ def validate_declared_ready_or_error(
             message="Ready response must be a non-ready action that uses action or no cost.",
             details={"action_cost": response_action.action_cost},
         )
+    if (
+        "spell" in {str(tag).strip().lower() for tag in response_action.tags}
+        and response_action.action_cost != "action"
+    ):
+        raise_turn_declaration_error(
+            actor=actor,
+            code="illegal_ready_spell_casting_time",
+            field="ready.response_action_name",
+            message="A readied spell must have a casting time of exactly one action.",
+            details={"action_cost": response_action.action_cost},
+        )
     attack_deliveries = (
         attack_deliveries_resolver(response_action)
         if attack_deliveries_resolver is not None

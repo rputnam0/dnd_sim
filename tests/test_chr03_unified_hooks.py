@@ -93,7 +93,7 @@ def test_chr03_dispatch_runs_subclass_reaction_attack_hook() -> None:
 
     _dispatch_combat_event(
         rng=rng,
-        event="after_action",
+        event="on_hit",
         trigger_actor=attacker,
         trigger_target=ally_target,
         trigger_action=trigger_action,
