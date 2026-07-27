@@ -372,6 +372,12 @@ def _normalize_event_trigger(trigger: str | None) -> str | None:
     return text or None
 
 
+def refresh_reaction_at_turn_start(actor: ActorRuntimeState) -> None:
+    """Restore the standard reaction at the start of this actor's turn."""
+
+    actor.reaction_available = True
+
+
 def can_take_reaction(actor: ActorRuntimeState) -> bool:
     from dnd_sim import engine_runtime as engine_module
 
@@ -938,7 +944,6 @@ def run_trait_event_handlers(
 
     if event != "after_action" or trigger_actor is None or trigger_action is None:
         return
-    lock_key = f"event_reaction_round:{round_number}"
     reactors = sorted(actors.values(), key=lambda value: value.actor_id)
     for reactor in reactors:
         if reactor.dead or reactor.hp <= 0:
@@ -981,29 +986,12 @@ def run_trait_event_handlers(
 
             if not reactor.reaction_available:
                 continue
-            if reactor.per_action_uses.get(lock_key, 0) > 0:
-                rule_trace.append(
-                    {
-                        "event": event,
-                        "round": round_number,
-                        "turn": turn_token,
-                        "handler": handler_name,
-                        "actor_id": reactor.actor_id,
-                        "hook_feature": hook.feature_name,
-                        "hook_source": hook.source_type,
-                        "hook_trigger": hook.trigger,
-                        "result": "skipped",
-                        "reason": "reaction_lock",
-                    }
-                )
-                continue
 
             attack_action = engine_module._fallback_action(reactor)
             if attack_action is None or attack_action.action_type != "attack":
                 continue
 
             reactor.reaction_available = False
-            reactor.per_action_uses[lock_key] = 1
             if hook.trigger == "creature_attacks_ally_within_5ft":
                 trigger_actor.movement_remaining = 0.0
 

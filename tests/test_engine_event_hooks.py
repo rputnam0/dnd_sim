@@ -4,6 +4,7 @@ import random
 
 from dnd_sim.engine_runtime import _run_event_triggered_actions
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.reaction_runtime import refresh_reaction_at_turn_start
 
 
 def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
@@ -27,7 +28,7 @@ def _base_actor(*, actor_id: str, team: str) -> ActorRuntimeState:
     )
 
 
-def test_event_triggered_reaction_is_locked_once_per_round() -> None:
+def test_event_triggered_reaction_can_refresh_on_its_actors_turn_in_same_round() -> None:
     rng = random.Random(7)
     reactor = _base_actor(actor_id="reactor", team="party")
     enemy = _base_actor(actor_id="enemy", team="enemy")
@@ -76,7 +77,7 @@ def test_event_triggered_reaction_is_locked_once_per_round() -> None:
     first_round_executed = [entry for entry in trace if entry["result"] == "executed"]
     assert len(first_round_executed) == 1
 
-    reactor.reaction_available = True
+    refresh_reaction_at_turn_start(reactor)
     _run_event_triggered_actions(
         rng=rng,
         event="after_action",
@@ -91,9 +92,9 @@ def test_event_triggered_reaction_is_locked_once_per_round() -> None:
         rule_trace=trace,
     )
     same_round_executed = [entry for entry in trace if entry["result"] == "executed"]
-    assert len(same_round_executed) == 1
+    assert len(same_round_executed) == 2
+    assert reactor.reaction_available is False
 
-    reactor.reaction_available = True
     _run_event_triggered_actions(
         rng=rng,
         event="after_action",
@@ -107,5 +108,5 @@ def test_event_triggered_reaction_is_locked_once_per_round() -> None:
         active_hazards=[],
         rule_trace=trace,
     )
-    next_round_executed = [entry for entry in trace if entry["result"] == "executed"]
-    assert len(next_round_executed) == 2
+    without_refresh_executed = [entry for entry in trace if entry["result"] == "executed"]
+    assert len(without_refresh_executed) == 2

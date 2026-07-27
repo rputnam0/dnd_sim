@@ -11488,7 +11488,7 @@ def _event_trigger_limit_per_turn(action: ActionDefinition) -> int | None:
 
 
 def _event_trigger_once_per_round(action: ActionDefinition) -> bool:
-    return action.trigger_once_per_round or action.action_cost == "reaction"
+    return action.trigger_once_per_round
 
 
 def _event_trigger_start_key(action: ActionDefinition) -> str:
@@ -11672,6 +11672,8 @@ def _dispatch_combat_event(
 
     candidates.sort(key=lambda item: (-item[0], item[1], item[2]))
     for _priority, actor_id, action_name, actor, action in candidates:
+        if not _action_available(actor, action, turn_token=turn_token):
+            continue
         if _event_trigger_is_expired(actor, action, round_number=round_number):
             trace.append(
                 {
@@ -15499,6 +15501,7 @@ def run_simulation_core(
                     if actor_id not in actors:
                         continue
                     actor = actors[actor_id]
+                    _reaction_runtime.refresh_reaction_at_turn_start(actor)
                     _refresh_legendary_actions_for_turn(actor)
                     actor.movement_remaining = float(actor.speed_ft)
                     actor.took_attack_action_this_turn = False
@@ -15527,7 +15530,6 @@ def run_simulation_core(
                     if "grappled" in actor.conditions:
                         actor.movement_remaining = 0.0
                     actor.bonus_available = True
-                    actor.reaction_available = True
                     actor.sneak_attack_used_this_turn = False
                     actor.colossus_slayer_used_this_turn = False
                     actor.horde_breaker_used_this_turn = False

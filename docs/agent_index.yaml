@@ -201,7 +201,7 @@ subsystems:
     owner_task: ARC-06
     owner_module: src/dnd_sim/reaction_runtime.py
     invariants:
-      - "Each actor consumes at most one reaction per round unless explicit rules override."
+      - "Each actor consumes at most one reaction between the starts of its turns unless explicit rules grant additional reactions."
       - "Ready-action release and interrupt ordering are deterministic under fixed seeds."
       - "Trigger matching preserves existing legality windows for opportunity and readied actions."
       - "Movement interrupts resolve readied reach triggers before exit-reach opportunity attacks for the same reactor."
@@ -211,7 +211,7 @@ subsystems:
     safe_edit_boundaries:
       - "Safe: trigger matcher decomposition and additive reaction hooks."
       - "Caution: reaction lockout state transitions and timing edge cases."
-      - "Caution: feature-hook reaction ordering and per-round reaction lock semantics."
+      - "Caution: feature-hook reaction ordering, turn-start refresh timing, and explicit per-round feature limits."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
   spell_runtime:
     owner_pool: runtime_spell
