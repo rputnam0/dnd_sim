@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import copy
+import math
 import random
 
 import pytest
+from pydantic import ValidationError
 
 import dnd_sim.engine_runtime as engine_runtime
 from dnd_sim.interactive import (
@@ -189,6 +191,86 @@ def test_real_dnd_driver_preview_matches_commit_without_mutating_session() -> No
     assert receipt.events[0].payload["status"] == "resolved"
     assert session.state["phase"] == "complete"
     assert session.state["actors"]["enemy"]["hp"] == 26
+
+
+def test_real_dnd_driver_accepts_browser_integer_movement_coordinates() -> None:
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session = EngineSession(
+        "table-browser-movement",
+        _turn_state(enemy_position=(10.0, 0.0, 0.0)),
+        driver,
+        seed=13,
+    )
+    session.execute(_prepare_command(session_id="table-browser-movement"))
+    canonical_command = _command(
+        session_id="table-browser-movement",
+        command_id="turn-browser-movement",
+        mode="commit",
+        declaration=_declaration(move=True),
+        expected_revision=1,
+    )
+    browser_payload = copy.deepcopy(canonical_command.payload)
+    browser_payload["movement_path"] = [[0, 0, 0], [5, 0, 0]]
+    browser_command = SessionCommand.model_validate(
+        {**canonical_command.model_dump(mode="json"), "payload": browser_payload}
+    )
+
+    receipt = session.execute(browser_command)
+
+    assert receipt.events[0].payload["status"] == "resolved"
+    assert session.state["actors"]["hero"]["position"] == [5.0, 0.0, 0.0]
+    assert session.state["actors"]["hero"]["movement_remaining"] == 25.0
+    assert session.state["actors"]["enemy"]["hp"] == 26
+
+
+@pytest.mark.parametrize(
+    "payload_case",
+    ["omitted_field", "extra_field", "boolean_coordinate", "coercion_elsewhere"],
+)
+def test_real_dnd_driver_keeps_strict_declaration_canonicality(payload_case: str) -> None:
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session_id = f"table-strict-{payload_case}"
+    session = EngineSession(session_id, _turn_state(), driver, seed=13)
+    session.execute(_prepare_command(session_id=session_id))
+    canonical_command = _command(
+        session_id=session_id,
+        command_id=f"turn-strict-{payload_case}",
+        mode="commit",
+        declaration=_declaration(move=True),
+        expected_revision=1,
+    )
+    payload = copy.deepcopy(canonical_command.payload)
+    if payload_case == "omitted_field":
+        del payload["movement_path"]
+    elif payload_case == "extra_field":
+        payload["unexpected"] = True
+    elif payload_case == "boolean_coordinate":
+        payload["movement_path"] = [[False, 0, 0], [5, 0, 0]]
+    else:
+        payload["action"]["action_name"] = " strike "
+    command = SessionCommand.model_validate(
+        {**canonical_command.model_dump(mode="json"), "payload": payload}
+    )
+
+    with pytest.raises(EngineSessionError) as exc_info:
+        session.execute(command)
+
+    assert exc_info.value.code == "invalid_command_payload"
+
+
+def test_session_command_rejects_nonfinite_movement_coordinates() -> None:
+    command = _command(
+        session_id="table-nonfinite-movement",
+        command_id="turn-nonfinite-movement",
+        mode="commit",
+        declaration=_declaration(move=True),
+        expected_revision=1,
+    )
+    payload = copy.deepcopy(command.payload)
+    payload["movement_path"] = [[0, 0, 0], [math.inf, 0, 0]]
+
+    with pytest.raises(ValidationError, match="must not contain NaN or infinity"):
+        SessionCommand.model_validate({**command.model_dump(mode="json"), "payload": payload})
 
 
 def test_turn_session_projection_is_a_safe_public_view() -> None:

@@ -121,6 +121,19 @@ def _normalized_object(value: Any, *, path: str) -> dict[str, JSONValue]:
     return normalized
 
 
+def _normalize_declaration_movement_spelling(
+    payload: Mapping[str, JSONValue],
+    *,
+    canonical_payload: Mapping[str, JSONValue],
+) -> dict[str, JSONValue]:
+    """Canonicalize only validated movement-coordinate numeric spellings."""
+
+    normalized = _normalized_object(payload, path="payload")
+    if "movement_path" in normalized:
+        normalized["movement_path"] = canonical_payload["movement_path"]
+    return normalized
+
+
 def _normalized_list(value: Any, *, path: str) -> list[JSONValue]:
     normalized = normalize_json(value, path=path)
     if not isinstance(normalized, list):
@@ -669,10 +682,19 @@ class DndCombatTurnDriver:
             raise EngineSessionError(
                 "invalid_command_payload",
                 "The turn declaration payload is invalid.",
-                details={"errors": cast(JSONValue, exc.errors(include_url=False))},
+                details={
+                    "errors": cast(
+                        JSONValue,
+                        exc.errors(include_url=False, include_context=False),
+                    )
+                },
             ) from exc
         canonical_payload = declaration_payload.model_dump(mode="json")
-        if _canonical_json(canonical_payload) != _canonical_json(command.payload):
+        comparable_payload = _normalize_declaration_movement_spelling(
+            command.payload,
+            canonical_payload=canonical_payload,
+        )
+        if _canonical_json(canonical_payload) != _canonical_json(comparable_payload):
             raise EngineSessionError(
                 "invalid_command_payload",
                 "The turn declaration payload must be complete and canonical.",
