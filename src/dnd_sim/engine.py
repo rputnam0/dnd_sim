@@ -7,9 +7,11 @@ from dnd_sim.engine_runtime import (
     SimulationArtifacts,
     SimulationCoreResult,
     create_declared_turn_runtime_state,
+    prepare_combat_turn,
     resolve_combat_turn,
     resolve_declared_turn,
     resolve_declared_turn_atomic,
+    resolve_prompted_combat_turn,
 )
 from dnd_sim.io import LoadedScenario
 from dnd_sim.replay import build_trial_rows
@@ -17,6 +19,7 @@ from dnd_sim.reporting_runtime import build_simulation_summary
 from dnd_sim.turn_kernel import (
     CombatTurnContext,
     CombatTurnDecision,
+    CombatTurnPrompt,
     CombatTurnResult,
     DeclaredTurnRuntimeState,
 )
@@ -82,13 +85,16 @@ def run_simulation(
 __all__ = [
     "CombatTurnContext",
     "CombatTurnDecision",
+    "CombatTurnPrompt",
     "CombatTurnResult",
     "DeclaredTurnRuntimeState",
     "SimulationArtifacts",
     "TurnDeclarationValidationError",
     "create_declared_turn_runtime_state",
+    "prepare_combat_turn",
     "resolve_combat_turn",
     "resolve_declared_turn",
     "resolve_declared_turn_atomic",
+    "resolve_prompted_combat_turn",
     "run_simulation",
 ]

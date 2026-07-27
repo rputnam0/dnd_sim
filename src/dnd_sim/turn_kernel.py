@@ -66,6 +66,17 @@ class CombatTurnDecision:
     declaration: TurnDeclaration | None
 
 
+@dataclass(frozen=True, slots=True)
+class CombatTurnPrompt:
+    """Decision boundary reached after deterministic turn-start automation."""
+
+    actor_id: str
+    round_number: int
+    turn_token: str
+    actor_view: ActorView
+    state_view: BattleStateView
+
+
 CombatTurnDecisionProvider = Callable[
     [ActorView, BattleStateView],
     CombatTurnDecision,

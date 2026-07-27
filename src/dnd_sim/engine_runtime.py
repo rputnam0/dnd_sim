@@ -167,6 +167,7 @@ from dnd_sim.turn_kernel import (
     CombatTurnContext,
     CombatTurnDecision,
     CombatTurnDecisionProvider,
+    CombatTurnPrompt,
     CombatTurnResult,
     DeclaredTurnRuntimeState,
 )
@@ -15054,18 +15055,16 @@ def _combat_has_ended(context: CombatTurnContext) -> bool:
     )
 
 
-def resolve_combat_turn(
+def prepare_combat_turn(
     *,
     rng: random.Random,
     context: CombatTurnContext,
     actor_id: str,
-    decision_provider: CombatTurnDecisionProvider,
-) -> CombatTurnResult:
-    """Resolve one actor's complete synchronous turn through a decision seam.
+) -> CombatTurnPrompt | CombatTurnResult:
+    """Advance one actor through automation to a prompt or automatic result.
 
-    Automatic start/end phases stay inside this function so batch strategies
-    and interactive declarations share identical ordering. Reactions remain
-    automatic until the encounter state machine gains resumable continuations.
+    Reactions remain automatic until the encounter state machine gains
+    resumable continuations.
     """
 
     actor = context.actors.get(actor_id)
@@ -15297,9 +15296,37 @@ def resolve_combat_turn(
             metadata,
         )
         actor_view = state_view.actors[actor.actor_id]
-        decision = decision_provider(actor_view, state_view)
+        return CombatTurnPrompt(
+            actor_id=actor.actor_id,
+            round_number=context.round_number,
+            turn_token=turn_token,
+            actor_view=actor_view,
+            state_view=state_view,
+        )
+
+
+def resolve_prompted_combat_turn(
+    *,
+    rng: random.Random,
+    context: CombatTurnContext,
+    prompt: CombatTurnPrompt,
+    decision: CombatTurnDecision,
+) -> CombatTurnResult:
+    """Resolve a decision from an already-prepared combat turn prompt."""
+
+    if not isinstance(prompt, CombatTurnPrompt):
+        raise TypeError("prompt must be a CombatTurnPrompt")
+    actor = context.actors.get(prompt.actor_id)
+    if actor is None:
+        raise ValueError(f"Unknown prompted combat-turn actor: {prompt.actor_id}")
+    expected_turn_token = f"{context.round_number}:{actor.actor_id}"
+    if prompt.round_number != context.round_number or prompt.turn_token != expected_turn_token:
+        raise ValueError("Combat turn prompt does not match the current turn context")
+    turn_token = prompt.turn_token
+
+    with _combat_timing_engine_scope(context.timing_engine):
         if not isinstance(decision, CombatTurnDecision):
-            raise TypeError("decision_provider must return CombatTurnDecision")
+            raise TypeError("decision must be a CombatTurnDecision")
         strategy_name = decision.strategy_name
         turn_declaration = decision.declaration
 
@@ -15442,6 +15469,31 @@ def resolve_combat_turn(
             status="resolved",
             strategy_name=strategy_name,
         )
+
+
+def resolve_combat_turn(
+    *,
+    rng: random.Random,
+    context: CombatTurnContext,
+    actor_id: str,
+    decision_provider: CombatTurnDecisionProvider,
+) -> CombatTurnResult:
+    """Synchronously compose turn preparation, decision, and resolution."""
+
+    prepared = prepare_combat_turn(
+        rng=rng,
+        context=context,
+        actor_id=actor_id,
+    )
+    if isinstance(prepared, CombatTurnResult):
+        return prepared
+    decision = decision_provider(prepared.actor_view, prepared.state_view)
+    return resolve_prompted_combat_turn(
+        rng=rng,
+        context=context,
+        prompt=prepared,
+        decision=decision,
+    )
 
 
 def run_simulation_core(

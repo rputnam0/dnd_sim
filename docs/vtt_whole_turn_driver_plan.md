@@ -20,7 +20,7 @@ and VTT must resolve a declared turn through the same domain function.
 - [x] Extract one synchronous actor-turn kernel containing start automation,
       the decision seam, action/bonus resolution, turn end, and legendary actions.
 - [ ] Persist combat only at `awaiting_declaration` or `terminal` boundaries.
-- [ ] Extract deterministic automatic phases (turn start, hazards, death saves,
+- [x] Extract deterministic automatic phases (turn start, hazards, death saves,
       forced dodge, turn end, legendary actions) around the prompted turn.
 - [x] Keep reactions explicitly auto-resolved until a resumable reaction
       continuation is implemented.
