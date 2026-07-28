@@ -3,11 +3,12 @@ from __future__ import annotations
 import random
 import re
 from dataclasses import dataclass, field
-from typing import Callable, TypeVar
+from typing import Callable, Literal, TypeVar
 
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.mortality import advance_stable_recovery, stabilize_creature
 from dnd_sim.noncombat_checks import resolve_contest
+from dnd_sim.roll_journal import BoundRollJournalRecorder
 
 _DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
 _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
@@ -974,22 +975,52 @@ def attack_roll(
     *,
     advantage: bool = False,
     disadvantage: bool = False,
+    journal_recorder: BoundRollJournalRecorder | None = None,
 ) -> AttackRollResult:
+    if journal_recorder is not None and not isinstance(journal_recorder, BoundRollJournalRecorder):
+        raise TypeError("journal_recorder must be a BoundRollJournalRecorder")
     if advantage and disadvantage:
         advantage = False
         disadvantage = False
 
+    mode: Literal["normal", "advantage", "disadvantage"]
     if advantage:
-        natural_roll = max(rng.randint(1, 20), rng.randint(1, 20))
+        generated_values = (rng.randint(1, 20), rng.randint(1, 20))
+        natural_roll = max(generated_values)
+        mode = "advantage"
     elif disadvantage:
-        natural_roll = min(rng.randint(1, 20), rng.randint(1, 20))
+        generated_values = (rng.randint(1, 20), rng.randint(1, 20))
+        natural_roll = min(generated_values)
+        mode = "disadvantage"
     else:
-        natural_roll = rng.randint(1, 20)
+        generated_values = (rng.randint(1, 20),)
+        natural_roll = generated_values[0]
+        mode = "normal"
 
     crit = natural_roll == 20
     total = natural_roll + to_hit
     hit = crit or (natural_roll != 1 and total >= target_ac)
-    return AttackRollResult(hit=hit, crit=crit, natural_roll=natural_roll, total=total)
+    result = AttackRollResult(hit=hit, crit=crit, natural_roll=natural_roll, total=total)
+    if journal_recorder is not None:
+        kept_generation_index = generated_values.index(natural_roll) + 1
+        modifier_text = f"{to_hit:+d}" if to_hit else ""
+        expression = {
+            "normal": "1d20",
+            "advantage": "2d20kh1",
+            "disadvantage": "2d20kl1",
+        }[mode]
+        journal_recorder.record_d20(
+            expression=f"{expression}{modifier_text}",
+            mode=mode,
+            generated_values=generated_values,
+            kept_generation_index=kept_generation_index,
+            flat_modifier=to_hit,
+            total=total,
+            threshold=target_ac,
+            outcome="hit" if hit else "miss",
+            critical=crit,
+        )
+    return result
 
 
 def _spend_luck_point_if_available(
