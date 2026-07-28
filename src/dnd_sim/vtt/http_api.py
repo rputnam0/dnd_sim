@@ -45,6 +45,12 @@ from .participants import (
     audience_allows,
 )
 from .scene import SquareGridScene
+from .scene_library_api import (
+    SCENE_LIBRARY_PROTECTED_ROUTES,
+    SceneLibraryAPIError,
+    install_scene_library_routes,
+)
+from .scene_library_store import SQLiteSceneLibrary
 from .session_service import VTTSessionService, VTTSessionServiceError
 
 VTT_SESSION_VIEW_SCHEMA_VERSION = "vtt.session_view.v1"
@@ -430,6 +436,8 @@ def create_vtt_app(
     annotation_table_id: str | None = None,
     chat_log: SQLiteChatLog | None = None,
     chat_table_id: str | None = None,
+    scene_library: SQLiteSceneLibrary | None = None,
+    scene_library_table_id: str | None = None,
 ) -> FastAPI:
     """Create a JSON-only VTT app around one already-owned session service."""
 
@@ -449,6 +457,10 @@ def create_vtt_app(
         raise TypeError("chat_log must be a SQLiteChatLog or None")
     if chat_log is None and chat_table_id is not None:
         raise ValueError("chat_table_id requires a chat_log")
+    if scene_library is not None and not isinstance(scene_library, SQLiteSceneLibrary):
+        raise TypeError("scene_library must be a SQLiteSceneLibrary or None")
+    if scene_library is None and scene_library_table_id is not None:
+        raise ValueError("scene_library_table_id requires a scene_library")
     configured_scene = None if scene is None else scene.model_copy(deep=True)
     configured_origins = _validate_allowed_origins(allowed_origins)
     configured_annotation_table_id: str | None = None
@@ -472,17 +484,32 @@ def create_vtt_app(
             )
         if access_policy is not None and configured_chat_table_id != access_policy.roster.table_id:
             raise ValueError("chat_table_id must match the access-policy table")
+    configured_scene_library_table_id: str | None = None
+    if scene_library is not None:
+        configured_scene_library_table_id = scene_library_table_id
+        if configured_scene_library_table_id is None:
+            configured_scene_library_table_id = (
+                access_policy.roster.table_id if access_policy is not None else service.session_id
+            )
+        if (
+            access_policy is not None
+            and configured_scene_library_table_id != access_policy.roster.table_id
+        ):
+            raise ValueError("scene_library_table_id must match the access-policy table")
 
     app = FastAPI(title="dnd-sim VTT API", version="1")
     app.state.vtt_access_policy = access_policy
     app.state.vtt_annotation_board = annotation_board
     app.state.vtt_chat_log = chat_log
+    app.state.vtt_scene_library = scene_library
     if access_policy is not None:
         protected_routes = set(_PROTECTED_TABLE_ROUTES)
         if annotation_board is not None:
             protected_routes.update(ANNOTATION_PROTECTED_ROUTES)
         if chat_log is not None:
             protected_routes.update(CHAT_PROTECTED_ROUTES)
+        if scene_library is not None:
+            protected_routes.update(SCENE_LIBRARY_PROTECTED_ROUTES)
         app.add_middleware(
             _TableAuthenticationMiddleware,
             access_policy=access_policy,
@@ -519,6 +546,18 @@ def create_vtt_app(
     async def chat_api_error(
         _request: Request,
         exc: ChatAPIError,
+    ) -> JSONResponse:
+        return _error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+        )
+
+    @app.exception_handler(SceneLibraryAPIError)
+    async def scene_library_api_error(
+        _request: Request,
+        exc: SceneLibraryAPIError,
     ) -> JSONResponse:
         return _error_response(
             status_code=exc.status_code,
@@ -726,6 +765,17 @@ def create_vtt_app(
             log=chat_log,
             session_id=service.session_id,
             table_id=configured_chat_table_id,
+            access_policy=access_policy,
+        )
+
+    if scene_library is not None:
+        if configured_scene_library_table_id is None:
+            raise RuntimeError("scene-library route configuration was not normalized")
+        install_scene_library_routes(
+            app,
+            library=scene_library,
+            session_id=service.session_id,
+            table_id=configured_scene_library_table_id,
             access_policy=access_policy,
         )
 

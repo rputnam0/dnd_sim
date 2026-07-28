@@ -134,6 +134,38 @@ def _public_chat_request(
     }
 
 
+def _public_scene_create_request(
+    *,
+    session_id: str,
+    command_id: str,
+    scene_id: str,
+    expected_revision: int,
+) -> dict[str, Any]:
+    return {
+        "schema_version": "vtt.scene_library_request.v1",
+        "session_id": session_id,
+        "command": {
+            "schema_version": "vtt.scene_command.v1",
+            "command_type": "create",
+            "table_id": session_id,
+            "command_id": command_id,
+            "expected_revision": expected_revision,
+            "scene": {
+                "schema_version": "vtt.scene_record.v1",
+                "scene_id": scene_id,
+                "map_metadata": {
+                    "schema_version": "vtt.scene_map_metadata.v1",
+                    "name": "Second Map",
+                    "width_px": 1_600,
+                    "height_px": 900,
+                    "grid_size_px": 80.0,
+                    "gridless": True,
+                },
+            },
+        },
+    }
+
+
 def _stored_command_count(database_path: Path) -> int:
     with sqlite3.connect(database_path) as connection:
         row = connection.execute("SELECT COUNT(*) FROM vtt_committed_commands").fetchone()
@@ -144,6 +176,13 @@ def _stored_command_count(database_path: Path) -> int:
 def _stored_chat_event_count(database_path: Path) -> int:
     with sqlite3.connect(database_path) as connection:
         row = connection.execute("SELECT COUNT(*) FROM _vtt_chat_event_log").fetchone()
+    assert row is not None
+    return int(row[0])
+
+
+def _stored_scene_event_count(database_path: Path) -> int:
+    with sqlite3.connect(database_path) as connection:
+        row = connection.execute("SELECT COUNT(*) FROM _vtt_scene_library_event_log").fetchone()
     assert row is not None
     return int(row[0])
 
@@ -432,18 +471,91 @@ def test_solo_table_persists_open_local_plain_text_chat_across_restart_and_retry
     assert _stored_chat_event_count(database_path) == 1
 
 
-def test_solo_table_owns_three_independent_sqlite_connections_and_closes_them(
+def test_solo_table_seeds_and_persists_scene_library_across_restart_and_retry(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "solo-scenes.sqlite3"
+    request = _public_scene_create_request(
+        session_id="echo-vault-session",
+        command_id="create-second-map",
+        scene_id="second-map",
+        # Revision one is the deterministic Echo Vault bootstrap event.
+        expected_revision=1,
+    )
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as first_client:
+        initial = first_client.get("/api/v1/scenes")
+        assert initial.status_code == 200
+        assert initial.json()["revision"] == 1
+        assert initial.json()["active_scene_id"] == "echo-vault"
+        assert initial.json()["scenes"] == [
+            {
+                "scene": {
+                    "schema_version": "vtt.scene_record.v1",
+                    "scene_id": "echo-vault",
+                    "map_metadata": {
+                        "schema_version": "vtt.scene_map_metadata.v1",
+                        "name": "Echo Vault",
+                        "width_px": 512,
+                        "height_px": 384,
+                        "grid_size_px": 64.0,
+                        "gridless": False,
+                    },
+                },
+                "archived": False,
+            }
+        ]
+
+        created = first_client.post("/api/v1/scene-commands", json=request)
+        assert created.status_code == 200
+        assert created.json()["revision"] == 2
+        assert created.json()["replayed"] is False
+
+    assert _stored_scene_event_count(database_path) == 2
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as restored_client:
+        restored = restored_client.get("/api/v1/scenes")
+        assert restored.status_code == 200
+        assert restored.json()["revision"] == 2
+        assert [entry["scene"]["scene_id"] for entry in restored.json()["scenes"]] == [
+            "echo-vault",
+            "second-map",
+        ]
+
+        replayed = restored_client.post("/api/v1/scene-commands", json=request)
+        assert replayed.status_code == 200
+        assert replayed.json()["replayed"] is True
+        assert replayed.json()["revision"] == 2
+
+    assert _stored_scene_event_count(database_path) == 2
+
+
+def test_solo_table_owns_four_independent_sqlite_connections_and_closes_them(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
     captured_connections: list[sqlite3.Connection] = []
 
-    def capture_composition(service, *, annotation_board, chat_log, **_kwargs):
+    def capture_composition(
+        service,
+        *,
+        annotation_board,
+        chat_log,
+        scene_library,
+        **_kwargs,
+    ):
         captured_connections.extend(
             [
                 service._event_store._connection,
                 annotation_board._connection,
                 chat_log._connection,
+                scene_library._connection,
             ]
         )
         return FastAPI()
@@ -452,12 +564,12 @@ def test_solo_table_owns_three_independent_sqlite_connections_and_closes_them(
 
     app = create_solo_table_app(tmp_path / "owned-connections.sqlite3")
 
-    assert len(captured_connections) == 3
-    assert len({id(connection) for connection in captured_connections}) == 3
+    assert len(captured_connections) == 4
+    assert len({id(connection) for connection in captured_connections}) == 4
     assert [
         connection.execute("PRAGMA busy_timeout").fetchone()[0]
         for connection in captured_connections
-    ] == [30_000, 30_000, 30_000]
+    ] == [30_000, 30_000, 30_000, 30_000]
 
     with TestClient(app):
         pass
@@ -473,12 +585,20 @@ def test_solo_table_closes_all_connections_when_http_composition_fails(
 ) -> None:
     captured_connections: list[sqlite3.Connection] = []
 
-    def fail_composition(service, *, annotation_board, chat_log, **_kwargs):
+    def fail_composition(
+        service,
+        *,
+        annotation_board,
+        chat_log,
+        scene_library,
+        **_kwargs,
+    ):
         captured_connections.extend(
             [
                 service._event_store._connection,
                 annotation_board._connection,
                 chat_log._connection,
+                scene_library._connection,
             ]
         )
         raise RuntimeError("HTTP composition failed")
@@ -488,7 +608,7 @@ def test_solo_table_closes_all_connections_when_http_composition_fails(
     with pytest.raises(RuntimeError, match="HTTP composition failed"):
         create_solo_table_app(tmp_path / "failed-composition.sqlite3")
 
-    assert len(captured_connections) == 3
+    assert len(captured_connections) == 4
     for connection in captured_connections:
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             connection.execute("SELECT 1")

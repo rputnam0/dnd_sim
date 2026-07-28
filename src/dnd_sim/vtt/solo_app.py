@@ -16,10 +16,14 @@ from .annotation_store import SQLiteAnnotationBoard
 from .chat_store import SQLiteChatLog
 from .event_store import SQLiteSessionEventStore
 from .http_api import create_vtt_app
+from .scene_library_contracts import SceneCreateCommand, SceneMapMetadata, SceneRecord
+from .scene_library_store import SQLiteSceneLibrary
 from .session_service import VTTSessionService
 from .solo_table import build_solo_table_fixture
 
 _SOLO_TABLE_SESSION_ID = "echo-vault-session"
+_SOLO_SCENE_GRID_SIZE_PX = 64.0
+_SOLO_SCENE_BOOTSTRAP_COMMAND_ID = "bootstrap-echo-vault-scene-v1"
 
 
 def _close_connections(*connections: sqlite3.Connection | None) -> None:
@@ -54,6 +58,7 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
     )
     annotation_connection: sqlite3.Connection | None = None
     chat_connection: sqlite3.Connection | None = None
+    scene_library_connection: sqlite3.Connection | None = None
     try:
         connection.execute("PRAGMA busy_timeout = 30000")
         fixture = build_solo_table_fixture()
@@ -86,25 +91,72 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
         )
         chat_connection.execute("PRAGMA busy_timeout = 30000")
         chat_log = SQLiteChatLog(chat_connection)
+
+        # Scene lifecycle owns a fourth transaction boundary. A deterministic
+        # metadata-only bootstrap record makes existing solo databases
+        # immediately scene-manageable without duplicating it on restart.
+        scene_library_connection = sqlite3.connect(
+            normalized_path,
+            timeout=30.0,
+            check_same_thread=False,
+        )
+        scene_library_connection.execute("PRAGMA busy_timeout = 30000")
+        scene_library = SQLiteSceneLibrary(scene_library_connection)
+        if scene_library.revision(_SOLO_TABLE_SESSION_ID) == 0:
+            scene_library.execute(
+                SceneCreateCommand(
+                    table_id=_SOLO_TABLE_SESSION_ID,
+                    command_id=_SOLO_SCENE_BOOTSTRAP_COMMAND_ID,
+                    expected_revision=0,
+                    scene=SceneRecord(
+                        scene_id=fixture.scene.scene_id,
+                        map_metadata=SceneMapMetadata(
+                            name=fixture.scene.name,
+                            width_px=int(fixture.scene.columns * _SOLO_SCENE_GRID_SIZE_PX),
+                            height_px=int(fixture.scene.rows * _SOLO_SCENE_GRID_SIZE_PX),
+                            grid_size_px=_SOLO_SCENE_GRID_SIZE_PX,
+                            gridless=False,
+                        ),
+                    ),
+                )
+            )
         app = create_vtt_app(
             service,
             scene=fixture.scene,
             annotation_board=annotation_board,
             chat_log=chat_log,
+            scene_library=scene_library,
         )
     except Exception:
         try:
-            _close_connections(chat_connection, annotation_connection, connection)
+            _close_connections(
+                scene_library_connection,
+                chat_connection,
+                annotation_connection,
+                connection,
+            )
         except Exception:
             pass
         raise
 
-    if annotation_connection is None or chat_connection is None:  # pragma: no cover
-        _close_connections(chat_connection, annotation_connection, connection)
+    if (
+        annotation_connection is None or chat_connection is None or scene_library_connection is None
+    ):  # pragma: no cover
+        _close_connections(
+            scene_library_connection,
+            chat_connection,
+            annotation_connection,
+            connection,
+        )
         raise RuntimeError("the solo durable connections were not initialized")
 
     def close_owned_connections() -> None:
-        _close_connections(chat_connection, annotation_connection, connection)
+        _close_connections(
+            scene_library_connection,
+            chat_connection,
+            annotation_connection,
+            connection,
+        )
 
     app.router.add_event_handler("shutdown", close_owned_connections)
     return app

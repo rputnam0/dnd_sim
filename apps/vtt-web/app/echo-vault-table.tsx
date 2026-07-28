@@ -57,6 +57,7 @@ import {
   type AreaTemplateKind,
 } from "./vtt-template-geometry";
 import { VttChatPanel } from "./vtt-chat-panel";
+import { VttScenesPanel } from "./vtt-scenes-panel";
 import { VttAccessGate } from "./vtt-access-gate";
 import {
   canControlActor,
@@ -2200,6 +2201,11 @@ export function EchoVaultTable() {
                 .catch(() => undefined);
             }}
             onAnnotationRetry={sharedAnnotations.retry}
+          />
+          <VttScenesPanel
+            sessionId={view.session_id}
+            bearerToken={bearerToken}
+            table={tableIdentity}
           />
           <VttChatPanel
             sessionId={view.session_id}

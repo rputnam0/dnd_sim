@@ -277,3 +277,30 @@ test("ships protected participant identity without persisting or leaking credent
     /localStorage|sessionStorage|bearerToken=.*(?:\?|&)|token=.*(?:\?|&)/,
   );
 });
+
+test("ships a strict GM scene lifecycle manager", async () => {
+  const [table, panel, hook, client, css, readme] = await Promise.all([
+    readFile(new URL("../app/echo-vault-table.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-scenes-panel.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/use-vtt-scenes.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-scenes.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(table, /<VttScenesPanel/);
+  assert.match(panel, /Create scene metadata/);
+  assert.match(panel, /Activate/);
+  assert.match(panel, /Duplicate/);
+  assert.match(panel, /Archive/);
+  assert.match(panel, /Export/);
+  assert.match(panel, /Import scene/);
+  assert.match(panel, /gridless/);
+  assert.match(hook, /streamSceneEvents/);
+  assert.match(hook, /participant\?\.role !== "gm"/);
+  assert.match(client, /vtt\.scene_library_view\.v1/);
+  assert.match(client, /vtt\.scene_export\.v1/);
+  assert.doesNotMatch(client, /image_blob|asset_path/);
+  assert.match(css, /\.scene-panel/);
+  assert.match(readme, /scene lifecycle/i);
+});

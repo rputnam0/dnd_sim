@@ -110,6 +110,22 @@ count the same way as they do in the Python service. If the optional chat API
 returns 404, the panel reports chat as unavailable while the tactical map and
 event log continue to work.
 
+## Scene lifecycle
+
+When the scene library API is composed, the table hydrates
+`GET /api/v1/scenes`, follows the authenticated scene event stream, and sends
+revision-checked changes through `POST /api/v1/scene-commands`. GMs can create,
+duplicate, activate, safely archive, export, and import strict scene metadata.
+Players and spectators receive the active entry only and cannot mutate the
+library. Archiving the active entry is disabled until an available successor
+exists.
+
+The portable `vtt.scene_export.v1` bundle includes the scene ID, display name,
+pixel dimensions, grid size, and gridless flag. It intentionally excludes map
+bytes, URLs, and asset paths. In this slice, activation changes the durable
+scene-library selection; the running combat session remains attached to its
+authoritative engine scene until the scene/session attachment boundary is added.
+
 ## Verification
 
 ```bash
