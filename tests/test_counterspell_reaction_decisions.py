@@ -5,18 +5,25 @@ from dataclasses import replace
 
 import pytest
 
+from dnd_sim import engine_runtime as engine_module
 from dnd_sim.engine_runtime import (
     _build_actor_from_enemy,
     _execute_action,
     _roll_recharge_for_actor,
+    _spell_pipeline_adapters,
 )
 from dnd_sim.io_models import EnemyConfig
 from dnd_sim.models import ActionDefinition, ActorRuntimeState, SpellComponents, SpellDefinition
 from dnd_sim.reaction_runtime import ReactionDecisionValidationError
+from dnd_sim.rules_2014 import ActionDeclaredEvent, CombatTimingEngine
 from dnd_sim.spatial import AABB
 from dnd_sim.spell_reaction_runtime import (
     build_counterspell_candidates_for_action,
     spell_action_identity,
+)
+from dnd_sim.spell_runtime import (
+    CounterspellChainState,
+    run_spell_declaration_pipeline_outcome,
 )
 from dnd_sim.strategy_api import ReactionDecision, ReactionWindowView
 
@@ -119,6 +126,7 @@ def _cast(
     telemetry: list[dict] | None = None,
     obstacles: list[AABB] | None = None,
     active_hazards: list[dict[str, object]] | None = None,
+    timing_engine: CombatTimingEngine | None = None,
 ) -> tuple[dict[str, dict[str, int]], list[dict]]:
     actors = {actor.actor_id: actor for actor in (caster, recipient, *reactors)}
     damage_dealt = {actor_id: 0 for actor_id in actors}
@@ -144,6 +152,7 @@ def _cast(
         turn_token=f"4:{caster.actor_id}",
         telemetry=telemetry_rows,
         reaction_decision_provider=provider,
+        timing_engine=timing_engine,
     )
     assert active_rng.values == []
     return resources_spent, telemetry_rows
@@ -160,6 +169,39 @@ def _fixture(*, reactor_id: str = "reactor", reactor_team: str = "enemy") -> tup
     reactor.actions = [_counterspell()]
     reactor.resources = {"spell_slot_3": 1}
     return caster, recipient, reactor
+
+
+def _nested_counterspell_fixture(
+    counter_count: int,
+) -> tuple[ActorRuntimeState, ActorRuntimeState, list[ActorRuntimeState]]:
+    if counter_count not in {1, 2, 3}:
+        raise ValueError("counter_count must be 1, 2, or 3")
+    caster = _actor("caster", team="party", position=(0.0, 0.0, 0.0))
+    recipient = _actor("recipient", team="party", position=(0.0, 10.0, 0.0))
+    first = _actor("b_first", team="enemy", position=(30.0, 0.0, 0.0))
+    first.actions = [_counterspell()]
+    first.resources = {"spell_slot_3": 1}
+    reactors = [first]
+    if counter_count >= 2:
+        caster.actions = [_counterspell()]
+        caster.resources = {"spell_slot_3": 1}
+    if counter_count >= 3:
+        third = _actor("z_third", team="enemy", position=(35.0, 0.0, 0.0))
+        third.actions = [_counterspell()]
+        third.resources = {"spell_slot_3": 1}
+        reactors.append(third)
+    return caster, recipient, reactors
+
+
+def _use_first_reaction_option(window: ReactionWindowView) -> ReactionDecision:
+    option = window.options[0]
+    slot_level = option.legal_spell_slot_levels[0] if option.legal_spell_slot_levels else None
+    return ReactionDecision(
+        window_id=window.window_id,
+        choice="use",
+        option_id=option.option_id,
+        spell_slot_level=slot_level,
+    )
 
 
 def test_counterspell_provider_can_pass_without_mutating_reactor() -> None:
@@ -343,6 +385,8 @@ def test_later_counterspeller_can_act_after_pass_or_failed_counter(first_result:
 
     def decide(window: ReactionWindowView) -> ReactionDecision:
         windows.append(window)
+        if window.chain_depth > 1:
+            return ReactionDecision(window_id=window.window_id, choice="pass")
         if window.reactor_id == first.actor_id and first_result == "pass":
             return ReactionDecision(window_id=window.window_id, choice="pass")
         option = window.options[0]
@@ -361,7 +405,13 @@ def test_later_counterspeller_can_act_after_pass_or_failed_counter(first_result:
         rng=_SequenceRng([1] if first_result == "failed_counter" else []),
     )
 
-    assert [window.reactor_id for window in windows] == ["a_first", "b_second"]
+    assert [window.reactor_id for window in windows if window.chain_depth == 1] == [
+        "a_first",
+        "b_second",
+    ]
+    assert [window.reactor_id for window in windows if window.chain_depth == 2] == [
+        "a_first" if first_result == "pass" else "b_second"
+    ]
     assert "arcane_sealed" not in recipient.conditions
     assert second.resources["spell_slot_5"] == 0
     assert resources_spent[second.actor_id] == {"spell_slot_5": 1}
@@ -1307,6 +1357,9 @@ def test_failed_counterspell_resolution_continues_with_stable_chain_and_reactor_
     assert lifecycle == [
         ("reaction_window_opened", "a_first"),
         ("reaction_decision", "a_first"),
+        ("reaction_window_opened", "b_second"),
+        ("reaction_decision", "b_second"),
+        ("reaction_window_closed", "b_second"),
         ("counterspell_resolution", "a_first"),
         ("reaction_window_closed", "a_first"),
         ("reaction_window_opened", "b_second"),
@@ -1454,3 +1507,433 @@ def test_spell_cast_ordinals_do_not_reuse_generic_combat_event_ordinals() -> Non
     assert caster.next_spell_cast_ordinal == 1
     assert windows[0].incoming_cast_ordinal == 0
     assert reactor.next_spell_cast_ordinal == 0
+
+
+@pytest.mark.parametrize(
+    ("counter_count", "spell_resolves"),
+    [(1, False), (2, True), (3, False)],
+)
+def test_nested_counterspell_parity_and_declaration_order(
+    counter_count: int,
+    spell_resolves: bool,
+) -> None:
+    caster, recipient, reactors = _nested_counterspell_fixture(counter_count)
+    timing_engine = CombatTimingEngine()
+    declarations: list[tuple[str, str]] = []
+    timing_engine.subscribe(
+        ActionDeclaredEvent,
+        lambda event: declarations.append((event.attacker.actor_id, event.action.name)),
+        name="capture declarations",
+    )
+
+    resources_spent, telemetry = _cast(
+        caster=caster,
+        recipient=recipient,
+        reactors=reactors,
+        action=_incoming_spell(level=3),
+        provider=_use_first_reaction_option,
+        timing_engine=timing_engine,
+    )
+
+    expected_declarations = [("caster", "Arcane Seal"), ("b_first", "Counterspell")]
+    expected_spenders = ["b_first"]
+    if counter_count >= 2:
+        expected_declarations.append(("caster", "Counterspell"))
+        expected_spenders.append("caster")
+    if counter_count >= 3:
+        expected_declarations.append(("z_third", "Counterspell"))
+        expected_spenders.append("z_third")
+    assert declarations == expected_declarations
+    assert ("arcane_sealed" in recipient.conditions) is spell_resolves
+    assert [
+        row["reactor_id"]
+        for row in telemetry
+        if row.get("telemetry_type") == "counterspell_resolution"
+    ] == list(reversed(expected_spenders))
+    for actor_id in expected_spenders:
+        actor = (
+            caster
+            if actor_id == caster.actor_id
+            else next(reactor for reactor in reactors if reactor.actor_id == actor_id)
+        )
+        assert actor.resources["spell_slot_3"] == 0
+        assert actor.reaction_available is False
+        assert resources_spent[actor_id] == {"spell_slot_3": 1}
+
+
+def test_countered_counterspell_skips_its_higher_spell_check_and_rng() -> None:
+    caster, recipient, reactors = _nested_counterspell_fixture(2)
+
+    _cast(
+        caster=caster,
+        recipient=recipient,
+        reactors=reactors,
+        action=_incoming_spell(level=5),
+        provider=_use_first_reaction_option,
+        rng=_SequenceRng([]),
+    )
+
+    assert "arcane_sealed" in recipient.conditions
+
+
+def test_cancelled_counterspell_declaration_keeps_committed_payment() -> None:
+    caster, recipient, reactors = _nested_counterspell_fixture(1)
+    first = reactors[0]
+    timing_engine = CombatTimingEngine()
+
+    def cancel_counterspell(event: ActionDeclaredEvent) -> None:
+        if event.action.name == "Counterspell":
+            event.cancel("test cancellation")
+
+    timing_engine.subscribe(
+        ActionDeclaredEvent,
+        cancel_counterspell,
+        priority=100,
+        name="cancel Counterspell",
+    )
+
+    resources_spent, telemetry = _cast(
+        caster=caster,
+        recipient=recipient,
+        reactors=reactors,
+        action=_incoming_spell(level=3),
+        provider=_use_first_reaction_option,
+        timing_engine=timing_engine,
+    )
+
+    assert "arcane_sealed" in recipient.conditions
+    assert first.resources["spell_slot_3"] == 0
+    assert first.reaction_available is False
+    assert first.per_action_uses == {"Counterspell": 1}
+    assert first.next_spell_cast_ordinal == 0
+    assert resources_spent[first.actor_id] == {"spell_slot_3": 1}
+    assert not any(row.get("telemetry_type") == "counterspell_resolution" for row in telemetry)
+    closed = next(row for row in telemetry if row.get("telemetry_type") == "reaction_window_closed")
+    assert closed["status"] == "cancelled"
+    assert closed["reason"] == "action_declaration_cancelled"
+
+
+def test_nested_counterspell_after_action_hooks_complete_lifo(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    caster, recipient, reactors = _nested_counterspell_fixture(3)
+    observed: list[tuple[str, str]] = []
+    original_dispatch = engine_module._dispatch_combat_event
+
+    def capture_dispatch(**kwargs):
+        if kwargs.get("event") == "after_action":
+            observed.append((kwargs["trigger_actor"].actor_id, kwargs["trigger_action"].name))
+        return original_dispatch(**kwargs)
+
+    monkeypatch.setattr(engine_module, "_dispatch_combat_event", capture_dispatch)
+
+    _cast(
+        caster=caster,
+        recipient=recipient,
+        reactors=reactors,
+        action=_incoming_spell(level=3),
+        provider=_use_first_reaction_option,
+    )
+
+    assert observed == [
+        ("z_third", "Counterspell"),
+        ("caster", "Counterspell"),
+        ("b_first", "Counterspell"),
+        ("caster", "Arcane Seal"),
+    ]
+
+
+def test_failed_nested_counterspell_check_allows_later_reactor_at_same_depth() -> None:
+    caster = _actor("caster", team="party", position=(0.0, 0.0, 0.0))
+    recipient = _actor("recipient", team="party", position=(0.0, 10.0, 0.0))
+    failed_nested = _actor(
+        "a_failed_nested",
+        team="party",
+        position=(25.0, 0.0, 0.0),
+    )
+    failed_nested.actions = [_counterspell()]
+    failed_nested.resources = {"spell_slot_3": 1}
+    failed_nested.cha_mod = -5
+    later_nested = _actor(
+        "b_later_nested",
+        team="party",
+        position=(20.0, 0.0, 0.0),
+    )
+    later_nested.actions = [_counterspell()]
+    later_nested.resources = {"spell_slot_5": 1}
+    outer_counterspeller = _actor(
+        "z_outer_counterspeller",
+        team="enemy",
+        position=(30.0, 0.0, 0.0),
+    )
+    outer_counterspeller.actions = [_counterspell()]
+    outer_counterspeller.resources = {"spell_slot_5": 1}
+    windows: list[ReactionWindowView] = []
+
+    def decide(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        if window.chain_depth == 1 and window.reactor_id != outer_counterspeller.actor_id:
+            return ReactionDecision(window_id=window.window_id, choice="pass")
+        if window.chain_depth > 2:
+            return ReactionDecision(window_id=window.window_id, choice="pass")
+        return _use_first_reaction_option(window)
+
+    rng = _SequenceRng([1])
+    resources_spent, telemetry = _cast(
+        caster=caster,
+        recipient=recipient,
+        reactors=[failed_nested, later_nested, outer_counterspeller],
+        action=_incoming_spell(level=5),
+        provider=decide,
+        rng=rng,
+    )
+
+    assert "arcane_sealed" in recipient.conditions
+    assert [window.reactor_id for window in windows if window.chain_depth == 2] == [
+        "a_failed_nested",
+        "b_later_nested",
+    ]
+    resolution_rows = [
+        row for row in telemetry if row.get("telemetry_type") == "counterspell_resolution"
+    ]
+    assert [row["reactor_id"] for row in resolution_rows] == [
+        "a_failed_nested",
+        "b_later_nested",
+        "z_outer_counterspeller",
+    ]
+    assert [row["chain_depth"] for row in resolution_rows] == [2, 2, 1]
+    assert [row["outcome"] for row in resolution_rows] == [
+        "counter_failed",
+        "countered",
+        "counterspell_countered",
+    ]
+    ability_checks = [row for row in resolution_rows if row["resolution_method"] == "ability_check"]
+    assert len(ability_checks) == 1
+    assert ability_checks[0]["d20_roll"] == 1
+    assert ability_checks[0]["check_modifier"] == -5
+    assert ability_checks[0]["check_total"] == -4
+    assert rng.values == []
+    assert failed_nested.resources["spell_slot_3"] == 0
+    assert later_nested.resources["spell_slot_5"] == 0
+    assert outer_counterspeller.resources["spell_slot_5"] == 0
+    assert resources_spent[failed_nested.actor_id] == {"spell_slot_3": 1}
+    assert resources_spent[later_nested.actor_id] == {"spell_slot_5": 1}
+    assert resources_spent[outer_counterspeller.actor_id] == {"spell_slot_5": 1}
+
+
+@pytest.mark.parametrize(
+    ("max_depth", "max_attempts"),
+    [(1, 32), (8, 1)],
+    ids=["depth-bound", "attempt-bound"],
+)
+def test_counterspell_chain_guard_precedes_nested_window_and_payment(
+    max_depth: int,
+    max_attempts: int,
+) -> None:
+    caster, recipient, reactors = _nested_counterspell_fixture(2)
+    outer_counterspeller = reactors[0]
+    actors = {actor.actor_id: actor for actor in (caster, recipient, outer_counterspeller)}
+    resources_spent = {actor_id: {} for actor_id in actors}
+    telemetry: list[dict] = []
+    windows: list[ReactionWindowView] = []
+    chain_state = CounterspellChainState(
+        max_depth=max_depth,
+        max_attempts=max_attempts,
+    )
+    rng = _SequenceRng([])
+
+    def use_and_capture(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        return _use_first_reaction_option(window)
+
+    outcome = run_spell_declaration_pipeline_outcome(
+        rng=rng,
+        actor=caster,
+        action=_incoming_spell(level=3),
+        targets=[recipient],
+        actors=actors,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=4,
+        turn_token="4:caster",
+        timing_engine=CombatTimingEngine(),
+        spell_cast_request=None,
+        antimagic_suppression_condition="antimagic_suppressed",
+        subtle_spell=False,
+        light_level="bright",
+        adapters=_spell_pipeline_adapters(),
+        obstacles=[],
+        reaction_decision_provider=use_and_capture,
+        telemetry=telemetry,
+        counterspell_chain_state=chain_state,
+    )
+
+    assert outcome.status == "countered"
+    assert chain_state.attempts == 1
+    assert chain_state.reaction_chain_id == outcome.cast_frame.reaction_chain_id
+    assert [(window.reactor_id, window.chain_depth) for window in windows] == [("b_first", 1)]
+    assert [
+        (row["reactor_id"], row["chain_depth"])
+        for row in telemetry
+        if row.get("telemetry_type") == "reaction_window_opened"
+    ] == [("b_first", 1)]
+    assert outer_counterspeller.resources["spell_slot_3"] == 0
+    assert resources_spent[outer_counterspeller.actor_id] == {"spell_slot_3": 1}
+    assert caster.resources["spell_slot_3"] == 1
+    assert caster.reaction_available is True
+    assert caster.per_action_uses == {}
+    assert caster.next_spell_cast_ordinal == 1
+    assert rng.values == []
+
+
+def test_nested_counterspell_telemetry_preserves_ancestry_and_unwinds_deepest_first() -> None:
+    caster, recipient, reactors = _nested_counterspell_fixture(3)
+    windows: list[ReactionWindowView] = []
+
+    def use_and_capture(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        return _use_first_reaction_option(window)
+
+    _, telemetry = _cast(
+        caster=caster,
+        recipient=recipient,
+        reactors=reactors,
+        action=_incoming_spell(level=3),
+        provider=use_and_capture,
+    )
+
+    resolution_rows = [
+        row for row in telemetry if row.get("telemetry_type") == "counterspell_resolution"
+    ]
+    assert [window.chain_depth for window in windows] == [1, 2, 3]
+    assert [row["chain_depth"] for row in resolution_rows] == [3, 2, 1]
+    assert [row["reactor_id"] for row in resolution_rows] == [
+        "z_third",
+        "caster",
+        "b_first",
+    ]
+    assert [row["resolution_method"] for row in resolution_rows] == [
+        "automatic",
+        "interrupted",
+        "automatic",
+    ]
+    assert [row["outcome"] for row in resolution_rows] == [
+        "countered",
+        "counterspell_countered",
+        "countered",
+    ]
+    assert [row["window_id"] for row in resolution_rows] == [
+        windows[2].window_id,
+        windows[1].window_id,
+        windows[0].window_id,
+    ]
+    chain_ids = {
+        *(window.reaction_chain_id for window in windows),
+        *(row["reaction_chain_id"] for row in resolution_rows),
+    }
+    assert len(chain_ids) == 1
+    deepest, interrupted, outermost = resolution_rows
+    assert deepest["incoming_cast_id"] == interrupted["counterspell_cast_id"]
+    assert interrupted["incoming_cast_id"] == outermost["counterspell_cast_id"]
+    assert deepest["parent_cast_id"] == deepest["incoming_cast_id"]
+    assert interrupted["parent_cast_id"] == interrupted["incoming_cast_id"]
+    assert outermost["parent_cast_id"] == outermost["incoming_cast_id"]
+    assert interrupted["countered_by_cast_id"] == deepest["counterspell_cast_id"]
+    assert deepest["countered_by_cast_id"] is None
+    assert outermost["countered_by_cast_id"] is None
+
+
+def test_lethal_mage_slayer_hook_does_not_undo_resolved_counterspell() -> None:
+    caster = _actor("caster", team="party", position=(0.0, 0.0, 0.0))
+    recipient = _actor("recipient", team="party", position=(0.0, 10.0, 0.0))
+    counterspeller = _actor(
+        "counterspeller",
+        team="enemy",
+        position=(30.0, 0.0, 0.0),
+    )
+    counterspeller.actions = [_counterspell(spell_level=3)]
+    counterspeller.resources = {"spell_slot_3": 1}
+    mage_slayer = _actor(
+        "mage_slayer",
+        team="party",
+        position=(35.0, 0.0, 0.0),
+    )
+    mage_slayer.traits = {
+        "mage_slayer": {
+            "name": "Mage Slayer",
+            "source_type": "feat",
+            "mechanics": [
+                {
+                    "effect_type": "reaction_attack",
+                    "trigger": "spell_cast_within_5ft",
+                }
+            ],
+        }
+    }
+    mage_slayer.actions = [
+        ActionDefinition(
+            name="lethal_sword",
+            action_type="attack",
+            attack_delivery="melee_weapon_attack",
+            action_cost="action",
+            target_mode="single_enemy",
+            to_hit=100,
+            damage="60",
+            damage_type="slashing",
+            reach_ft=5,
+            range_ft=5,
+        )
+    ]
+    windows: list[ReactionWindowView] = []
+    telemetry: list[dict] = []
+
+    def counterspell_then_mage_slayer(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        option = window.options[0]
+        return ReactionDecision(
+            window_id=window.window_id,
+            choice="use",
+            option_id=option.option_id,
+            spell_slot_level=(
+                option.legal_spell_slot_levels[0] if option.legal_spell_slot_levels else None
+            ),
+        )
+
+    _cast(
+        caster=caster,
+        recipient=recipient,
+        reactors=[counterspeller, mage_slayer],
+        action=_incoming_spell(level=3),
+        provider=counterspell_then_mage_slayer,
+        rng=_SequenceRng([10]),
+        telemetry=telemetry,
+    )
+
+    assert "arcane_sealed" not in recipient.conditions
+    assert counterspeller.hp == 0
+    assert counterspeller.dead is True
+    mage_slayer_windows = [
+        window for window in windows if window.trigger.feature_name == "Mage Slayer"
+    ]
+    assert len(mage_slayer_windows) == 1
+    counterspell_resolution_index = next(
+        index
+        for index, row in enumerate(telemetry)
+        if row.get("telemetry_type") == "counterspell_resolution"
+        and row.get("reactor_id") == counterspeller.actor_id
+    )
+    counterspell_close_index = next(
+        index
+        for index, row in enumerate(telemetry)
+        if row.get("telemetry_type") == "reaction_window_closed"
+        and row.get("reaction_kind") == "counterspell"
+        and row.get("reactor_id") == counterspeller.actor_id
+    )
+    mage_slayer_open_indices = [
+        index
+        for index, row in enumerate(telemetry)
+        if row.get("telemetry_type") == "reaction_window_opened"
+        and row.get("feature_name") == "Mage Slayer"
+    ]
+    assert len(mage_slayer_open_indices) == 1
+    assert counterspell_resolution_index < counterspell_close_index < mage_slayer_open_indices[0]

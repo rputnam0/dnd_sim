@@ -639,8 +639,8 @@ def test_counterspell_blocks_before_resolution_with_level_check_logic() -> None:
 
     observed: list[str] = []
 
-    def _capture_declared(_event: ActionDeclaredEvent) -> None:
-        observed.append("declared")
+    def _capture_declared(event: ActionDeclaredEvent) -> None:
+        observed.append(f"declared:{event.action.name}")
 
     def _capture_window(event: ReactionWindowOpenedEvent) -> None:
         if event.window == "counterspell":
@@ -672,7 +672,11 @@ def test_counterspell_blocks_before_resolution_with_level_check_logic() -> None:
         timing_engine=timing_engine,
     )
 
-    assert observed == ["declared", "counterspell_window"]
+    assert observed == [
+        "declared:greater_blessing",
+        "counterspell_window",
+        "declared:counterspell",
+    ]
     assert "blessed" not in ally.conditions
     assert counterspeller.resources["spell_slot_3"] == 0
 
@@ -711,8 +715,8 @@ def test_counterspell_against_attack_spell_emits_declaration_before_window() -> 
 
     observed: list[str] = []
 
-    def _capture_declared(_event: ActionDeclaredEvent) -> None:
-        observed.append("declared")
+    def _capture_declared(event: ActionDeclaredEvent) -> None:
+        observed.append(f"declared:{event.action.name}")
 
     def _capture_window(event: ReactionWindowOpenedEvent) -> None:
         if event.window == "counterspell":
@@ -744,7 +748,11 @@ def test_counterspell_against_attack_spell_emits_declaration_before_window() -> 
         timing_engine=timing_engine,
     )
 
-    assert observed == ["declared", "counterspell_window"]
+    assert observed == [
+        "declared:guiding_bolt",
+        "counterspell_window",
+        "declared:counterspell",
+    ]
     assert target.hp == target.max_hp
     assert counterspeller.resources["spell_slot_3"] == 0
 

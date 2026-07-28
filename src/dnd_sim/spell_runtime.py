@@ -13,6 +13,7 @@ from dnd_sim.models import (
 )
 from dnd_sim.rules_2014 import ActionDeclaredEvent, CombatTimingEngine, ReactionWindowOpenedEvent
 from dnd_sim.spell_reaction_runtime import (
+    CounterspellCandidate,
     SpellCastFrame,
     build_child_spell_cast_frame,
     build_counterspell_candidates_for_action,
@@ -139,6 +140,36 @@ class SpellPipelineOutcome:
     @property
     def spell_cast_occurred(self) -> bool:
         return self.status in {"countered", "resolved"}
+
+
+ReactionSpellCompletion = Callable[
+    [ActorRuntimeState, ActionDefinition, ActorRuntimeState | None, SpellPipelineOutcome],
+    None,
+]
+
+
+@dataclass(slots=True)
+class CounterspellChainState:
+    reaction_chain_id: str | None = None
+    max_depth: int = 8
+    max_attempts: int = 32
+    attempts: int = 0
+
+    def can_open_for(self, incoming_frame: SpellCastFrame) -> bool:
+        same_chain = self.reaction_chain_id in {None, incoming_frame.reaction_chain_id}
+        return (
+            same_chain
+            and incoming_frame.chain_depth < max(0, int(self.max_depth))
+            and self.attempts < max(0, int(self.max_attempts))
+        )
+
+    def reserve_attempt(self, incoming_frame: SpellCastFrame) -> bool:
+        if not self.can_open_for(incoming_frame):
+            return False
+        if self.reaction_chain_id is None:
+            self.reaction_chain_id = incoming_frame.reaction_chain_id
+        self.attempts += 1
+        return True
 
 
 def available_spell_slots(
@@ -303,6 +334,61 @@ def apply_spell_result_state(
         actor.concentration_effect_instance_ids.clear()
 
 
+def _declare_spell_cast_frame(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    target: ActorRuntimeState | None,
+    spell_level: int,
+    round_number: int | None,
+    turn_token: str | None,
+    timing_engine: CombatTimingEngine,
+    adapters: SpellPipelineAdapters,
+    parent: SpellCastFrame | None = None,
+    range_ft: float | None = None,
+) -> SpellCastFrame | None:
+    declaration = timing_engine.emit(
+        ActionDeclaredEvent(
+            attacker=actor,
+            target=target,
+            action=action,
+            round_number=round_number,
+            turn_token=turn_token,
+        )
+    )
+    if declaration.cancelled:
+        return None
+
+    cast_ordinal = actor.next_spell_cast_ordinal
+    actor.next_spell_cast_ordinal += 1
+    if parent is None:
+        frame = build_root_spell_cast_frame(
+            caster=actor,
+            action=action,
+            spell_level=spell_level,
+            target_actor_id=target.actor_id if target is not None else None,
+            cast_ordinal=cast_ordinal,
+            round_number=round_number,
+            turn_token=turn_token,
+        )
+    else:
+        frame = build_child_spell_cast_frame(
+            parent=parent,
+            caster=actor,
+            action=action,
+            spell_level=spell_level,
+            target_actor_id=target.actor_id if target is not None else None,
+            cast_ordinal=cast_ordinal,
+            range_ft=range_ft,
+        )
+    record_spell_cast_for_turn(
+        actor,
+        action,
+        is_action_cantrip_spell=adapters.is_action_cantrip_spell,
+    )
+    return frame
+
+
 def action_component_tags(action: ActionDefinition) -> set[str]:
     explicit = {
         str(tag).strip().lower()
@@ -323,10 +409,436 @@ def action_component_tags(action: ActionDefinition) -> set[str]:
     }
 
 
+def can_cast_spell_with_components(
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    *,
+    has_trait: Callable[[ActorRuntimeState, str], bool],
+) -> bool:
+    if "spell" not in action.tags:
+        return True
+    components = action_component_tags(action)
+    if not components:
+        return True
+    if "component:verbal" in components and actor.conditions.intersection(
+        {"silenced", "gagged", "mute"}
+    ):
+        return False
+
+    has_free_hand = int(actor.resources.get("free_hands", 1)) > 0
+    has_focus = bool(actor.resources.get("spellcasting_focus", 0)) or has_trait(
+        actor, "spellcasting focus"
+    )
+    needs_material = "component:material" in components
+    needs_somatic = "component:somatic" in components
+    if needs_material and not (has_focus or has_free_hand):
+        return False
+    if needs_somatic and not has_free_hand and not has_trait(actor, "war caster"):
+        if not (needs_material and has_focus):
+            return False
+    return True
+
+
 def _spell_cast_is_observable(action: ActionDefinition, *, subtle_spell: bool) -> bool:
     if not subtle_spell:
         return True
     return "component:material" in action_component_tags(action)
+
+
+def _action_uses_subtle_spell(action: ActionDefinition) -> bool:
+    return any(str(tag).strip().lower() == "metamagic:subtle" for tag in action.tags)
+
+
+def _counterspell_candidates_for_reactor(
+    *,
+    reactor: ActorRuntimeState,
+    caster: ActorRuntimeState,
+    incoming_spell_level: int,
+    turn_token: str | None,
+    active_hazards: list[dict[str, Any]],
+    light_level: str,
+    obstacles: list[Any] | None,
+    adapters: SpellPipelineAdapters,
+) -> list[CounterspellCandidate]:
+    candidates: list[CounterspellCandidate] = []
+    for action_index, counterspell_action in enumerate(reactor.actions):
+        if counterspell_action.action_cost != "reaction" or not (
+            adapters.action_matches_reaction_spell_id(counterspell_action, "counterspell")
+        ):
+            continue
+        for candidate in build_counterspell_candidates_for_action(
+            reactor=reactor,
+            action=counterspell_action,
+            action_index=action_index,
+        ):
+            if adapters.counterspell_candidate_is_legal(
+                reactor=reactor,
+                candidate=candidate,
+                caster=caster,
+                incoming_spell_level=incoming_spell_level,
+                turn_token=turn_token,
+                active_hazards=active_hazards,
+                light_level=light_level,
+                obstacles=obstacles,
+            ):
+                candidates.append(candidate)
+    return candidates
+
+
+def _live_counterspell_candidate(
+    *,
+    reactor: ActorRuntimeState,
+    selected: CounterspellCandidate,
+    caster: ActorRuntimeState,
+    incoming_spell_level: int,
+    turn_token: str | None,
+    active_hazards: list[dict[str, Any]],
+    light_level: str,
+    obstacles: list[Any] | None,
+    adapters: SpellPipelineAdapters,
+) -> CounterspellCandidate | None:
+    action_index = selected.action_index
+    if not (
+        0 <= action_index < len(reactor.actions)
+        and reactor.actions[action_index] is selected.action
+    ):
+        return None
+    live = next(
+        (
+            candidate
+            for candidate in build_counterspell_candidates_for_action(
+                reactor=reactor,
+                action=selected.action,
+                action_index=action_index,
+            )
+            if candidate == selected
+        ),
+        None,
+    )
+    if live is None:
+        return None
+    if not adapters.counterspell_candidate_is_legal(
+        reactor=reactor,
+        candidate=live,
+        caster=caster,
+        incoming_spell_level=incoming_spell_level,
+        turn_token=turn_token,
+        active_hazards=active_hazards,
+        light_level=light_level,
+        obstacles=obstacles,
+    ):
+        return None
+    return live
+
+
+def _counterspell_reactions_counter_incoming(
+    *,
+    rng: random.Random,
+    caster: ActorRuntimeState,
+    incoming_action: ActionDefinition,
+    incoming_spell_level: int,
+    spell_target: ActorRuntimeState | None,
+    incoming_frame: SpellCastFrame,
+    incoming_subtle_spell: bool,
+    actors: dict[str, ActorRuntimeState],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    round_number: int | None,
+    turn_token: str | None,
+    timing_engine: CombatTimingEngine,
+    light_level: str,
+    adapters: SpellPipelineAdapters,
+    obstacles: list[Any] | None,
+    reaction_decision_provider: ReactionDecisionProvider | None,
+    telemetry: list[dict[str, Any]] | None,
+    chain_state: CounterspellChainState,
+    on_reaction_spell_complete: ReactionSpellCompletion | None,
+) -> SpellCastFrame | None:
+    """Resolve a bounded chain and return the Counterspell that defeats the cast."""
+
+    if not chain_state.can_open_for(incoming_frame) or not _spell_cast_is_observable(
+        incoming_action,
+        subtle_spell=incoming_subtle_spell,
+    ):
+        return None
+
+    from dnd_sim.reaction_decision_runtime import (
+        ReactionDecisionValidationError,
+        default_reaction_decision,
+        record_reaction_decision,
+        record_reaction_window_closed,
+        record_reaction_window_opened,
+        validate_reaction_decision,
+    )
+
+    reactor_order = 0
+    for reactor in sorted(actors.values(), key=lambda candidate: candidate.actor_id):
+        if not chain_state.can_open_for(incoming_frame):
+            break
+        if (
+            reactor.actor_id == caster.actor_id
+            or reactor.hp <= 0
+            or reactor.dead
+            or not adapters.can_take_reaction(reactor)
+        ):
+            continue
+        candidates = _counterspell_candidates_for_reactor(
+            reactor=reactor,
+            caster=caster,
+            incoming_spell_level=incoming_spell_level,
+            turn_token=turn_token,
+            active_hazards=active_hazards,
+            light_level=light_level,
+            obstacles=obstacles,
+            adapters=adapters,
+        )
+        if not candidates:
+            continue
+
+        counter_window = timing_engine.emit(
+            ReactionWindowOpenedEvent(
+                window="counterspell",
+                reactor=reactor,
+                attacker=caster,
+                target=spell_target if spell_target is not None else caster,
+                action=incoming_action,
+                round_number=round_number,
+                turn_token=turn_token,
+            )
+        )
+        if counter_window.cancelled:
+            continue
+
+        window = build_counterspell_reaction_window(
+            reactor=reactor,
+            caster=caster,
+            spell_target=spell_target,
+            incoming_action=incoming_action,
+            incoming_spell_level=incoming_spell_level,
+            candidates=candidates,
+            round_number=round_number,
+            turn_token=turn_token,
+            incoming_cast_frame=incoming_frame,
+            reactor_order=reactor_order,
+        )
+        reactor_order += 1
+        record_reaction_window_opened(telemetry, window=window)
+        if reaction_decision_provider is not None:
+            decision = reaction_decision_provider(window)
+        elif reactor.team == caster.team:
+            decision = ReactionDecision(window_id=window.window_id, choice="pass")
+        else:
+            decision = default_reaction_decision(window)
+        record_reaction_decision(telemetry, window=window, decision=decision)
+        try:
+            selected_option, _ = validate_reaction_decision(window, decision)
+        except ReactionDecisionValidationError as exc:
+            record_reaction_window_closed(
+                telemetry,
+                window=window,
+                status="rejected",
+                option_id=getattr(decision, "option_id", None),
+                reason=exc.code,
+                spell_slot_level=getattr(decision, "spell_slot_level", None),
+            )
+            raise
+        if selected_option is None:
+            record_reaction_window_closed(telemetry, window=window, status="passed")
+            continue
+
+        selected_index = next(
+            index
+            for index, option in enumerate(window.options)
+            if option.option_id == selected_option.option_id
+        )
+        selected_candidate = candidates[selected_index]
+        live_candidate = _live_counterspell_candidate(
+            reactor=reactor,
+            selected=selected_candidate,
+            caster=caster,
+            incoming_spell_level=incoming_spell_level,
+            turn_token=turn_token,
+            active_hazards=active_hazards,
+            light_level=light_level,
+            obstacles=obstacles,
+            adapters=adapters,
+        )
+        if live_candidate is None:
+            record_reaction_window_closed(
+                telemetry,
+                window=window,
+                status="unavailable",
+                option_id=selected_option.option_id,
+                reason="state_changed",
+                spell_slot_level=selected_candidate.slot_level,
+            )
+            continue
+        if (
+            live_candidate.effective_spell_level < incoming_spell_level
+            and live_candidate.spellcasting_ability is None
+        ):
+            record_reaction_window_closed(
+                telemetry,
+                window=window,
+                status="unavailable",
+                option_id=selected_option.option_id,
+                reason="missing_spellcasting_ability",
+                spell_slot_level=live_candidate.slot_level,
+            )
+            continue
+        if not chain_state.reserve_attempt(incoming_frame):
+            record_reaction_window_closed(
+                telemetry,
+                window=window,
+                status="unavailable",
+                option_id=selected_option.option_id,
+                reason="counterspell_chain_limit",
+                spell_slot_level=live_candidate.slot_level,
+            )
+            break
+
+        counterspell_action = live_candidate.action
+        counter_level = live_candidate.effective_spell_level
+        reactor_spent = resources_spent.setdefault(reactor.actor_id, {})
+        for key, amount in adapters.spend_resources(
+            reactor,
+            dict(live_candidate.resource_cost),
+        ).items():
+            reactor_spent[key] = reactor_spent.get(key, 0) + amount
+        state_key = live_candidate.state_key
+        reactor.per_action_uses[state_key] = reactor.per_action_uses.get(state_key, 0) + 1
+        if counterspell_action.recharge:
+            reactor.recharge_ready[state_key] = False
+        adapters.mark_action_cost_used(reactor, counterspell_action)
+
+        counterspell_frame = _declare_spell_cast_frame(
+            actor=reactor,
+            action=counterspell_action,
+            target=caster,
+            spell_level=counter_level,
+            round_number=round_number,
+            turn_token=turn_token,
+            timing_engine=timing_engine,
+            adapters=adapters,
+            parent=incoming_frame,
+            range_ft=live_candidate.range_ft,
+        )
+        if counterspell_frame is None:
+            record_reaction_window_closed(
+                telemetry,
+                window=window,
+                status="cancelled",
+                option_id=selected_option.option_id,
+                reason="action_declaration_cancelled",
+                spell_slot_level=live_candidate.slot_level,
+            )
+            continue
+
+        countering_frame = _counterspell_reactions_counter_incoming(
+            rng=rng,
+            caster=reactor,
+            incoming_action=counterspell_action,
+            incoming_spell_level=counter_level,
+            spell_target=caster,
+            incoming_frame=counterspell_frame,
+            incoming_subtle_spell=_action_uses_subtle_spell(counterspell_action),
+            actors=actors,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            round_number=round_number,
+            turn_token=turn_token,
+            timing_engine=timing_engine,
+            light_level=light_level,
+            adapters=adapters,
+            obstacles=obstacles,
+            reaction_decision_provider=reaction_decision_provider,
+            telemetry=telemetry,
+            chain_state=chain_state,
+            on_reaction_spell_complete=on_reaction_spell_complete,
+        )
+        if countering_frame is not None:
+            record_counterspell_resolution(
+                telemetry,
+                window=window,
+                incoming_frame=incoming_frame,
+                counterspell_frame=counterspell_frame,
+                candidate=live_candidate,
+                option_id=selected_option.option_id,
+                resolution_method="interrupted",
+                d20_roll=None,
+                check_modifier=None,
+                check_dc=None,
+                check_total=None,
+                outcome="counterspell_countered",
+                countered_by_cast_id=countering_frame.cast_id,
+            )
+            record_reaction_window_closed(
+                telemetry,
+                window=window,
+                status="resolved",
+                option_id=selected_option.option_id,
+                reason="counterspell_countered",
+                spell_slot_level=live_candidate.slot_level,
+            )
+            if on_reaction_spell_complete is not None:
+                on_reaction_spell_complete(
+                    reactor,
+                    counterspell_action,
+                    caster,
+                    SpellPipelineOutcome(status="countered", cast_frame=counterspell_frame),
+                )
+            continue
+
+        resolution_method: Literal["automatic", "ability_check"]
+        d20_roll: int | None = None
+        check_modifier: int | None = None
+        check_dc: int | None = None
+        check_total: int | None = None
+        countered = counter_level >= incoming_spell_level
+        if countered:
+            resolution_method = "automatic"
+        else:
+            resolution_method = "ability_check"
+            spellcasting_ability = live_candidate.spellcasting_ability
+            assert spellcasting_ability is not None
+            check_dc = 10 + incoming_spell_level
+            d20_roll = rng.randint(1, 20)
+            check_modifier = adapters.spellcasting_ability_mod(reactor, spellcasting_ability)
+            check_total = d20_roll + check_modifier
+            countered = check_total >= check_dc
+        outcome = "countered" if countered else "counter_failed"
+        record_counterspell_resolution(
+            telemetry,
+            window=window,
+            incoming_frame=incoming_frame,
+            counterspell_frame=counterspell_frame,
+            candidate=live_candidate,
+            option_id=selected_option.option_id,
+            resolution_method=resolution_method,
+            d20_roll=d20_roll,
+            check_modifier=check_modifier,
+            check_dc=check_dc,
+            check_total=check_total,
+            outcome=outcome,
+        )
+        record_reaction_window_closed(
+            telemetry,
+            window=window,
+            status="resolved",
+            option_id=selected_option.option_id,
+            reason=outcome,
+            spell_slot_level=live_candidate.slot_level,
+        )
+        if on_reaction_spell_complete is not None:
+            on_reaction_spell_complete(
+                reactor,
+                counterspell_action,
+                caster,
+                SpellPipelineOutcome(status="resolved", cast_frame=counterspell_frame),
+            )
+        if countered:
+            return counterspell_frame
+    return None
 
 
 def run_spell_declaration_pipeline_outcome(
@@ -351,6 +863,8 @@ def run_spell_declaration_pipeline_outcome(
     telemetry: list[dict[str, Any]] | None = None,
     allow_deferred_targets: bool = False,
     apply_result_state: bool = True,
+    counterspell_chain_state: CounterspellChainState | None = None,
+    on_reaction_spell_complete: ReactionSpellCompletion | None = None,
 ) -> SpellPipelineOutcome:
     if not targets and not allow_deferred_targets:
         return SpellPipelineOutcome(status="blocked")
@@ -381,289 +895,45 @@ def run_spell_declaration_pipeline_outcome(
         spell_level = int(resolved_spell_cast_request.slot_level)
         action = adapters.apply_upcast_scaling_for_slot(action, spell_level)
 
-    declaration_event = timing_engine.emit(
-        ActionDeclaredEvent(
-            attacker=actor,
-            target=targets[0] if targets else None,
-            action=action,
-            round_number=round_number,
-            turn_token=turn_token,
-        )
-    )
-    if declaration_event.cancelled:
-        return SpellPipelineOutcome(status="cancelled")
-
-    cast_ordinal = actor.next_spell_cast_ordinal
-    actor.next_spell_cast_ordinal += 1
-    cast_frame = build_root_spell_cast_frame(
-        caster=actor,
+    cast_frame = _declare_spell_cast_frame(
+        actor=actor,
         action=action,
+        target=targets[0] if targets else None,
         spell_level=spell_level,
-        target_actor_id=(targets[0].actor_id if targets else None),
-        cast_ordinal=cast_ordinal,
         round_number=round_number,
         turn_token=turn_token,
+        timing_engine=timing_engine,
+        adapters=adapters,
     )
+    if cast_frame is None:
+        return SpellPipelineOutcome(status="cancelled")
 
-    record_spell_cast_for_turn(
-        actor,
-        action,
-        is_action_cantrip_spell=adapters.is_action_cantrip_spell,
-    )
-
-    if _spell_cast_is_observable(action, subtle_spell=subtle_spell):
-        from dnd_sim.reaction_decision_runtime import (
-            ReactionDecisionValidationError,
-            default_reaction_decision,
-            record_reaction_decision as _reaction_decision_telemetry,
-            record_reaction_window_closed as _reaction_window_closed_telemetry,
-            record_reaction_window_opened as _reaction_window_telemetry,
-            validate_reaction_decision,
-        )
-
-        reactor_order = 0
-        for enemy in sorted(actors.values(), key=lambda candidate: candidate.actor_id):
-            if (
-                enemy.actor_id == actor.actor_id
-                or enemy.hp <= 0
-                or enemy.dead
-                or not adapters.can_take_reaction(enemy)
-            ):
-                continue
-            counterspell_candidates = []
-            for action_index, counterspell_action in enumerate(enemy.actions):
-                if counterspell_action.action_cost != "reaction" or not (
-                    adapters.action_matches_reaction_spell_id(
-                        counterspell_action,
-                        "counterspell",
-                    )
-                ):
-                    continue
-                for candidate in build_counterspell_candidates_for_action(
-                    reactor=enemy,
-                    action=counterspell_action,
-                    action_index=action_index,
-                ):
-                    if adapters.counterspell_candidate_is_legal(
-                        reactor=enemy,
-                        candidate=candidate,
-                        caster=actor,
-                        incoming_spell_level=spell_level,
-                        turn_token=turn_token,
-                        active_hazards=active_hazards,
-                        light_level=light_level,
-                        obstacles=obstacles,
-                    ):
-                        counterspell_candidates.append(candidate)
-            if not counterspell_candidates:
-                continue
-
-            counter_window = timing_engine.emit(
-                ReactionWindowOpenedEvent(
-                    window="counterspell",
-                    reactor=enemy,
-                    attacker=actor,
-                    target=targets[0] if targets else actor,
-                    action=action,
-                    round_number=round_number,
-                    turn_token=turn_token,
-                )
-            )
-            if counter_window.cancelled:
-                continue
-
-            window = build_counterspell_reaction_window(
-                reactor=enemy,
-                caster=actor,
-                spell_target=targets[0] if targets else None,
-                incoming_action=action,
-                incoming_spell_level=spell_level,
-                candidates=counterspell_candidates,
-                round_number=round_number,
-                turn_token=turn_token,
-                incoming_cast_frame=cast_frame,
-                reactor_order=reactor_order,
-            )
-            reactor_order += 1
-            _reaction_window_telemetry(telemetry, window=window)
-            if reaction_decision_provider is not None:
-                decision = reaction_decision_provider(window)
-            elif enemy.team == actor.team:
-                decision = ReactionDecision(window_id=window.window_id, choice="pass")
-            else:
-                decision = default_reaction_decision(window)
-            _reaction_decision_telemetry(telemetry, window=window, decision=decision)
-            try:
-                selected_option, _ = validate_reaction_decision(window, decision)
-            except ReactionDecisionValidationError as exc:
-                _reaction_window_closed_telemetry(
-                    telemetry,
-                    window=window,
-                    status="rejected",
-                    option_id=getattr(decision, "option_id", None),
-                    reason=exc.code,
-                    spell_slot_level=getattr(decision, "spell_slot_level", None),
-                )
-                raise
-            if selected_option is None:
-                _reaction_window_closed_telemetry(telemetry, window=window, status="passed")
-                continue
-
-            selected_index = next(
-                index
-                for index, option in enumerate(window.options)
-                if option.option_id == selected_option.option_id
-            )
-            selected_candidate = counterspell_candidates[selected_index]
-            action_index = selected_candidate.action_index
-            action_is_current = (
-                0 <= action_index < len(enemy.actions)
-                and enemy.actions[action_index] is selected_candidate.action
-            )
-            live_candidate = None
-            if action_is_current:
-                live_candidate = next(
-                    (
-                        candidate
-                        for candidate in build_counterspell_candidates_for_action(
-                            reactor=enemy,
-                            action=selected_candidate.action,
-                            action_index=action_index,
-                        )
-                        if candidate == selected_candidate
-                    ),
-                    None,
-                )
-            if live_candidate is not None and not adapters.counterspell_candidate_is_legal(
-                reactor=enemy,
-                candidate=live_candidate,
-                caster=actor,
-                incoming_spell_level=spell_level,
-                turn_token=turn_token,
-                active_hazards=active_hazards,
-                light_level=light_level,
-                obstacles=obstacles,
-            ):
-                live_candidate = None
-            if live_candidate is None:
-                _reaction_window_closed_telemetry(
-                    telemetry,
-                    window=window,
-                    status="unavailable",
-                    option_id=selected_option.option_id,
-                    reason="state_changed",
-                    spell_slot_level=selected_candidate.slot_level,
-                )
-                continue
-            if (
-                live_candidate.effective_spell_level < spell_level
-                and live_candidate.spellcasting_ability is None
-            ):
-                _reaction_window_closed_telemetry(
-                    telemetry,
-                    window=window,
-                    status="unavailable",
-                    option_id=selected_option.option_id,
-                    reason="missing_spellcasting_ability",
-                    spell_slot_level=live_candidate.slot_level,
-                )
-                continue
-
-            counterspell_action = live_candidate.action
-            counter_level = live_candidate.effective_spell_level
-            enemy_spent = resources_spent.setdefault(enemy.actor_id, {})
-            for key, amount in adapters.spend_resources(
-                enemy,
-                dict(live_candidate.resource_cost),
-            ).items():
-                enemy_spent[key] = enemy_spent.get(key, 0) + amount
-
-            state_key = live_candidate.state_key
-            enemy.per_action_uses[state_key] = enemy.per_action_uses.get(state_key, 0) + 1
-            if counterspell_action.recharge:
-                enemy.recharge_ready[state_key] = False
-            adapters.mark_action_cost_used(enemy, counterspell_action)
-            record_spell_cast_for_turn(
-                enemy,
-                counterspell_action,
-                is_action_cantrip_spell=adapters.is_action_cantrip_spell,
-            )
-
-            counterspell_cast_ordinal = enemy.next_spell_cast_ordinal
-            enemy.next_spell_cast_ordinal += 1
-            counterspell_frame = build_child_spell_cast_frame(
-                parent=cast_frame,
-                caster=enemy,
-                action=counterspell_action,
-                spell_level=counter_level,
-                target_actor_id=actor.actor_id,
-                cast_ordinal=counterspell_cast_ordinal,
-                range_ft=live_candidate.range_ft,
-            )
-
-            if counter_level >= spell_level:
-                record_counterspell_resolution(
-                    telemetry,
-                    window=window,
-                    incoming_frame=cast_frame,
-                    counterspell_frame=counterspell_frame,
-                    candidate=live_candidate,
-                    option_id=selected_option.option_id,
-                    resolution_method="automatic",
-                    d20_roll=None,
-                    check_modifier=None,
-                    check_dc=None,
-                    check_total=None,
-                    outcome="countered",
-                )
-                _reaction_window_closed_telemetry(
-                    telemetry,
-                    window=window,
-                    status="resolved",
-                    option_id=selected_option.option_id,
-                    reason="countered",
-                    spell_slot_level=live_candidate.slot_level,
-                )
-                return SpellPipelineOutcome(status="countered", cast_frame=cast_frame)
-            check_dc = 10 + spell_level
-            spellcasting_ability = live_candidate.spellcasting_ability
-            assert spellcasting_ability is not None
-            d20_roll = rng.randint(1, 20)
-            check_modifier = adapters.spellcasting_ability_mod(enemy, spellcasting_ability)
-            check_total = d20_roll + check_modifier
-            outcome = "countered" if check_total >= check_dc else "counter_failed"
-            record_counterspell_resolution(
-                telemetry,
-                window=window,
-                incoming_frame=cast_frame,
-                counterspell_frame=counterspell_frame,
-                candidate=live_candidate,
-                option_id=selected_option.option_id,
-                resolution_method="ability_check",
-                d20_roll=d20_roll,
-                check_modifier=check_modifier,
-                check_dc=check_dc,
-                check_total=check_total,
-                outcome=outcome,
-            )
-            if check_total >= check_dc:
-                _reaction_window_closed_telemetry(
-                    telemetry,
-                    window=window,
-                    status="resolved",
-                    option_id=selected_option.option_id,
-                    reason="countered",
-                    spell_slot_level=live_candidate.slot_level,
-                )
-                return SpellPipelineOutcome(status="countered", cast_frame=cast_frame)
-            _reaction_window_closed_telemetry(
-                telemetry,
-                window=window,
-                status="resolved",
-                option_id=selected_option.option_id,
-                reason="counter_failed",
-                spell_slot_level=live_candidate.slot_level,
-            )
+    chain_state = counterspell_chain_state or CounterspellChainState()
+    if chain_state.reaction_chain_id is None:
+        chain_state.reaction_chain_id = cast_frame.reaction_chain_id
+    if _counterspell_reactions_counter_incoming(
+        rng=rng,
+        caster=actor,
+        incoming_action=action,
+        incoming_spell_level=spell_level,
+        spell_target=targets[0] if targets else None,
+        incoming_frame=cast_frame,
+        incoming_subtle_spell=subtle_spell,
+        actors=actors,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        round_number=round_number,
+        turn_token=turn_token,
+        timing_engine=timing_engine,
+        light_level=light_level,
+        adapters=adapters,
+        obstacles=obstacles,
+        reaction_decision_provider=reaction_decision_provider,
+        telemetry=telemetry,
+        chain_state=chain_state,
+        on_reaction_spell_complete=on_reaction_spell_complete,
+    ):
+        return SpellPipelineOutcome(status="countered", cast_frame=cast_frame)
 
     if apply_result_state:
         apply_spell_result_state(

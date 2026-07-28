@@ -10,6 +10,7 @@ from dnd_sim.engine_runtime import (
 )
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.reaction_runtime import ReactionDecisionValidationError
+from dnd_sim.rules_2014 import ActionDeclaredEvent, CombatTimingEngine
 from dnd_sim.spatial import AABB
 from dnd_sim.strategy_api import (
     DeclaredAction,
@@ -494,6 +495,182 @@ def test_top_level_spell_action_dispatches_mage_slayer_window() -> None:
     assert len(windows) == 1
     assert windows[0].trigger.feature_name == "Mage Slayer"
     assert reactor.reaction_available is True
+
+
+def test_cancelled_top_level_spell_does_not_dispatch_mage_slayer_window() -> None:
+    reactor = _actor("reactor", team="party")
+    caster = _actor("caster", team="enemy")
+    reactor.position = (0.0, 0.0, 0.0)
+    caster.position = (5.0, 0.0, 0.0)
+    reactor.traits = _reaction_trait(
+        name="Mage Slayer",
+        trigger="spell_cast_within_5ft",
+        source_type="feat",
+    )
+    reactor.actions = [_attack("sword")]
+    spell = ActionDefinition(
+        name="cancelled_spell",
+        action_type="utility",
+        target_mode="single_enemy",
+        tags=["spell"],
+    )
+    actors = {reactor.actor_id: reactor, caster.actor_id: caster}
+    timing_engine = CombatTimingEngine()
+    timing_engine.subscribe(
+        ActionDeclaredEvent,
+        lambda event: event.cancel("test cancellation"),
+        name="cancel spell",
+    )
+    windows: list[ReactionWindowView] = []
+
+    def pass_reaction(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        return ReactionDecision(window_id=window.window_id, choice="pass")
+
+    _execute_action(
+        rng=_NoRollRng(),
+        actor=caster,
+        action=spell,
+        targets=[reactor],
+        actors=actors,
+        damage_dealt={actor_id: 0 for actor_id in actors},
+        damage_taken={actor_id: 0 for actor_id in actors},
+        threat_scores={actor_id: 0 for actor_id in actors},
+        resources_spent={actor_id: {} for actor_id in actors},
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+        reaction_decision_provider=pass_reaction,
+        timing_engine=timing_engine,
+    )
+
+    assert windows == []
+    assert caster.next_combat_event_ordinal == 0
+
+
+def test_component_blocked_top_level_spell_does_not_dispatch_after_action() -> None:
+    reactor = _actor("reactor", team="party")
+    caster = _actor("caster", team="enemy")
+    reactor.position = (0.0, 0.0, 0.0)
+    caster.position = (5.0, 0.0, 0.0)
+    reactor.traits = _reaction_trait(
+        name="Mage Slayer",
+        trigger="spell_cast_within_5ft",
+        source_type="feat",
+    )
+    reactor.actions = [_attack("sword")]
+    caster.conditions.add("silenced")
+    spell = ActionDefinition(
+        name="blocked_spell",
+        action_type="utility",
+        target_mode="single_enemy",
+        tags=["spell", "component:verbal"],
+    )
+    actors = {reactor.actor_id: reactor, caster.actor_id: caster}
+    windows: list[ReactionWindowView] = []
+
+    def pass_reaction(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        return ReactionDecision(window_id=window.window_id, choice="pass")
+
+    _execute_action(
+        rng=_NoRollRng(),
+        actor=caster,
+        action=spell,
+        targets=[reactor],
+        actors=actors,
+        damage_dealt={actor_id: 0 for actor_id in actors},
+        damage_taken={actor_id: 0 for actor_id in actors},
+        threat_scores={actor_id: 0 for actor_id in actors},
+        resources_spent={actor_id: {} for actor_id in actors},
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+        reaction_decision_provider=pass_reaction,
+    )
+
+    assert windows == []
+    assert caster.next_combat_event_ordinal == 0
+
+
+def test_countered_top_level_spell_dispatches_one_mage_slayer_cast_hook() -> None:
+    mage_slayer = _actor("mage_slayer", team="party")
+    counterspeller = _actor("counterspeller", team="party")
+    caster = _actor("caster", team="enemy")
+    mage_slayer.position = (5.0, 0.0, 0.0)
+    counterspeller.position = (30.0, 0.0, 0.0)
+    caster.position = (0.0, 0.0, 0.0)
+    mage_slayer.traits = _reaction_trait(
+        name="Mage Slayer",
+        trigger="spell_cast_within_5ft",
+        source_type="feat",
+    )
+    mage_slayer.actions = [_attack("sword")]
+    counterspeller.actions = [
+        ActionDefinition(
+            name="Counterspell",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="single_creature",
+            range_ft=60,
+            tags=["spell", "counterspell", "component:somatic"],
+        )
+    ]
+    counterspeller.resources = {"spell_slot_3": 1}
+    spell = ActionDefinition(
+        name="countered_spell",
+        action_type="utility",
+        target_mode="single_enemy",
+        effects=[
+            {
+                "effect_type": "apply_condition",
+                "condition": "spell_resolved",
+                "target": "target",
+            }
+        ],
+        tags=["spell", "component:verbal", "component:somatic"],
+    )
+    actors = {
+        mage_slayer.actor_id: mage_slayer,
+        counterspeller.actor_id: counterspeller,
+        caster.actor_id: caster,
+    }
+    windows: list[ReactionWindowView] = []
+
+    def choose_counterspell_then_pass(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        if window.trigger.kind == "counterspell":
+            option = window.options[0]
+            return ReactionDecision(
+                window_id=window.window_id,
+                choice="use",
+                option_id=option.option_id,
+                spell_slot_level=option.legal_spell_slot_levels[0],
+            )
+        return ReactionDecision(window_id=window.window_id, choice="pass")
+
+    _execute_action(
+        rng=_NoRollRng(),
+        actor=caster,
+        action=spell,
+        targets=[mage_slayer],
+        actors=actors,
+        damage_dealt={actor_id: 0 for actor_id in actors},
+        damage_taken={actor_id: 0 for actor_id in actors},
+        threat_scores={actor_id: 0 for actor_id in actors},
+        resources_spent={actor_id: {} for actor_id in actors},
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+        reaction_decision_provider=choose_counterspell_then_pass,
+    )
+
+    mage_slayer_windows = [
+        window for window in windows if window.trigger.feature_name == "Mage Slayer"
+    ]
+    assert "spell_resolved" not in mage_slayer.conditions
+    assert len(mage_slayer_windows) == 1
+    assert caster.next_combat_event_ordinal == 1
 
 
 def test_lair_spell_routes_mage_slayer_window_to_provider() -> None:

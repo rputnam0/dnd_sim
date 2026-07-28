@@ -4,12 +4,28 @@ from dataclasses import asdict
 import hashlib
 import json
 import logging
+import random
+import re
 
-from dnd_sim.models import ActionDefinition
+from dnd_sim.models import ActionDefinition, ActorRuntimeState
 
 _EXPLICIT_STATE_KEY_PREFIX = "action_state_key:"
 
 logger = logging.getLogger(__name__)
+
+
+def parse_recharge_threshold(spec: str) -> int | None:
+    value = str(spec).strip().strip("()").replace("–", "-")
+    match = re.fullmatch(
+        r"(?:recharge\s+)?([1-6])(?:\s*-\s*([1-6]))?",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    low = int(match.group(1))
+    high = int(match.group(2) or match.group(1))
+    return low if low <= high else None
 
 
 def _explicit_action_state_key(action: ActionDefinition) -> str | None:
@@ -82,3 +98,20 @@ def actions_by_variant_state_key(
             action,
         )
     return resolved
+
+
+def roll_recharge_for_actor(rng: random.Random, actor: ActorRuntimeState) -> None:
+    if not actor.recharge_ready:
+        return
+    by_name = {action.name: action for action in actor.actions}
+    by_state_key = actions_by_variant_state_key(actor.actions)
+    for state_key, is_ready in list(actor.recharge_ready.items()):
+        if is_ready:
+            continue
+        action = by_state_key.get(state_key) or by_name.get(state_key)
+        if not action or not action.recharge:
+            actor.recharge_ready[state_key] = True
+            continue
+        threshold = parse_recharge_threshold(action.recharge)
+        if threshold is None or rng.randint(1, 6) >= threshold:
+            actor.recharge_ready[state_key] = True

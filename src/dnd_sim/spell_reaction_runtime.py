@@ -469,12 +469,13 @@ def record_counterspell_resolution(
     counterspell_frame: SpellCastFrame,
     candidate: CounterspellCandidate,
     option_id: str,
-    resolution_method: Literal["automatic", "ability_check"],
+    resolution_method: Literal["automatic", "ability_check", "interrupted"],
     d20_roll: int | None,
     check_modifier: int | None,
     check_dc: int | None,
     check_total: int | None,
-    outcome: Literal["countered", "counter_failed"],
+    outcome: Literal["countered", "counter_failed", "counterspell_countered"],
+    countered_by_cast_id: str | None = None,
 ) -> None:
     """Append one replay-safe resolution envelope for a paid Counterspell attempt."""
 
@@ -513,6 +514,7 @@ def record_counterspell_resolution(
         "check_dc": check_dc,
         "check_total": check_total,
         "outcome": outcome,
+        "countered_by_cast_id": countered_by_cast_id,
     }
     telemetry.append(
         build_event_envelope(

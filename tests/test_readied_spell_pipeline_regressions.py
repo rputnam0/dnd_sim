@@ -75,6 +75,17 @@ def _spell(*, name: str = "held_bolt", concentration: bool = False) -> ActionDef
     )
 
 
+def _counterspell() -> ActionDefinition:
+    return ActionDefinition(
+        name="Counterspell",
+        action_type="utility",
+        action_cost="reaction",
+        target_mode="single_creature",
+        spellcasting_ability="cha",
+        tags=["spell", "counterspell"],
+    )
+
+
 def _trackers(
     *actors: ActorRuntimeState,
 ) -> tuple[dict[str, int], dict[str, int], dict[str, int], dict[str, dict[str, int]]]:
@@ -417,3 +428,184 @@ def test_readied_multiattack_spell_preserves_each_concentration_linked_effect() 
     assert caster.concentration_effect_instance_ids == {
         effect.instance_id for effect in marked_effects
     }
+
+
+@pytest.mark.parametrize(
+    ("counter_count", "spell_is_held"),
+    [(1, False), (2, True), (3, False)],
+)
+def test_nested_counterspell_parity_during_readied_spell_setup(
+    counter_count: int,
+    spell_is_held: bool,
+) -> None:
+    caster = _actor(actor_id="caster", team="party")
+    first = _actor(actor_id="b_first", team="enemy")
+    trigger = _actor(actor_id="m_trigger", team="enemy")
+    held_spell = _spell()
+    caster.actions = [_ready_action(), held_spell]
+    caster.resources["spell_slot_1"] = 1
+    first.actions = [_counterspell()]
+    first.resources["spell_slot_3"] = 1
+    actors = {
+        caster.actor_id: caster,
+        first.actor_id: first,
+        trigger.actor_id: trigger,
+    }
+    if counter_count >= 2:
+        caster.actions.append(_counterspell())
+        caster.resources["spell_slot_3"] = 1
+    third: ActorRuntimeState | None = None
+    if counter_count >= 3:
+        third = _actor(actor_id="z_third", team="enemy")
+        third.actions = [_counterspell()]
+        third.resources["spell_slot_3"] = 1
+        actors[third.actor_id] = third
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(*actors.values())
+    timing_engine = CombatTimingEngine()
+    declarations: list[tuple[str, str, str | None]] = []
+    timing_engine.subscribe(
+        ActionDeclaredEvent,
+        lambda event: declarations.append(
+            (
+                event.attacker.actor_id,
+                event.action.name,
+                event.target.actor_id if event.target is not None else None,
+            )
+        ),
+        name="capture declarations",
+    )
+
+    def use_first_option(window: ReactionWindowView) -> ReactionDecision:
+        option = window.options[0]
+        slot_level = option.legal_spell_slot_levels[0] if option.legal_spell_slot_levels else None
+        return ReactionDecision(
+            window_id=window.window_id,
+            choice="use",
+            option_id=option.option_id,
+            spell_slot_level=slot_level,
+        )
+
+    _execute_action(
+        rng=_SequenceRng([]),
+        actor=caster,
+        action=caster.actions[0],
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+        timing_engine=timing_engine,
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name=held_spell.name,
+        ),
+        reaction_decision_provider=use_first_option,
+    )
+
+    expected_declarations = [
+        ("caster", held_spell.name, None),
+        ("b_first", "Counterspell", "caster"),
+    ]
+    if counter_count >= 2:
+        expected_declarations.append(("caster", "Counterspell", "b_first"))
+    if counter_count >= 3:
+        expected_declarations.append(("z_third", "Counterspell", "caster"))
+    assert declarations == expected_declarations
+    assert caster.readied_spell_held is spell_is_held
+    assert ("readying" in caster.conditions) is spell_is_held
+    assert caster.next_spell_cast_ordinal == 1 + int(counter_count >= 2)
+    assert first.next_spell_cast_ordinal == 1
+    if third is not None:
+        assert third.next_spell_cast_ordinal == 1
+
+
+def test_held_spell_release_does_not_repeat_cast_boundaries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    caster = _actor(actor_id="caster", team="party")
+    trigger = _actor(actor_id="trigger", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    trigger.position = (5.0, 0.0, 0.0)
+    held_spell = _spell()
+    caster.actions = [_ready_action(), held_spell]
+    caster.resources["spell_slot_1"] = 1
+    _mage_slayer(trigger)
+    trigger.actions.append(_counterspell())
+    trigger.resources["spell_slot_3"] = 1
+    actors = {caster.actor_id: caster, trigger.actor_id: trigger}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, trigger)
+    timing_engine = CombatTimingEngine()
+    monkeypatch.setattr(engine_module, "_DEFAULT_COMBAT_TIMING_ENGINE", timing_engine)
+    cast_trigger_hooks: list[tuple[str, str]] = []
+    original_dispatch = engine_module._dispatch_combat_event
+
+    def capture_dispatch(**kwargs):
+        if kwargs.get("event") == "after_action" and kwargs.get("spell_cast_occurred"):
+            cast_trigger_hooks.append(
+                (kwargs["trigger_actor"].actor_id, kwargs["trigger_action"].name)
+            )
+        return original_dispatch(**kwargs)
+
+    monkeypatch.setattr(engine_module, "_dispatch_combat_event", capture_dispatch)
+    declarations: list[tuple[str, str]] = []
+    timing_engine.subscribe(
+        ActionDeclaredEvent,
+        lambda event: declarations.append((event.attacker.actor_id, event.action.name)),
+        name="capture declarations",
+    )
+    windows: list[ReactionWindowView] = []
+
+    def pass_reaction(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        return ReactionDecision(window_id=window.window_id, choice="pass")
+
+    _execute_action(
+        rng=_SequenceRng([]),
+        actor=caster,
+        action=caster.actions[0],
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name=held_spell.name,
+        ),
+        reaction_decision_provider=pass_reaction,
+    )
+
+    assert declarations == [(caster.actor_id, held_spell.name)]
+    assert [window.trigger.kind for window in windows] == ["counterspell", "trait"]
+    assert caster.readied_spell_held is True
+    assert caster.next_spell_cast_ordinal == 1
+    assert cast_trigger_hooks == [(caster.actor_id, held_spell.name)]
+
+    getattr(engine_module, "_trigger_readied_actions")(
+        rng=_SequenceRng([10, 10]),
+        trigger_actor=trigger,
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:trigger",
+        reaction_decision_provider=pass_reaction,
+    )
+
+    assert declarations == [(caster.actor_id, held_spell.name)]
+    assert [window.trigger.kind for window in windows] == ["counterspell", "trait"]
+    assert caster.next_spell_cast_ordinal == 1
+    assert cast_trigger_hooks == [(caster.actor_id, held_spell.name)]
+    assert caster.readied_spell_held is False
+    assert trigger.hp == trigger.max_hp - 1

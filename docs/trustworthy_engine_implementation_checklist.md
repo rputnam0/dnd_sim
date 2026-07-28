@@ -116,14 +116,15 @@ Active stack:
   typed Counterspell decisions with exact standard/Pact/innate payment, stable action-variant
   state, component/range/sight/line-of-effect legality, actor-local cast correlation, full
   resolution telemetry, and explicit spellcasting-ability provenance.
+- Draft PR `#262`, `codex/nested-counterspell-casts`: committed Counterspell declarations,
+  bounded nested cast chains, exact interruption ancestry, actual root-cast outcome propagation,
+  deepest-first post-cast hooks, and readied-spell setup/release parity.
 
-The next rules slice makes Counterspell a fully committed nested spell cast: each Counterspell gets
-its own declaration, bounded recursive counter-reactions, actual cast-outcome propagation, and
-exactly-once post-cast hooks. Typed Shield follows on that shared reaction-spell seam, including
-attack-hit and Magic Missile timing, persistent AC lifecycle, exact payment, Counterspell, and
-replay telemetry. War Caster and the remaining reaction-modifying features follow on the same
-kernel. Once the combat reaction boundary is stable, the D&D combat driver can integrate with the
-atomic interactive session contract in draft PR `#250`.
+The next rules slice implements typed Shield on the shared reaction-spell seam, including attack-hit
+and Magic Missile timing, persistent AC lifecycle, exact payment, Counterspell, and replay
+telemetry. War Caster and the remaining reaction-modifying features follow on the same kernel. Once
+the combat reaction boundary is stable, the D&D combat driver can integrate with the atomic
+interactive session contract in draft PR `#250`.
 
 ## Required verification for Milestone 0
 
