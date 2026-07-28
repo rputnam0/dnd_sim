@@ -551,3 +551,37 @@ def test_base_strategy_avoids_friendly_fire_for_trait_reactions() -> None:
     assert decision.rationale == {"reason": "avoid_friendly_fire"}
     assert legacy_decision.choice == "pass"
     assert legacy_decision.option_id is None
+
+    counterspell_window = ReactionWindowView(
+        window_id="1:counterspell:reactor:ally",
+        reactor_id=reactor.actor_id,
+        round_number=1,
+        turn_token="1:ally",
+        trigger=ReactionTriggerView(
+            kind="counterspell",
+            source_actor_id=ally.actor_id,
+            action_name="Arcane Seal",
+            spell_level=3,
+        ),
+        options=(
+            ReactionOptionView(
+                option_id="reactor:counterspell:slot3",
+                action_name="Counterspell",
+                fixed_target_ids=(ally.actor_id,),
+                legal_target_ids=(ally.actor_id,),
+                legal_spell_slot_levels=(3,),
+                resource_cost=(("spell_slot_3", 1),),
+            ),
+        ),
+    )
+    counterspell_decision = BaseStrategy().decide_reaction(reactor, counterspell_window, state)
+    counterspell_legacy = build_strategy_reaction_decision_provider(
+        state_provider=lambda: state,
+        strategy_registry={"party_default": object()},
+        actor_strategy_overrides={},
+        party_default_strategy="party_default",
+        enemy_default_strategy="enemy_default",
+    )(counterspell_window)
+
+    assert counterspell_decision.choice == "pass"
+    assert counterspell_legacy.choice == "pass"

@@ -50,6 +50,7 @@ class ReactionOptionView:
     damage_type: str | None = None
     reach_ft: float | None = None
     on_hit_effects: tuple[str, ...] = ()
+    effective_spell_level: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +78,13 @@ class ReactionWindowView:
     turn_token: str | None
     trigger: ReactionTriggerView
     options: tuple[ReactionOptionView, ...]
+    reaction_chain_id: str | None = None
+    chain_depth: int | None = None
+    incoming_cast_id: str | None = None
+    incoming_cast_ordinal: int | None = None
+    parent_cast_id: str | None = None
+    reactor_order: int | None = None
+    incoming_action_identity: str | None = None
 
 
 @dataclass(slots=True)
@@ -198,6 +206,17 @@ class BaseStrategy:
                 choice="pass",
                 rationale={"reason": "no_reaction_options"},
             )
+        if window.trigger.kind == "counterspell":
+            caster = state.actors.get(str(window.trigger.source_actor_id or ""))
+            if caster is not None and caster.team == actor.team:
+                return ReactionDecision(
+                    window_id=window.window_id,
+                    choice="pass",
+                    rationale={"reason": "avoid_countering_ally"},
+                )
+            from dnd_sim.spell_reaction_runtime import default_counterspell_reaction_decision
+
+            return default_counterspell_reaction_decision(window)
         options = window.options
         if window.trigger.kind == "trait":
             options = tuple(

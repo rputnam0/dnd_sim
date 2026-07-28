@@ -130,6 +130,7 @@ from dnd_sim.action_resolution import (
     execute_action_pipeline as _action_resolution_execute_action_pipeline,
 )
 from dnd_sim.mechanics_schema import SPELL_METADATA_EFFECT_TYPES
+from dnd_sim import action_state_runtime as _action_state_runtime
 from dnd_sim import effects_runtime as _effects_runtime
 from dnd_sim import reaction_runtime as _reaction_runtime
 from dnd_sim import spell_runtime as _spell_runtime
@@ -3532,7 +3533,7 @@ def _classify_casting_time_action_cost(casting_time: str) -> str:
     compact = re.sub(r"[^a-z0-9]+", "", casting_time.strip().lower())
     if compact in {"ba", "1ba", "bonusaction", "1bonusaction"}:
         return "bonus"
-    if compact in {"r", "1r", "reaction", "1reaction"}:
+    if compact in {"r", "1r"} or compact.startswith(("reaction", "1reaction")):
         return "reaction"
     return "action"
 
@@ -3767,6 +3768,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "to_hit": to_hit if to_hit is not None else global_to_hit,
             "save_dc": save_dc if save_dc is not None else global_save_dc,
             "save_ability": save_ability,
+            "spellcasting_ability": profile.get("casting_ability"),
             "concentration": "concentration" in duration.lower() if duration else False,
         }
         if casting_time:
@@ -4123,6 +4125,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             "concentration",
             "ritual",
             "components",
+            "spellcasting_ability",
             "duration",
             "duration_rounds",
             "target_mode",
@@ -4183,6 +4186,7 @@ def _clone_action(action: ActionDefinition, **overrides: Any) -> ActionDefinitio
         "aoe_size_ft": action.aoe_size_ft,
         "max_targets": action.max_targets,
         "concentration": action.concentration,
+        "spellcasting_ability": action.spellcasting_ability,
         "include_self": action.include_self,
         "effects": [
             dict(effect) if isinstance(effect, dict) else effect for effect in action.effects
@@ -4544,6 +4548,9 @@ def _build_spell_actions(
     if pact_profile is not None:
         pact_slot_level, _pact_slot_count = pact_profile
         pact_slot_key = f"warlock_spell_slot_{pact_slot_level}"
+    profile_ability = _extract_spellcasting_profile_from_raw_fields(character).get(
+        "casting_ability"
+    )
 
     for spell in spells:
         name = str(spell.get("name", "unknown_spell"))
@@ -4562,6 +4569,9 @@ def _build_spell_actions(
         action_cost = str(spell.get("action_cost", "action"))
         target_mode = str(spell.get("target_mode", "single_enemy"))
         max_targets = spell.get("max_targets")
+        spellcasting_ability = _spell_runtime.infer_character_spellcasting_ability(
+            character, spell, profile_ability=profile_ability
+        )
         mechanics = spell.get("mechanics", [])
         tags = list(spell.get("tags", []))
         tags.append("spell")
@@ -4654,6 +4664,7 @@ def _build_spell_actions(
             aoe_size_ft=spell.get("aoe_size_ft"),
             max_targets=max_targets,
             concentration=bool(spell.get("concentration", False)),
+            spellcasting_ability=spellcasting_ability,
             include_self=smite_setup,
             effects=effects,
             mechanics=mechanics,
@@ -4714,6 +4725,7 @@ def _build_spell_actions(
                         aoe_size_ft=spell.get("aoe_size_ft"),
                         max_targets=max_targets,
                         concentration=bool(spell.get("concentration", False)),
+                        spellcasting_ability=spellcasting_ability,
                         include_self=smite_setup,
                         effects=list(effects),
                         mechanics=list(mechanics),
@@ -6656,6 +6668,7 @@ def _build_enemy_innate_spell_actions(enemy: EnemyConfig) -> list[ActionDefiniti
                     else None
                 ),
                 concentration=bool(spell_def.get("concentration", False)),
+                spellcasting_ability=getattr(entry, "spellcasting_ability", None),
                 effects=effects,
                 mechanics=[
                     dict(mechanic) if isinstance(mechanic, dict) else mechanic
@@ -6717,6 +6730,7 @@ def _build_actor_from_enemy(
                     range_normal_ft=getattr(action, "range_normal_ft", None),
                     range_long_ft=getattr(action, "range_long_ft", None),
                     concentration=action.concentration,
+                    spellcasting_ability=getattr(action, "spellcasting_ability", None),
                     include_self=action.include_self,
                     effects=[effect.model_dump() for effect in action.effects],
                     mechanics=[
@@ -7410,7 +7424,7 @@ def _can_pay_flexible_spell_slots(
     effective_floor = minimum_level
     if preferred_level is not None and preferred_level > effective_floor:
         effective_floor = preferred_level
-    available = _available_spell_slots(actor, minimum=effective_floor)
+    available = _spell_runtime.available_spell_slots(actor, minimum=effective_floor)
     total_available = sum(max(0, int(actor.resources.get(key, 0))) for key, _ in available)
     return total_available >= amount
 
@@ -7452,7 +7466,7 @@ def _spend_flexible_spell_slots(
             floor = minimum_level
             if preferred_level is not None and preferred_level > floor:
                 floor = preferred_level
-            available = _available_spell_slots(actor, minimum=floor)
+            available = _spell_runtime.available_spell_slots(actor, minimum=floor)
             if not available:
                 break
             slot_key = available[0][0]
@@ -10998,10 +11012,11 @@ def _roll_recharge_for_actor(rng: random.Random, actor: ActorRuntimeState) -> No
     if not actor.recharge_ready:
         return
     by_name = {action.name: action for action in actor.actions}
+    by_state_key = _action_state_runtime.actions_by_variant_state_key(actor.actions)
     for action_name, is_ready in list(actor.recharge_ready.items()):
         if is_ready:
             continue
-        action = by_name.get(action_name)
+        action = by_state_key.get(action_name) or by_name.get(action_name)
         if not action or not action.recharge:
             actor.recharge_ready[action_name] = True
             continue
@@ -11013,18 +11028,10 @@ def _roll_recharge_for_actor(rng: random.Random, actor: ActorRuntimeState) -> No
             actor.recharge_ready[action_name] = True
 
 
-def _action_component_tags(action: ActionDefinition) -> set[str]:
-    return {
-        str(tag).strip().lower()
-        for tag in action.tags
-        if str(tag).strip().lower().startswith("component:")
-    }
-
-
 def _can_cast_spell_with_components(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
     if "spell" not in action.tags:
         return True
-    components = _action_component_tags(action)
+    components = _spell_runtime.action_component_tags(action)
     if not components:
         return True
 
@@ -11256,6 +11263,11 @@ def _action_available(
     spell_cast_request: SpellCastRequest | None = None,
     turn_token: str | None = None,
 ) -> bool:
+    state_key = action.name
+    if action.action_cost == "reaction" and _action_matches_reaction_spell_id(
+        action, spell_id="counterspell"
+    ):
+        state_key = _action_state_runtime.action_variant_state_key(actor.actions, action)
     if action.name == "lay_on_hands" and actor.resources.get("lay_on_hands_pool", 0) <= 0:
         return False
     if action.name == "rage_activation":
@@ -11263,9 +11275,9 @@ def _action_available(
             return False
         if has_condition(actor, "raging"):
             return False
-    if action.max_uses is not None and actor.per_action_uses.get(action.name, 0) >= action.max_uses:
+    if action.max_uses is not None and actor.per_action_uses.get(state_key, 0) >= action.max_uses:
         return False
-    if action.recharge and not actor.recharge_ready.get(action.name, True):
+    if action.recharge and not actor.recharge_ready.get(state_key, True):
         return False
     if "spell" in action.tags and has_condition(actor, _ANTIMAGIC_SUPPRESSION_CONDITION):
         return False
@@ -11846,71 +11858,58 @@ def _spell_level_from_action(action: ActionDefinition) -> int:
     return _required_spell_slot_level(action)
 
 
-def _available_spell_slots(actor: ActorRuntimeState, *, minimum: int = 1) -> list[tuple[str, int]]:
-    available: list[tuple[str, int]] = []
-    for key, value in actor.resources.items():
-        if not key.startswith("spell_slot_") or int(value) <= 0:
-            continue
-        try:
-            level = int(key.split("_")[-1])
-        except ValueError:
-            continue
-        if level >= minimum:
-            available.append((key, level))
-    available.sort(key=lambda item: item[1])
-    return available
-
-
-def _lowest_available_spell_slot(
-    actor: ActorRuntimeState, *, minimum: int = 1
-) -> tuple[str, int] | None:
-    slots = _available_spell_slots(actor, minimum=minimum)
-    return slots[0] if slots else None
-
-
-def _select_counterspell_slot(
-    actor: ActorRuntimeState, *, incoming_spell_level: int
-) -> tuple[str, int] | None:
-    available = _available_spell_slots(actor, minimum=3)
-    if not available:
-        return None
-    guaranteed = [slot for slot in available if slot[1] >= max(3, incoming_spell_level)]
-    if guaranteed:
-        return guaranteed[0]
-    return available[0]
-
-
-def _counterspell_slot_if_legal(
+def _counterspell_candidate_is_legal(
     *,
     reactor: ActorRuntimeState,
-    counterspell_action: ActionDefinition,
+    candidate: Any,
     caster: ActorRuntimeState,
     incoming_spell_level: int,
     turn_token: str | None,
     active_hazards: list[dict[str, Any]],
     light_level: str,
-) -> tuple[str, int] | None:
-    if not _action_available(reactor, counterspell_action, turn_token=turn_token):
-        return None
+    obstacles: list[AABB] | None,
+) -> bool:
+    if candidate.effective_spell_level < incoming_spell_level and not (
+        candidate.spellcasting_ability
+    ):
+        return False
+    exact_cost = dict(candidate.resource_cost)
+    if not _has_resources(reactor, exact_cost):
+        return False
+    action = candidate.action
+    used = reactor.per_action_uses.get(
+        candidate.state_key,
+        reactor.per_action_uses.get(action.name, 0),
+    )
+    if action.max_uses is not None and used >= action.max_uses:
+        return False
+    ready = reactor.recharge_ready.get(
+        candidate.state_key,
+        reactor.recharge_ready.get(action.name, True),
+    )
+    if action.recharge and not ready:
+        return False
+    legal_action = replace(action, resource_cost=exact_cost, max_uses=None, recharge=None)
+    if not _action_available(reactor, legal_action, turn_token=turn_token):
+        return False
     if _actor_inside_antimagic_zone(reactor, active_hazards):
-        return None
-    if distance_chebyshev(reactor.position, caster.position) > 60:
-        return None
-    if has_condition(reactor, "blinded"):
-        return None
-
-    from .spatial import can_see
-
-    if not can_see(
-        observer_pos=reactor.position,
+        return False
+    if distance_chebyshev(reactor.position, caster.position) > candidate.range_ft:
+        return False
+    visibility = query_visibility(
+        attacker_pos=reactor.position,
         target_pos=caster.position,
-        observer_traits=reactor.traits,
+        attacker_traits=reactor.traits,
+        target_traits=caster.traits,
+        attacker_conditions=reactor.conditions,
         target_conditions=caster.conditions,
         active_hazards=active_hazards,
+        obstacles=obstacles,
         light_level=light_level,
-    ):
-        return None
-    return _select_counterspell_slot(reactor, incoming_spell_level=incoming_spell_level)
+        requires_sight=True,
+        requires_line_of_effect=True,
+    )
+    return bool(visibility.targeting_legal)
 
 
 def _fallback_action(
@@ -12464,10 +12463,6 @@ def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None
     return best
 
 
-def _spellcasting_ability_mod(actor: ActorRuntimeState) -> int:
-    return max(actor.int_mod, actor.wis_mod, actor.cha_mod)
-
-
 _RUNTIME_EXPR_TOKEN_RE = re.compile(r"\bspellcasting(?:_ability)?_mod\b", re.IGNORECASE)
 _LAST_DAMAGE_APPLIED_TOKEN_RE = re.compile(
     r"\blast_damage_applied(?:_x(?P<multiplier>\d+))?\b", re.IGNORECASE
@@ -12490,7 +12485,9 @@ def _resolve_runtime_roll_expression(
         return str(base * multiplier)
 
     resolved = _LAST_DAMAGE_APPLIED_TOKEN_RE.sub(_replace_last_damage_applied, text)
-    resolved = _RUNTIME_EXPR_TOKEN_RE.sub(str(_spellcasting_ability_mod(actor)), resolved)
+    resolved = _RUNTIME_EXPR_TOKEN_RE.sub(
+        str(_spell_runtime.spellcasting_ability_modifier(actor)), resolved
+    )
     return resolved.replace("+-", "-").replace("--", "+")
 
 
@@ -12692,7 +12689,7 @@ def _resolve_dispel_magic(
     active_hazards: list[dict[str, Any]],
 ) -> None:
     dispel_level = max(3, _spell_level_from_action(action))
-    check_mod = _spellcasting_ability_mod(actor)
+    check_mod = _spell_runtime.spellcasting_ability_modifier(actor)
     for target in targets:
         affecting_sources = [
             source
@@ -13121,11 +13118,10 @@ def _spell_pipeline_adapters() -> _spell_runtime.SpellPipelineAdapters:
         action_matches_reaction_spell_id=(
             lambda action, spell_id: _action_matches_reaction_spell_id(action, spell_id=spell_id)
         ),
-        counterspell_slot_if_legal=_counterspell_slot_if_legal,
-        split_spell_slot_cost=_split_spell_slot_cost,
+        counterspell_candidate_is_legal=_counterspell_candidate_is_legal,
         spend_resources=_spend_resources,
         mark_action_cost_used=_mark_action_cost_used,
-        spellcasting_ability_mod=_spellcasting_ability_mod,
+        spellcasting_ability_mod=_spell_runtime.spellcasting_ability_modifier,
         is_action_cantrip_spell=_is_action_cantrip_spell,
         break_concentration=_break_concentration,
         is_smite_setup_action=_is_smite_setup_action,
@@ -13588,6 +13584,9 @@ def _execute_action_impl(
             subtle_spell=subtle_spell,
             light_level=light_level,
             adapters=_spell_pipeline_adapters(),
+            obstacles=line_of_effect_obstacles,
+            reaction_decision_provider=reaction_decision_provider,
+            telemetry=telemetry,
         )
         if spell_runtime_result is None:
             return
@@ -14817,6 +14816,9 @@ def _execute_action_impl(
                     subtle_spell=_has_tag(readied_response, "metamagic:subtle"),
                     light_level=light_level,
                     adapters=_spell_pipeline_adapters(),
+                    obstacles=line_of_effect_obstacles,
+                    reaction_decision_provider=reaction_decision_provider,
+                    telemetry=telemetry,
                     allow_deferred_targets=True,
                     apply_result_state=False,
                 )

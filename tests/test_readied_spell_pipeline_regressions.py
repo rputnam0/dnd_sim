@@ -225,8 +225,16 @@ def test_counterspelled_readied_spell_still_opens_mage_slayer_window() -> None:
     )
     windows: list[ReactionWindowView] = []
 
-    def pass_reaction(window: ReactionWindowView) -> ReactionDecision:
+    def decide_reaction(window: ReactionWindowView) -> ReactionDecision:
         windows.append(window)
+        if window.trigger.kind == "counterspell":
+            option = window.options[0]
+            return ReactionDecision(
+                window_id=window.window_id,
+                choice="use",
+                option_id=option.option_id,
+                spell_slot_level=option.legal_spell_slot_levels[0],
+            )
         return ReactionDecision(window_id=window.window_id, choice="pass")
 
     _execute_action(
@@ -246,13 +254,74 @@ def test_counterspelled_readied_spell_still_opens_mage_slayer_window() -> None:
             trigger="enemy_turn_start",
             response_action_name=spell.name,
         ),
-        reaction_decision_provider=pass_reaction,
+        reaction_decision_provider=decide_reaction,
     )
 
-    assert len(windows) == 1
-    assert windows[0].reactor_id == slayer.actor_id
+    assert [window.trigger.kind for window in windows] == ["counterspell", "trait"]
+    assert windows[1].reactor_id == slayer.actor_id
     assert counterspeller.resources["spell_slot_3"] == 0
     assert caster.readied_spell_held is False
+
+
+def test_persistent_wall_blocks_counterspell_while_readied_spell_still_arms() -> None:
+    caster = _actor(actor_id="caster", team="party")
+    counterspeller = _actor(actor_id="counterspeller", team="enemy")
+    caster.position = (0.0, 0.0, 0.0)
+    counterspeller.position = (30.0, 0.0, 0.0)
+    spell = _spell()
+    caster.actions = [_ready_action(), spell]
+    caster.resources["spell_slot_1"] = 1
+    counterspeller.actions = [
+        ActionDefinition(
+            name="counterspell",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="single_enemy",
+            tags=["spell", "counterspell"],
+        )
+    ]
+    counterspeller.resources["spell_slot_3"] = 1
+    actors = {caster.actor_id: caster, counterspeller.actor_id: counterspeller}
+    damage_dealt, damage_taken, threat_scores, resources_spent = _trackers(caster, counterspeller)
+    windows: list[ReactionWindowView] = []
+    wall_zone = {
+        "type": "wall",
+        "zone_instance_id": "wall:readied-counterspell",
+        "min_pos": (14.0, -5.0, -5.0),
+        "max_pos": (16.0, 5.0, 5.0),
+        "blocks_line_of_effect": True,
+    }
+
+    def capture(window: ReactionWindowView) -> ReactionDecision:
+        windows.append(window)
+        return ReactionDecision(window_id=window.window_id, choice="pass")
+
+    _execute_action(
+        rng=_SequenceRng([]),
+        actor=caster,
+        action=caster.actions[0],
+        targets=[caster],
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=[wall_zone],
+        round_number=1,
+        turn_token="1:caster",
+        ready_declaration=ReadyDeclaration(
+            trigger="enemy_turn_start",
+            response_action_name=spell.name,
+        ),
+        reaction_decision_provider=capture,
+    )
+
+    assert windows == []
+    assert caster.readied_spell_held is True
+    assert "readying" in caster.conditions
+    assert caster.concentrating is True
+    assert counterspeller.resources["spell_slot_3"] == 1
+    assert counterspeller.reaction_available is True
 
 
 def test_readied_spell_declaration_has_no_deferred_resolution_target() -> None:

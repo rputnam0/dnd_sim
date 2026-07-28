@@ -187,3 +187,110 @@ def test_base_strategy_uses_deterministic_reaction_option_priority() -> None:
     assert decision.window_id == window.window_id
     assert decision.choice == "use"
     assert decision.option_id == "accurate"
+
+
+def test_base_strategy_passes_same_team_counterspell_and_uses_optimal_hostile_slot() -> None:
+    actor, state = _build_state()
+    window = ReactionWindowView(
+        window_id="counterspell-window",
+        reactor_id=actor.actor_id,
+        round_number=1,
+        turn_token="1:enemy",
+        trigger=ReactionTriggerView(
+            kind="counterspell",
+            source_actor_id="enemy",
+            target_actor_id=actor.actor_id,
+            action_name="Arcane Seal",
+            spell_level=5,
+        ),
+        options=(
+            ReactionOptionView(
+                option_id="slot-3",
+                action_name="Counterspell",
+                fixed_target_ids=("enemy",),
+                legal_spell_slot_levels=(3,),
+                resource_cost=(("spell_slot_3", 1),),
+            ),
+            ReactionOptionView(
+                option_id="slot-5",
+                action_name="Counterspell",
+                fixed_target_ids=("enemy",),
+                legal_spell_slot_levels=(5,),
+                resource_cost=(("spell_slot_5", 1),),
+            ),
+        ),
+    )
+
+    hostile = BaseStrategy().decide_reaction(actor, window, state)
+    assert hostile.choice == "use"
+    assert hostile.option_id == "slot-5"
+    assert hostile.spell_slot_level == 5
+
+    state.actors["enemy"].team = actor.team
+    friendly = BaseStrategy().decide_reaction(actor, window, state)
+    assert friendly.choice == "pass"
+    assert friendly.option_id is None
+    assert friendly.spell_slot_level is None
+
+
+def test_base_strategy_can_select_slotless_counterspell_option() -> None:
+    actor, state = _build_state()
+    window = ReactionWindowView(
+        window_id="innate-counterspell-window",
+        reactor_id=actor.actor_id,
+        round_number=1,
+        turn_token="1:enemy",
+        trigger=ReactionTriggerView(
+            kind="counterspell",
+            source_actor_id="enemy",
+            spell_level=3,
+        ),
+        options=(
+            ReactionOptionView(
+                option_id="innate-counterspell",
+                action_name="Counterspell",
+                fixed_target_ids=("enemy",),
+                effective_spell_level=3,
+            ),
+        ),
+    )
+
+    decision = BaseStrategy().decide_reaction(actor, window, state)
+
+    assert decision.choice == "use"
+    assert decision.option_id == "innate-counterspell"
+    assert decision.spell_slot_level is None
+
+
+def test_default_counterspell_prefers_free_guaranteed_option_before_lower_level_slot() -> None:
+    actor, state = _build_state()
+    window = ReactionWindowView(
+        window_id="counterspell-resource-priority",
+        reactor_id=actor.actor_id,
+        round_number=1,
+        turn_token="1:enemy",
+        trigger=ReactionTriggerView(
+            kind="counterspell",
+            source_actor_id="enemy",
+            spell_level=3,
+        ),
+        options=(
+            ReactionOptionView(
+                option_id="paid-level-three",
+                action_name="Counterspell",
+                legal_spell_slot_levels=(3,),
+                resource_cost=(("spell_slot_3", 1),),
+                effective_spell_level=3,
+            ),
+            ReactionOptionView(
+                option_id="free-innate-level-four",
+                action_name="Counterspell",
+                effective_spell_level=4,
+            ),
+        ),
+    )
+
+    decision = BaseStrategy().decide_reaction(actor, window, state)
+
+    assert decision.option_id == "free-innate-level-four"
+    assert decision.spell_slot_level is None

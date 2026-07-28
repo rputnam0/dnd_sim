@@ -66,6 +66,7 @@ class CanonicalSpellRecord(BaseModel):
     level: int = Field(ge=0, le=9)
     school: str | None = None
     casting_time: str
+    components: str = ""
     action_type: Literal["attack", "save", "utility"] | None = None
     attack_delivery: AttackDelivery | None = None
     target_mode: (
@@ -109,6 +110,11 @@ class CanonicalSpellRecord(BaseModel):
             return None
         text = str(value).strip()
         return text.title() if text else None
+
+    @field_validator("components")
+    @classmethod
+    def _normalize_components(cls, value: str) -> str:
+        return re.sub(r"\s+", " ", str(value or "")).strip()
 
     @field_validator("save_ability")
     @classmethod
@@ -337,6 +343,7 @@ def canonicalize_spell_payload(
         "level": int(level_raw),
         "school": school_raw,
         "casting_time": casting_time,
+        "components": payload.get("components") or "",
         "action_type": action_type,
         "attack_delivery": attack_delivery,
         "target_mode": str(payload.get("target_mode", "")).strip().lower() or None,
@@ -362,7 +369,14 @@ def canonicalize_spell_payload(
 
 def _record_richness(record: dict[str, Any]) -> tuple[int, int]:
     score = 0
-    for field in ("school", "range_ft", "duration_rounds", "save_ability", "damage_type"):
+    for field in (
+        "school",
+        "components",
+        "range_ft",
+        "duration_rounds",
+        "save_ability",
+        "damage_type",
+    ):
         value = record.get(field)
         if value not in (None, ""):
             score += 1

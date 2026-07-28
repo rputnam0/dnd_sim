@@ -8,11 +8,12 @@ from dnd_sim.engine_runtime import (
     _break_concentration,
     _build_spell_actions,
     _coerce_positive_distance,
-    _counterspell_slot_if_legal,
+    _counterspell_candidate_is_legal,
     _execute_action,
     _resolve_targets_for_action,
 )
-from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.models import ActionDefinition, ActorRuntimeState, SpellComponents, SpellDefinition
+from dnd_sim.spell_reaction_runtime import build_counterspell_candidates_for_action
 from dnd_sim.strategy_api import TargetRef
 
 
@@ -93,6 +94,7 @@ def test_counterspell_higher_level_spell_requires_ability_check() -> None:
         action_type="utility",
         action_cost="reaction",
         target_mode="single_enemy",
+        spellcasting_ability="int",
         tags=["spell", "counterspell"],
     )
     caster.actions = [spell]
@@ -299,46 +301,59 @@ def test_counterspell_slot_legality_requires_sight_and_components() -> None:
         action_type="utility",
         action_cost="reaction",
         target_mode="single_enemy",
-        tags=["spell", "counterspell", "component:verbal"],
+        spell=SpellDefinition(
+            name="Counterspell",
+            level=3,
+            components=SpellComponents(somatic=True, raw="S"),
+        ),
+        tags=["spell", "counterspell"],
     )
-
-    assert _counterspell_slot_if_legal(
+    candidate = build_counterspell_candidates_for_action(
         reactor=enemy,
-        counterspell_action=counterspell,
+        action=counterspell,
+        action_index=0,
+    )[0]
+
+    assert _counterspell_candidate_is_legal(
+        reactor=enemy,
+        candidate=candidate,
         caster=caster,
         incoming_spell_level=3,
         turn_token="1:caster",
         active_hazards=[],
         light_level="bright",
-    ) == ("spell_slot_3", 3)
-
-    enemy.conditions.add("silenced")
-    assert (
-        _counterspell_slot_if_legal(
-            reactor=enemy,
-            counterspell_action=counterspell,
-            caster=caster,
-            incoming_spell_level=3,
-            turn_token="1:caster",
-            active_hazards=[],
-            light_level="bright",
-        )
-        is None
+        obstacles=None,
     )
 
-    enemy.conditions.clear()
-    enemy.conditions.add("blinded")
+    enemy.resources["free_hands"] = 0
     assert (
-        _counterspell_slot_if_legal(
+        _counterspell_candidate_is_legal(
             reactor=enemy,
-            counterspell_action=counterspell,
+            candidate=candidate,
             caster=caster,
             incoming_spell_level=3,
             turn_token="1:caster",
             active_hazards=[],
             light_level="bright",
+            obstacles=None,
         )
-        is None
+        is False
+    )
+
+    enemy.resources["free_hands"] = 1
+    enemy.conditions.add("blinded")
+    assert (
+        _counterspell_candidate_is_legal(
+            reactor=enemy,
+            candidate=candidate,
+            caster=caster,
+            incoming_spell_level=3,
+            turn_token="1:caster",
+            active_hazards=[],
+            light_level="bright",
+            obstacles=None,
+        )
+        is False
     )
 
 
@@ -557,6 +572,7 @@ def test_build_spell_actions_maps_component_strings_to_tags() -> None:
     assert "component:verbal" in tags
     assert "component:somatic" in tags
     assert "component:material" in tags
+    assert actions[0].spellcasting_ability == "int"
 
 
 def test_target_resolution_templates_are_shape_specific_and_team_consistent() -> None:
