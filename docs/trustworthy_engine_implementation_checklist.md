@@ -2,7 +2,7 @@
 
 Status: working implementation plan  
 Owner: engine-foundation  
-Last updated: 2026-07-26  
+Last updated: 2026-07-27
 Product roadmap: `docs/roadmap/README.md`
 
 ## Objective
@@ -112,12 +112,18 @@ Active stack:
 - Draft PR `#260`, `codex/typed-trait-reaction-decisions`: typed per-attack trait reactions,
   collision-safe reaction identities, exact target/range/resource bookkeeping, bounded causal
   event propagation, and rules-correct readied-spell cast/hold/release timing.
+- Draft PR `#261`, `codex/typed-spell-reaction-decisions`: forced-movement event context plus
+  typed Counterspell decisions with exact standard/Pact/innate payment, stable action-variant
+  state, component/range/sight/line-of-effect legality, actor-local cast correlation, full
+  resolution telemetry, and explicit spellcasting-ability provenance.
 
-The next rules slice completes `on_move` propagation for Open Hand and pending-smite forced
-movement, then moves Counterspell and Shield onto the typed use/pass decision surface with
-deterministic timing and target choices. War Caster and the remaining reaction-modifying features
-follow on that shared kernel. Once the combat reaction boundary is stable, the D&D combat driver
-can integrate with the atomic interactive session contract in draft PR `#250`.
+The next rules slice makes Counterspell a fully committed nested spell cast: each Counterspell gets
+its own declaration, bounded recursive counter-reactions, actual cast-outcome propagation, and
+exactly-once post-cast hooks. Typed Shield follows on that shared reaction-spell seam, including
+attack-hit and Magic Missile timing, persistent AC lifecycle, exact payment, Counterspell, and
+replay telemetry. War Caster and the remaining reaction-modifying features follow on the same
+kernel. Once the combat reaction boundary is stable, the D&D combat driver can integrate with the
+atomic interactive session contract in draft PR `#250`.
 
 ## Required verification for Milestone 0
 
