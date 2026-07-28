@@ -1970,6 +1970,17 @@ button:disabled {
   line-height: 1.45;
 }
 
+.command-permission-note {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid #c89243;
+  border-radius: 4px;
+  background: #f2e5c9;
+  color: #6d522b;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
 .chat-panel {
   padding: 18px 20px 20px;
 }
@@ -2049,6 +2060,16 @@ button:disabled {
   font-family: var(--font-geist-mono), monospace;
   font-size: 9px;
   font-weight: 750;
+}
+
+.chat-audience-label {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-faint);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 7px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .chat-delete,
@@ -2134,6 +2155,30 @@ button:disabled {
   font-weight: 750;
 }
 
+.chat-composer-routing {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chat-composer-routing > label:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.chat-composer select {
+  min-height: 32px;
+  max-width: 190px;
+  padding: 5px 28px 5px 8px;
+  border: 1px solid #cbbda8;
+  border-radius: 7px;
+  background: var(--ivory-50);
+  color: var(--ink);
+  font: inherit;
+  font-size: 9px;
+}
+
 .chat-composer textarea {
   width: 100%;
   min-height: 72px;
@@ -2149,6 +2194,7 @@ button:disabled {
 }
 
 .chat-composer textarea:focus-visible,
+.chat-composer select:focus-visible,
 .chat-delete:focus-visible,
 .chat-notice button:focus-visible {
   outline: 2px solid var(--coral-dark);
@@ -2359,6 +2405,59 @@ button:disabled {
 
 .state-card-error .button {
   margin-top: 24px;
+}
+
+.access-card {
+  display: grid;
+  gap: 13px;
+  border-top: 4px solid var(--mint-deep);
+}
+
+.access-card > p:not(.eyebrow) {
+  margin-bottom: 5px;
+}
+
+.access-card > label {
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.access-card > input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #cbbda8;
+  border-radius: var(--radius-control);
+  background: var(--ivory-50);
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+}
+
+.access-card > input:focus-visible {
+  outline: 2px solid var(--mint-deep);
+  outline-offset: 2px;
+}
+
+.access-glyph {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--mint-deep);
+  border-radius: 50%;
+  color: var(--mint-deep);
+  font-size: 24px;
+}
+
+.access-error {
+  margin: 0 !important;
+  padding: 8px 10px;
+  border-left: 3px solid var(--danger);
+  border-radius: 4px;
+  background: #f6d7d2;
+  color: #78342f !important;
+  font-size: 10px !important;
 }
 
 .error-glyph {

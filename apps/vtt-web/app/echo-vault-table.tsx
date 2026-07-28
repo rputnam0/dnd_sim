@@ -12,13 +12,13 @@ import {
 import {
   buildDeclarationCommand,
   buildStartCommand,
+  cellToFeet,
   feetToCell,
   getSessionView,
-  parseVttEvent,
   planGridMovement,
   postCommand,
+  streamVttEvents,
   VttApiError,
-  vttEventsUrl,
   type ActorAction,
   type ActorProjection,
   type DisplayEvent,
@@ -57,6 +57,12 @@ import {
   type AreaTemplateKind,
 } from "./vtt-template-geometry";
 import { VttChatPanel } from "./vtt-chat-panel";
+import { VttAccessGate } from "./vtt-access-gate";
+import {
+  canControlActor,
+  getTableView,
+  type VttTableView,
+} from "./vtt-access";
 
 type PendingOperation = "start" | "preview" | "commit" | null;
 
@@ -240,6 +246,30 @@ function isInteractiveControl(target: EventTarget | null): boolean {
       "input, textarea, select, button, a[href], summary, [contenteditable]:not([contenteditable='false']), [role='textbox'], [role='button'], [role='combobox']",
     ),
   );
+}
+
+function waitForEventReconnect(signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+    const finish = () => {
+      window.clearTimeout(timer);
+      signal.removeEventListener("abort", finish);
+      resolve();
+    };
+    const timer = window.setTimeout(finish, 750);
+    signal.addEventListener("abort", finish, { once: true });
+  });
+}
+
+async function loadTableConnection(
+  bearerToken: string | null,
+): Promise<{ identity: VttTableView; view: VttSessionView }> {
+  const identity = await getTableView({ bearerToken });
+  const view = await getSessionView(undefined, bearerToken);
+  return { identity, view };
 }
 
 function measurementStatus(
@@ -473,6 +503,8 @@ function TacticalMap({
   annotationError,
   annotationOperation,
   annotationCanMutate,
+  annotationCanManage,
+  currentParticipantId,
   templatePlacementError,
   onTokenSelect,
   onTargetSelect,
@@ -513,6 +545,8 @@ function TacticalMap({
   annotationError: string | null;
   annotationOperation: AnnotationMutationOperation;
   annotationCanMutate: boolean;
+  annotationCanManage: (authorId: string) => boolean;
+  currentParticipantId: string;
   templatePlacementError: string | null;
   onTokenSelect: (actorId: string) => void;
   onTargetSelect: (actorId: string) => void;
@@ -553,9 +587,11 @@ function TacticalMap({
   const selectedAnnotation = annotations.find(
     (annotation) => annotation.annotation_id === selectedAnnotationId,
   );
-  const selectedIsLocal = selectedAnnotation?.author_id === "local";
-  const localAnnotationCount = annotations.filter(
-    (annotation) => annotation.author_id === "local",
+  const selectedCanManage = Boolean(
+    selectedAnnotation && annotationCanManage(selectedAnnotation.author_id),
+  );
+  const ownedAnnotationCount = annotations.filter(
+    (annotation) => annotation.author_id === currentParticipantId,
   ).length;
 
   return (
@@ -716,20 +752,20 @@ function TacticalMap({
             </label>
             <button
               type="button"
-              disabled={!selectedIsLocal || !annotationCanMutate}
+              disabled={!selectedCanManage || !annotationCanMutate}
               onClick={onRemoveSelected}
             >
               Remove selected
             </button>
             <button
               type="button"
-              disabled={localAnnotationCount === 0 || !annotationCanMutate}
+              disabled={ownedAnnotationCount === 0 || !annotationCanMutate}
               onClick={onClearLocal}
             >
-              Clear local ({localAnnotationCount})
+              Clear mine ({ownedAnnotationCount})
             </button>
           </div>
-          {selectedAnnotation && !selectedIsLocal ? (
+          {selectedAnnotation && !selectedCanManage ? (
             <p className="annotation-owner-note">
               This marker belongs to {selectedAnnotation.author_id}; removal is disabled.
             </p>
@@ -1024,6 +1060,8 @@ function CommandPanel({
   fingerprint,
   pending,
   commandError,
+  canAdmin,
+  canControlActiveActor,
   onActionSelect,
   onTargetSelect,
   onStart,
@@ -1039,6 +1077,8 @@ function CommandPanel({
   fingerprint: string;
   pending: PendingOperation;
   commandError: string | null;
+  canAdmin: boolean;
+  canControlActiveActor: boolean;
   onActionSelect: (name: string) => void;
   onTargetSelect: (actorId: string) => void;
   onStart: () => void;
@@ -1070,7 +1110,8 @@ function CommandPanel({
       !selectedTargetIsLegalNow,
   );
   const canPreview = Boolean(
-    activeActor &&
+    canControlActiveActor &&
+      activeActor &&
       choices &&
       selectedChoice &&
       movementPlan &&
@@ -1106,12 +1147,17 @@ function CommandPanel({
           <button
             type="button"
             className="button button-primary button-wide"
-            disabled={pending !== null}
+            disabled={!canAdmin || pending !== null}
             onClick={onStart}
           >
             <span className="play-glyph" aria-hidden="true" />
             {pending === "start" ? "Starting encounter…" : "Start encounter"}
           </button>
+          {!canAdmin ? (
+            <p className="command-permission-note">
+              Only a Game Master can start the encounter.
+            </p>
+          ) : null}
         </section>
       ) : projection.phase === "terminal" ? (
         <section className="terminal-module">
@@ -1292,6 +1338,11 @@ function CommandPanel({
                 {pending === "commit" ? "Committing…" : "Commit turn"}
               </button>
             </div>
+            {!canControlActiveActor ? (
+              <p className="command-permission-note">
+                You can inspect this turn, but only its owner or a Game Master can act.
+              </p>
+            ) : null}
           </div>
         </section>
       )}
@@ -1348,6 +1399,10 @@ function EventLog({ events }: { events: LoggedEvent[] }) {
 
 export function EchoVaultTable() {
   const [view, setView] = useState<VttSessionView | null>(null);
+  const [tableIdentity, setTableIdentity] = useState<VttTableView | null>(null);
+  const [bearerToken, setBearerToken] = useState<string | null>(null);
+  const [credentialRequired, setCredentialRequired] = useState(false);
+  const [credentialPending, setCredentialPending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [commandError, setCommandError] = useState<string | null>(null);
@@ -1382,6 +1437,8 @@ export function EchoVaultTable() {
   const sharedAnnotations = useVttAnnotations({
     sessionId: view?.session_id ?? null,
     sceneId: view?.scene?.scene_id ?? null,
+    bearerToken,
+    participant: tableIdentity?.current_participant ?? null,
   });
   const activePingMode = pingMode && sharedAnnotations.available;
   const activeTemplateMode = templateMode && sharedAnnotations.available;
@@ -1390,7 +1447,8 @@ export function EchoVaultTable() {
       (annotation) => annotation.annotation_id === selectedAnnotationId,
     )?.annotation_id ??
     sharedAnnotations.annotations.find(
-      (annotation) => annotation.author_id === "local",
+      (annotation) =>
+        annotation.author_id === tableIdentity?.current_participant.participant_id,
     )?.annotation_id ??
     sharedAnnotations.annotations[0]?.annotation_id ??
     "";
@@ -1524,30 +1582,49 @@ export function EchoVaultTable() {
     setCommandError(null);
   }, []);
 
+  const adoptConnection = useCallback((connection: {
+    identity: VttTableView;
+    view: VttSessionView;
+  }, nextBearerToken: string | null) => {
+    setBearerToken(nextBearerToken);
+    setTableIdentity(connection.identity);
+    setCredentialRequired(false);
+    adoptView(connection.view);
+  }, [adoptView]);
+
   const refresh = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
     setLoadError(null);
     try {
-      const nextView = await getSessionView();
+      const nextView = await getSessionView(undefined, bearerToken);
       adoptView(nextView);
       return nextView;
     } catch (error) {
       const message = errorMessage(error);
       setLoadError(message);
+      if (error instanceof VttApiError && error.status === 401) {
+        setCredentialRequired(true);
+      }
       throw error;
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, [adoptView]);
+  }, [adoptView, bearerToken]);
 
   useEffect(() => {
     let active = true;
-    getSessionView()
-      .then((nextView) => {
-        if (active) adoptView(nextView);
+    loadTableConnection(null)
+      .then((connection) => {
+        if (active) adoptConnection(connection, null);
       })
       .catch((error) => {
-        if (active) setLoadError(errorMessage(error));
+        if (!active) return;
+        if (error instanceof VttApiError && error.status === 401) {
+          setCredentialRequired(true);
+          setLoadError("Enter the private credential supplied by your Game Master.");
+        } else {
+          setLoadError(errorMessage(error));
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -1555,7 +1632,7 @@ export function EchoVaultTable() {
     return () => {
       active = false;
     };
-  }, [adoptView]);
+  }, [adoptConnection]);
 
   const appendEvents = useCallback((response: VttCommandResponse) => {
     const source = response.response_type;
@@ -1571,49 +1648,73 @@ export function EchoVaultTable() {
   }, []);
 
   useEffect(() => {
-    let closed = false;
-    const stream = new EventSource(vttEventsUrl(eventCursorRef.current));
+    if (view === null || tableIdentity === null) return;
+    const controller = new AbortController();
+    let active = true;
 
-    const receiveEvent = (rawEvent: Event) => {
-      try {
-        const message = rawEvent as MessageEvent<string>;
-        const event = parseVttEvent(JSON.parse(message.data));
-        if (
-          sessionIdRef.current !== null &&
-          event.session_id !== sessionIdRef.current
-        ) {
-          throw new Error("Live event belongs to another VTT session");
+    const synchronize = async () => {
+      setStreamStatus("connecting");
+      while (active && !controller.signal.aborted) {
+        try {
+          const cursor = await streamVttEvents({
+            after: eventCursorRef.current,
+            bearerToken,
+            signal: controller.signal,
+            onOpen: () => {
+              if (active) setStreamStatus("live");
+            },
+            onEvent: (event) => {
+              if (
+                sessionIdRef.current !== null &&
+                event.session_id !== sessionIdRef.current
+              ) {
+                throw new Error("Live event belongs to another VTT session");
+              }
+              if (event.sequence <= eventCursorRef.current) return;
+              eventCursorRef.current = event.sequence;
+              setEvents((current) =>
+                appendUniqueEvents(current, [
+                  { id: event.event_id, source: "stream", event },
+                ]),
+              );
+              if (event.revision > latestRevisionRef.current) {
+                void refresh().catch(() => undefined);
+              }
+            },
+          });
+          eventCursorRef.current = Math.max(eventCursorRef.current, cursor);
+          if (!active || controller.signal.aborted) return;
+          setStreamStatus("reconnecting");
+        } catch (streamError) {
+          if (
+            !active ||
+            (streamError instanceof DOMException &&
+              streamError.name === "AbortError")
+          ) return;
+          if (streamError instanceof VttApiError && streamError.status === 401) {
+            setCredentialRequired(true);
+            setLoadError("Your table credential is no longer accepted.");
+            return;
+          }
+          if (streamError instanceof TypeError) {
+            setStreamStatus("reconnecting");
+            setLoadError("The live event stream is reconnecting.");
+          } else {
+            setStreamStatus("invalid");
+            setLoadError("The live event stream returned invalid public data.");
+            return;
+          }
         }
-        if (event.sequence <= eventCursorRef.current) return;
-        eventCursorRef.current = event.sequence;
-        setEvents((current) =>
-          appendUniqueEvents(current, [
-            { id: event.event_id, source: "stream", event },
-          ]),
-        );
-        if (event.revision > latestRevisionRef.current) {
-          void refresh().catch(() => undefined);
-        }
-      } catch {
-        setStreamStatus("invalid");
-        setLoadError("The live event stream returned invalid public data.");
-        stream.close();
+        await waitForEventReconnect(controller.signal);
       }
     };
 
-    stream.addEventListener("vtt.event", receiveEvent);
-    stream.onopen = () => {
-      if (!closed) setStreamStatus("live");
-    };
-    stream.onerror = () => {
-      if (!closed) setStreamStatus("reconnecting");
-    };
+    void synchronize();
     return () => {
-      closed = true;
-      stream.removeEventListener("vtt.event", receiveEvent);
-      stream.close();
+      active = false;
+      controller.abort();
     };
-  }, [refresh]);
+  }, [bearerToken, refresh, tableIdentity, view]);
 
   const projection = view?.projection;
   const scene = view?.scene ?? null;
@@ -1621,6 +1722,11 @@ export function EchoVaultTable() {
     projection?.active_actor_id
       ? projection.actors[projection.active_actor_id]
       : undefined;
+  const canControlActiveActor = Boolean(
+    activeActor &&
+      tableIdentity &&
+      canControlActor(tableIdentity.current_participant, activeActor.actor_id),
+  );
   const choices = projection?.choices ?? null;
   const selectedChoice = choices?.actions.find(
     (choice) => choice.action_name === selectedActionName,
@@ -1747,7 +1853,8 @@ export function EchoVaultTable() {
         }
         const identity = {
           scene,
-          authorId: "local",
+          authorId:
+            tableIdentity?.current_participant.participant_id ?? "local",
           audience: ["all"],
         } as const;
         const annotation =
@@ -1809,7 +1916,7 @@ export function EchoVaultTable() {
   };
 
   const handleStart = async () => {
-    if (!view) return;
+    if (!view || tableIdentity?.current_participant.role !== "gm") return;
     setPending("start");
     setCommandError(null);
     try {
@@ -1818,6 +1925,8 @@ export function EchoVaultTable() {
           sessionId: view.session_id,
           expectedRevision: view.revision,
         }),
+        undefined,
+        bearerToken,
       );
       appendEvents(response);
       await refresh();
@@ -1829,7 +1938,13 @@ export function EchoVaultTable() {
   };
 
   const handlePreview = async () => {
-    if (!view || !activeActor || !selectedChoice || !declarationReady) return;
+    if (
+      !view ||
+      !activeActor ||
+      !selectedChoice ||
+      !declarationReady ||
+      !canControlActiveActor
+    ) return;
     setPending("preview");
     setCommandError(null);
     try {
@@ -1843,6 +1958,8 @@ export function EchoVaultTable() {
           movementPath: movementPlan?.path ?? [],
           mode: "preview",
         }),
+        undefined,
+        bearerToken,
       );
       if (response.response_type !== "preview") {
         throw new Error("The service returned a commit for a preview request.");
@@ -1864,6 +1981,7 @@ export function EchoVaultTable() {
       !selectedChoice ||
       !declarationReady ||
       preview?.fingerprint !== fingerprint
+      || !canControlActiveActor
     ) {
       return;
     }
@@ -1880,6 +1998,8 @@ export function EchoVaultTable() {
           movementPath: movementPlan?.path ?? [],
           mode: "commit",
         }),
+        undefined,
+        bearerToken,
       );
       appendEvents(response);
       setPreview(null);
@@ -1895,6 +2015,31 @@ export function EchoVaultTable() {
   };
 
   if (loading) return <LoadingView />;
+  if (credentialRequired) {
+    return (
+      <VttAccessGate
+        error={loadError}
+        pending={credentialPending}
+        onConnect={async (nextBearerToken) => {
+          setCredentialPending(true);
+          setLoadError(null);
+          try {
+            const connection = await loadTableConnection(nextBearerToken);
+            adoptConnection(connection, nextBearerToken);
+          } catch (error) {
+            const message =
+              error instanceof VttApiError && error.status === 401
+                ? "That credential is not recognized for this table."
+                : errorMessage(error);
+            setLoadError(message);
+            throw new Error(message);
+          } finally {
+            setCredentialPending(false);
+          }
+        }}
+      />
+    );
+  }
   if (loadError && !view) {
     return (
       <ErrorView
@@ -1907,6 +2052,18 @@ export function EchoVaultTable() {
   }
   if (!view) {
     return <ErrorView message="No session view was returned." onRetry={() => void refresh(true)} />;
+  }
+  if (!tableIdentity) {
+    return (
+      <ErrorView
+        message="The service did not return a participant identity."
+        onRetry={() =>
+          void loadTableConnection(bearerToken)
+            .then((connection) => adoptConnection(connection, bearerToken))
+            .catch(() => undefined)
+        }
+      />
+    );
   }
   if (!view.scene) {
     return (
@@ -1953,6 +2110,11 @@ export function EchoVaultTable() {
           <div><span>Revision</span><strong>{view.revision}</strong></div>
           <i aria-hidden="true" />
           <div><span>Status</span><strong>{phaseLabel(view.projection.phase)}</strong></div>
+          <i aria-hidden="true" />
+          <div>
+            <span>{titleCase(tableIdentity.current_participant.role)}</span>
+            <strong>{tableIdentity.current_participant.display_name}</strong>
+          </div>
         </div>
 
         <div className="topbar-round">
@@ -2004,6 +2166,10 @@ export function EchoVaultTable() {
             annotationError={sharedAnnotations.error}
             annotationOperation={sharedAnnotations.operation}
             annotationCanMutate={sharedAnnotations.canMutate}
+            annotationCanManage={sharedAnnotations.canManageAnnotation}
+            currentParticipantId={
+              tableIdentity.current_participant.participant_id
+            }
             templatePlacementError={templatePlacementError}
             onTokenSelect={setSelectedActorId}
             onTargetSelect={handleTargetSelect}
@@ -2035,7 +2201,11 @@ export function EchoVaultTable() {
             }}
             onAnnotationRetry={sharedAnnotations.retry}
           />
-          <VttChatPanel sessionId={view.session_id} />
+          <VttChatPanel
+            sessionId={view.session_id}
+            bearerToken={bearerToken}
+            table={tableIdentity}
+          />
           <EventLog events={events} />
         </div>
 
@@ -2049,6 +2219,8 @@ export function EchoVaultTable() {
           fingerprint={fingerprint}
           pending={pending}
           commandError={commandError}
+          canAdmin={tableIdentity.current_participant.role === "gm"}
+          canControlActiveActor={canControlActiveActor}
           onActionSelect={handleActionSelect}
           onTargetSelect={handleTargetSelect}
           onStart={() => void handleStart()}

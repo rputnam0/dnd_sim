@@ -98,6 +98,24 @@ test("builds exact open-local post and delete requests without changing text", (
   );
 });
 
+test("builds participant-scoped private chat without rewriting identity", () => {
+  const request = buildChatPostRequest({
+    sessionId: "echo-vault-session",
+    tableId: "echo-vault-session",
+    expectedRevision: 4,
+    text: "Only the GM and Vela should receive this.",
+    authorId: "player-one",
+    audience: ["participant:player-one", "role:gm"],
+    commandId: "private-command",
+    messageId: "private-message",
+  });
+  assert.equal(request.command.message.author_id, "player-one");
+  assert.deepEqual(request.command.message.audience, [
+    "participant:player-one",
+    "role:gm",
+  ]);
+});
+
 test("strictly parses ordered plain-text chat views", () => {
   assert.deepEqual(parseChatView(view), view);
   assert.deepEqual(
@@ -251,7 +269,10 @@ test("decodes and consumes reconnectable chunked chat SSE", async () => {
       String(input),
       "http://127.0.0.1:8000/api/v1/chat-events?after=1",
     );
-    assert.deepEqual(init?.headers, { accept: "text/event-stream" });
+    assert.deepEqual(init?.headers, {
+      accept: "text/event-stream",
+      authorization: "Bearer table-token-1234567890",
+    });
     return new Response(
       new ReadableStream({
         start(controller) {
@@ -267,6 +288,7 @@ test("decodes and consumes reconnectable chunked chat SSE", async () => {
   try {
     const cursor = await streamChatEvents({
       after: 1,
+      bearerToken: "table-token-1234567890",
       signal: new AbortController().signal,
       onOpen: () => {
         opened = true;

@@ -4,6 +4,7 @@ import {
   type JsonValue,
   type Position3,
 } from "./vtt-client";
+import { buildVttRequestHeaders } from "./vtt-transport";
 
 export interface AnnotationPoint {
   x_ft: number;
@@ -961,10 +962,14 @@ async function annotationResponseJson(response: Response): Promise<unknown> {
 
 export async function getAnnotationsView(
   signal?: AbortSignal,
+  bearerToken?: string | null,
 ): Promise<AnnotationsView> {
   const response = await fetch(`${VTT_API_BASE_URL}/api/v1/annotations`, {
     method: "GET",
-    headers: { accept: "application/json" },
+    headers: buildVttRequestHeaders({
+      accept: "application/json",
+      bearerToken,
+    }),
     signal,
   });
   return parseAnnotationsView(await annotationResponseJson(response));
@@ -973,15 +978,17 @@ export async function getAnnotationsView(
 export async function postAnnotationRequest(
   request: AnnotationMutationRequest,
   signal?: AbortSignal,
+  bearerToken?: string | null,
 ): Promise<AnnotationResponse> {
   const response = await fetch(
     `${VTT_API_BASE_URL}/api/v1/annotation-commands`,
     {
       method: "POST",
-      headers: {
+      headers: buildVttRequestHeaders({
         accept: "application/json",
-        "content-type": "application/json",
-      },
+        bearerToken,
+        contentType: "application/json",
+      }),
       body: JSON.stringify(request),
       signal,
     },
@@ -1000,6 +1007,7 @@ export function vttAnnotationEventsUrl(after: number): string {
 
 export async function streamAnnotationEvents(input: {
   after: number;
+  bearerToken?: string | null;
   signal: AbortSignal;
   onEvent: (event: AnnotationEvent) => void;
   onOpen?: () => void;
@@ -1007,7 +1015,10 @@ export async function streamAnnotationEvents(input: {
   let cursor = integerValue(input.after, "after");
   const response = await fetch(vttAnnotationEventsUrl(cursor), {
     method: "GET",
-    headers: { accept: "text/event-stream" },
+    headers: buildVttRequestHeaders({
+      accept: "text/event-stream",
+      bearerToken: input.bearerToken,
+    }),
     signal: input.signal,
   });
   if (!response.ok) {

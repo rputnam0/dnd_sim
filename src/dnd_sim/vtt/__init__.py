@@ -121,10 +121,13 @@ from .event_store import (
 )
 from .http_api import (
     DEFAULT_VTT_ALLOWED_ORIGINS,
+    OPEN_LOCAL_PARTICIPANT_ID,
     VTT_ERROR_SCHEMA_VERSION,
     VTT_SESSION_VIEW_SCHEMA_VERSION,
+    VTT_TABLE_VIEW_SCHEMA_VERSION,
     VTTError,
     VTTSessionView,
+    VTTTableView,
     create_vtt_app,
 )
 from .participants import (
@@ -187,6 +190,7 @@ __all__ = [
     "CHAT_VIEW_SCHEMA_VERSION",
     "OPEN_LOCAL_CHAT_AUTHOR_ID",
     "OPEN_LOCAL_ANNOTATION_AUTHOR_ID",
+    "OPEN_LOCAL_PARTICIPANT_ID",
     "EVENT_STORE_SCHEMA_VERSION",
     "DEFAULT_VTT_ALLOWED_ORIGINS",
     "MAX_ABSOLUTE_COORDINATE_FT",
@@ -207,6 +211,7 @@ __all__ = [
     "VTT_ANNOTATION_RESPONSE_SCHEMA_VERSION",
     "VTT_PREVIEW_RESPONSE_SCHEMA_VERSION",
     "VTT_SESSION_VIEW_SCHEMA_VERSION",
+    "VTT_TABLE_VIEW_SCHEMA_VERSION",
     "VTT_VERSION_INFO_SCHEMA_VERSION",
     "AppendCommitResult",
     "AnnotationBounds",
@@ -290,6 +295,7 @@ __all__ = [
     "VTTSessionService",
     "VTTSessionServiceError",
     "VTTSessionView",
+    "VTTTableView",
     "VTTVersionInfo",
     "VTTAnnotation",
     "VTTAnnotationRequest",

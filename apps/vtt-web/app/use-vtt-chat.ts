@@ -4,6 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { VttApiError } from "./vtt-client";
 import {
+  canDeleteParticipantRecord,
+  type VttTableParticipant,
+} from "./vtt-access";
+import {
   applyChatEvent,
   buildChatDeleteRequest,
   buildChatPostRequest,
@@ -60,7 +64,11 @@ function waitForReconnect(signal: AbortSignal): Promise<void> {
   });
 }
 
-export function useVttChat(sessionId: string | null) {
+export function useVttChat(input: {
+  sessionId: string | null;
+  bearerToken: string | null;
+  participant: VttTableParticipant | null;
+}) {
   const [view, setView] = useState<ChatView | null>(null);
   const [status, setStatus] = useState<ChatConnectionStatus>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +92,7 @@ export function useVttChat(sessionId: string | null) {
   }, []);
 
   useEffect(() => {
-    if (sessionId === null) return;
+    if (input.sessionId === null || input.participant === null) return;
     const controller = new AbortController();
     let active = true;
 
@@ -93,8 +101,8 @@ export function useVttChat(sessionId: string | null) {
       if (!preserveErrorRef.current) setError(null);
       let hydrated: ChatView;
       try {
-        hydrated = await getChatView(controller.signal);
-        if (hydrated.session_id !== sessionId) {
+        hydrated = await getChatView(controller.signal, input.bearerToken);
+        if (hydrated.session_id !== input.sessionId) {
           throw new Error(
             "The chat view does not belong to the active table session.",
           );
@@ -124,6 +132,7 @@ export function useVttChat(sessionId: string | null) {
         try {
           const cursor = await streamChatEvents({
             after: cursorRef.current,
+            bearerToken: input.bearerToken,
             signal: controller.signal,
             onOpen: () => {
               if (active) {
@@ -168,15 +177,21 @@ export function useVttChat(sessionId: string | null) {
       active = false;
       controller.abort();
     };
-  }, [adoptEvent, refreshKey, sessionId]);
+  }, [
+    adoptEvent,
+    input.bearerToken,
+    input.participant,
+    input.sessionId,
+    refreshKey,
+  ]);
 
   const requireCurrentView = useCallback((): ChatView => {
     const current = viewRef.current;
-    if (current === null || sessionId === null) {
+    if (current === null || input.sessionId === null) {
       throw new Error("Plain-text chat is not available for this table.");
     }
     return current;
-  }, [sessionId]);
+  }, [input.sessionId]);
 
   const requestAuthoritativeRefresh = useCallback((message: string) => {
     preserveErrorRef.current = true;
@@ -187,7 +202,11 @@ export function useVttChat(sessionId: string | null) {
 
   const submitMutation = useCallback(
     async (request: ChatMutationRequest): Promise<ChatResponse> => {
-      const response = await postChatRequest(request);
+      const response = await postChatRequest(
+        request,
+        undefined,
+        input.bearerToken,
+      );
       const event = chatEventForRequest(request, response);
       if (event === null) {
         requestAuthoritativeRefresh(
@@ -198,7 +217,7 @@ export function useVttChat(sessionId: string | null) {
       }
       return response;
     },
-    [adoptEvent, requestAuthoritativeRefresh],
+    [adoptEvent, input.bearerToken, requestAuthoritativeRefresh],
   );
 
   const beginMutation = useCallback(
@@ -245,15 +264,20 @@ export function useVttChat(sessionId: string | null) {
   );
 
   const postMessage = useCallback(
-    async (text: string) => {
+    async (text: string, audience: string[]) => {
       beginMutation("posting");
       try {
         const current = requireCurrentView();
+        if (input.participant === null || input.participant.role === "spectator") {
+          throw new Error("Spectators cannot post table messages.");
+        }
         const request = buildChatPostRequest({
           sessionId: current.session_id,
           tableId: current.table_id,
           expectedRevision: current.revision,
           text,
+          authorId: input.participant.participant_id,
+          audience,
         });
         await submitMutation(request);
       } catch (postError) {
@@ -266,6 +290,7 @@ export function useVttChat(sessionId: string | null) {
     [
       beginMutation,
       finishMutation,
+      input.participant,
       reportMutationError,
       requireCurrentView,
       submitMutation,
@@ -281,9 +306,12 @@ export function useVttChat(sessionId: string | null) {
           (message) => message.message_id === messageId,
         );
         if (!target) throw new Error("The selected message no longer exists.");
-        if (target.author_id !== "local") {
+        if (
+          input.participant === null ||
+          !canDeleteParticipantRecord(input.participant, target.author_id)
+        ) {
           throw new Error(
-            "Only messages authored by this open-local table can be deleted here.",
+            "Only the author or a Game Master can delete this message.",
           );
         }
         const request = buildChatDeleteRequest({
@@ -303,6 +331,7 @@ export function useVttChat(sessionId: string | null) {
     [
       beginMutation,
       finishMutation,
+      input.participant,
       reportMutationError,
       requireCurrentView,
       submitMutation,
@@ -315,6 +344,8 @@ export function useVttChat(sessionId: string | null) {
     status !== "loading" &&
     status !== "unavailable" &&
     status !== "error";
+  const canMutate =
+    available && !pending && input.participant?.role !== "spectator";
 
   return {
     view,
@@ -324,7 +355,11 @@ export function useVttChat(sessionId: string | null) {
     operation,
     pending,
     available,
-    canMutate: available && !pending,
+    canMutate,
+    canDeleteMessage: (authorId: string) =>
+      canMutate &&
+      input.participant !== null &&
+      canDeleteParticipantRecord(input.participant, authorId),
     postMessage,
     deleteMessage,
     retry: () => {

@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { VttApiError, type Position3 } from "./vtt-client";
+import {
+  canDeleteParticipantRecord,
+  type VttTableParticipant,
+} from "./vtt-access";
 import type { AreaTemplateAnnotation } from "./vtt-template-geometry";
 import {
   annotationEventForRequest,
@@ -64,6 +68,8 @@ function waitForReconnect(signal: AbortSignal): Promise<void> {
 export function useVttAnnotations(input: {
   sessionId: string | null;
   sceneId: string | null;
+  bearerToken: string | null;
+  participant: VttTableParticipant | null;
 }) {
   const [view, setView] = useState<AnnotationsView | null>(null);
   const [status, setStatus] = useState<AnnotationConnectionStatus>("loading");
@@ -89,7 +95,11 @@ export function useVttAnnotations(input: {
   }, []);
 
   useEffect(() => {
-    if (input.sessionId === null || input.sceneId === null) return;
+    if (
+      input.sessionId === null ||
+      input.sceneId === null ||
+      input.participant === null
+    ) return;
     const controller = new AbortController();
     let active = true;
 
@@ -98,7 +108,10 @@ export function useVttAnnotations(input: {
       if (!preserveErrorRef.current) setError(null);
       let hydrated: AnnotationsView;
       try {
-        hydrated = await getAnnotationsView(controller.signal);
+        hydrated = await getAnnotationsView(
+          controller.signal,
+          input.bearerToken,
+        );
         if (
           hydrated.session_id !== input.sessionId ||
           hydrated.scene_id !== input.sceneId
@@ -134,6 +147,7 @@ export function useVttAnnotations(input: {
         try {
           await streamAnnotationEvents({
             after: cursorRef.current,
+            bearerToken: input.bearerToken,
             signal: controller.signal,
             onOpen: () => {
               if (active) {
@@ -169,7 +183,14 @@ export function useVttAnnotations(input: {
       active = false;
       controller.abort();
     };
-  }, [adoptEvent, input.sceneId, input.sessionId, refreshKey]);
+  }, [
+    adoptEvent,
+    input.bearerToken,
+    input.participant,
+    input.sceneId,
+    input.sessionId,
+    refreshKey,
+  ]);
 
   const requireCurrentView = useCallback((): AnnotationsView => {
     const current = viewRef.current;
@@ -185,11 +206,15 @@ export function useVttAnnotations(input: {
 
   const submitMutation = useCallback(
     async (request: AnnotationMutationRequest): Promise<AnnotationResponse> => {
-      const response = await postAnnotationRequest(request);
+      const response = await postAnnotationRequest(
+        request,
+        undefined,
+        input.bearerToken,
+      );
       adoptEvent(annotationEventForRequest(request, response));
       return response;
     },
-    [adoptEvent],
+    [adoptEvent, input.bearerToken],
   );
 
   const beginMutation = useCallback(
@@ -241,11 +266,14 @@ export function useVttAnnotations(input: {
       beginMutation("placing");
       try {
         const current = requireCurrentView();
+        if (input.participant === null || input.participant.role === "spectator") {
+          throw new Error("Spectators cannot place shared annotations.");
+        }
         const request = buildPingPutRequest({
           sessionId: current.session_id,
           tableId: current.table_id,
           sceneId: current.scene_id,
-          authorId: "local",
+          authorId: input.participant.participant_id,
           expectedRevision: current.revision,
           position,
         });
@@ -257,7 +285,14 @@ export function useVttAnnotations(input: {
         finishMutation();
       }
     },
-    [beginMutation, finishMutation, reportMutationError, requireCurrentView, submitMutation],
+    [
+      beginMutation,
+      finishMutation,
+      input.participant,
+      reportMutationError,
+      requireCurrentView,
+      submitMutation,
+    ],
   );
 
   const placeAnnotation = useCallback(
@@ -265,6 +300,9 @@ export function useVttAnnotations(input: {
       beginMutation("placing");
       try {
         const current = requireCurrentView();
+        if (input.participant === null || input.participant.role === "spectator") {
+          throw new Error("Spectators cannot place shared annotations.");
+        }
         if (annotation.scene_id !== current.scene_id) {
           throw new Error("The template belongs to another scene.");
         }
@@ -282,7 +320,14 @@ export function useVttAnnotations(input: {
         finishMutation();
       }
     },
-    [beginMutation, finishMutation, reportMutationError, requireCurrentView, submitMutation],
+    [
+      beginMutation,
+      finishMutation,
+      input.participant,
+      reportMutationError,
+      requireCurrentView,
+      submitMutation,
+    ],
   );
 
   const removeAnnotation = useCallback(
@@ -294,9 +339,12 @@ export function useVttAnnotations(input: {
           (annotation) => annotation.annotation_id === annotationId,
         );
         if (!target) throw new Error("The selected annotation no longer exists.");
-        if (target.author_id !== "local") {
+        if (
+          input.participant === null ||
+          !canDeleteParticipantRecord(input.participant, target.author_id)
+        ) {
           throw new Error(
-            "Only annotations authored by this open-local table can be removed here.",
+            "Only the author or a Game Master can remove this annotation.",
           );
         }
         const request = buildAnnotationDeleteRequest({
@@ -313,15 +361,28 @@ export function useVttAnnotations(input: {
         finishMutation();
       }
     },
-    [beginMutation, finishMutation, reportMutationError, requireCurrentView, submitMutation],
+    [
+      beginMutation,
+      finishMutation,
+      input.participant,
+      reportMutationError,
+      requireCurrentView,
+      submitMutation,
+    ],
   );
 
   const clearLocalAnnotations = useCallback(async () => {
     beginMutation("clearing");
     try {
       const initial = requireCurrentView();
+      if (input.participant === null) {
+        throw new Error("Participant identity is unavailable.");
+      }
       const annotationIds = initial.annotations
-        .filter((annotation) => annotation.author_id === "local")
+        .filter(
+          (annotation) =>
+            annotation.author_id === input.participant?.participant_id,
+        )
         .map((annotation) => annotation.annotation_id);
       for (const annotationId of annotationIds) {
         const current = requireCurrentView();
@@ -329,9 +390,9 @@ export function useVttAnnotations(input: {
           (annotation) => annotation.annotation_id === annotationId,
         );
         if (!target) continue;
-        if (target.author_id !== "local") {
+        if (target.author_id !== input.participant.participant_id) {
           throw new Error(
-            "An annotation owner changed while the local markers were being cleared.",
+            "An annotation owner changed while your markers were being cleared.",
           );
         }
         const request = buildAnnotationDeleteRequest({
@@ -351,6 +412,7 @@ export function useVttAnnotations(input: {
   }, [
     beginMutation,
     finishMutation,
+    input.participant,
     reportMutationError,
     requireCurrentView,
     submitMutation,
@@ -379,6 +441,8 @@ export function useVttAnnotations(input: {
     status !== "unavailable" &&
     status !== "error";
   const pending = operation !== null;
+  const canMutate =
+    available && !pending && input.participant?.role !== "spectator";
 
   return {
     view,
@@ -390,8 +454,12 @@ export function useVttAnnotations(input: {
     pending,
     operation,
     available,
-    canPlace: available && !pending,
-    canMutate: available && !pending,
+    canPlace: canMutate,
+    canMutate,
+    canManageAnnotation: (authorId: string) =>
+      canMutate &&
+      input.participant !== null &&
+      canDeleteParticipantRecord(input.participant, authorId),
     placePing,
     placeAnnotation,
     removeAnnotation,

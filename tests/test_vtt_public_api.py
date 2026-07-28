@@ -7,8 +7,10 @@ def test_tabletop_domain_contracts_are_available_from_the_public_vtt_package() -
     expected_exports = {
         "ANNOTATION_SCHEMA_VERSION",
         "ANNOTATION_STORE_SCHEMA_VERSION",
+        "OPEN_LOCAL_PARTICIPANT_ID",
         "PARTICIPANT_SCHEMA_VERSION",
         "ROSTER_SCHEMA_VERSION",
+        "VTT_TABLE_VIEW_SCHEMA_VERSION",
         "AnnotationPoint",
         "AnnotationPutCommand",
         "CircleTemplateAnnotation",
@@ -22,6 +24,7 @@ def test_tabletop_domain_contracts_are_available_from_the_public_vtt_package() -
         "TableAccessPolicy",
         "TableParticipant",
         "TableRoster",
+        "VTTTableView",
         "VTTAnnotation",
         "annotation_bounds_ft",
         "audience_allows",

@@ -23,7 +23,13 @@ from dnd_sim.interactive import (
 from dnd_sim.vtt.access import TableAccessPolicy
 from dnd_sim.vtt.contracts import VTT_COMMAND_SCHEMA_VERSION
 from dnd_sim.vtt.event_store import SQLiteSessionEventStore
-from dnd_sim.vtt.http_api import VTT_ERROR_SCHEMA_VERSION, create_vtt_app
+from dnd_sim.vtt.http_api import (
+    OPEN_LOCAL_PARTICIPANT_ID,
+    VTT_ERROR_SCHEMA_VERSION,
+    VTT_TABLE_VIEW_SCHEMA_VERSION,
+    VTTTableView,
+    create_vtt_app,
+)
 from dnd_sim.vtt.participants import (
     PARTICIPANT_SCHEMA_VERSION,
     ROSTER_SCHEMA_VERSION,
@@ -242,6 +248,7 @@ def test_protected_routes_require_one_canonical_bearer_credential(
 ) -> None:
     client, service = protected_api
 
+    table = client.get("/api/v1/table", headers=headers)
     session = client.get("/api/v1/session", headers=headers)
     events = client.get("/api/v1/events", headers=headers)
     command = client.post(
@@ -250,6 +257,7 @@ def test_protected_routes_require_one_canonical_bearer_credential(
         headers={"content-type": "application/json", **headers},
     )
 
+    _assert_access_error(table, status_code=401, code="authentication_required")
     _assert_access_error(session, status_code=401, code="authentication_required")
     _assert_access_error(events, status_code=401, code="authentication_required")
     _assert_access_error(command, status_code=401, code="authentication_required")
@@ -271,6 +279,121 @@ def test_health_remains_public_and_open_apps_keep_existing_behavior(
 
     with TestClient(create_vtt_app(service), raise_server_exceptions=False) as open_client:
         assert open_client.get("/api/v1/session").status_code == 200
+
+
+def test_protected_table_view_identifies_current_participant_and_safe_directory(
+    protected_api,
+) -> None:
+    client, _service = protected_api
+
+    response = client.get("/api/v1/table", headers=_authorization("player"))
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "schema_version": VTT_TABLE_VIEW_SCHEMA_VERSION,
+        "access_mode": "protected",
+        "table_id": "access-table",
+        "current_participant": {
+            "schema_version": PARTICIPANT_SCHEMA_VERSION,
+            "participant_id": "player",
+            "display_name": "player",
+            "role": "player",
+            "owned_actor_ids": ["hero"],
+        },
+        "participants": [
+            {
+                "schema_version": PARTICIPANT_SCHEMA_VERSION,
+                "participant_id": "gm",
+                "display_name": "gm",
+                "role": "gm",
+                "owned_actor_ids": [],
+            },
+            {
+                "schema_version": PARTICIPANT_SCHEMA_VERSION,
+                "participant_id": "other",
+                "display_name": "other",
+                "role": "player",
+                "owned_actor_ids": ["other_actor"],
+            },
+            {
+                "schema_version": PARTICIPANT_SCHEMA_VERSION,
+                "participant_id": "player",
+                "display_name": "player",
+                "role": "player",
+                "owned_actor_ids": ["hero"],
+            },
+            {
+                "schema_version": PARTICIPANT_SCHEMA_VERSION,
+                "participant_id": "spectator",
+                "display_name": "spectator",
+                "role": "spectator",
+                "owned_actor_ids": [],
+            },
+        ],
+    }
+    assert "token-1234567890" not in response.text
+    assert "bearer" not in response.text.lower()
+
+
+def test_open_local_table_view_exposes_one_explicit_synthetic_gm(protected_api) -> None:
+    _client, service = protected_api
+
+    with TestClient(create_vtt_app(service), raise_server_exceptions=False) as open_client:
+        response = open_client.get("/api/v1/table")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "schema_version": VTT_TABLE_VIEW_SCHEMA_VERSION,
+        "access_mode": "open_local",
+        "table_id": "access-table",
+        "current_participant": {
+            "schema_version": PARTICIPANT_SCHEMA_VERSION,
+            "participant_id": OPEN_LOCAL_PARTICIPANT_ID,
+            "display_name": "Local GM",
+            "role": "gm",
+            "owned_actor_ids": [],
+        },
+        "participants": [
+            {
+                "schema_version": PARTICIPANT_SCHEMA_VERSION,
+                "participant_id": OPEN_LOCAL_PARTICIPANT_ID,
+                "display_name": "Local GM",
+                "role": "gm",
+                "owned_actor_ids": [],
+            }
+        ],
+    }
+
+
+def test_table_view_contract_rejects_unknown_fields_and_a_forged_current_principal() -> None:
+    local = {
+        "schema_version": PARTICIPANT_SCHEMA_VERSION,
+        "participant_id": OPEN_LOCAL_PARTICIPANT_ID,
+        "display_name": "Local GM",
+        "role": "gm",
+        "owned_actor_ids": [],
+    }
+    payload = {
+        "schema_version": VTT_TABLE_VIEW_SCHEMA_VERSION,
+        "access_mode": "open_local",
+        "table_id": "table",
+        "current_participant": local,
+        "participants": [local],
+    }
+
+    with pytest.raises(ValueError):
+        VTTTableView.model_validate({**payload, "bearer_tokens": {"local": "secret"}})
+
+    with pytest.raises(ValueError, match="current_participant"):
+        VTTTableView.model_validate(
+            {
+                **payload,
+                "current_participant": {
+                    **local,
+                    "participant_id": "forged",
+                },
+            }
+        )
 
 
 def test_duplicate_authorization_headers_are_rejected(protected_api) -> None:

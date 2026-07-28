@@ -3,6 +3,10 @@
 import { useId, useState, type FormEvent } from "react";
 
 import { useVttChat, type ChatConnectionStatus } from "./use-vtt-chat";
+import {
+  chatAudienceChoices,
+  type VttTableView,
+} from "./vtt-access";
 import { MAX_CHAT_TEXT_LENGTH } from "./vtt-chat";
 
 function chatStatusLabel(status: ChatConnectionStatus, count: number): string {
@@ -14,12 +18,45 @@ function chatStatusLabel(status: ChatConnectionStatus, count: number): string {
   return `${count} ${count === 1 ? "message" : "messages"} synced`;
 }
 
-export function VttChatPanel({ sessionId }: { sessionId: string }) {
-  const chat = useVttChat(sessionId);
+function audienceLabel(audience: string[], table: VttTableView): string {
+  if (audience.length === 1 && audience[0] === "all") return "Everyone";
+  if (audience.length === 1 && audience[0] === "role:gm") {
+    return "Game Masters";
+  }
+  if (audience.length === 1 && audience[0].startsWith("participant:")) {
+    const participantId = audience[0].slice("participant:".length);
+    const participant = table.participants.find(
+      (candidate) => candidate.participant_id === participantId,
+    );
+    return participant ? `Direct · ${participant.display_name}` : "Private";
+  }
+  return "Restricted";
+}
+
+export function VttChatPanel({
+  sessionId,
+  bearerToken,
+  table,
+}: {
+  sessionId: string;
+  bearerToken: string | null;
+  table: VttTableView;
+}) {
+  const chat = useVttChat({
+    sessionId,
+    bearerToken,
+    participant: table.current_participant,
+  });
   const [draft, setDraft] = useState("");
+  const [audienceKey, setAudienceKey] = useState("public");
   const titleId = useId();
   const composerId = useId();
+  const audienceId = useId();
   const counterId = useId();
+  const audienceChoices = chatAudienceChoices(table);
+  const selectedAudience =
+    audienceChoices.find((choice) => choice.key === audienceKey) ??
+    audienceChoices[0];
   const characterCount = Array.from(draft).length;
   const canSubmit =
     chat.canMutate &&
@@ -31,7 +68,7 @@ export function VttChatPanel({ sessionId }: { sessionId: string }) {
     if (!canSubmit) return;
     const submittedText = draft;
     try {
-      await chat.postMessage(submittedText);
+      await chat.postMessage(submittedText, selectedAudience.audience);
       setDraft((current) => (current === submittedText ? "" : current));
     } catch {
       // The hook keeps the exact draft and exposes actionable server guidance.
@@ -77,8 +114,18 @@ export function VttChatPanel({ sessionId }: { sessionId: string }) {
               <li className="chat-message" key={message.message_id}>
                 <article>
                   <div className="chat-message-heading">
-                    <h3>{message.author_id}</h3>
-                    {message.author_id === "local" ? (
+                    <div>
+                      <h3>
+                        {table.participants.find(
+                          (participant) =>
+                            participant.participant_id === message.author_id,
+                        )?.display_name ?? message.author_id}
+                      </h3>
+                      <span className="chat-audience-label">
+                        {audienceLabel(message.audience, table)}
+                      </span>
+                    </div>
+                    {chat.canDeleteMessage(message.author_id) ? (
                       <button
                         className="chat-delete"
                         type="button"
@@ -117,17 +164,36 @@ export function VttChatPanel({ sessionId }: { sessionId: string }) {
       ) : null}
 
       <form className="chat-composer" onSubmit={handleSubmit}>
-        <label htmlFor={composerId}>Message the table</label>
+        <div className="chat-composer-routing">
+          <label htmlFor={composerId}>Message the table</label>
+          <label htmlFor={audienceId}>
+            Audience
+            <select
+              id={audienceId}
+              value={selectedAudience.key}
+              onChange={(event) => setAudienceKey(event.target.value)}
+              disabled={!chat.canMutate}
+            >
+              {audienceChoices.map((choice) => (
+                <option key={choice.key} value={choice.key}>
+                  {choice.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <textarea
           id={composerId}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           rows={3}
-          disabled={!chat.available}
+          disabled={!chat.canMutate}
           aria-invalid={characterCount > MAX_CHAT_TEXT_LENGTH}
           aria-describedby={counterId}
           placeholder={
-            chat.status === "unavailable"
+            table.current_participant.role === "spectator"
+              ? "Spectators can read but cannot post"
+              : chat.status === "unavailable"
               ? "Chat is not enabled"
               : "Write plain text…"
           }

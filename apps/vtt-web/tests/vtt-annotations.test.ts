@@ -338,7 +338,10 @@ test("streams chunked annotation events and resumes after the supplied cursor", 
       "http://127.0.0.1:8000/api/v1/annotation-events?after=1",
     );
     assert.equal(init?.method, "GET");
-    assert.deepEqual(init?.headers, { accept: "text/event-stream" });
+    assert.deepEqual(init?.headers, {
+      accept: "text/event-stream",
+      authorization: "Bearer table-token-1234567890",
+    });
     const chunks = [": heartbeat\n\ni", eventBlock.slice(1, 37), eventBlock.slice(37)];
     return new Response(
       new ReadableStream({
@@ -354,6 +357,7 @@ test("streams chunked annotation events and resumes after the supplied cursor", 
   try {
     const cursor = await streamAnnotationEvents({
       after: 1,
+      bearerToken: "table-token-1234567890",
       signal: new AbortController().signal,
       onOpen: () => {
         opened = true;

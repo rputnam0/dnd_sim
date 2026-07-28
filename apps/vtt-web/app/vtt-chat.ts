@@ -3,6 +3,7 @@ import {
   VttApiError,
   type JsonValue,
 } from "./vtt-client";
+import { buildVttRequestHeaders } from "./vtt-transport";
 
 export const MAX_CHAT_TEXT_LENGTH = 2_000;
 
@@ -402,6 +403,8 @@ export function buildChatPostRequest(input: {
   tableId: string;
   expectedRevision: number;
   text: string;
+  authorId?: string;
+  audience?: string[];
   commandId?: string;
   messageId?: string;
 }): ChatPostRequest {
@@ -426,8 +429,8 @@ export function buildChatPostRequest(input: {
           input.messageId ?? crypto.randomUUID(),
           "messageId",
         ),
-        author_id: "local",
-        audience: ["all"],
+        author_id: canonicalText(input.authorId ?? "local", "authorId"),
+        audience: parseAudience(input.audience ?? ["all"], "audience"),
         text: input.text,
       }),
     },
@@ -565,10 +568,16 @@ async function chatResponseJson(response: Response): Promise<unknown> {
   }
 }
 
-export async function getChatView(signal?: AbortSignal): Promise<ChatView> {
+export async function getChatView(
+  signal?: AbortSignal,
+  bearerToken?: string | null,
+): Promise<ChatView> {
   const response = await fetch(`${VTT_API_BASE_URL}/api/v1/chat`, {
     method: "GET",
-    headers: { accept: "application/json" },
+    headers: buildVttRequestHeaders({
+      accept: "application/json",
+      bearerToken,
+    }),
     signal,
   });
   return parseChatView(await chatResponseJson(response));
@@ -577,13 +586,15 @@ export async function getChatView(signal?: AbortSignal): Promise<ChatView> {
 export async function postChatRequest(
   request: ChatMutationRequest,
   signal?: AbortSignal,
+  bearerToken?: string | null,
 ): Promise<ChatResponse> {
   const response = await fetch(`${VTT_API_BASE_URL}/api/v1/chat-commands`, {
     method: "POST",
-    headers: {
+    headers: buildVttRequestHeaders({
       accept: "application/json",
-      "content-type": "application/json",
-    },
+      bearerToken,
+      contentType: "application/json",
+    }),
     body: JSON.stringify(request),
     signal,
   });
@@ -651,6 +662,7 @@ function findSseBoundary(buffer: string): { index: number; length: number } | nu
 
 export async function streamChatEvents(input: {
   after: number;
+  bearerToken?: string | null;
   signal: AbortSignal;
   onEvent: (event: ChatEvent) => void;
   onOpen?: () => void;
@@ -658,7 +670,10 @@ export async function streamChatEvents(input: {
   let cursor = integerValue(input.after, "after");
   const response = await fetch(chatEventsUrl(cursor), {
     method: "GET",
-    headers: { accept: "text/event-stream" },
+    headers: buildVttRequestHeaders({
+      accept: "text/event-stream",
+      bearerToken: input.bearerToken,
+    }),
     signal: input.signal,
   });
   if (!response.ok) await chatResponseJson(response);

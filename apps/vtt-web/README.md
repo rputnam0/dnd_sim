@@ -18,8 +18,25 @@ at another gateway, set `NEXT_PUBLIC_VTT_API_BASE_URL` in a local ignored `.env`
 NEXT_PUBLIC_VTT_API_BASE_URL=http://127.0.0.1:8000
 ```
 
-The API must expose `GET /api/v1/session` and `POST /api/v1/commands` and allow the
-frontend origin through its exact CORS allowlist.
+The API must expose `GET /api/v1/table`, `GET /api/v1/session`,
+`GET /api/v1/events`, and `POST /api/v1/commands`, and allow the frontend origin
+through its exact CORS allowlist.
+
+## Protected browser authentication
+
+The client first requests the strict, credential-free `vtt.table_view.v1`
+participant directory. Open-local tables return a synthetic local GM and open
+without a prompt. Protected tables show a password-style credential gate after
+the API returns `401`; a successful credential identifies the current
+participant, role, and owned actors. The credential stays only in page memory,
+is carried in the `Authorization` header for JSON and fetch-based SSE requests,
+and is never put in a URL or browser storage. Reloading a protected table
+therefore requires the credential again.
+
+Role and ownership controls are reflected in the browser as well as enforced by
+the server. GMs may run admin commands and moderate shared records, players may
+act only for owned actors, and spectators can follow the table without posting
+or mutating it.
 
 ## Authoritative turn choices
 
@@ -65,12 +82,12 @@ world-space length and direction while the bounded angle control remains explici
 SVG presentation converts server-returned feet to grid coordinates and never becomes
 engine authority.
 
-The persisted annotation selector can remove one open-local marker, including a ping,
-or clear all open-local annotations. Both actions use server-backed deletion. Clear is
-implemented as revision-safe sequential delete commands and stops on the first stale
-revision or ownership failure; the UI then rehydrates and asks the user to review and
-retry instead of guessing at server state. Markers owned by another author stay visible
-but cannot be removed from this open-local browser surface.
+The persisted annotation selector can remove one marker owned by the current
+participant; GMs can also moderate another participant's marker. **Clear mine**
+removes only the current participant's records. Both actions use
+server-backed deletion. Clear is implemented as revision-safe sequential delete commands and
+stops on the first stale revision or ownership failure; the UI then rehydrates
+and asks the user to review and retry instead of guessing at server state.
 
 ## Durable plain-text chat
 
@@ -81,18 +98,17 @@ valid because audience filtering can hide intervening events; visible messages r
 server order. A stale mutation or a successful response without a visible event triggers
 an immediate authoritative rehydrate instead of a speculative browser update.
 
-The bundled open-local surface posts public messages through `POST /api/v1/chat-commands`
-and offers server-backed deletion only for messages whose `author_id` is `local`. Message
-text is preserved and rendered directly through React text nodes with whitespace retained.
-There is no HTML or Markdown interpretation and no timestamps are invented. The composer
-enforces the 2,000-character contract by Unicode code point, so multi-code-unit characters
-count the same way as they do in the Python service. If the optional chat API returns 404,
-the panel reports chat as unavailable while the tactical map and event log continue to work.
-
-The bundled solo table uses open-local author identity. Protected browser authentication
-is not implemented by this web app yet; deployments that enable participant-scoped
-access need a credential source and request-header integration before these controls can
-mutate protected tables.
+The composer can address everyone, Game Masters, or one non-spectator
+participant. The server remains responsible for audience filtering and treats
+authorship as implicit access to a participant's own outbound private message.
+Authors may delete their messages and GMs may moderate any message; spectators
+are read-only. Message text is preserved and rendered directly through React
+text nodes with whitespace retained. There is no HTML or Markdown
+interpretation and no timestamps are invented. The composer enforces the
+2,000-character contract by Unicode code point, so multi-code-unit characters
+count the same way as they do in the Python service. If the optional chat API
+returns 404, the panel reports chat as unavailable while the tactical map and
+event log continue to work.
 
 ## Verification
 

@@ -65,9 +65,10 @@ test("replaces the starter with the projection-only tactical product", async () 
   assert.match(table, /Choose destination/);
   assert.match(table, /onCellSelect/);
   assert.match(table, /movementPath/);
-  assert.match(table, /new EventSource/);
-  assert.match(table, /"vtt\.event"/);
-  assert.match(table, /parseVttEvent/);
+  assert.doesNotMatch(table, /new EventSource/);
+  assert.match(table, /streamVttEvents/);
+  assert.match(client, /"vtt\.event"/);
+  assert.match(client, /parseVttEvent/);
   assert.match(table, /Preview turn/);
   assert.match(table, /Commit turn/);
   assert.match(table, /Start encounter/);
@@ -207,7 +208,7 @@ test("ships shared area templates with explicit server-backed removal", async ()
   assert.match(css, /\.template-overlay/);
   assert.match(readme, /area templates/i);
   assert.match(readme, /server-backed deletion/i);
-  assert.doesNotMatch(readme, /protected browser auth(?:entication)? (?:is )?supported/i);
+  assert.match(readme, /protected browser auth/i);
 });
 
 test("ships accessible durable plain-text chat without fabricated presentation data", async () => {
@@ -220,7 +221,7 @@ test("ships accessible durable plain-text chat without fabricated presentation d
     readFile(new URL("../README.md", import.meta.url), "utf8"),
   ]);
 
-  assert.match(table, /<VttChatPanel sessionId=\{view\.session_id\} \/>/);
+  assert.match(table, /<VttChatPanel[\s\S]+?table=\{tableIdentity\}/);
   assert.match(panel, /role="log"/);
   assert.match(panel, /<form/);
   assert.match(panel, /<textarea/);
@@ -228,7 +229,9 @@ test("ships accessible durable plain-text chat without fabricated presentation d
   assert.match(panel, /characterCount <= MAX_CHAT_TEXT_LENGTH/);
   assert.doesNotMatch(panel, /maxLength=/);
   assert.match(panel, /setDraft\(\(current\) =>[\s\S]+?current === submittedText/);
-  assert.match(panel, /message\.author_id === "local"/);
+  assert.match(panel, /chat\.canDeleteMessage\(message\.author_id\)/);
+  assert.match(panel, /Audience/);
+  assert.match(panel, /chatAudienceChoices/);
   assert.match(panel, /deleteMessage/);
   assert.match(panel, /\{message\.text\}/);
   assert.match(client, /vtt\.chat_view\.v1/);
@@ -244,5 +247,33 @@ test("ships accessible durable plain-text chat without fabricated presentation d
   assert.doesNotMatch(
     panel + client + hook,
     /dangerouslySetInnerHTML|\.innerHTML|\bmarked\b|markdown-it|new Date\(|Date\.now\(|timestamp/i,
+  );
+});
+
+test("ships protected participant identity without persisting or leaking credentials", async () => {
+  const [table, access, gate, transport, client, annotations, chat] =
+    await Promise.all([
+      readFile(new URL("../app/echo-vault-table.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/vtt-access.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/vtt-access-gate.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/vtt-transport.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/vtt-client.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/vtt-annotations.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/vtt-chat.ts", import.meta.url), "utf8"),
+    ]);
+
+  assert.match(access, /vtt\.table_view\.v1/);
+  assert.match(access, /\/api\/v1\/table/);
+  assert.match(gate, /type="password"/);
+  assert.match(gate, /never placed in a URL/);
+  assert.match(transport, /authorization = `Bearer \$\{bearerToken\}`/);
+  assert.match(table, /canControlActor/);
+  assert.match(table, /current_participant/);
+  assert.match(client, /streamVttEvents/);
+  assert.match(annotations, /buildVttRequestHeaders/);
+  assert.match(chat, /buildVttRequestHeaders/);
+  assert.doesNotMatch(
+    table + access + gate + transport + client + annotations + chat,
+    /localStorage|sessionStorage|bearerToken=.*(?:\?|&)|token=.*(?:\?|&)/,
   );
 });

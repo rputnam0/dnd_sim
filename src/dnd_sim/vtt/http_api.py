@@ -12,7 +12,7 @@ from fastapi import FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 from starlette.datastructures import Headers
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -37,12 +37,20 @@ from .contracts import (
     VTTVersionInfo,
 )
 from .event_store import CommandConflictError, EventStoreError
-from .participants import TableParticipant, audience_allows
+from .participants import (
+    PARTICIPANT_SCHEMA_VERSION,
+    ROSTER_SCHEMA_VERSION,
+    TableParticipant,
+    TableRoster,
+    audience_allows,
+)
 from .scene import SquareGridScene
 from .session_service import VTTSessionService, VTTSessionServiceError
 
 VTT_SESSION_VIEW_SCHEMA_VERSION = "vtt.session_view.v1"
+VTT_TABLE_VIEW_SCHEMA_VERSION = "vtt.table_view.v1"
 VTT_ERROR_SCHEMA_VERSION = "vtt.error.v1"
+OPEN_LOCAL_PARTICIPANT_ID = "local"
 DEFAULT_VTT_ALLOWED_ORIGINS = (
     "http://127.0.0.1:3000",
     "http://localhost:3000",
@@ -52,6 +60,7 @@ SSE_HEARTBEAT_INTERVAL_SECONDS = 15.0
 _PROTECTED_TABLE_ROUTES = frozenset(
     {
         ("GET", "/api/v1/session"),
+        ("GET", "/api/v1/table"),
         ("GET", "/api/v1/events"),
         ("POST", "/api/v1/commands"),
     }
@@ -106,6 +115,54 @@ class VTTSessionView(_StrictHTTPModel):
         if not normalized:
             raise ValueError("session_id must not be empty")
         return normalized
+
+
+class VTTTableView(_StrictHTTPModel):
+    """Credential-free identity and participant directory for one table."""
+
+    schema_version: Literal[VTT_TABLE_VIEW_SCHEMA_VERSION] = VTT_TABLE_VIEW_SCHEMA_VERSION
+    access_mode: Literal["open_local", "protected"]
+    table_id: str
+    current_participant: TableParticipant
+    participants: tuple[TableParticipant, ...]
+
+    @field_validator("participants", mode="before")
+    @classmethod
+    def normalize_participants(cls, value: Any) -> tuple[Any, ...]:
+        if not isinstance(value, (list, tuple)):
+            raise ValueError("participants must be an ordered list or tuple")
+        return tuple(value)
+
+    @model_validator(mode="after")
+    def validate_directory(self) -> "VTTTableView":
+        roster = TableRoster(
+            schema_version=ROSTER_SCHEMA_VERSION,
+            table_id=self.table_id,
+            participants=self.participants,
+        )
+        canonical_current = roster.participant(self.current_participant.participant_id)
+        if canonical_current != self.current_participant:
+            raise ValueError("current_participant must match its participant-directory entry")
+
+        if self.access_mode == "open_local":
+            expected_local = _open_local_participant()
+            if self.current_participant != expected_local or self.participants != (expected_local,):
+                raise ValueError(
+                    "an open_local table must expose only the synthetic local participant"
+                )
+        return self
+
+
+def _open_local_participant() -> TableParticipant:
+    """Return the synthetic authority matching existing open-local mutation ownership."""
+
+    return TableParticipant(
+        schema_version=PARTICIPANT_SCHEMA_VERSION,
+        participant_id=OPEN_LOCAL_PARTICIPANT_ID,
+        display_name="Local GM",
+        role="gm",
+        owned_actor_ids=(),
+    )
 
 
 class VTTError(_StrictHTTPModel):
@@ -576,6 +633,28 @@ def create_vtt_app(
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
+    @app.get("/api/v1/table", response_model=VTTTableView)
+    async def get_table(request: Request) -> VTTTableView:
+        participant = _request_participant(request)
+        if participant is None:
+            local_participant = _open_local_participant()
+            return VTTTableView(
+                access_mode="open_local",
+                table_id=service.session_id,
+                current_participant=local_participant,
+                participants=(local_participant,),
+            )
+
+        if access_policy is None:  # pragma: no cover - guarded by _request_participant
+            raise RuntimeError("a protected table view is missing its access policy")
+        roster = access_policy.roster
+        return VTTTableView(
+            access_mode="protected",
+            table_id=roster.table_id,
+            current_participant=participant,
+            participants=roster.participants,
+        )
+
     @app.get("/api/v1/session", response_model=VTTSessionView)
     async def get_session() -> VTTSessionView:
         session = service.read_view()
@@ -655,9 +734,12 @@ def create_vtt_app(
 
 __all__ = [
     "DEFAULT_VTT_ALLOWED_ORIGINS",
+    "OPEN_LOCAL_PARTICIPANT_ID",
     "VTT_ERROR_SCHEMA_VERSION",
     "VTT_SESSION_VIEW_SCHEMA_VERSION",
+    "VTT_TABLE_VIEW_SCHEMA_VERSION",
     "VTTError",
     "VTTSessionView",
+    "VTTTableView",
     "create_vtt_app",
 ]

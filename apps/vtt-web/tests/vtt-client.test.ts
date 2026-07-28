@@ -9,8 +9,10 @@ import {
   parseCommandResponse,
   parseSessionView,
   parseVttEvent,
+  parseVttSseBlock,
   planGridMovement,
   vttEventsUrl,
+  streamVttEvents,
 } from "../app/vtt-client";
 
 const sessionView = {
@@ -514,4 +516,70 @@ test("builds a reconnect cursor URL and strictly parses streamed events", () => 
     () => parseVttEvent({ ...event, canonical_state: { actors: {} } }),
     /unexpected field.*canonical_state/i,
   );
+});
+
+test("streams encounter events with bearer auth through fetch", async () => {
+  const event = {
+    schema_version: "vtt.event.v1",
+    event_id: "echo-vault-session:2:1",
+    session_id: "echo-vault-session",
+    sequence: 7,
+    revision: 2,
+    kind: "dnd.encounter.completed",
+    command_id: "turn-1",
+    versions: sessionView.versions,
+    causation_id: null,
+    audience: ["all"],
+    payload: { outcome: "party_victory" },
+  } as const;
+  const block = [
+    "id: 7",
+    "event: vtt.event",
+    `data: ${JSON.stringify(event)}`,
+  ].join("\n");
+  assert.deepEqual(parseVttSseBlock(block), event);
+  assert.equal(parseVttSseBlock(": heartbeat"), null);
+
+  const originalFetch = globalThis.fetch;
+  const encoder = new TextEncoder();
+  const received: unknown[] = [];
+  let opened = false;
+  const eventBlock = `${block}\n\n`;
+  globalThis.fetch = (async (input, init) => {
+    assert.equal(
+      String(input),
+      "http://127.0.0.1:8000/api/v1/events?after=3",
+    );
+    assert.deepEqual(init?.headers, {
+      accept: "text/event-stream",
+      authorization: "Bearer table-token-1234567890",
+    });
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          for (const chunk of [": heartbeat\n\n", eventBlock.slice(0, 19), eventBlock.slice(19)]) {
+            controller.enqueue(encoder.encode(chunk));
+          }
+          controller.close();
+        },
+      }),
+      { status: 200 },
+    );
+  }) as typeof fetch;
+  try {
+    const cursor = await streamVttEvents({
+      after: 3,
+      bearerToken: "table-token-1234567890",
+      signal: new AbortController().signal,
+      onOpen: () => {
+        opened = true;
+      },
+      onEvent: (incoming) => received.push(incoming),
+    });
+    assert.equal(opened, true);
+    assert.equal(cursor, 7);
+    assert.deepEqual(received, [event]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

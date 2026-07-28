@@ -1,3 +1,5 @@
+import { buildVttRequestHeaders } from "./vtt-transport";
+
 export type JsonValue =
   | null
   | boolean
@@ -1259,10 +1261,16 @@ async function responseJson(response: Response): Promise<unknown> {
   }
 }
 
-export async function getSessionView(signal?: AbortSignal): Promise<VttSessionView> {
+export async function getSessionView(
+  signal?: AbortSignal,
+  bearerToken?: string | null,
+): Promise<VttSessionView> {
   const response = await fetch(`${VTT_API_BASE_URL}/api/v1/session`, {
     method: "GET",
-    headers: { accept: "application/json" },
+    headers: buildVttRequestHeaders({
+      accept: "application/json",
+      bearerToken,
+    }),
     signal,
   });
   return parseSessionView(await responseJson(response));
@@ -1275,16 +1283,119 @@ export function vttEventsUrl(after: number): string {
   return `${VTT_API_BASE_URL}/api/v1/events?after=${after}`;
 }
 
+export function parseVttSseBlock(block: string): VttEvent | null {
+  if (typeof block !== "string") throw new Error("VTT SSE block must be text");
+  const fields = new Map<string, string>();
+  for (const rawLine of block.replaceAll("\r\n", "\n").split("\n")) {
+    if (!rawLine || rawLine.startsWith(":")) continue;
+    const separator = rawLine.indexOf(":");
+    if (separator <= 0) throw new Error("VTT SSE contains a malformed field");
+    const name = rawLine.slice(0, separator);
+    const fieldValue = rawLine.slice(separator + 1).replace(/^ /, "");
+    if (!new Set(["id", "event", "data"]).has(name) || fields.has(name)) {
+      throw new Error("VTT SSE contains duplicate or unsupported fields");
+    }
+    fields.set(name, fieldValue);
+  }
+  if (fields.size === 0) return null;
+  if (fields.get("event") !== "vtt.event") {
+    throw new Error("VTT SSE event type is invalid");
+  }
+  const idText = fields.get("id");
+  const dataText = fields.get("data");
+  if (!idText || !dataText || !/^\d+$/.test(idText)) {
+    throw new Error("VTT SSE id must be a canonical integer");
+  }
+  const id = Number(idText);
+  if (!Number.isSafeInteger(id) || String(id) !== idText) {
+    throw new Error("VTT SSE id must be a canonical safe integer");
+  }
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(dataText);
+  } catch {
+    throw new Error("VTT SSE data must be valid JSON");
+  }
+  const event = parseVttEvent(decoded);
+  if (id !== event.sequence) {
+    throw new Error("VTT SSE id must match the event sequence");
+  }
+  return event;
+}
+
+function findSseBoundary(buffer: string): { index: number; length: number } | null {
+  const unix = buffer.indexOf("\n\n");
+  const windows = buffer.indexOf("\r\n\r\n");
+  if (unix < 0 && windows < 0) return null;
+  if (windows >= 0 && (unix < 0 || windows < unix)) {
+    return { index: windows, length: 4 };
+  }
+  return { index: unix, length: 2 };
+}
+
+export async function streamVttEvents(input: {
+  after: number;
+  bearerToken?: string | null;
+  signal: AbortSignal;
+  onEvent: (event: VttEvent) => void;
+  onOpen?: () => void;
+}): Promise<number> {
+  if (!Number.isSafeInteger(input.after) || input.after < 0) {
+    throw new Error("Event cursor must be a non-negative safe integer");
+  }
+  let cursor = input.after;
+  const response = await fetch(vttEventsUrl(cursor), {
+    method: "GET",
+    headers: buildVttRequestHeaders({
+      accept: "text/event-stream",
+      bearerToken: input.bearerToken,
+    }),
+    signal: input.signal,
+  });
+  if (!response.ok) await responseJson(response);
+  if (!response.body) {
+    throw new VttApiError("The event stream has no response body.", {
+      code: "invalid_response",
+      status: response.status,
+    });
+  }
+  input.onOpen?.();
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    let boundary = findSseBoundary(buffer);
+    while (boundary !== null) {
+      const event = parseVttSseBlock(buffer.slice(0, boundary.index));
+      buffer = buffer.slice(boundary.index + boundary.length);
+      if (event && event.sequence > cursor) {
+        cursor = event.sequence;
+        input.onEvent(event);
+      }
+      boundary = findSseBoundary(buffer);
+    }
+    if (done) break;
+  }
+  if (buffer.trim() !== "") {
+    throw new Error("VTT SSE ended with an incomplete event");
+  }
+  return cursor;
+}
+
 export async function postCommand(
   command: VttCommand,
   signal?: AbortSignal,
+  bearerToken?: string | null,
 ): Promise<VttCommandResponse> {
   const response = await fetch(`${VTT_API_BASE_URL}/api/v1/commands`, {
     method: "POST",
-    headers: {
+    headers: buildVttRequestHeaders({
       accept: "application/json",
-      "content-type": "application/json",
-    },
+      bearerToken,
+      contentType: "application/json",
+    }),
     body: JSON.stringify(command),
     signal,
   });
