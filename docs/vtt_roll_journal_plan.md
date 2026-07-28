@@ -1,6 +1,6 @@
 # Authoritative VTT Roll Journal Plan
 
-Status: base attack RNG boundary integrated; committed turn-state routing remains
+Status: base attack and damage RNG boundaries integrated; committed turn-state routing remains
 
 ## Decision
 
@@ -10,9 +10,11 @@ the rules engine owns a deterministic roll journal and projects its committed
 facts through the interactive driver.
 
 Today the engine briefly exposes final attack totals through timing events, but
-does not retain those events. Damage helpers return only totals and discard die
-faces, while several save rolls remain local variables. The interactive turn
-event therefore contains no authoritative dice facts to render.
+does not retain those events. The base attack and damage helpers now have
+opt-in journal recorders, but full action resolution does not bind them or carry
+damage faces through target application. Several save rolls also remain local
+variables. The interactive turn event therefore still contains no committed
+authoritative dice facts to render.
 
 ## Required engine record
 
@@ -38,6 +40,9 @@ than the rules kernel.
       floors through those result types.
       The base `rules_2014.attack_roll` boundary now accepts an opt-in bound
       engine recorder and retains its exact normal/advantage/disadvantage draws.
+      `rules_2014.roll_damage` likewise retains initial and empowered-reroll
+      faces, critical expansion, the parsed flat modifier, damage-floor changes,
+      and its authoritative returned raw total.
       The full action path is not bound yet because Lucky, inspiration, reaction,
       and timing hooks can replace that base result before it becomes final.
 - [ ] Add a complete roll journal to combat turn state and its strict codec;
@@ -72,10 +77,16 @@ than the rules kernel.
       post-roll RNG state.
 - [x] Resume an engine recorder from the strict journal codec and append at the
       next deterministic sequence without changing the decoded history.
+- [x] Capture the real `roll_damage` RNG boundary, including generated face
+      order, empowered-reroll links, critical dice expansion, expression and
+      flat modifier, per-die floors, the minimum-zero clamp, and returned raw
+      damage without changing RNG state or numerical results.
+- [x] Represent a pre-application damage fact honestly with explicit
+      `applied_damage: null`; raw damage is never copied into that field.
 - [ ] Bind and finalize attack records after all attack-roll timing hooks; base
       boundary records must not be projected as final VTT cards before this step.
-- [ ] Capture damage faces at `roll_damage`, carry them through damage packets,
-      and finalize raw/applied damage only after bundle resolution.
+- [ ] Carry captured damage faces through damage packets and finalize applied
+      damage only after bundle resolution and target mitigation.
 
 ## Acceptance tests
 

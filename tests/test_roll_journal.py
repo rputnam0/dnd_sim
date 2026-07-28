@@ -147,6 +147,36 @@ def _damage_draft() -> RollRecordDraft:
     )
 
 
+def _unapplied_damage_draft() -> RollRecordDraft:
+    return RollRecordDraft(
+        source_actor_id="fighter",
+        target_actor_id="goblin",
+        action_id="action:longsword",
+        purpose="base_damage_roll",
+        audience=_public(),
+        fact=DamageRollFact(
+            kind="damage",
+            expression="1d8+3",
+            damage_type="slashing",
+            faces=(
+                DieFace(
+                    generation_index=1,
+                    sides=8,
+                    value=6,
+                    status="kept",
+                    replacement_generation_index=None,
+                ),
+            ),
+            flat_modifier=3,
+            rolled_total=9,
+            raw_damage=9,
+            applied_damage=None,
+            critical=False,
+            adjustments=(),
+        ),
+    )
+
+
 def test_immutable_journal_appends_deterministic_ordered_records_without_rng_draws() -> None:
     rng = random.Random(41020)
     rng_state = rng.getstate()
@@ -227,6 +257,19 @@ def test_codec_is_canonical_byte_stable_and_round_trips_discriminated_facts() ->
     )
     assert encoded.startswith('{"records":[')
     assert f'"schema_version":"{ROLL_JOURNAL_SCHEMA_VERSION}"' in encoded
+
+
+def test_damage_fact_can_explicitly_retain_an_unapplied_rng_boundary() -> None:
+    journal = RollJournal.empty("turn-1").append(_unapplied_damage_draft())
+
+    restored = decode_roll_journal(encode_roll_journal(journal))
+
+    fact = restored.records[0].fact
+    assert isinstance(fact, DamageRollFact)
+    assert fact.rolled_total == 9
+    assert fact.raw_damage == 9
+    assert fact.applied_damage is None
+    assert '"applied_damage":null' in encode_roll_journal(restored)
 
 
 @pytest.mark.parametrize(
@@ -326,6 +369,28 @@ def test_codec_rejects_ambiguous_duplicate_json_keys() -> None:
                 adjustments=(),
             ),
             "applied_damage",
+        ),
+        (
+            lambda: DamageRollFact(
+                kind="damage",
+                expression="8",
+                damage_type=None,
+                faces=(),
+                flat_modifier=8,
+                rolled_total=8,
+                raw_damage=8,
+                applied_damage=None,
+                critical=False,
+                adjustments=(
+                    DamageAdjustment(
+                        stage="applied",
+                        kind="resistance",
+                        amount=-4,
+                        source_id="trait:resistance",
+                    ),
+                ),
+            ),
+            "unapplied damage",
         ),
     ],
 )

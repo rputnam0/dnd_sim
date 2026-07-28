@@ -270,23 +270,35 @@ class DamageAdjustment(RollJournalModel):
 
 
 class DamageRollFact(RollJournalModel):
-    """Generated damage faces and the engine's raw/applied damage stages."""
+    """Generated damage faces and the engine's known damage stages.
+
+    ``applied_damage`` is explicitly ``None`` at a dice-only RNG boundary. It
+    becomes an integer only when target mitigation and application have really
+    completed.
+    """
 
     kind: Literal["damage"]
     expression: str
-    damage_type: str
+    damage_type: str | None
     faces: tuple[DieFace, ...]
     flat_modifier: int
     rolled_total: int
     raw_damage: NonNegativeInt
-    applied_damage: NonNegativeInt
+    applied_damage: NonNegativeInt | None
     critical: bool
     adjustments: tuple[DamageAdjustment, ...]
 
-    @field_validator("expression", "damage_type")
+    @field_validator("expression")
     @classmethod
-    def validate_text(cls, value: str, info: Any) -> str:
-        return _canonical_text(value, field_name=info.field_name)
+    def validate_expression(cls, value: str) -> str:
+        return _canonical_text(value, field_name="expression")
+
+    @field_validator("damage_type")
+    @classmethod
+    def validate_damage_type(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _canonical_text(value, field_name="damage_type")
 
     @field_validator("faces", "adjustments", mode="before")
     @classmethod
@@ -304,7 +316,12 @@ class DamageRollFact(RollJournalModel):
         if self.raw_damage != self.rolled_total + raw_delta:
             raise ValueError("raw_damage must equal rolled_total plus raw adjustments")
         applied_delta = sum(item.amount for item in self.adjustments if item.stage == "applied")
-        if self.applied_damage != self.raw_damage + applied_delta:
+        if self.applied_damage is None and applied_delta:
+            raise ValueError("unapplied damage must not contain applied adjustments")
+        if (
+            self.applied_damage is not None
+            and self.applied_damage != self.raw_damage + applied_delta
+        ):
             raise ValueError("applied_damage must equal raw_damage plus applied adjustments")
         return self
 
@@ -564,6 +581,100 @@ class BoundRollJournalRecorder:
             threshold=threshold,
             outcome=outcome,
             critical=critical,
+        )
+        return self._owner._append(self._context.draft(fact))
+
+    def record_damage(
+        self,
+        *,
+        expression: str,
+        damage_type: str | None,
+        die_sides: int | None,
+        initial_values: Sequence[int],
+        rerolls: Sequence[tuple[int, int]],
+        flat_modifier: int,
+        rolled_total: int,
+        raw_damage: int,
+        critical: bool,
+        raw_adjustments: Sequence[DamageAdjustment],
+    ) -> AuthoritativeRollRecord:
+        """Append generated damage faces before target application is known.
+
+        ``rerolls`` contains ``(original_generation_index, replacement_value)``
+        pairs in replacement generation order. The resulting fact explicitly
+        stores ``applied_damage=None``; a caller must never substitute the raw
+        total for target-applied damage.
+        """
+
+        values = tuple(initial_values)
+        if any(isinstance(value, bool) or not isinstance(value, int) for value in values):
+            raise TypeError("generated damage values must be integers")
+        replacements = tuple(rerolls)
+        if any(
+            not isinstance(item, tuple)
+            or len(item) != 2
+            or any(isinstance(value, bool) or not isinstance(value, int) for value in item)
+            for item in replacements
+        ):
+            raise TypeError("damage rerolls must be integer index/value pairs")
+        if values:
+            if isinstance(die_sides, bool) or not isinstance(die_sides, int) or die_sides < 2:
+                raise ValueError("die_sides must describe generated damage faces")
+        elif die_sides is not None:
+            raise ValueError("die_sides must be absent when no damage dice were generated")
+        if replacements and not values:
+            raise ValueError("static damage cannot contain rerolls")
+
+        replacement_by_original: dict[int, tuple[int, int]] = {}
+        for replacement_offset, (original_index, replacement_value) in enumerate(
+            replacements, start=1
+        ):
+            if original_index < 1 or original_index > len(values):
+                raise ValueError("damage reroll must identify an initial generated face")
+            if original_index in replacement_by_original:
+                raise ValueError("an initial damage face may be rerolled only once")
+            replacement_generation = len(values) + replacement_offset
+            replacement_by_original[original_index] = (
+                replacement_generation,
+                replacement_value,
+            )
+
+        faces: list[DieFace] = []
+        for index, value in enumerate(values, start=1):
+            replacement = replacement_by_original.get(index)
+            faces.append(
+                DieFace(
+                    generation_index=index,
+                    sides=die_sides,
+                    value=value,
+                    status="rerolled" if replacement is not None else "kept",
+                    replacement_generation_index=(replacement[0] if replacement else None),
+                )
+            )
+        for replacement_offset, (_original_index, replacement_value) in enumerate(
+            replacements, start=1
+        ):
+            faces.append(
+                DieFace(
+                    generation_index=len(values) + replacement_offset,
+                    sides=die_sides,
+                    value=replacement_value,
+                    status="kept",
+                    replacement_generation_index=None,
+                )
+            )
+
+        fact = DamageRollFact(
+            kind="damage",
+            expression=expression,
+            damage_type=damage_type,
+            faces=tuple(faces),
+            flat_modifier=flat_modifier,
+            rolled_total=rolled_total,
+            raw_damage=raw_damage,
+            applied_damage=None,
+            critical=critical,
+            adjustments=tuple(raw_adjustments),
         )
         return self._owner._append(self._context.draft(fact))
 
