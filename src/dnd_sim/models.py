@@ -13,6 +13,7 @@ AttackDelivery = Literal[
     "ranged_spell_attack",
 ]
 ZeroHPIntent = Literal["normal", "knock_out"]
+SpellcastingAbility = Literal["int", "wis", "cha"]
 
 
 @dataclass(slots=True)
@@ -174,6 +175,7 @@ class ActionDefinition:
     aoe_size_ft: int | None = None
     max_targets: int | None = None
     concentration: bool = False
+    spellcasting_ability: SpellcastingAbility | None = None
     include_self: bool = False
     effects: list[dict[str, Any]] = field(default_factory=list)
     mechanics: list[dict[str, Any]] = field(default_factory=list)
@@ -257,6 +259,7 @@ class ActorRuntimeState:
     bonus_available: bool = True
     per_action_uses: dict[str, int] = field(default_factory=dict)
     next_combat_event_ordinal: int = 0
+    next_spell_cast_ordinal: int = 0
     active_event_action_keys: set[str] = field(default_factory=set)
     recharge_ready: dict[str, bool] = field(default_factory=dict)
     legendary_actions_remaining: int = 0

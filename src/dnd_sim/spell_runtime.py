@@ -5,14 +5,95 @@ import random
 from dataclasses import dataclass
 from typing import Any, Callable, Literal
 
-from dnd_sim.models import ActionDefinition, ActorRuntimeState, SpellCastRequest
+from dnd_sim.models import (
+    ActionDefinition,
+    ActorRuntimeState,
+    SpellCastRequest,
+    SpellcastingAbility,
+)
 from dnd_sim.rules_2014 import ActionDeclaredEvent, CombatTimingEngine, ReactionWindowOpenedEvent
-from dnd_sim.strategy_api import TargetRef
+from dnd_sim.spell_reaction_runtime import (
+    SpellCastFrame,
+    build_child_spell_cast_frame,
+    build_counterspell_candidates_for_action,
+    build_counterspell_reaction_window,
+    build_root_spell_cast_frame,
+    record_counterspell_resolution,
+)
+from dnd_sim.strategy_api import ReactionDecision, ReactionDecisionProvider, TargetRef
 
 TargetResolver = Callable[..., list[ActorRuntimeState]]
 RangeFilter = Callable[..., list[ActorRuntimeState]]
 
 logger = logging.getLogger(__name__)
+
+_CLASS_SPELLCASTING_ABILITIES: dict[str, SpellcastingAbility] = {
+    "artificer": "int",
+    "bard": "cha",
+    "cleric": "wis",
+    "druid": "wis",
+    "paladin": "cha",
+    "ranger": "wis",
+    "sorcerer": "cha",
+    "warlock": "cha",
+    "wizard": "int",
+}
+
+
+def normalize_spellcasting_ability(value: object) -> SpellcastingAbility | None:
+    normalized = str(value or "").strip().lower()
+    aliases = {
+        "int": "int",
+        "intelligence": "int",
+        "wis": "wis",
+        "wisdom": "wis",
+        "cha": "cha",
+        "charisma": "cha",
+    }
+    return aliases.get(normalized)  # type: ignore[return-value]
+
+
+def infer_character_spellcasting_ability(
+    character: dict[str, Any],
+    spell: dict[str, Any],
+    *,
+    profile_ability: object = None,
+) -> SpellcastingAbility | None:
+    """Resolve an explicit spell source before using unambiguous class provenance."""
+
+    for value in (
+        spell.get("spellcasting_ability"),
+        spell.get("casting_ability"),
+        spell.get("source_class"),
+        spell.get("class_name"),
+        character.get("spellcasting_ability"),
+        profile_ability,
+    ):
+        normalized = normalize_spellcasting_ability(value)
+        if normalized is not None:
+            return normalized
+        source_class = str(value or "").strip().lower()
+        if source_class in _CLASS_SPELLCASTING_ABILITIES:
+            return _CLASS_SPELLCASTING_ABILITIES[source_class]
+
+    raw_levels = character.get("class_levels")
+    if not isinstance(raw_levels, dict):
+        return None
+    abilities = {
+        ability
+        for class_name, ability in _CLASS_SPELLCASTING_ABILITIES.items()
+        if int(raw_levels.get(class_name, 0) or 0) > 0
+    }
+    return next(iter(abilities)) if len(abilities) == 1 else None
+
+
+def spellcasting_ability_modifier(
+    actor: ActorRuntimeState,
+    ability: SpellcastingAbility | None = None,
+) -> int:
+    if ability is not None:
+        return int(getattr(actor, f"{ability}_mod"))
+    return max(actor.int_mod, actor.wis_mod, actor.cha_mod)
 
 
 @dataclass(slots=True)
@@ -26,11 +107,10 @@ class SpellPipelineAdapters:
     apply_upcast_scaling_for_slot: Callable[[ActionDefinition, int], ActionDefinition]
     can_take_reaction: Callable[[ActorRuntimeState], bool]
     action_matches_reaction_spell_id: Callable[[ActionDefinition, str], bool]
-    counterspell_slot_if_legal: Callable[..., tuple[str, int] | None]
-    split_spell_slot_cost: Callable[[dict[str, int]], tuple[dict[str, int], int, list[int]]]
+    counterspell_candidate_is_legal: Callable[..., bool]
     spend_resources: Callable[[ActorRuntimeState, dict[str, int]], dict[str, int]]
     mark_action_cost_used: Callable[[ActorRuntimeState, ActionDefinition], None]
-    spellcasting_ability_mod: Callable[[ActorRuntimeState], int]
+    spellcasting_ability_mod: Callable[[ActorRuntimeState, SpellcastingAbility | None], int]
     is_action_cantrip_spell: Callable[[ActionDefinition], bool]
     break_concentration: Callable[
         [ActorRuntimeState, dict[str, ActorRuntimeState], list[dict[str, Any]]], None
@@ -44,6 +124,7 @@ class SpellPipelineResult:
     spell_level: int
     spell_cast_request: SpellCastRequest
     spell_declared_for_resolution: bool
+    cast_frame: SpellCastFrame
 
 
 SpellPipelineStatus = Literal["blocked", "cancelled", "countered", "resolved"]
@@ -53,10 +134,30 @@ SpellPipelineStatus = Literal["blocked", "cancelled", "countered", "resolved"]
 class SpellPipelineOutcome:
     status: SpellPipelineStatus
     result: SpellPipelineResult | None = None
+    cast_frame: SpellCastFrame | None = None
 
     @property
     def spell_cast_occurred(self) -> bool:
         return self.status in {"countered", "resolved"}
+
+
+def available_spell_slots(
+    actor: ActorRuntimeState,
+    *,
+    minimum: int = 1,
+) -> list[tuple[str, int]]:
+    available: list[tuple[str, int]] = []
+    for key, value in actor.resources.items():
+        if not key.startswith("spell_slot_") or int(value) <= 0:
+            continue
+        try:
+            level = int(key.split("_")[-1])
+        except ValueError:
+            continue
+        if level >= minimum:
+            available.append((key, level))
+    available.sort(key=lambda item: item[1])
+    return available
 
 
 def mode_requires_explicit_targets(mode: str) -> bool:
@@ -202,6 +303,32 @@ def apply_spell_result_state(
         actor.concentration_effect_instance_ids.clear()
 
 
+def action_component_tags(action: ActionDefinition) -> set[str]:
+    explicit = {
+        str(tag).strip().lower()
+        for tag in action.tags
+        if str(tag).strip().lower().startswith("component:")
+    }
+    if explicit or action.spell is None:
+        return explicit
+    components = action.spell.components
+    return {
+        tag
+        for tag, required in (
+            ("component:verbal", components.verbal),
+            ("component:somatic", components.somatic),
+            ("component:material", components.material),
+        )
+        if required
+    }
+
+
+def _spell_cast_is_observable(action: ActionDefinition, *, subtle_spell: bool) -> bool:
+    if not subtle_spell:
+        return True
+    return "component:material" in action_component_tags(action)
+
+
 def run_spell_declaration_pipeline_outcome(
     *,
     rng: random.Random,
@@ -219,6 +346,9 @@ def run_spell_declaration_pipeline_outcome(
     subtle_spell: bool,
     light_level: str,
     adapters: SpellPipelineAdapters,
+    obstacles: list[Any] | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
     allow_deferred_targets: bool = False,
     apply_result_state: bool = True,
 ) -> SpellPipelineOutcome:
@@ -263,48 +393,69 @@ def run_spell_declaration_pipeline_outcome(
     if declaration_event.cancelled:
         return SpellPipelineOutcome(status="cancelled")
 
+    cast_ordinal = actor.next_spell_cast_ordinal
+    actor.next_spell_cast_ordinal += 1
+    cast_frame = build_root_spell_cast_frame(
+        caster=actor,
+        action=action,
+        spell_level=spell_level,
+        target_actor_id=(targets[0].actor_id if targets else None),
+        cast_ordinal=cast_ordinal,
+        round_number=round_number,
+        turn_token=turn_token,
+    )
+
     record_spell_cast_for_turn(
         actor,
         action,
         is_action_cantrip_spell=adapters.is_action_cantrip_spell,
     )
 
-    if not subtle_spell:
+    if _spell_cast_is_observable(action, subtle_spell=subtle_spell):
+        from dnd_sim.reaction_decision_runtime import (
+            ReactionDecisionValidationError,
+            default_reaction_decision,
+            record_reaction_decision as _reaction_decision_telemetry,
+            record_reaction_window_closed as _reaction_window_closed_telemetry,
+            record_reaction_window_opened as _reaction_window_telemetry,
+            validate_reaction_decision,
+        )
+
+        reactor_order = 0
         for enemy in sorted(actors.values(), key=lambda candidate: candidate.actor_id):
             if (
-                enemy.team == actor.team
+                enemy.actor_id == actor.actor_id
                 or enemy.hp <= 0
                 or enemy.dead
                 or not adapters.can_take_reaction(enemy)
             ):
                 continue
-            counterspell_action = next(
-                (
-                    candidate
-                    for candidate in enemy.actions
-                    if (
-                        candidate.action_cost == "reaction"
-                        and adapters.action_matches_reaction_spell_id(
-                            candidate,
-                            "counterspell",
-                        )
+            counterspell_candidates = []
+            for action_index, counterspell_action in enumerate(enemy.actions):
+                if counterspell_action.action_cost != "reaction" or not (
+                    adapters.action_matches_reaction_spell_id(
+                        counterspell_action,
+                        "counterspell",
                     )
-                ),
-                None,
-            )
-            if counterspell_action is None:
-                continue
-
-            counter_slot = adapters.counterspell_slot_if_legal(
-                reactor=enemy,
-                counterspell_action=counterspell_action,
-                caster=actor,
-                incoming_spell_level=spell_level,
-                turn_token=turn_token,
-                active_hazards=active_hazards,
-                light_level=light_level,
-            )
-            if counter_slot is None:
+                ):
+                    continue
+                for candidate in build_counterspell_candidates_for_action(
+                    reactor=enemy,
+                    action=counterspell_action,
+                    action_index=action_index,
+                ):
+                    if adapters.counterspell_candidate_is_legal(
+                        reactor=enemy,
+                        candidate=candidate,
+                        caster=actor,
+                        incoming_spell_level=spell_level,
+                        turn_token=turn_token,
+                        active_hazards=active_hazards,
+                        light_level=light_level,
+                        obstacles=obstacles,
+                    ):
+                        counterspell_candidates.append(candidate)
+            if not counterspell_candidates:
                 continue
 
             counter_window = timing_engine.emit(
@@ -321,18 +472,116 @@ def run_spell_declaration_pipeline_outcome(
             if counter_window.cancelled:
                 continue
 
-            slot_key, counter_level = counter_slot
-            enemy.resources[slot_key] -= 1
-            enemy_spent = resources_spent.setdefault(enemy.actor_id, {})
-            enemy_spent[slot_key] = enemy_spent.get(slot_key, 0) + 1
+            window = build_counterspell_reaction_window(
+                reactor=enemy,
+                caster=actor,
+                spell_target=targets[0] if targets else None,
+                incoming_action=action,
+                incoming_spell_level=spell_level,
+                candidates=counterspell_candidates,
+                round_number=round_number,
+                turn_token=turn_token,
+                incoming_cast_frame=cast_frame,
+                reactor_order=reactor_order,
+            )
+            reactor_order += 1
+            _reaction_window_telemetry(telemetry, window=window)
+            if reaction_decision_provider is not None:
+                decision = reaction_decision_provider(window)
+            elif enemy.team == actor.team:
+                decision = ReactionDecision(window_id=window.window_id, choice="pass")
+            else:
+                decision = default_reaction_decision(window)
+            _reaction_decision_telemetry(telemetry, window=window, decision=decision)
+            try:
+                selected_option, _ = validate_reaction_decision(window, decision)
+            except ReactionDecisionValidationError as exc:
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="rejected",
+                    option_id=getattr(decision, "option_id", None),
+                    reason=exc.code,
+                    spell_slot_level=getattr(decision, "spell_slot_level", None),
+                )
+                raise
+            if selected_option is None:
+                _reaction_window_closed_telemetry(telemetry, window=window, status="passed")
+                continue
 
-            non_slot_cost, _, _ = adapters.split_spell_slot_cost(counterspell_action.resource_cost)
-            for key, amount in adapters.spend_resources(enemy, non_slot_cost).items():
+            selected_index = next(
+                index
+                for index, option in enumerate(window.options)
+                if option.option_id == selected_option.option_id
+            )
+            selected_candidate = counterspell_candidates[selected_index]
+            action_index = selected_candidate.action_index
+            action_is_current = (
+                0 <= action_index < len(enemy.actions)
+                and enemy.actions[action_index] is selected_candidate.action
+            )
+            live_candidate = None
+            if action_is_current:
+                live_candidate = next(
+                    (
+                        candidate
+                        for candidate in build_counterspell_candidates_for_action(
+                            reactor=enemy,
+                            action=selected_candidate.action,
+                            action_index=action_index,
+                        )
+                        if candidate == selected_candidate
+                    ),
+                    None,
+                )
+            if live_candidate is not None and not adapters.counterspell_candidate_is_legal(
+                reactor=enemy,
+                candidate=live_candidate,
+                caster=actor,
+                incoming_spell_level=spell_level,
+                turn_token=turn_token,
+                active_hazards=active_hazards,
+                light_level=light_level,
+                obstacles=obstacles,
+            ):
+                live_candidate = None
+            if live_candidate is None:
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="unavailable",
+                    option_id=selected_option.option_id,
+                    reason="state_changed",
+                    spell_slot_level=selected_candidate.slot_level,
+                )
+                continue
+            if (
+                live_candidate.effective_spell_level < spell_level
+                and live_candidate.spellcasting_ability is None
+            ):
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="unavailable",
+                    option_id=selected_option.option_id,
+                    reason="missing_spellcasting_ability",
+                    spell_slot_level=live_candidate.slot_level,
+                )
+                continue
+
+            counterspell_action = live_candidate.action
+            counter_level = live_candidate.effective_spell_level
+            enemy_spent = resources_spent.setdefault(enemy.actor_id, {})
+            for key, amount in adapters.spend_resources(
+                enemy,
+                dict(live_candidate.resource_cost),
+            ).items():
                 enemy_spent[key] = enemy_spent.get(key, 0) + amount
 
-            enemy.per_action_uses[counterspell_action.name] = (
-                enemy.per_action_uses.get(counterspell_action.name, 0) + 1
-            )
+            state_key = live_candidate.state_key
+            enemy.per_action_uses[state_key] = enemy.per_action_uses.get(state_key, 0) + 1
+            if counterspell_action.recharge:
+                enemy.recharge_ready[state_key] = False
             adapters.mark_action_cost_used(enemy, counterspell_action)
             record_spell_cast_for_turn(
                 enemy,
@@ -340,12 +589,81 @@ def run_spell_declaration_pipeline_outcome(
                 is_action_cantrip_spell=adapters.is_action_cantrip_spell,
             )
 
+            counterspell_cast_ordinal = enemy.next_spell_cast_ordinal
+            enemy.next_spell_cast_ordinal += 1
+            counterspell_frame = build_child_spell_cast_frame(
+                parent=cast_frame,
+                caster=enemy,
+                action=counterspell_action,
+                spell_level=counter_level,
+                target_actor_id=actor.actor_id,
+                cast_ordinal=counterspell_cast_ordinal,
+                range_ft=live_candidate.range_ft,
+            )
+
             if counter_level >= spell_level:
-                return SpellPipelineOutcome(status="countered")
+                record_counterspell_resolution(
+                    telemetry,
+                    window=window,
+                    incoming_frame=cast_frame,
+                    counterspell_frame=counterspell_frame,
+                    candidate=live_candidate,
+                    option_id=selected_option.option_id,
+                    resolution_method="automatic",
+                    d20_roll=None,
+                    check_modifier=None,
+                    check_dc=None,
+                    check_total=None,
+                    outcome="countered",
+                )
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="resolved",
+                    option_id=selected_option.option_id,
+                    reason="countered",
+                    spell_slot_level=live_candidate.slot_level,
+                )
+                return SpellPipelineOutcome(status="countered", cast_frame=cast_frame)
             check_dc = 10 + spell_level
-            check_total = rng.randint(1, 20) + adapters.spellcasting_ability_mod(enemy)
+            spellcasting_ability = live_candidate.spellcasting_ability
+            assert spellcasting_ability is not None
+            d20_roll = rng.randint(1, 20)
+            check_modifier = adapters.spellcasting_ability_mod(enemy, spellcasting_ability)
+            check_total = d20_roll + check_modifier
+            outcome = "countered" if check_total >= check_dc else "counter_failed"
+            record_counterspell_resolution(
+                telemetry,
+                window=window,
+                incoming_frame=cast_frame,
+                counterspell_frame=counterspell_frame,
+                candidate=live_candidate,
+                option_id=selected_option.option_id,
+                resolution_method="ability_check",
+                d20_roll=d20_roll,
+                check_modifier=check_modifier,
+                check_dc=check_dc,
+                check_total=check_total,
+                outcome=outcome,
+            )
             if check_total >= check_dc:
-                return SpellPipelineOutcome(status="countered")
+                _reaction_window_closed_telemetry(
+                    telemetry,
+                    window=window,
+                    status="resolved",
+                    option_id=selected_option.option_id,
+                    reason="countered",
+                    spell_slot_level=live_candidate.slot_level,
+                )
+                return SpellPipelineOutcome(status="countered", cast_frame=cast_frame)
+            _reaction_window_closed_telemetry(
+                telemetry,
+                window=window,
+                status="resolved",
+                option_id=selected_option.option_id,
+                reason="counter_failed",
+                spell_slot_level=live_candidate.slot_level,
+            )
 
     if apply_result_state:
         apply_spell_result_state(
@@ -360,11 +678,13 @@ def run_spell_declaration_pipeline_outcome(
 
     return SpellPipelineOutcome(
         status="resolved",
+        cast_frame=cast_frame,
         result=SpellPipelineResult(
             action=action,
             spell_level=spell_level,
             spell_cast_request=resolved_spell_cast_request,
             spell_declared_for_resolution=True,
+            cast_frame=cast_frame,
         ),
     )
 
@@ -386,6 +706,9 @@ def run_spell_declaration_pipeline(
     subtle_spell: bool,
     light_level: str,
     adapters: SpellPipelineAdapters,
+    obstacles: list[Any] | None = None,
+    reaction_decision_provider: ReactionDecisionProvider | None = None,
+    telemetry: list[dict[str, Any]] | None = None,
 ) -> SpellPipelineResult | None:
     return run_spell_declaration_pipeline_outcome(
         rng=rng,
@@ -403,4 +726,7 @@ def run_spell_declaration_pipeline(
         subtle_spell=subtle_spell,
         light_level=light_level,
         adapters=adapters,
+        obstacles=obstacles,
+        reaction_decision_provider=reaction_decision_provider,
+        telemetry=telemetry,
     ).result

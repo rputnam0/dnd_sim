@@ -6,13 +6,14 @@ from dataclasses import replace
 import pytest
 
 from dnd_sim.models import ActionDefinition, ActorRuntimeState, SpellCastRequest
-from dnd_sim.rules_2014 import CombatTimingEngine
+from dnd_sim.rules_2014 import ActionDeclaredEvent, CombatTimingEngine
 from dnd_sim.spell_runtime import (
     SpellPipelineAdapters,
     mode_requires_explicit_targets,
     resolve_action_targets,
     resolve_spell_cast_request,
     run_spell_declaration_pipeline,
+    run_spell_declaration_pipeline_outcome,
 )
 from dnd_sim.strategy_api import TargetRef
 
@@ -184,6 +185,11 @@ def test_resolve_action_targets_filters_requested_ids_for_declared_spell_targets
 
 
 def _pipeline_adapters() -> SpellPipelineAdapters:
+    def spend_resources(actor: ActorRuntimeState, cost: dict[str, int]) -> dict[str, int]:
+        for key, amount in cost.items():
+            actor.resources[key] = actor.resources.get(key, 0) - amount
+        return dict(cost)
+
     return SpellPipelineAdapters(
         has_condition=lambda _actor, _condition: False,
         ritual_casting_legal_for_context=lambda _action, turn_token: True,
@@ -197,11 +203,10 @@ def _pipeline_adapters() -> SpellPipelineAdapters:
         ),
         can_take_reaction=lambda actor: actor.reaction_available,
         action_matches_reaction_spell_id=lambda action, spell_id: action.name == spell_id,
-        counterspell_slot_if_legal=lambda **_kwargs: None,
-        split_spell_slot_cost=lambda _cost: ({}, 0, []),
-        spend_resources=lambda _actor, _cost: {},
+        counterspell_candidate_is_legal=lambda **_kwargs: False,
+        spend_resources=spend_resources,
         mark_action_cost_used=lambda actor, _action: setattr(actor, "reaction_available", False),
-        spellcasting_ability_mod=lambda _actor: 0,
+        spellcasting_ability_mod=lambda _actor, _ability: 0,
         is_action_cantrip_spell=lambda _action: False,
         break_concentration=lambda _actor, _actors, _hazards: None,
         is_smite_setup_action=lambda _action: False,
@@ -239,6 +244,52 @@ def test_run_spell_declaration_pipeline_applies_upcast_and_concentration_state()
     assert caster.concentrated_spell == "hold_person"
     assert caster.concentrated_spell_level == 5
     assert caster.non_action_cantrip_spell_cast_this_turn is True
+    assert caster.next_spell_cast_ordinal == 1
+    assert result.cast_frame.cast_ordinal == 0
+    assert result.cast_frame.parent_cast_id is None
+    assert result.cast_frame.chain_depth == 0
+    assert result.cast_frame.caster_id == caster.actor_id
+    assert result.cast_frame.spell_level == 5
+    assert result.cast_frame.target_actor_id == target.actor_id
+
+
+def test_cancelled_spell_declaration_does_not_allocate_a_cast_frame_or_ordinal() -> None:
+    caster = _actor(actor_id="caster", team="party")
+    target = _actor(actor_id="target", team="enemy")
+    action = _base_spell_action()
+    actors = {caster.actor_id: caster, target.actor_id: target}
+    timing_engine = CombatTimingEngine()
+
+    def cancel_declaration(event: ActionDeclaredEvent) -> None:
+        event.cancelled = True
+
+    timing_engine.subscribe(
+        ActionDeclaredEvent,
+        cancel_declaration,
+        name="cancel_spell_declaration",
+    )
+
+    outcome = run_spell_declaration_pipeline_outcome(
+        rng=random.Random(1),
+        actor=caster,
+        action=action,
+        targets=[target],
+        actors=actors,
+        resources_spent={caster.actor_id: {}, target.actor_id: {}},
+        active_hazards=[],
+        round_number=1,
+        turn_token="1:caster",
+        timing_engine=timing_engine,
+        spell_cast_request=SpellCastRequest(slot_level=3),
+        antimagic_suppression_condition="antimagic_suppressed",
+        subtle_spell=False,
+        light_level="bright",
+        adapters=_pipeline_adapters(),
+    )
+
+    assert outcome.status == "cancelled"
+    assert outcome.cast_frame is None
+    assert caster.next_spell_cast_ordinal == 0
 
 
 def test_run_spell_declaration_pipeline_returns_none_when_counterspelled() -> None:
@@ -259,7 +310,7 @@ def test_run_spell_declaration_pipeline_returns_none_when_counterspelled() -> No
     adapters = _pipeline_adapters()
     adapters = replace(
         adapters,
-        counterspell_slot_if_legal=lambda **_kwargs: ("spell_slot_3", 3),
+        counterspell_candidate_is_legal=lambda **_kwargs: True,
     )
 
     result = run_spell_declaration_pipeline(

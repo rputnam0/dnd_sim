@@ -631,6 +631,7 @@ def test_counterspell_blocks_before_resolution_with_level_check_logic() -> None:
         action_type="utility",
         action_cost="reaction",
         target_mode="single_enemy",
+        spellcasting_ability="cha",
         tags=["spell", "counterspell"],
     )
     counterspeller.actions = [counterspell]
@@ -690,6 +691,7 @@ def test_counterspell_against_attack_spell_emits_declaration_before_window() -> 
             action_type="utility",
             action_cost="reaction",
             target_mode="single_enemy",
+            spellcasting_ability="int",
             tags=["spell", "counterspell"],
         )
     ]
@@ -761,6 +763,7 @@ def test_same_turn_bonus_action_spell_blocks_counterspell_reaction() -> None:
             action_type="utility",
             action_cost="reaction",
             target_mode="single_enemy",
+            spellcasting_ability="cha",
             tags=["spell", "counterspell"],
         )
     ]
@@ -854,6 +857,7 @@ def test_off_turn_counterspell_after_bonus_action_spell_is_legal() -> None:
             action_type="utility",
             action_cost="reaction",
             target_mode="single_enemy",
+            spellcasting_ability="cha",
             tags=["spell", "counterspell"],
         )
     ]
@@ -1000,8 +1004,8 @@ def test_counterspell_reaction_matches_canonicalized_name_id() -> None:
     assert counterspeller.reaction_available is False
 
 
-def test_counterspell_ability_check_uses_spellcasting_ability_modifier() -> None:
-    rng = _FixedRng([10])  # Passes DC 15 only if INT/WIS/CHA max modifier is used.
+def test_counterspell_ability_check_uses_declared_spellcasting_ability_modifier() -> None:
+    rng = _FixedRng([10])
 
     caster = _base_actor(actor_id="caster", team="party")
     ally = _base_actor(actor_id="ally", team="party")
@@ -1016,6 +1020,7 @@ def test_counterspell_ability_check_uses_spellcasting_ability_modifier() -> None
             action_type="utility",
             action_cost="reaction",
             target_mode="single_enemy",
+            spellcasting_ability="int",
             tags=["spell", "counterspell"],
         )
     ]

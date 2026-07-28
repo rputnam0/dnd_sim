@@ -11,7 +11,7 @@ from dnd_sim.mechanics_schema import (
     KNOWN_EFFECT_TYPES,
     validate_effect_specific_mechanic_fields,
 )
-from dnd_sim.models import AttackDelivery
+from dnd_sim.models import AttackDelivery, SpellcastingAbility
 from dnd_sim.rules_profiles import (
     DEFAULT_RULES_PROFILE_ID,
     DEFAULT_RULES_PROFILE_VERSION,
@@ -116,6 +116,7 @@ class ActionConfig(BaseModel):
     aoe_size_ft: int | None = None
     max_targets: int | None = None
     concentration: bool = False
+    spellcasting_ability: SpellcastingAbility | None = None
     include_self: bool = False
     effects: list["EffectConfig"] = Field(default_factory=list)
     mechanics: list[dict[str, Any]] = Field(default_factory=list)
@@ -418,6 +419,7 @@ class InnateSpellConfig(BaseModel):
     action_cost: Literal["action", "bonus", "reaction"] | None = None
     save_dc: int | None = None
     to_hit: int | None = None
+    spellcasting_ability: SpellcastingAbility | None = None
 
     @field_validator("spell")
     @classmethod

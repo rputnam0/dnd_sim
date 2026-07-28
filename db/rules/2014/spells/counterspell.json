@@ -4,11 +4,12 @@
   "level": 3,
   "school": "Abjuration",
   "casting_time": "1 reaction, which you take when you see a creature within 60 feet of you casting a spell",
+  "components": "S",
   "range_ft": 60,
   "concentration": false,
   "ritual": false,
   "duration_rounds": 0,
-  "description": "Create Food and Water 3rd-\u00ad\u2010\u2011level conjuration",
+  "description": "You try to interrupt a creature while it casts a spell, automatically stopping spells of 3rd level or lower and making an ability check for higher-level spells.",
   "save_ability": null,
   "damage_type": null,
   "mechanics": [

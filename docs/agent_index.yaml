@@ -198,10 +198,22 @@ subsystems:
       - "Caution: concentration break propagation and stacked-condition teardown."
       - "Caution: sync points between intrinsic/manual conditions and effect-derived conditions."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  action_state_runtime:
+    owner_pool: runtime_f
+    owner_task: ARC-06
+    owner_module: src/dnd_sim/action_state_runtime.py
+    invariants:
+      - "Unique action names retain their legacy name-keyed use and recharge state."
+      - "Same-name Counterspell variants receive deterministic independent state keys unless an explicit action_state_key tag intentionally shares their state."
+      - "Counterspell legality checks, use commits, and recharge lookup use the same resolved action-variant state key."
+    safe_edit_boundaries:
+      - "Safe: deterministic identity normalization and additive state-key helpers."
+      - "Caution: changing fingerprints or ordinals can invalidate replay and persisted actor-state identities."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
   reaction_runtime:
     owner_pool: runtime_f
     owner_task: ARC-06
-    owner_module: src/dnd_sim/reaction_runtime.py
+    owner_module: src/dnd_sim/reaction*.py
     invariants:
       - "Each actor consumes at most one reaction between the starts of its turns unless explicit rules grant additional reactions."
       - "Ready-action release and interrupt ordering are deterministic under fixed seeds."
@@ -213,11 +225,32 @@ subsystems:
       - "Sentinel opportunity windows bypass Disengage per reactor and reduce speed only after a confirmed opportunity hit, stopping downstream reactions against the abandoned path."
       - "Trait reactions expose per-attack typed use/pass windows, validate before mutation, execute exactly one selected melee attack without off-turn movement, and preserve resource/use/recharge bookkeeping."
       - "Reaction window and option IDs are deterministic opaque identities that bind trigger, hook, candidate, and fixed-target context without delimiter collisions."
+      - "Invalid typed reaction decisions fail with structured errors before the selected reaction mutates reactor resources, consumes RNG, or changes reactor combat state; the enclosing command may already have declaration costs and must be transactionally rolled back by its caller on error."
+      - "When telemetry is enabled, typed reaction windows emit deterministic opened, decision, and closed lifecycle records for replay and audit."
       - "Readied spells complete declaration, component, Counterspell, and cast-trigger reactions when armed; release resolves the held spell without casting it again."
     safe_edit_boundaries:
       - "Safe: trigger matcher decomposition and additive reaction hooks."
       - "Caution: reaction lockout state transitions and timing edge cases."
       - "Caution: feature-hook reaction ordering, turn-start refresh timing, and explicit per-round feature limits."
+      - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  spell_reaction_runtime:
+    owner_pool: runtime_spell
+    owner_task: ARC-07
+    owner_module: src/dnd_sim/spell_reaction_runtime.py
+    invariants:
+      - "Counterspell options bind deterministic caster, spell, reactor, slot-level, and exact standard-or-pact payment-source context."
+      - "Counterspell validates typed decisions and revalidates live reaction, action, resource, component, range, sight, and cover legality before mutation; invalid decisions surface structured errors."
+      - "Counterspell pass and failed-check outcomes continue through eligible reactors in deterministic order, while successful counters close resolution without nested Counterspell recursion in Phase A."
+      - "Phase A resolves Counterspell as a special spell-reaction branch: it does not yet emit Counterspell's own ActionDeclaredEvent, permit nested Counterspell, or dispatch Counterspell-specific post-cast hooks."
+      - "When telemetry is enabled, Counterspell emits opened, decision, rejected, passed, unavailable, and resolved lifecycle records without changing declared-spell ordering."
+      - "When telemetry is enabled, each paid live Counterspell attempt emits exactly one deterministic resolution record containing cast-chain ancestry, actor-local cast ordinals, exact payment identity, casting-ability provenance, and complete automatic-or-check arithmetic."
+      - "Root and Counterspell cast IDs derive from actor-local spell-cast ordinals, so unrelated combat-event emission cannot perturb their identities."
+      - "Cast action identities bind the complete ActionDefinition semantic snapshot, including homebrew effects, mechanics, spell metadata, components, concentration, and casting ability."
+      - "Counterspell ability checks use the selected action's explicit or unambiguously inferred spellcasting ability; check-required candidates without that provenance fail closed before the reaction window opens."
+      - "Subtle V/S-only or component-unknown casts are unobservable, while Subtle casts with material components remain observable."
+    safe_edit_boundaries:
+      - "Safe: additive spell-reaction window schemas and deterministic identity context."
+      - "Caution: exact slot-source accounting, observability, live legality revalidation, and reaction bookkeeping."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
   spell_runtime:
     owner_pool: runtime_spell

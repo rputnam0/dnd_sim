@@ -20,7 +20,7 @@ def test_canonicalize_spell_payload_normalizes_legacy_spell_record() -> None:
         "meta": "Detect Magic 1st-level Divination",
         "casting_time": "1 action",
         "range": "30 feet",
-        "components": "V, S",
+        "components": "  V,   S  ",
         "duration": "Concentration, up to 1 minute",
         "description": "For the duration, you sense the presence of magic within 30 feet of you.",
     }
@@ -34,6 +34,7 @@ def test_canonicalize_spell_payload_normalizes_legacy_spell_record() -> None:
     assert canonical["range_ft"] == 30
     assert canonical["concentration"] is True
     assert canonical["duration_rounds"] == 10
+    assert canonical["components"] == "V, S"
     assert canonical["mechanics"] == []
 
 
@@ -51,6 +52,7 @@ def test_canonicalize_spell_payload_parses_unicode_hyphen_meta_level_and_school(
 
     assert canonical["level"] == 9
     assert canonical["school"] == "Necromancy"
+    assert canonical["components"] == ""
 
 
 def test_load_spell_database_fails_fast_on_duplicate_lookup_key(tmp_path: Path) -> None:
@@ -120,6 +122,41 @@ def test_load_spell_database_prefer_richest_counts_ritual_marker(tmp_path: Path)
     assert spell["description"] == "Short duplicate."
 
 
+def test_load_spell_database_prefer_richest_counts_components(tmp_path: Path) -> None:
+    (tmp_path / "a.json").write_text(
+        json.dumps(
+            {
+                "name": "Echo Ward",
+                "type": "spell",
+                "level": 1,
+                "casting_time": "action",
+                "components": "S",
+                "description": "Short duplicate.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "b.json").write_text(
+        json.dumps(
+            {
+                "name": "Echo Ward",
+                "type": "spell",
+                "level": 1,
+                "casting_time": "action",
+                "description": "A longer duplicate description without component metadata.",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    database = load_spell_database(tmp_path, duplicate_policy="prefer_richest")
+
+    assert len(database) == 1
+    spell = next(iter(database.values()))
+    assert spell["components"] == "S"
+    assert spell["description"] == "Short duplicate."
+
+
 def test_engine_spell_lookup_uses_validated_canonical_records(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -160,3 +197,16 @@ def test_repository_spell_database_has_one_canonical_spare_the_dying_record() ->
 
     assert len(matching) == 1
     assert all(spell["name"] != "Spare the Dying Necromancy" for spell in database.values())
+
+
+def test_repository_counterspell_is_2014_somatic_only() -> None:
+    spells_dir = Path(__file__).resolve().parents[1] / "db" / "rules" / "2014" / "spells"
+
+    database = load_spell_database(spells_dir)
+    counterspell = database["counterspell"]
+
+    assert counterspell["components"] == "S"
+    assert counterspell["description"] == (
+        "You try to interrupt a creature while it casts a spell, automatically stopping "
+        "spells of 3rd level or lower and making an ability check for higher-level spells."
+    )
