@@ -10994,70 +10994,12 @@ def _apply_action_effects(
             )
 
 
-def _parse_recharge_threshold(spec: str) -> int | None:
-    value = str(spec).strip().strip("()").replace("–", "-")
-    if not value:
-        return None
-    match = re.fullmatch(r"(?:recharge\s+)?([1-6])(?:\s*-\s*([1-6]))?", value, flags=re.IGNORECASE)
-    if match is None:
-        return None
-    low = int(match.group(1))
-    high = int(match.group(2) or match.group(1))
-    if low > high:
-        return None
-    return low
-
-
 def _roll_recharge_for_actor(rng: random.Random, actor: ActorRuntimeState) -> None:
-    if not actor.recharge_ready:
-        return
-    by_name = {action.name: action for action in actor.actions}
-    by_state_key = _action_state_runtime.actions_by_variant_state_key(actor.actions)
-    for action_name, is_ready in list(actor.recharge_ready.items()):
-        if is_ready:
-            continue
-        action = by_state_key.get(action_name) or by_name.get(action_name)
-        if not action or not action.recharge:
-            actor.recharge_ready[action_name] = True
-            continue
-        threshold = _parse_recharge_threshold(action.recharge)
-        if threshold is None:
-            actor.recharge_ready[action_name] = True
-            continue
-        if rng.randint(1, 6) >= threshold:
-            actor.recharge_ready[action_name] = True
+    _action_state_runtime.roll_recharge_for_actor(rng, actor)
 
 
-def _can_cast_spell_with_components(actor: ActorRuntimeState, action: ActionDefinition) -> bool:
-    if "spell" not in action.tags:
-        return True
-    components = _spell_runtime.action_component_tags(action)
-    if not components:
-        return True
-
-    if "component:verbal" in components and actor.conditions.intersection(
-        {"silenced", "gagged", "mute"}
-    ):
-        return False
-
-    free_hands = int(actor.resources.get("free_hands", 1))
-    has_free_hand = free_hands > 0
-    has_focus = bool(actor.resources.get("spellcasting_focus", 0)) or _has_trait(
-        actor, "spellcasting focus"
-    )
-
-    needs_material = "component:material" in components
-    needs_somatic = "component:somatic" in components
-
-    if needs_material and not (has_focus or has_free_hand):
-        return False
-
-    if needs_somatic and not has_free_hand and not _has_trait(actor, "war caster"):
-        # A hand holding an M component/focus can satisfy S+M together.
-        if not (needs_material and has_focus):
-            return False
-
-    return True
+def _parse_recharge_threshold(spec: str) -> int | None:
+    return _action_state_runtime.parse_recharge_threshold(spec)
 
 
 def _can_pay_resource_cost(
@@ -11301,7 +11243,7 @@ def _action_available(
         return False
     if not _action_has_required_ammo(actor, action):
         return False
-    if not _can_cast_spell_with_components(actor, action):
+    if not _spell_runtime.can_cast_spell_with_components(actor, action, has_trait=_has_trait):
         return False
     if action.action_cost == "bonus" and not actor.bonus_available:
         return False
@@ -13108,7 +13050,9 @@ def _spell_pipeline_adapters() -> _spell_runtime.SpellPipelineAdapters:
                 actor, action, turn_token=token
             )
         ),
-        can_cast_spell_with_components=_can_cast_spell_with_components,
+        can_cast_spell_with_components=lambda actor, action: (
+            _spell_runtime.can_cast_spell_with_components(actor, action, has_trait=_has_trait)
+        ),
         required_spell_slot_level=_required_spell_slot_level,
         preferred_spell_slot_level=_preferred_spell_slot_level,
         apply_upcast_scaling_for_slot=(
@@ -13319,6 +13263,12 @@ def _execute_action(
     spell_already_declared: bool = False,
     spell_result_state_applied: bool = False,
 ) -> None:
+    observed_spell_cast_occurred: bool | None = False if "spell" in action.tags else None
+
+    def _observe_spell_outcome(outcome: _spell_runtime.SpellPipelineOutcome) -> None:
+        nonlocal observed_spell_cast_occurred
+        observed_spell_cast_occurred = outcome.spell_cast_occurred
+
     def _run_impl(
         resolved_action: ActionDefinition,
         resolved_targets: list[ActorRuntimeState],
@@ -13351,6 +13301,7 @@ def _execute_action(
             zero_hp_intent=zero_hp_intent,
             spell_already_declared=spell_already_declared,
             spell_result_state_applied=spell_result_state_applied,
+            spell_outcome_observer=_observe_spell_outcome,
         )
 
     def _run_item_action(
@@ -13377,7 +13328,18 @@ def _execute_action(
             fallback=_run_impl,
         ),
     )
-    if dispatch_after_action and round_number is not None and turn_token is not None and targets:
+    completed_spell_cast = (
+        after_action_spell_cast_occurred
+        if after_action_spell_cast_occurred is not None
+        else observed_spell_cast_occurred
+    )
+    if (
+        dispatch_after_action
+        and round_number is not None
+        and turn_token is not None
+        and targets
+        and completed_spell_cast is not False
+    ):
         _dispatch_combat_event(
             rng=rng,
             event="after_action",
@@ -13397,11 +13359,7 @@ def _execute_action(
             light_level=light_level,
             reaction_decision_provider=reaction_decision_provider,
             telemetry=telemetry,
-            spell_cast_occurred=(
-                after_action_spell_cast_occurred
-                if after_action_spell_cast_occurred is not None
-                else "spell" in action.tags
-            ),
+            spell_cast_occurred=completed_spell_cast,
         )
 
 
@@ -13434,6 +13392,7 @@ def _execute_action_impl(
     zero_hp_intent: ZeroHPIntent = "normal",
     spell_already_declared: bool = False,
     spell_result_state_applied: bool = False,
+    spell_outcome_observer: Callable[[_spell_runtime.SpellPipelineOutcome], None] | None = None,
 ) -> None:
     if not targets:
         return
@@ -13487,6 +13446,36 @@ def _execute_action_impl(
             light_level=light_level,
             reaction_decision_provider=reaction_decision_provider,
             telemetry=telemetry,
+        )
+
+    def complete_reaction_spell(
+        caster: ActorRuntimeState,
+        completed_action: ActionDefinition,
+        completed_target: ActorRuntimeState | None,
+        outcome: _spell_runtime.SpellPipelineOutcome,
+    ) -> None:
+        if not outcome.spell_cast_occurred or not has_turn_context:
+            return
+        _dispatch_combat_event(
+            rng=rng,
+            event="after_action",
+            trigger_actor=caster,
+            trigger_target=completed_target,
+            trigger_action=completed_action,
+            actors=actors,
+            round_number=round_number,
+            turn_token=turn_token,
+            damage_dealt=damage_dealt,
+            damage_taken=damage_taken,
+            threat_scores=threat_scores,
+            resources_spent=resources_spent,
+            active_hazards=active_hazards,
+            rule_trace=rule_trace,
+            obstacles=obstacles,
+            light_level=light_level,
+            reaction_decision_provider=reaction_decision_provider,
+            telemetry=telemetry,
+            spell_cast_occurred=True,
         )
 
     if _requires_range_resolution(action):
@@ -13568,7 +13557,7 @@ def _execute_action_impl(
                 is_smite_setup_action=_is_smite_setup_action,
             )
     elif is_spell_action:
-        spell_runtime_result = _spell_runtime.run_spell_declaration_pipeline(
+        spell_outcome = _spell_runtime.run_spell_declaration_pipeline_outcome(
             rng=rng,
             actor=actor,
             action=action,
@@ -13587,7 +13576,11 @@ def _execute_action_impl(
             obstacles=line_of_effect_obstacles,
             reaction_decision_provider=reaction_decision_provider,
             telemetry=telemetry,
+            on_reaction_spell_complete=complete_reaction_spell,
         )
+        if spell_outcome_observer is not None:
+            spell_outcome_observer(spell_outcome)
+        spell_runtime_result = spell_outcome.result
         if spell_runtime_result is None:
             return
         action = spell_runtime_result.action
@@ -14821,6 +14814,7 @@ def _execute_action_impl(
                     telemetry=telemetry,
                     allow_deferred_targets=True,
                     apply_result_state=False,
+                    on_reaction_spell_complete=complete_reaction_spell,
                 )
                 held_result = held_outcome.result
                 prepared_spell = held_result.action if held_result is not None else readied_response

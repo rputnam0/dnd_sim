@@ -238,12 +238,14 @@ subsystems:
     owner_task: ARC-07
     owner_module: src/dnd_sim/spell_reaction_runtime.py
     invariants:
-      - "Counterspell options bind deterministic caster, spell, reactor, slot-level, and exact standard-or-pact payment-source context."
+      - "Counterspell options bind deterministic caster, spell, reactor, slot-level, and exact standard, Pact, innate, or fixed-cost payment context."
       - "Counterspell validates typed decisions and revalidates live reaction, action, resource, component, range, sight, and cover legality before mutation; invalid decisions surface structured errors."
-      - "Counterspell pass and failed-check outcomes continue through eligible reactors in deterministic order, while successful counters close resolution without nested Counterspell recursion in Phase A."
-      - "Phase A resolves Counterspell as a special spell-reaction branch: it does not yet emit Counterspell's own ActionDeclaredEvent, permit nested Counterspell, or dispatch Counterspell-specific post-cast hooks."
+      - "Counterspell pass, cancelled-declaration, interrupted, and failed-check outcomes continue through eligible reactors in deterministic order."
+      - "Every paid Counterspell emits its own ActionDeclaredEvent, receives an actor-local child cast frame after declaration survives, and can itself be Counterspelled within shared depth and attempt bounds."
+      - "Counterspell payment, exact variant use, recharge, and reaction commitments survive declaration cancellation or a later Counterspell interruption."
+      - "Completed Counterspell casts dispatch exactly one post-cast hook after their effect or interruption is final; recursive unwinding orders these hooks deepest-first."
       - "When telemetry is enabled, Counterspell emits opened, decision, rejected, passed, unavailable, and resolved lifecycle records without changing declared-spell ordering."
-      - "When telemetry is enabled, each paid live Counterspell attempt emits exactly one deterministic resolution record containing cast-chain ancestry, actor-local cast ordinals, exact payment identity, casting-ability provenance, and complete automatic-or-check arithmetic."
+      - "When telemetry is enabled, each paid and successfully declared Counterspell emits exactly one deterministic resolution record containing cast-chain ancestry, direct interruption identity, actor-local cast ordinals, exact payment identity, casting-ability provenance, and complete automatic-or-check arithmetic."
       - "Root and Counterspell cast IDs derive from actor-local spell-cast ordinals, so unrelated combat-event emission cannot perturb their identities."
       - "Cast action identities bind the complete ActionDefinition semantic snapshot, including homebrew effects, mechanics, spell metadata, components, concentration, and casting ability."
       - "Counterspell ability checks use the selected action's explicit or unambiguously inferred spellcasting ability; check-required candidates without that provenance fail closed before the reaction window opens."
@@ -260,7 +262,8 @@ subsystems:
       - "Spell declaration normalization, slot spend, and upcast handling remain deterministic."
       - "Target-resolution adapters preserve existing target_mode semantics and negative-case behavior."
       - "Spell-result application avoids side effects when legality checks fail."
-      - "Counterspell interrupts preserve declaration ordering and deterministic slot accounting."
+      - "Blocked and declaration-cancelled spells report that no cast occurred; resolved and Counterspelled spells report a completed cast for exactly-once post-cast hooks."
+      - "Counterspell chains preserve declaration ordering, deterministic slot accounting, bounded recursion, and deepest-first completion."
     safe_edit_boundaries:
       - "Safe: spell-family handler extraction and adapter hardening."
       - "Caution: slot accounting, concentration handoff, and target selection heuristics."
