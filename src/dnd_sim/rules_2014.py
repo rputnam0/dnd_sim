@@ -5,12 +5,16 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable, Literal, TypeVar
 
+from dnd_sim.damage_rolls import (
+    _damage_expr_has_dice,
+    parse_damage_expression,
+    roll_damage,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.mortality import advance_stable_recovery, stabilize_creature
 from dnd_sim.noncombat_checks import resolve_contest
-from dnd_sim.roll_journal import BoundRollJournalRecorder, DamageAdjustment
+from dnd_sim.roll_journal import BoundRollJournalRecorder
 
-_DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
 _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SHIELD_MASTER_INCAPACITATING_CONDITIONS = {
     "incapacitated",
@@ -953,21 +957,6 @@ def roll_dice(rng: random.Random, sides: int, count: int = 1) -> int:
     return sum(rng.randint(1, sides) for _ in range(count))
 
 
-def parse_damage_expression(expr: str) -> tuple[int, int, int]:
-    value = expr.strip().replace(" ", "")
-    if value.isdigit() or (value.startswith("-") and value[1:].isdigit()):
-        return 0, 0, int(value)
-
-    match = _DAMAGE_RE.fullmatch(value)
-    if not match:
-        raise ValueError(f"Invalid damage expression: {expr}")
-
-    n_dice = int(match.group(1) or 0)
-    dice_size = int(match.group(2) or 0)
-    flat = int(match.group(3) or 0)
-    return n_dice, dice_size, flat
-
-
 def attack_roll(
     rng: random.Random,
     to_hit: int,
@@ -1128,109 +1117,6 @@ def run_contested_check(
         attacker_modifier=attacker_mod,
         defender_modifiers=defender_mods,
     ).success
-
-
-def roll_damage(
-    rng: random.Random,
-    expr: str,
-    *,
-    crit: bool = False,
-    empowered_rerolls: int = 0,
-    source: ActorRuntimeState | None = None,
-    damage_type: str = "",
-    journal_recorder: BoundRollJournalRecorder | None = None,
-) -> int:
-    if journal_recorder is not None and not isinstance(journal_recorder, BoundRollJournalRecorder):
-        raise TypeError("journal_recorder must be a BoundRollJournalRecorder")
-    n_dice, dice_size, flat = parse_damage_expression(expr)
-    total = flat
-    initial_values: tuple[int, ...] = ()
-    rerolls: list[tuple[int, int]] = []
-    raw_adjustments: list[DamageAdjustment] = []
-    rolls_after_rerolls: tuple[int, ...] = ()
-    if n_dice and dice_size:
-        rolls = [rng.randint(1, dice_size) for _ in range(n_dice * (2 if crit else 1))]
-        if journal_recorder is not None:
-            initial_values = tuple(rolls)
-        if empowered_rerolls > 0:
-            sorted_initial_indices = (
-                sorted(range(len(rolls)), key=lambda index: rolls[index])
-                if journal_recorder is not None
-                else []
-            )
-            rolls.sort()
-            for i in range(min(empowered_rerolls, len(rolls))):
-                if rolls[i] <= dice_size // 2:
-                    replacement = rng.randint(1, dice_size)
-                    rolls[i] = replacement
-                    if journal_recorder is not None:
-                        rerolls.append((sorted_initial_indices[i] + 1, replacement))
-
-        if journal_recorder is not None:
-            rolls_after_rerolls = tuple(rolls)
-
-        if source and damage_type:
-            floor = 1
-            floor_source_id: str | None = None
-            for trait_name, trait_data in source.traits.items():
-                for mechanic in trait_data.get("mechanics", []):
-                    if mechanic.get("effect_type") == "damage_roll_floor":
-                        req_type = mechanic.get("damage_type", "").lower()
-                        if req_type == damage_type.lower() or req_type == "any_elemental":
-                            candidate_floor = mechanic.get("floor", 1)
-                            if candidate_floor > floor:
-                                floor = candidate_floor
-                                if journal_recorder is not None:
-                                    floor_source_id = f"trait:{_normalize_trait_name(trait_name)}:damage-floor:{floor}"
-            if floor > 1:
-                rolls = [max(r, floor) for r in rolls]
-                floor_delta = (
-                    sum(rolls) - sum(rolls_after_rerolls) if journal_recorder is not None else 0
-                )
-                if journal_recorder is not None and floor_delta:
-                    raw_adjustments.append(
-                        DamageAdjustment(
-                            stage="raw",
-                            kind="floor",
-                            amount=floor_delta,
-                            source_id=floor_source_id,
-                        )
-                    )
-
-        total += sum(rolls)
-    raw_total = max(total, 0)
-    if journal_recorder is not None and raw_total != total:
-        raw_adjustments.append(
-            DamageAdjustment(
-                stage="raw",
-                kind="floor",
-                amount=raw_total - total,
-                source_id="rule:minimum-damage:0",
-            )
-        )
-    if journal_recorder is not None:
-        rolled_total = flat + sum(rolls_after_rerolls)
-        journal_recorder.record_damage(
-            expression=expr.strip(),
-            damage_type=damage_type.strip().lower() or None,
-            die_sides=dice_size if initial_values else None,
-            initial_values=initial_values,
-            rerolls=tuple(rerolls),
-            flat_modifier=flat,
-            rolled_total=rolled_total,
-            raw_damage=raw_total,
-            critical=crit,
-            raw_adjustments=tuple(raw_adjustments),
-        )
-    return raw_total
-
-
-def _damage_expr_has_dice(expr: str) -> bool:
-    try:
-        n_dice, dice_size, _flat = parse_damage_expression(expr)
-    except ValueError:
-        return False
-    return n_dice > 0 and dice_size > 0
 
 
 def roll_damage_packet(
