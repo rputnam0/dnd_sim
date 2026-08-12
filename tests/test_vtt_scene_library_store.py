@@ -223,8 +223,10 @@ def test_scene_library_enforces_revision_id_uniqueness_and_exact_command_retry()
 
         assert replay.replayed is True
         assert replay.receipt == first.receipt
-        with pytest.raises(SceneRevisionConflictError):
+        with pytest.raises(SceneRevisionConflictError) as stale_error:
             library.execute(_create("stale", _scene("stale"), expected_revision=0))
+        assert stale_error.value.current_revision == 1
+        assert stale_error.value.expected_revision == 0
         with pytest.raises(SceneCommandConflictError):
             library.execute(_create("create-once", _scene("different"), expected_revision=0))
         with pytest.raises(SceneIdConflictError):
@@ -282,6 +284,31 @@ def test_scene_export_import_round_trip_is_validated_and_durable() -> None:
     finally:
         source_connection.close()
         target_connection.close()
+
+
+def test_scene_event_delta_queries_only_the_requested_sqlite_tail() -> None:
+    connection = sqlite3.connect(":memory:")
+    try:
+        library = SQLiteSceneLibrary(connection)
+        library.execute(_create("first", _scene("one"), expected_revision=0))
+        library.execute(_create("second", _scene("two"), expected_revision=1))
+        traced: list[str] = []
+        connection.set_trace_callback(traced.append)
+
+        events = library.events_after("table-a", 1)
+
+        connection.set_trace_callback(None)
+        assert [event.sequence for event in events] == [2]
+        event_queries = [
+            " ".join(statement.split()).lower()
+            for statement in traced
+            if "_vtt_scene_library_event_log" in statement.lower()
+            and statement.lstrip().upper().startswith("SELECT")
+        ]
+        assert len(event_queries) == 1
+        assert "sequence > 1" in event_queries[0]
+    finally:
+        connection.close()
 
 
 def test_scene_library_restarts_from_append_only_history(tmp_path: Path) -> None:

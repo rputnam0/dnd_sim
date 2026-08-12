@@ -2,7 +2,7 @@
 
 Status: active implementation plan  
 Owner: VTT program  
-Last updated: 2026-07-26
+Last updated: 2026-08-11
 
 This plan defines an independent VTT product built on the authoritative
 `dnd_sim` engine. AboveVTT is the user-experience benchmark, not a source-code
@@ -57,9 +57,7 @@ then restart and recover it exactly.
 - [x] Versioned square-grid scene and token projection.
 - [x] Public action metadata, initiative, HP, condition, and rules-event read
       model.
-- [ ] Authoritative legal movement, action, and target choice read model.
-      Implemented and verified on `codex/vtt-whole-turn-driver`; pending
-      pull-request review.
+- [x] Authoritative legal movement, action, and target choice read model.
 - [x] HTTP JSON endpoints for singleton load/read/preview/commit.
 - [x] Server-sent event stream with reconnect cursor and heartbeat.
 - [x] Browser table with map, token selection, movement preview, action palette,
@@ -76,12 +74,13 @@ service, and recover byte-identical state without duplicate mutation.
 Goal: cover the core DM/player jobs advertised by AboveVTT.
 
 - [ ] Campaign, table, participant, role, and token-ownership models.
-      Strict participant, roster, role, actor-ownership, bearer-access, and
-      annotation-audience foundations are implemented; campaign/table lifecycle
-      and browser credential UX remain.
-- [ ] Multi-client presence, reconnect, optimistic concurrency, and event deltas.
-      Encounter and annotation streams reconnect independently, and annotation
-      mutations use optimistic revisions; presence remains.
+      Strict participant, roster, role, actor-ownership, bearer-access,
+      in-memory browser credential, and annotation-audience foundations are
+      implemented; campaign and table lifecycle remain.
+- [x] Multi-client presence, reconnect, optimistic concurrency, and event deltas.
+      The durable server-timed heartbeat log aggregates multiple browser clients,
+      derives online/away/offline status, survives restart, retries idempotently,
+      and exposes only a safe roster view plus sanitized reconnect signals.
 - [ ] Public, GM-only, player-private, and blind roll/chat audiences.
       Annotation and durable plain-text chat reads/events enforce public, role,
       participant, and owned-actor audiences. Chat authors retain access to
@@ -89,9 +88,15 @@ Goal: cover the core DM/player jobs advertised by AboveVTT.
       read-only. Private/blind authoritative roll presentation remains.
 - [ ] Dice tray and structured roll cards tied to rules events.
       This requires the engine-owned, no-reroll journal defined in
-      [`vtt_roll_journal_plan.md`](vtt_roll_journal_plan.md); current totals do
-      not retain enough authoritative dice facts for an honest card.
+      [`vtt_roll_journal_plan.md`](vtt_roll_journal_plan.md). Base attack and raw
+      damage RNG boundaries now retain honest facts without changing outcomes;
+      final timing-hook, save/check, applied-damage, projection, and card work
+      remains.
 - [ ] Scene create, duplicate, activate, archive, import, and export.
+      The durable metadata lifecycle and GM browser manager are implemented,
+      including explicit successor selection before archiving an active scene.
+      This remains open until activation attaches the running combat session and
+      map asset rather than changing metadata selection alone.
 - [ ] Map image/video metadata, crop, scale, offset, grid calibration, and
       gridless mode.
 - [ ] Token create, move, rotate, resize, lock, hide, group-select, copy, and
@@ -205,5 +210,11 @@ optional media features.
    first browser-facing annotation lifecycle, including explicit deletion.
 8. Add durable participant-scoped table chat before structured roll cards.
    The append-only chat log, HTTP/SSE boundary, moderation policy, and
-   open-local solo composition are implemented; protected browser credentials
-   and private-audience composition remain.
+   open-local and protected private-audience compositions are implemented.
+9. Add the scene-library metadata lifecycle and browser manager. Done for
+   create, duplicate, activate, explicit-safe archive, import, and export;
+   combat-session/map attachment remains a separate open boundary.
+10. Add durable participant presence. Done for open-local and protected tables,
+    including server-owned epoch timestamps, multi-client aggregation,
+    reconnectable sanitized signals, optimistic retries, and safe browser UI.
+11. Complete engine-bound roll finalization and project authoritative cards.

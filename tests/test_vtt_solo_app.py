@@ -166,6 +166,28 @@ def _public_scene_create_request(
     }
 
 
+def _public_presence_heartbeat_request(
+    *,
+    session_id: str,
+    command_id: str,
+    expected_revision: int,
+    client_id: str = "solo-browser",
+) -> dict[str, Any]:
+    return {
+        "schema_version": "vtt.presence_heartbeat_request.v1",
+        "session_id": session_id,
+        "command": {
+            "schema_version": "vtt.presence_command.v1",
+            "command_type": "heartbeat",
+            "table_id": session_id,
+            "command_id": command_id,
+            "expected_revision": expected_revision,
+            "participant_id": "local",
+            "client_id": client_id,
+        },
+    }
+
+
 def _stored_command_count(database_path: Path) -> int:
     with sqlite3.connect(database_path) as connection:
         row = connection.execute("SELECT COUNT(*) FROM vtt_committed_commands").fetchone()
@@ -183,6 +205,13 @@ def _stored_chat_event_count(database_path: Path) -> int:
 def _stored_scene_event_count(database_path: Path) -> int:
     with sqlite3.connect(database_path) as connection:
         row = connection.execute("SELECT COUNT(*) FROM _vtt_scene_library_event_log").fetchone()
+    assert row is not None
+    return int(row[0])
+
+
+def _stored_presence_event_count(database_path: Path) -> int:
+    with sqlite3.connect(database_path) as connection:
+        row = connection.execute("SELECT COUNT(*) FROM _vtt_presence_event_log").fetchone()
     assert row is not None
     return int(row[0])
 
@@ -536,7 +565,63 @@ def test_solo_table_seeds_and_persists_scene_library_across_restart_and_retry(
     assert _stored_scene_event_count(database_path) == 2
 
 
-def test_solo_table_owns_four_independent_sqlite_connections_and_closes_them(
+def test_solo_table_persists_open_local_presence_across_restart_and_exact_retry(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "solo-presence.sqlite3"
+    request = _public_presence_heartbeat_request(
+        session_id="echo-vault-session",
+        command_id="local-heartbeat-once",
+        expected_revision=0,
+    )
+
+    with TestClient(
+        create_solo_table_app(database_path, epoch_ms_clock=lambda: 1_000),
+        raise_server_exceptions=False,
+    ) as first_client:
+        initial = first_client.get("/api/v1/presence")
+        assert initial.status_code == 200
+        assert initial.json()["records"] == [
+            {
+                "schema_version": "vtt.presence_record.v1",
+                "participant_id": "local",
+                "display_name": "Local GM",
+                "role": "gm",
+                "status": "offline",
+            }
+        ]
+
+        created = first_client.post("/api/v1/presence-heartbeats", json=request)
+        assert created.status_code == 200
+        assert created.json()["replayed"] is False
+        assert created.json()["signal"] == {
+            "schema_version": "vtt.presence_change_signal.v1",
+            "sequence": 1,
+            "revision": 1,
+            "participant_id": "local",
+        }
+        assert "client_id" not in created.text
+        assert "observed_at" not in created.text
+
+    assert _stored_presence_event_count(database_path) == 1
+
+    with TestClient(
+        create_solo_table_app(database_path, epoch_ms_clock=lambda: 1_001),
+        raise_server_exceptions=False,
+    ) as restored_client:
+        restored = restored_client.get("/api/v1/presence")
+        assert restored.status_code == 200
+        assert restored.json()["records"][0]["status"] == "online"
+
+        replayed = restored_client.post("/api/v1/presence-heartbeats", json=request)
+        assert replayed.status_code == 200
+        assert replayed.json()["replayed"] is True
+        assert replayed.json()["signal"] == created.json()["signal"]
+
+    assert _stored_presence_event_count(database_path) == 1
+
+
+def test_solo_table_owns_five_independent_sqlite_connections_and_closes_them(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
@@ -548,6 +633,7 @@ def test_solo_table_owns_four_independent_sqlite_connections_and_closes_them(
         annotation_board,
         chat_log,
         scene_library,
+        presence_store,
         **_kwargs,
     ):
         captured_connections.extend(
@@ -556,6 +642,7 @@ def test_solo_table_owns_four_independent_sqlite_connections_and_closes_them(
                 annotation_board._connection,
                 chat_log._connection,
                 scene_library._connection,
+                presence_store._connection,
             ]
         )
         return FastAPI()
@@ -564,12 +651,12 @@ def test_solo_table_owns_four_independent_sqlite_connections_and_closes_them(
 
     app = create_solo_table_app(tmp_path / "owned-connections.sqlite3")
 
-    assert len(captured_connections) == 4
-    assert len({id(connection) for connection in captured_connections}) == 4
+    assert len(captured_connections) == 5
+    assert len({id(connection) for connection in captured_connections}) == 5
     assert [
         connection.execute("PRAGMA busy_timeout").fetchone()[0]
         for connection in captured_connections
-    ] == [30_000, 30_000, 30_000, 30_000]
+    ] == [30_000, 30_000, 30_000, 30_000, 30_000]
 
     with TestClient(app):
         pass
@@ -591,6 +678,7 @@ def test_solo_table_closes_all_connections_when_http_composition_fails(
         annotation_board,
         chat_log,
         scene_library,
+        presence_store,
         **_kwargs,
     ):
         captured_connections.extend(
@@ -599,6 +687,7 @@ def test_solo_table_closes_all_connections_when_http_composition_fails(
                 annotation_board._connection,
                 chat_log._connection,
                 scene_library._connection,
+                presence_store._connection,
             ]
         )
         raise RuntimeError("HTTP composition failed")
@@ -608,7 +697,7 @@ def test_solo_table_closes_all_connections_when_http_composition_fails(
     with pytest.raises(RuntimeError, match="HTTP composition failed"):
         create_solo_table_app(tmp_path / "failed-composition.sqlite3")
 
-    assert len(captured_connections) == 4
+    assert len(captured_connections) == 5
     for connection in captured_connections:
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             connection.execute("SELECT 1")

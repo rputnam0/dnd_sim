@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sqlite3
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import uvicorn
@@ -15,7 +15,18 @@ from dnd_sim.interactive.dnd_encounter_driver import DndCombatEncounterDriver
 from .annotation_store import SQLiteAnnotationBoard
 from .chat_store import SQLiteChatLog
 from .event_store import SQLiteSessionEventStore
-from .http_api import create_vtt_app
+from .http_api import OPEN_LOCAL_PARTICIPANT_ID, create_vtt_app
+from .participants import (
+    PARTICIPANT_SCHEMA_VERSION,
+    ROSTER_SCHEMA_VERSION,
+    TableParticipant,
+    TableRoster,
+)
+from .presence_store import (
+    DEFAULT_PRESENCE_AWAY_AFTER_MS,
+    DEFAULT_PRESENCE_OFFLINE_AFTER_MS,
+    SQLitePresenceStore,
+)
 from .scene_library_contracts import SceneCreateCommand, SceneMapMetadata, SceneRecord
 from .scene_library_store import SQLiteSceneLibrary
 from .session_service import VTTSessionService
@@ -42,7 +53,11 @@ def _close_connections(*connections: sqlite3.Connection | None) -> None:
         raise first_error
 
 
-def create_solo_table_app(database_path: str | Path) -> FastAPI:
+def create_solo_table_app(
+    database_path: str | Path,
+    *,
+    epoch_ms_clock: Callable[[], int] | None = None,
+) -> FastAPI:
     """Create one HTTP app owning a durable Echo Vault session and connection."""
 
     if not isinstance(database_path, (str, Path)):
@@ -50,6 +65,8 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
     normalized_path = str(database_path)
     if not normalized_path.strip():
         raise ValueError("database_path must not be empty")
+    if epoch_ms_clock is not None and not callable(epoch_ms_clock):
+        raise TypeError("epoch_ms_clock must be callable or None")
 
     connection = sqlite3.connect(
         normalized_path,
@@ -59,6 +76,7 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
     annotation_connection: sqlite3.Connection | None = None
     chat_connection: sqlite3.Connection | None = None
     scene_library_connection: sqlite3.Connection | None = None
+    presence_connection: sqlite3.Connection | None = None
     try:
         connection.execute("PRAGMA busy_timeout = 30000")
         fixture = build_solo_table_fixture()
@@ -120,16 +138,43 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
                     ),
                 )
             )
+
+        presence_connection = sqlite3.connect(
+            normalized_path,
+            timeout=30.0,
+            check_same_thread=False,
+        )
+        presence_connection.execute("PRAGMA busy_timeout = 30000")
+        local_participant = TableParticipant(
+            schema_version=PARTICIPANT_SCHEMA_VERSION,
+            participant_id=OPEN_LOCAL_PARTICIPANT_ID,
+            display_name="Local GM",
+            role="gm",
+            owned_actor_ids=(),
+        )
+        presence_store = SQLitePresenceStore(
+            presence_connection,
+            roster=TableRoster(
+                schema_version=ROSTER_SCHEMA_VERSION,
+                table_id=_SOLO_TABLE_SESSION_ID,
+                participants=(local_participant,),
+            ),
+            away_after_ms=DEFAULT_PRESENCE_AWAY_AFTER_MS,
+            offline_after_ms=DEFAULT_PRESENCE_OFFLINE_AFTER_MS,
+        )
         app = create_vtt_app(
             service,
             scene=fixture.scene,
             annotation_board=annotation_board,
             chat_log=chat_log,
             scene_library=scene_library,
+            presence_store=presence_store,
+            presence_epoch_ms_clock=epoch_ms_clock,
         )
     except Exception:
         try:
             _close_connections(
+                presence_connection,
                 scene_library_connection,
                 chat_connection,
                 annotation_connection,
@@ -140,9 +185,13 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
         raise
 
     if (
-        annotation_connection is None or chat_connection is None or scene_library_connection is None
+        annotation_connection is None
+        or chat_connection is None
+        or scene_library_connection is None
+        or presence_connection is None
     ):  # pragma: no cover
         _close_connections(
+            presence_connection,
             scene_library_connection,
             chat_connection,
             annotation_connection,
@@ -152,6 +201,7 @@ def create_solo_table_app(database_path: str | Path) -> FastAPI:
 
     def close_owned_connections() -> None:
         _close_connections(
+            presence_connection,
             scene_library_connection,
             chat_connection,
             annotation_connection,

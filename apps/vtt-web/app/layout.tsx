@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 
 import "./globals.css";
 
@@ -13,30 +14,63 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Echo Vault · Solo Table",
-    template: "%s · Solo Table",
-  },
-  description:
-    "A focused virtual tabletop for deterministic D&D combat in the original Echo Vault encounter.",
-  applicationName: "Echo Vault Solo Table",
-  icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-  },
-  openGraph: {
-    title: "Echo Vault · Solo Table",
-    description:
-      "Preview, verify, and commit deterministic turns on an original 8×6 tactical grid.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary",
-    title: "Echo Vault · Solo Table",
-    description: "An arcane instrument panel for deterministic tactical play.",
-  },
-};
+function requestOrigin(requestHeaders: Headers): URL {
+  const forwardedHost = requestHeaders.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || requestHeaders.get("host") || "127.0.0.1:3000";
+  const forwardedProtocol = requestHeaders
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim();
+  const protocol =
+    forwardedProtocol === "http" || forwardedProtocol === "https"
+      ? forwardedProtocol
+      : host.startsWith("127.0.0.1") || host.startsWith("localhost")
+        ? "http"
+        : "https";
+  try {
+    return new URL(`${protocol}://${host}`);
+  } catch {
+    return new URL("http://127.0.0.1:3000");
+  }
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const metadataBase = requestOrigin(await headers());
+  const description =
+    "An authoritative virtual tabletop for deterministic tactical play, shared scenes, chat, annotations, and live participant presence.";
+  return {
+    metadataBase,
+    title: {
+      default: "Echo Vault · Authoritative VTT",
+      template: "%s · Echo Vault",
+    },
+    description,
+    applicationName: "Echo Vault Authoritative VTT",
+    icons: {
+      icon: "/favicon.svg",
+      shortcut: "/favicon.svg",
+    },
+    openGraph: {
+      title: "Echo Vault · Authoritative Virtual Tabletop",
+      description,
+      type: "website",
+      images: [
+        {
+          url: new URL("/og.png", metadataBase).toString(),
+          width: 1_731,
+          height: 909,
+          alt: "Echo Vault authoritative virtual tabletop tactical map",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Echo Vault · Authoritative Virtual Tabletop",
+      description,
+      images: [new URL("/og.png", metadataBase).toString()],
+    },
+  };
+}
 
 export const viewport: Viewport = {
   colorScheme: "dark",

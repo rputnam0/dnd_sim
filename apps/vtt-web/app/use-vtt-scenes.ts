@@ -126,7 +126,10 @@ export function useVttScenes(input: {
             bearerToken: input.bearerToken,
             signal: controller.signal,
             onOpen: () => {
-              if (active) setStatus("live");
+              if (active) {
+                setStatus("live");
+                setError(null);
+              }
             },
             onEvent: (event) => {
               cursorRef.current = Math.max(cursorRef.current, event.sequence);

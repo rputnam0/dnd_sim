@@ -218,6 +218,21 @@ function booleanValue(value: unknown, path: string): boolean {
   return value;
 }
 
+function compareCodePoints(left: string, right: string): number {
+  const leftPoints = Array.from(left, (character) => character.codePointAt(0) as number);
+  const rightPoints = Array.from(right, (character) => character.codePointAt(0) as number);
+  for (
+    let index = 0;
+    index < Math.min(leftPoints.length, rightPoints.length);
+    index += 1
+  ) {
+    if (leftPoints[index] !== rightPoints[index]) {
+      return leftPoints[index] - rightPoints[index];
+    }
+  }
+  return leftPoints.length - rightPoints.length;
+}
+
 function parseMapMetadata(value: unknown, path: string): SceneMapMetadata {
   const data = exactObject(
     value,
@@ -297,7 +312,8 @@ export function parseSceneLibraryView(value: unknown): SceneLibraryView {
   if (
     new Set(sceneIds).size !== sceneIds.length ||
     sceneIds.some(
-      (sceneId, index) => index > 0 && sceneIds[index - 1] > sceneId,
+      (sceneId, index) =>
+        index > 0 && compareCodePoints(sceneIds[index - 1], sceneId) > 0,
     )
   ) {
     throw new Error("scene_library_view scenes must have unique sorted scene IDs");

@@ -44,6 +44,14 @@ from .participants import (
     TableRoster,
     audience_allows,
 )
+from .presence_api import (
+    PRESENCE_PROTECTED_ROUTES,
+    EpochMillisecondsClock,
+    PresenceAPIError,
+    install_presence_routes,
+    system_epoch_ms,
+)
+from .presence_store import SQLitePresenceStore
 from .scene import SquareGridScene
 from .scene_library_api import (
     SCENE_LIBRARY_PROTECTED_ROUTES,
@@ -438,6 +446,8 @@ def create_vtt_app(
     chat_table_id: str | None = None,
     scene_library: SQLiteSceneLibrary | None = None,
     scene_library_table_id: str | None = None,
+    presence_store: SQLitePresenceStore | None = None,
+    presence_epoch_ms_clock: EpochMillisecondsClock | None = None,
 ) -> FastAPI:
     """Create a JSON-only VTT app around one already-owned session service."""
 
@@ -461,6 +471,10 @@ def create_vtt_app(
         raise TypeError("scene_library must be a SQLiteSceneLibrary or None")
     if scene_library is None and scene_library_table_id is not None:
         raise ValueError("scene_library_table_id requires a scene_library")
+    if presence_store is not None and not isinstance(presence_store, SQLitePresenceStore):
+        raise TypeError("presence_store must be a SQLitePresenceStore or None")
+    if presence_store is None and presence_epoch_ms_clock is not None:
+        raise ValueError("presence_epoch_ms_clock requires a presence_store")
     configured_scene = None if scene is None else scene.model_copy(deep=True)
     configured_origins = _validate_allowed_origins(allowed_origins)
     configured_annotation_table_id: str | None = None
@@ -496,12 +510,32 @@ def create_vtt_app(
             and configured_scene_library_table_id != access_policy.roster.table_id
         ):
             raise ValueError("scene_library_table_id must match the access-policy table")
+    configured_presence_clock: EpochMillisecondsClock | None = None
+    if presence_store is not None:
+        if access_policy is not None:
+            if presence_store.roster != access_policy.roster:
+                raise ValueError("presence_store must match the access-policy roster")
+        else:
+            local_participant = _open_local_participant()
+            local_roster = TableRoster(
+                schema_version=ROSTER_SCHEMA_VERSION,
+                table_id=service.session_id,
+                participants=(local_participant,),
+            )
+            if presence_store.roster != local_roster:
+                raise ValueError("presence_store must match the open-local roster")
+        configured_presence_clock = (
+            system_epoch_ms if presence_epoch_ms_clock is None else presence_epoch_ms_clock
+        )
+        if not callable(configured_presence_clock):
+            raise TypeError("presence_epoch_ms_clock must be callable")
 
     app = FastAPI(title="dnd-sim VTT API", version="1")
     app.state.vtt_access_policy = access_policy
     app.state.vtt_annotation_board = annotation_board
     app.state.vtt_chat_log = chat_log
     app.state.vtt_scene_library = scene_library
+    app.state.vtt_presence_store = presence_store
     if access_policy is not None:
         protected_routes = set(_PROTECTED_TABLE_ROUTES)
         if annotation_board is not None:
@@ -510,6 +544,8 @@ def create_vtt_app(
             protected_routes.update(CHAT_PROTECTED_ROUTES)
         if scene_library is not None:
             protected_routes.update(SCENE_LIBRARY_PROTECTED_ROUTES)
+        if presence_store is not None:
+            protected_routes.update(PRESENCE_PROTECTED_ROUTES)
         app.add_middleware(
             _TableAuthenticationMiddleware,
             access_policy=access_policy,
@@ -558,6 +594,18 @@ def create_vtt_app(
     async def scene_library_api_error(
         _request: Request,
         exc: SceneLibraryAPIError,
+    ) -> JSONResponse:
+        return _error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+        )
+
+    @app.exception_handler(PresenceAPIError)
+    async def presence_api_error(
+        _request: Request,
+        exc: PresenceAPIError,
     ) -> JSONResponse:
         return _error_response(
             status_code=exc.status_code,
@@ -777,6 +825,18 @@ def create_vtt_app(
             session_id=service.session_id,
             table_id=configured_scene_library_table_id,
             access_policy=access_policy,
+        )
+
+    if presence_store is not None:
+        if configured_presence_clock is None:
+            raise RuntimeError("presence route configuration was not normalized")
+        install_presence_routes(
+            app,
+            store=presence_store,
+            session_id=service.session_id,
+            table_id=presence_store.table_id,
+            access_policy=access_policy,
+            epoch_ms_clock=configured_presence_clock,
         )
 
     return app

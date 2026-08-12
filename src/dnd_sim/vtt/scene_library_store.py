@@ -54,7 +54,10 @@ class SceneCommandConflictError(SceneLibraryStoreError):
 
 
 class SceneRevisionConflictError(SceneLibraryStoreError):
-    pass
+    def __init__(self, *, current_revision: int, expected_revision: int) -> None:
+        super().__init__(f"expected revision {current_revision}, received {expected_revision}")
+        self.current_revision = current_revision
+        self.expected_revision = expected_revision
 
 
 class SceneIdConflictError(SceneLibraryStoreError):
@@ -234,8 +237,8 @@ class SQLiteSceneLibrary:
             snapshot = self._snapshot_locked(command.table_id)
             if command.expected_revision != snapshot.revision:
                 raise SceneRevisionConflictError(
-                    f"expected revision {snapshot.revision}, received "
-                    f"{command.expected_revision}"
+                    current_revision=snapshot.revision,
+                    expected_revision=command.expected_revision,
                 )
             revision = snapshot.revision + 1
             event_id = f"{command.table_id}:scene:{revision}"
@@ -400,9 +403,17 @@ class SQLiteSceneLibrary:
         normalized = _canonical_text(table_id, field_name="table_id")
         if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 0:
             raise ValueError("sequence must be a non-negative integer")
-        return tuple(
-            event for event in self._events_locked(normalized) if event.sequence > sequence
-        )
+        rows = self._connection.execute(
+            f"""
+            SELECT store_schema_version, sequence, revision, command_id,
+                   command_json, receipt_json
+            FROM {_EVENTS_TABLE}
+            WHERE table_id = ? AND sequence > ?
+            ORDER BY sequence ASC
+            """,
+            (normalized, sequence),
+        ).fetchall()
+        return self._parse_event_rows(normalized, rows)
 
     def _events_locked(self, table_id: str) -> tuple[SceneMutationEvent, ...]:
         rows = self._connection.execute(
@@ -415,6 +426,13 @@ class SQLiteSceneLibrary:
             """,
             (table_id,),
         ).fetchall()
+        return self._parse_event_rows(table_id, rows)
+
+    def _parse_event_rows(
+        self,
+        table_id: str,
+        rows: list[tuple[Any, ...]],
+    ) -> tuple[SceneMutationEvent, ...]:
         events: list[SceneMutationEvent] = []
         for row in rows:
             self._validate_store_schema(str(row[0]))

@@ -38,6 +38,23 @@ the server. GMs may run admin commands and moderate shared records, players may
 act only for owned actors, and spectators can follow the table without posting
 or mutating it.
 
+## Participant presence
+
+When the optional presence API is composed, the table shows the authenticated
+participant directory with online, away, and offline status. Each open browser
+keeps a memory-only client identity, sends revision-checked heartbeats using the
+same authorization header as the rest of the table, and follows a reconnectable
+presence-change stream. Stale heartbeats rehydrate the directory before one
+bounded retry, while transient network failures repeat the same command once so
+the server can honor its idempotency contract.
+
+The safe presence view contains display names, roles, and derived statuses only.
+Device IDs and observation timestamps remain server-internal, and the SSE
+notification carries only the participant ID and revision needed to trigger a
+fresh safe view. No presence identity or table credential is written to browser
+storage or placed in a URL. If the optional service is absent, the roster stays
+visible and reports presence as unavailable without disrupting play.
+
 ## Authoritative turn choices
 
 Action and target controls come from the projection's strict `dnd.turn-choices.v1`

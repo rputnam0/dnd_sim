@@ -72,6 +72,27 @@ test("strictly parses ordered scene library metadata without map blobs", () => {
   );
 });
 
+test("accepts backend code-point ordering for non-BMP scene IDs", () => {
+  const privateUse = "\uE000";
+  const supplementary = "\u{10000}";
+  assert.doesNotThrow(() =>
+    parseSceneLibraryView({
+      ...view,
+      active_scene_id: privateUse,
+      scenes: [
+        {
+          scene: { ...scene, scene_id: privateUse },
+          archived: false,
+        },
+        {
+          scene: { ...scene, scene_id: supplementary },
+          archived: false,
+        },
+      ],
+    }),
+  );
+});
+
 test("builds exact create duplicate activate and safe archive requests", () => {
   assert.deepEqual(
     buildSceneCreateRequest({

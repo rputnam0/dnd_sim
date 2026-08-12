@@ -46,6 +46,7 @@ from dnd_sim.vtt.scene_library_contracts import (
 from dnd_sim.vtt.scene_library_store import (
     SQLiteSceneLibrary,
     SceneLibraryStoreCorruptionError,
+    SceneRevisionConflictError,
 )
 from dnd_sim.vtt.session_service import VTTSessionService
 
@@ -425,6 +426,27 @@ def test_scene_binding_idempotency_and_store_conflicts_use_stable_errors(
         },
     )
     _assert_error(missing, status_code=404, code="scene_not_found")
+
+
+def test_scene_stale_revision_reports_the_transaction_observation(
+    scene_api_client,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, library, _service = scene_api_client
+
+    def lose_cross_process_race(_command):
+        raise SceneRevisionConflictError(current_revision=7, expected_revision=0)
+
+    monkeypatch.setattr(library, "execute", lose_cross_process_race)
+    stale = client.post(
+        "/api/v1/scene-commands",
+        headers=_authorization("gm"),
+        json=_create_request("raced", "raced", expected_revision=0),
+    )
+
+    assert _assert_error(stale, status_code=409, code="scene_stale_revision")["details"] == {
+        "current_revision": 7
+    }
 
 
 def test_scene_store_failures_use_stable_nonleaking_errors(

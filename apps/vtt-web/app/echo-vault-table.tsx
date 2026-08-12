@@ -57,6 +57,7 @@ import {
   type AreaTemplateKind,
 } from "./vtt-template-geometry";
 import { VttChatPanel } from "./vtt-chat-panel";
+import { VttPresencePanel } from "./vtt-presence-panel";
 import { VttScenesPanel } from "./vtt-scenes-panel";
 import { VttAccessGate } from "./vtt-access-gate";
 import {
@@ -2203,6 +2204,11 @@ export function EchoVaultTable() {
             onAnnotationRetry={sharedAnnotations.retry}
           />
           <VttScenesPanel
+            sessionId={view.session_id}
+            bearerToken={bearerToken}
+            table={tableIdentity}
+          />
+          <VttPresencePanel
             sessionId={view.session_id}
             bearerToken={bearerToken}
             table={tableIdentity}

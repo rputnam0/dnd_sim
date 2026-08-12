@@ -265,8 +265,6 @@ def _binding_error(*, session_id: str, table_id: str) -> SceneLibraryAPIError:
 def _execute_library(
     library: SQLiteSceneLibrary,
     command: SceneMutationCommand,
-    *,
-    current_revision: int,
 ):
     try:
         return library.execute(command)
@@ -275,7 +273,7 @@ def _execute_library(
             status_code=409,
             code="scene_stale_revision",
             message="The scene command targets a stale library revision.",
-            details={"current_revision": current_revision},
+            details={"current_revision": exc.current_revision},
         ) from exc
     except SceneCommandConflictError as exc:
         raise SceneLibraryAPIError(
@@ -455,12 +453,7 @@ def install_scene_library_routes(
                 session_id=configured_session_id,
                 table_id=configured_table_id,
             )
-        current = _read_view(library, table_id=configured_table_id)
-        result = _execute_library(
-            library,
-            payload.command,
-            current_revision=current.revision,
-        )
+        result = _execute_library(library, payload.command)
         return SceneLibraryResponse(
             session_id=configured_session_id,
             table_id=configured_table_id,

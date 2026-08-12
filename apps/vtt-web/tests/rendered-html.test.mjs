@@ -31,7 +31,9 @@ test("server-renders the branded table loading boundary", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Echo Vault · Solo Table<\/title>/i);
+  assert.match(html, /<title>Echo Vault · Authoritative VTT<\/title>/i);
+  assert.match(html, /property="og:image" content="https?:\/\/[^\"]+\/og\.png"/i);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/i);
   assert.match(html, /Solo Table \/ Encounter 01/);
   assert.match(html, /Synchronizing the Echo Vault/);
   assert.match(html, /Reading the public table projection/);
@@ -51,7 +53,8 @@ test("replaces the starter with the projection-only tactical product", async () 
   ]);
 
   assert.match(page, /<EchoVaultTable \/>/);
-  assert.match(layout, /Echo Vault · Solo Table/);
+  assert.match(layout, /Echo Vault · Authoritative VTT/);
+  assert.match(layout, /new URL\("\/og\.png", metadataBase\)/);
   assert.doesNotMatch(page + layout, /codex-preview|_sites-preview|Starter Project/);
 
   assert.match(client, /GET|method: "GET"/);
@@ -80,6 +83,7 @@ test("replaces the starter with the projection-only tactical product", async () 
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(packageJson, /"tsx": "4\.22\.1"/);
   await Promise.all([
+    access(new URL("public/og.png", projectRoot)),
     assert.rejects(
       access(new URL("app/_sites-preview/SkeletonPreview.tsx", projectRoot)),
     ),
@@ -293,14 +297,50 @@ test("ships a strict GM scene lifecycle manager", async () => {
   assert.match(panel, /Activate/);
   assert.match(panel, /Duplicate/);
   assert.match(panel, /Archive/);
+  assert.match(panel, /Choose the next active scene/);
+  assert.match(panel, /Confirm archive/);
   assert.match(panel, /Export/);
   assert.match(panel, /Import scene/);
   assert.match(panel, /gridless/);
   assert.match(hook, /streamSceneEvents/);
+  assert.match(hook, /setError\(null\)/);
   assert.match(hook, /participant\?\.role !== "gm"/);
   assert.match(client, /vtt\.scene_library_view\.v1/);
   assert.match(client, /vtt\.scene_export\.v1/);
   assert.doesNotMatch(client, /image_blob|asset_path/);
   assert.match(css, /\.scene-panel/);
   assert.match(readme, /scene lifecycle/i);
+});
+
+test("ships safe multi-client participant presence without durable browser credentials", async () => {
+  const [table, panel, client, hook, css, readme] = await Promise.all([
+    readFile(new URL("../app/echo-vault-table.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-presence-panel.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/vtt-presence.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/use-vtt-presence.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(table, /<VttPresencePanel/);
+  assert.match(panel, /Participant presence/);
+  assert.match(panel, /Online|online/);
+  assert.match(panel, /Away/);
+  assert.match(panel, /Offline/);
+  assert.match(client, /vtt\.presence_view\.v1/);
+  assert.match(client, /vtt\.presence_heartbeat_request\.v1/);
+  assert.match(client, /vtt\.presence_changed/);
+  assert.match(client, /assertPresenceViewMatchesTable/);
+  assert.match(hook, /streamPresenceEvents/);
+  assert.match(hook, /presence_stale_revision/);
+  assert.match(hook, /crypto\.randomUUID\(\)/);
+  assert.match(hook, /setError\(null\)/);
+  assert.match(css, /\.presence-dot-online/);
+  assert.match(css, /\.presence-dot-away/);
+  assert.match(css, /\.presence-dot-offline/);
+  assert.match(readme, /participant presence/i);
+  assert.doesNotMatch(
+    table + panel + client + hook,
+    /localStorage|sessionStorage|bearerToken=.*(?:\?|&)|token=.*(?:\?|&)/,
+  );
 });

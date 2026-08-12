@@ -55,12 +55,24 @@ export function VttScenesPanel({
   const [gridSizePx, setGridSizePx] = useState(70);
   const [gridless, setGridless] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [archiveTargetId, setArchiveTargetId] = useState<string | null>(null);
+  const [archiveSuccessorId, setArchiveSuccessorId] = useState("");
   const importId = useId();
   const titleId = useId();
   const view = scenes.view;
   const entries = view?.scenes ?? [];
   const active = entries.find(
     (entry) => entry.scene.scene_id === view?.active_scene_id,
+  );
+  const archiveTarget = entries.find(
+    (entry) => entry.scene.scene_id === archiveTargetId && !entry.archived,
+  );
+  const archiveTargetIsActive =
+    archiveTarget?.scene.scene_id === view?.active_scene_id;
+  const archiveSuccessors = entries.filter(
+    (entry) =>
+      !entry.archived &&
+      entry.scene.scene_id !== archiveTarget?.scene.scene_id,
   );
 
   const create = async (event: FormEvent<HTMLFormElement>) => {
@@ -84,6 +96,28 @@ export function VttScenesPanel({
     } catch (error) {
       setLocalError(
         error instanceof Error ? error.message : "The scene could not be created.",
+      );
+    }
+  };
+
+  const archive = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!archiveTarget) return;
+    if (archiveTargetIsActive && archiveSuccessorId.length === 0) {
+      setLocalError("Choose the next active scene before archiving this one.");
+      return;
+    }
+    try {
+      await scenes.archiveScene(
+        archiveTarget.scene.scene_id,
+        archiveTargetIsActive ? archiveSuccessorId : null,
+      );
+      setArchiveTargetId(null);
+      setArchiveSuccessorId("");
+      setLocalError(null);
+    } catch (error) {
+      setLocalError(
+        error instanceof Error ? error.message : "The scene could not be archived.",
       );
     }
   };
@@ -119,7 +153,7 @@ export function VttScenesPanel({
         <ul className="scene-list">
           {entries.map((entry) => {
             const isActive = entry.scene.scene_id === view?.active_scene_id;
-            const successor = entries.find(
+            const hasSuccessor = entries.some(
               (candidate) =>
                 !candidate.archived &&
                 candidate.scene.scene_id !== entry.scene.scene_id,
@@ -168,24 +202,74 @@ export function VttScenesPanel({
                     disabled={
                       !scenes.canMutate ||
                       entry.archived ||
-                      (isActive && successor === undefined)
+                      (isActive && !hasSuccessor)
                     }
                     onClick={() => {
-                      void scenes
-                        .archiveScene(
-                          entry.scene.scene_id,
-                          isActive ? successor?.scene.scene_id ?? null : null,
-                        )
-                        .catch(() => undefined);
+                      setArchiveTargetId(entry.scene.scene_id);
+                      setArchiveSuccessorId("");
+                      setLocalError(null);
                     }}
                   >
-                    Archive
+                    Archive…
                   </button>
                 </div>
               </li>
             );
           })}
         </ul>
+      ) : null}
+
+      {archiveTarget ? (
+        <form className="scene-archive-confirm" onSubmit={archive}>
+          <div>
+            <h3>Archive {archiveTarget.scene.map_metadata.name}?</h3>
+            <p>
+              Archived scene IDs remain reserved. Confirm only when this metadata
+              should leave the available scene list.
+            </p>
+          </div>
+          {archiveTargetIsActive ? (
+            <label>
+              Choose the next active scene
+              <select
+                value={archiveSuccessorId}
+                onChange={(event) => setArchiveSuccessorId(event.target.value)}
+                required
+                disabled={scenes.operation === "archiving"}
+              >
+                <option value="">Select a successor</option>
+                {archiveSuccessors.map((entry) => (
+                  <option key={entry.scene.scene_id} value={entry.scene.scene_id}>
+                    {entry.scene.map_metadata.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <div className="scene-archive-actions">
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={() => {
+                setArchiveTargetId(null);
+                setArchiveSuccessorId("");
+              }}
+              disabled={scenes.operation === "archiving"}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="button button-primary"
+              disabled={
+                scenes.operation === "archiving" ||
+                (archiveTargetIsActive && archiveSuccessorId.length === 0)
+              }
+            >
+              {scenes.operation === "archiving" ? "Archiving…" : "Confirm archive"}
+            </button>
+          </div>
+        </form>
       ) : null}
 
       {table.current_participant.role === "gm" ? (
