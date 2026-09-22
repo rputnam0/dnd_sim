@@ -250,7 +250,7 @@ remain storage foundations, not actor sheets or deployment.
 The previous temporary checkout was recovered into a durable sibling worktree
 on 2026-09-07; see `vtt_recovery_2026_09_07.md` for provenance and verification.
 
-The active end-to-end slice is installation administration:
+The accepted administration baseline is:
 
 - [x] Deliver the first-run claim only to the local operator, then claim an
       administrator through an authenticated, bounded setup request.
@@ -304,22 +304,22 @@ participant invitations and validated actor deployment. An empty world must
 open a preparation workspace without manufacturing an engine encounter or
 copying the Echo Vault demonstration.
 
-### Empty-world preparation launch — active slice
+### Empty-world preparation launch — accepted slice
 
 This slice provides an authenticated, durable preparation workspace for scenes
 and maps. It does not claim combat, actor deployment, invitations, or full
 Foundry parity. The existing engine requires a real roster; an empty world must
 not manufacture an encounter just to render a tabletop.
 
-- [ ] Explicitly prepare and open an active catalog world, preserving its
+- [x] Explicitly prepare and open an active catalog world, preserving its
       reserved identities and assigning a durable initial GM.
-- [ ] Isolate scene and map stores per world; record successful empty
+- [x] Isolate scene and map stores per world; record successful empty
       provisioning and reject incomplete or damaged storage on reopen.
-- [ ] Issue memory-only, world-bound launch credentials; enforce administrator
+- [x] Issue memory-only, world-bound launch credentials; enforce administrator
       session revocation/expiry and world archive at requests and streams.
-- [ ] Provide a map-centered empty/scene preparation browser with scene
+- [x] Provide a map-centered empty/scene preparation browser with scene
       authoring, upload, calibration, return, and honest unavailable combat.
-- [ ] Prove world isolation, exact retry, return/relaunch and process restart;
+- [x] Prove world isolation, exact retry, return/relaunch and process restart;
       complete browser journey, full regressions and independent critique.
 
 The explicit action is **Prepare & open**, not a claim that every catalog
@@ -333,3 +333,15 @@ Operating envelope and critic budget remain those of the Gauntlet charter:
 local/protected installation, bounded scene/map stores, one fresh critic and
 at most one focused correction/re-review. Invitations and additional content
 panels remain separate slices.
+
+Implemented and independently accepted in draft
+[PR #264](https://github.com/rputnam0/dnd_sim/pull/264), stacked on #263.
+Final lead-run gates: 2,057 Python tests, 178 browser tests, strict typecheck,
+production build, ESLint, Black and diff checks all pass. Real-browser desktop,
+390px, native skip-focus, manual map upload/attachment and normal
+return/restart/reopen checks pass. See the Gauntlet ledger for review evidence
+and the deferred hot-restart transport observation.
+
+Next highest-value gaps: participant invitations/revocation and reusable actor
+sheets with validated deployment into an actual engine encounter. Existing demo
+combat capabilities are not yet available in these original preparation worlds.
