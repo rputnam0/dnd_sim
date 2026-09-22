@@ -88,8 +88,8 @@ export function useVttPresence(input: {
     const sessionId = input.sessionId;
     const clientId = `web-${crypto.randomUUID()}`;
     let active = true;
-    let heartbeatTimer: ReturnType<typeof window.setTimeout> | null = null;
-    let refreshTimer: ReturnType<typeof window.setTimeout> | null = null;
+    let heartbeatTimer: number | null = null;
+    let refreshTimer: number | null = null;
     let heartbeatInFlight = false;
 
     const adoptView = (nextView: PresenceView) => {

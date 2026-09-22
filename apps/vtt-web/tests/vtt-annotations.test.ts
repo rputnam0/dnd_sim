@@ -7,12 +7,22 @@ import {
   buildAnnotationDeleteRequest,
   buildAnnotationPutRequest,
   buildPingPutRequest,
+  annotationViewMatchesIdentity,
+  isDrawingAnnotation,
+  isLockedDrawingAnnotation,
+  parseVttAnnotation,
   parseAnnotationEvent,
   parseAnnotationsView,
   parseAnnotationSseBlock,
   parseAnnotationResponse,
   streamAnnotationEvents,
   vttAnnotationEventsUrl,
+  type ArrowDrawingAnnotation,
+  type DrawingAnnotation,
+  type FreehandDrawingAnnotation,
+  type PingAnnotation,
+  type ShapeDrawingAnnotation,
+  type TextDrawingAnnotation,
 } from "../app/vtt-annotations";
 
 const ping = {
@@ -24,7 +34,7 @@ const ping = {
   annotation_type: "ping",
   position: { x_ft: 17.5, y_ft: 12.5, z_ft: 0 },
   duration_ms: 1500,
-} as const;
+} satisfies PingAnnotation;
 
 const view = {
   schema_version: "vtt.annotations_view.v1",
@@ -61,6 +71,76 @@ const circle = {
   center: { x_ft: 17.5, y_ft: 12.5, z_ft: 0 },
   radius_ft: 10,
 } as const;
+
+const drawingStyle = {
+  stroke_color: "#5eead4",
+  fill_color: "#123456",
+  opacity: 0.75,
+  stroke_width_ft: 1.5,
+  line_style: "dashed",
+} as const;
+
+const drawingBase = {
+  schema_version: "vtt.annotation.v1",
+  scene_id: "echo-vault",
+  author_id: "browser-player",
+  audience: ["all"],
+} satisfies Pick<DrawingAnnotation, "schema_version" | "scene_id" | "author_id" | "audience">;
+
+const drawings = [
+  {
+    ...drawingBase,
+    annotation_id: "draw-arrow",
+    annotation_type: "arrow_drawing",
+    layer: "over_tokens",
+    locked: false,
+    style: drawingStyle,
+    start: { x_ft: 5, y_ft: 10, z_ft: 0 },
+    end: { x_ft: 15, y_ft: 20, z_ft: 0 },
+    head_size_ft: 2,
+  },
+  {
+    ...drawingBase,
+    annotation_id: "draw-freehand",
+    annotation_type: "freehand_drawing",
+    layer: "under_tokens",
+    locked: true,
+    style: drawingStyle,
+    points: [
+      { x_ft: 5, y_ft: 10, z_ft: 0 },
+      { x_ft: 10, y_ft: 15, z_ft: 0 },
+      { x_ft: 15, y_ft: 10, z_ft: 0 },
+    ],
+  },
+  {
+    ...drawingBase,
+    annotation_id: "draw-shape",
+    annotation_type: "shape_drawing",
+    layer: "under_tokens",
+    locked: false,
+    style: drawingStyle,
+    shape: "ellipse",
+    corner_a: { x_ft: 5, y_ft: 10, z_ft: 0 },
+    corner_b: { x_ft: 15, y_ft: 20, z_ft: 0 },
+  },
+  {
+    ...drawingBase,
+    annotation_id: "draw-text",
+    annotation_type: "text_drawing",
+    layer: "over_tokens",
+    locked: true,
+    style: drawingStyle,
+    anchor: { x_ft: 5, y_ft: 10, z_ft: 0 },
+    text: "Hold <script>alert(1)</script>\nNorth",
+    font_size_ft: 3,
+    background_color: "#112233",
+  },
+] satisfies [
+  ArrowDrawingAnnotation,
+  FreehandDrawingAnnotation,
+  ShapeDrawingAnnotation,
+  TextDrawingAnnotation,
+];
 
 test("builds exact generic annotation put and delete requests", () => {
   assert.deepEqual(
@@ -237,6 +317,105 @@ test("strictly parses a deterministic scene-bound annotation view", () => {
       }),
     /duration_ms/i,
   );
+});
+
+test("strictly round-trips every durable drawing variant as inert data", () => {
+  for (const drawing of drawings) {
+    const parsed = parseVttAnnotation(drawing);
+    assert.deepEqual(parsed, drawing);
+    assert.equal(isDrawingAnnotation(parsed), true);
+  }
+  assert.equal(isDrawingAnnotation(parseVttAnnotation(ping)), false);
+
+  assert.throws(
+    () => parseVttAnnotation({ ...drawings[0], style: { ...drawingStyle, stroke_color: "#ABCDEF" } }),
+    /stroke_color/i,
+  );
+  assert.throws(
+    () => parseVttAnnotation({ ...drawings[0], style: { ...drawingStyle, filter: "url(secret)" } }),
+    /unexpected field.*filter/i,
+  );
+  assert.throws(
+    () => parseVttAnnotation({ ...drawings[0], end: drawings[0].start }),
+    /distinct/i,
+  );
+  assert.throws(
+    () => parseVttAnnotation({ ...drawings[2], corner_b: { x_ft: 5, y_ft: 20, z_ft: 0 } }),
+    /opposite corners/i,
+  );
+  assert.throws(
+    () => parseVttAnnotation({ ...drawings[3], text: "unsafe\u0000text" }),
+    /control/i,
+  );
+  assert.throws(
+    () => parseVttAnnotation({
+      ...drawings[1],
+      points: Array.from({ length: 513 }, (_, index) => ({
+        x_ft: index,
+        y_ft: index % 2,
+        z_ft: 0,
+      })),
+    }),
+    /2-512/i,
+  );
+  assert.throws(
+    () => parseVttAnnotation({
+      ...drawings[1],
+      points: [
+        { x_ft: 5, y_ft: 5, z_ft: 0 },
+        { x_ft: 10, y_ft: 10, z_ft: 0 },
+        { x_ft: 5, y_ft: 5, z_ft: 0 },
+      ],
+    }),
+    /unique/i,
+  );
+  assert.equal(isLockedDrawingAnnotation(drawings[1]), true);
+  assert.equal(isLockedDrawingAnnotation(drawings[0]), false);
+  assert.equal(isLockedDrawingAnnotation(ping), false);
+});
+
+test("annotation projection identity fails closed for every table binding", () => {
+  const parsed = parseAnnotationsView(view);
+  assert.equal(
+    annotationViewMatchesIdentity(parsed, {
+      sessionId: "echo-vault-session",
+      tableId: "echo-vault-table",
+      sceneId: "echo-vault",
+    }),
+    true,
+  );
+  for (const identity of [
+    { sessionId: "other-session", tableId: "echo-vault-table", sceneId: "echo-vault" },
+    { sessionId: "echo-vault-session", tableId: "other-table", sceneId: "echo-vault" },
+    { sessionId: "echo-vault-session", tableId: "echo-vault-table", sceneId: "other-scene" },
+  ]) {
+    assert.equal(annotationViewMatchesIdentity(parsed, identity), false);
+  }
+});
+
+test("updates one drawing event without disturbing unrelated records", () => {
+  const initial = parseAnnotationsView({
+    ...view,
+    revision: 2,
+    annotations: [drawings[0], drawings[1]],
+  });
+  const updatedArrow = {
+    ...drawings[0],
+    locked: true,
+    style: { ...drawingStyle, opacity: 0.5 },
+  };
+  const event = parseAnnotationEvent({
+    ...putEvent,
+    sequence: 3,
+    revision: 3,
+    annotation_id: "draw-arrow",
+    annotation: updatedArrow,
+  });
+
+  const next = applyAnnotationEvent(initial, event);
+
+  assert.equal(next.revision, 3);
+  assert.deepEqual(next.annotations, [updatedArrow, drawings[1]]);
 });
 
 test("parses receipts and applies put/delete events without duplicates", () => {

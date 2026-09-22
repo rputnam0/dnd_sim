@@ -39,7 +39,7 @@ export function VttAccessGate({
       <form className="state-card access-card" onSubmit={submit}>
         <span className="access-glyph" aria-hidden="true">⌁</span>
         <p className="eyebrow">Protected table</p>
-        <h1>Join the Echo Vault</h1>
+        <h1>Join a private table</h1>
         <p>
           Enter the private credential supplied by your Game Master. It is kept
           only in this page&apos;s memory and is never placed in a URL.

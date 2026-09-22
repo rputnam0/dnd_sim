@@ -7,15 +7,14 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
 } from "react";
 
 import {
   buildDeclarationCommand,
   buildStartCommand,
-  cellToFeet,
-  feetToCell,
   getSessionView,
-  planGridMovement,
   postCommand,
   streamVttEvents,
   VttApiError,
@@ -35,7 +34,6 @@ import {
 } from "./vtt-client";
 import {
   EMPTY_GRID_MEASUREMENT,
-  gridMeasurementDistanceFeet,
   nextGridMeasurement,
   type GridMeasurement,
 } from "./grid-ruler";
@@ -48,7 +46,50 @@ import {
   type AnnotationConnectionStatus,
   type AnnotationMutationOperation,
 } from "./use-vtt-annotations";
-import type { PingAnnotation, VttAnnotation } from "./vtt-annotations";
+import { useVttScenes } from "./use-vtt-scenes";
+import {
+  useVttTokens,
+  type TokenConnectionStatus,
+} from "./use-vtt-tokens";
+import {
+  useVttVisibility,
+  type VisibilityConnectionStatus,
+} from "./use-vtt-visibility";
+import {
+  useVttMapAssets,
+  useVttMapAssetUrl,
+} from "./use-vtt-map-assets";
+import {
+  isDrawingAnnotation,
+  isLockedDrawingAnnotation,
+  type AnnotationPoint,
+  type DrawingAnnotation,
+  type PingAnnotation,
+  type VttAnnotation,
+} from "./vtt-annotations";
+import {
+  buildDrawingAnnotation,
+  type DrawingKind,
+} from "./vtt-drawings";
+import { advanceDrawingDraft } from "./vtt-drawing-workflow";
+import { VttDrawingLayer } from "./vtt-drawing-layer";
+import type { SceneMapMetadata } from "./vtt-scenes";
+import { selectActiveBoardPresentation } from "./vtt-active-board";
+import {
+  boardCellDistanceFeet,
+  activateGridlessMeasurementPoint,
+  boardCellToFeet,
+  boardCellToPixel,
+  enumerateBoardCells,
+  feetToBoardCell,
+  moveGridlessCursor,
+  pixelDistanceFeet,
+  pixelToBoardFeet,
+  type BoardCalibration,
+  type BoardCell,
+  type BoardPoint,
+  type GridlessMeasurementState,
+} from "./vtt-board-calibration";
 import {
   buildAreaTemplateAnnotation,
   projectAreaTemplateToGrid,
@@ -57,16 +98,38 @@ import {
   type AreaTemplateKind,
 } from "./vtt-template-geometry";
 import { VttChatPanel } from "./vtt-chat-panel";
+import { VttJournalPanel } from "./vtt-journal-panel";
+import { useVttPresentation } from "./use-vtt-presentation";
+import { VttPresentationPanel } from "./vtt-presentation-panel";
+import type { SharedCamera } from "./vtt-presentation";
+import { VttCombatTrackerPanel } from "./vtt-combat-tracker-panel";
+import {
+  buildCombatControlCommand,
+  type CombatControlPayload,
+} from "./vtt-combat-tracker";
+import { useVttJournal } from "./use-vtt-journal";
+import type { JournalDocument } from "./vtt-journal";
 import { VttPresencePanel } from "./vtt-presence-panel";
 import { VttScenesPanel } from "./vtt-scenes-panel";
+import { VttTokensPanel } from "./vtt-tokens-panel";
+import { VttVisibilityPanel } from "./vtt-visibility-panel";
+import { VttVisibilityMask } from "./vtt-visibility-mask";
+import { VttRollCardArticle } from "./vtt-roll-card";
+import { rollCardFromEvent } from "./vtt-roll-cards";
+import type {
+  VisibilityProjection,
+  VisibilityProjectionSources,
+} from "./vtt-visibility";
+import type { TokenRecord } from "./vtt-tokens";
 import { VttAccessGate } from "./vtt-access-gate";
+import { VttShell, type VttShellPanel } from "./vtt-shell";
 import {
   canControlActor,
   getTableView,
   type VttTableView,
 } from "./vtt-access";
 
-type PendingOperation = "start" | "preview" | "commit" | null;
+type PendingOperation = "start" | "preview" | "commit" | "combat" | null;
 
 interface LoggedEvent {
   id: string;
@@ -134,7 +197,9 @@ function annotationStatusLabel(
 function annotationLabel(annotation: VttAnnotation): string {
   const kind = titleCase(annotation.annotation_type.replace("_template", ""));
   const dimensions =
-    annotation.annotation_type === "circle_template"
+    isDrawingAnnotation(annotation)
+      ? `${annotation.layer.replace("_", " ")} · ${annotation.locked ? "locked" : "editable"}`
+      : annotation.annotation_type === "circle_template"
       ? `radius ${annotation.radius_ft} ft`
       : annotation.annotation_type === "cube_template"
         ? `${annotation.size_ft} ft side`
@@ -146,6 +211,64 @@ function annotationLabel(annotation: VttAnnotation): string {
               ? `${annotation.duration_ms} ms pulse`
               : `${annotation.total_distance_ft} ft`;
   return `${kind} · ${dimensions} · ${annotation.author_id}`;
+}
+
+interface DrawingToolSettings {
+  kind: DrawingKind;
+  layer: DrawingAnnotation["layer"];
+  audience: "all" | "self";
+  strokeColor: string;
+  fillColor: string;
+  fillEnabled: boolean;
+  opacity: number;
+  strokeWidthFt: number;
+  lineStyle: "solid" | "dashed";
+  locked: boolean;
+  text: string;
+  fontSizeFt: number;
+}
+
+interface DrawingToolPresentation extends DrawingToolSettings {
+  active: boolean;
+  pointCount: number;
+  error: string | null;
+}
+
+function settingsFromDrawing(
+  annotation: DrawingAnnotation,
+): DrawingToolSettings {
+  const kind: DrawingKind =
+    annotation.annotation_type === "freehand_drawing"
+      ? "freehand"
+      : annotation.annotation_type === "shape_drawing"
+        ? annotation.shape
+        : annotation.annotation_type === "arrow_drawing"
+          ? "arrow"
+          : "text";
+  const optionalColor =
+    annotation.annotation_type === "text_drawing"
+      ? annotation.background_color ?? annotation.style.fill_color
+      : annotation.style.fill_color;
+  return {
+    kind,
+    layer: annotation.layer,
+    audience: annotation.audience.length === 1 && annotation.audience[0] === "all"
+      ? "all"
+      : "self",
+    strokeColor: annotation.style.stroke_color,
+    fillColor: optionalColor ?? "#1d4ed8",
+    fillEnabled: optionalColor !== null,
+    opacity: annotation.style.opacity,
+    strokeWidthFt: annotation.style.stroke_width_ft,
+    lineStyle: annotation.style.line_style,
+    locked: annotation.locked,
+    text: annotation.annotation_type === "text_drawing"
+      ? annotation.text
+      : "Map note",
+    fontSizeFt: annotation.annotation_type === "text_drawing"
+      ? annotation.font_size_ft
+      : 3,
+  };
 }
 
 function templateControlLabel(kind: AreaTemplateKind): string {
@@ -241,11 +364,178 @@ function sameCell(left: GridCell | null, right: GridCell): boolean {
   return left?.column === right.column && left.row === right.row;
 }
 
+function presentedCalibration(
+  metadata: SceneMapMetadata,
+): BoardCalibration {
+  return metadata.calibration;
+}
+
+function boardCellFromGrid(
+  calibration: BoardCalibration,
+  cell: GridCell,
+): BoardCell {
+  return calibration.topology.startsWith("hex_")
+    ? { q: cell.column, r: cell.row }
+    : cell;
+}
+
+function gridCellFromBoard(cell: BoardCell): GridCell {
+  return "q" in cell
+    ? { column: cell.q, row: cell.r }
+    : cell;
+}
+
+function boardOriginFeet(
+  scene: SquareGridScene,
+  calibration: BoardCalibration,
+): Position3 {
+  const halfStep = calibration.distance_ft / 2;
+  return [
+    scene.origin_ft.x_ft + halfStep,
+    scene.origin_ft.y_ft + halfStep,
+    scene.origin_ft.z_ft,
+  ];
+}
+
+function presentedFeetToCell(
+  scene: SquareGridScene,
+  calibration: BoardCalibration,
+  position: Position3,
+): GridCell {
+  return gridCellFromBoard(
+    feetToBoardCell(calibration, position, boardOriginFeet(scene, calibration)),
+  );
+}
+
+function presentedCellToFeet(
+  scene: SquareGridScene,
+  calibration: BoardCalibration,
+  cell: GridCell,
+): Position3 {
+  return boardCellToFeet(
+    calibration,
+    boardCellFromGrid(calibration, cell),
+    boardOriginFeet(scene, calibration),
+  );
+}
+
+function planPresentedMovement(input: {
+  scene: SquareGridScene;
+  calibration: BoardCalibration;
+  start: Position3;
+  destination: GridCell;
+  movementRemaining: number;
+}): GridMovementPlan {
+  if (input.calibration.topology === "gridless") {
+    throw new Error("gridless movement requires a free-position command surface");
+  }
+  const startCell = boardCellFromGrid(
+    input.calibration,
+    presentedFeetToCell(input.scene, input.calibration, input.start),
+  );
+  const destinationCell = boardCellFromGrid(
+    input.calibration,
+    input.destination,
+  );
+  const distanceFt = boardCellDistanceFeet(
+    input.calibration,
+    startCell,
+    destinationCell,
+  );
+  if (distanceFt > input.movementRemaining + 1e-6) {
+    throw new Error("Destination exceeds remaining movement");
+  }
+  const projected = presentedCellToFeet(
+    input.scene,
+    input.calibration,
+    input.destination,
+  );
+  const end: Position3 = [projected[0], projected[1], input.start[2]];
+  return {
+    destination: input.destination,
+    distanceFt,
+    end,
+    path: distanceFt <= 1e-6 ? [] : [[...input.start] as Position3, end],
+  };
+}
+
+function presentedCells(
+  metadata: SceneMapMetadata,
+): GridCell[] {
+  return enumerateBoardCells(
+    metadata.calibration,
+    metadata.width_px,
+    metadata.height_px,
+  ).map(gridCellFromBoard);
+}
+
+function squareTemplatesAreSupported(
+  scene: SquareGridScene,
+  metadata: SceneMapMetadata,
+): boolean {
+  const calibration = presentedCalibration(metadata);
+  const widthPx = metadata.width_px;
+  const heightPx = metadata.height_px;
+  return calibration.topology === "square" &&
+    calibration.origin_x_px === calibration.cell_extent_px / 2 &&
+    calibration.origin_y_px === calibration.cell_extent_px / 2 &&
+    calibration.distance_ft === scene.cell_size_ft &&
+    widthPx === scene.columns * calibration.cell_extent_px &&
+    heightPx === scene.rows * calibration.cell_extent_px;
+}
+
+function presentedCellStyle(
+  calibration: BoardCalibration,
+  cell: GridCell,
+  widthPx: number,
+  heightPx: number,
+  includeExtent = true,
+): CSSProperties {
+  const center = boardCellToPixel(
+    calibration,
+    boardCellFromGrid(calibration, cell),
+  );
+  const cellWidthPx = calibration.topology === "hex_flat"
+    ? 2 * calibration.cell_extent_px / Math.sqrt(3)
+    : calibration.cell_extent_px;
+  const cellHeightPx = calibration.topology === "hex_pointy"
+    ? 2 * calibration.cell_extent_px / Math.sqrt(3)
+    : calibration.cell_extent_px;
+  return {
+    left: `${center.x_px / widthPx * 100}%`,
+    top: `${center.y_px / heightPx * 100}%`,
+    ...(includeExtent
+      ? {
+          width: `${cellWidthPx / widthPx * 100}%`,
+          height: `${cellHeightPx / heightPx * 100}%`,
+        }
+      : {}),
+  };
+}
+
+function presentedFeetStyle(
+  scene: SquareGridScene,
+  calibration: BoardCalibration,
+  position: Position3,
+  widthPx: number,
+  heightPx: number,
+): CSSProperties {
+  const origin = boardOriginFeet(scene, calibration);
+  const xPx = calibration.origin_x_px +
+    (position[0] - origin[0]) / calibration.distance_ft * calibration.cell_extent_px;
+  const yPx = calibration.origin_y_px +
+    (position[1] - origin[1]) / calibration.distance_ft * calibration.cell_extent_px;
+  return {
+    left: `${xPx / widthPx * 100}%`,
+    top: `${yPx / heightPx * 100}%`,
+  };
+}
+
 function isInteractiveControl(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
   return Boolean(
     target.closest(
-      "input, textarea, select, button, a[href], summary, [contenteditable]:not([contenteditable='false']), [role='textbox'], [role='button'], [role='combobox']",
+      "input, textarea, select, button, a[href], summary, [tabindex]:not([tabindex='-1']), [contenteditable]:not([contenteditable='false']), [role='textbox'], [role='button'], [role='combobox']",
     ),
   );
 }
@@ -275,10 +565,13 @@ async function loadTableConnection(
 }
 
 function measurementStatus(
-  scene: SquareGridScene,
+  calibration: BoardCalibration,
   measurement: GridMeasurement,
   measureMode: boolean,
 ): string {
+  if (calibration.topology === "gridless") {
+    return "Gridless calibrated scale · cell snapping disabled";
+  }
   if (measurement.start === null) {
     return measureMode ? "Choose any start cell" : "Ruler ready";
   }
@@ -287,7 +580,11 @@ function measurementStatus(
       ? `Start ${cellLabel(measurement.start)} · choose any end cell`
       : `Start ${cellLabel(measurement.start)} saved`;
   }
-  const distance = gridMeasurementDistanceFeet(scene, measurement);
+  const distance = boardCellDistanceFeet(
+    calibration,
+    boardCellFromGrid(calibration, measurement.start),
+    boardCellFromGrid(calibration, measurement.end),
+  );
   const resetHint = measureMode ? " · choose a cell to start again" : "";
   return `${cellLabel(measurement.start)} → ${cellLabel(measurement.end)} · ${distance} ft${resetHint}`;
 }
@@ -369,9 +666,9 @@ function LoadingView() {
     <main className="state-screen state-screen-loading">
       <div className="state-card" role="status" aria-live="polite">
         <InstrumentMark />
-        <p className="eyebrow">Solo Table / Encounter 01</p>
-        <h1>Synchronizing the Echo Vault</h1>
-        <p>Reading the public table projection and calibrating the grid.</p>
+        <p className="eyebrow">Standalone tabletop</p>
+        <h1>Joining the active table</h1>
+        <p>Reading your authorized table projection and calibrating the board.</p>
         <div className="signal-line" aria-hidden="true">
           <span />
         </div>
@@ -394,7 +691,7 @@ function ErrorView({
           !
         </span>
         <p className="eyebrow">Connection interrupted</p>
-        <h1>The vault is out of phase.</h1>
+        <h1>The table could not synchronize.</h1>
         <p>{message}</p>
         <button className="button button-primary" type="button" onClick={onRetry}>
           Retry connection
@@ -409,11 +706,19 @@ function InitiativePanel({
   selectedActorId,
   onSelect,
   versions,
+  canManage,
+  pending,
+  error,
+  onCombatControl,
 }: {
   projection: EncounterProjection;
   selectedActorId: string;
   onSelect: (actorId: string) => void;
   versions: VttSessionView["versions"];
+  canManage: boolean;
+  pending: boolean;
+  error: string | null;
+  onCombatControl: (payload: CombatControlPayload) => Promise<void>;
 }) {
   return (
     <aside className="panel initiative-panel" aria-labelledby="initiative-title">
@@ -457,6 +762,19 @@ function InitiativePanel({
         })}
       </ol>
 
+      <VttCombatTrackerPanel
+        key={[
+          projection.round_number,
+          projection.active_actor_id ?? "none",
+          projection.initiative_order.join("|"),
+        ].join(":")}
+        projection={projection}
+        canManage={canManage}
+        pending={pending}
+        error={error}
+        onControl={onCombatControl}
+      />
+
       <div className="round-meter" aria-label={`Round ${projection.round_number} of ${projection.max_rounds}`}>
         <span>
           Round {projection.round_number} / {projection.max_rounds}
@@ -481,9 +799,20 @@ function InitiativePanel({
   );
 }
 
-function TacticalMap({
+export function TacticalMap({
   scene,
+  mapMetadata,
+  mapUrl,
+  mapLoadError,
   projection,
+  tokens,
+  tokenStatus,
+  tokenError,
+  visibilityProjection,
+  visibilitySources,
+  visibilityStatus,
+  visibilityError,
+  showVisibilityMask,
   selectedActorId,
   selectableTargetIds,
   selectedTargetId,
@@ -499,6 +828,12 @@ function TacticalMap({
   templateAngleDegrees,
   pings,
   templates,
+  drawings,
+  journalDocuments,
+  onJournalDocumentSelect,
+  sharedCamera,
+  followSharedCamera,
+  drawingTool,
   annotations,
   selectedAnnotationId,
   annotationStatus,
@@ -511,6 +846,7 @@ function TacticalMap({
   onTokenSelect,
   onTargetSelect,
   onCellSelect,
+  onGridlessPointSelect,
   onMeasureToggle,
   onMeasureClear,
   onPingToggle,
@@ -519,13 +855,30 @@ function TacticalMap({
   onTemplateDimensionChange,
   onTemplateAngleChange,
   onTemplateCancelStart,
+  onDrawingToggle,
+  onDrawingSettingsChange,
+  onDrawingFinish,
+  onDrawingCancel,
+  onUpdateSelectedDrawing,
+  onUnlockSelectedDrawing,
   onAnnotationSelect,
   onRemoveSelected,
   onClearLocal,
   onAnnotationRetry,
 }: {
   scene: SquareGridScene;
+  mapMetadata: SceneMapMetadata;
+  mapUrl: string | null;
+  mapLoadError: string | null;
   projection: EncounterProjection;
+  tokens: TokenRecord[];
+  tokenStatus: TokenConnectionStatus;
+  tokenError: string | null;
+  visibilityProjection: VisibilityProjection | null;
+  visibilitySources: VisibilityProjectionSources;
+  visibilityStatus: VisibilityConnectionStatus;
+  visibilityError: string | null;
+  showVisibilityMask: boolean;
   selectedActorId: string;
   selectableTargetIds: Set<string>;
   selectedTargetId: string | null;
@@ -541,6 +894,12 @@ function TacticalMap({
   templateAngleDegrees: number;
   pings: PingAnnotation[];
   templates: AreaTemplateAnnotation[];
+  drawings: DrawingAnnotation[];
+  journalDocuments: JournalDocument[];
+  onJournalDocumentSelect: (documentId: string) => void;
+  sharedCamera: SharedCamera | null;
+  followSharedCamera: boolean;
+  drawingTool: DrawingToolPresentation;
   annotations: VttAnnotation[];
   selectedAnnotationId: string;
   annotationStatus: AnnotationConnectionStatus;
@@ -553,6 +912,7 @@ function TacticalMap({
   onTokenSelect: (actorId: string) => void;
   onTargetSelect: (actorId: string) => void;
   onCellSelect: (cell: GridCell) => void;
+  onGridlessPointSelect: (position: Position3) => void;
   onMeasureToggle: () => void;
   onMeasureClear: () => void;
   onPingToggle: () => void;
@@ -561,52 +921,251 @@ function TacticalMap({
   onTemplateDimensionChange: (value: number) => void;
   onTemplateAngleChange: (value: number) => void;
   onTemplateCancelStart: () => void;
+  onDrawingToggle: () => void;
+  onDrawingSettingsChange: (settings: Partial<DrawingToolSettings>) => void;
+  onDrawingFinish: () => void;
+  onDrawingCancel: () => void;
+  onUpdateSelectedDrawing: () => void;
+  onUnlockSelectedDrawing: () => void;
   onAnnotationSelect: (annotationId: string) => void;
   onRemoveSelected: () => void;
   onClearLocal: () => void;
   onAnnotationRetry: () => void;
 }) {
+  const [gridlessMeasurement, setGridlessMeasurement] =
+    useState<GridlessMeasurementState | null>(null);
+  const [gridlessCursor, setGridlessCursor] = useState<{
+    calibrationKey: string;
+    point: BoardPoint;
+  } | null>(null);
+  const mapAsset = mapMetadata.asset ?? null;
+  const calibration = presentedCalibration(mapMetadata);
+  const mapWidthPx = mapMetadata.width_px;
+  const mapHeightPx = mapMetadata.height_px;
+  const cameraZoom = followSharedCamera && sharedCamera?.enabled ? sharedCamera.zoom : null;
+  const cameraXPercent = cameraZoom && sharedCamera && sharedCamera.center_x_ft !== null
+    ? (calibration.origin_x_px + ((sharedCamera.center_x_ft - scene.origin_ft.x_ft) / calibration.distance_ft) * calibration.cell_extent_px) / mapWidthPx * 100
+    : null;
+  const cameraYPercent = cameraZoom && sharedCamera && sharedCamera.center_y_ft !== null
+    ? (calibration.origin_y_px + ((sharedCamera.center_y_ft - scene.origin_ft.y_ft) / calibration.distance_ft) * calibration.cell_extent_px) / mapHeightPx * 100
+    : null;
   const mapStyle = {
-    "--grid-columns": scene.columns,
-    "--grid-rows": scene.rows,
+    aspectRatio: `${mapWidthPx} / ${mapHeightPx}`,
+    backgroundImage: mapUrl ? `url(${JSON.stringify(mapUrl)})` : undefined,
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "100% 100%",
+    transform: cameraZoom && cameraXPercent !== null && cameraYPercent !== null
+      ? `translate(${50 - cameraXPercent * cameraZoom}%, ${50 - cameraYPercent * cameraZoom}%) scale(${cameraZoom})`
+      : undefined,
+    transformOrigin: cameraZoom ? "top left" : undefined,
   } as CSSProperties;
-  const cells = Array.from({ length: scene.columns * scene.rows });
-  const measurePrompt = measurementStatus(scene, measurement, measureMode);
+  let cells: GridCell[] = [];
+  let cellPresentationError: string | null = null;
+  try {
+    cells = presentedCells(mapMetadata);
+  } catch (error) {
+    cellPresentationError = errorMessage(error);
+  }
+  const squareTemplatesSupported = squareTemplatesAreSupported(scene, mapMetadata);
+  const calibrationKey = JSON.stringify(calibration);
+  const currentGridlessCursor = gridlessCursor?.calibrationKey === calibrationKey
+    ? gridlessCursor.point
+    : {
+        x_px: calibration.origin_x_px,
+        y_px: calibration.origin_y_px,
+      };
+  const currentGridlessMeasurement =
+    gridlessMeasurement?.calibrationKey === calibrationKey
+      ? gridlessMeasurement
+      : null;
+  const measurePrompt = calibration.topology === "gridless"
+    ? currentGridlessMeasurement?.end
+      ? `Gridless ruler · ${pixelDistanceFeet(
+          calibration,
+          currentGridlessMeasurement.start,
+          currentGridlessMeasurement.end,
+        ).toFixed(1)} ft${measureMode ? " · choose a point to start again" : ""}`
+      : currentGridlessMeasurement
+        ? "Gridless ruler · choose an end point"
+        : measureMode
+          ? "Gridless ruler · choose a start point"
+          : "Gridless calibrated scale · ruler ready"
+    : measurementStatus(calibration, measurement, measureMode);
   const renderedPings = pings.flatMap((ping) => {
     try {
-      return [{ ping, cell: feetToCell(scene, [ping.position.x_ft, ping.position.y_ft, ping.position.z_ft]) }];
+      const position: Position3 = [
+        ping.position.x_ft,
+        ping.position.y_ft,
+        ping.position.z_ft,
+      ];
+      return [{
+        ping,
+        cell: calibration.topology === "gridless"
+          ? null
+          : presentedFeetToCell(scene, calibration, position),
+        style: presentedFeetStyle(
+          scene,
+          calibration,
+          position,
+          mapWidthPx,
+          mapHeightPx,
+        ),
+      }];
     } catch {
       return [];
     }
   });
-  const renderedTemplates = templates.flatMap((template) => {
+  const renderedJournalPins = journalDocuments.flatMap((document) => {
+    const pin = document.map_pin;
+    if (pin === null || pin.scene_id !== scene.scene_id) return [];
+    try {
+      return [{
+        document,
+        style: presentedFeetStyle(
+          scene,
+          calibration,
+          [pin.position.x_ft, pin.position.y_ft, pin.position.z_ft],
+          mapWidthPx,
+          mapHeightPx,
+        ),
+      }];
+    } catch {
+      return [];
+    }
+  });
+  const renderedTemplates = squareTemplatesSupported ? templates.flatMap((template) => {
     try {
       return [{ template, geometry: projectAreaTemplateToGrid(scene, template) }];
     } catch {
       return [];
     }
-  });
+  }) : [];
+  const drawingOriginFeet = boardOriginFeet(scene, calibration);
   const selectedAnnotation = annotations.find(
     (annotation) => annotation.annotation_id === selectedAnnotationId,
   );
   const selectedCanManage = Boolean(
     selectedAnnotation && annotationCanManage(selectedAnnotation.author_id),
   );
-  const ownedAnnotationCount = annotations.filter(
-    (annotation) => annotation.author_id === currentParticipantId,
+  const selectedIsLocked = Boolean(
+    selectedAnnotation && isLockedDrawingAnnotation(selectedAnnotation),
+  );
+  const unlockedOwnedAnnotationCount = annotations.filter(
+    (annotation) =>
+      annotation.author_id === currentParticipantId &&
+      !isLockedDrawingAnnotation(annotation),
   ).length;
+  const authoritativeTokens = tokens.flatMap((token) => {
+    try {
+      const position: Position3 = [
+        token.pose.position_ft.x_ft,
+        token.pose.position_ft.y_ft,
+        token.pose.position_ft.z_ft,
+      ];
+      const cell = calibration.topology === "gridless"
+        ? null
+        : presentedFeetToCell(scene, calibration, position);
+      return [{
+        token,
+        actor: token.actor_id ? projection.actors[token.actor_id] : undefined,
+        cell,
+        style: presentedFeetStyle(
+          scene,
+          calibration,
+          position,
+          mapWidthPx,
+          mapHeightPx,
+        ),
+      }];
+    } catch {
+      return [];
+    }
+  });
+  const activateGridlessPoint = (point: BoardPoint) => {
+    if (measureMode) {
+      setGridlessMeasurement((current) =>
+        activateGridlessMeasurementPoint(current, calibrationKey, point),
+      );
+      return;
+    }
+    onGridlessPointSelect(
+      pixelToBoardFeet(
+        calibration,
+        point,
+        boardOriginFeet(scene, calibration),
+      ),
+    );
+  };
+  const handleGridlessBoardClick = (
+    event: ReactMouseEvent<HTMLDivElement>,
+  ) => {
+    if (
+      calibration.topology !== "gridless" ||
+      (!measureMode && !pingMode && !drawingTool.active) ||
+      (event.target instanceof Element && event.target.closest("button"))
+    ) {
+      return;
+    }
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (bounds.width <= 0 || bounds.height <= 0) return;
+    const point: BoardPoint = {
+      x_px: Math.min(
+        mapWidthPx,
+        Math.max(0, (event.clientX - bounds.left) / bounds.width * mapWidthPx),
+      ),
+      y_px: Math.min(
+        mapHeightPx,
+        Math.max(0, (event.clientY - bounds.top) / bounds.height * mapHeightPx),
+      ),
+    };
+    setGridlessCursor({ calibrationKey, point });
+    activateGridlessPoint(point);
+  };
+  const handleGridlessBoardKeyDown = (
+    event: ReactKeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (calibration.topology !== "gridless") return;
+    if (
+      event.key === "ArrowLeft" ||
+      event.key === "ArrowRight" ||
+      event.key === "ArrowUp" ||
+      event.key === "ArrowDown"
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      const point = moveGridlessCursor(
+        currentGridlessCursor,
+        event.key,
+        mapWidthPx,
+        mapHeightPx,
+        event.shiftKey ? 10 : 1,
+      );
+      setGridlessCursor({ calibrationKey, point });
+      return;
+    }
+    if (
+      (event.key === "Enter" || event.key === " ") &&
+      (measureMode || pingMode || drawingTool.active)
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      activateGridlessPoint(currentGridlessCursor);
+    }
+  };
 
   return (
     <section className="map-panel" aria-labelledby="map-title">
       <div className="map-toolbar">
         <div>
           <p className="eyebrow">Tactical surface</p>
-          <h2 id="map-title">{scene.name}</h2>
+          <h2 id="map-title">{mapMetadata?.name ?? scene.name}</h2>
         </div>
         <div className="map-toolbar-tools">
           <div className="map-readouts" aria-label="Map measurements">
-            <span>{scene.columns} × {scene.rows}</span>
-            <span>{scene.cell_size_ft} ft / cell</span>
+            <span>{mapWidthPx} × {mapHeightPx}px</span>
+            <span>{calibration.topology.replace("_", "-")}</span>
+            <span>{calibration.distance_ft} ft / step</span>
             <span>Z 0</span>
           </div>
           <div className="measure-controls" role="group" aria-label="Map tools">
@@ -625,8 +1184,15 @@ function TacticalMap({
             <button
               type="button"
               className="measure-clear"
-              disabled={measurement.start === null}
-              onClick={onMeasureClear}
+              disabled={
+                calibration.topology === "gridless"
+                  ? currentGridlessMeasurement === null
+                  : measurement.start === null
+              }
+              onClick={() => {
+                onMeasureClear();
+                setGridlessMeasurement(null);
+              }}
             >
               Clear measure
             </button>
@@ -649,12 +1215,25 @@ function TacticalMap({
               aria-pressed={templateMode}
               aria-keyshortcuts="T"
               aria-controls="echo-vault-grid template-controls"
-              disabled={!annotationCanMutate}
+              disabled={!annotationCanMutate || !squareTemplatesSupported}
               onClick={onTemplateToggle}
             >
               <span aria-hidden="true">◇</span>
               Template
               <kbd>T</kbd>
+            </button>
+            <button
+              type="button"
+              className={`drawing-toggle ${drawingTool.active ? "is-active" : ""}`}
+              aria-pressed={drawingTool.active}
+              aria-keyshortcuts="D"
+              aria-controls="echo-vault-grid drawing-controls"
+              disabled={!annotationCanMutate}
+              onClick={onDrawingToggle}
+            >
+              <span aria-hidden="true">✎</span>
+              Draw
+              <kbd>D</kbd>
             </button>
           </div>
           {templateMode ? (
@@ -710,13 +1289,228 @@ function TacticalMap({
               </small>
             </fieldset>
           ) : null}
+          {drawingTool.active ? (
+            <fieldset className="drawing-controls" id="drawing-controls">
+              <legend>Shared drawing</legend>
+              <label>
+                Type
+                <select
+                  value={drawingTool.kind}
+                  onChange={(event) =>
+                    onDrawingSettingsChange({ kind: event.target.value as DrawingKind })
+                  }
+                >
+                  <option value="freehand">Freehand path</option>
+                  <option value="rectangle">Rectangle</option>
+                  <option value="ellipse">Ellipse</option>
+                  <option value="arrow">Arrow</option>
+                  <option value="text">Text label</option>
+                </select>
+              </label>
+              <label>
+                Layer
+                <select
+                  value={drawingTool.layer}
+                  onChange={(event) =>
+                    onDrawingSettingsChange({
+                      layer: event.target.value as DrawingAnnotation["layer"],
+                    })
+                  }
+                >
+                  <option value="under_tokens">Under tokens</option>
+                  <option value="over_tokens">Over tokens</option>
+                </select>
+              </label>
+              <label>
+                Audience
+                <select
+                  value={drawingTool.audience}
+                  onChange={(event) =>
+                    onDrawingSettingsChange({
+                      audience: event.target.value as "all" | "self",
+                    })
+                  }
+                >
+                  <option value="all">Everyone</option>
+                  <option value="self">Only me</option>
+                </select>
+              </label>
+              <label>
+                Stroke
+                <input
+                  type="color"
+                  value={drawingTool.strokeColor}
+                  onChange={(event) =>
+                    onDrawingSettingsChange({ strokeColor: event.target.value })
+                  }
+                />
+              </label>
+              <label className="drawing-check">
+                <input
+                  type="checkbox"
+                  checked={drawingTool.fillEnabled}
+                  onChange={(event) =>
+                    onDrawingSettingsChange({ fillEnabled: event.target.checked })
+                  }
+                />
+                Fill
+              </label>
+              <label>
+                Fill color
+                <input
+                  type="color"
+                  value={drawingTool.fillColor}
+                  disabled={!drawingTool.fillEnabled}
+                  onChange={(event) =>
+                    onDrawingSettingsChange({ fillColor: event.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Opacity
+                <input
+                  type="number"
+                  min="0.05"
+                  max="1"
+                  step="0.05"
+                  value={drawingTool.opacity}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+                    if (Number.isFinite(value)) onDrawingSettingsChange({ opacity: value });
+                  }}
+                />
+              </label>
+              <label>
+                Width (ft)
+                <input
+                  type="number"
+                  min="0.1"
+                  max="1000"
+                  step="0.1"
+                  value={drawingTool.strokeWidthFt}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+                    if (Number.isFinite(value)) onDrawingSettingsChange({ strokeWidthFt: value });
+                  }}
+                />
+              </label>
+              <label>
+                Line
+                <select
+                  value={drawingTool.lineStyle}
+                  onChange={(event) =>
+                    onDrawingSettingsChange({
+                      lineStyle: event.target.value as "solid" | "dashed",
+                    })
+                  }
+                >
+                  <option value="solid">Solid</option>
+                  <option value="dashed">Dashed</option>
+                </select>
+              </label>
+              <label className="drawing-check">
+                <input
+                  type="checkbox"
+                  checked={drawingTool.locked}
+                  onChange={(event) =>
+                    onDrawingSettingsChange({ locked: event.target.checked })
+                  }
+                />
+                Lock after save
+              </label>
+              {drawingTool.kind === "text" ? (
+                <>
+                  <label className="drawing-text-control">
+                    Plain text
+                    <textarea
+                      maxLength={500}
+                      value={drawingTool.text}
+                      onChange={(event) =>
+                        onDrawingSettingsChange({ text: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Font (ft)
+                    <input
+                      type="number"
+                      min="0.1"
+                      max="1000"
+                      step="0.1"
+                      value={drawingTool.fontSizeFt}
+                      onChange={(event) => {
+                        const value = Number(event.target.value);
+                        if (Number.isFinite(value)) onDrawingSettingsChange({ fontSizeFt: value });
+                      }}
+                    />
+                  </label>
+                </>
+              ) : null}
+              {drawingTool.kind === "freehand" ? (
+                <button
+                  type="button"
+                  disabled={drawingTool.pointCount < 2}
+                  onClick={onDrawingFinish}
+                >
+                  Finish path ({drawingTool.pointCount})
+                </button>
+              ) : null}
+              {drawingTool.pointCount > 0 ? (
+                <button type="button" onClick={onDrawingCancel}>
+                  Cancel points
+                </button>
+              ) : null}
+              <small>
+                {drawingTool.kind === "text"
+                  ? "Choose one map position. Text is stored and rendered as inert plain text."
+                  : drawingTool.kind === "freehand"
+                    ? "Choose two or more map positions, then finish the path."
+                    : "Choose a start and end position."}
+              </small>
+            </fieldset>
+          ) : null}
           <output className="measure-output" aria-live="polite">
-            {templateMode
+            {drawingTool.active
+              ? `Drawing ${drawingTool.kind} · ${drawingTool.pointCount} point${drawingTool.pointCount === 1 ? "" : "s"} selected`
+              : templateMode
               ? templatePrompt(templateKind, templateStart)
               : pingMode
               ? "Ping mode · choose any map cell"
               : measurePrompt}
           </output>
+          {calibration.topology === "gridless" ? (
+            <p id="gridless-keyboard-instructions" className="board-tool-note" role="status" aria-live="polite">
+              Focus the map, move the free cursor with arrow keys (Shift moves 10 px),
+              then press Enter or Space to {measureMode ? "set the ruler point" : pingMode ? "place the ping" : drawingTool.active ? "add a drawing point" : "activate the selected map tool"}.
+              {` Cursor ${currentGridlessCursor.x_px.toFixed(1)}, ${currentGridlessCursor.y_px.toFixed(1)} px.`}
+            </p>
+          ) : null}
+          {mapLoadError ? (
+            <p className="annotation-error" role="alert">{mapLoadError}</p>
+          ) : null}
+          {cellPresentationError ? (
+            <p className="annotation-error" role="alert">
+              Board calibration cannot be presented: {cellPresentationError}
+            </p>
+          ) : null}
+          {!squareTemplatesSupported && calibration.topology !== "gridless" ? (
+            <p className="board-tool-note" role="status">
+              Shared area templates remain square-board tools; hex movement, tokens,
+              pings, and measurement use the calibrated axial lattice.
+            </p>
+          ) : null}
+          {tokenStatus !== "live" ? (
+            <p className={`token-board-state token-board-state-${tokenStatus}`} role="status">
+              {tokenError ??
+                (tokenStatus === "loading"
+                  ? "Loading authoritative token projection…"
+                  : tokenStatus === "connecting"
+                    ? "Connecting authoritative token projection…"
+                    : tokenStatus === "reconnecting"
+                      ? "Authoritative tokens reconnecting…"
+                      : "Authoritative token projection unavailable.")}
+            </p>
+          ) : null}
           <div className="annotation-sync-state" role="status" aria-live="polite">
             <span className={`annotation-sync-dot annotation-${annotationStatus}`} aria-hidden="true" />
             <span>
@@ -754,17 +1548,44 @@ function TacticalMap({
             </label>
             <button
               type="button"
-              disabled={!selectedCanManage || !annotationCanMutate}
+              disabled={
+                !selectedCanManage || selectedIsLocked || !annotationCanMutate
+              }
               onClick={onRemoveSelected}
             >
               Remove selected
             </button>
             <button
               type="button"
-              disabled={ownedAnnotationCount === 0 || !annotationCanMutate}
+              disabled={
+                !drawingTool.active ||
+                !selectedCanManage ||
+                !selectedAnnotation ||
+                !isDrawingAnnotation(selectedAnnotation) ||
+                selectedIsLocked ||
+                !annotationCanMutate
+              }
+              onClick={onUpdateSelectedDrawing}
+            >
+              Update selected drawing
+            </button>
+            {selectedIsLocked && selectedCanManage ? (
+              <button
+                type="button"
+                disabled={!annotationCanMutate}
+                onClick={onUnlockSelectedDrawing}
+              >
+                Unlock selected drawing
+              </button>
+            ) : null}
+            <button
+              type="button"
+              disabled={
+                unlockedOwnedAnnotationCount === 0 || !annotationCanMutate
+              }
               onClick={onClearLocal}
             >
-              Clear mine ({ownedAnnotationCount})
+              Clear mine ({unlockedOwnedAnnotationCount})
             </button>
           </div>
           {selectedAnnotation && !selectedCanManage ? (
@@ -774,6 +1595,9 @@ function TacticalMap({
           ) : null}
           {templatePlacementError ? (
             <p className="annotation-error" role="alert">{templatePlacementError}</p>
+          ) : null}
+          {drawingTool.error ? (
+            <p className="annotation-error" role="alert">{drawingTool.error}</p>
           ) : null}
           {annotationError ? (
             <p className="annotation-error" role="alert">{annotationError}</p>
@@ -793,15 +1617,38 @@ function TacticalMap({
         </div>
         <div
           id="echo-vault-grid"
-          className="square-grid"
+          className={`square-grid calibrated-board topology-${calibration.topology}`}
           style={mapStyle}
-          role="grid"
-          aria-label={`${scene.name}, ${scene.columns} by ${scene.rows} square grid`}
+          role={calibration.topology === "gridless" ? "application" : "grid"}
+          tabIndex={calibration.topology === "gridless" ? 0 : undefined}
+          aria-describedby={calibration.topology === "gridless" ? "gridless-keyboard-instructions" : undefined}
+          data-map-asset-id={mapAsset?.asset_id}
+          data-board-topology={calibration.topology}
+          onClick={handleGridlessBoardClick}
+          onKeyDown={handleGridlessBoardKeyDown}
+          aria-label={`${mapMetadata?.name ?? scene.name}, calibrated ${calibration.topology.replace("_", "-")} board${mapAsset ? `. ${mapAsset.alt_text}` : ""}`}
         >
-          {cells.map((_, index) => {
-            const column = index % scene.columns;
-            const row = Math.floor(index / scene.columns);
-            const cell = { column, row };
+          {calibration.topology === "gridless" ? (
+            <span
+              className="gridless-keyboard-cursor"
+              style={{
+                left: `${currentGridlessCursor.x_px / mapWidthPx * 100}%`,
+                top: `${currentGridlessCursor.y_px / mapHeightPx * 100}%`,
+              }}
+              aria-hidden="true"
+            />
+          ) : null}
+          <VttDrawingLayer
+            drawings={drawings}
+            layer="under_tokens"
+            calibration={calibration}
+            originFeet={drawingOriginFeet}
+            widthPx={mapWidthPx}
+            heightPx={mapHeightPx}
+            selectedAnnotationId={selectedAnnotationId}
+          />
+          {cells.map((cell) => {
+            const { column, row } = cell;
             const reachable = reachableCells.has(cellKey(cell));
             const selected =
               movementPlan?.destination.column === column &&
@@ -817,19 +1664,36 @@ function TacticalMap({
             const templateAction = templateMode
               ? `, ${templatePrompt(templateKind, templateStart).toLowerCase()}`
               : "";
+            const drawingAction = drawingTool.active
+              ? ", add shared drawing point"
+              : "";
             return (
               <button
                 type="button"
-                className={`grid-cell ${reachable ? "is-reachable" : ""} ${selected ? "is-destination" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""} ${templateMode ? "is-templating" : ""} ${isTemplateStart ? "is-template-start" : ""} ${measureStart ? "is-measure-start" : ""} ${measureEnd ? "is-measure-end" : ""}`}
+                className={`grid-cell ${reachable ? "is-reachable" : ""} ${selected ? "is-destination" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""} ${templateMode ? "is-templating" : ""} ${drawingTool.active ? "is-drawing" : ""} ${isTemplateStart ? "is-template-start" : ""} ${measureStart ? "is-measure-start" : ""} ${measureEnd ? "is-measure-end" : ""}`}
+                style={presentedCellStyle(
+                  calibration,
+                  cell,
+                  mapWidthPx,
+                  mapHeightPx,
+                )}
                 role="gridcell"
-                aria-label={`Cell ${cellLabel(cell)}${reachable ? ", reachable destination" : ", not a reachable destination"}${selected ? ", selected destination" : ""}${measureStart ? ", measure start" : ""}${measureEnd ? ", measure end" : ""}${isTemplateStart ? ", template start" : ""}${measureMode ? `, ${measureAction}` : ""}${pingAction}${templateAction}`}
+                aria-label={`Cell ${cellLabel(cell)}${reachable ? ", reachable destination" : ", not a reachable destination"}${selected ? ", selected destination" : ""}${measureStart ? ", measure start" : ""}${measureEnd ? ", measure end" : ""}${isTemplateStart ? ", template start" : ""}${measureMode ? `, ${measureAction}` : ""}${pingAction}${templateAction}${drawingAction}`}
                 aria-selected={selected}
-                disabled={!templateMode && !pingMode && !measureMode && !reachable}
+                disabled={!drawingTool.active && !templateMode && !pingMode && !measureMode && !reachable}
                 onClick={() => onCellSelect(cell)}
-                key={`${column}-${row}`}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter" && event.key !== " ") return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onCellSelect(cell);
+                }}
+                key={cellKey(cell)}
               >
                 <span className="grid-coordinate" aria-hidden="true">
-                  {row === scene.rows - 1 ? column + 1 : ""}
+                  {calibration.topology.startsWith("hex_")
+                    ? `${column},${row}`
+                    : cellLabel(cell)}
                 </span>
               </button>
             );
@@ -891,16 +1755,15 @@ function TacticalMap({
             </svg>
           ) : null}
 
-          {renderedPings.map(({ ping, cell }) => (
+          {renderedPings.map(({ ping, cell, style }) => (
             <span
               className="ping-marker"
               style={{
-                gridColumn: cell.column + 1,
-                gridRow: cell.row + 1,
+                ...style,
                 "--ping-duration": `${ping.duration_ms}ms`,
               } as CSSProperties}
               role="img"
-              aria-label={`Shared ping by ${ping.author_id} at cell ${cellLabel(cell)}`}
+              aria-label={`Shared ping by ${ping.author_id}${cell ? ` at cell ${cellLabel(cell)}` : " on the calibrated gridless board"}`}
               key={ping.annotation_id}
             >
               <i aria-hidden="true" />
@@ -909,78 +1772,172 @@ function TacticalMap({
             </span>
           ))}
 
-          {projection.initiative_order.map((actorId) => {
-            const actor = projection.actors[actorId];
-            const cell = feetToCell(scene, actor.position);
-            const active = actorId === projection.active_actor_id;
-            const selected = actorId === selectedActorId;
-            const targetable = selectableTargetIds.has(actorId);
-            const targeted = actorId === selectedTargetId;
-            return (
-              <button
-                key={actorId}
-                type="button"
-                className={`map-token team-${actor.team} ${active ? "is-active" : ""} ${selected ? "is-selected" : ""} ${targetable ? "is-targetable" : ""} ${targeted ? "is-targeted" : ""} ${actor.dead ? "is-defeated" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""} ${templateMode ? "is-templating" : ""}`}
-                style={{ gridColumn: cell.column + 1, gridRow: cell.row + 1 }}
-                onClick={() => {
-                  if (pingMode || measureMode || templateMode) {
-                    onCellSelect(cell);
-                    return;
-                  }
-                  onTokenSelect(actorId);
-                  if (targetable) onTargetSelect(actorId);
-                }}
-                aria-pressed={selected || targeted}
-                aria-label={`${actor.name}, ${actor.hp} of ${actor.max_hp} hit points${active ? ", active turn" : ""}${targetable ? ", server-selectable target" : ""}${measureMode ? `, ${measurement.start !== null && measurement.end === null ? "select measure end" : "select measure start"} at ${cellLabel(cell)}` : ""}${pingMode ? `, place shared ping at ${cellLabel(cell)}` : ""}${templateMode ? `, ${templatePrompt(templateKind, templateStart).toLowerCase()} at ${cellLabel(cell)}` : ""}`}
-              >
-                <span className="token-orbit" aria-hidden="true" />
-                <span className="token-face">{initials(actor.name)}</span>
-                <span className="token-hp" aria-hidden="true">
-                  <i style={{ width: `${Math.max(0, (actor.hp / actor.max_hp) * 100)}%` }} />
-                </span>
-                <span className="token-name">{actor.name.split(" ")[0]}</span>
-              </button>
-            );
-          })}
+          {renderedJournalPins.map(({ document, style }) => (
+            <button
+              type="button"
+              className="journal-map-pin"
+              style={{
+                ...style,
+                "--journal-pin-color": document.map_pin?.color,
+              } as CSSProperties}
+              onClick={() => onJournalDocumentSelect(document.document_id)}
+              aria-label={`Open handout ${document.title}`}
+              key={`journal-pin:${document.document_id}`}
+            >
+              <span aria-hidden="true">◆</span>
+            </button>
+          ))}
 
-          {measurement.start !== null && measurement.end !== null ? (
+          {authoritativeTokens.map(({ token, actor, cell, style }) => {
+                const actorId = token.actor_id;
+                const active = actorId !== null && actorId === projection.active_actor_id;
+                const selected = actorId !== null && actorId === selectedActorId;
+                const targetable = actorId !== null && selectableTargetIds.has(actorId);
+                const targeted = actorId !== null && actorId === selectedTargetId;
+                const team = actor?.team ?? "neutral";
+                const hpPercent = actor
+                  ? Math.max(0, (actor.hp / Math.max(actor.max_hp, 1)) * 100)
+                  : 0;
+                const conditionCopy = token.condition_labels.length
+                  ? `, ${token.condition_labels.join(", ")}`
+                  : "";
+                return (
+                  <button
+                    key={token.token_id}
+                    type="button"
+                    className={`map-token authoritative-token team-${team} nameplate-${token.nameplate} ${active ? "is-active" : ""} ${selected ? "is-selected" : ""} ${targetable ? "is-targetable" : ""} ${targeted ? "is-targeted" : ""} ${actor?.dead ? "is-defeated" : ""} ${token.locked ? "is-locked" : ""} ${measureMode ? "is-measuring" : ""} ${pingMode ? "is-pinging" : ""} ${templateMode ? "is-templating" : ""} ${drawingTool.active ? "is-drawing" : ""}`}
+                    style={{
+                      ...style,
+                      width: `${token.pose.width_ft / calibration.distance_ft * calibration.cell_extent_px / mapWidthPx * 100}%`,
+                      height: `${token.pose.height_ft / calibration.distance_ft * calibration.cell_extent_px / mapHeightPx * 100}%`,
+                      zIndex: 108 + token.pose.layer,
+                      "--token-rotation": `${token.pose.rotation_degrees}deg`,
+                      "--token-aura-cells": token.aura_radius_ft / calibration.distance_ft,
+                      "--token-aura-color": token.aura_color,
+                    } as CSSProperties}
+                    onClick={() => {
+                      if (pingMode || measureMode || templateMode || drawingTool.active) {
+                        if (cell) onCellSelect(cell);
+                        return;
+                      }
+                      if (actorId !== null) {
+                        onTokenSelect(actorId);
+                        if (targetable) onTargetSelect(actorId);
+                      }
+                    }}
+                    aria-pressed={selected || targeted}
+                    aria-label={`${token.name}${actor ? `, ${actor.hp} of ${actor.max_hp} hit points` : ""}${token.locked ? ", locked" : ""}${conditionCopy}${active ? ", active turn" : ""}${targetable ? ", server-selectable target" : ""}`}
+                  >
+                    {token.aura_radius_ft > 0 ? <span className="token-aura" aria-hidden="true" /> : null}
+                    <span className="token-orbit" aria-hidden="true" />
+                    <span className="token-face">{initials(token.name)}</span>
+                    {token.show_hp_bar && actor ? (
+                      <span className="token-hp" aria-hidden="true"><i style={{ width: `${hpPercent}%` }} /></span>
+                    ) : null}
+                    <span className="token-name">{token.name}</span>
+                    {token.locked ? <span className="token-lock" aria-hidden="true">◇</span> : null}
+                  </button>
+                );
+              })}
+
+          <VttDrawingLayer
+            drawings={drawings}
+            layer="over_tokens"
+            calibration={calibration}
+            originFeet={drawingOriginFeet}
+            widthPx={mapWidthPx}
+            heightPx={mapHeightPx}
+            selectedAnnotationId={selectedAnnotationId}
+          />
+
+          {calibration.topology === "gridless" && currentGridlessMeasurement?.end ? (
             <svg
               className="measurement-line"
-              viewBox={`0 0 ${scene.columns} ${scene.rows}`}
+              viewBox={`0 0 ${mapWidthPx} ${mapHeightPx}`}
               preserveAspectRatio="none"
               aria-hidden="true"
             >
               <line
-                x1={measurement.start.column + 0.5}
-                y1={measurement.start.row + 0.5}
-                x2={measurement.end.column + 0.5}
-                y2={measurement.end.row + 0.5}
+                x1={currentGridlessMeasurement.start.x_px}
+                y1={currentGridlessMeasurement.start.y_px}
+                x2={currentGridlessMeasurement.end.x_px}
+                y2={currentGridlessMeasurement.end.y_px}
+              />
+            </svg>
+          ) : measurement.start !== null && measurement.end !== null ? (
+            <svg
+              className="measurement-line"
+              viewBox={`0 0 ${mapWidthPx} ${mapHeightPx}`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <line
+                x1={boardCellToPixel(calibration, boardCellFromGrid(calibration, measurement.start)).x_px}
+                y1={boardCellToPixel(calibration, boardCellFromGrid(calibration, measurement.start)).y_px}
+                x2={boardCellToPixel(calibration, boardCellFromGrid(calibration, measurement.end)).x_px}
+                y2={boardCellToPixel(calibration, boardCellFromGrid(calibration, measurement.end)).y_px}
               />
             </svg>
           ) : null}
-          {measurement.start !== null ? (
+          {calibration.topology === "gridless" && currentGridlessMeasurement ? (
             <span
               className="measure-marker measure-marker-start"
               style={{
-                gridColumn: measurement.start.column + 1,
-                gridRow: measurement.start.row + 1,
+                left: `${currentGridlessMeasurement.start.x_px / mapWidthPx * 100}%`,
+                top: `${currentGridlessMeasurement.start.y_px / mapHeightPx * 100}%`,
               }}
               aria-hidden="true"
             >
               S
             </span>
+          ) : measurement.start !== null ? (
+            <span
+              className="measure-marker measure-marker-start"
+              style={presentedCellStyle(
+                calibration,
+                measurement.start,
+                mapWidthPx,
+                mapHeightPx,
+                false,
+              )}
+              aria-hidden="true"
+            >
+              S
+            </span>
           ) : null}
-          {measurement.end !== null ? (
+          {calibration.topology === "gridless" && currentGridlessMeasurement?.end ? (
             <span
               className="measure-marker measure-marker-end"
               style={{
-                gridColumn: measurement.end.column + 1,
-                gridRow: measurement.end.row + 1,
+                left: `${currentGridlessMeasurement.end.x_px / mapWidthPx * 100}%`,
+                top: `${currentGridlessMeasurement.end.y_px / mapHeightPx * 100}%`,
               }}
               aria-hidden="true"
             >
               E
             </span>
+          ) : measurement.end !== null ? (
+            <span
+              className="measure-marker measure-marker-end"
+              style={presentedCellStyle(
+                calibration,
+                measurement.end,
+                mapWidthPx,
+                mapHeightPx,
+                false,
+              )}
+              aria-hidden="true"
+            >
+              E
+            </span>
+          ) : null}
+          {showVisibilityMask ? (
+            <VttVisibilityMask
+              projection={visibilityProjection}
+              sources={visibilitySources}
+              status={visibilityStatus}
+              error={visibilityError}
+            />
           ) : null}
         </div>
 
@@ -998,7 +1955,9 @@ function TacticalMap({
         <span><i className="legend-dot legend-enemy" /> Hostile</span>
         <span><i className="legend-ring" /> Active</span>
         <p>
-          {templateMode
+          {drawingTool.active
+            ? `Drawing mode · ${titleCase(drawingTool.kind)} · ${drawingTool.layer.replace("_", " ")}`
+            : templateMode
             ? `Template mode · ${titleCase(templateKind)} · persisted shared area`
             : pingMode
             ? "Ping mode · shared server annotation"
@@ -1378,8 +2337,12 @@ function EventLog({ events }: { events: LoggedEvent[] }) {
             <p>Start the encounter to record its first public rule event.</p>
           </div>
         ) : (
-          events.map(({ id, source, event }, index) => (
-            <article className={`event-entry event-${source}`} key={id}>
+          events.map(({ id, source, event }, index) => {
+            const rollCard = rollCardFromEvent(event);
+            if (rollCard !== null) {
+              return <VttRollCardArticle key={id} card={rollCard} source={source} />;
+            }
+            return <article className={`event-entry event-${source}`} key={id}>
               <span className="event-sequence">
                 {"sequence" in event ? String(event.sequence).padStart(3, "0") : `P${String(index + 1).padStart(2, "0")}`}
               </span>
@@ -1390,8 +2353,8 @@ function EventLog({ events }: { events: LoggedEvent[] }) {
                 </div>
                 <p>{eventSummary(event)}</p>
               </div>
-            </article>
-          ))
+            </article>;
+          })
         )}
         <div ref={endRef} />
       </div>
@@ -1408,6 +2371,7 @@ export function EchoVaultTable() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [commandError, setCommandError] = useState<string | null>(null);
+  const [combatControlError, setCombatControlError] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingOperation>(null);
   const [selectedActorId, setSelectedActorId] = useState("");
   const [selectedActionName, setSelectedActionName] = useState("");
@@ -1424,7 +2388,27 @@ export function EchoVaultTable() {
   const [templatePlacementError, setTemplatePlacementError] = useState<
     string | null
   >(null);
+  const [drawingMode, setDrawingMode] = useState(false);
+  const [drawingSettings, setDrawingSettings] = useState<DrawingToolSettings>({
+    kind: "freehand",
+    layer: "under_tokens",
+    audience: "all",
+    strokeColor: "#5eead4",
+    fillColor: "#1d4ed8",
+    fillEnabled: false,
+    opacity: 0.8,
+    strokeWidthFt: 0.5,
+    lineStyle: "solid",
+    locked: false,
+    text: "Map note",
+    fontSizeFt: 3,
+  });
+  const [drawingPoints, setDrawingPoints] = useState<AnnotationPoint[]>([]);
+  const [drawingPlacementError, setDrawingPlacementError] = useState<
+    string | null
+  >(null);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState("");
+  const [selectedJournalDocumentId, setSelectedJournalDocumentId] = useState("");
   const [measurement, setMeasurement] = useState<GridMeasurement>(
     EMPTY_GRID_MEASUREMENT,
   );
@@ -1436,14 +2420,91 @@ export function EchoVaultTable() {
   const latestRevisionRef = useRef(0);
   const sessionIdRef = useRef<string | null>(null);
   const eventCursorRef = useRef(0);
-  const sharedAnnotations = useVttAnnotations({
+  const sharedScenes = useVttScenes({
     sessionId: view?.session_id ?? null,
-    sceneId: view?.scene?.scene_id ?? null,
+    tableId: tableIdentity?.table_id ?? null,
     bearerToken,
     participant: tableIdentity?.current_participant ?? null,
   });
+  const boardPresentation = selectActiveBoardPresentation(
+    view,
+    loadError,
+    sharedScenes.view,
+  );
+  const activeBoard = boardPresentation.board;
+  const sharedAnnotations = useVttAnnotations({
+    sessionId: view?.session_id ?? null,
+    tableId: tableIdentity?.table_id ?? null,
+    sceneId: activeBoard?.scene.scene_id ?? null,
+    bearerToken,
+    participant: tableIdentity?.current_participant ?? null,
+  });
+  const sharedMapAssets = useVttMapAssets({
+    sessionId: view?.session_id ?? null,
+    tableId: tableIdentity?.table_id ?? null,
+    bearerToken,
+    participant: tableIdentity?.current_participant ?? null,
+  });
+  const sharedTokens = useVttTokens({
+    sessionId: view?.session_id ?? null,
+    tableId: tableIdentity?.table_id ?? null,
+    sceneId: activeBoard?.scene.scene_id ?? null,
+    bearerToken,
+    participant: tableIdentity?.current_participant ?? null,
+  });
+  const sharedJournal = useVttJournal({
+    sessionId: view?.session_id ?? null,
+    tableId: tableIdentity?.table_id ?? null,
+    bearerToken,
+    participant: tableIdentity?.current_participant ?? null,
+  });
+  const sharedPresentation = useVttPresentation({
+    sessionId: view?.session_id ?? null,
+    tableId: tableIdentity?.table_id ?? null,
+    bearerToken,
+    participant: tableIdentity?.current_participant ?? null,
+    activeSceneId: activeBoard?.scene.scene_id ?? null,
+  });
+  const sharedVisibility = useVttVisibility({
+    sessionId: view?.session_id ?? null,
+    tableId: tableIdentity?.table_id ?? null,
+    sceneId: activeBoard?.scene.scene_id ?? null,
+    sceneRevision: activeBoard?.scene_revision ?? null,
+    tokenRevision: sharedTokens.view?.revision ?? null,
+    encounterRevision: view?.revision ?? null,
+    bearerToken,
+    participant: tableIdentity?.current_participant ?? null,
+  });
+  const activeSceneMetadata = view?.active_board?.map_metadata ?? null;
+  const activeMapAsset = useVttMapAssetUrl(
+    activeSceneMetadata?.asset ?? null,
+    bearerToken,
+  );
   const activePingMode = pingMode && sharedAnnotations.available;
-  const activeTemplateMode = templateMode && sharedAnnotations.available;
+  const activeDrawingMode = drawingMode && sharedAnnotations.available;
+  const gmVisibilityPreview = tableIdentity?.current_participant.role === "gm"
+    ? sharedVisibility.preview
+    : null;
+  const tacticalVisibility = gmVisibilityPreview ?? sharedVisibility.projection;
+  const tacticalTokens = gmVisibilityPreview
+    ? gmVisibilityPreview.tokens
+    : tableIdentity?.current_participant.role === "gm"
+      ? sharedTokens.view?.tokens ?? []
+      : sharedVisibility.projection?.tokens ?? [];
+  const showVisibilityMask = Boolean(
+    tableIdentity &&
+      (tableIdentity.current_participant.role !== "gm" ||
+        sharedVisibility.previewParticipantId !== null),
+  );
+  const activeTemplateMode = Boolean(
+    templateMode &&
+      sharedAnnotations.available &&
+      view?.active_board &&
+      squareTemplatesAreSupported(
+        view.active_board.scene,
+        view.active_board.map_metadata,
+      ),
+  );
   const resolvedSelectedAnnotationId =
     sharedAnnotations.annotations.find(
       (annotation) => annotation.annotation_id === selectedAnnotationId,
@@ -1454,6 +2515,9 @@ export function EchoVaultTable() {
     )?.annotation_id ??
     sharedAnnotations.annotations[0]?.annotation_id ??
     "";
+  const resolvedSelectedAnnotation = sharedAnnotations.annotations.find(
+    (annotation) => annotation.annotation_id === resolvedSelectedAnnotationId,
+  );
 
   const toggleMeasureMode = useCallback(() => {
     setMeasureMode((current) => !current);
@@ -1461,6 +2525,9 @@ export function EchoVaultTable() {
     setTemplateMode(false);
     setTemplateStart(null);
     setTemplatePlacementError(null);
+    setDrawingMode(false);
+    setDrawingPoints([]);
+    setDrawingPlacementError(null);
   }, []);
 
   const togglePingMode = useCallback(() => {
@@ -1470,6 +2537,9 @@ export function EchoVaultTable() {
     setTemplateMode(false);
     setTemplateStart(null);
     setTemplatePlacementError(null);
+    setDrawingMode(false);
+    setDrawingPoints([]);
+    setDrawingPlacementError(null);
   }, [sharedAnnotations.canPlace]);
 
   const toggleTemplateMode = useCallback(() => {
@@ -1479,7 +2549,62 @@ export function EchoVaultTable() {
     setPingMode(false);
     setTemplateStart(null);
     setTemplatePlacementError(null);
+    setDrawingMode(false);
+    setDrawingPoints([]);
+    setDrawingPlacementError(null);
   }, [sharedAnnotations.canMutate]);
+
+  const toggleDrawingMode = useCallback(() => {
+    if (!sharedAnnotations.canMutate) return;
+    const transition = advanceDrawingDraft(
+      {
+        active: drawingMode,
+        kind: drawingSettings.kind,
+        points: drawingPoints,
+      },
+      { type: "shortcut", key: "D" },
+    );
+    if (
+      transition.state.active &&
+      resolvedSelectedAnnotation &&
+      isDrawingAnnotation(resolvedSelectedAnnotation)
+    ) {
+      setDrawingSettings(settingsFromDrawing(resolvedSelectedAnnotation));
+    }
+    setDrawingMode(transition.state.active);
+    setMeasureMode(false);
+    setPingMode(false);
+    setTemplateMode(false);
+    setTemplateStart(null);
+    setTemplatePlacementError(null);
+    setDrawingPoints([]);
+    setDrawingPlacementError(null);
+  }, [
+    drawingMode,
+    drawingPoints,
+    drawingSettings.kind,
+    resolvedSelectedAnnotation,
+    sharedAnnotations.canMutate,
+  ]);
+
+  const changeDrawingSettings = useCallback(
+    (changes: Partial<DrawingToolSettings>) => {
+      setDrawingSettings((current) => ({ ...current, ...changes }));
+      if (changes.kind !== undefined) {
+        const transition = advanceDrawingDraft(
+          {
+            active: drawingMode,
+            kind: drawingSettings.kind,
+            points: drawingPoints,
+          },
+          { type: "select_kind", kind: changes.kind },
+        );
+        setDrawingPoints(transition.state.points);
+      }
+      setDrawingPlacementError(null);
+    },
+    [drawingMode, drawingPoints, drawingSettings.kind],
+  );
 
   const selectTemplateKind = useCallback((kind: AreaTemplateKind) => {
     setTemplateKind(kind);
@@ -1541,13 +2666,33 @@ export function EchoVaultTable() {
       toggleTemplateMode();
     };
 
+    const handleDrawingShortcut = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.repeat ||
+        event.key.toLowerCase() !== "d" ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        !sharedAnnotations.canMutate ||
+        isInteractiveControl(event.target) ||
+        isInteractiveControl(document.activeElement)
+      ) {
+        return;
+      }
+      event.preventDefault();
+      toggleDrawingMode();
+    };
+
     window.addEventListener("keydown", handleMeasureShortcut);
     window.addEventListener("keydown", handlePingShortcut);
     window.addEventListener("keydown", handleTemplateShortcut);
+    window.addEventListener("keydown", handleDrawingShortcut);
     return () => {
       window.removeEventListener("keydown", handleMeasureShortcut);
       window.removeEventListener("keydown", handlePingShortcut);
       window.removeEventListener("keydown", handleTemplateShortcut);
+      window.removeEventListener("keydown", handleDrawingShortcut);
     };
   }, [
     sharedAnnotations.canMutate,
@@ -1555,6 +2700,7 @@ export function EchoVaultTable() {
     toggleMeasureMode,
     togglePingMode,
     toggleTemplateMode,
+    toggleDrawingMode,
   ]);
 
   const adoptView = useCallback((nextView: VttSessionView) => {
@@ -1573,9 +2719,10 @@ export function EchoVaultTable() {
     setSelectedActionName(selection.actionName);
     setSelectedTargetId(selection.targetId);
     setSelectedDestination(
-      nextView.scene && actor
-        ? feetToCell(
-            nextView.scene,
+      nextView.active_board && actor
+        ? presentedFeetToCell(
+            nextView.active_board.scene,
+            presentedCalibration(nextView.active_board.map_metadata),
             choices?.movement.origin ?? actor.position,
           )
         : null,
@@ -1612,6 +2759,44 @@ export function EchoVaultTable() {
       if (showLoading) setLoading(false);
     }
   }, [adoptView, bearerToken]);
+
+  useEffect(() => {
+    const library = sharedScenes.view;
+    const board = view?.active_board;
+    if (
+      library === null ||
+      library.active_scene_id === null ||
+      board === null ||
+      board === undefined ||
+      (library.revision === board.scene_revision &&
+        library.active_scene_id === board.scene.scene_id)
+    ) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void refresh().catch(() => undefined);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh, sharedScenes.view, view?.active_board]);
+
+  const activeBoardIdentity = view?.active_board
+    ? `${view.active_board.scene.scene_id}:${view.active_board.scene_revision}`
+    : "unavailable";
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSelectedDestination(null);
+      setMeasurement({ ...EMPTY_GRID_MEASUREMENT });
+      setMeasureMode(false);
+      setPingMode(false);
+      setTemplateMode(false);
+      setTemplateStart(null);
+      setTemplatePlacementError(null);
+      setDrawingMode(false);
+      setDrawingPoints([]);
+      setDrawingPlacementError(null);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [activeBoardIdentity]);
 
   useEffect(() => {
     let active = true;
@@ -1719,7 +2904,7 @@ export function EchoVaultTable() {
   }, [bearerToken, refresh, tableIdentity, view]);
 
   const projection = view?.projection;
-  const scene = view?.scene ?? null;
+  const scene = activeBoard?.scene ?? null;
   const activeActor =
     projection?.active_actor_id
       ? projection.actors[projection.active_actor_id]
@@ -1737,11 +2922,24 @@ export function EchoVaultTable() {
     selectedChoice,
     selectedTargetId,
   );
-  const movementPlan = useMemo(() => {
-    if (!scene || !choices || !selectedDestination) return null;
+  const boardCalibration = activeBoard
+    ? presentedCalibration(activeBoard.map_metadata)
+    : null;
+  const movementPlan = (() => {
+    if (!scene || !boardCalibration || !choices) return null;
+    if (boardCalibration.topology === "gridless") {
+      return {
+        destination: { column: 0, row: 0 },
+        distanceFt: 0,
+        end: [...choices.movement.origin] as Position3,
+        path: [],
+      };
+    }
+    if (!selectedDestination) return null;
     try {
-      return planGridMovement({
+      return planPresentedMovement({
         scene,
+        calibration: boardCalibration,
         start: choices.movement.origin,
         destination: selectedDestination,
         movementRemaining: choices.movement.remaining_ft,
@@ -1749,44 +2947,54 @@ export function EchoVaultTable() {
     } catch {
       return null;
     }
-  }, [choices, scene, selectedDestination]);
-  const reachableCells = useMemo(() => {
+  })();
+  const reachableCells = (() => {
     const reachable = new Set<string>();
     if (
       !scene ||
+      !activeBoard ||
+      !boardCalibration ||
+      boardCalibration.topology === "gridless" ||
       !activeActor ||
       !choices ||
       projection?.phase !== "awaiting_declaration"
     ) {
       return reachable;
     }
-    const occupied = new Set(
-      Object.values(projection.actors)
-        .filter(
-          (actor) =>
-            actor.actor_id !== activeActor.actor_id && !actor.dead,
-        )
-        .map((actor) => cellKey(feetToCell(scene, actor.position))),
-    );
-    for (let row = 0; row < scene.rows; row += 1) {
-      for (let column = 0; column < scene.columns; column += 1) {
-        const destination = { column, row };
-        if (occupied.has(cellKey(destination))) continue;
-        try {
-          planGridMovement({
-            scene,
-            start: choices.movement.origin,
-            destination,
-            movementRemaining: choices.movement.remaining_ft,
-          });
-          reachable.add(cellKey(destination));
-        } catch {
-          // The authoritative preview remains the final legality check.
-        }
+    const occupied = new Set<string>();
+    for (const actor of Object.values(projection.actors)) {
+      if (actor.actor_id === activeActor.actor_id || actor.dead) continue;
+      try {
+        occupied.add(
+          cellKey(presentedFeetToCell(scene, boardCalibration, actor.position)),
+        );
+      } catch {
+        // An off-presentation actor cannot occupy a presented destination.
+      }
+    }
+    let candidates: GridCell[] = [];
+    try {
+      candidates = presentedCells(activeBoard.map_metadata);
+    } catch {
+      return reachable;
+    }
+    for (const destination of candidates) {
+      if (occupied.has(cellKey(destination))) continue;
+      try {
+        planPresentedMovement({
+          scene,
+          calibration: boardCalibration,
+          start: choices.movement.origin,
+          destination,
+          movementRemaining: choices.movement.remaining_ft,
+        });
+        reachable.add(cellKey(destination));
+      } catch {
+        // The authoritative preview remains the final legality check.
       }
     }
     return reachable;
-  }, [activeActor, choices, projection, scene]);
+  })();
   const fingerprint = view && activeActor && choices
     ? selectionFingerprint(
         view.revision,
@@ -1843,7 +3051,169 @@ export function EchoVaultTable() {
     setCommandError(null);
   };
 
+  const drawingAudience = (): string[] =>
+    drawingSettings.audience === "all"
+      ? ["all"]
+      : tableIdentity
+        ? [`participant:${tableIdentity.current_participant.participant_id}`]
+        : [];
+
+  const persistNewDrawing = async (points: AnnotationPoint[]) => {
+    if (!activeBoard || !tableIdentity) {
+      throw new Error("The active drawing board is unavailable.");
+    }
+    const annotation = buildDrawingAnnotation({
+      sceneId: activeBoard.scene.scene_id,
+      authorId: tableIdentity.current_participant.participant_id,
+      audience: drawingAudience(),
+      kind: drawingSettings.kind,
+      layer: drawingSettings.layer,
+      locked: drawingSettings.locked,
+      style: {
+        stroke_color: drawingSettings.strokeColor,
+        fill_color: drawingSettings.fillEnabled ? drawingSettings.fillColor : null,
+        opacity: drawingSettings.opacity,
+        stroke_width_ft: drawingSettings.strokeWidthFt,
+        line_style: drawingSettings.lineStyle,
+      },
+      points,
+      text: drawingSettings.text,
+      fontSizeFt: drawingSettings.fontSizeFt,
+      backgroundColor: drawingSettings.fillEnabled
+        ? drawingSettings.fillColor
+        : null,
+      headSizeFt: Math.min(
+        1_000,
+        Math.max(0.1, drawingSettings.strokeWidthFt * 2),
+      ),
+    });
+    await sharedAnnotations.placeAnnotation(annotation);
+    setDrawingPoints([]);
+    setDrawingPlacementError(null);
+  };
+
+  const handleDrawingPointSelect = (position: Position3) => {
+    if (!activeDrawingMode || !sharedAnnotations.canMutate) return;
+    const point: AnnotationPoint = {
+      x_ft: position[0],
+      y_ft: position[1],
+      z_ft: position[2],
+    };
+    const transition = advanceDrawingDraft(
+      {
+        active: activeDrawingMode,
+        kind: drawingSettings.kind,
+        points: drawingPoints,
+      },
+      { type: "keyboard_point", key: "Enter", point },
+    );
+    if (transition.error) {
+      setDrawingPlacementError(transition.error);
+      return;
+    }
+    setDrawingPoints(transition.state.points);
+    setDrawingPlacementError(null);
+    if (transition.completed) {
+      void persistNewDrawing(transition.completed.points).catch((error) =>
+        setDrawingPlacementError(errorMessage(error)),
+      );
+    }
+  };
+
+  const finishFreehandDrawing = () => {
+    const transition = advanceDrawingDraft(
+      {
+        active: activeDrawingMode,
+        kind: drawingSettings.kind,
+        points: drawingPoints,
+      },
+      { type: "finish" },
+    );
+    if (transition.error || transition.completed === null) {
+      setDrawingPlacementError(transition.error);
+      return;
+    }
+    setDrawingPoints(transition.state.points);
+    void persistNewDrawing(transition.completed.points).catch((error) =>
+      setDrawingPlacementError(errorMessage(error)),
+    );
+  };
+
+  const updateSelectedDrawing = () => {
+    if (
+      !resolvedSelectedAnnotation ||
+      !isDrawingAnnotation(resolvedSelectedAnnotation) ||
+      isLockedDrawingAnnotation(resolvedSelectedAnnotation) ||
+      !sharedAnnotations.canManageAnnotation(resolvedSelectedAnnotation.author_id)
+    ) {
+      return;
+    }
+    const style = {
+      stroke_color: drawingSettings.strokeColor,
+      fill_color: drawingSettings.fillEnabled ? drawingSettings.fillColor : null,
+      opacity: drawingSettings.opacity,
+      stroke_width_ft: drawingSettings.strokeWidthFt,
+      line_style: drawingSettings.lineStyle,
+    } as const;
+    const common = {
+      ...resolvedSelectedAnnotation,
+      audience: drawingAudience(),
+      layer: drawingSettings.layer,
+      locked: drawingSettings.locked,
+      style,
+    };
+    const updated: DrawingAnnotation =
+      resolvedSelectedAnnotation.annotation_type === "text_drawing"
+        ? {
+            ...common,
+            annotation_type: "text_drawing",
+            anchor: resolvedSelectedAnnotation.anchor,
+            text: drawingSettings.text,
+            font_size_ft: drawingSettings.fontSizeFt,
+            background_color: drawingSettings.fillEnabled
+              ? drawingSettings.fillColor
+              : null,
+          }
+        : common;
+    void sharedAnnotations
+      .placeAnnotation(updated)
+      .catch((error) => setDrawingPlacementError(errorMessage(error)));
+  };
+
+  const unlockSelectedDrawing = () => {
+    if (
+      !resolvedSelectedAnnotation ||
+      !isLockedDrawingAnnotation(resolvedSelectedAnnotation) ||
+      !sharedAnnotations.canManageAnnotation(resolvedSelectedAnnotation.author_id)
+    ) {
+      return;
+    }
+    void sharedAnnotations
+      .unlockDrawing(resolvedSelectedAnnotation.annotation_id)
+      .catch((error) => setDrawingPlacementError(errorMessage(error)));
+  };
+
+  const selectManagedAnnotation = (annotationId: string) => {
+    setSelectedAnnotationId(annotationId);
+    const annotation = sharedAnnotations.annotations.find(
+      (candidate) => candidate.annotation_id === annotationId,
+    );
+    if (annotation && isDrawingAnnotation(annotation)) {
+      setDrawingSettings(settingsFromDrawing(annotation));
+      setDrawingPoints([]);
+      setDrawingPlacementError(null);
+    }
+  };
+
   const handleMapCellSelect = (cell: GridCell) => {
+    if (activeDrawingMode) {
+      if (scene && boardCalibration) {
+        handleDrawingPointSelect(
+          presentedCellToFeet(scene, boardCalibration, cell),
+        );
+      }
+      return;
+    }
     if (activeTemplateMode) {
       if (!scene || !sharedAnnotations.canMutate) return;
       try {
@@ -1903,9 +3273,9 @@ export function EchoVaultTable() {
       return;
     }
     if (activePingMode) {
-      if (scene && sharedAnnotations.canPlace) {
+      if (scene && boardCalibration && sharedAnnotations.canPlace) {
         void sharedAnnotations
-          .placePing(cellToFeet(scene, cell))
+          .placePing(presentedCellToFeet(scene, boardCalibration, cell))
           .catch(() => undefined);
       }
       return;
@@ -1915,6 +3285,15 @@ export function EchoVaultTable() {
       return;
     }
     handleMovementCellSelect(cell);
+  };
+
+  const handleGridlessPointSelect = (position: Position3) => {
+    if (activeDrawingMode) {
+      handleDrawingPointSelect(position);
+      return;
+    }
+    if (!activePingMode || !sharedAnnotations.canPlace) return;
+    void sharedAnnotations.placePing(position).catch(() => undefined);
   };
 
   const handleStart = async () => {
@@ -1934,6 +3313,33 @@ export function EchoVaultTable() {
       await refresh();
     } catch (error) {
       setCommandError(errorMessage(error));
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const handleCombatControl = async (payload: CombatControlPayload) => {
+    if (!view || tableIdentity?.current_participant.role !== "gm") return;
+    setPending("combat");
+    setCombatControlError(null);
+    try {
+      const response = await postCommand(
+        buildCombatControlCommand({
+          sessionId: view.session_id,
+          expectedRevision: view.revision,
+          payload,
+        }),
+        undefined,
+        bearerToken,
+      );
+      appendEvents(response);
+      setPreview(null);
+      await refresh();
+    } catch (error) {
+      setCombatControlError(errorMessage(error));
+      if (error instanceof VttApiError && error.code === "stale_revision") {
+        await refresh().catch(() => undefined);
+      }
     } finally {
       setPending(null);
     }
@@ -2067,87 +3473,48 @@ export function EchoVaultTable() {
       />
     );
   }
-  if (!view.scene) {
-    return (
-      <ErrorView
-        message="The service is online, but no square-grid scene is attached to this session."
-        onRetry={() => void refresh(true).catch(() => undefined)}
-      />
-    );
-  }
-
   const selectedActor =
     view.projection.actors[selectedActorId] ??
     Object.values(view.projection.actors)[0];
+  const visibleSelectedActorId = selectedActor?.actor_id ?? "";
 
-  return (
-    <div className="table-app">
-      <a className="skip-link" href="#tactical-map">Skip to tactical map</a>
-      <header className="topbar">
-        <div className="brand-lockup">
-          <InstrumentMark />
-          <div>
-            <p>Solo Table / Encounter 01</p>
-            <h1>Echo Vault</h1>
-          </div>
-        </div>
-
-        <div className="session-strip" aria-label="Session status">
-          <div>
-            <span
-              className={`signal-dot stream-${streamStatus}`}
-              aria-hidden="true"
-            />
-            <span>
-              {streamStatus === "live"
-                ? "Events live"
-                : streamStatus === "invalid"
-                  ? "Stream invalid"
-                  : streamStatus === "reconnecting"
-                    ? "Reconnecting"
-                    : "Connecting"}
-            </span>
-          </div>
-          <i aria-hidden="true" />
-          <div><span>Revision</span><strong>{view.revision}</strong></div>
-          <i aria-hidden="true" />
-          <div><span>Status</span><strong>{phaseLabel(view.projection.phase)}</strong></div>
-          <i aria-hidden="true" />
-          <div>
-            <span>{titleCase(tableIdentity.current_participant.role)}</span>
-            <strong>{tableIdentity.current_participant.display_name}</strong>
-          </div>
-        </div>
-
-        <div className="topbar-round">
-          <span>Round</span>
-          <strong>{String(view.projection.round_number).padStart(2, "0")}</strong>
-          <small>/ {String(view.projection.max_rounds).padStart(2, "0")}</small>
-        </div>
-      </header>
-
-      {loadError ? (
-        <div className="stale-banner" role="alert">
-          <span>{loadError}</span>
-          <button type="button" onClick={() => void refresh().catch(() => undefined)}>
-            Retry refresh
-          </button>
-        </div>
-      ) : null}
-
-      <main className="table-layout">
-        <InitiativePanel
+  const role = tableIdentity.current_participant.role;
+  const canManage = role === "gm";
+  const initiativeSlot = (
+    <InitiativePanel
           projection={view.projection}
-          selectedActorId={selectedActor.actor_id}
+          selectedActorId={visibleSelectedActorId}
           onSelect={setSelectedActorId}
           versions={view.versions}
+          canManage={canManage}
+          pending={pending === "combat"}
+          error={combatControlError}
+          onCombatControl={handleCombatControl}
         />
-
-        <div className="center-column" id="tactical-map">
-          <TacticalMap
-            scene={view.scene}
+  );
+  const mapSlot = activeBoard ? <TacticalMap
+            scene={activeBoard.scene}
+            mapMetadata={activeBoard.map_metadata}
+            mapUrl={activeMapAsset.url}
+            mapLoadError={activeMapAsset.error}
             projection={view.projection}
-            selectedActorId={selectedActor.actor_id}
+            tokens={tacticalTokens}
+            tokenStatus={
+              tableIdentity.current_participant.role === "gm"
+                ? sharedTokens.status
+                : sharedVisibility.status
+            }
+            tokenError={
+              tableIdentity.current_participant.role === "gm"
+                ? sharedTokens.error
+                : sharedVisibility.error
+            }
+            visibilityProjection={tacticalVisibility}
+            visibilitySources={sharedVisibility.sources}
+            visibilityStatus={sharedVisibility.status}
+            visibilityError={sharedVisibility.error}
+            showVisibilityMask={showVisibilityMask}
+            selectedActorId={visibleSelectedActorId}
             selectableTargetIds={targetOptions}
             selectedTargetId={selectedTargetId}
             reachableCells={reachableCells}
@@ -2162,6 +3529,17 @@ export function EchoVaultTable() {
             templateAngleDegrees={templateAngleDegrees}
             pings={sharedAnnotations.pings}
             templates={sharedAnnotations.templates}
+            drawings={sharedAnnotations.drawings}
+            journalDocuments={sharedJournal.documents}
+            onJournalDocumentSelect={setSelectedJournalDocumentId}
+            sharedCamera={sharedPresentation.camera}
+            followSharedCamera={sharedPresentation.followCamera}
+            drawingTool={{
+              ...drawingSettings,
+              active: activeDrawingMode,
+              pointCount: drawingPoints.length,
+              error: drawingPlacementError,
+            }}
             annotations={sharedAnnotations.annotations}
             selectedAnnotationId={resolvedSelectedAnnotationId}
             annotationStatus={sharedAnnotations.status}
@@ -2176,6 +3554,7 @@ export function EchoVaultTable() {
             onTokenSelect={setSelectedActorId}
             onTargetSelect={handleTargetSelect}
             onCellSelect={handleMapCellSelect}
+            onGridlessPointSelect={handleGridlessPointSelect}
             onMeasureToggle={toggleMeasureMode}
             onMeasureClear={() =>
               setMeasurement({ ...EMPTY_GRID_MEASUREMENT })
@@ -2189,9 +3568,22 @@ export function EchoVaultTable() {
               setTemplateStart(null);
               setTemplatePlacementError(null);
             }}
-            onAnnotationSelect={setSelectedAnnotationId}
+            onDrawingToggle={toggleDrawingMode}
+            onDrawingSettingsChange={changeDrawingSettings}
+            onDrawingFinish={finishFreehandDrawing}
+            onDrawingCancel={() => {
+              setDrawingPoints([]);
+              setDrawingPlacementError(null);
+            }}
+            onUpdateSelectedDrawing={updateSelectedDrawing}
+            onUnlockSelectedDrawing={unlockSelectedDrawing}
+            onAnnotationSelect={selectManagedAnnotation}
             onRemoveSelected={() => {
-              if (!resolvedSelectedAnnotationId) return;
+              if (
+                !resolvedSelectedAnnotationId ||
+                (resolvedSelectedAnnotation &&
+                  isLockedDrawingAnnotation(resolvedSelectedAnnotation))
+              ) return;
               void sharedAnnotations
                 .removeAnnotation(resolvedSelectedAnnotationId)
                 .catch(() => undefined);
@@ -2202,50 +3594,187 @@ export function EchoVaultTable() {
                 .catch(() => undefined);
             }}
             onAnnotationRetry={sharedAnnotations.retry}
-          />
-          <VttScenesPanel
-            sessionId={view.session_id}
-            bearerToken={bearerToken}
-            table={tableIdentity}
-          />
-          <VttPresencePanel
-            sessionId={view.session_id}
-            bearerToken={bearerToken}
-            table={tableIdentity}
-          />
-          <VttChatPanel
-            sessionId={view.session_id}
-            bearerToken={bearerToken}
-            table={tableIdentity}
-          />
-          <EventLog events={events} />
-        </div>
-
-        <CommandPanel
-          view={view}
-          selectedActor={selectedActor}
-          selectedActionName={selectedActionName}
-          selectedTargetId={selectedTargetId}
-          movementPlan={movementPlan}
-          preview={preview}
-          fingerprint={fingerprint}
-          pending={pending}
-          commandError={commandError}
-          canAdmin={tableIdentity.current_participant.role === "gm"}
-          canControlActiveActor={canControlActiveActor}
-          onActionSelect={handleActionSelect}
-          onTargetSelect={handleTargetSelect}
-          onStart={() => void handleStart()}
-          onPreview={() => void handlePreview()}
-          onCommit={() => void handleCommit()}
+          /> : (
+            <section
+              className="panel board-unavailable"
+              role={boardPresentation.status === "error" ? "alert" : "status"}
+              aria-live="polite"
+            >
+              <p className="eyebrow">Tactical surface</p>
+              <h2>{boardPresentation.status === "error" ? "Board unavailable" : "Loading active board…"}</h2>
+              <p>
+                Grid, tokens, movement, and map tools remain disabled until the
+                authoritative active-scene calibration is available.
+              </p>
+            </section>
+          );
+  const actionSlot = selectedActor ? (
+    <CommandPanel
+      view={view}
+      selectedActor={selectedActor}
+      selectedActionName={selectedActionName}
+      selectedTargetId={selectedTargetId}
+      movementPlan={movementPlan}
+      preview={preview}
+      fingerprint={fingerprint}
+      pending={pending}
+      commandError={commandError}
+      canAdmin={canManage}
+      canControlActiveActor={canControlActiveActor}
+      onActionSelect={handleActionSelect}
+      onTargetSelect={handleTargetSelect}
+      onStart={() => void handleStart()}
+      onPreview={() => void handlePreview()}
+      onCommit={() => void handleCommit()}
+    />
+  ) : (
+    <aside className="panel command-panel perception-limited-panel" role="status">
+      <p className="eyebrow">Player view</p>
+      <h2>No combatant is currently perceptible.</h2>
+      <p>
+        The board remains live. Combat identities and controls appear only
+        when the server-authoritative token projection makes them visible.
+      </p>
+    </aside>
+  );
+  const workspacePanels: VttShellPanel[] = [
+    {
+      id: "events",
+      label: "Rules",
+      modes: ["play"],
+      content: <EventLog events={events} />,
+    },
+    {
+      id: "chat",
+      label: "Chat",
+      modes: ["play"],
+      content: (
+        <VttChatPanel
+          sessionId={view.session_id}
+          bearerToken={bearerToken}
+          table={tableIdentity}
         />
-      </main>
+      ),
+    },
+    {
+      id: "participants",
+      label: "People",
+      modes: ["play"],
+      content: (
+        <VttPresencePanel
+          sessionId={view.session_id}
+          bearerToken={bearerToken}
+          table={tableIdentity}
+        />
+      ),
+    },
+    {
+      id: "journal",
+      label: "Journal",
+      modes: ["play", "prepare"],
+      content: (
+        <VttJournalPanel
+          sessionId={view.session_id}
+          bearerToken={bearerToken}
+          table={tableIdentity}
+          controller={sharedJournal}
+          requestedDocumentId={selectedJournalDocumentId}
+          activeSceneId={activeBoard?.scene.scene_id}
+          activeSceneOriginFt={activeBoard ? [
+            activeBoard.scene.origin_ft.x_ft,
+            activeBoard.scene.origin_ft.y_ft,
+            activeBoard.scene.origin_ft.z_ft,
+          ] : undefined}
+          onDocumentSelect={setSelectedJournalDocumentId}
+        />
+      ),
+    },
+    {
+      id: "sound",
+      label: "Sound & view",
+      modes: ["play", "prepare"],
+      content: (
+        <VttPresentationPanel
+          table={tableIdentity}
+          bearerToken={bearerToken}
+          activeSceneId={activeBoard?.scene.scene_id ?? null}
+          controller={sharedPresentation}
+        />
+      ),
+    },
+    {
+      id: "scenes",
+      label: "Scenes",
+      modes: ["prepare"],
+      roles: ["gm"],
+      content: (
+        <VttScenesPanel
+            table={tableIdentity}
+            scenes={sharedScenes}
+            assets={sharedMapAssets}
+          />
+      ),
+    },
+    {
+      id: "tokens",
+      label: "Tokens",
+      modes: ["prepare"],
+      roles: ["gm"],
+      content: activeBoard ? <VttTokensPanel
+            table={tableIdentity}
+            scene={activeBoard.scene}
+            mapMetadata={activeBoard.map_metadata}
+            actors={view.projection.actors}
+            tokens={sharedTokens}
+          /> : <p role="status">Tokens are available after the active board loads.</p>,
+    },
+    {
+      id: "visibility",
+      label: "Lighting & fog",
+      modes: ["prepare"],
+      roles: ["gm"],
+      content: activeBoard ? <VttVisibilityPanel
+            table={tableIdentity}
+            mapMetadata={activeBoard.map_metadata}
+            tokens={sharedTokens.view?.tokens ?? []}
+            visibility={sharedVisibility}
+          /> : <p role="status">Visibility tools are available after the active board loads.</p>,
+    },
+  ];
+  const connectionLabel = [
+    streamStatus === "live"
+      ? "Events live"
+      : streamStatus === "invalid"
+        ? "Stream invalid"
+        : streamStatus === "reconnecting"
+          ? "Reconnecting"
+          : "Connecting",
+    `Revision ${view.revision}`,
+    phaseLabel(view.projection.phase),
+    `${titleCase(role)} ${tableIdentity.current_participant.display_name}`,
+    `Round ${view.projection.round_number} of ${view.projection.max_rounds}`,
+  ].join(" · ");
 
-      <footer className="table-footer">
-        <span>Echo Vault tactical link</span>
-        <span>Engine projection only</span>
-        <code>{view.session_id}</code>
-      </footer>
+  return (
+    <div className="table-app">
+      {loadError ? (
+        <div className="stale-banner" role="alert">
+          <span>{loadError}</span>
+          <button type="button" onClick={() => void refresh().catch(() => undefined)}>
+            Retry refresh
+          </button>
+        </div>
+      ) : null}
+      <VttShell
+        role={role}
+        worldName="Echo Vault"
+        sceneName={activeBoard?.scene.name ?? null}
+        connectionLabel={connectionLabel}
+        mapSlot={mapSlot}
+        actionSlot={actionSlot}
+        initiativeSlot={initiativeSlot}
+        panels={workspacePanels}
+      />
     </div>
   );
 }

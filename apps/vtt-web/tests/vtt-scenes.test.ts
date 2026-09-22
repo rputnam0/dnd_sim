@@ -8,6 +8,7 @@ import {
   buildSceneDuplicateRequest,
   buildSceneExportBundle,
   buildSceneImportRequest,
+  buildSceneUpdateRequest,
   parseSceneEvent,
   parseSceneExportBundle,
   parseSceneLibraryView,
@@ -22,6 +23,22 @@ const mapMetadata = {
   height_px: 1080,
   grid_size_px: 70.0,
   gridless: false,
+  calibration: {
+    schema_version: "vtt.board_calibration.v1",
+    topology: "square",
+    origin_x_px: 35,
+    origin_y_px: 35,
+    cell_extent_px: 70,
+    distance_ft: 5,
+  },
+  asset: {
+    schema_version: "vtt.scene_map_asset.v1",
+    asset_id: "moon-temple-original",
+    media_type: "image/png",
+    content_path: "/assets/maps/moon-temple-original.png",
+    sha256: "a".repeat(64),
+    alt_text: "A top-down moonlit temple chamber.",
+  },
 } as const;
 
 const scene = {
@@ -41,14 +58,19 @@ const view = {
       scene: {
         ...scene,
         scene_id: "old-road",
-        map_metadata: { ...mapMetadata, name: "Old Road", gridless: true },
+        map_metadata: {
+          ...mapMetadata,
+          name: "Old Road",
+          gridless: true,
+          calibration: { ...mapMetadata.calibration, topology: "gridless" },
+        },
       },
       archived: true,
     },
   ],
 } as const;
 
-test("strictly parses ordered scene library metadata without map blobs", () => {
+test("strictly parses ordered scene library metadata with safe map references", () => {
   assert.deepEqual(parseSceneLibraryView(view), view);
   assert.throws(
     () =>
@@ -67,8 +89,78 @@ test("strictly parses ordered scene library metadata without map blobs", () => {
     /unexpected field.*image_url/i,
   );
   assert.throws(
+    () =>
+      parseSceneLibraryView({
+        ...view,
+        scenes: [
+          {
+            scene: {
+              ...scene,
+              map_metadata: {
+                ...mapMetadata,
+                asset: {
+                  ...mapMetadata.asset,
+                  content_path: "https://example.com/secret.png",
+                },
+              },
+            },
+            archived: false,
+          },
+        ],
+      }),
+    /content_path|same-origin|map asset/i,
+  );
+  assert.throws(
     () => parseSceneLibraryView({ ...view, scenes: [...view.scenes].reverse() }),
     /sorted.*scene/i,
+  );
+});
+
+test("migrates legacy scene calibration but rejects inconsistent explicit geometry", () => {
+  const legacyMetadata = {
+    schema_version: mapMetadata.schema_version,
+    name: mapMetadata.name,
+    width_px: mapMetadata.width_px,
+    height_px: mapMetadata.height_px,
+    grid_size_px: mapMetadata.grid_size_px,
+    gridless: mapMetadata.gridless,
+    asset: mapMetadata.asset,
+  };
+  const migrated = parseSceneLibraryView({
+    ...view,
+    scenes: [
+      {
+        scene: { ...scene, map_metadata: legacyMetadata },
+        archived: false,
+      },
+    ],
+  });
+  assert.deepEqual(migrated.scenes[0].scene.map_metadata.calibration, {
+    schema_version: "vtt.board_calibration.v1",
+    topology: "square",
+    origin_x_px: 35,
+    origin_y_px: 35,
+    cell_extent_px: 70,
+    distance_ft: 5,
+  });
+  assert.throws(
+    () =>
+      parseSceneLibraryView({
+        ...view,
+        scenes: [
+          {
+            scene: {
+              ...scene,
+              map_metadata: {
+                ...mapMetadata,
+                gridless: true,
+              },
+            },
+            archived: false,
+          },
+        ],
+      }),
+    /gridless.*topology/i,
   );
 });
 
@@ -94,6 +186,25 @@ test("accepts backend code-point ordering for non-BMP scene IDs", () => {
 });
 
 test("builds exact create duplicate activate and safe archive requests", () => {
+  assert.deepEqual(
+    buildSceneUpdateRequest({
+      sessionId: "echo-vault-session",
+      tableId: "echo-vault-session",
+      expectedRevision: 2,
+      sceneId: "moon-temple",
+      mapMetadata,
+      commandId: "attach-map",
+    }).command,
+    {
+      schema_version: "vtt.scene_command.v1",
+      command_type: "update",
+      table_id: "echo-vault-session",
+      command_id: "attach-map",
+      expected_revision: 2,
+      scene_id: "moon-temple",
+      map_metadata: mapMetadata,
+    },
+  );
   assert.deepEqual(
     buildSceneCreateRequest({
       sessionId: "echo-vault-session",
@@ -156,6 +267,24 @@ test("builds exact create duplicate activate and safe archive requests", () => {
       successor_scene_id: "old-road",
     },
   );
+});
+
+test("parses active scene update events carrying calibrated map references", () => {
+  const event = parseSceneEvent({
+    schema_version: "vtt.scene_event.v1",
+    table_id: "echo-vault-session",
+    event_id: "echo-vault-session:scene:3",
+    sequence: 3,
+    revision: 3,
+    command_id: "attach-map",
+    event_type: "updated",
+    scene,
+    active: true,
+  });
+
+  assert.equal(event.event_type, "updated");
+  assert.equal(event.active, true);
+  assert.deepEqual(event.scene, scene);
 });
 
 test("exports and imports the exact strict metadata bundle", () => {

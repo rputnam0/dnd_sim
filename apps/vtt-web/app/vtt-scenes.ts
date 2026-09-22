@@ -4,6 +4,12 @@ import {
   type JsonValue,
 } from "./vtt-client";
 import { buildVttRequestHeaders } from "./vtt-transport";
+import {
+  legacyBoardCalibration,
+  parseBoardCalibration,
+  requireUsableBoardCalibration,
+  type BoardCalibration,
+} from "./vtt-board-calibration";
 
 export interface SceneMapMetadata {
   schema_version: "vtt.scene_map_metadata.v1";
@@ -12,6 +18,17 @@ export interface SceneMapMetadata {
   height_px: number;
   grid_size_px: number;
   gridless: boolean;
+  calibration: BoardCalibration;
+  asset?: SceneMapAssetReference;
+}
+
+export interface SceneMapAssetReference {
+  schema_version: "vtt.scene_map_asset.v1";
+  asset_id: string;
+  media_type: "image/png" | "image/jpeg" | "image/webp";
+  content_path: string;
+  sha256: string;
+  alt_text: string;
 }
 
 export interface SceneRecord {
@@ -57,6 +74,12 @@ export interface SceneDuplicateCommand extends SceneCommandBase {
   new_name: string;
 }
 
+export interface SceneUpdateCommand extends SceneCommandBase {
+  command_type: "update";
+  scene_id: string;
+  map_metadata: SceneMapMetadata;
+}
+
 export interface SceneActivateCommand extends SceneCommandBase {
   command_type: "activate";
   scene_id: string;
@@ -76,6 +99,7 @@ export interface SceneImportCommand extends SceneCommandBase {
 export type SceneMutationCommand =
   | SceneCreateCommand
   | SceneDuplicateCommand
+  | SceneUpdateCommand
   | SceneActivateCommand
   | SceneArchiveCommand
   | SceneImportCommand;
@@ -106,6 +130,11 @@ export type SceneEvent =
       source_scene_id: string;
       scene: SceneRecord;
       became_active: boolean;
+    })
+  | (SceneEventBase & {
+      event_type: "updated";
+      scene: SceneRecord;
+      active: boolean;
     })
   | (SceneEventBase & {
       event_type: "activated";
@@ -218,6 +247,74 @@ function booleanValue(value: unknown, path: string): boolean {
   return value;
 }
 
+export function parseSceneMapAssetReference(
+  value: unknown,
+  path = "map_asset",
+): SceneMapAssetReference {
+  const data = exactObject(
+    value,
+    [
+      "schema_version",
+      "asset_id",
+      "media_type",
+      "content_path",
+      "sha256",
+      "alt_text",
+    ],
+    path,
+  );
+  const mediaType = literal(
+    data.media_type,
+    ["image/png", "image/jpeg", "image/webp"],
+    `${path}.media_type`,
+  );
+  const contentPath = canonicalText(data.content_path, `${path}.content_path`, 256);
+  const assetId = canonicalText(data.asset_id, `${path}.asset_id`);
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(assetId)) {
+    throw new Error(`${path}.asset_id must be a URL-safe identifier`);
+  }
+  const staticPath = /^\/assets\/maps\/[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(
+    contentPath,
+  );
+  const apiMatch = contentPath.match(
+    /^\/api\/v1\/map-assets\/([A-Za-z0-9][A-Za-z0-9_-]{0,127})\/content\.(?:png|jpg|webp)$/,
+  );
+  if (
+    (!staticPath && apiMatch === null) ||
+    (staticPath &&
+      contentPath.slice("/assets/maps/".length).split("/").some(
+        (segment) => segment.length === 0 || segment === "." || segment === "..",
+      )) ||
+    (apiMatch !== null && apiMatch[1] !== assetId)
+  ) {
+    throw new Error(`${path}.content_path must identify a safe same-origin map asset`);
+  }
+  const expectedExtensions: Record<SceneMapAssetReference["media_type"], string[]> = {
+    "image/png": [".png"],
+    "image/jpeg": [".jpg", ".jpeg"],
+    "image/webp": [".webp"],
+  };
+  if (!expectedExtensions[mediaType].some((extension) => contentPath.toLowerCase().endsWith(extension))) {
+    throw new Error(`${path}.content_path extension must match media_type`);
+  }
+  const sha256 = canonicalText(data.sha256, `${path}.sha256`, 64);
+  if (!/^[0-9a-f]{64}$/.test(sha256)) {
+    throw new Error(`${path}.sha256 must be a lowercase SHA-256 digest`);
+  }
+  return {
+    schema_version: literal(
+      data.schema_version,
+      ["vtt.scene_map_asset.v1"],
+      `${path}.schema_version`,
+    ),
+    asset_id: assetId,
+    media_type: mediaType,
+    content_path: contentPath,
+    sha256,
+    alt_text: canonicalText(data.alt_text, `${path}.alt_text`, 240),
+  };
+}
+
 function compareCodePoints(left: string, right: string): number {
   const leftPoints = Array.from(left, (character) => character.codePointAt(0) as number);
   const rightPoints = Array.from(right, (character) => character.codePointAt(0) as number);
@@ -233,7 +330,11 @@ function compareCodePoints(left: string, right: string): number {
   return leftPoints.length - rightPoints.length;
 }
 
-function parseMapMetadata(value: unknown, path: string): SceneMapMetadata {
+export function parseSceneMapMetadata(
+  value: unknown,
+  path = "map_metadata",
+): SceneMapMetadata {
+  const input = objectValue(value, path);
   const data = exactObject(
     value,
     [
@@ -243,9 +344,30 @@ function parseMapMetadata(value: unknown, path: string): SceneMapMetadata {
       "height_px",
       "grid_size_px",
       "gridless",
+      ...("calibration" in input ? ["calibration"] : []),
+      ...("asset" in input ? ["asset"] : []),
     ],
     path,
   );
+  const widthPx = integer(data.width_px, `${path}.width_px`, 1, 1_000_000);
+  const heightPx = integer(data.height_px, `${path}.height_px`, 1, 1_000_000);
+  const gridSizePx = finiteNumber(
+    data.grid_size_px,
+    `${path}.grid_size_px`,
+    0,
+    100_000,
+  );
+  const gridless = booleanValue(data.gridless, `${path}.gridless`);
+  const calibration = data.calibration === undefined
+    ? legacyBoardCalibration(gridSizePx, gridless)
+    : parseBoardCalibration(data.calibration, `${path}.calibration`);
+  if (calibration.cell_extent_px !== gridSizePx) {
+    throw new Error(`${path}.grid_size_px must match calibration extent`);
+  }
+  if (gridless !== (calibration.topology === "gridless")) {
+    throw new Error(`${path}.gridless must match calibration topology`);
+  }
+  requireUsableBoardCalibration(calibration, widthPx, heightPx);
   return {
     schema_version: literal(
       data.schema_version,
@@ -253,15 +375,14 @@ function parseMapMetadata(value: unknown, path: string): SceneMapMetadata {
       `${path}.schema_version`,
     ),
     name: canonicalText(data.name, `${path}.name`, 160),
-    width_px: integer(data.width_px, `${path}.width_px`, 1, 1_000_000),
-    height_px: integer(data.height_px, `${path}.height_px`, 1, 1_000_000),
-    grid_size_px: finiteNumber(
-      data.grid_size_px,
-      `${path}.grid_size_px`,
-      0,
-      100_000,
-    ),
-    gridless: booleanValue(data.gridless, `${path}.gridless`),
+    width_px: widthPx,
+    height_px: heightPx,
+    grid_size_px: gridSizePx,
+    gridless,
+    calibration,
+    ...(data.asset === undefined
+      ? {}
+      : { asset: parseSceneMapAssetReference(data.asset, `${path}.asset`) }),
   };
 }
 
@@ -278,7 +399,7 @@ export function parseSceneRecord(value: unknown, path = "scene"): SceneRecord {
       `${path}.schema_version`,
     ),
     scene_id: canonicalText(data.scene_id, `${path}.scene_id`),
-    map_metadata: parseMapMetadata(data.map_metadata, `${path}.map_metadata`),
+    map_metadata: parseSceneMapMetadata(data.map_metadata, `${path}.map_metadata`),
   };
 }
 
@@ -433,6 +554,28 @@ export function buildSceneDuplicateRequest(input: {
   });
 }
 
+export function buildSceneUpdateRequest(input: {
+  sessionId: string;
+  tableId: string;
+  expectedRevision: number;
+  sceneId: string;
+  mapMetadata: SceneMapMetadata;
+  commandId?: string;
+}): SceneLibraryRequest {
+  const sceneId = canonicalText(input.sceneId, "sceneId");
+  const mapMetadata = parseSceneRecord({
+    schema_version: "vtt.scene_record.v1",
+    scene_id: sceneId,
+    map_metadata: input.mapMetadata,
+  }).map_metadata;
+  return request(input.sessionId, {
+    ...commandBase(input),
+    command_type: "update",
+    scene_id: sceneId,
+    map_metadata: mapMetadata,
+  });
+}
+
 export function buildSceneActivateRequest(input: {
   sessionId: string;
   tableId: string;
@@ -489,7 +632,7 @@ export function parseSceneEvent(value: unknown): SceneEvent {
   const base = objectValue(value, "scene_event");
   const eventType = literal(
     base.event_type,
-    ["created", "duplicated", "activated", "archived", "imported"],
+    ["created", "duplicated", "updated", "activated", "archived", "imported"],
     "scene_event.event_type",
   );
   const commonKeys = [
@@ -506,6 +649,8 @@ export function parseSceneEvent(value: unknown): SceneEvent {
       ? ["scene", "became_active"]
       : eventType === "duplicated"
         ? ["source_scene_id", "scene", "became_active"]
+        : eventType === "updated"
+          ? ["scene", "active"]
         : eventType === "activated"
           ? ["scene_id", "previous_scene_id"]
           : ["scene_id", "successor_scene_id", "active_scene_id"];
@@ -551,6 +696,14 @@ export function parseSceneEvent(value: unknown): SceneEvent {
         data.became_active,
         "scene_event.became_active",
       ),
+    };
+  }
+  if (eventType === "updated") {
+    return {
+      ...common,
+      event_type: "updated",
+      scene: parseSceneRecord(data.scene, "scene_event.scene"),
+      active: booleanValue(data.active, "scene_event.active"),
     };
   }
   if (eventType === "activated") {

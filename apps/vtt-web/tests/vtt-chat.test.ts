@@ -12,6 +12,8 @@ import {
   parseChatSseBlock,
   parseChatView,
   streamChatEvents,
+  type ChatMessage,
+  type ChatPostedEvent,
 } from "../app/vtt-chat";
 
 const message = {
@@ -20,7 +22,7 @@ const message = {
   author_id: "local",
   audience: ["all"],
   text: "<b>literal</b>\n**still plain text**",
-} as const;
+} satisfies ChatMessage;
 
 const view = {
   schema_version: "vtt.chat_view.v1",
@@ -44,7 +46,7 @@ const postedEvent = {
     message_id: "message-b",
     text: "second message",
   },
-} as const;
+} satisfies ChatPostedEvent;
 
 test("builds exact open-local post and delete requests without changing text", () => {
   assert.deepEqual(

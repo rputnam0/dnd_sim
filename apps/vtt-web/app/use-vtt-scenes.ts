@@ -10,12 +10,14 @@ import {
   buildSceneCreateRequest,
   buildSceneDuplicateRequest,
   buildSceneImportRequest,
+  buildSceneUpdateRequest,
   getSceneLibraryView,
   postSceneLibraryRequest,
   streamSceneEvents,
   type SceneExportBundle,
   type SceneLibraryRequest,
   type SceneLibraryView,
+  type SceneMapMetadata,
   type SceneRecord,
 } from "./vtt-scenes";
 
@@ -30,6 +32,7 @@ export type SceneConnectionStatus =
 export type SceneMutationOperation =
   | "creating"
   | "duplicating"
+  | "updating"
   | "activating"
   | "archiving"
   | "importing"
@@ -259,6 +262,20 @@ export function useVttScenes(input: {
     [input.sessionId, submit],
   );
 
+  const updateScene = useCallback(
+    (sceneId: string, mapMetadata: SceneMapMetadata) =>
+      submit("updating", (current) =>
+        buildSceneUpdateRequest({
+          sessionId: input.sessionId as string,
+          tableId: current.table_id,
+          expectedRevision: current.revision,
+          sceneId,
+          mapMetadata,
+        }),
+      ),
+    [input.sessionId, submit],
+  );
+
   const activateScene = useCallback(
     (sceneId: string) =>
       submit("activating", (current) =>
@@ -317,9 +334,12 @@ export function useVttScenes(input: {
       available && !pending && input.participant?.role === "gm",
     createScene,
     duplicateScene,
+    updateScene,
     activateScene,
     archiveScene,
     importScene,
     retry: () => setRefreshKey((current) => current + 1),
   };
 }
+
+export type VttScenesController = ReturnType<typeof useVttScenes>;

@@ -35,6 +35,36 @@ const sessionView = {
     rows: 6,
     origin_ft: { x_ft: 0, y_ft: 0, z_ft: 0 },
   },
+  active_board: {
+    schema_version: "vtt.active_board_projection.v1",
+    scene_revision: 1,
+    scene: {
+      schema_version: "vtt.scene.v1",
+      scene_id: "echo-vault",
+      name: "Echo Vault",
+      grid_type: "square",
+      cell_size_ft: 5,
+      columns: 8,
+      rows: 6,
+      origin_ft: { x_ft: 0, y_ft: 0, z_ft: 0 },
+    },
+    map_metadata: {
+      schema_version: "vtt.scene_map_metadata.v1",
+      name: "Echo Vault",
+      width_px: 800,
+      height_px: 600,
+      grid_size_px: 100,
+      gridless: false,
+      calibration: {
+        schema_version: "vtt.board_calibration.v1",
+        topology: "square",
+        origin_x_px: 50,
+        origin_y_px: 50,
+        cell_extent_px: 100,
+        distance_ft: 5,
+      },
+    },
+  },
   projection: {
     phase: "awaiting_declaration",
     outcome: null,
@@ -178,6 +208,24 @@ test("builds the complete canonical D&D declaration command", () => {
   });
 });
 
+test("accepts a perception-limited encounter projection with no visible active actor", () => {
+  const parsed = parseSessionView({
+    ...sessionView,
+    projection: {
+      ...sessionView.projection,
+      active_actor_id: null,
+      initiative_order: [],
+      actors: {},
+      prompt: null,
+      result: null,
+      choices: null,
+    },
+  });
+
+  assert.equal(parsed.projection.active_actor_id, null);
+  assert.deepEqual(parsed.projection.actors, {});
+});
+
 test("builds an actor-independent start command with UUID defaults", () => {
   const command = buildStartCommand({
     sessionId: "echo-vault-session",
@@ -230,6 +278,24 @@ test("strictly parses the public session view and rejects snapshot leakage", () 
         projection: { ...sessionView.projection, phase: "running" },
       }),
     /projection\.phase/i,
+  );
+});
+
+test("accepts an explicitly unavailable board without manufacturing topology", () => {
+  const unavailable = parseSessionView({
+    ...sessionView,
+    scene: null,
+    active_board: null,
+  });
+  assert.equal(unavailable.scene, null);
+  assert.equal(unavailable.active_board, null);
+
+  assert.throws(
+    () => parseSessionView({
+      ...sessionView,
+      scene: { ...sessionView.scene, scene_id: "stale-square" },
+    }),
+    /scene must match.*active_board/i,
   );
 });
 

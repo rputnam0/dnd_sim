@@ -1,4 +1,5 @@
 import {
+  isDrawingAnnotation,
   parseVttAnnotation,
   type CircleTemplateAnnotation,
   type ConeTemplateAnnotation,
@@ -118,7 +119,8 @@ function requireAreaTemplate(annotation: unknown): AreaTemplateAnnotation {
   const parsed = parseVttAnnotation(annotation);
   if (
     parsed.annotation_type === "ping" ||
-    parsed.annotation_type === "ruler"
+    parsed.annotation_type === "ruler" ||
+    isDrawingAnnotation(parsed)
   ) {
     throw new Error("annotation must be an area template");
   }

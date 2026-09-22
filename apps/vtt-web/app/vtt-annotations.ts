@@ -60,13 +60,61 @@ export interface CubeTemplateAnnotation extends AnnotationBase {
   size_ft: number;
 }
 
+export interface DrawingStyle {
+  stroke_color: string;
+  fill_color: string | null;
+  opacity: number;
+  stroke_width_ft: number;
+  line_style: "solid" | "dashed";
+}
+
+interface DrawingBase extends AnnotationBase {
+  layer: "under_tokens" | "over_tokens";
+  locked: boolean;
+  style: DrawingStyle;
+}
+
+export interface FreehandDrawingAnnotation extends DrawingBase {
+  annotation_type: "freehand_drawing";
+  points: AnnotationPoint[];
+}
+
+export interface ShapeDrawingAnnotation extends DrawingBase {
+  annotation_type: "shape_drawing";
+  shape: "rectangle" | "ellipse";
+  corner_a: AnnotationPoint;
+  corner_b: AnnotationPoint;
+}
+
+export interface ArrowDrawingAnnotation extends DrawingBase {
+  annotation_type: "arrow_drawing";
+  start: AnnotationPoint;
+  end: AnnotationPoint;
+  head_size_ft: number;
+}
+
+export interface TextDrawingAnnotation extends DrawingBase {
+  annotation_type: "text_drawing";
+  anchor: AnnotationPoint;
+  text: string;
+  font_size_ft: number;
+  background_color: string | null;
+}
+
+export type DrawingAnnotation =
+  | FreehandDrawingAnnotation
+  | ShapeDrawingAnnotation
+  | ArrowDrawingAnnotation
+  | TextDrawingAnnotation;
+
 export type VttAnnotation =
   | PingAnnotation
   | RulerAnnotation
   | CircleTemplateAnnotation
   | ConeTemplateAnnotation
   | LineTemplateAnnotation
-  | CubeTemplateAnnotation;
+  | CubeTemplateAnnotation
+  | DrawingAnnotation;
 
 export interface AnnotationsView {
   schema_version: "vtt.annotations_view.v1";
@@ -159,6 +207,9 @@ const MAX_ABSOLUTE_COORDINATE_FT = 1_000_000;
 const MAX_TEMPLATE_SIZE_FT = 100_000;
 const MAX_RULER_WAYPOINTS = 128;
 const MAX_PING_DURATION_MS = 60_000;
+const MAX_DRAWING_PATH_POINTS = 512;
+const MAX_DRAWING_TEXT_LENGTH = 500;
+const MAX_DRAWING_EXTENT_FT = 1_000;
 
 function objectValue(value: unknown, path: string): ObjectValue {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -306,6 +357,188 @@ function parsePoint(value: unknown, path: string): AnnotationPoint {
   };
 }
 
+function drawingColor(
+  value: unknown,
+  path: string,
+  nullable = false,
+): string | null {
+  if (nullable && value === null) return null;
+  if (typeof value !== "string" || !/^#[0-9a-f]{6}$/.test(value)) {
+    throw new Error(`${path} must be a lowercase #rrggbb color`);
+  }
+  return value;
+}
+
+function parseDrawingStyle(value: unknown, path: string): DrawingStyle {
+  const data = exactObject(
+    value,
+    ["stroke_color", "fill_color", "opacity", "stroke_width_ft", "line_style"],
+    path,
+  );
+  return {
+    stroke_color: drawingColor(data.stroke_color, `${path}.stroke_color`) as string,
+    fill_color: drawingColor(data.fill_color, `${path}.fill_color`, true),
+    opacity: boundedNumber(data.opacity, `${path}.opacity`, 0.05, 1),
+    stroke_width_ft: boundedNumber(
+      data.stroke_width_ft,
+      `${path}.stroke_width_ft`,
+      0,
+      MAX_DRAWING_EXTENT_FT,
+      false,
+    ),
+    line_style: literalValue(
+      data.line_style,
+      ["solid", "dashed"],
+      `${path}.line_style`,
+    ),
+  };
+}
+
+function drawingBase(data: ObjectValue, path: string): DrawingBase {
+  return {
+    ...parseAnnotationBase(data, path),
+    layer: literalValue(
+      data.layer,
+      ["under_tokens", "over_tokens"],
+      `${path}.layer`,
+    ),
+    locked: booleanValue(data.locked, `${path}.locked`),
+    style: parseDrawingStyle(data.style, `${path}.style`),
+  };
+}
+
+function samePoint(left: AnnotationPoint, right: AnnotationPoint): boolean {
+  return (
+    left.x_ft === right.x_ft &&
+    left.y_ft === right.y_ft &&
+    left.z_ft === right.z_ft
+  );
+}
+
+function requirePlanar(points: AnnotationPoint[], path: string): void {
+  if (points.some((point) => point.z_ft !== points[0].z_ft)) {
+    throw new Error(`${path} must share one z_ft plane`);
+  }
+}
+
+function parseDrawing(
+  raw: ObjectValue,
+  annotationType: DrawingAnnotation["annotation_type"],
+  baseKeys: string[],
+  path: string,
+): DrawingAnnotation {
+  const drawingKeys = [...baseKeys, "layer", "locked", "style"];
+  if (annotationType === "freehand_drawing") {
+    const data = exactObject(raw, [...drawingKeys, "points"], path);
+    if (
+      !Array.isArray(data.points) ||
+      data.points.length < 2 ||
+      data.points.length > MAX_DRAWING_PATH_POINTS
+    ) {
+      throw new Error(`${path}.points must contain 2-${MAX_DRAWING_PATH_POINTS} points`);
+    }
+    const points = data.points.map((point, index) =>
+      parsePoint(point, `${path}.points[${index}]`),
+    );
+    const pointKeys = new Set(
+      points.map((point) => `${point.x_ft}\u0000${point.y_ft}\u0000${point.z_ft}`),
+    );
+    if (pointKeys.size !== points.length) {
+      throw new Error(`${path}.points must be globally unique`);
+    }
+    requirePlanar(points, `${path}.points`);
+    return {
+      ...drawingBase(data, path),
+      annotation_type: "freehand_drawing",
+      points,
+    };
+  }
+  if (annotationType === "shape_drawing") {
+    const data = exactObject(
+      raw,
+      [...drawingKeys, "shape", "corner_a", "corner_b"],
+      path,
+    );
+    const cornerA = parsePoint(data.corner_a, `${path}.corner_a`);
+    const cornerB = parsePoint(data.corner_b, `${path}.corner_b`);
+    requirePlanar([cornerA, cornerB], `${path}.corners`);
+    if (cornerA.x_ft === cornerB.x_ft || cornerA.y_ft === cornerB.y_ft) {
+      throw new Error(`${path} requires two opposite corners`);
+    }
+    return {
+      ...drawingBase(data, path),
+      annotation_type: "shape_drawing",
+      shape: literalValue(
+        data.shape,
+        ["rectangle", "ellipse"],
+        `${path}.shape`,
+      ),
+      corner_a: cornerA,
+      corner_b: cornerB,
+    };
+  }
+  if (annotationType === "arrow_drawing") {
+    const data = exactObject(
+      raw,
+      [...drawingKeys, "start", "end", "head_size_ft"],
+      path,
+    );
+    const start = parsePoint(data.start, `${path}.start`);
+    const end = parsePoint(data.end, `${path}.end`);
+    requirePlanar([start, end], `${path}.endpoints`);
+    if (samePoint(start, end)) {
+      throw new Error(`${path} arrow endpoints must be distinct`);
+    }
+    return {
+      ...drawingBase(data, path),
+      annotation_type: "arrow_drawing",
+      start,
+      end,
+      head_size_ft: boundedNumber(
+        data.head_size_ft,
+        `${path}.head_size_ft`,
+        0,
+        MAX_DRAWING_EXTENT_FT,
+        false,
+      ),
+    };
+  }
+  const data = exactObject(
+    raw,
+    [...drawingKeys, "anchor", "text", "font_size_ft", "background_color"],
+    path,
+  );
+  if (
+    typeof data.text !== "string" ||
+    data.text.length === 0 ||
+    data.text.trim() !== data.text ||
+    Array.from(data.text).length > MAX_DRAWING_TEXT_LENGTH
+  ) {
+    throw new Error(`${path}.text must be canonical plain text of 1-${MAX_DRAWING_TEXT_LENGTH} characters`);
+  }
+  if (Array.from(data.text).some((character) => character !== "\n" && /\p{Cc}/u.test(character))) {
+    throw new Error(`${path}.text must not contain control characters`);
+  }
+  return {
+    ...drawingBase(data, path),
+    annotation_type: "text_drawing",
+    anchor: parsePoint(data.anchor, `${path}.anchor`),
+    text: data.text,
+    font_size_ft: boundedNumber(
+      data.font_size_ft,
+      `${path}.font_size_ft`,
+      0,
+      MAX_DRAWING_EXTENT_FT,
+      false,
+    ),
+    background_color: drawingColor(
+      data.background_color,
+      `${path}.background_color`,
+      true,
+    ),
+  };
+}
+
 function parseAnnotationBase(
   data: ObjectValue,
   path: string,
@@ -334,6 +567,10 @@ function parseAnnotation(value: unknown, path: string): VttAnnotation {
       "cone_template",
       "line_template",
       "cube_template",
+      "freehand_drawing",
+      "shape_drawing",
+      "arrow_drawing",
+      "text_drawing",
     ],
     `${path}.annotation_type`,
   );
@@ -345,6 +582,14 @@ function parseAnnotation(value: unknown, path: string): VttAnnotation {
     "audience",
     "annotation_type",
   ];
+  if (
+    annotationType === "freehand_drawing" ||
+    annotationType === "shape_drawing" ||
+    annotationType === "arrow_drawing" ||
+    annotationType === "text_drawing"
+  ) {
+    return parseDrawing(raw, annotationType, baseKeys, path);
+  }
   if (annotationType === "ping") {
     const data = exactObject(
       raw,
@@ -528,6 +773,39 @@ function parseAnnotation(value: unknown, path: string): VttAnnotation {
 
 export function parseVttAnnotation(value: unknown): VttAnnotation {
   return parseAnnotation(value, "annotation");
+}
+
+export function isDrawingAnnotation(
+  annotation: VttAnnotation,
+): annotation is DrawingAnnotation {
+  return (
+    annotation.annotation_type === "freehand_drawing" ||
+    annotation.annotation_type === "shape_drawing" ||
+    annotation.annotation_type === "arrow_drawing" ||
+    annotation.annotation_type === "text_drawing"
+  );
+}
+
+export function isLockedDrawingAnnotation(annotation: VttAnnotation): boolean {
+  return isDrawingAnnotation(annotation) && annotation.locked;
+}
+
+export function annotationViewMatchesIdentity(
+  view: AnnotationsView,
+  identity: {
+    sessionId: string | null;
+    tableId: string | null;
+    sceneId: string | null;
+  },
+): boolean {
+  return (
+    identity.sessionId !== null &&
+    identity.tableId !== null &&
+    identity.sceneId !== null &&
+    view.session_id === identity.sessionId &&
+    view.table_id === identity.tableId &&
+    view.scene_id === identity.sceneId
+  );
 }
 
 export function parseAnnotationsView(value: unknown): AnnotationsView {

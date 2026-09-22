@@ -3,12 +3,17 @@
 import { useId, useState, type FormEvent } from "react";
 
 import type { VttTableView } from "./vtt-access";
-import { useVttScenes, type SceneConnectionStatus } from "./use-vtt-scenes";
+import type {
+  SceneConnectionStatus,
+  VttScenesController,
+} from "./use-vtt-scenes";
+import type { VttMapAssetsController } from "./use-vtt-map-assets";
 import {
   buildSceneExportBundle,
   parseSceneExportBundle,
   type SceneRecord,
 } from "./vtt-scenes";
+import type { BoardTopology } from "./vtt-board-calibration";
 
 function statusLabel(status: SceneConnectionStatus, count: number): string {
   if (status === "loading") return "Loading scenes…";
@@ -34,26 +39,35 @@ function downloadScene(scene: SceneRecord): void {
 }
 
 export function VttScenesPanel({
-  sessionId,
-  bearerToken,
   table,
+  scenes,
+  assets,
 }: {
-  sessionId: string;
-  bearerToken: string | null;
   table: VttTableView;
+  scenes: VttScenesController;
+  assets: VttMapAssetsController;
 }) {
-  const scenes = useVttScenes({
-    sessionId,
-    tableId: table.table_id,
-    bearerToken,
-    participant: table.current_participant,
-  });
   const [sceneId, setSceneId] = useState("");
   const [name, setName] = useState("");
   const [widthPx, setWidthPx] = useState(1920);
   const [heightPx, setHeightPx] = useState(1080);
   const [gridSizePx, setGridSizePx] = useState(70);
-  const [gridless, setGridless] = useState(false);
+  const [topology, setTopology] = useState<BoardTopology>("square");
+  const [originXPx, setOriginXPx] = useState(35);
+  const [originYPx, setOriginYPx] = useState(35);
+  const [distanceFt, setDistanceFt] = useState(5);
+  const [assetId, setAssetId] = useState("");
+  const [assetAltText, setAssetAltText] = useState("");
+  const [assetFile, setAssetFile] = useState<File | null>(null);
+  const [calibration, setCalibration] = useState<{
+    sceneId: string;
+    assetId: string;
+    gridSizePx: number;
+    topology: BoardTopology;
+    originXPx: number;
+    originYPx: number;
+    distanceFt: number;
+  } | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [archiveTargetId, setArchiveTargetId] = useState<string | null>(null);
   const [archiveSuccessorId, setArchiveSuccessorId] = useState("");
@@ -74,6 +88,60 @@ export function VttScenesPanel({
       !entry.archived &&
       entry.scene.scene_id !== archiveTarget?.scene.scene_id,
   );
+  const assetRecords = assets.catalog?.assets ?? [];
+  const calibrationForActive =
+    active && calibration?.sceneId === active.scene.scene_id ? calibration : null;
+  const selectedAssetId =
+    calibrationForActive?.assetId ?? active?.scene.map_metadata.asset?.asset_id ?? "";
+  const attachGridSizePx =
+    calibrationForActive?.gridSizePx ?? active?.scene.map_metadata.grid_size_px ?? 70;
+  const attachTopology =
+    calibrationForActive?.topology ??
+    active?.scene.map_metadata.calibration.topology ??
+    "square";
+  const attachOriginXPx =
+    calibrationForActive?.originXPx ??
+    active?.scene.map_metadata.calibration.origin_x_px ??
+    attachGridSizePx / 2;
+  const attachOriginYPx =
+    calibrationForActive?.originYPx ??
+    active?.scene.map_metadata.calibration.origin_y_px ??
+    attachGridSizePx / 2;
+  const attachDistanceFt =
+    calibrationForActive?.distanceFt ??
+    active?.scene.map_metadata.calibration.distance_ft ??
+    5;
+  const selectedAsset = assetRecords.find(
+    (record) => record.reference.asset_id === selectedAssetId,
+  );
+
+  const reviseCalibration = (
+    patch: Partial<{
+      assetId: string;
+      gridSizePx: number;
+      topology: BoardTopology;
+      originXPx: number;
+      originYPx: number;
+      distanceFt: number;
+    }>,
+  ) => {
+    if (!active) return;
+    setCalibration((current) => {
+      const base =
+        current?.sceneId === active.scene.scene_id
+          ? current
+          : {
+              sceneId: active.scene.scene_id,
+              assetId: active.scene.map_metadata.asset?.asset_id ?? "",
+              gridSizePx: active.scene.map_metadata.grid_size_px,
+              topology: active.scene.map_metadata.calibration.topology,
+              originXPx: active.scene.map_metadata.calibration.origin_x_px,
+              originYPx: active.scene.map_metadata.calibration.origin_y_px,
+              distanceFt: active.scene.map_metadata.calibration.distance_ft,
+            };
+      return { ...base, ...patch };
+    });
+  };
 
   const create = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -87,7 +155,15 @@ export function VttScenesPanel({
           width_px: widthPx,
           height_px: heightPx,
           grid_size_px: gridSizePx,
-          gridless,
+          gridless: topology === "gridless",
+          calibration: {
+            schema_version: "vtt.board_calibration.v1",
+            topology,
+            origin_x_px: originXPx,
+            origin_y_px: originYPx,
+            cell_extent_px: gridSizePx,
+            distance_ft: distanceFt,
+          },
         },
       });
       setSceneId("");
@@ -122,6 +198,57 @@ export function VttScenesPanel({
     }
   };
 
+  const uploadAsset = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (assetFile === null) {
+      setLocalError("Choose a PNG, JPEG, or WebP map image first.");
+      return;
+    }
+    try {
+      const uploaded = await assets.uploadAsset(assetFile, assetId, assetAltText);
+      reviseCalibration({ assetId: uploaded.reference.asset_id });
+      setAssetId("");
+      setAssetAltText("");
+      setAssetFile(null);
+      setLocalError(null);
+    } catch (error) {
+      setLocalError(
+        error instanceof Error ? error.message : "The map image could not be uploaded.",
+      );
+    }
+  };
+
+  const attachAsset = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!active || !selectedAsset) {
+      setLocalError("Choose an active scene and uploaded map asset first.");
+      return;
+    }
+    try {
+      await scenes.updateScene(active.scene.scene_id, {
+        ...active.scene.map_metadata,
+        width_px: selectedAsset.width_px,
+        height_px: selectedAsset.height_px,
+        grid_size_px: attachGridSizePx,
+        gridless: attachTopology === "gridless",
+        calibration: {
+          schema_version: "vtt.board_calibration.v1",
+          topology: attachTopology,
+          origin_x_px: attachOriginXPx,
+          origin_y_px: attachOriginYPx,
+          cell_extent_px: attachGridSizePx,
+          distance_ft: attachDistanceFt,
+        },
+        asset: selectedAsset.reference,
+      });
+      setLocalError(null);
+    } catch (error) {
+      setLocalError(
+        error instanceof Error ? error.message : "The map could not be attached.",
+      );
+    }
+  };
+
   return (
     <section className="panel scene-panel" aria-labelledby={titleId}>
       <div className="panel-heading scene-heading">
@@ -136,17 +263,17 @@ export function VttScenesPanel({
 
       {active ? (
         <div className="scene-active-card">
-          <span>Active metadata</span>
+          <span>Active scene</span>
           <strong>{active.scene.map_metadata.name}</strong>
           <small>
             {active.scene.map_metadata.width_px} × {active.scene.map_metadata.height_px}px
-            · {active.scene.map_metadata.gridless
-              ? " gridless"
-              : ` ${active.scene.map_metadata.grid_size_px}px grid`}
+            · {active.scene.map_metadata.calibration.topology.replace("_", "-")}
+            {` · ${active.scene.map_metadata.grid_size_px}px · ${active.scene.map_metadata.calibration.distance_ft} ft`}
+            {active.scene.map_metadata.asset ? " · map attached" : " · no map asset"}
           </small>
         </div>
       ) : (
-        <p className="scene-empty">No scene metadata has been created yet.</p>
+        <p className="scene-empty">No scene has been created yet.</p>
       )}
 
       {entries.length > 0 ? (
@@ -275,7 +402,7 @@ export function VttScenesPanel({
       {table.current_participant.role === "gm" ? (
         <div className="scene-admin-grid">
           <form className="scene-create-form" onSubmit={create}>
-            <h3>Create scene metadata</h3>
+            <h3>Create scene</h3>
             <label>
               Scene ID
               <input
@@ -332,17 +459,203 @@ export function VttScenesPanel({
                 />
               </label>
             </div>
-            <label className="scene-gridless-toggle">
-              <input
-                type="checkbox"
-                checked={gridless}
-                onChange={(event) => setGridless(event.target.checked)}
+            <label>
+              Board topology
+              <select
+                value={topology}
+                onChange={(event) =>
+                  setTopology(event.target.value as BoardTopology)
+                }
                 disabled={!scenes.canMutate}
-              />
-              Gridless scene
+              >
+                <option value="square">Square</option>
+                <option value="hex_flat">Flat-top hex</option>
+                <option value="hex_pointy">Pointy-top hex</option>
+                <option value="gridless">Gridless</option>
+              </select>
             </label>
+            <div className="scene-number-grid">
+              <label>
+                Origin X px
+                <input
+                  type="number"
+                  step="any"
+                  value={originXPx}
+                  onChange={(event) => setOriginXPx(Number(event.target.value))}
+                  disabled={!scenes.canMutate}
+                />
+              </label>
+              <label>
+                Origin Y px
+                <input
+                  type="number"
+                  step="any"
+                  value={originYPx}
+                  onChange={(event) => setOriginYPx(Number(event.target.value))}
+                  disabled={!scenes.canMutate}
+                />
+              </label>
+              <label>
+                Feet / step
+                <input
+                  type="number"
+                  min={0.01}
+                  max={100000}
+                  step="any"
+                  value={distanceFt}
+                  onChange={(event) => setDistanceFt(Number(event.target.value))}
+                  disabled={!scenes.canMutate}
+                />
+              </label>
+            </div>
             <button className="button button-secondary" disabled={!scenes.canMutate}>
               {scenes.operation === "creating" ? "Creating…" : "Create scene"}
+            </button>
+          </form>
+
+          <form className="scene-create-form scene-asset-upload" onSubmit={uploadAsset}>
+            <h3>Upload map image</h3>
+            <label>
+              Asset ID
+              <input
+                value={assetId}
+                onChange={(event) => setAssetId(event.target.value)}
+                placeholder="moon-temple-map"
+                pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,127}"
+                required
+                disabled={!assets.canUpload}
+              />
+            </label>
+            <label>
+              Alternative text
+              <input
+                value={assetAltText}
+                onChange={(event) => setAssetAltText(event.target.value)}
+                placeholder="A top-down moonlit temple battle map."
+                maxLength={240}
+                required
+                disabled={!assets.canUpload}
+              />
+            </label>
+            <label>
+              Image file
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => setAssetFile(event.target.files?.[0] ?? null)}
+                required
+                disabled={!assets.canUpload}
+              />
+            </label>
+            <button
+              type="submit"
+              className="button button-primary"
+              disabled={!assets.canUpload || assetFile === null}
+            >
+              {assets.uploading ? "Uploading…" : "Upload image"}
+            </button>
+            {assets.error ? <p className="scene-error">{assets.error}</p> : null}
+          </form>
+
+          <form className="scene-create-form scene-asset-attach" onSubmit={attachAsset}>
+            <h3>Attach and calibrate map</h3>
+            <label>
+              Uploaded image
+              <select
+                value={selectedAssetId}
+                onChange={(event) => reviseCalibration({ assetId: event.target.value })}
+                required
+                disabled={!scenes.canMutate || assetRecords.length === 0}
+              >
+                <option value="">Select an asset</option>
+                {assetRecords.map((record) => (
+                  <option
+                    key={record.reference.asset_id}
+                    value={record.reference.asset_id}
+                  >
+                    {record.reference.asset_id} · {record.width_px} × {record.height_px}px
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Grid size in pixels
+              <input
+                type="number"
+                min={0.01}
+                max={100000}
+                step="any"
+                value={attachGridSizePx}
+                onChange={(event) =>
+                  reviseCalibration({ gridSizePx: Number(event.target.value) })
+                }
+                required
+                disabled={!scenes.canMutate}
+              />
+            </label>
+            <label>
+              Board topology
+              <select
+                value={attachTopology}
+                onChange={(event) =>
+                  reviseCalibration({
+                    topology: event.target.value as BoardTopology,
+                  })
+                }
+                disabled={!scenes.canMutate}
+              >
+                <option value="square">Square</option>
+                <option value="hex_flat">Flat-top hex</option>
+                <option value="hex_pointy">Pointy-top hex</option>
+                <option value="gridless">Gridless</option>
+              </select>
+            </label>
+            <div className="scene-number-grid">
+              <label>
+                Origin X px
+                <input
+                  type="number"
+                  step="any"
+                  value={attachOriginXPx}
+                  onChange={(event) =>
+                    reviseCalibration({ originXPx: Number(event.target.value) })
+                  }
+                  disabled={!scenes.canMutate}
+                />
+              </label>
+              <label>
+                Origin Y px
+                <input
+                  type="number"
+                  step="any"
+                  value={attachOriginYPx}
+                  onChange={(event) =>
+                    reviseCalibration({ originYPx: Number(event.target.value) })
+                  }
+                  disabled={!scenes.canMutate}
+                />
+              </label>
+              <label>
+                Feet / step
+                <input
+                  type="number"
+                  min={0.01}
+                  max={100000}
+                  step="any"
+                  value={attachDistanceFt}
+                  onChange={(event) =>
+                    reviseCalibration({ distanceFt: Number(event.target.value) })
+                  }
+                  disabled={!scenes.canMutate}
+                />
+              </label>
+            </div>
+            <button
+              type="submit"
+              className="button button-primary"
+              disabled={!scenes.canMutate || !active || !selectedAsset}
+            >
+              {scenes.operation === "updating" ? "Attaching…" : "Attach to active scene"}
             </button>
           </form>
 

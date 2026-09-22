@@ -1,4 +1,8 @@
 import { buildVttRequestHeaders } from "./vtt-transport";
+import {
+  parseSceneMapMetadata,
+  type SceneMapMetadata,
+} from "./vtt-scenes";
 
 export type JsonValue =
   | null
@@ -138,7 +142,15 @@ export interface VttSessionView {
   revision: number;
   versions: VttVersionInfo;
   scene: SquareGridScene | null;
+  active_board: ActiveBoardProjection | null;
   projection: EncounterProjection;
+}
+
+export interface ActiveBoardProjection {
+  schema_version: "vtt.active_board_projection.v1";
+  scene_revision: number;
+  scene: SquareGridScene;
+  map_metadata: SceneMapMetadata;
 }
 
 export interface VttCommand {
@@ -749,17 +761,25 @@ function parseProjection(value: unknown, path: string): EncounterProjection {
   const prompt = parsePrompt(data.prompt, `${path}.prompt`);
   const result = parseResult(data.result, `${path}.result`);
   const choices = parseTurnChoices(data.choices, `${path}.choices`);
+  const perceptionLimited =
+    phase !== "terminal" &&
+    activeActorId === null &&
+    initiativeOrder.length === 0 &&
+    Object.keys(actors).length === 0 &&
+    prompt === null &&
+    result === null &&
+    choices === null;
   if (phase === "terminal") {
     if (activeActorId !== null || outcome === null || prompt !== null) {
       throw new Error(`${path} has inconsistent terminal fields`);
     }
-  } else if (activeActorId === null || outcome !== null) {
+  } else if ((!perceptionLimited && activeActorId === null) || outcome !== null) {
     throw new Error(`${path} has inconsistent active encounter fields`);
   }
-  if (phase === "awaiting_declaration" && prompt === null) {
+  if (phase === "awaiting_declaration" && !perceptionLimited && prompt === null) {
     throw new Error(`${path}.prompt is required while awaiting a declaration`);
   }
-  if (phase === "awaiting_declaration") {
+  if (phase === "awaiting_declaration" && !perceptionLimited) {
     if (choices === null) {
       throw new Error(`${path}.choices is required while awaiting a declaration`);
     }
@@ -844,9 +864,46 @@ function parseProjection(value: unknown, path: string): EncounterProjection {
 export function parseSessionView(value: unknown): VttSessionView {
   const data = exactObject(
     value,
-    ["schema_version", "session_id", "revision", "versions", "scene", "projection"],
+    [
+      "schema_version",
+      "session_id",
+      "revision",
+      "versions",
+      "scene",
+      "active_board",
+      "projection",
+    ],
     "session",
   );
+  const scene = data.scene === null ? null : parseScene(data.scene, "session.scene");
+  let activeBoard: ActiveBoardProjection | null = null;
+  if (data.active_board !== null) {
+    const board = exactObject(
+      data.active_board,
+      ["schema_version", "scene_revision", "scene", "map_metadata"],
+      "session.active_board",
+    );
+    const boardScene = parseScene(board.scene, "session.active_board.scene");
+    activeBoard = {
+      schema_version: literalValue(
+        board.schema_version,
+        ["vtt.active_board_projection.v1"],
+        "session.active_board.schema_version",
+      ),
+      scene_revision: integerValue(
+        board.scene_revision,
+        "session.active_board.scene_revision",
+      ),
+      scene: boardScene,
+      map_metadata: parseSceneMapMetadata(
+        board.map_metadata,
+        "session.active_board.map_metadata",
+      ),
+    };
+    if (scene === null || scene.scene_id !== boardScene.scene_id) {
+      throw new Error("session.scene must match session.active_board.scene");
+    }
+  }
   return {
     schema_version: literalValue(
       data.schema_version,
@@ -856,7 +913,8 @@ export function parseSessionView(value: unknown): VttSessionView {
     session_id: stringValue(data.session_id, "session.session_id"),
     revision: integerValue(data.revision, "session.revision"),
     versions: parseVersions(data.versions, "session.versions"),
-    scene: data.scene === null ? null : parseScene(data.scene, "session.scene"),
+    scene,
+    active_board: activeBoard,
     projection: parseProjection(data.projection, "session.projection"),
   };
 }
@@ -1225,7 +1283,7 @@ export class VttApiError extends Error {
   }
 }
 
-async function responseJson(response: Response): Promise<unknown> {
+export async function responseJson(response: Response): Promise<unknown> {
   let value: unknown;
   try {
     value = await response.json();

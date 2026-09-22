@@ -22,7 +22,15 @@ export function normalizeVttBearerToken(
 }
 
 export function buildVttRequestHeaders(input: {
-  accept: "application/json" | "text/event-stream";
+  accept:
+    | "application/json"
+    | "text/event-stream"
+    | "image/png"
+    | "image/jpeg"
+    | "image/webp"
+    | "audio/mpeg"
+    | "audio/ogg"
+    | "audio/wav";
   bearerToken?: string | null;
   contentType?: "application/json";
 }): Record<string, string> {

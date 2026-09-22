@@ -8,19 +8,24 @@ import {
   type VttTableParticipant,
 } from "./vtt-access";
 import type { AreaTemplateAnnotation } from "./vtt-template-geometry";
+import { clearUnlockedOwnedAnnotations } from "./vtt-annotation-workflow";
 import {
   annotationEventForRequest,
+  annotationViewMatchesIdentity,
   applyAnnotationEvent,
   buildAnnotationDeleteRequest,
   buildAnnotationPutRequest,
   buildPingPutRequest,
   getAnnotationsView,
+  isDrawingAnnotation,
+  isLockedDrawingAnnotation,
   postAnnotationRequest,
   streamAnnotationEvents,
   type AnnotationEvent,
   type AnnotationMutationRequest,
   type AnnotationResponse,
   type AnnotationsView,
+  type DrawingAnnotation,
   type PingAnnotation,
   type VttAnnotation,
 } from "./vtt-annotations";
@@ -67,6 +72,7 @@ function waitForReconnect(signal: AbortSignal): Promise<void> {
 
 export function useVttAnnotations(input: {
   sessionId: string | null;
+  tableId: string | null;
   sceneId: string | null;
   bearerToken: string | null;
   participant: VttTableParticipant | null;
@@ -97,6 +103,7 @@ export function useVttAnnotations(input: {
   useEffect(() => {
     if (
       input.sessionId === null ||
+      input.tableId === null ||
       input.sceneId === null ||
       input.participant === null
     ) return;
@@ -113,8 +120,11 @@ export function useVttAnnotations(input: {
           input.bearerToken,
         );
         if (
-          hydrated.session_id !== input.sessionId ||
-          hydrated.scene_id !== input.sceneId
+          !annotationViewMatchesIdentity(hydrated, {
+            sessionId: input.sessionId,
+            tableId: input.tableId,
+            sceneId: input.sceneId,
+          })
         ) {
           throw new Error(
             "The annotation view does not belong to the active table scene.",
@@ -189,6 +199,7 @@ export function useVttAnnotations(input: {
     input.participant,
     input.sceneId,
     input.sessionId,
+    input.tableId,
     refreshKey,
   ]);
 
@@ -197,12 +208,18 @@ export function useVttAnnotations(input: {
     if (
       current === null ||
       input.sessionId === null ||
-      input.sceneId === null
+      input.tableId === null ||
+      input.sceneId === null ||
+      !annotationViewMatchesIdentity(current, {
+        sessionId: input.sessionId,
+        tableId: input.tableId,
+        sceneId: input.sceneId,
+      })
     ) {
       throw new Error("Shared annotations are not available for this scene.");
     }
     return current;
-  }, [input.sceneId, input.sessionId]);
+  }, [input.sceneId, input.sessionId, input.tableId]);
 
   const submitMutation = useCallback(
     async (request: AnnotationMutationRequest): Promise<AnnotationResponse> => {
@@ -306,6 +323,12 @@ export function useVttAnnotations(input: {
         if (annotation.scene_id !== current.scene_id) {
           throw new Error("The template belongs to another scene.");
         }
+        const existing = current.annotations.find(
+          (candidate) => candidate.annotation_id === annotation.annotation_id,
+        );
+        if (existing && isLockedDrawingAnnotation(existing)) {
+          throw new Error("Unlock the drawing before updating it.");
+        }
         const request = buildAnnotationPutRequest({
           sessionId: current.session_id,
           tableId: current.table_id,
@@ -330,6 +353,49 @@ export function useVttAnnotations(input: {
     ],
   );
 
+  const unlockDrawing = useCallback(
+    async (annotationId: string) => {
+      beginMutation("placing");
+      try {
+        const current = requireCurrentView();
+        const target = current.annotations.find(
+          (annotation) => annotation.annotation_id === annotationId,
+        );
+        if (!target || !isLockedDrawingAnnotation(target)) {
+          throw new Error("The selected locked drawing no longer exists.");
+        }
+        if (
+          input.participant === null ||
+          !canDeleteParticipantRecord(input.participant, target.author_id)
+        ) {
+          throw new Error(
+            "Only the author or a Game Master can unlock this drawing.",
+          );
+        }
+        const request = buildAnnotationPutRequest({
+          sessionId: current.session_id,
+          tableId: current.table_id,
+          expectedRevision: current.revision,
+          annotation: { ...target, locked: false },
+        });
+        await submitMutation(request);
+      } catch (unlockError) {
+        reportMutationError(unlockError, "select it and unlock it again");
+        throw unlockError;
+      } finally {
+        finishMutation();
+      }
+    },
+    [
+      beginMutation,
+      finishMutation,
+      input.participant,
+      reportMutationError,
+      requireCurrentView,
+      submitMutation,
+    ],
+  );
+
   const removeAnnotation = useCallback(
     async (annotationId: string) => {
       beginMutation("removing");
@@ -339,6 +405,9 @@ export function useVttAnnotations(input: {
           (annotation) => annotation.annotation_id === annotationId,
         );
         if (!target) throw new Error("The selected annotation no longer exists.");
+        if (isLockedDrawingAnnotation(target)) {
+          throw new Error("Unlock the drawing before removing it.");
+        }
         if (
           input.participant === null ||
           !canDeleteParticipantRecord(input.participant, target.author_id)
@@ -374,35 +443,22 @@ export function useVttAnnotations(input: {
   const clearLocalAnnotations = useCallback(async () => {
     beginMutation("clearing");
     try {
-      const initial = requireCurrentView();
       if (input.participant === null) {
         throw new Error("Participant identity is unavailable.");
       }
-      const annotationIds = initial.annotations
-        .filter(
-          (annotation) =>
-            annotation.author_id === input.participant?.participant_id,
-        )
-        .map((annotation) => annotation.annotation_id);
-      for (const annotationId of annotationIds) {
-        const current = requireCurrentView();
-        const target = current.annotations.find(
-          (annotation) => annotation.annotation_id === annotationId,
-        );
-        if (!target) continue;
-        if (target.author_id !== input.participant.participant_id) {
-          throw new Error(
-            "An annotation owner changed while your markers were being cleared.",
-          );
-        }
-        const request = buildAnnotationDeleteRequest({
-          sessionId: current.session_id,
-          tableId: current.table_id,
-          expectedRevision: current.revision,
-          annotationId,
-        });
-        await submitMutation(request);
-      }
+      await clearUnlockedOwnedAnnotations({
+        participantId: input.participant.participant_id,
+        readCurrentView: requireCurrentView,
+        remove: async (current, target) => {
+          const request = buildAnnotationDeleteRequest({
+            sessionId: current.session_id,
+            tableId: current.table_id,
+            expectedRevision: current.revision,
+            annotationId: target.annotation_id,
+          });
+          await submitMutation(request);
+        },
+      });
     } catch (clearError) {
       reportMutationError(clearError, "review the remaining markers and clear again");
       throw clearError;
@@ -418,25 +474,54 @@ export function useVttAnnotations(input: {
     submitMutation,
   ]);
 
+  const presentedAnnotations = useMemo(
+    () =>
+      view !== null &&
+      annotationViewMatchesIdentity(view, {
+        sessionId: input.sessionId,
+        tableId: input.tableId,
+        sceneId: input.sceneId,
+      }) &&
+      status !== "loading" &&
+      status !== "unavailable" &&
+      status !== "error"
+        ? view.annotations
+        : [],
+    [input.sceneId, input.sessionId, input.tableId, status, view],
+  );
   const pings = useMemo(
     () =>
-      (view?.annotations.filter(
+      presentedAnnotations.filter(
         (annotation): annotation is PingAnnotation =>
           annotation.annotation_type === "ping",
-      ) ?? []),
-    [view],
+      ),
+    [presentedAnnotations],
   );
   const templates = useMemo(
     () =>
-      (view?.annotations.filter(
+      presentedAnnotations.filter(
         (annotation): annotation is AreaTemplateAnnotation =>
           annotation.annotation_type !== "ping" &&
-          annotation.annotation_type !== "ruler",
-      ) ?? []),
-    [view],
+          annotation.annotation_type !== "ruler" &&
+          !isDrawingAnnotation(annotation),
+      ),
+    [presentedAnnotations],
+  );
+  const drawings = useMemo(
+    () =>
+      presentedAnnotations.filter(
+        (annotation): annotation is DrawingAnnotation =>
+          isDrawingAnnotation(annotation),
+      ),
+    [presentedAnnotations],
   );
   const available =
     view !== null &&
+    annotationViewMatchesIdentity(view, {
+      sessionId: input.sessionId,
+      tableId: input.tableId,
+      sceneId: input.sceneId,
+    }) &&
     status !== "loading" &&
     status !== "unavailable" &&
     status !== "error";
@@ -446,9 +531,10 @@ export function useVttAnnotations(input: {
 
   return {
     view,
-    annotations: view?.annotations ?? [],
+    annotations: presentedAnnotations,
     pings,
     templates,
+    drawings,
     status,
     error,
     pending,
@@ -462,6 +548,7 @@ export function useVttAnnotations(input: {
       canDeleteParticipantRecord(input.participant, authorId),
     placePing,
     placeAnnotation,
+    unlockDrawing,
     removeAnnotation,
     clearLocalAnnotations,
     retry: () => {

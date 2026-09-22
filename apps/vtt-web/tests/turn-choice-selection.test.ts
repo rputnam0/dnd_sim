@@ -5,7 +5,7 @@ import {
   initialTurnSelection,
   selectedTargetIdsForChoice,
 } from "../app/turn-choice-selection";
-import type { TurnChoices } from "../app/vtt-client";
+import type { TurnActionChoice, TurnChoices } from "../app/vtt-client";
 
 const choices: TurnChoices = {
   schema_version: "dnd.turn-choices.v1",
@@ -52,7 +52,7 @@ test("keeps targetless and self-resolving modes targetless in declarations", () 
     selectable_target_ids: ["vela_quill"],
     legal_target_ids: ["vela_quill"],
     reason: null,
-  } as const;
+  } satisfies TurnActionChoice;
 
   assert.deepEqual(selectedTargetIdsForChoice(selfChoice, "vela_quill"), []);
 });
