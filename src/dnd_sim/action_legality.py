@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import copy
 import logging
-from typing import Any
+import random
+from dataclasses import dataclass
+from typing import Any, Callable
 
+from dnd_sim import spell_runtime
 from dnd_sim.models import ActionDefinition, ActorRuntimeState, SpellCastRequest
 from dnd_sim.spatial import distance_chebyshev
 from dnd_sim.strategy_api import DeclaredAction, ReadyDeclaration, TargetRef, TurnDeclaration
+from dnd_sim.turn_kernel import CombatTurnContext, CombatTurnPrompt
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +31,140 @@ class TurnDeclarationValidationError(ValueError):
         self.message = message
         self.details = dict(details or {})
         super().__init__(f"{code} [{actor_id}:{field}] {message}")
+
+
+@dataclass(frozen=True, slots=True)
+class CombatActionChoice:
+    """One declaration-compatible action and its authoritative target choices."""
+
+    action_name: str
+    action_cost: str
+    target_mode: str
+    requires_explicit_targets: bool
+    selectable_target_ids: tuple[str, ...]
+    legal_target_ids: tuple[str, ...]
+
+
+def _target_ids_for_prompt_action(
+    *,
+    actor: ActorRuntimeState,
+    action: ActionDefinition,
+    actors: dict[str, ActorRuntimeState],
+    active_hazards: list[dict[str, Any]],
+    obstacles: list[Any],
+    light_level: str,
+    resolve_targets_for_action: Callable[..., list[ActorRuntimeState]],
+    filter_targets_in_range: Callable[..., list[ActorRuntimeState]],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    selectable_target_ids: list[str] = []
+    legal_target_ids: list[str] = []
+    for target_id in sorted(actors):
+        requested = [TargetRef(actor_id=target_id)]
+        structurally_resolved_targets = resolve_targets_for_action(
+            rng=random.Random(0),
+            actor=actor,
+            action=action,
+            actors=actors,
+            requested=requested,
+            # Selection deliberately precedes current-position visibility and
+            # line-of-effect checks. Exact legality below receives the real
+            # obstacle set through the normal resolver/filter pipeline.
+            obstacles=[],
+            spell_cast_request=None,
+        )
+        structurally_resolved_targets = [
+            target for target in structurally_resolved_targets if target.actor_id == target_id
+        ]
+        selectable = bool(structurally_resolved_targets)
+        resolved_targets = spell_runtime.resolve_action_targets(
+            rng=random.Random(0),
+            actor=actor,
+            action=action,
+            actors=actors,
+            requested=requested,
+            obstacles=obstacles,
+            active_hazards=active_hazards,
+            light_level=light_level,
+            spell_cast_request=None,
+            resolve_targets_for_action=resolve_targets_for_action,
+            filter_targets_in_range=filter_targets_in_range,
+        )
+        legal = any(target.actor_id == target_id for target in resolved_targets)
+        if selectable or legal:
+            selectable_target_ids.append(target_id)
+        if legal:
+            legal_target_ids.append(target_id)
+    return tuple(selectable_target_ids), tuple(legal_target_ids)
+
+
+def bind_prompt_action_choice_enumerator(
+    action_available: Callable[..., bool],
+    resolve_targets_for_action: Callable[..., list[ActorRuntimeState]],
+    filter_targets_in_range: Callable[..., list[ActorRuntimeState]],
+) -> Callable[..., tuple[CombatActionChoice, ...]]:
+    """Bind private runtime predicates behind one read-only public enumerator."""
+
+    def enumerate_prompt_action_choices(
+        *,
+        context: CombatTurnContext,
+        prompt: CombatTurnPrompt,
+    ) -> tuple[CombatActionChoice, ...]:
+        """Return choices in canonical actor action order without runtime side effects."""
+
+        if not isinstance(prompt, CombatTurnPrompt):
+            raise TypeError("prompt must be a CombatTurnPrompt")
+        source_actor = context.actors.get(prompt.actor_id)
+        if source_actor is None:
+            raise ValueError(f"Unknown prompted combat-turn actor: {prompt.actor_id}")
+        expected_turn_token = f"{context.round_number}:{source_actor.actor_id}"
+        if prompt.round_number != context.round_number or prompt.turn_token != expected_turn_token:
+            raise ValueError("Combat turn prompt does not match the current turn context")
+
+        # Legality probes receive detached runtime inputs. They cannot mutate the
+        # canonical actors, hazards, obstacles, or timing engine, and no caller RNG
+        # enters this boundary.
+        actors = copy.deepcopy(context.actors)
+        active_hazards = copy.deepcopy(context.active_hazards)
+        obstacles = copy.deepcopy(context.obstacles)
+        actor = actors[prompt.actor_id]
+
+        choices: list[CombatActionChoice] = []
+        seen_names: set[str] = set()
+        for action in actor.actions:
+            # Declarations resolve the first matching action name, so later
+            # duplicates are not independently selectable.
+            if action.name in seen_names:
+                continue
+            seen_names.add(action.name)
+            if action.action_cost not in {"action", "bonus", "none"}:
+                continue
+            if not action_available(actor, action, turn_token=prompt.turn_token):
+                continue
+            selectable_target_ids, legal_target_ids = _target_ids_for_prompt_action(
+                actor=actor,
+                action=action,
+                actors=actors,
+                active_hazards=active_hazards,
+                obstacles=obstacles,
+                light_level=context.light_level,
+                resolve_targets_for_action=resolve_targets_for_action,
+                filter_targets_in_range=filter_targets_in_range,
+            )
+            choices.append(
+                CombatActionChoice(
+                    action_name=action.name,
+                    action_cost=action.action_cost,
+                    target_mode=action.target_mode,
+                    requires_explicit_targets=spell_runtime.mode_requires_explicit_targets(
+                        action.target_mode
+                    ),
+                    selectable_target_ids=selectable_target_ids,
+                    legal_target_ids=legal_target_ids,
+                )
+            )
+        return tuple(choices)
+
+    return enumerate_prompt_action_choices
 
 
 def validate_strategy_instance(strategy: Any) -> None:

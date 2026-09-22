@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 _EXPLICIT_TARGET_MODES = {
     "single_enemy",
     "single_ally",
+    "single_creature",
     "n_enemies",
     "n_allies",
     "random_enemy",
@@ -273,22 +274,65 @@ def _is_action_legal(actor: ActorView, action: dict[str, Any]) -> bool:
     return _can_pay_resource_cost(actor, action)
 
 
-def _living_pool_for_mode(
+def _stabilize_effects(action: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        effect
+        for key in ("effects", "mechanics")
+        for effect in action.get(key, [])
+        if isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).strip().lower() == "stabilize"
+    ]
+
+
+def _eligible_stabilize_target(
+    target: ActorView,
+    effects: list[dict[str, Any]],
+) -> bool:
+    if target.dead or target.hp != 0 or target.stable or target.uses_death_saves is False:
+        return False
+    creature_type = target.creature_type.strip().lower()
+    return any(
+        creature_type
+        not in {str(entry).strip().lower() for entry in effect.get("excluded_creature_types", [])}
+        for effect in effects
+    )
+
+
+def _target_pool_for_mode(
     actor: ActorView,
     state: BattleStateView,
     *,
+    action: dict[str, Any],
     target_mode: str,
 ) -> list[ActorView]:
-    living = [view for view in state.actors.values() if view.hp > 0]
-    enemies = [view for view in living if view.team != actor.team]
-    allies = [view for view in living if view.team == actor.team]
+    stabilize_effects = _stabilize_effects(action)
+    has_targeted_healing = any(
+        isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).strip().lower() == "heal"
+        and str(effect.get("target", "target")).strip().lower() == "target"
+        for key in ("effects", "mechanics")
+        for effect in action.get(key, [])
+    )
+    if stabilize_effects or has_targeted_healing:
+        eligible = [
+            view
+            for view in state.actors.values()
+            if _eligible_stabilize_target(view, stabilize_effects)
+            or (has_targeted_healing and not view.dead and view.hp >= 0)
+        ]
+    else:
+        eligible = [view for view in state.actors.values() if view.hp > 0 and not view.dead]
+    if not bool(action.get("include_self", False)):
+        eligible = [view for view in eligible if view.actor_id != actor.actor_id]
+    enemies = [view for view in eligible if view.team != actor.team]
+    allies = [view for view in eligible if view.team == actor.team]
 
     if target_mode in {"single_enemy", "n_enemies", "random_enemy", "all_enemies"}:
         return sorted(enemies, key=lambda entry: entry.actor_id)
     if target_mode in {"single_ally", "n_allies", "random_ally", "all_allies"}:
         return sorted(allies, key=lambda entry: entry.actor_id)
-    if target_mode == "all_creatures":
-        return sorted(living, key=lambda entry: entry.actor_id)
+    if target_mode in {"single_creature", "all_creatures"}:
+        return sorted(eligible, key=lambda entry: entry.actor_id)
     return []
 
 
@@ -302,12 +346,23 @@ def _enumerate_target_sets(
     if target_mode == "self":
         return [(actor.actor_id,)]
 
-    pool = _living_pool_for_mode(actor, state, target_mode=target_mode)
+    pool = _target_pool_for_mode(
+        actor,
+        state,
+        action=action,
+        target_mode=target_mode,
+    )
     reachable = [target for target in pool if _can_reach_target(actor, action, target)]
     if not reachable:
         return []
 
-    if target_mode in {"single_enemy", "single_ally", "random_enemy", "random_ally"}:
+    if target_mode in {
+        "single_enemy",
+        "single_ally",
+        "single_creature",
+        "random_enemy",
+        "random_ally",
+    }:
         return [(target.actor_id,) for target in reachable]
 
     if target_mode in {"n_enemies", "n_allies"}:

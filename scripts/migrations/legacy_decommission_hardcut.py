@@ -6,7 +6,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from dnd_sim.characters import canonical_class_level_text, normalize_class_levels, parse_class_levels
+from dnd_sim.characters import (
+    canonical_class_level_text,
+    normalize_class_levels,
+    parse_class_levels,
+)
 from dnd_sim.monster_backfill import backfill_monster_payload
 from dnd_sim.spells import canonicalize_spell_payload, spell_lookup_key
 
@@ -169,7 +173,9 @@ def _spell_richness(payload: dict[str, Any]) -> tuple[int, int]:
     return score, len(str(payload.get("description", "")))
 
 
-def _choose_spell_winner(candidates: list[tuple[Path, dict[str, Any]]]) -> tuple[Path, dict[str, Any]]:
+def _choose_spell_winner(
+    candidates: list[tuple[Path, dict[str, Any]]],
+) -> tuple[Path, dict[str, Any]]:
     ranked = sorted(
         candidates,
         key=lambda row: (
@@ -256,7 +262,9 @@ def migrate_characters(characters_dir: Path) -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run legacy decommission canonical data migration.")
+    parser = argparse.ArgumentParser(
+        description="Run legacy decommission canonical data migration."
+    )
     parser.add_argument("--repo-root", default=".", help="Repository root path.")
     args = parser.parse_args()
 

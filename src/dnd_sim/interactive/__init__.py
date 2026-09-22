@@ -19,20 +19,68 @@ from .contracts import (
     SessionEvent,
     SessionSnapshot,
 )
-from .session import EngineSession, EngineSessionDriver, EngineSessionError, EngineTransition
+from .dnd_contracts import (
+    DECLARATION_COMMAND_KIND,
+    TURN_CHOICES_SCHEMA_VERSION,
+    ActionChoicePayload,
+    MovementChoicePayload,
+    TurnChoicesPayload,
+    TurnDeclarationPayload,
+)
+from .dnd_encounter_driver import (
+    COMBAT_CONTROL_COMMAND_KIND,
+    DND_ENCOUNTER_STATE_SCHEMA_VERSION,
+    START_ENCOUNTER_COMMAND_KIND,
+    DndCombatEncounterDriver,
+    DndCombatEncounterState,
+)
+from .dnd_state_codec import (
+    ActorStateCodecError,
+    decode_actor_runtime_state,
+    decode_actor_runtime_state_map,
+    encode_actor_runtime_state,
+    encode_actor_runtime_state_map,
+)
+from .dnd_turn_driver import (
+    DND_TURN_STATE_SCHEMA_VERSION,
+    PREPARE_TURN_COMMAND_KIND,
+    DndCombatTurnDriver,
+    DndCombatTurnState,
+)
+from .session import (
+    EngineSession,
+    EngineSessionDriver,
+    EngineSessionError,
+    EngineSessionProjectionDriver,
+    EngineTransition,
+)
 
 __all__ = [
+    "ActorStateCodecError",
     "COMMAND_SCHEMA_VERSION",
+    "COMBAT_CONTROL_COMMAND_KIND",
+    "DECLARATION_COMMAND_KIND",
+    "DND_ENCOUNTER_STATE_SCHEMA_VERSION",
+    "DND_TURN_STATE_SCHEMA_VERSION",
     "EVENT_SCHEMA_VERSION",
+    "PREPARE_TURN_COMMAND_KIND",
     "REACTION_SCHEMA_VERSION",
     "RECEIPT_SCHEMA_VERSION",
     "RNG_ALGORITHM",
     "SNAPSHOT_SCHEMA_VERSION",
+    "START_ENCOUNTER_COMMAND_KIND",
+    "TURN_CHOICES_SCHEMA_VERSION",
+    "ActionChoicePayload",
     "CommandReceipt",
     "CommandRecord",
+    "DndCombatTurnDriver",
+    "DndCombatTurnState",
+    "DndCombatEncounterDriver",
+    "DndCombatEncounterState",
     "EngineSession",
     "EngineSessionDriver",
     "EngineSessionError",
+    "EngineSessionProjectionDriver",
     "EngineTransition",
     "EngineVersionPins",
     "EventDraft",
@@ -43,4 +91,11 @@ __all__ = [
     "SessionCommand",
     "SessionEvent",
     "SessionSnapshot",
+    "MovementChoicePayload",
+    "TurnChoicesPayload",
+    "TurnDeclarationPayload",
+    "decode_actor_runtime_state",
+    "decode_actor_runtime_state_map",
+    "encode_actor_runtime_state",
+    "encode_actor_runtime_state_map",
 ]

@@ -17,6 +17,7 @@ from dnd_sim.interactive import (
     CommandReceipt,
     EngineSession,
     EngineSessionError,
+    EngineSessionProjectionDriver,
     EngineTransition,
     EngineVersionPins,
     EventDraft,
@@ -150,6 +151,22 @@ class SlowCounterDriver(CounterDriver):
     ) -> EngineTransition:
         time.sleep(0.02)
         return super().commit(state, command, rng)
+
+
+class MutatingProjectionDriver(CounterDriver):
+    def project_state(self, state: dict[str, Any]) -> Mapping[str, Any]:
+        current_total = int(state.get("total", 0))
+        state["total"] = 999
+        return {
+            "current_total": current_total,
+            "nested": {"items": [1]},
+        }
+
+
+class InvalidProjectionDriver(CounterDriver):
+    def project_state(self, state: dict[str, Any]) -> Mapping[str, Any]:
+        state["total"] = 999
+        return {"unsupported": object()}
 
 
 class EmptyEventDriver(CounterDriver):
@@ -337,6 +354,36 @@ def test_preview_is_read_only_and_does_not_consume_canonical_rng() -> None:
     assert after_preview == without_preview
     assert preview.projection["predicted_roll"] == after_preview.events[0].payload["roll"]
     assert previewed.snapshot() == direct.snapshot()
+
+
+def test_projection_is_optional_strict_and_isolated_from_authoritative_state() -> None:
+    driver = MutatingProjectionDriver()
+    assert isinstance(driver, EngineSessionProjectionDriver)
+    session = EngineSession("session-1", {"total": 7}, driver, seed=17)
+    before = session.snapshot()
+
+    projection = session.projection
+
+    assert projection == {"current_total": 7, "nested": {"items": [1]}}
+    projection["current_total"] = 999
+    projection["nested"]["items"].append(2)
+    assert session.projection == {"current_total": 7, "nested": {"items": [1]}}
+    assert session.snapshot() == before
+
+
+def test_projection_reports_unsupported_and_invalid_drivers_without_mutation() -> None:
+    unsupported = EngineSession("session-1", {"total": 7}, CounterDriver(), seed=17)
+    assert not isinstance(CounterDriver(), EngineSessionProjectionDriver)
+    with pytest.raises(EngineSessionError) as unsupported_error:
+        _ = unsupported.projection
+    assert unsupported_error.value.code == "projection_unsupported"
+
+    invalid = EngineSession("session-1", {"total": 7}, InvalidProjectionDriver(), seed=17)
+    before = invalid.snapshot()
+    with pytest.raises(EngineSessionError) as invalid_error:
+        _ = invalid.projection
+    assert invalid_error.value.code == "invalid_projection"
+    assert invalid.snapshot() == before
 
 
 def test_commit_advances_revision_and_emits_ordered_deterministic_events() -> None:

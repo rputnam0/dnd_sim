@@ -3,17 +3,17 @@ name: content-capability-gate
 on:
   pull_request:
     paths:
-      - "src/dnd_sim/io.py"
+      - "db/rules/2014/**"
+      - "src/dnd_sim/**"
       - "scripts/content/**"
-      - "tests/test_capability_gates.py"
-      - "tests/fixtures/capability_gates/**"
+      - "tests/**"
       - ".github/workflows/content-capability-gate.yml"
   push:
     paths:
-      - "src/dnd_sim/io.py"
+      - "db/rules/2014/**"
+      - "src/dnd_sim/**"
       - "scripts/content/**"
-      - "tests/test_capability_gates.py"
-      - "tests/fixtures/capability_gates/**"
+      - "tests/**"
       - ".github/workflows/content-capability-gate.yml"
 
 jobs:

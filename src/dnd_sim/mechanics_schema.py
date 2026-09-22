@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Collection, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,7 @@ KNOWN_EFFECT_TYPES = {
     "damage",
     "heal",
     "temp_hp",
+    "stabilize",
     "apply_condition",
     "remove_condition",
     "resource_change",
@@ -57,6 +59,7 @@ EXECUTABLE_EFFECT_TYPES = {
     "damage",
     "heal",
     "temp_hp",
+    "stabilize",
     "apply_condition",
     "remove_condition",
     "resource_change",
@@ -122,6 +125,14 @@ _SUPPORTED_STACK_POLICY_ALIASES: dict[str, str] = {
     "by_source": "refresh",
 }
 _SUPPORTED_SAVE_ABILITIES = {"str", "dex", "con", "int", "wis", "cha"}
+_SUPPORTED_EFFECT_TARGETS = {"source", "target"}
+_SUPPORTED_EFFECT_APPLICATIONS = {
+    "always",
+    "hit",
+    "miss",
+    "save_fail",
+    "save_success",
+}
 
 _ACTION_GROUPS = (
     "actions",
@@ -130,18 +141,65 @@ _ACTION_GROUPS = (
     "legendary_actions",
     "lair_actions",
 )
+_SUPPORTED_MONSTER_ACTION_TYPES = {"attack", "save", "utility"}
 
 
 def _canonical_effect_type(effect_type: str) -> str:
     return str(effect_type).strip().lower()
 
 
-def _iter_json_payloads(path: Path) -> list[tuple[Path, dict[str, Any]]]:
+def validate_effect_specific_mechanic_fields(
+    row: Mapping[str, Any],
+    *,
+    path: str,
+) -> list[str]:
+    """Validate runtime fields whose contract depends on an effect type."""
+
+    effect_type = _canonical_effect_type(row.get("effect_type", ""))
+    if effect_type != "stabilize":
+        return []
+
+    issues: list[str] = []
+    target = _canonical_effect_type(row.get("target", "target"))
+    if target not in _SUPPORTED_EFFECT_TARGETS:
+        issues.append(f"{path}.target '{target}' is unsupported for stabilize")
+
+    apply_on = _canonical_effect_type(row.get("apply_on", "always"))
+    if apply_on not in _SUPPORTED_EFFECT_APPLICATIONS:
+        issues.append(f"{path}.apply_on '{apply_on}' is unsupported for stabilize")
+
+    check_skill = row.get("check_skill")
+    if check_skill is not None:
+        normalized_skill = _canonical_effect_type(check_skill)
+        if normalized_skill != "medicine":
+            issues.append(f"{path}.check_skill '{normalized_skill}' is unsupported for stabilize")
+
+    if "check_dc" in row:
+        check_dc = row.get("check_dc")
+        if isinstance(check_dc, bool) or not isinstance(check_dc, int) or check_dc < 1:
+            issues.append(f"{path}.check_dc must be an integer greater than or equal to 1")
+
+    if "excluded_creature_types" in row:
+        excluded = row.get("excluded_creature_types")
+        if not isinstance(excluded, list) or not all(
+            isinstance(entry, str) and bool(entry.strip()) for entry in excluded
+        ):
+            issues.append(f"{path}.excluded_creature_types must be a list of strings")
+
+    return issues
+
+
+def _iter_json_payloads(
+    path: Path,
+    *,
+    included_files: Collection[Path] | None = None,
+) -> list[tuple[Path, dict[str, Any]]]:
     payloads: list[tuple[Path, dict[str, Any]]] = []
     if not path.exists():
         return payloads
 
-    for file_path in sorted(path.glob("*.json")):
+    candidates = path.glob("*.json") if included_files is None else included_files
+    for file_path in sorted(candidates):
         try:
             raw = json.loads(file_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -182,6 +240,8 @@ def _validate_mechanics_list(mechanics: Any, *, prefix: str) -> list[str]:
         for required_field in sorted(required_fields):
             if required_field not in row:
                 issues.append(f"{path}.{required_field} is required for {normalized_effect}")
+
+        issues.extend(validate_effect_specific_mechanic_fields(row, path=path))
 
         if normalized_effect in {"summon", "conjure"}:
             has_identity = any(
@@ -239,8 +299,39 @@ def validate_rule_mechanics_payload(*, kind: str, payload: dict[str, Any]) -> li
     return _validate_mechanics_list(payload.get("mechanics"), prefix="mechanics")
 
 
+def monster_has_executable_action_kit(payload: dict[str, Any]) -> bool:
+    """Return whether a monster declares at least one runtime-dispatchable action.
+
+    This is intentionally a minimum integrity check. Detailed action/effect validation remains
+    responsible for proving that each declared action's payload is executable.
+    """
+
+    for group in _ACTION_GROUPS:
+        actions = payload.get(group, [])
+        if not isinstance(actions, list):
+            continue
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            name = str(action.get("name", "")).strip()
+            action_type = str(action.get("action_type", "")).strip().lower()
+            if name and action_type in _SUPPORTED_MONSTER_ACTION_TYPES:
+                return True
+
+    innate_spells = payload.get("innate_spellcasting", [])
+    if isinstance(innate_spells, list):
+        return any(
+            isinstance(entry, dict) and bool(str(entry.get("spell", "")).strip())
+            for entry in innate_spells
+        )
+    return False
+
+
 def validate_monster_mechanics_payload(payload: dict[str, Any]) -> list[str]:
     issues: list[str] = []
+
+    if not monster_has_executable_action_kit(payload):
+        issues.append("monster must define at least one executable action or innate spell")
 
     for group in _ACTION_GROUPS:
         actions = payload.get(group, [])
@@ -304,6 +395,7 @@ def build_mechanics_coverage_report(
     traits_dir: Path,
     spells_dir: Path,
     monsters_dir: Path,
+    included_files_by_kind: Mapping[str, Collection[Path]] | None = None,
 ) -> dict[str, Any]:
     """Build mechanics coverage report across canonical rule JSON directories."""
 
@@ -314,11 +406,31 @@ def build_mechanics_coverage_report(
     }
     unsupported_effect_types: set[str] = set()
 
-    sources = [
-        ("trait", _iter_json_payloads(traits_dir), _collect_rule_mechanics),
-        ("spell", _iter_json_payloads(spells_dir), _collect_rule_mechanics),
-        ("monster", _iter_json_payloads(monsters_dir), _collect_monster_mechanics),
-    ]
+    source_directories = {
+        "trait": traits_dir,
+        "spell": spells_dir,
+        "monster": monsters_dir,
+    }
+    collectors = {
+        "trait": _collect_rule_mechanics,
+        "spell": _collect_rule_mechanics,
+        "monster": _collect_monster_mechanics,
+    }
+    sources = []
+    for kind in ("trait", "spell", "monster"):
+        included_files = (
+            None if included_files_by_kind is None else included_files_by_kind.get(kind, ())
+        )
+        sources.append(
+            (
+                kind,
+                _iter_json_payloads(
+                    source_directories[kind],
+                    included_files=included_files,
+                ),
+                collectors[kind],
+            )
+        )
 
     for kind, payloads, collector in sources:
         ingested = 0
@@ -357,22 +469,36 @@ def validate_mechanics_directories(
     traits_dir: Path,
     spells_dir: Path,
     monsters_dir: Path,
+    included_files_by_kind: Mapping[str, Collection[Path]] | None = None,
 ) -> dict[str, dict[str, list[str]]]:
     """Validate mechanics JSON entries and return file-scoped issues."""
 
     out: dict[str, dict[str, list[str]]] = {"trait": {}, "spell": {}, "monster": {}}
 
-    for file_path, payload in _iter_json_payloads(traits_dir):
+    trait_files = (
+        None if included_files_by_kind is None else included_files_by_kind.get("trait", ())
+    )
+    spell_files = (
+        None if included_files_by_kind is None else included_files_by_kind.get("spell", ())
+    )
+    monster_files = (
+        None if included_files_by_kind is None else included_files_by_kind.get("monster", ())
+    )
+
+    for file_path, payload in _iter_json_payloads(traits_dir, included_files=trait_files):
         issues = validate_rule_mechanics_payload(kind="trait", payload=payload)
         if issues:
             out["trait"][str(file_path)] = issues
 
-    for file_path, payload in _iter_json_payloads(spells_dir):
+    for file_path, payload in _iter_json_payloads(spells_dir, included_files=spell_files):
         issues = validate_rule_mechanics_payload(kind="spell", payload=payload)
         if issues:
             out["spell"][str(file_path)] = issues
 
-    for file_path, payload in _iter_json_payloads(monsters_dir):
+    for file_path, payload in _iter_json_payloads(
+        monsters_dir,
+        included_files=monster_files,
+    ):
         issues = validate_monster_mechanics_payload(payload)
         if issues:
             out["monster"][str(file_path)] = issues

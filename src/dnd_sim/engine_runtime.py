@@ -7,6 +7,8 @@ import math
 import random
 import re
 import statistics
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from functools import lru_cache
 from pathlib import Path
@@ -18,6 +20,18 @@ from dnd_sim.characters import (
     total_character_level,
 )
 from dnd_sim.class_progression import build_character_progression
+from dnd_sim.combat_roll_runtime import (
+    bound_roll_recorder as _bound_roll_recorder,
+    capture_roll_recorder as _capture_roll_recorder,
+    captured_damage_fact as _captured_damage_fact,
+    combat_roll_journal_scope,
+    damage_packet_identity as _damage_packet_identity,
+    finalized_attack_fact,
+    finalized_damage_fact,
+    finalized_healing_fact,
+    first_generated_raw_modifier_face as _first_generated_raw_modifier_face,
+    record_saving_throw,
+)
 from dnd_sim.exploration_interaction import (
     AwarenessState,
     ExplorationInteractionState,
@@ -47,6 +61,11 @@ from dnd_sim.models import (
     SimulationSummary,
     SummaryMetric,
     TrialResult,
+)
+from dnd_sim.roll_journal import (
+    BoundRollJournalRecorder,
+    D20RollFact,
+    DamageRollFact,
 )
 from dnd_sim.spatial import (
     AABB,
@@ -89,6 +108,8 @@ from dnd_sim.rules_2014 import (
     DamageRollEvent,
     ListenerSubscription,
     ReactionWindowOpenedEvent,
+    RollHookTrace,
+    advance_stable_recovery,
     apply_damage,
     apply_damage_bundle,
     attack_roll,
@@ -100,7 +121,9 @@ from dnd_sim.rules_2014 import (
     roll_damage,
     roll_damage_packet,
     run_concentration_check,
+    stabilize_creature,
 )
+from dnd_sim.rules_profiles import ActorKind, SupportedRulesProfile
 from dnd_sim.strategy_api import (
     ActorView,
     BattleStateView,
@@ -112,7 +135,8 @@ from dnd_sim.strategy_api import (
 from dnd_sim.action_legality import (
     TurnDeclarationValidationError,
     apply_declared_reaction_policy_or_error as _apply_declared_reaction_policy_or_error_impl,
-    declared_action_or_error as _declared_action_or_error_impl,
+    bind_prompt_action_choice_enumerator as _bind_prompt_action_choice_enumerator,
+    declared_action_or_error as _declared_action_or_error,
     declared_extra_resource_cost_or_error as _declared_extra_resource_cost_or_error_impl,
     declared_movement_path_or_error as _declared_movement_path_or_error_impl,
     declared_spell_request_or_error as _declared_spell_request_or_error_impl,
@@ -140,6 +164,7 @@ from dnd_sim.engine_resources import (
     iter_spell_slot_levels_desc as _iter_spell_slot_levels_desc_impl,
     recover_spell_slots_with_budget as _recover_spell_slots_with_budget_impl,
 )
+
 from dnd_sim.engine_spell_inference import (
     area_template_uses_self_origin as _area_template_uses_self_origin,
     description_is_probably_non_single_target as _description_is_probably_non_single_target,
@@ -158,9 +183,16 @@ from dnd_sim.spells import (
     spell_lookup_key as _canonical_spell_lookup_key,
 )
 from dnd_sim.telemetry import build_event_envelope
+from dnd_sim.turn_kernel import (
+    CombatTurnContext,
+    CombatTurnDecision,
+    CombatTurnDecisionProvider,
+    CombatTurnPrompt,
+    CombatTurnResult,
+    DeclaredTurnRuntimeState,
+)
 
 logger = logging.getLogger(__name__)
-
 
 _CONTROL_BLOCKING_CONDITIONS = {
     "incapacitated",
@@ -1139,6 +1171,7 @@ def _roll_damage_with_channel_divinity_hooks(
     resources_spent: dict[str, dict[str, int]],
     crit: bool = False,
     empowered_rerolls: int = 0,
+    journal_recorder: BoundRollJournalRecorder | None = None,
 ) -> int:
     resolved_expr = _resolve_runtime_roll_expression(actor=actor, expr=expr)
     normalized_type = str(damage_type).lower()
@@ -1152,6 +1185,7 @@ def _roll_damage_with_channel_divinity_hooks(
         empowered_rerolls=empowered_rerolls,
         source=actor,
         damage_type=damage_type,
+        journal_recorder=journal_recorder,
     )
 
 
@@ -1183,6 +1217,19 @@ def _append_damage_packet(
             crit_expanded=bool(crit_expanded),
         )
     )
+
+
+def _record_damage_packet_capture(
+    *,
+    captures: dict[tuple[str, int], DamageRollFact],
+    bundle: DamageBundle,
+    previous_packet_count: int,
+    fact: DamageRollFact | None,
+) -> None:
+    if fact is None or len(bundle.packets) != previous_packet_count + 1:
+        return
+    packet_index = len(bundle.packets) - 1
+    captures[_damage_packet_identity(bundle.packets, packet_index)] = fact
 
 
 _ROGUE_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
@@ -1908,7 +1955,39 @@ def _apply_artificer_infusion_passives(actor: ActorRuntimeState) -> None:
         _ensure_action(actor, _construct_command_action())
 
 
-def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRuntimeState:
+def _resolve_actor_death_save_policy(
+    *,
+    actor_kind: ActorKind,
+    explicit: bool | None,
+    rules_profile: SupportedRulesProfile | None,
+    legacy_default: bool,
+) -> bool:
+    if rules_profile is not None:
+        return rules_profile.resolve_uses_death_saves(
+            actor_kind=actor_kind,
+            explicit=explicit,
+        )
+    return explicit if explicit is not None else legacy_default
+
+
+def _resolve_summon_death_save_policy(
+    source: ActorRuntimeState,
+    effect: dict[str, Any],
+) -> bool:
+    explicit = effect.get("uses_death_saves")
+    if not isinstance(explicit, bool):
+        return source.summon_uses_death_saves_default
+    if not source.death_save_overrides_allowed:
+        raise ValueError("rules profile does not allow explicit actor overrides")
+    return explicit
+
+
+def _build_construct_companion(
+    owner: ActorRuntimeState,
+    kind: str,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
+) -> ActorRuntimeState:
     proficiency = _calculate_proficiency_bonus(owner.level)
     if kind == "steel_defender":
         max_hp = max(1, 2 + owner.int_mod + (5 * owner.level))
@@ -1982,6 +2061,14 @@ def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRunt
         cha_mod=cha_mod,
         save_mods=save_mods,
         actions=[attack] + _get_standard_actions(),
+        uses_death_saves=_resolve_actor_death_save_policy(
+            actor_kind="construct",
+            explicit=None,
+            rules_profile=rules_profile,
+            legacy_default=False,
+        ),
+        summon_uses_death_saves_default=owner.summon_uses_death_saves_default,
+        death_save_overrides_allowed=owner.death_save_overrides_allowed,
         resources={},
         max_resources={},
         traits=traits,
@@ -1991,16 +2078,21 @@ def _build_construct_companion(owner: ActorRuntimeState, kind: str) -> ActorRunt
         allied_controller_id=owner.actor_id,
         requires_command=True,
         movement_modes={"walk": float(speed)},
+        creature_type="construct",
     )
     companion.position = owner.position
     companion.movement_remaining = float(speed)
     return companion
 
 
-def _build_construct_companions(owner: ActorRuntimeState) -> list[ActorRuntimeState]:
+def _build_construct_companions(
+    owner: ActorRuntimeState,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
+) -> list[ActorRuntimeState]:
     companions: list[ActorRuntimeState] = []
     for kind in sorted(_discover_construct_companion_kinds(owner)):
-        companions.append(_build_construct_companion(owner, kind))
+        companions.append(_build_construct_companion(owner, kind, rules_profile=rules_profile))
     return companions
 
 
@@ -3982,7 +4074,7 @@ def _extract_spells_from_raw_fields(character: dict[str, Any]) -> list[dict[str,
             hydrated["tags"] = list(dict.fromkeys(tags))
 
         if (
-            target_mode in {"single_enemy", "single_ally"}
+            target_mode in {"single_enemy", "single_ally", "single_creature"}
             and not hydrated.get("aoe_type")
             and not non_single_target
         ):
@@ -5593,6 +5685,28 @@ def _get_standard_actions() -> list[ActionDefinition]:
             tags=["standard_action"],
         ),
         ActionDefinition(
+            name="stabilize",
+            action_type="utility",
+            action_cost="action",
+            target_mode="single_creature",
+            reach_ft=5,
+            tags=[
+                "standard_action",
+                "medicine_check",
+                "requires_unstable_zero_hp",
+                "requires_line_of_effect",
+            ],
+            mechanics=[
+                {
+                    "effect_type": "stabilize",
+                    "target": "target",
+                    "apply_on": "always",
+                    "check_skill": "medicine",
+                    "check_dc": 10,
+                }
+            ],
+        ),
+        ActionDefinition(
             name="grapple",
             action_type="grapple",
             action_cost="action",
@@ -6275,6 +6389,8 @@ def _build_actor_from_character(
     character: dict[str, Any],
     traits_db: dict[str, dict[str, Any]] = None,
     item_catalog: dict[str, CanonicalItem] | None = None,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
 ) -> ActorRuntimeState:
     class_levels = _class_levels_from_character_payload(character)
     character_level = total_character_level(class_levels)
@@ -6306,8 +6422,32 @@ def _build_actor_from_character(
         cha_mod=ability_mods.get("cha", 0),
         save_mods=save_mods,
         actions=_build_character_actions(character) + _get_standard_actions(),
+        uses_death_saves=_resolve_actor_death_save_policy(
+            actor_kind="player_character",
+            explicit=(
+                character["uses_death_saves"]
+                if isinstance(character.get("uses_death_saves"), bool)
+                else None
+            ),
+            rules_profile=rules_profile,
+            legacy_default=True,
+        ),
+        summon_uses_death_saves_default=(
+            rules_profile.resolve_uses_death_saves(actor_kind="summon")
+            if rules_profile is not None
+            else False
+        ),
+        death_save_overrides_allowed=(
+            rules_profile.zero_hit_point_policy.allow_explicit_actor_override
+            if rules_profile is not None
+            else True
+        ),
         proficiencies={str(v).lower() for v in character.get("proficiencies", [])},
         expertise={str(v).lower() for v in character.get("expertise", [])},
+        skill_mods={
+            str(key).strip().lower(): int(value)
+            for key, value in (character.get("skill_mods", {}) or {}).items()
+        },
         resources=_extract_flat_resources(character),
         max_resources=_extract_flat_resources(character),
         traits=_resolve_character_traits(character, traits_db),
@@ -6320,6 +6460,7 @@ def _build_actor_from_character(
         speed_ft=int(character.get("speed_ft", 30)),
         movement_modes={"walk": float(int(character.get("speed_ft", 30)))},
         exhaustion_level=max(0, min(6, int(character.get("exhaustion_level", 0) or 0))),
+        creature_type=str(character.get("creature_type", "humanoid")).strip().lower() or "humanoid",
     )
     actor.hidden = bool(character.get("hidden", False))
     actor.surprised = bool(character.get("surprised", False))
@@ -6529,7 +6670,10 @@ def _build_enemy_innate_spell_actions(enemy: EnemyConfig) -> list[ActionDefiniti
 
 
 def _build_actor_from_enemy(
-    enemy: EnemyConfig, traits_db: dict[str, dict[str, Any]] = None
+    enemy: EnemyConfig,
+    traits_db: dict[str, dict[str, Any]] = None,
+    *,
+    rules_profile: SupportedRulesProfile | None = None,
 ) -> ActorRuntimeState:
     normalized_traits_db = {
         _normalize_trait_name(key): value for key, value in (traits_db or {}).items()
@@ -6625,6 +6769,22 @@ def _build_actor_from_enemy(
         cha_mod=_enemy_ability_mod("cha"),
         save_mods=dict(enemy.stat_block.save_mods),
         actions=actions,
+        uses_death_saves=_resolve_actor_death_save_policy(
+            actor_kind="monster",
+            explicit=getattr(enemy, "uses_death_saves", None),
+            rules_profile=rules_profile,
+            legacy_default=False,
+        ),
+        summon_uses_death_saves_default=(
+            rules_profile.resolve_uses_death_saves(actor_kind="summon")
+            if rules_profile is not None
+            else False
+        ),
+        death_save_overrides_allowed=(
+            rules_profile.zero_hit_point_policy.allow_explicit_actor_override
+            if rules_profile is not None
+            else True
+        ),
         damage_resistances={v.lower() for v in enemy.damage_resistances},
         damage_immunities={v.lower() for v in enemy.damage_immunities},
         damage_vulnerabilities={v.lower() for v in enemy.damage_vulnerabilities},
@@ -6635,6 +6795,10 @@ def _build_actor_from_enemy(
         legendary_actions_remaining=legendary_pool,
         proficiencies={str(v).lower() for v in enemy.script_hooks.get("proficiencies", [])},
         expertise={str(v).lower() for v in enemy.script_hooks.get("expertise", [])},
+        skill_mods={
+            str(key).strip().lower(): int(value)
+            for key, value in (enemy.script_hooks.get("skill_mods", {}) or {}).items()
+        },
         traits={
             _normalize_trait_name(trait): _normalize_trait_payload_for_runtime(
                 _normalize_trait_name(trait),
@@ -6644,6 +6808,9 @@ def _build_actor_from_enemy(
         },
         speed_ft=enemy_speed_ft,
         movement_modes={"walk": float(enemy_speed_ft)},
+        creature_type=(
+            str(getattr(enemy.identity, "creature_type", "unknown")).strip().lower() or "unknown"
+        ),
     )
     actor.hidden = bool(enemy.script_hooks.get("hidden", False))
     actor.surprised = bool(enemy.script_hooks.get("surprised", False))
@@ -6671,6 +6838,7 @@ def _build_actor_from_enemy(
 
 
 def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
+    advance_stable_recovery(actor, hours=1)
     if actor.hp > 0 and not actor.dead:
         actor.hp = min(actor.max_hp, actor.hp + healing)
 
@@ -6706,6 +6874,8 @@ def short_rest(actor: ActorRuntimeState, healing: int = 0) -> None:
 
 
 def long_rest(actor: ActorRuntimeState) -> None:
+    if actor.dead:
+        return
     _revert_wild_shape(actor)
     actor.hp = actor.max_hp
     actor.temp_hp = 0
@@ -6718,7 +6888,9 @@ def long_rest(actor: ActorRuntimeState) -> None:
     actor.effect_instance_seq = 0
     actor.death_failures = 0
     actor.death_successes = 0
-    actor.downed_count = 0
+    actor.stable = False
+    actor.was_downed = False
+    actor.stable_recovery_hours_remaining = None
     actor.concentrating = False
     actor.concentrated_targets.clear()
     actor.concentration_conditions.clear()
@@ -6853,7 +7025,15 @@ def _run_exploration_leg(
 
     travel_pace = _normalize_travel_pace(leg_config.get("travel_pace", "normal"))
     segments = _determine_exploration_segments(leg_config, travel_pace)
+    try:
+        elapsed_hours = max(0, int(leg_config.get("duration_hours", 0)))
+    except (TypeError, ValueError):
+        elapsed_hours = 0
     if segments <= 0:
+        if elapsed_hours > 0:
+            for actor in actors.values():
+                if actor.team == "party":
+                    advance_stable_recovery(actor, hours=elapsed_hours)
         return
 
     hazard_dc_modifier = _TRAVEL_PACE_HAZARD_DC_MODIFIER.get(travel_pace, 0)
@@ -6912,6 +7092,11 @@ def _run_exploration_leg(
                     resources_spent=resources_spent,
                 )
 
+    if elapsed_hours > 0:
+        for actor in actors.values():
+            if actor.team == "party":
+                advance_stable_recovery(actor, hours=elapsed_hours)
+
 
 def _build_actor_views(
     actors: dict[str, ActorRuntimeState],
@@ -6939,6 +7124,13 @@ def _build_actor_views(
                 hidden=actor.hidden,
                 detected_by=set(actor.detected_by),
                 surprised=actor.surprised,
+                dead=actor.dead,
+                stable=actor.stable,
+                uses_death_saves=actor.uses_death_saves,
+                death_successes=actor.death_successes,
+                death_failures=actor.death_failures,
+                stable_recovery_hours_remaining=actor.stable_recovery_hours_remaining,
+                creature_type=actor.creature_type,
             )
             for actor_id, actor in actors.items()
         },
@@ -6949,6 +7141,12 @@ def _build_actor_views(
 
 def _actor_defeated(actor: ActorRuntimeState) -> bool:
     return actor.dead or actor.hp <= 0
+
+
+def _actor_uses_death_saves(actor: ActorRuntimeState) -> bool:
+    if actor.uses_death_saves is not None:
+        return actor.uses_death_saves
+    return actor.team == "party"
 
 
 def _team_actors(actors: dict[str, ActorRuntimeState], *, team: str) -> list[ActorRuntimeState]:
@@ -7097,7 +7295,14 @@ def _actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
         "max_hp": actor.max_hp,
         "temp_hp": actor.temp_hp,
         "dead": actor.dead,
+        "stable": actor.stable,
+        "uses_death_saves": actor.uses_death_saves,
+        "death_successes": actor.death_successes,
+        "death_failures": actor.death_failures,
+        "stable_recovery_hours_remaining": actor.stable_recovery_hours_remaining,
         "downed_count": actor.downed_count,
+        "was_downed": actor.was_downed,
+        "creature_type": actor.creature_type,
         "conditions": sorted(actor.conditions),
         "resources": dict(sorted(actor.resources.items())),
         "hidden": actor.hidden,
@@ -7909,9 +8114,52 @@ def _action_can_target_downed_allies(action: ActionDefinition) -> bool:
             continue
         if effect.get("target") != "target":
             continue
-        if effect.get("effect_type") in {"heal", "temp_hp", "remove_condition", "resource_change"}:
+        if effect.get("effect_type") in {
+            "heal",
+            "temp_hp",
+            "stabilize",
+            "remove_condition",
+            "resource_change",
+        }:
             return True
     return False
+
+
+def _is_stabilize_action(action: ActionDefinition) -> bool:
+    return bool(_stabilize_effects(action))
+
+
+def _stabilize_effects(action: ActionDefinition) -> list[dict[str, Any]]:
+    return [
+        effect
+        for effect in [*action.effects, *action.mechanics]
+        if isinstance(effect, dict)
+        and str(effect.get("effect_type", "")).strip().lower() == "stabilize"
+    ]
+
+
+def _can_be_stabilized(target: ActorRuntimeState) -> bool:
+    return (
+        target.hp == 0
+        and not target.dead
+        and not target.stable
+        and target.uses_death_saves is not False
+    )
+
+
+def _stabilize_effect_allows_target(
+    effect: dict[str, Any],
+    target: ActorRuntimeState,
+) -> bool:
+    excluded_creature_types = {
+        str(creature_type).strip().lower()
+        for creature_type in effect.get("excluded_creature_types", [])
+        if str(creature_type).strip()
+    }
+    return (
+        _can_be_stabilized(target)
+        and target.creature_type.strip().lower() not in excluded_creature_types
+    )
 
 
 def _target_pool(
@@ -8206,6 +8454,13 @@ def _resolve_targets_for_action(
             for target in candidates
             if not any(_has_trait_marker(target, marker) for marker in excluded_target_traits)
         ]
+    stabilize_effects = _stabilize_effects(action)
+    if stabilize_effects:
+        candidates = [
+            target
+            for target in candidates
+            if any(_stabilize_effect_allows_target(effect, target) for effect in stabilize_effects)
+        ]
     if not candidates:
         return []
     by_id = {target.actor_id: target for target in candidates}
@@ -8328,21 +8583,6 @@ def _raise_turn_declaration_error(
     )
 
 
-def _declared_action_or_error(
-    actor: ActorRuntimeState,
-    declaration: DeclaredAction,
-    *,
-    field_prefix: str,
-    expected_cost: str,
-) -> ActionDefinition:
-    return _declared_action_or_error_impl(
-        actor=actor,
-        declaration=declaration,
-        field_prefix=field_prefix,
-        expected_cost=expected_cost,
-    )
-
-
 def _declared_targets_or_error(
     actor: ActorRuntimeState,
     declaration: DeclaredAction,
@@ -8455,13 +8695,24 @@ def _apply_declared_movement_or_error(
     light_level: str = "bright",
     round_number: int | None = None,
     turn_token: str | None = None,
+    declared_movement_distance_ft: float | None = None,
 ) -> None:
     if not movement_path:
         return
 
-    declared_distance = _path_distance(movement_path)
-    if declared_distance <= 0:
+    native_distance = _path_distance(movement_path)
+    if native_distance <= 0:
         return
+    declared_distance = (
+        native_distance if declared_movement_distance_ft is None else declared_movement_distance_ft
+    )
+    if (
+        not isinstance(declared_distance, (int, float))
+        or isinstance(declared_distance, bool)
+        or not math.isfinite(float(declared_distance))
+        or declared_distance < 0.0
+    ):
+        raise ValueError("declared_movement_distance_ft must be finite and non-negative")
 
     available_distance, crawling = _prepare_voluntary_movement(actor)
     if available_distance <= 0:
@@ -8485,7 +8736,8 @@ def _apply_declared_movement_or_error(
                 message="Declared movement passes through blocked space.",
             )
 
-    declared_cost = _path_movement_cost(movement_path, active_hazards, crawling=crawling)
+    native_cost = _path_movement_cost(movement_path, active_hazards, crawling=crawling)
+    declared_cost = native_cost * float(declared_distance) / native_distance
     if declared_cost > (available_distance + 1e-6):
         _raise_turn_declaration_error(
             actor=actor,
@@ -8733,6 +8985,7 @@ def _execute_declared_turn_or_error(
     round_number: int | None = None,
     turn_token: str | None = None,
     rule_trace: list[dict[str, Any]] | None = None,
+    declared_movement_distance_ft: float | None = None,
 ) -> None:
     movement_path = _declared_movement_path_or_error(actor, declaration)
     _apply_declared_movement_or_error(
@@ -8749,6 +9002,7 @@ def _execute_declared_turn_or_error(
         light_level=light_level,
         round_number=round_number,
         turn_token=turn_token,
+        declared_movement_distance_ft=declared_movement_distance_ft,
     )
     if actor.dead or actor.hp <= 0:
         return
@@ -8884,6 +9138,112 @@ def _execute_declared_turn_or_error(
             )
 
     _ = executed_primary
+
+
+def create_declared_turn_runtime_state(
+    *,
+    actors: dict[str, ActorRuntimeState],
+    damage_dealt: dict[str, int],
+    damage_taken: dict[str, int],
+    threat_scores: dict[str, int],
+    resources_spent: dict[str, dict[str, int]],
+    active_hazards: list[dict[str, Any]],
+    telemetry: list[dict[str, Any]] | None = None,
+    obstacles: list[AABB] | None = None,
+    light_level: str = "bright",
+    round_number: int | None = None,
+    turn_token: str | None = None,
+    rule_trace: list[dict[str, Any]] | None = None,
+    timing_engine: CombatTimingEngine | None = None,
+) -> DeclaredTurnRuntimeState:
+    """Collect the complete mutable boundary used by one declared turn."""
+
+    return DeclaredTurnRuntimeState(
+        actors=actors,
+        damage_dealt=damage_dealt,
+        damage_taken=damage_taken,
+        threat_scores=threat_scores,
+        resources_spent=resources_spent,
+        active_hazards=active_hazards,
+        telemetry=telemetry if telemetry is not None else [],
+        obstacles=obstacles if obstacles is not None else [],
+        light_level=light_level,
+        round_number=round_number,
+        turn_token=turn_token,
+        rule_trace=rule_trace if rule_trace is not None else [],
+        timing_engine=(
+            timing_engine if timing_engine is not None else _create_combat_timing_engine()
+        ),
+    )
+
+
+def resolve_declared_turn(
+    *,
+    state: DeclaredTurnRuntimeState,
+    rng: random.Random,
+    actor_id: str,
+    declaration: TurnDeclaration,
+    strategy_name: str,
+    declared_movement_distance_ft: float | None = None,
+) -> None:
+    """Mutate one declared turn through the shared batch/interactive rules path."""
+
+    if actor_id not in state.actors:
+        raise ValueError(f"Unknown declared-turn actor: {actor_id}")
+
+    with _combat_timing_engine_scope(state.timing_engine):
+        _execute_declared_turn_or_error(
+            rng=rng,
+            actor=state.actors[actor_id],
+            declaration=declaration,
+            strategy_name=strategy_name,
+            actors=state.actors,
+            damage_dealt=state.damage_dealt,
+            damage_taken=state.damage_taken,
+            threat_scores=state.threat_scores,
+            resources_spent=state.resources_spent,
+            active_hazards=state.active_hazards,
+            telemetry=state.telemetry,
+            obstacles=state.obstacles,
+            light_level=state.light_level,
+            round_number=state.round_number,
+            turn_token=state.turn_token,
+            rule_trace=state.rule_trace,
+            declared_movement_distance_ft=declared_movement_distance_ft,
+        )
+
+
+def resolve_declared_turn_atomic(
+    *,
+    state: DeclaredTurnRuntimeState,
+    rng: random.Random,
+    actor_id: str,
+    declaration: TurnDeclaration,
+    strategy_name: str,
+    declared_movement_distance_ft: float | None = None,
+) -> DeclaredTurnRuntimeState:
+    """Resolve a declaration on a detached candidate and commit only RNG state.
+
+    The caller adopts the returned state on success. Any exception leaves both
+    the supplied state and RNG unchanged, including failures discovered after
+    movement or a primary action has already been evaluated on the candidate.
+    """
+
+    candidate = copy.deepcopy(state)
+    candidate_rng = random.Random()
+    candidate_rng.setstate(copy.deepcopy(rng.getstate()))
+
+    resolve_declared_turn(
+        state=candidate,
+        rng=candidate_rng,
+        actor_id=actor_id,
+        declaration=declaration,
+        strategy_name=strategy_name,
+        declared_movement_distance_ft=declared_movement_distance_ft,
+    )
+
+    rng.setstate(candidate_rng.getstate())
+    return candidate
 
 
 def _disadvantaged(actor: ActorRuntimeState) -> bool:
@@ -9577,6 +9937,7 @@ def _apply_healing(target: ActorRuntimeState, amount: int) -> None:
         target.death_failures = 0
         target.stable = False
         target.was_downed = False
+        target.stable_recovery_hours_remaining = None
         _remove_condition(target, "unconscious")
         _remove_condition(target, "incapacitated")
 
@@ -9839,19 +10200,43 @@ def _apply_effect(
     if effect_type == "heal":
         before = recipient.hp
         raw_amount = str(effect.get("amount", "0")).strip().lower()
+        healing_recorder = (
+            _bound_roll_recorder(
+                source=actor,
+                target=recipient,
+                action=action,
+                purpose="healing",
+            )
+            if action is not None
+            else None
+        )
+        healing_capture = _capture_roll_recorder(healing_recorder)
         if raw_amount == "full":
             amount = max(0, recipient.max_hp - recipient.hp)
+            resolved_healing_expression = "full"
         else:
+            resolved_healing_expression = _resolve_runtime_roll_expression(
+                actor=actor,
+                expr=effect.get("amount", "0"),
+                effect_context=effect_context,
+            )
             amount = roll_damage(
                 rng,
-                _resolve_runtime_roll_expression(
-                    actor=actor,
-                    expr=effect.get("amount", "0"),
-                    effect_context=effect_context,
-                ),
+                resolved_healing_expression,
                 crit=False,
+                journal_recorder=healing_capture,
             )
         _apply_healing(recipient, amount)
+        effective_healing = max(0, recipient.hp - before)
+        if healing_recorder is not None:
+            healing_fact = finalized_healing_fact(
+                captured=(None if raw_amount == "full" else _captured_damage_fact(healing_capture)),
+                expression=resolved_healing_expression,
+                rolled_healing=amount,
+                effective_healing=effective_healing,
+            )
+            if healing_fact is not None:
+                healing_recorder.record_fact(healing_fact)
         if telemetry is not None:
             telemetry.append(
                 {
@@ -9895,6 +10280,53 @@ def _apply_effect(
                     "trigger_event": trigger_event,
                     "effect_type": "temp_hp",
                     "applied_amount": max(0, recipient.temp_hp - before),
+                }
+            )
+        return
+
+    if effect_type == "stabilize":
+        stabilized = False
+        check_skill = str(effect.get("check_skill") or "").strip().lower() or None
+        check_roll: int | None = None
+        check_modifier: int | None = None
+        check_dc: int | None = None
+        check_passed: bool | None = None
+        target_eligible = _stabilize_effect_allows_target(effect, recipient)
+        if target_eligible:
+            if check_skill is not None:
+                if check_skill != "medicine":
+                    raise ValueError(f"Unsupported stabilization check skill: {check_skill!r}")
+                check_roll = rng.randint(1, 20)
+                check_modifier = _medicine_check_mod(actor)
+                check_dc = int(effect.get("check_dc", 10))
+                check_passed = check_roll + check_modifier >= check_dc
+            else:
+                check_passed = True
+            if check_passed:
+                stabilized = stabilize_creature(
+                    recipient,
+                    recovery_hours=rng.randint(1, 4),
+                )
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "effect_contribution",
+                    "round": round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "target_id": recipient.actor_id,
+                    "action_name": action_name or (action.name if action else None),
+                    "source_bucket": source_bucket,
+                    "trigger_event": trigger_event,
+                    "effect_type": "stabilize",
+                    "applied_amount": int(stabilized),
+                    "target_eligible": target_eligible,
+                    "check_skill": check_skill,
+                    "check_roll": check_roll,
+                    "check_modifier": check_modifier,
+                    "check_dc": check_dc,
+                    "check_passed": check_passed,
+                    "stable_recovery_hours_remaining": (recipient.stable_recovery_hours_remaining),
                 }
             )
         return
@@ -10196,6 +10628,9 @@ def _apply_effect(
             cha_mod=0,
             save_mods={"str": 0, "dex": 0, "con": 0, "int": 0, "wis": 0, "cha": 0},
             actions=summon_actions + _get_standard_actions(),
+            uses_death_saves=_resolve_summon_death_save_policy(actor, effect),
+            summon_uses_death_saves_default=actor.summon_uses_death_saves_default,
+            death_save_overrides_allowed=actor.death_save_overrides_allowed,
             speed_ft=summon_speed,
             position=_to_position3(effect.get("position")) or actor.position,
             requires_command=requires_command,
@@ -10203,6 +10638,7 @@ def _apply_effect(
             allied_controller_id=(controller_id or None) if summon_team == actor.team else None,
             mount_controller_id=(controller_id or None) if is_mount else None,
             movement_modes={"walk": float(summon_speed)},
+            creature_type=str(effect.get("creature_type", "unknown")).strip().lower() or "unknown",
         )
         summoned_actor.movement_remaining = float(summon_speed)
         summoned_actor.add_manual_condition("summoned")
@@ -10757,6 +11193,19 @@ def _acrobatics_check_mod(actor: ActorRuntimeState) -> int:
         if "acrobatics" in actor.expertise:
             mod += _calculate_proficiency_bonus(actor.level)
     return mod
+
+
+def _medicine_check_mod(actor: ActorRuntimeState) -> int:
+    explicit = actor.skill_mods.get("medicine")
+    if explicit is not None:
+        return int(explicit)
+    modifier = int(actor.wis_mod)
+    proficiency = _calculate_proficiency_bonus(actor.level)
+    if "medicine" in actor.expertise:
+        return modifier + (2 * proficiency)
+    if "medicine" in actor.proficiencies:
+        return modifier + proficiency
+    return modifier
 
 
 def _resolve_shove_mode(action: ActionDefinition, target: ActorRuntimeState) -> str:
@@ -11606,6 +12055,7 @@ def _try_spend_bardic_inspiration_on_attack_roll(
     roll: AttackRollResult,
     target_ac: int,
     resources_spent: dict[str, dict[str, int]],
+    hook_trace: list[RollHookTrace] | None = None,
 ) -> AttackRollResult:
     if roll.hit or roll.natural_roll == 20:
         return roll
@@ -11619,6 +12069,16 @@ def _try_spend_bardic_inspiration_on_attack_roll(
     if consumed <= 0:
         return roll
     bonus = rng.randint(1, consumed)
+    if hook_trace is not None:
+        hook_trace.append(
+            RollHookTrace(
+                kind="bardic_inspiration",
+                stage="total",
+                amount=bonus,
+                die_sides=consumed,
+                die_value=bonus,
+            )
+        )
     total = roll.total + bonus
     hit = roll.crit or (roll.natural_roll != 1 and total >= target_ac)
     return AttackRollResult(hit=hit, crit=roll.crit, natural_roll=roll.natural_roll, total=total)
@@ -11708,6 +12168,7 @@ def _try_cutting_words_on_attack_roll(
     target_ac: int,
     actors: dict[str, ActorRuntimeState],
     resources_spent: dict[str, dict[str, int]],
+    hook_trace: list[RollHookTrace] | None = None,
 ) -> AttackRollResult:
     if not roll.hit or roll.natural_roll == 20:
         return roll
@@ -11722,6 +12183,16 @@ def _try_cutting_words_on_attack_roll(
     )
     if reduction <= 0:
         return roll
+    if hook_trace is not None:
+        hook_trace.append(
+            RollHookTrace(
+                kind="cutting_words",
+                stage="total",
+                amount=-reduction,
+                die_sides=_bardic_inspiration_die_sides(reactor),
+                die_value=reduction,
+            )
+        )
     total = roll.total - reduction
     hit = roll.crit or (roll.natural_roll != 1 and total >= target_ac)
     return AttackRollResult(hit=hit, crit=roll.crit, natural_roll=roll.natural_roll, total=total)
@@ -11735,6 +12206,7 @@ def _try_cutting_words_on_damage_roll(
     raw_damage: int,
     actors: dict[str, ActorRuntimeState],
     resources_spent: dict[str, dict[str, int]],
+    hook_trace: list[RollHookTrace] | None = None,
 ) -> int:
     if raw_damage <= 0:
         return raw_damage
@@ -11746,7 +12218,18 @@ def _try_cutting_words_on_damage_roll(
     )
     if reduction <= 0:
         return raw_damage
-    return max(0, raw_damage - reduction)
+    reduced = max(0, raw_damage - reduction)
+    if hook_trace is not None:
+        hook_trace.append(
+            RollHookTrace(
+                kind="cutting_words",
+                stage="raw",
+                amount=reduced - raw_damage,
+                die_sides=_bardic_inspiration_die_sides(reactor),
+                die_value=reduction,
+            )
+        )
+    return reduced
 
 
 def _ki_save_dc(actor: ActorRuntimeState) -> int:
@@ -12394,6 +12877,7 @@ def _apply_domain_attack_roll_hooks(
     target_ac: int,
     actors: dict[str, ActorRuntimeState],
     resources_spent: dict[str, dict[str, int]],
+    hook_trace: list[RollHookTrace] | None = None,
 ) -> AttackRollResult:
     if roll.hit or roll.natural_roll == 1:
         return roll
@@ -12402,6 +12886,14 @@ def _apply_domain_attack_roll_hooks(
     boosted_total = roll.total + 10
     if boosted_total >= target_ac and _has_any_trait(actor, guided_strike_traits):
         if _spend_channel_divinity(actor, resources_spent):
+            if hook_trace is not None:
+                hook_trace.append(
+                    RollHookTrace(
+                        kind="guided_strike",
+                        stage="total",
+                        amount=10,
+                    )
+                )
             return AttackRollResult(
                 hit=True,
                 crit=roll.crit,
@@ -12431,6 +12923,14 @@ def _apply_domain_attack_roll_hooks(
         if not _spend_channel_divinity(ally, resources_spent):
             continue
         ally.reaction_available = False
+        if hook_trace is not None:
+            hook_trace.append(
+                RollHookTrace(
+                    kind="war_gods_blessing",
+                    stage="total",
+                    amount=10,
+                )
+            )
         return AttackRollResult(
             hit=True,
             crit=roll.crit,
@@ -12466,6 +12966,7 @@ class _AttackRollBardicInspirationRule:
             roll=event.roll,
             target_ac=event.target_ac,
             resources_spent=event.resources_spent,
+            hook_trace=event.hook_trace,
         )
 
 
@@ -12483,6 +12984,16 @@ class _AttackRollLuckyAttackerRule:
         )
         lucky_natural = event.rng.randint(1, 20)
         new_natural = max(event.roll.natural_roll, lucky_natural)
+        event.hook_trace.append(
+            RollHookTrace(
+                kind="lucky_attacker",
+                stage="replacement",
+                amount=new_natural - event.roll.natural_roll,
+                die_sides=20,
+                die_value=lucky_natural,
+                selected=new_natural != event.roll.natural_roll,
+            )
+        )
         crit = new_natural == 20
         total = new_natural + event.to_hit_modifier
         hit = crit or (new_natural != 1 and total >= event.target_ac)
@@ -12503,6 +13014,16 @@ class _AttackRollLuckyDefenderRule:
         )
         lucky_natural = event.rng.randint(1, 20)
         new_natural = min(event.roll.natural_roll, lucky_natural)
+        event.hook_trace.append(
+            RollHookTrace(
+                kind="lucky_defender",
+                stage="replacement",
+                amount=new_natural - event.roll.natural_roll,
+                die_sides=20,
+                die_value=lucky_natural,
+                selected=new_natural != event.roll.natural_roll,
+            )
+        )
         crit = new_natural == 20
         total = new_natural + event.to_hit_modifier
         hit = crit or (new_natural != 1 and total >= event.target_ac)
@@ -12521,6 +13042,7 @@ class _AttackResolvedCuttingWordsRule:
             target_ac=event.target_ac,
             actors=event.actors,
             resources_spent=event.resources_spent,
+            hook_trace=event.hook_trace,
         )
 
 
@@ -12557,6 +13079,13 @@ class _AttackResolutionShieldRule:
             target_ac=event.target_ac,
             turn_token=event.turn_token,
         ):
+            event.hook_trace.append(
+                RollHookTrace(
+                    kind="shield",
+                    stage="threshold",
+                    amount=_SHIELD_SPELL_AC_BONUS,
+                )
+            )
             event.roll = AttackRollResult(
                 hit=False,
                 crit=False,
@@ -12595,6 +13124,7 @@ class _DamageRollCuttingWordsRule:
             raw_damage=event.raw_damage,
             actors=event.actors,
             resources_spent=event.resources_spent,
+            hook_trace=event.hook_trace,
         )
         if event.bundle is not None:
             event.bundle.rebalance_total(reduced_total)
@@ -12662,10 +13192,26 @@ def _create_combat_timing_engine(*, include_default_rules: bool = True) -> Comba
 
 
 _DEFAULT_COMBAT_TIMING_ENGINE: CombatTimingEngine | None = None
+_ACTIVE_COMBAT_TIMING_ENGINE: ContextVar[CombatTimingEngine | None] = ContextVar(
+    "dnd_sim_active_combat_timing_engine",
+    default=None,
+)
+
+
+@contextmanager
+def _combat_timing_engine_scope(timing_engine: CombatTimingEngine):
+    token = _ACTIVE_COMBAT_TIMING_ENGINE.set(timing_engine)
+    try:
+        yield timing_engine
+    finally:
+        _ACTIVE_COMBAT_TIMING_ENGINE.reset(token)
 
 
 def _get_default_combat_timing_engine() -> CombatTimingEngine:
     global _DEFAULT_COMBAT_TIMING_ENGINE
+    active_timing_engine = _ACTIVE_COMBAT_TIMING_ENGINE.get()
+    if active_timing_engine is not None:
+        return active_timing_engine
     if _DEFAULT_COMBAT_TIMING_ENGINE is None:
         _DEFAULT_COMBAT_TIMING_ENGINE = _create_combat_timing_engine()
     return _DEFAULT_COMBAT_TIMING_ENGINE
@@ -13193,7 +13739,23 @@ def _execute_action_impl(
         defender_athletics = _athletics_check_mod(target)
         defender_acrobatics = _acrobatics_check_mod(target)
 
-        success = run_contested_check(rng, attacker_mod, [defender_athletics, defender_acrobatics])
+        success = run_contested_check(
+            rng,
+            attacker_mod,
+            [defender_athletics, defender_acrobatics],
+            attacker_journal_recorder=_bound_roll_recorder(
+                source=actor,
+                target=target,
+                action=action,
+                purpose="check",
+            ),
+            defender_journal_recorder=_bound_roll_recorder(
+                source=target,
+                target=actor,
+                action=action,
+                purpose="opposed_check",
+            ),
+        )
 
         if success:
             if action.action_type == "grapple":
@@ -13468,12 +14030,20 @@ def _execute_action_impl(
                 damage_bonus += rage_bonus
 
             to_hit_mod = action.to_hit + to_hit_penalty if action.to_hit is not None else 0
+            authoritative_attack_recorder = _bound_roll_recorder(
+                source=actor,
+                target=target,
+                action=action,
+                purpose="attack",
+            )
+            attack_capture = _capture_roll_recorder(authoritative_attack_recorder)
             roll = attack_roll(
                 rng,
                 to_hit_mod,
                 target_ac,
                 advantage=advantage,
                 disadvantage=disadvantage,
+                journal_recorder=attack_capture,
             )
             roll_event = active_timing_engine.emit(
                 AttackRollEvent(
@@ -13500,6 +14070,7 @@ def _execute_action_impl(
                 target_ac=target_ac,
                 actors=actors,
                 resources_spent=resources_spent,
+                hook_trace=roll_event.hook_trace,
             )
 
             if force_crit and roll.hit:
@@ -13517,6 +14088,7 @@ def _execute_action_impl(
                     actors=actors,
                     resources_spent=resources_spent,
                     timing_engine=active_timing_engine,
+                    hook_trace=roll_event.hook_trace,
                     round_number=round_number,
                     turn_token=turn_token,
                 )
@@ -13524,6 +14096,20 @@ def _execute_action_impl(
             if resolved_event.cancelled:
                 continue
             roll = resolved_event.roll
+            if attack_capture is not None and authoritative_attack_recorder is not None:
+                captured_attack = attack_capture.journal.records[-1].fact
+                if isinstance(captured_attack, D20RollFact):
+                    authoritative_attack_recorder.record_fact(
+                        finalized_attack_fact(
+                            captured_attack,
+                            natural_roll=roll.natural_roll,
+                            total=roll.total,
+                            hit=roll.hit,
+                            critical=roll.crit,
+                            target_ac=target_ac,
+                            hook_trace=resolved_event.hook_trace,
+                        )
+                    )
             event = resolved_event.outcome
             if roll.hit and action.damage:
                 empowered_rerolls = 0
@@ -13614,6 +14200,14 @@ def _execute_action_impl(
                     damage_expr += f"{damage_bonus:+d}"
                 attack_is_magical = _is_magical_action(action)
                 damage_bundle = DamageBundle()
+                authoritative_damage_recorder = _bound_roll_recorder(
+                    source=actor,
+                    target=target,
+                    action=action,
+                    purpose="damage",
+                )
+                damage_capture = _capture_roll_recorder(authoritative_damage_recorder)
+                packet_captures: dict[tuple[str, int], DamageRollFact] = {}
                 base_damage = _roll_damage_with_channel_divinity_hooks(
                     rng=rng,
                     actor=actor,
@@ -13622,7 +14216,9 @@ def _execute_action_impl(
                     resources_spent=resources_spent,
                     crit=roll.crit,
                     empowered_rerolls=empowered_rerolls,
+                    journal_recorder=damage_capture,
                 )
+                previous_packet_count = len(damage_bundle.packets)
                 _append_damage_packet(
                     bundle=damage_bundle,
                     amount=base_damage,
@@ -13630,6 +14226,12 @@ def _execute_action_impl(
                     packet_source="attack",
                     is_magical=attack_is_magical,
                     crit_expanded=_damage_expr_was_crit_expanded(damage_expr, crit=roll.crit),
+                )
+                _record_damage_packet_capture(
+                    captures=packet_captures,
+                    bundle=damage_bundle,
+                    previous_packet_count=previous_packet_count,
+                    fact=_captured_damage_fact(damage_capture),
                 )
                 if roll.crit and _has_trait_marker(actor, "brutal critical") and not is_ranged:
                     brutal_extra = 0
@@ -13641,13 +14243,16 @@ def _execute_action_impl(
                         brutal_extra = 1
                     brutal_expr = _critical_bonus_dice_expr(action.damage, brutal_extra)
                     if brutal_expr:
+                        brutal_capture = _capture_roll_recorder(authoritative_damage_recorder)
                         brutal_roll = roll_damage(
                             rng,
                             brutal_expr,
                             crit=False,
                             source=actor,
                             damage_type=action.damage_type,
+                            journal_recorder=brutal_capture,
                         )
+                        previous_packet_count = len(damage_bundle.packets)
                         _append_damage_packet(
                             bundle=damage_bundle,
                             amount=brutal_roll,
@@ -13656,14 +14261,23 @@ def _execute_action_impl(
                             is_magical=attack_is_magical,
                             crit_expanded=False,
                         )
+                        _record_damage_packet_capture(
+                            captures=packet_captures,
+                            bundle=damage_bundle,
+                            previous_packet_count=previous_packet_count,
+                            fact=_captured_damage_fact(brutal_capture),
+                        )
                 if sneak_damage_expr:
+                    sneak_capture = _capture_roll_recorder(authoritative_damage_recorder)
                     sneak_roll = roll_damage(
                         rng,
                         sneak_damage_expr,
                         crit=roll.crit,
                         source=actor,
                         damage_type=action.damage_type,
+                        journal_recorder=sneak_capture,
                     )
+                    previous_packet_count = len(damage_bundle.packets)
                     _append_damage_packet(
                         bundle=damage_bundle,
                         amount=sneak_roll,
@@ -13674,14 +14288,23 @@ def _execute_action_impl(
                             sneak_damage_expr, crit=roll.crit
                         ),
                     )
+                    _record_damage_packet_capture(
+                        captures=packet_captures,
+                        bundle=damage_bundle,
+                        previous_packet_count=previous_packet_count,
+                        fact=_captured_damage_fact(sneak_capture),
+                    )
                 if colossus_damage_expr:
+                    colossus_capture = _capture_roll_recorder(authoritative_damage_recorder)
                     colossus_roll = roll_damage(
                         rng,
                         colossus_damage_expr,
                         crit=roll.crit,
                         source=actor,
                         damage_type=action.damage_type,
+                        journal_recorder=colossus_capture,
                     )
+                    previous_packet_count = len(damage_bundle.packets)
                     _append_damage_packet(
                         bundle=damage_bundle,
                         amount=colossus_roll,
@@ -13692,18 +14315,37 @@ def _execute_action_impl(
                             colossus_damage_expr, crit=roll.crit
                         ),
                     )
+                    _record_damage_packet_capture(
+                        captures=packet_captures,
+                        bundle=damage_bundle,
+                        previous_packet_count=previous_packet_count,
+                        fact=_captured_damage_fact(colossus_capture),
+                    )
 
                 if _has_trait(actor, "improved divine smite") and not is_ranged:
-                    damage_bundle.add_packet(
-                        roll_damage_packet(
-                            rng,
-                            "1d8",
-                            damage_type="radiant",
-                            packet_source="improved_divine_smite",
-                            crit=roll.crit,
-                            source=actor,
-                            is_magical=True,
-                        )
+                    improved_smite_capture = _capture_roll_recorder(authoritative_damage_recorder)
+                    improved_smite_damage = roll_damage(
+                        rng,
+                        "1d8",
+                        crit=roll.crit,
+                        source=actor,
+                        damage_type="radiant",
+                        journal_recorder=improved_smite_capture,
+                    )
+                    previous_packet_count = len(damage_bundle.packets)
+                    _append_damage_packet(
+                        bundle=damage_bundle,
+                        amount=improved_smite_damage,
+                        damage_type="radiant",
+                        packet_source="improved_divine_smite",
+                        is_magical=True,
+                        crit_expanded=_damage_expr_was_crit_expanded("1d8", crit=roll.crit),
+                    )
+                    _record_damage_packet_capture(
+                        captures=packet_captures,
+                        bundle=damage_bundle,
+                        previous_packet_count=previous_packet_count,
+                        fact=_captured_damage_fact(improved_smite_capture),
                     )
 
                 # Divine Smite Logic
@@ -13728,13 +14370,16 @@ def _execute_action_impl(
                     if selected_slot is not None or slot_level > 0:
                         smite_dice = min(5, 1 + slot_level)
                         smite_expr = f"{smite_dice}d8"
+                        smite_capture = _capture_roll_recorder(authoritative_damage_recorder)
                         raw_smite = roll_damage(
                             rng,
                             smite_expr,
                             crit=roll.crit,
                             source=actor,
                             damage_type="radiant",
+                            journal_recorder=smite_capture,
                         )
+                        previous_packet_count = len(damage_bundle.packets)
                         _append_damage_packet(
                             bundle=damage_bundle,
                             amount=raw_smite,
@@ -13744,6 +14389,12 @@ def _execute_action_impl(
                             crit_expanded=_damage_expr_was_crit_expanded(
                                 smite_expr, crit=roll.crit
                             ),
+                        )
+                        _record_damage_packet_capture(
+                            captures=packet_captures,
+                            bundle=damage_bundle,
+                            previous_packet_count=previous_packet_count,
+                            fact=_captured_damage_fact(smite_capture),
                         )
                         if _has_trait(actor, "smite of protection"):
                             _apply_condition(actor, "smite_of_protection_window", duration_rounds=1)
@@ -13822,6 +14473,34 @@ def _execute_action_impl(
                         turn_token=turn_token,
                     )
                 )
+                if authoritative_damage_recorder is not None:
+                    raw_modifier_face = _first_generated_raw_modifier_face(
+                        damage_roll_event.hook_trace
+                    )
+                    modifier_face_available = raw_modifier_face is not None
+                    for packet_index, resolved_packet in enumerate(resolution.packets):
+                        packet_key = _damage_packet_identity(
+                            resolution.packets,
+                            packet_index,
+                        )
+                        captured_damage = packet_captures.get(packet_key)
+                        if captured_damage is None:
+                            continue
+                        generated_face = None
+                        if (
+                            modifier_face_available
+                            and captured_damage.raw_damage != resolved_packet.amount
+                        ):
+                            generated_face = raw_modifier_face
+                            modifier_face_available = False
+                        authoritative_damage_recorder.record_fact(
+                            finalized_damage_fact(
+                                captured_damage,
+                                raw_damage=resolved_packet.amount,
+                                applied_damage=resolved_packet.applied_amount,
+                                raw_generated_face=generated_face,
+                            )
+                        )
                 if applied > 0:
                     if not _force_end_concentration_if_needed(
                         target, actors=actors, active_hazards=active_hazards
@@ -13897,7 +14576,17 @@ def _execute_action_impl(
 
         # Roll AoE damage once and apply per-target save outcomes.
         raw_damage = 0
+        captured_save_damage: DamageRollFact | None = None
+        save_damage_hook_trace: list[RollHookTrace] = []
         if action.damage:
+            save_damage_capture = _capture_roll_recorder(
+                _bound_roll_recorder(
+                    source=actor,
+                    target=None,
+                    action=action,
+                    purpose="base_damage_roll",
+                )
+            )
             empowered_rerolls = 0
             if is_spell_action and empowered_metamagic:
                 empowered_rerolls = max(1, actor.cha_mod)
@@ -13919,7 +14608,12 @@ def _execute_action_impl(
                 resources_spent=resources_spent,
                 crit=False,
                 empowered_rerolls=empowered_rerolls,
+                journal_recorder=save_damage_capture,
             )
+            if save_damage_capture is not None and save_damage_capture.journal.records:
+                captured_fact = save_damage_capture.journal.records[-1].fact
+                if isinstance(captured_fact, DamageRollFact):
+                    captured_save_damage = captured_fact
         if raw_damage > 0:
             primary_enemy_target = next(
                 (
@@ -13937,6 +14631,7 @@ def _execute_action_impl(
                     raw_damage=raw_damage,
                     actors=actors,
                     resources_spent=resources_spent,
+                    hook_trace=save_damage_hook_trace,
                 )
 
         careful_allies = set()
@@ -13973,11 +14668,15 @@ def _execute_action_impl(
                     save_mod += _cover_bonus_from_state(cover_state)
                 save_mod += _smite_of_protection_half_cover_bonus(target, actors)
             auto_fail_save = _auto_fails_strength_or_dex_save(target, save_key)
+            save_values: list[int] = []
+            save_mode = "normal"
+            save_fact_is_explainable = not auto_fail_save
             if auto_fail_save:
                 save_roll = 0
                 success = False
             else:
                 save_roll = rng.randint(1, 20)
+                save_values.append(save_roll)
                 if (
                     save_key == "dex"
                     and _has_trait(target, "danger sense")
@@ -13985,21 +14684,36 @@ def _execute_action_impl(
                     and not has_condition(target, "deafened")
                     and not has_condition(target, "incapacitated")
                 ):
-                    save_roll = max(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    save_roll = max(save_values)
+                    save_mode = "advantage"
                 if (
                     "spell" in action.tags
                     and _has_trait(target, "gnomish cunning")
                     and save_key in {"int", "wis", "cha"}
                 ):
-                    save_roll = max(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    save_roll = max(save_values)
+                    save_mode = "advantage"
                 if save_key == "dex" and has_condition(target, "dodging"):
-                    save_roll = max(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    save_roll = max(save_values)
+                    save_mode = "advantage"
                 if is_spell_action and not subtle_spell and _has_trait(target, "mage slayer"):
-                    save_roll = max(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    save_roll = max(save_values)
+                    save_mode = "advantage"
                 if target.actor_id == heightened_target_id:
-                    save_roll = min(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    if save_mode == "normal":
+                        save_roll = min(save_values)
+                        save_mode = "disadvantage"
+                    else:
+                        save_roll = min(save_roll, save_values[-1])
+                        save_fact_is_explainable = False
                 success = (save_roll + save_mod) >= action.save_dc
             if not auto_fail_save and not success:
+                before_inspiration_roll = save_roll
                 save_roll = _try_spend_bardic_inspiration_on_save(
                     rng=rng,
                     actor=target,
@@ -14008,6 +14722,8 @@ def _execute_action_impl(
                     dc=action.save_dc,
                     resources_spent=resources_spent,
                 )
+                if save_roll != before_inspiration_roll:
+                    save_fact_is_explainable = False
                 success = (save_roll + save_mod) >= action.save_dc
 
             # Lucky: Reroll failed save
@@ -14023,16 +14739,38 @@ def _execute_action_impl(
                 )
                 lucky_roll = rng.randint(1, 20)
                 save_roll = max(save_roll, lucky_roll)
+                save_fact_is_explainable = False
                 success = (save_roll + save_mod) >= action.save_dc
 
             if target.actor_id in careful_allies:
+                if not success:
+                    save_fact_is_explainable = False
                 success = True
             if not success and target.resources.get("legendary_resistance", 0) > 0:
                 target.resources["legendary_resistance"] -= 1
                 resources_spent[target.actor_id]["legendary_resistance"] = (
                     resources_spent[target.actor_id].get("legendary_resistance", 0) + 1
                 )
+                save_fact_is_explainable = False
                 success = True
+
+            save_recorder = _bound_roll_recorder(
+                source=target,
+                target=actor,
+                action=action,
+                purpose="saving_throw",
+            )
+            if save_recorder is not None and save_fact_is_explainable and save_values:
+                record_saving_throw(
+                    save_recorder,
+                    ability=save_key,
+                    mode=save_mode,
+                    generated_values=save_values,
+                    natural_roll=save_roll,
+                    modifier=save_mod,
+                    dc=action.save_dc,
+                    succeeded=success,
+                )
 
             final_damage = raw_damage
             if success:
@@ -14070,6 +14808,29 @@ def _execute_action_impl(
                 is_magical=_is_magical_action(action),
                 source=actor,
             )
+            if captured_save_damage is not None:
+                target_damage_recorder = _bound_roll_recorder(
+                    source=actor,
+                    target=target,
+                    action=action,
+                    purpose="damage",
+                )
+                if target_damage_recorder is not None:
+                    target_damage_recorder.record_fact(
+                        finalized_damage_fact(
+                            captured_save_damage,
+                            raw_damage=raw_damage,
+                            applied_damage=applied,
+                            raw_generated_face=_first_generated_raw_modifier_face(
+                                save_damage_hook_trace
+                            ),
+                            adjustment_kind=(
+                                "reduction"
+                                if final_damage != captured_save_damage.raw_damage
+                                else None
+                            ),
+                        )
+                    )
             if applied > 0:
                 if not _force_end_concentration_if_needed(
                     target, actors=actors, active_hazards=active_hazards
@@ -14120,6 +14881,21 @@ def _execute_action_impl(
                 if spent <= 0:
                     continue
                 _apply_healing(target, spent)
+                lay_on_hands_recorder = _bound_roll_recorder(
+                    source=actor,
+                    target=target,
+                    action=action,
+                    purpose="healing",
+                )
+                if lay_on_hands_recorder is not None:
+                    lay_on_hands_recorder.record_fact(
+                        finalized_healing_fact(
+                            captured=None,
+                            expression=str(spent),
+                            rolled_healing=spent,
+                            effective_healing=spent,
+                        )
+                    )
                 actor.resources["lay_on_hands_pool"] = max(0, pool - spent)
                 resources_spent[actor.actor_id]["lay_on_hands_pool"] = (
                     resources_spent[actor.actor_id].get("lay_on_hands_pool", 0) + spent
@@ -14147,7 +14923,27 @@ def _execute_action_impl(
 
             escape_mod = max(_athletics_check_mod(actor), _acrobatics_check_mod(actor))
             grappler_mods = [_athletics_check_mod(enemy) for enemy in nearby_enemies]
-            if run_contested_check(rng, escape_mod, grappler_mods):
+            primary_grappler = max(
+                nearby_enemies,
+                key=lambda enemy: (_athletics_check_mod(enemy), enemy.actor_id),
+            )
+            if run_contested_check(
+                rng,
+                escape_mod,
+                grappler_mods,
+                attacker_journal_recorder=_bound_roll_recorder(
+                    source=actor,
+                    target=primary_grappler,
+                    action=action,
+                    purpose="check",
+                ),
+                defender_journal_recorder=_bound_roll_recorder(
+                    source=primary_grappler,
+                    target=actor,
+                    action=action,
+                    purpose="opposed_check",
+                ),
+            ):
                 _remove_condition(actor, "grappled")
             return
         if _has_tag(action, "conversion:points_to_slot"):
@@ -14522,6 +15318,9 @@ def _flatten_trial(trial: TrialResult) -> dict[str, Any]:
         "trial_index": trial.trial_index,
         "rounds": trial.rounds,
         "winner": trial.winner,
+        "outcome": trial.outcome,
+        "termination_reason": trial.termination_reason,
+        "censored": trial.censored,
         "damage_taken": json.dumps(trial.damage_taken, sort_keys=True),
         "damage_dealt": json.dumps(trial.damage_dealt, sort_keys=True),
         "resources_spent": json.dumps(trial.resources_spent, sort_keys=True),
@@ -14593,6 +15392,526 @@ def _emit_turn_trace_event(
     )
 
 
+def _resolve_combat_turn_end(
+    *,
+    rng: random.Random,
+    context: CombatTurnContext,
+    actor: ActorRuntimeState,
+    turn_token: str,
+) -> None:
+    _dispatch_combat_event(
+        rng=rng,
+        event="turn_end",
+        trigger_actor=actor,
+        trigger_target=actor,
+        trigger_action=None,
+        actors=context.actors,
+        round_number=context.round_number,
+        turn_token=turn_token,
+        damage_dealt=context.damage_dealt,
+        damage_taken=context.damage_taken,
+        threat_scores=context.threat_scores,
+        resources_spent=context.resources_spent,
+        active_hazards=context.active_hazards,
+        rule_trace=context.rule_trace,
+        obstacles=context.obstacles,
+        light_level=context.light_level,
+    )
+    _run_legendary_actions(
+        rng=rng,
+        trigger_actor=actor,
+        actors=context.actors,
+        damage_dealt=context.damage_dealt,
+        damage_taken=context.damage_taken,
+        threat_scores=context.threat_scores,
+        resources_spent=context.resources_spent,
+        active_hazards=context.active_hazards,
+        obstacles=context.obstacles,
+        light_level=context.light_level,
+        telemetry=context.telemetry,
+        round_number=context.round_number,
+        turn_token=turn_token,
+    )
+    if actor.surprised:
+        actor.surprised = False
+        actor.discard_manual_condition("surprised")
+
+
+def _combat_has_ended(context: CombatTurnContext) -> bool:
+    return _party_defeated(
+        context.actors,
+        context.party_defeat_rule,
+    ) or _enemies_defeated(
+        context.actors,
+        context.enemy_defeat_rule,
+    )
+
+
+def build_combat_turn_prompt(
+    *,
+    context: CombatTurnContext,
+    actor_id: str,
+) -> CombatTurnPrompt:
+    """Build the read-only decision view for an already-prepared actor turn."""
+
+    actor = context.actors.get(actor_id)
+    if actor is None:
+        raise ValueError(f"Unknown combat-turn actor: {actor_id}")
+    metadata = _build_round_metadata(
+        actors=context.actors,
+        threat_scores=context.threat_scores,
+        burst_round_threshold=context.burst_round_threshold,
+        active_hazards=context.active_hazards,
+        obstacles=context.obstacles,
+        light_level=context.light_level,
+        strategy_overrides=context.strategy_overrides,
+    )
+    state_view = _build_actor_views(
+        context.actors,
+        context.initiative_order,
+        context.round_number,
+        metadata,
+    )
+    return CombatTurnPrompt(
+        actor_id=actor.actor_id,
+        round_number=context.round_number,
+        turn_token=f"{context.round_number}:{actor.actor_id}",
+        actor_view=state_view.actors[actor.actor_id],
+        state_view=state_view,
+    )
+
+
+enumerate_prompt_action_choices = _bind_prompt_action_choice_enumerator(
+    _action_available,
+    _resolve_targets_for_action,
+    _filter_targets_in_range,
+)
+
+
+def prepare_combat_turn(
+    *,
+    rng: random.Random,
+    context: CombatTurnContext,
+    actor_id: str,
+) -> CombatTurnPrompt | CombatTurnResult:
+    """Advance one actor through automation to a prompt or automatic result.
+
+    Reactions remain automatic until the encounter state machine gains
+    resumable continuations.
+    """
+
+    actor = context.actors.get(actor_id)
+    if actor is None:
+        raise ValueError(f"Unknown combat-turn actor: {actor_id}")
+    turn_token = f"{context.round_number}:{actor.actor_id}"
+
+    with _combat_timing_engine_scope(context.timing_engine):
+        _refresh_legendary_actions_for_turn(actor)
+        actor.movement_remaining = float(actor.speed_ft)
+        actor.took_attack_action_this_turn = False
+        actor.bonus_action_spell_restriction_active = False
+        actor.non_action_cantrip_spell_cast_this_turn = False
+        _roll_recharge_for_actor(rng, actor)
+        _tick_conditions_for_actor(
+            rng,
+            actor,
+            actors=context.actors,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+        )
+        _tick_hazards_for_actor_turn(
+            active_hazards=context.active_hazards,
+            actor=actor,
+            actors=context.actors,
+            boundary="turn_start",
+        )
+        _force_end_concentration_if_needed(
+            actor,
+            actors=context.actors,
+            active_hazards=context.active_hazards,
+        )
+        if "grappled" in actor.conditions:
+            actor.movement_remaining = 0.0
+        actor.bonus_available = True
+        actor.reaction_available = True
+        actor.sneak_attack_used_this_turn = False
+        actor.colossus_slayer_used_this_turn = False
+        actor.horde_breaker_used_this_turn = False
+        actor.gwm_bonus_trigger_available = False
+
+        if actor.dead:
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="dead",
+            )
+
+        if actor.hp <= 0:
+            if _actor_uses_death_saves(actor):
+                resolve_death_save(rng, actor)
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="death_save",
+            )
+
+        _process_hazard_start_turn_triggers(
+            rng=rng,
+            actor=actor,
+            actors=context.actors,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+        )
+        if actor.dead or actor.hp <= 0:
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="start_hazard_defeat",
+            )
+        if _combat_has_ended(context):
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="combat_ended",
+            )
+
+        _dispatch_combat_event(
+            rng=rng,
+            event="turn_start",
+            trigger_actor=actor,
+            trigger_target=actor,
+            trigger_action=None,
+            actors=context.actors,
+            round_number=context.round_number,
+            turn_token=turn_token,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+            rule_trace=context.rule_trace,
+            obstacles=context.obstacles,
+            light_level=context.light_level,
+        )
+        _trigger_readied_actions(
+            rng=rng,
+            trigger_actor=actor,
+            round_number=context.round_number,
+            turn_token=turn_token,
+            actors=context.actors,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+            obstacles=context.obstacles,
+            light_level=context.light_level,
+        )
+
+        if actor.dead or actor.hp <= 0:
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="readied_action_defeat",
+            )
+        if _combat_has_ended(context):
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="combat_ended",
+            )
+        if not _can_act(actor):
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="incapacitated",
+            )
+
+        controller_id = _controller_id_for_actor(actor)
+        controller = context.actors.get(controller_id) if controller_id else None
+        should_force_dodge = (
+            bool(getattr(actor, "requires_command", False))
+            and not bool(getattr(actor, "commanded_this_round", False))
+            and not _owner_is_incapacitated(controller)
+        )
+        if should_force_dodge:
+            action = _resolve_action_selection(actor, "dodge")
+            if _action_available(actor, action, turn_token=turn_token):
+                resolved_targets = _resolve_targets_for_action(
+                    rng=rng,
+                    actor=actor,
+                    action=action,
+                    actors=context.actors,
+                    requested=[],
+                    obstacles=context.obstacles,
+                )
+                if resolved_targets:
+                    actor.per_action_uses[action.name] = (
+                        actor.per_action_uses.get(action.name, 0) + 1
+                    )
+                    _mark_action_cost_used(actor, action)
+                    _execute_action(
+                        rng=rng,
+                        actor=actor,
+                        action=action,
+                        targets=resolved_targets,
+                        actors=context.actors,
+                        damage_dealt=context.damage_dealt,
+                        damage_taken=context.damage_taken,
+                        threat_scores=context.threat_scores,
+                        resources_spent=context.resources_spent,
+                        active_hazards=context.active_hazards,
+                        obstacles=context.obstacles,
+                        light_level=context.light_level,
+                        telemetry=context.telemetry,
+                        strategy_name="forced_dodge",
+                    )
+            if hasattr(actor, "commanded_this_round"):
+                actor.commanded_this_round = False
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="forced_dodge",
+                strategy_name="forced_dodge",
+            )
+
+        return build_combat_turn_prompt(
+            context=context,
+            actor_id=actor.actor_id,
+        )
+
+
+def resolve_prompted_combat_turn(
+    *,
+    rng: random.Random,
+    context: CombatTurnContext,
+    prompt: CombatTurnPrompt,
+    decision: CombatTurnDecision,
+    declared_movement_distance_ft: float | None = None,
+) -> CombatTurnResult:
+    """Resolve a decision from an already-prepared combat turn prompt."""
+
+    if not isinstance(prompt, CombatTurnPrompt):
+        raise TypeError("prompt must be a CombatTurnPrompt")
+    actor = context.actors.get(prompt.actor_id)
+    if actor is None:
+        raise ValueError(f"Unknown prompted combat-turn actor: {prompt.actor_id}")
+    expected_turn_token = f"{context.round_number}:{actor.actor_id}"
+    if prompt.round_number != context.round_number or prompt.turn_token != expected_turn_token:
+        raise ValueError("Combat turn prompt does not match the current turn context")
+    turn_token = prompt.turn_token
+
+    with _combat_timing_engine_scope(context.timing_engine):
+        if not isinstance(decision, CombatTurnDecision):
+            raise TypeError("decision must be a CombatTurnDecision")
+        strategy_name = decision.strategy_name
+        turn_declaration = decision.declaration
+
+        if turn_declaration is None:
+            context.telemetry.append(
+                {
+                    "telemetry_type": "decision",
+                    "round": context.round_number,
+                    "strategy": strategy_name,
+                    "actor_id": actor.actor_id,
+                    "team": actor.team,
+                    "intent_action": None,
+                    "resolved_action": None,
+                    "fallback_reason": "declare_turn_none",
+                    "requested_targets": [],
+                    "resolved_targets": [],
+                    "rationale": {},
+                    "extra_resource_request": {},
+                    "resource_cost": {},
+                }
+            )
+            _resolve_combat_turn_end(
+                rng=rng,
+                context=context,
+                actor=actor,
+                turn_token=turn_token,
+            )
+            return CombatTurnResult(
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                status="no_declaration",
+                strategy_name=strategy_name,
+            )
+        if not isinstance(turn_declaration, TurnDeclaration):
+            _raise_turn_declaration_error(
+                actor=actor,
+                code="invalid_turn_declaration_type",
+                field="turn_declaration",
+                message="declare_turn(...) must return TurnDeclaration or None.",
+                details={"actual_type": type(turn_declaration).__name__},
+            )
+
+        requested_targets = _declared_target_ids(turn_declaration)
+        action_name = (
+            turn_declaration.action.action_name if turn_declaration.action is not None else None
+        )
+        declared_turn_state = create_declared_turn_runtime_state(
+            actors=context.actors,
+            damage_dealt=context.damage_dealt,
+            damage_taken=context.damage_taken,
+            threat_scores=context.threat_scores,
+            resources_spent=context.resources_spent,
+            active_hazards=context.active_hazards,
+            telemetry=context.telemetry,
+            obstacles=context.obstacles,
+            light_level=context.light_level,
+            round_number=context.round_number,
+            turn_token=turn_token,
+            rule_trace=context.rule_trace,
+            timing_engine=context.timing_engine,
+        )
+        try:
+            resolve_declared_turn(
+                state=declared_turn_state,
+                rng=rng,
+                actor_id=actor.actor_id,
+                declaration=turn_declaration,
+                strategy_name=strategy_name,
+                declared_movement_distance_ft=declared_movement_distance_ft,
+            )
+        except TurnDeclarationValidationError as exc:
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="action_selection",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                selection_state="illegal",
+                error_code=exc.code,
+                field=exc.field,
+            )
+            raise
+
+        if turn_declaration.action is not None:
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="declaration_validation",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                validation_state="valid",
+            )
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="action_selection",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                resolved_targets=requested_targets,
+                selection_state="selected",
+            )
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="action_resolution",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                resolved_targets=requested_targets,
+                resolution_state="resolved",
+            )
+            _emit_turn_trace_event(
+                context.telemetry,
+                event_type="action_outcome",
+                actor_id=actor.actor_id,
+                round_number=context.round_number,
+                turn_token=turn_token,
+                action_name=action_name,
+                requested_targets=requested_targets,
+                resolved_targets=requested_targets,
+                outcome_state="applied",
+            )
+        _resolve_combat_turn_end(
+            rng=rng,
+            context=context,
+            actor=actor,
+            turn_token=turn_token,
+        )
+        return CombatTurnResult(
+            actor_id=actor.actor_id,
+            round_number=context.round_number,
+            turn_token=turn_token,
+            status="resolved",
+            strategy_name=strategy_name,
+        )
+
+
+def resolve_combat_turn(
+    *,
+    rng: random.Random,
+    context: CombatTurnContext,
+    actor_id: str,
+    decision_provider: CombatTurnDecisionProvider,
+) -> CombatTurnResult:
+    """Synchronously compose turn preparation, decision, and resolution."""
+
+    prepared = prepare_combat_turn(
+        rng=rng,
+        context=context,
+        actor_id=actor_id,
+    )
+    if isinstance(prepared, CombatTurnResult):
+        return prepared
+    decision = decision_provider(prepared.actor_view, prepared.state_view)
+    return resolve_prompted_combat_turn(
+        rng=rng,
+        context=context,
+        prompt=prepared,
+        decision=decision,
+    )
+
+
 def run_simulation_core(
     scenario: LoadedScenario,
     character_db: dict[str, dict[str, Any]],
@@ -14660,11 +15979,16 @@ def run_simulation_core(
         trial_telemetry: list[dict[str, Any]] = []
         encounter_outcomes: list[dict[str, Any]] = []
         state_snapshots: list[dict[str, Any]] = []
+        trial_timing_engine = _create_combat_timing_engine()
 
         for character_id in scenario.config.party:
             if character_id not in character_db:
                 raise ValueError(f"Character ID missing from DB: {character_id}")
-            actor = _build_actor_from_character(character_db[character_id], traits_db)
+            actor = _build_actor_from_character(
+                character_db[character_id],
+                traits_db,
+                rules_profile=scenario.rules_profile,
+            )
             actors[actor.actor_id] = actor
             damage_taken[actor.actor_id] = 0
             damage_dealt[actor.actor_id] = 0
@@ -14673,7 +15997,10 @@ def run_simulation_core(
             downed_counts[actor.actor_id] = 0
             death_counts[actor.actor_id] = 0
 
-            for companion in _build_construct_companions(actor):
+            for companion in _build_construct_companions(
+                actor,
+                rules_profile=scenario.rules_profile,
+            ):
                 if companion.actor_id in actors:
                     continue
                 actors[companion.actor_id] = companion
@@ -14686,6 +16013,9 @@ def run_simulation_core(
 
         total_rounds = 0
         overall_winner = "draw"
+        overall_outcome = "draw"
+        overall_termination_reason: str | None = None
+        overall_censored = False
         encounter_idx: int | None = 0
         encounter_step = 0
 
@@ -14717,7 +16047,11 @@ def run_simulation_core(
                     else enemy_id
                 )
 
-                actor = _build_actor_from_enemy(scenario.enemies[enemy_id], traits_db)
+                actor = _build_actor_from_enemy(
+                    scenario.enemies[enemy_id],
+                    traits_db,
+                    rules_profile=scenario.rules_profile,
+                )
                 actor.actor_id = unique_enemy_id
                 actor.position = (0.0, 30.0, 0.0)
                 actors[actor.actor_id] = actor
@@ -14780,44 +16114,6 @@ def run_simulation_core(
                 )
                 lair_actions_resolved = False
 
-                def _resolve_turn_end(actor: ActorRuntimeState, turn_token: str) -> None:
-                    _dispatch_combat_event(
-                        rng=rng,
-                        event="turn_end",
-                        trigger_actor=actor,
-                        trigger_target=actor,
-                        trigger_action=None,
-                        actors=actors,
-                        round_number=rounds,
-                        turn_token=turn_token,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        rule_trace=trial_rule_trace,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
-                    )
-                    _run_legendary_actions(
-                        rng=rng,
-                        trigger_actor=actor,
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
-                        telemetry=trial_telemetry,
-                        round_number=rounds,
-                        turn_token=turn_token,
-                    )
-                    if actor.surprised:
-                        actor.surprised = False
-                        actor.discard_manual_condition("surprised")
-
                 for actor_id in initiative_order:
                     if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
                         actors, enemy_defeat_rule
@@ -14853,296 +16149,67 @@ def run_simulation_core(
 
                     if actor_id not in actors:
                         continue
-                    actor = actors[actor_id]
-                    _refresh_legendary_actions_for_turn(actor)
-                    actor.movement_remaining = float(actor.speed_ft)
-                    actor.took_attack_action_this_turn = False
-                    actor.bonus_action_spell_restriction_active = False
-                    actor.non_action_cantrip_spell_cast_this_turn = False
-                    _roll_recharge_for_actor(rng, actor)
-                    _tick_conditions_for_actor(
-                        rng,
-                        actor,
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                    )
-                    _tick_hazards_for_actor_turn(
-                        active_hazards=active_hazards,
-                        actor=actor,
-                        actors=actors,
-                        boundary="turn_start",
-                    )
-                    _force_end_concentration_if_needed(
-                        actor, actors=actors, active_hazards=active_hazards
-                    )
-                    if "grappled" in actor.conditions:
-                        actor.movement_remaining = 0.0
-                    actor.bonus_available = True
-                    actor.reaction_available = True
-                    actor.sneak_attack_used_this_turn = False
-                    actor.colossus_slayer_used_this_turn = False
-                    actor.horde_breaker_used_this_turn = False
-                    actor.gwm_bonus_trigger_available = False
 
-                    if actor.dead:
-                        continue
+                    def _batch_decision_provider(
+                        actor_view: ActorView,
+                        state_view: BattleStateView,
+                    ) -> CombatTurnDecision:
+                        strategy_name = actor_strategy_overrides.get(actor_view.actor_id)
+                        if strategy_name is None:
+                            strategy_name = (
+                                party_default_strategy
+                                if actor_view.team == "party"
+                                else enemy_default_strategy
+                            )
+                        strategy = strategy_registry.get(strategy_name)
+                        if strategy is None:
+                            raise ValueError(
+                                f"No strategy registered for actor "
+                                f"{actor_view.actor_id}: {strategy_name}"
+                            )
+                        return CombatTurnDecision(
+                            strategy_name=strategy_name,
+                            declaration=strategy.declare_turn(actor_view, state_view),
+                        )
 
-                    if actor.hp <= 0:
-                        resolve_death_save(rng, actor)
-                        _resolve_turn_end(actor, f"{rounds}:{actor.actor_id}")
-                        continue
-
-                    _process_hazard_start_turn_triggers(
-                        rng=rng,
-                        actor=actor,
+                    turn_context = CombatTurnContext(
                         actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                    )
-                    if actor.dead or actor.hp <= 0:
-                        continue
-
-                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
-                        actors, enemy_defeat_rule
-                    ):
-                        break
-                    turn_token = f"{rounds}:{actor.actor_id}"
-                    _dispatch_combat_event(
-                        rng=rng,
-                        event="turn_start",
-                        trigger_actor=actor,
-                        trigger_target=actor,
-                        trigger_action=None,
-                        actors=actors,
+                        initiative_order=initiative_order,
                         round_number=rounds,
-                        turn_token=turn_token,
                         damage_dealt=damage_dealt,
                         damage_taken=damage_taken,
                         threat_scores=threat_scores,
                         resources_spent=resources_spent,
                         active_hazards=active_hazards,
+                        telemetry=trial_telemetry,
                         rule_trace=trial_rule_trace,
                         obstacles=battlefield_obstacles,
                         light_level=light_level,
-                    )
-
-                    _trigger_readied_actions(
-                        rng=rng,
-                        trigger_actor=actor,
-                        round_number=rounds,
-                        turn_token=turn_token,
-                        actors=actors,
-                        damage_dealt=damage_dealt,
-                        damage_taken=damage_taken,
-                        threat_scores=threat_scores,
-                        resources_spent=resources_spent,
-                        active_hazards=active_hazards,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
-                    )
-
-                    if actor.dead or actor.hp <= 0:
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-                    if _party_defeated(actors, party_defeat_rule) or _enemies_defeated(
-                        actors, enemy_defeat_rule
-                    ):
-                        break
-                    if not _can_act(actor):
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-
-                    controller_id = _controller_id_for_actor(actor)
-                    controller = actors.get(controller_id) if controller_id else None
-                    should_force_dodge = (
-                        bool(getattr(actor, "requires_command", False))
-                        and not bool(getattr(actor, "commanded_this_round", False))
-                        and not _owner_is_incapacitated(controller)
-                    )
-                    if should_force_dodge:
-                        action = _resolve_action_selection(actor, "dodge")
-                        if _action_available(actor, action, turn_token=turn_token):
-                            resolved_targets = _resolve_targets_for_action(
-                                rng=rng,
-                                actor=actor,
-                                action=action,
-                                actors=actors,
-                                requested=[],
-                                obstacles=battlefield_obstacles,
-                            )
-                            if resolved_targets:
-                                actor.per_action_uses[action.name] = (
-                                    actor.per_action_uses.get(action.name, 0) + 1
-                                )
-                                _mark_action_cost_used(actor, action)
-                                _execute_action(
-                                    rng=rng,
-                                    actor=actor,
-                                    action=action,
-                                    targets=resolved_targets,
-                                    actors=actors,
-                                    damage_dealt=damage_dealt,
-                                    damage_taken=damage_taken,
-                                    threat_scores=threat_scores,
-                                    resources_spent=resources_spent,
-                                    active_hazards=active_hazards,
-                                    obstacles=battlefield_obstacles,
-                                    light_level=light_level,
-                                    telemetry=trial_telemetry,
-                                    strategy_name="forced_dodge",
-                                )
-                        if hasattr(actor, "commanded_this_round"):
-                            actor.commanded_this_round = False
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-
-                    strategy_name = actor_strategy_overrides.get(actor.actor_id)
-                    if strategy_name is None:
-                        strategy_name = (
-                            party_default_strategy
-                            if actor.team == "party"
-                            else enemy_default_strategy
-                        )
-                    strategy = strategy_registry.get(strategy_name)
-                    if strategy is None:
-                        raise ValueError(
-                            f"No strategy registered for actor {actor.actor_id}: {strategy_name}"
-                        )
-
-                    metadata = _build_round_metadata(
-                        actors=actors,
-                        threat_scores=threat_scores,
                         burst_round_threshold=int(
                             scenario.config.resource_policy.get("burst_round_threshold", 3)
                         ),
-                        active_hazards=active_hazards,
-                        obstacles=battlefield_obstacles,
-                        light_level=light_level,
                         strategy_overrides=assumption_overrides,
+                        timing_engine=trial_timing_engine,
+                        party_defeat_rule=party_defeat_rule,
+                        enemy_defeat_rule=enemy_defeat_rule,
                     )
-                    state_view = _build_actor_views(actors, initiative_order, rounds, metadata)
-                    actor_view = state_view.actors[actor.actor_id]
-                    turn_declaration = strategy.declare_turn(actor_view, state_view)
-                    if turn_declaration is None:
-                        trial_telemetry.append(
-                            {
-                                "telemetry_type": "decision",
-                                "round": rounds,
-                                "strategy": strategy_name,
-                                "actor_id": actor.actor_id,
-                                "team": actor.team,
-                                "intent_action": None,
-                                "resolved_action": None,
-                                "fallback_reason": "declare_turn_none",
-                                "requested_targets": [],
-                                "resolved_targets": [],
-                                "rationale": {},
-                                "extra_resource_request": {},
-                                "resource_cost": {},
-                            }
-                        )
-                        _resolve_turn_end(actor, turn_token)
-                        continue
-                    if not isinstance(turn_declaration, TurnDeclaration):
-                        _raise_turn_declaration_error(
-                            actor=actor,
-                            code="invalid_turn_declaration_type",
-                            field="turn_declaration",
-                            message="declare_turn(...) must return TurnDeclaration or None.",
-                            details={"actual_type": type(turn_declaration).__name__},
-                        )
-                    requested_targets = _declared_target_ids(turn_declaration)
-                    action_name = (
-                        turn_declaration.action.action_name
-                        if turn_declaration.action is not None
-                        else None
+                    turn_result = resolve_combat_turn(
+                        rng=rng,
+                        context=turn_context,
+                        actor_id=actor_id,
+                        decision_provider=_batch_decision_provider,
                     )
-                    try:
-                        _execute_declared_turn_or_error(
-                            rng=rng,
-                            actor=actor,
-                            declaration=turn_declaration,
-                            strategy_name=strategy_name,
-                            actors=actors,
-                            damage_dealt=damage_dealt,
-                            damage_taken=damage_taken,
-                            threat_scores=threat_scores,
-                            resources_spent=resources_spent,
-                            active_hazards=active_hazards,
-                            telemetry=trial_telemetry,
-                            obstacles=battlefield_obstacles,
-                            light_level=light_level,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            rule_trace=trial_rule_trace,
-                        )
-                    except TurnDeclarationValidationError as exc:
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="action_selection",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            selection_state="illegal",
-                            error_code=exc.code,
-                            field=exc.field,
-                        )
-                        raise
-
-                    if turn_declaration.action is not None:
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="declaration_validation",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            validation_state="valid",
-                        )
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="action_selection",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            resolved_targets=requested_targets,
-                            selection_state="selected",
-                        )
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="action_resolution",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            resolved_targets=requested_targets,
-                            resolution_state="resolved",
-                        )
-                        _emit_turn_trace_event(
-                            trial_telemetry,
-                            event_type="action_outcome",
-                            actor_id=actor.actor_id,
-                            round_number=rounds,
-                            turn_token=turn_token,
-                            action_name=action_name,
-                            requested_targets=requested_targets,
-                            resolved_targets=requested_targets,
-                            outcome_state="applied",
-                        )
-                    _resolve_turn_end(actor, turn_token)
+                    actors = turn_context.actors
+                    damage_dealt = turn_context.damage_dealt
+                    damage_taken = turn_context.damage_taken
+                    threat_scores = turn_context.threat_scores
+                    resources_spent = turn_context.resources_spent
+                    active_hazards = turn_context.active_hazards
+                    trial_telemetry = turn_context.telemetry
+                    trial_rule_trace = turn_context.rule_trace
+                    trial_timing_engine = turn_context.timing_engine
+                    if turn_result.combat_ended:
+                        break
 
                 if (
                     not lair_actions_resolved
@@ -15175,14 +16242,18 @@ def run_simulation_core(
             if party_is_defeated:
                 encounter_winner = "enemy"
                 encounter_outcome = "party_defeat"
+                encounter_termination_reason = "party_defeated"
+                encounter_censored = False
             elif enemies_are_defeated:
                 encounter_winner = "party"
                 encounter_outcome = "enemy_defeat"
+                encounter_termination_reason = "enemy_defeated"
+                encounter_censored = False
             else:
-                party_hp = sum(a.hp for a in actors.values() if a.team == "party" and not a.dead)
-                enemy_hp = sum(a.hp for a in actors.values() if a.team != "party" and not a.dead)
-                encounter_winner = "party" if party_hp >= enemy_hp else "enemy"
-                encounter_outcome = encounter_winner
+                encounter_winner = "draw"
+                encounter_outcome = "timeout"
+                encounter_termination_reason = "max_rounds"
+                encounter_censored = True
 
             next_encounter_idx, branch_key = _resolve_next_encounter_index(
                 encounter=encounter,
@@ -15192,15 +16263,25 @@ def run_simulation_core(
                 encounter_count=len(encounter_plan),
             )
 
+            # A max-rounds timeout is censored rather than a resolved combat
+            # result. Do not silently discard the unresolved actors and advance
+            # through a sequential campaign. Scenario authors can opt into that
+            # behavior with an explicit timeout/draw/default branch.
+            if encounter_censored and branch_key is None:
+                next_encounter_idx = None
+
             continue_campaign = next_encounter_idx is not None
             if party_is_defeated:
                 overall_winner = "enemy"
+                overall_outcome = "enemy_victory"
+                overall_termination_reason = "party_defeated"
                 continue_campaign = False
                 next_encounter_idx = None
-            elif encounter_winner == "enemy" and branch_key is None:
-                overall_winner = "enemy"
-                continue_campaign = False
-                next_encounter_idx = None
+            elif encounter_censored and not continue_campaign:
+                overall_censored = True
+                overall_winner = "draw"
+                overall_outcome = "timeout"
+                overall_termination_reason = encounter_termination_reason
 
             if continue_campaign:
                 for actor in actors.values():
@@ -15238,6 +16319,8 @@ def run_simulation_core(
                     "encounter_step": step_index,
                     "outcome": encounter_outcome,
                     "winner": encounter_winner,
+                    "termination_reason": encounter_termination_reason,
+                    "censored": encounter_censored,
                     "next_encounter_index": next_encounter_idx,
                     "party": party_snapshot,
                     "enemies": enemy_snapshot,
@@ -15249,23 +16332,40 @@ def run_simulation_core(
                     "encounter_step": step_index,
                     "outcome": encounter_outcome,
                     "winner": encounter_winner,
+                    "termination_reason": encounter_termination_reason,
+                    "censored": encounter_censored,
                     "branch_key": branch_key,
                     "next_encounter_index": next_encounter_idx,
                 }
             )
 
             if not continue_campaign:
-                if overall_winner == "draw":
+                if (
+                    overall_termination_reason is None
+                    and encounter_winner == "party"
+                    and not encounter_censored
+                ):
                     overall_winner = encounter_winner
+                    overall_outcome = "party_victory"
+                    overall_termination_reason = encounter_termination_reason
                 break
 
             encounter_idx = next_encounter_idx
 
-        if overall_winner == "draw":
+        if overall_termination_reason is None:
             if _party_defeated(actors, party_defeat_rule):
                 overall_winner = "enemy"
+                overall_outcome = "enemy_victory"
+                overall_termination_reason = "party_defeated"
             elif _enemies_defeated(actors, enemy_defeat_rule):
                 overall_winner = "party"
+                overall_outcome = "party_victory"
+                overall_termination_reason = "enemy_defeated"
+            else:
+                overall_winner = "draw"
+                overall_outcome = "censored"
+                overall_termination_reason = "unresolved"
+                overall_censored = True
 
         for aid, actor in actors.items():
             downed_counts[aid] = actor.downed_count
@@ -15285,6 +16385,11 @@ def run_simulation_core(
             telemetry=trial_telemetry,
             encounter_outcomes=encounter_outcomes,
             state_snapshots=state_snapshots,
+            outcome=overall_outcome,
+            termination_reason=overall_termination_reason,
+            censored=overall_censored,
+            rules_profile_id=scenario.rules_profile.profile_id,
+            rules_profile_version=scenario.rules_profile.profile_version,
         )
         trial_results.append(trial)
 

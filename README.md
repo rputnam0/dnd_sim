@@ -25,6 +25,15 @@ uv run python scripts/content/verify_completion_capabilities.py --strict
 - Runtime CRPG-core support includes class/subclass progression, item attunement/equipment/charges, stealth/surprise/search, traps, locks, containers, and persistent exploration world state.
 - Program truth and release state live under `docs/program/`.
 
+## Echo Vault Solo VTT
+
+The first playable browser VTT slice runs the original Echo Vault encounter through the same
+deterministic turn resolver as batch simulation. It supports grid movement, action/target
+selection, non-mutating preview, durable commit/restart, and reconnectable public events.
+
+See [`docs/vtt_solo_table.md`](docs/vtt_solo_table.md) for the two-process local setup and play
+loop.
+
 ## Tests
 
 ```bash

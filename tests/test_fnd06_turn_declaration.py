@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+import dnd_sim.engine_runtime as engine_runtime
 from dnd_sim.engine import TurnDeclarationValidationError, run_simulation
 from dnd_sim.io import load_character_db, load_runtime_scenario
 from dnd_sim.strategy_api import (
@@ -43,7 +44,7 @@ class LegacyBasicStrategy(BaseStrategy):
             action=DeclaredAction(
                 action_name="basic",
                 targets=[TargetRef(actor_id=target.actor_id)],
-            )
+            ),
         )
 
 
@@ -256,10 +257,7 @@ def test_turn_only_strategy_without_legacy_methods_can_noop_turns(tmp_path: Path
         for event in result.trial_results[0].telemetry
         if event.get("telemetry_type") == "decision" and event.get("actor_id") == "hero"
     ]
-    assert any(
-        event.get("fallback_reason") == "declare_turn_none"
-        for event in hero_decisions
-    )
+    assert any(event.get("fallback_reason") == "declare_turn_none" for event in hero_decisions)
 
 
 def test_validate_strategy_instance_rejects_removed_legacy_methods() -> None:
@@ -327,3 +325,29 @@ def test_illegal_turn_plan_raises_structured_bonus_action_error(tmp_path: Path) 
     assert exc_info.value.code == "illegal_bonus_action"
     assert exc_info.value.actor_id == "hero"
     assert exc_info.value.field == "bonus_action.action_name"
+
+
+def test_batch_turn_loop_routes_actionable_actors_through_combat_turn_kernel(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scenario_path = _setup_env(tmp_path)
+    loaded = load_runtime_scenario(scenario_path)
+    db = load_character_db(Path(loaded.config.character_db_dir))
+    real_resolver = engine_runtime.resolve_combat_turn
+    resolved_actor_ids: list[str] = []
+
+    def observing_resolver(**kwargs):
+        resolved_actor_ids.append(kwargs["actor_id"])
+        return real_resolver(**kwargs)
+
+    monkeypatch.setattr(engine_runtime, "resolve_combat_turn", observing_resolver)
+    registry = {
+        "party_strategy": ExplicitBasicPlanStrategy(),
+        "enemy_strategy": LegacyBasicStrategy(),
+    }
+
+    run_simulation(loaded, db, {}, registry, trials=1, seed=43, run_id="atomic_route")
+
+    assert "hero" in resolved_actor_ids
+    assert "boss" in resolved_actor_ids

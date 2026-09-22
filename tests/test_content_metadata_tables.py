@@ -59,8 +59,7 @@ def _create_legacy_core_tables(conn: sqlite3.Connection) -> None:
 
 
 def _create_dbs01_content_metadata_tables(conn: sqlite3.Connection) -> None:
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE content_records (
             content_id TEXT PRIMARY KEY,
             content_type TEXT NOT NULL,
@@ -69,10 +68,8 @@ def _create_dbs01_content_metadata_tables(conn: sqlite3.Connection) -> None:
             source_hash TEXT NOT NULL,
             payload_json TEXT NOT NULL
         )
-        """
-    )
-    conn.execute(
-        """
+        """)
+    conn.execute("""
         CREATE TABLE content_capabilities (
             content_id TEXT PRIMARY KEY,
             content_type TEXT NOT NULL,
@@ -81,8 +78,7 @@ def _create_dbs01_content_metadata_tables(conn: sqlite3.Connection) -> None:
             last_verified_commit TEXT NOT NULL,
             FOREIGN KEY (content_id) REFERENCES content_records(content_id) ON DELETE CASCADE
         )
-        """
-    )
+        """)
     conn.commit()
 
 

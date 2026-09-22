@@ -3,10 +3,27 @@ from __future__ import annotations
 from typing import Any
 
 from dnd_sim.action_legality import TurnDeclarationValidationError
-from dnd_sim.engine_runtime import SimulationArtifacts, SimulationCoreResult
+from dnd_sim.engine_runtime import (
+    SimulationArtifacts,
+    SimulationCoreResult,
+    build_combat_turn_prompt,
+    create_declared_turn_runtime_state,
+    prepare_combat_turn,
+    resolve_combat_turn,
+    resolve_declared_turn,
+    resolve_declared_turn_atomic,
+    resolve_prompted_combat_turn,
+)
 from dnd_sim.io import LoadedScenario
 from dnd_sim.replay import build_trial_rows
 from dnd_sim.reporting_runtime import build_simulation_summary
+from dnd_sim.turn_kernel import (
+    CombatTurnContext,
+    CombatTurnDecision,
+    CombatTurnPrompt,
+    CombatTurnResult,
+    DeclaredTurnRuntimeState,
+)
 
 
 def _build_simulation_artifacts(
@@ -14,6 +31,8 @@ def _build_simulation_artifacts(
     core_result: SimulationCoreResult,
     run_id: str,
     scenario_id: str,
+    rules_profile_id: str,
+    rules_profile_version: str,
     trials: int,
 ) -> SimulationArtifacts:
     trial_rows = build_trial_rows(core_result.trial_results)
@@ -23,6 +42,8 @@ def _build_simulation_artifacts(
         trials=trials,
         trial_results=core_result.trial_results,
         tracked_resource_names=core_result.tracked_resource_names,
+        rules_profile_id=rules_profile_id,
+        rules_profile_version=rules_profile_version,
     )
     return SimulationArtifacts(
         trial_results=core_result.trial_results,
@@ -56,8 +77,26 @@ def run_simulation(
         core_result=core_result,
         run_id=run_id,
         scenario_id=scenario.config.scenario_id,
+        rules_profile_id=scenario.rules_profile.profile_id,
+        rules_profile_version=scenario.rules_profile.profile_version,
         trials=trials,
     )
 
 
-__all__ = ["SimulationArtifacts", "TurnDeclarationValidationError", "run_simulation"]
+__all__ = [
+    "CombatTurnContext",
+    "CombatTurnDecision",
+    "CombatTurnPrompt",
+    "CombatTurnResult",
+    "DeclaredTurnRuntimeState",
+    "SimulationArtifacts",
+    "TurnDeclarationValidationError",
+    "build_combat_turn_prompt",
+    "create_declared_turn_runtime_state",
+    "prepare_combat_turn",
+    "resolve_combat_turn",
+    "resolve_declared_turn",
+    "resolve_declared_turn_atomic",
+    "resolve_prompted_combat_turn",
+    "run_simulation",
+]

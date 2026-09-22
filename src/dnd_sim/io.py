@@ -54,6 +54,7 @@ from dnd_sim.io_models import (
     ResourceChangeEffectConfig,
     RuntimeScenarioConfig,
     ScenarioConfig,
+    StabilizeEffectConfig,
     StrategyModuleConfig,
     SummonEffectConfig,
     TempHPEffectConfig,
@@ -69,6 +70,7 @@ from dnd_sim.io_runtime import (
     write_json,
     write_trial_rows,
 )
+from dnd_sim.rules_profiles import load_supported_rules_profile
 
 logger = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -114,6 +116,7 @@ _CAPABILITY_MONSTER_CONTENT_TYPES = frozenset(
     {
         "monster",
         "monster_action",
+        "monster_bonus_action",
         "monster_reaction",
         "monster_legendary_action",
         "monster_lair_action",
@@ -634,6 +637,15 @@ def validate_capability_gate_records(
 
     issues: list[str] = []
     for index, raw_record in enumerate(records):
+        if isinstance(raw_record, dict):
+            raw_states = raw_record.get("states")
+            if (
+                isinstance(raw_states, dict)
+                and raw_states.get("tested") is True
+                and raw_states.get("executable") is not True
+            ):
+                content_id = str(raw_record.get("content_id", f"index {index}"))
+                issues.append(f"{content_id} tested record requires states.executable=true")
         try:
             record = (
                 raw_record
@@ -648,6 +660,19 @@ def validate_capability_gate_records(
             continue
 
         states = record.states
+        if not states.cataloged:
+            issues.append(f"{record.content_id} record must set states.cataloged=true")
+        if states.executable == states.blocked:
+            issues.append(
+                f"{record.content_id} states.executable and states.blocked must be exact opposites"
+            )
+        if states.executable and not states.schema_valid:
+            issues.append(
+                f"{record.content_id} executable record requires states.schema_valid=true"
+            )
+        if states.tested and not states.executable:
+            issues.append(f"{record.content_id} tested record requires states.executable=true")
+
         if states.blocked:
             reason = str(states.unsupported_reason or "").strip()
             if not reason:
@@ -662,8 +687,8 @@ def validate_capability_gate_records(
 
         if not states.schema_valid:
             issues.append(f"{record.content_id} supported-scope record must set schema_valid=true")
-        if not states.tested:
-            issues.append(f"{record.content_id} supported-scope record must set tested=true")
+        if not states.executable:
+            issues.append(f"{record.content_id} supported-scope record must set executable=true")
         if states.unsupported_reason is not None:
             issues.append(
                 f"{record.content_id} supported-scope record must not set unsupported_reason"
@@ -722,9 +747,41 @@ def _resolve_content_path_ref(raw_path: str, *, scenario_path: Path) -> Path:
 
 def _validate_public_enemy_payload(*, enemy_payload: dict[str, Any], enemy_id: str) -> None:
     if "script_hooks" in enemy_payload:
-        raise ValueError(
-            f"Public enemy content must not declare script_hooks: {enemy_id}"
-        )
+        raise ValueError(f"Public enemy content must not declare script_hooks: {enemy_id}")
+
+
+_ENEMY_ACTION_KIT_FIELDS = (
+    "actions",
+    "bonus_actions",
+    "reactions",
+    "legendary_actions",
+    "lair_actions",
+    "innate_spellcasting",
+)
+
+
+def _validate_enemy_action_kit(
+    *,
+    enemy: EnemyConfig,
+    enemy_id: str,
+    source_path: Path | None,
+) -> None:
+    """Reject actionless enemies at the executable scenario-loading boundary.
+
+    Catalog and migration code may parse incomplete monster records independently,
+    but public and runtime scenario loaders must never rely on the engine's synthetic
+    basic-attack fallback. There is intentionally no production loader escape hatch.
+    """
+
+    if any(getattr(enemy, field_name) for field_name in _ENEMY_ACTION_KIT_FIELDS):
+        return
+
+    source = f" at {source_path}" if source_path is not None else " from SQLite content"
+    fields = ", ".join(_ENEMY_ACTION_KIT_FIELDS)
+    raise ValueError(
+        f"Enemy '{enemy_id}' has an empty action kit{source}; "
+        f"production scenarios require at least one entry across: {fields}"
+    )
 
 
 def _content_index_identifier(*, kind: str, payload: dict[str, Any], default: str) -> str:
@@ -749,6 +806,16 @@ def _load_validated_scenario(
     scenario: RuntimeScenarioConfig,
     public_contract: bool,
 ) -> LoadedScenario:
+    rules_profile = load_supported_rules_profile(
+        profile_id=scenario.rules_profile_id,
+        profile_version=scenario.rules_profile_version,
+    )
+    if rules_profile.ruleset != scenario.ruleset:
+        raise ValueError(
+            "rules profile ruleset mismatch: "
+            f"scenario uses {scenario.ruleset}, profile uses {rules_profile.ruleset}"
+        )
+
     _assert_capability_gate(
         required_content_types=set(_CAPABILITY_MONSTER_CONTENT_TYPES),
         source="load_public_scenario" if public_contract else "load_runtime_scenario",
@@ -816,12 +883,18 @@ def _load_validated_scenario(
         except json.JSONDecodeError as exc:
             raise ValueError(f"Invalid JSON blob for {enemy_id}: {exc}") from exc
 
+        _validate_enemy_action_kit(
+            enemy=enemy,
+            enemy_id=enemy_id,
+            source_path=source_path,
+        )
         enemies[enemy_id] = enemy
 
     return LoadedScenario.model_construct(
         scenario_path=str(scenario_path),
         config=scenario,
         enemies=enemies,
+        rules_profile=rules_profile,
     )
 
 

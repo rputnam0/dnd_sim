@@ -2,7 +2,7 @@
 
 Status: canonical  
 Owner: program-control  
-Last updated: 2026-03-09
+Last updated: 2026-07-26
 Canonical source: `docs/program/README.md`
 
 This file is the single canonical planning entrypoint for the DnD Sim completion program.
@@ -58,21 +58,30 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 
 ## Current Backend Snapshot
 
-- Strict shipped-2014 parity is complete on `main` with `0` blocked records.
-- Current capability report totals are `2674/2674` schema-valid, executable, tested, and supported records.
+- The 2014 catalog contains `2674` capability records, but catalog coverage is not equivalent to
+  behavioral rules parity.
+- The current capability report exposes `191` actionless monster stat shells as blocked and no
+  records yet carry independent behavioral-test evidence under the truthful manifest semantics.
+- Strict shipped-2014 behavioral parity is therefore not complete. Strict completion mode is
+  expected to remain red until executable content and conformance evidence close those blockers.
 - Wave 6 parity closeout was promoted from `codex/int/w6-parity-closeout` to `main` via [#244](https://github.com/rputnam0/dnd_sim/pull/244).
 - `docs/program/parity_leaf_registry.csv` and `docs/program/parity_batch_registry.csv` remain canonical historical execution maps for the closeout wave.
 - Wave 7 closeout is merged on `main`: canonical items, classes, subclasses, stealth/search/surprise state, traps, locks, containers, and persistence-backed interaction flows are all first-class shipped surfaces.
-- The repository should now be described as an authoritative simulation and campaign core, not as the full Part 1 product backend.
-- Governed AI DM runtime, authored dialogue runtime, live session services, and creator-safe tooling remain intentionally out of scope until Wave 8 stabilization closes.
-- Use `docs/program/capability_report.md` and `docs/program/status_board.md` for current truth.
+- The repository is a candidate deterministic simulation and campaign core, not yet a validated
+  encounter-difficulty model or the full Part 1 product backend.
+- Governed AI DM runtime, authored dialogue runtime, live session services, and creator-safe tooling remain product-roadmap work.
+- Use `docs/program/capability_report.md` for current capability truth and
+  `docs/program/status_board.md` for historical program/merge state.
 
-## Active stabilization wave
+## Active implementation milestone
 
-- Wave 8 is the live program wave.
-- Wave 8 objective: complete Section 2 stabilization for the Part 1 product target in `docs/roadmap/part_1.md`.
-- Use `docs/program/section1_gap_matrix.md` as the canonical bridge between the product definition and the current codebase truth.
-- Wave 8 scope is stabilization only: truthful baseline, portability, creator-boundary hardening, core contract decomposition, data-integrity hardening, and final Section 2 gates.
+- Wave 8 is merged historical program state; it does not establish behavioral rules parity.
+- Milestone 0 now establishes the simulation truth gate shared by the simulator, VTT, and CRPG
+  product paths.
+- Use `docs/trustworthy_engine_implementation_checklist.md` for the ordered implementation
+  milestones and current acceptance commands.
+- The active scope is strict content validation, truthful capability evidence, executable shipped
+  scenarios, and explicit terminal outcomes before broader rules or product expansion.
 
 Ownership and metadata-header requirements for this same live planning surface are defined in
 `docs/program/doc_governance.md`.

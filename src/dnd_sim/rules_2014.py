@@ -3,12 +3,19 @@ from __future__ import annotations
 import random
 import re
 from dataclasses import dataclass, field
-from typing import Callable, TypeVar
+from typing import Callable, Literal, TypeVar
 
+from dnd_sim.damage_rolls import (
+    _damage_expr_has_dice,
+    parse_damage_expression,
+    roll_damage,
+)
 from dnd_sim.models import ActionDefinition, ActorRuntimeState
+from dnd_sim.mortality import advance_stable_recovery, stabilize_creature
 from dnd_sim.noncombat_checks import resolve_contest
+from dnd_sim.roll_journal import BoundRollJournalRecorder
+from dnd_sim.roll_hook_provenance import RollHookTrace
 
-_DAMAGE_RE = re.compile(r"^(?:(\d+)d(\d+))?([+-]\d+)?$")
 _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SHIELD_MASTER_INCAPACITATING_CONDITIONS = {
     "incapacitated",
@@ -74,6 +81,7 @@ class AttackRollEvent(CombatEvent):
     to_hit_modifier: int
     actors: dict[str, ActorRuntimeState]
     resources_spent: dict[str, dict[str, int]]
+    hook_trace: list[RollHookTrace] = field(default_factory=list)
     round_number: int | None = None
     turn_token: str | None = None
 
@@ -100,6 +108,7 @@ class AttackResolvedEvent(CombatEvent):
     actors: dict[str, ActorRuntimeState]
     resources_spent: dict[str, dict[str, int]]
     timing_engine: "CombatTimingEngine | None" = None
+    hook_trace: list[RollHookTrace] = field(default_factory=list)
     round_number: int | None = None
     turn_token: str | None = None
 
@@ -121,6 +130,7 @@ class DamageRollEvent(CombatEvent):
     target_can_see_attacker: bool
     bundle: "DamageBundle | None" = None
     timing_engine: "CombatTimingEngine | None" = None
+    hook_trace: list[RollHookTrace] = field(default_factory=list)
     round_number: int | None = None
     turn_token: str | None = None
 
@@ -951,21 +961,6 @@ def roll_dice(rng: random.Random, sides: int, count: int = 1) -> int:
     return sum(rng.randint(1, sides) for _ in range(count))
 
 
-def parse_damage_expression(expr: str) -> tuple[int, int, int]:
-    value = expr.strip().replace(" ", "")
-    if value.isdigit() or (value.startswith("-") and value[1:].isdigit()):
-        return 0, 0, int(value)
-
-    match = _DAMAGE_RE.fullmatch(value)
-    if not match:
-        raise ValueError(f"Invalid damage expression: {expr}")
-
-    n_dice = int(match.group(1) or 0)
-    dice_size = int(match.group(2) or 0)
-    flat = int(match.group(3) or 0)
-    return n_dice, dice_size, flat
-
-
 def attack_roll(
     rng: random.Random,
     to_hit: int,
@@ -973,22 +968,52 @@ def attack_roll(
     *,
     advantage: bool = False,
     disadvantage: bool = False,
+    journal_recorder: BoundRollJournalRecorder | None = None,
 ) -> AttackRollResult:
+    if journal_recorder is not None and not isinstance(journal_recorder, BoundRollJournalRecorder):
+        raise TypeError("journal_recorder must be a BoundRollJournalRecorder")
     if advantage and disadvantage:
         advantage = False
         disadvantage = False
 
+    mode: Literal["normal", "advantage", "disadvantage"]
     if advantage:
-        natural_roll = max(rng.randint(1, 20), rng.randint(1, 20))
+        generated_values = (rng.randint(1, 20), rng.randint(1, 20))
+        natural_roll = max(generated_values)
+        mode = "advantage"
     elif disadvantage:
-        natural_roll = min(rng.randint(1, 20), rng.randint(1, 20))
+        generated_values = (rng.randint(1, 20), rng.randint(1, 20))
+        natural_roll = min(generated_values)
+        mode = "disadvantage"
     else:
-        natural_roll = rng.randint(1, 20)
+        generated_values = (rng.randint(1, 20),)
+        natural_roll = generated_values[0]
+        mode = "normal"
 
     crit = natural_roll == 20
     total = natural_roll + to_hit
     hit = crit or (natural_roll != 1 and total >= target_ac)
-    return AttackRollResult(hit=hit, crit=crit, natural_roll=natural_roll, total=total)
+    result = AttackRollResult(hit=hit, crit=crit, natural_roll=natural_roll, total=total)
+    if journal_recorder is not None:
+        kept_generation_index = generated_values.index(natural_roll) + 1
+        modifier_text = f"{to_hit:+d}" if to_hit else ""
+        expression = {
+            "normal": "1d20",
+            "advantage": "2d20kh1",
+            "disadvantage": "2d20kl1",
+        }[mode]
+        journal_recorder.record_d20(
+            expression=f"{expression}{modifier_text}",
+            mode=mode,
+            generated_values=generated_values,
+            kept_generation_index=kept_generation_index,
+            flat_modifier=to_hit,
+            total=total,
+            threshold=target_ac,
+            outcome="hit" if hit else "miss",
+            critical=crit,
+        )
+    return result
 
 
 def _spend_luck_point_if_available(
@@ -1089,55 +1114,44 @@ def run_contested_check(
     rng: random.Random,
     attacker_mod: int,
     defender_mods: list[int],
+    *,
+    attacker_journal_recorder: BoundRollJournalRecorder | None = None,
+    defender_journal_recorder: BoundRollJournalRecorder | None = None,
 ) -> bool:
     """Evaluates a contested check. Ties go to the defender."""
-    return resolve_contest(
+    for recorder in (attacker_journal_recorder, defender_journal_recorder):
+        if recorder is not None and not isinstance(recorder, BoundRollJournalRecorder):
+            raise TypeError("journal recorders must be BoundRollJournalRecorder values")
+    result = resolve_contest(
         rng,
         attacker_modifier=attacker_mod,
         defender_modifiers=defender_mods,
-    ).success
-
-
-def roll_damage(
-    rng: random.Random,
-    expr: str,
-    *,
-    crit: bool = False,
-    empowered_rerolls: int = 0,
-    source: ActorRuntimeState | None = None,
-    damage_type: str = "",
-) -> int:
-    n_dice, dice_size, flat = parse_damage_expression(expr)
-    total = flat
-    if n_dice and dice_size:
-        rolls = [rng.randint(1, dice_size) for _ in range(n_dice * (2 if crit else 1))]
-        if empowered_rerolls > 0:
-            rolls.sort()
-            for i in range(min(empowered_rerolls, len(rolls))):
-                if rolls[i] <= dice_size // 2:
-                    rolls[i] = rng.randint(1, dice_size)
-
-        if source and damage_type:
-            floor = 1
-            for trait_data in source.traits.values():
-                for mechanic in trait_data.get("mechanics", []):
-                    if mechanic.get("effect_type") == "damage_roll_floor":
-                        req_type = mechanic.get("damage_type", "").lower()
-                        if req_type == damage_type.lower() or req_type == "any_elemental":
-                            floor = max(floor, mechanic.get("floor", 1))
-            if floor > 1:
-                rolls = [max(r, floor) for r in rolls]
-
-        total += sum(rolls)
-    return max(total, 0)
-
-
-def _damage_expr_has_dice(expr: str) -> bool:
-    try:
-        n_dice, dice_size, _flat = parse_damage_expression(expr)
-    except ValueError:
-        return False
-    return n_dice > 0 and dice_size > 0
+    )
+    if attacker_journal_recorder is not None:
+        attacker_journal_recorder.record_d20(
+            expression=f"1d20{result.attacker_modifier:+d}",
+            mode="normal",
+            generated_values=(result.attacker_roll,),
+            kept_generation_index=1,
+            flat_modifier=result.attacker_modifier,
+            total=result.attacker_total,
+            threshold=result.defender_total + 1,
+            outcome="success" if result.success else "failure",
+            critical=False,
+        )
+    if defender_journal_recorder is not None:
+        defender_journal_recorder.record_d20(
+            expression=f"1d20{result.defender_modifier:+d}",
+            mode="normal",
+            generated_values=(result.defender_roll,),
+            kept_generation_index=1,
+            flat_modifier=result.defender_modifier,
+            total=result.defender_total,
+            threshold=result.attacker_total,
+            outcome="failure" if result.success else "success",
+            critical=False,
+        )
+    return result.success
 
 
 def roll_damage_packet(
@@ -1286,6 +1300,8 @@ def apply_damage_bundle(
     _sync_rage_state(target)
     resolution = resolve_damage_bundle(target, bundle, source=source)
     adjusted = resolution.applied_total
+    if target.dead:
+        return resolution
     if adjusted > 0 and _rage_benefits_active(target):
         target.rage_sustained_since_last_turn = True
 
@@ -1322,13 +1338,18 @@ def apply_damage_bundle(
         return resolution
 
     def _mark_dead() -> None:
+        target.hp = 0
         target.dead = True
         target.stable = False
+        target.stable_recovery_hours_remaining = None
         target.death_failures = max(3, target.death_failures)
         target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         _end_rage_if_active()
 
     if target.hp <= 0 and not target.dead:
+        if target.uses_death_saves is False:
+            _mark_dead()
+            return resolution
         if remaining >= target.max_hp:
             _mark_dead()
             return resolution
@@ -1336,6 +1357,7 @@ def apply_damage_bundle(
             if target.stable:
                 target.stable = False
                 target.death_successes = 0
+                target.stable_recovery_hours_remaining = None
             # Failed death save from taking damage while at 0.
             target.death_failures += 2 if is_critical else 1
             if target.death_failures >= 3:
@@ -1349,6 +1371,7 @@ def apply_damage_bundle(
     if target.hp <= 0 and not target.dead:
         overflow = max(0, remaining - max(0, hp_before))
         target.hp = 0
+        target.stable_recovery_hours_remaining = None
         downed_conditions = {"unconscious", "incapacitated"}
         if "prone" not in target.condition_immunities and "all" not in target.condition_immunities:
             downed_conditions.add("prone")
@@ -1358,6 +1381,8 @@ def apply_damage_bundle(
             target.downed_count += 1
             target.was_downed = True
         if overflow >= target.max_hp:
+            _mark_dead()
+        elif target.uses_death_saves is False:
             _mark_dead()
 
     if adjusted > 0 and "turned" in target.conditions:
@@ -1433,6 +1458,13 @@ def run_concentration_check(
 def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSaveResult:
     if target.hp > 0 or target.stable or target.dead:
         return DeathSaveResult(False, target.dead, False)
+    if target.uses_death_saves is False:
+        target.dead = True
+        target.stable = False
+        target.stable_recovery_hours_remaining = None
+        target.death_failures = max(3, target.death_failures)
+        target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
+        return DeathSaveResult(False, True, False)
 
     roll = rng.randint(1, 20)
     if roll == 1:
@@ -1442,6 +1474,8 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
         target.death_successes = 0
         target.death_failures = 0
         target.stable = False
+        target.was_downed = False
+        target.stable_recovery_hours_remaining = None
         _remove_condition_everywhere(target, "unconscious")
         _remove_condition_everywhere(target, "incapacitated")
         return DeathSaveResult(False, False, True)
@@ -1454,9 +1488,14 @@ def resolve_death_save(rng: random.Random, target: ActorRuntimeState) -> DeathSa
     became_dead = False
     if target.death_successes >= 3:
         target.stable = True
+        target.death_successes = 0
+        target.death_failures = 0
+        target.stable_recovery_hours_remaining = rng.randint(1, 4)
         became_stable = True
     if target.death_failures >= 3:
         target.dead = True
+        target.stable = False
+        target.stable_recovery_hours_remaining = None
         target.update_manual_conditions({"dead", "unconscious", "incapacitated"})
         became_dead = True
 

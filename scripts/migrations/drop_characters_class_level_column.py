@@ -89,12 +89,10 @@ def migrate_drop_class_level_column(
         conn.execute(f"CREATE TABLE {backup_table} AS SELECT * FROM characters")
 
         canonical_rows: list[tuple[str, str, int, int, int | None, str]] = []
-        for row in conn.execute(
-            """
+        for row in conn.execute("""
             SELECT character_id, name, ac, max_hp, initiative_mod, data_json
             FROM characters
-            """
-        ).fetchall():
+            """).fetchall():
             canonical_rows.append(
                 (
                     str(row[0]),
@@ -136,19 +134,15 @@ def rollback_restore_class_level_column(
     if "class_level" in columns:
         return False
     if not _table_exists(conn, backup_table):
-        raise ValueError(
-            "Cannot rollback character class_level migration: backup table is missing"
-        )
+        raise ValueError("Cannot rollback character class_level migration: backup table is missing")
 
     conn.execute("BEGIN IMMEDIATE")
     try:
         merged_rows: dict[str, tuple[str, str, str, int, int, int | None, str]] = {}
-        for row in conn.execute(
-            f"""
+        for row in conn.execute(f"""
             SELECT character_id, name, class_level, ac, max_hp, initiative_mod, data_json
             FROM {backup_table}
-            """
-        ).fetchall():
+            """).fetchall():
             character_id = str(row[0])
             merged_rows[character_id] = (
                 character_id,
@@ -160,12 +154,10 @@ def rollback_restore_class_level_column(
                 str(row[6]),
             )
 
-        for row in conn.execute(
-            """
+        for row in conn.execute("""
             SELECT character_id, name, ac, max_hp, initiative_mod, data_json
             FROM characters
-            """
-        ).fetchall():
+            """).fetchall():
             payload = json.loads(str(row[5]))
             if not isinstance(payload, dict):
                 raise ValueError("characters.data_json must be a JSON object during rollback")

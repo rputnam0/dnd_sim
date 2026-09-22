@@ -193,7 +193,9 @@ def _normalize_faction_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     return normalized
 
 
-def _campaign_snapshot_hash(campaign_id: str, snapshot_version: str, snapshot: Mapping[str, Any]) -> str:
+def _campaign_snapshot_hash(
+    campaign_id: str, snapshot_version: str, snapshot: Mapping[str, Any]
+) -> str:
     return _stable_payload_hash(
         {
             "campaign_id": campaign_id,
@@ -219,7 +221,9 @@ def _encounter_snapshot_hash(
     )
 
 
-def _world_snapshot_hash(campaign_id: str, snapshot_version: str, snapshot: Mapping[str, Any]) -> str:
+def _world_snapshot_hash(
+    campaign_id: str, snapshot_version: str, snapshot: Mapping[str, Any]
+) -> str:
     return _stable_payload_hash(
         {
             "campaign_id": campaign_id,

@@ -19,8 +19,13 @@ def _stable_json(value: Any) -> str:
 def flatten_trial_result(trial: TrialResult) -> dict[str, Any]:
     return {
         "trial_index": trial.trial_index,
+        "rules_profile_id": trial.rules_profile_id,
+        "rules_profile_version": trial.rules_profile_version,
         "rounds": trial.rounds,
         "winner": trial.winner,
+        "outcome": trial.outcome,
+        "termination_reason": trial.termination_reason,
+        "censored": trial.censored,
         "damage_taken": _stable_json(trial.damage_taken),
         "damage_dealt": _stable_json(trial.damage_dealt),
         "resources_spent": _stable_json(trial.resources_spent),

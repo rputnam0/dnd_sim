@@ -116,31 +116,172 @@ def test_feature_manifest_sets_explicit_reason_for_unsupported_feature() -> None
     assert record.states.unsupported_reason == "missing_runtime_hook_family"
 
 
-def test_trait_hook_shard_a_traits_are_classified_with_canonical_hook_families() -> None:
-    covered_trait_ids = {
-        "trait:dark_one_s_blessing": "effect",
-        "trait:ever_ready_shot": "effect",
-        "trait:expertise": "meta",
-        "trait:magical_ambush": "meta",
-        "trait:precise_hunter": "meta",
-        "trait:steady_eye": "meta",
-        "trait:tool_expertise": "meta",
-        "trait:uncanny_dodge": "effect",
+def test_feature_manifest_marks_runtime_effect_supported() -> None:
+    manifest = build_feature_capability_manifest(
+        feature_payloads=[
+            {
+                "name": "Battle Blessing",
+                "source_type": "feat",
+                "mechanics": [{"effect_type": "max_hp_increase", "calculation": "character_level"}],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.runtime_hook_family == "effect"
+    assert record.support_state == "supported"
+    assert record.states.schema_valid is True
+    assert record.states.executable is True
+    assert record.states.tested is False
+    assert record.states.blocked is False
+    assert record.states.unsupported_reason is None
+
+
+def test_feature_manifest_uses_unsupported_effect_type_reason() -> None:
+    manifest = build_feature_capability_manifest(
+        feature_payloads=[
+            {
+                "name": "Alert",
+                "source_type": "feat",
+                "mechanics": [{"effect_type": "initiative_bonus", "amount": 5}],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.runtime_hook_family == "effect"
+    assert record.support_state == "unsupported"
+    assert record.states.schema_valid is False
+    assert record.states.executable is False
+    assert record.states.blocked is True
+    assert record.states.unsupported_reason == "unsupported_effect_type"
+
+
+def test_feature_manifest_uses_invalid_mechanics_schema_reason() -> None:
+    manifest = build_feature_capability_manifest(
+        feature_payloads=[
+            {
+                "name": "Incomplete Ward",
+                "source_type": "class",
+                "mechanics": [{"effect_type": "temp_hp"}],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.runtime_hook_family == "invalid"
+    assert record.support_state == "unsupported"
+    assert record.states.schema_valid is False
+    assert record.states.executable is False
+    assert record.states.blocked is True
+    assert record.states.unsupported_reason == "invalid_mechanics_schema"
+
+
+@pytest.mark.parametrize(
+    "mechanics",
+    [
+        [{"meta_type": "skill_proficiency"}],
+        [{"effect_type": "note", "text": "Narrative guidance only."}],
+        [{"effect_type": "area", "radius_ft": 10}],
+        [{"effect_type": "temp_hp", "amount": "1d6"}],
+    ],
+)
+def test_feature_manifest_marks_metadata_and_no_op_mechanics_non_executable(
+    mechanics: list[dict[str, object]],
+) -> None:
+    manifest = build_feature_capability_manifest(
+        feature_payloads=[
+            {
+                "name": "Feature Marker",
+                "source_type": "species",
+                "mechanics": mechanics,
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.support_state == "unsupported"
+    assert record.states.schema_valid is True
+    assert record.states.executable is False
+    assert record.states.blocked is True
+    assert record.states.unsupported_reason == "non_executable_mechanics"
+
+
+def test_feature_manifest_accepts_metadata_when_paired_with_runtime_effect() -> None:
+    manifest = build_feature_capability_manifest(
+        feature_payloads=[
+            {
+                "name": "Ward Aura",
+                "source_type": "species",
+                "mechanics": [
+                    {"meta_type": "aura_radius", "radius_ft": 10},
+                    {"effect_type": "max_hp_increase", "calculation": "character_level"},
+                ],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.runtime_hook_family == "effect_meta"
+    assert record.support_state == "supported"
+    assert record.states.schema_valid is True
+    assert record.states.executable is True
+    assert record.states.blocked is False
+    assert record.states.unsupported_reason is None
+
+
+def test_feature_manifest_rejects_invalid_row_even_with_runtime_effect() -> None:
+    manifest = build_feature_capability_manifest(
+        feature_payloads=[
+            {
+                "name": "Mixed Mechanics",
+                "source_type": "feat",
+                "mechanics": [
+                    {"effect_type": "temp_hp", "amount": 3},
+                    {"effect_type": "initiative_bonus", "amount": 5},
+                ],
+            }
+        ]
+    )
+
+    record = manifest.records[0]
+    assert record.support_state == "unsupported"
+    assert record.states.schema_valid is False
+    assert record.states.executable is False
+    assert record.states.blocked is True
+    assert record.states.unsupported_reason == "unsupported_effect_type"
+
+
+def test_trait_hook_shard_a_distinguishes_executable_effects_from_metadata() -> None:
+    expected_states = {
+        "trait:dark_one_s_blessing": (
+            "effect",
+            "unsupported",
+            "non_executable_mechanics",
+        ),
+        "trait:ever_ready_shot": ("effect", "unsupported", "non_executable_mechanics"),
+        "trait:expertise": ("meta", "unsupported", "non_executable_mechanics"),
+        "trait:magical_ambush": ("meta", "unsupported", "non_executable_mechanics"),
+        "trait:precise_hunter": ("meta", "unsupported", "non_executable_mechanics"),
+        "trait:steady_eye": ("meta", "unsupported", "non_executable_mechanics"),
+        "trait:tool_expertise": ("meta", "unsupported", "non_executable_mechanics"),
+        "trait:uncanny_dodge": ("effect", "supported", None),
     }
 
     manifest = build_feature_capability_manifest()
     records = {record.content_id: record for record in manifest.records}
 
-    assert covered_trait_ids.keys() <= records.keys()
-    for trait_id, expected_family in covered_trait_ids.items():
+    assert expected_states.keys() <= records.keys()
+    for trait_id, (expected_family, expected_support, expected_reason) in expected_states.items():
         record = records[trait_id]
-        assert record.support_state == "supported"
         assert record.runtime_hook_family == expected_family
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
+        assert record.support_state == expected_support
+        assert record.states.executable is (expected_support == "supported")
+        assert record.states.blocked is (expected_support == "unsupported")
+        assert record.states.unsupported_reason == expected_reason
 
 
-def test_background_shard_a_features_have_runtime_hook_family_support() -> None:
+def test_background_shard_a_metadata_is_cataloged_but_non_executable() -> None:
     manifest = build_feature_capability_manifest(feature_payloads=load_feature_payloads())
     by_content_id = {record.content_id: record for record in manifest.records}
 
@@ -159,12 +300,13 @@ def test_background_shard_a_features_have_runtime_hook_family_support() -> None:
         record = by_content_id[content_id]
         assert record.content_type == "background"
         assert record.runtime_hook_family == "meta"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
+        assert record.support_state == "unsupported"
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
-def test_background_shard_b_features_have_runtime_hook_family_support() -> None:
+def test_background_shard_b_metadata_is_cataloged_but_non_executable() -> None:
     manifest = build_feature_capability_manifest(feature_payloads=load_feature_payloads())
     by_content_id = {record.content_id: record for record in manifest.records}
 
@@ -183,74 +325,61 @@ def test_background_shard_b_features_have_runtime_hook_family_support() -> None:
         record = by_content_id[content_id]
         assert record.content_type == "background"
         assert record.runtime_hook_family == "meta"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
+        assert record.support_state == "unsupported"
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
-def test_species_hook_shard_a_records_are_supported() -> None:
+def test_species_hook_shard_a_unsupported_effects_are_not_executable() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
     missing_ids = sorted(SHARD_A_SPECIES_IDS - set(by_id))
     assert missing_ids == []
 
-    blocked_species_missing_hook = {
-        record.content_id
-        for record in manifest.records
-        if record.content_type == "species"
-        and record.states.unsupported_reason == "missing_runtime_hook_family"
-    }
-    assert blocked_species_missing_hook.isdisjoint(SHARD_A_SPECIES_IDS)
-
     for content_id in sorted(SHARD_A_SPECIES_IDS):
         record = by_id[content_id]
         assert record.content_type == "species"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
+        assert record.runtime_hook_family == "effect"
+        assert record.support_state == "unsupported"
+        assert record.states.schema_valid is False
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "unsupported_effect_type"
 
-def test_species_hook_shard_b_records_are_supported() -> None:
+
+def test_species_hook_shard_b_metadata_is_not_executable() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
     missing_ids = sorted(SHARD_B_SPECIES_IDS - set(by_id))
     assert missing_ids == []
 
-    blocked_species_missing_hook = {
-        record.content_id
-        for record in manifest.records
-        if record.content_type == "species"
-        and record.states.unsupported_reason == "missing_runtime_hook_family"
-    }
-    assert blocked_species_missing_hook.isdisjoint(SHARD_B_SPECIES_IDS)
-
     for content_id in sorted(SHARD_B_SPECIES_IDS):
         record = by_id[content_id]
         assert record.content_type == "species"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
+        assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
-def test_trait_hook_shard_b_records_are_supported() -> None:
+def test_trait_hook_shard_b_metadata_is_not_executable() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
     missing_ids = sorted(SHARD_B_TRAIT_IDS - set(by_id))
     assert missing_ids == []
 
-    blocked_traits_missing_hook = {
-        record.content_id
-        for record in manifest.records
-        if record.content_type == "trait"
-        and record.states.unsupported_reason == "missing_runtime_hook_family"
-    }
-    assert blocked_traits_missing_hook.isdisjoint(SHARD_B_TRAIT_IDS)
-
     for content_id in sorted(SHARD_B_TRAIT_IDS):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
         assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"

@@ -39,8 +39,88 @@ SHARD_B_SPECIES_IDS = {
 }
 
 
-def test_supported_scope_requires_schema_valid_and_tested() -> None:
+def _capability_record(
+    *,
+    cataloged: bool = True,
+    schema_valid: bool = True,
+    executable: bool = True,
+    tested: bool = False,
+    blocked: bool = False,
+    unsupported_reason: str | None = None,
+) -> dict[str, object]:
+    return {
+        "content_id": "spell:state_fixture",
+        "content_type": "spell",
+        "states": {
+            "cataloged": cataloged,
+            "schema_valid": schema_valid,
+            "executable": executable,
+            "tested": tested,
+            "blocked": blocked,
+            "unsupported_reason": unsupported_reason,
+        },
+    }
+
+
+def test_capability_gate_rejects_record_that_is_both_blocked_and_executable() -> None:
     issues = validate_capability_gate_records(
+        records=[
+            _capability_record(
+                executable=True,
+                blocked=True,
+                unsupported_reason="rules_not_implemented",
+            )
+        ]
+    )
+
+    assert any("executable and states.blocked must be exact opposites" in issue for issue in issues)
+
+
+@pytest.mark.parametrize(
+    ("record", "expected_issue"),
+    [
+        (_capability_record(cataloged=False), "cataloged=true"),
+        (
+            _capability_record(schema_valid=False, executable=True),
+            "executable record requires states.schema_valid=true",
+        ),
+        (
+            _capability_record(
+                executable=False,
+                tested=True,
+                blocked=True,
+                unsupported_reason="rules_not_implemented",
+            ),
+            "tested record requires states.executable=true",
+        ),
+    ],
+)
+def test_capability_gate_enforces_shared_state_invariants(
+    record: dict[str, object], expected_issue: str
+) -> None:
+    issues = validate_capability_gate_records(records=[record])
+
+    assert any(expected_issue in issue for issue in issues)
+
+
+def test_capability_gate_preserves_legitimate_blocked_record() -> None:
+    issues = validate_capability_gate_records(
+        records=[
+            _capability_record(
+                schema_valid=False,
+                executable=False,
+                tested=False,
+                blocked=True,
+                unsupported_reason="rules_not_implemented",
+            )
+        ]
+    )
+
+    assert issues == []
+
+
+def test_runtime_scope_requires_executable_content_but_not_test_evidence() -> None:
+    executable_untested_issues = validate_capability_gate_records(
         records=[
             {
                 "content_id": "spell:arc_flash",
@@ -57,7 +137,26 @@ def test_supported_scope_requires_schema_valid_and_tested() -> None:
         ]
     )
 
-    assert any("tested=true" in issue for issue in issues)
+    assert executable_untested_issues == []
+
+    non_executable_issues = validate_capability_gate_records(
+        records=[
+            {
+                "content_id": "spell:arc_flash",
+                "content_type": "spell",
+                "states": {
+                    "cataloged": True,
+                    "schema_valid": True,
+                    "executable": False,
+                    "tested": False,
+                    "blocked": False,
+                    "unsupported_reason": None,
+                },
+            }
+        ]
+    )
+
+    assert any("executable=true" in issue for issue in non_executable_issues)
 
 
 def test_blocked_record_fixture_requires_unsupported_reason() -> None:
@@ -101,7 +200,7 @@ def test_verify_capabilities_cli_accepts_item_and_class_scopes(
     assert verify_capabilities.main(["--scope", "class"]) == 0
 
 
-def test_species_hook_shard_a_ids_are_supported_in_canonical_capability_records() -> None:
+def test_species_hook_shard_a_invalid_effects_are_blocked_in_canonical_records() -> None:
     io._canonical_capability_records.cache_clear()
     by_id = {record.content_id: record for record in io._canonical_capability_records()}
 
@@ -111,12 +210,15 @@ def test_species_hook_shard_a_ids_are_supported_in_canonical_capability_records(
     for content_id in sorted(SHARD_A_SPECIES_IDS):
         record = by_id[content_id]
         assert record.content_type == "species"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
+        assert record.support_state == "unsupported"
+        assert record.states.schema_valid is False
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "unsupported_effect_type"
+        assert record.runtime_hook_family == "effect"
 
 
-def test_species_hook_shard_b_ids_are_supported_in_canonical_capability_records() -> None:
+def test_species_hook_shard_b_metadata_is_blocked_in_canonical_records() -> None:
     io._canonical_capability_records.cache_clear()
     by_id = {record.content_id: record for record in io._canonical_capability_records()}
 
@@ -126,6 +228,9 @@ def test_species_hook_shard_b_ids_are_supported_in_canonical_capability_records(
     for content_id in sorted(SHARD_B_SPECIES_IDS):
         record = by_id[content_id]
         assert record.content_type == "species"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.runtime_hook_family in {"effect", "effect_meta", "meta"}
+        assert record.support_state == "unsupported"
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
+        assert record.runtime_hook_family == "meta"

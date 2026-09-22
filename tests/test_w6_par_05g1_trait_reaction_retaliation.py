@@ -71,6 +71,7 @@ CONTINUATION_SLICE_META_TYPES = {
     "wails_from_the_grave": {"extra_damage", "resource"},
 }
 
+
 def _owned_g1_trait_ids() -> set[str]:
     owned: set[str] = set()
     with REGISTRY_PATH.open(encoding="utf-8", newline="") as handle:
@@ -136,7 +137,7 @@ def test_w6_par_05g1_continuation_slice_belongs_to_registry() -> None:
     assert assignments == CONTINUATION_SLICE_REGISTRY_ASSIGNMENTS
 
 
-def test_w6_par_05g1_owned_trait_records_are_supported() -> None:
+def test_w6_par_05g1_owned_trait_records_are_non_executable_metadata() -> None:
     owned_ids = _owned_g1_trait_ids()
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
@@ -155,13 +156,16 @@ def test_w6_par_05g1_owned_trait_records_are_supported() -> None:
     for content_id in sorted(owned_ids):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
         assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
-def test_w6_par_05g1_continuation_slice_records_are_supported() -> None:
+def test_w6_par_05g1_continuation_slice_records_are_non_executable_metadata() -> None:
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
 
@@ -171,9 +175,13 @@ def test_w6_par_05g1_continuation_slice_records_are_supported() -> None:
     for content_id in sorted(CONTINUATION_SLICE_IDS):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
         assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_w6_par_05g1_trait_files_use_canonical_mechanics_rows() -> None:
@@ -195,7 +203,7 @@ def test_w6_par_05g1_trait_files_use_canonical_mechanics_rows() -> None:
         assert issues == [], f"{content_id} has schema issues: {issues}"
 
 
-def test_w6_par_05g1d_owned_trait_records_are_supported() -> None:
+def test_w6_par_05g1d_owned_trait_records_are_non_executable_metadata() -> None:
     owned_ids = _owned_g1d_trait_ids()
     manifest = build_feature_capability_manifest()
     by_id = {record.content_id: record for record in manifest.records}
@@ -214,10 +222,13 @@ def test_w6_par_05g1d_owned_trait_records_are_supported() -> None:
     for content_id in sorted(owned_ids):
         record = by_id[content_id]
         assert record.content_type == "trait"
-        assert record.support_state == "supported"
-        assert record.states.blocked is False
-        assert record.states.unsupported_reason is None
         assert record.runtime_hook_family == "meta"
+        assert record.support_state == "unsupported"
+        assert record.states.cataloged is True
+        assert record.states.schema_valid is True
+        assert record.states.executable is False
+        assert record.states.blocked is True
+        assert record.states.unsupported_reason == "non_executable_mechanics"
 
 
 def test_w6_par_05g1d_trait_files_use_canonical_mechanics_rows() -> None:
@@ -250,9 +261,7 @@ def test_w6_par_05g1_continuation_slice_uses_expected_meta_types() -> None:
         assert mechanics, f"trait:{trait_id} mechanics must not be empty"
 
         seen_meta_types = {
-            str(row.get("meta_type", "")).strip()
-            for row in mechanics
-            if isinstance(row, dict)
+            str(row.get("meta_type", "")).strip() for row in mechanics if isinstance(row, dict)
         }
         assert expected_meta_types <= seen_meta_types
 

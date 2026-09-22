@@ -64,22 +64,23 @@ def _setup_campaign_env(
             "enemy_defeat": "all_dead",
             "max_rounds": 1,
         },
-        "internal_harness": {"strategy_modules": [
-            {
-                "name": "focus_fire_lowest_hp",
-                "source": "builtin",
-                "class_name": "FocusFireLowestHPStrategy",
-            },
-            {
-                "name": "boss_highest_threat_target",
-                "source": "builtin",
-                "class_name": "BossHighestThreatTargetStrategy",
-            },
-            {
-                "name": "always_use_signature_ability_if_ready",
-                "source": "builtin",
-                "class_name": "AlwaysUseSignatureAbilityStrategy",
-            },
+        "internal_harness": {
+            "strategy_modules": [
+                {
+                    "name": "focus_fire_lowest_hp",
+                    "source": "builtin",
+                    "class_name": "FocusFireLowestHPStrategy",
+                },
+                {
+                    "name": "boss_highest_threat_target",
+                    "source": "builtin",
+                    "class_name": "BossHighestThreatTargetStrategy",
+                },
+                {
+                    "name": "always_use_signature_ability_if_ready",
+                    "source": "builtin",
+                    "class_name": "AlwaysUseSignatureAbilityStrategy",
+                },
             ]
         },
         "resource_policy": resource_policy

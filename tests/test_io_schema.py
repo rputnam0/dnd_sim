@@ -7,6 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from dnd_sim.io import (
+    ActionConfig,
     EnemyConfig,
     build_run_dir,
     default_results_dir,
@@ -306,6 +307,35 @@ def _minimal_enemy_payload() -> dict[str, object]:
     }
 
 
+def _write_scenario_with_enemy(
+    tmp_path: Path,
+    enemy_payload: dict[str, object],
+    *,
+    filename: str,
+) -> tuple[Path, Path]:
+    payload = json.loads(PUBLIC_SCENARIO_PATH.read_text(encoding="utf-8"))
+    identity = enemy_payload["identity"]
+    assert isinstance(identity, dict)
+    enemy_id = str(identity["enemy_id"])
+    payload["enemies"] = [enemy_id]
+    payload["encounters"] = [{"enemies": [enemy_id]}]
+
+    base = tmp_path / "encounters" / "validator"
+    scenario_dir = base / "scenarios"
+    enemy_dir = base / "enemies"
+    scenario_dir.mkdir(parents=True, exist_ok=True)
+    enemy_dir.mkdir(parents=True, exist_ok=True)
+
+    public_enemy_payload = dict(enemy_payload)
+    public_enemy_payload.pop("script_hooks", None)
+    enemy_path = enemy_dir / f"{enemy_id}.json"
+    enemy_path.write_text(json.dumps(public_enemy_payload), encoding="utf-8")
+
+    scenario_path = scenario_dir / filename
+    scenario_path.write_text(json.dumps(payload), encoding="utf-8")
+    return scenario_path, enemy_path
+
+
 def test_enemy_schema_rejects_invalid_recharge_format() -> None:
     payload = _minimal_enemy_payload()
     actions = list(payload["actions"])  # type: ignore[index]
@@ -322,6 +352,84 @@ def test_enemy_schema_rejects_unknown_innate_spell_reference() -> None:
 
     with pytest.raises(ValidationError):
         EnemyConfig.model_validate(payload)
+
+
+def test_action_schema_rejects_unknown_mechanic_with_item_path() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ActionConfig.model_validate(
+            {
+                "name": "broken_action",
+                "mechanics": [
+                    {"effect_type": "damage", "damage": "1"},
+                    {"effect_type": "timeline_snap"},
+                ],
+            }
+        )
+
+    assert exc_info.value.errors()[0]["loc"] == ("mechanics", 1, "effect_type")
+    assert "mechanics[1].effect_type 'timeline_snap' is unsupported" in str(exc_info.value)
+
+
+def test_runtime_loader_reports_nested_path_for_unknown_action_mechanic(
+    tmp_path: Path,
+) -> None:
+    enemy_payload = _minimal_enemy_payload()
+    actions = list(enemy_payload["actions"])  # type: ignore[index]
+    actions[0] = dict(actions[0], mechanics=[{"effect_type": "timeline_snap"}])
+    enemy_payload["actions"] = actions
+    scenario_path, _ = _write_scenario_with_enemy(
+        tmp_path,
+        enemy_payload,
+        filename="unknown_action_mechanic.json",
+    )
+
+    with pytest.raises(ValueError) as exc_info:
+        load_runtime_scenario(scenario_path)
+
+    message = str(exc_info.value)
+    assert "Invalid enemy schema for validator_enemy" in message
+    assert "actions.0.mechanics.0.effect_type" in message
+    assert "mechanics[0].effect_type 'timeline_snap' is unsupported" in message
+
+
+@pytest.mark.parametrize("loader_name", ["public", "runtime"])
+def test_scenario_loaders_reject_actionless_enemy(
+    tmp_path: Path,
+    loader_name: str,
+) -> None:
+    enemy_payload = _minimal_enemy_payload()
+    enemy_payload["actions"] = []
+    scenario_path, enemy_path = _write_scenario_with_enemy(
+        tmp_path,
+        enemy_payload,
+        filename=f"{loader_name}_actionless_enemy.json",
+    )
+    loader = load_public_scenario if loader_name == "public" else load_runtime_scenario
+
+    with pytest.raises(ValueError) as exc_info:
+        loader(scenario_path)
+
+    message = str(exc_info.value)
+    assert "Enemy 'validator_enemy' has an empty action kit" in message
+    assert str(enemy_path) in message
+    assert "actions, bonus_actions, reactions, legendary_actions, lair_actions" in message
+    assert "innate_spellcasting" in message
+
+
+def test_runtime_loader_accepts_innate_spell_as_nonempty_action_kit(tmp_path: Path) -> None:
+    enemy_payload = _minimal_enemy_payload()
+    enemy_payload["actions"] = []
+    enemy_payload["innate_spellcasting"] = [{"spell": "Magic Missile"}]
+    scenario_path, _ = _write_scenario_with_enemy(
+        tmp_path,
+        enemy_payload,
+        filename="innate_spell_action_kit.json",
+    )
+
+    loaded = load_runtime_scenario(scenario_path)
+
+    assert loaded.enemies["validator_enemy"].actions == []
+    assert loaded.enemies["validator_enemy"].innate_spellcasting[0].spell == "Magic Missile"
 
 
 def test_scenario_schema_accepts_first_class_stealth_and_interactable_payloads(

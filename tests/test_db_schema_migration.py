@@ -17,8 +17,7 @@ def _columns(conn: sqlite3.Connection, table_name: str) -> list[str]:
 
 
 def _create_legacy_characters_table(conn: sqlite3.Connection) -> None:
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE characters (
             character_id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -28,8 +27,7 @@ def _create_legacy_characters_table(conn: sqlite3.Connection) -> None:
             initiative_mod INTEGER,
             data_json TEXT NOT NULL
         )
-        """
-    )
+        """)
     conn.execute(
         """
         INSERT INTO characters (character_id, name, class_level, ac, max_hp, initiative_mod, data_json)
@@ -49,8 +47,7 @@ def _create_legacy_characters_table(conn: sqlite3.Connection) -> None:
 
 
 def _create_canonical_characters_table(conn: sqlite3.Connection) -> None:
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE characters (
             character_id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -59,8 +56,7 @@ def _create_canonical_characters_table(conn: sqlite3.Connection) -> None:
             initiative_mod INTEGER,
             data_json TEXT NOT NULL
         )
-        """
-    )
+        """)
     conn.execute(
         """
         INSERT INTO characters (character_id, name, ac, max_hp, initiative_mod, data_json)
@@ -108,9 +104,7 @@ def test_drop_characters_class_level_rollback_restores_column(tmp_path: Path) ->
         assert rollback_restore_class_level_column(conn) is True
 
         assert "class_level" in _columns(conn, "characters")
-        row = conn.execute(
-            "SELECT character_id, class_level, data_json FROM characters"
-        ).fetchone()
+        row = conn.execute("SELECT character_id, class_level, data_json FROM characters").fetchone()
         assert row[0:2] == ("hero_1", "Fighter 8")
         payload = json.loads(row[2])
         assert payload["class_level"] == "Fighter 8"
