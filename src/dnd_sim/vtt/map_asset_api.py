@@ -132,6 +132,9 @@ def _request_participant(
     *,
     access_policy: TableAccessPolicy | None,
 ) -> TableParticipant | None:
+    revalidate = getattr(request.state, "vtt_revalidate", None)
+    if revalidate is not None:
+        revalidate()
     if access_policy is None:
         return None
     participant = getattr(request.state, "vtt_participant", None)

@@ -6,7 +6,7 @@ import logging
 import secrets
 import sqlite3
 from threading import RLock
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -59,6 +59,8 @@ from .world_catalog_store import (
 
 MAX_ADMIN_BODY_BYTES = 16_384
 logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from .world_preparation import WorldPreparationManager
 DEFAULT_ADMIN_ALLOWED_ORIGINS = ("http://localhost:3000", "http://127.0.0.1:3000")
 _ROOT = "/api/v1/installation"
 _Model = TypeVar("_Model", bound=BaseModel)
@@ -129,6 +131,7 @@ def install_administration_routes(
     installation: SQLiteInstallationStore,
     catalog: SQLiteWorldCatalog | None,
     lock: RLock,
+    world_manager: WorldPreparationManager | None = None,
 ) -> None:
     """Compose routes around stores whose connections are owned by the app.
 
@@ -210,6 +213,15 @@ def install_administration_routes(
             raise WorldCatalogStoreError("world catalog unavailable")
         return catalog
 
+    def dashboard(catalog_view: Any) -> WorldDashboardView:
+        return WorldDashboardView(
+            catalog=catalog_view,
+            launch_supported=world_manager is not None,
+            launch_unavailable_reason=(
+                None if world_manager is not None else "world_provisioning_not_implemented"
+            ),
+        )
+
     @app.get(_ROOT)
     async def installation_view() -> dict[str, Any]:
         with lock:
@@ -258,13 +270,30 @@ def install_administration_routes(
         with lock:
             token, _, _ = authenticate(request)
             installation.revoke_session(token)
+            if world_manager is not None:
+                world_manager.prune()
         return Response(status_code=204)
 
     @app.get(_ROOT + "/worlds")
     async def worlds(request: Request) -> WorldDashboardView:
         with lock:
             authenticate(request)
-            return WorldDashboardView(catalog=require_catalog().snapshot())
+            return dashboard(require_catalog().snapshot())
+
+    if world_manager is not None:
+
+        @app.post(_ROOT + "/worlds/{world_id}/launch")
+        async def launch_world(world_id: str, request: Request) -> Any:
+            # Preparing is an explicit transition with no caller-supplied state.
+            with lock:
+                token, _, admin = authenticate(request)
+                return world_manager.launch(world_id, admin_bearer=token, admin=admin)
+
+        @app.post(_ROOT + "/worlds/{world_id}/return", status_code=204)
+        async def return_world(world_id: str, request: Request) -> Response:
+            with lock:
+                world_manager.return_world(world_id, _bearer(request))
+            return Response(status_code=204)
 
     async def mutate(request: Request, model: type[_Model]) -> WorldDashboardMutationResponse:
         with lock:
@@ -306,9 +335,11 @@ def install_administration_routes(
                 else:
                     command = WorldArchiveCommand(**payload.model_dump())
                 result = transaction.execute(command)
-                dashboard = WorldDashboardView(catalog=transaction.snapshot())
+                updated_dashboard = dashboard(transaction.snapshot())
+            if world_manager is not None:
+                world_manager.prune()
             return WorldDashboardMutationResponse(
-                receipt=result.receipt, replayed=result.replayed, dashboard=dashboard
+                receipt=result.receipt, replayed=result.replayed, dashboard=updated_dashboard
             )
 
     @app.post(_ROOT + "/worlds/create")

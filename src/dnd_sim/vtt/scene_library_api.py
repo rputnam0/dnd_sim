@@ -228,6 +228,9 @@ def _request_participant(
     *,
     access_policy: TableAccessPolicy | None,
 ) -> TableParticipant | None:
+    revalidate = getattr(request.state, "vtt_revalidate", None)
+    if revalidate is not None:
+        revalidate()
     if access_policy is None:
         return None
     participant = getattr(request.state, "vtt_participant", None)
@@ -488,8 +491,13 @@ async def _stream_scene_events(
     pending_events = initial_events
     event_loop = asyncio.get_running_loop()
     next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
+    access_valid = getattr(request.state, "vtt_access_valid", lambda: True)
     while True:
+        if not access_valid():
+            return
         if await request.is_disconnected():
+            return
+        if not access_valid():
             return
         events = pending_events
         pending_events = ()
@@ -499,6 +507,8 @@ async def _stream_scene_events(
             yielded_visible_event = False
             for event in events:
                 if await request.is_disconnected():
+                    return
+                if not access_valid():
                     return
                 cursor = event.sequence
                 if not _event_visible_to(event, participant):

@@ -166,13 +166,14 @@ def _command_identity(command: MapAssetUploadCommand, *, digest: str) -> str:
 class SQLiteMapAssetStore:
     """One connection-owned map image catalog with idempotent uploads."""
 
-    def __init__(self, connection: sqlite3.Connection) -> None:
+    def __init__(self, connection: sqlite3.Connection, *, initialize: bool = True) -> None:
         if not isinstance(connection, sqlite3.Connection):
             raise TypeError("connection must be a sqlite3.Connection")
         if connection.in_transaction:
             raise MapAssetStoreError("cannot initialize map assets in an active transaction")
         self._connection = connection
-        self._initialize_schema()
+        if initialize:
+            self._initialize_schema()
 
     def _initialize_schema(self) -> None:
         try:
