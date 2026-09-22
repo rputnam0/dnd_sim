@@ -1,0 +1,11 @@
+# VTT Gauntlet Deferred Findings
+
+This file records valid observations that do not currently satisfy the charter's
+promotion rule. Entries are not active work until new evidence, a changed
+operating envelope, or an explicit user decision promotes them.
+
+| Finding | Evidence / repro | Related criterion | Why deferred | Risk / likelihood | Promotion trigger | Suggested next step |
+|---|---|---|---|---|---|---|
+| Stream map uploads rather than decoding one bounded JSON body | Current upload contract rejects decoded content above 12 MiB, but request parsing temporarily holds base64 JSON in memory. | Bounded media and security | Supported single-table uploads are bounded after parsing; streaming requires a transport change disproportionate to this slice. | Low under the local/protected-table envelope | Measured memory pressure or public multi-tenant deployment | Add authenticated multipart streaming into bounded temporary storage. |
+| Cross-GM live asset-catalog signals | A second GM sees another GM's new catalog item after retry/reload, while scene attachment itself is live through scene SSE. | Multi-client synchronization | Does not block the supported upload-and-attach job or player active-map delivery. | Low | Multi-GM asset preparation becomes a required task or user-visible staleness reproduces in play | Add an identity-free asset-catalog revision signal. |
+| Refresh recovered browser dependencies before hosting release | `npm audit` on 2026-09-07 reports 23 advisories (17 high, 5 moderate, 1 low), including inherited Next/RSC, Vite, vinext and Cloudflare toolchain dependencies. | Production hosting and dependency safety | The active administration slice binds to loopback; a broad framework migration is separate from proving its supported local journey. This is not a claim that every advisory is exploitable here. | Public exposure remains unsupported pending an applicability audit and patched build | Before exposing any application server beyond a trusted local/protected development environment | Upgrade compatible affected pins, inspect transitive advisories, and rerun the complete browser and hosting gates; do not use a blanket forced audit fix. |
