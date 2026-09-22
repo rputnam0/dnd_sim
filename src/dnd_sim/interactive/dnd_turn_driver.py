@@ -14,6 +14,7 @@ from pydantic import ValidationError
 import dnd_sim.engine_runtime as engine_runtime
 from dnd_sim.action_legality import TurnDeclarationValidationError
 from dnd_sim.models import ActorRuntimeState
+from dnd_sim.roll_journal import EngineRollJournalRecorder, RollJournal
 from dnd_sim.spatial import AABB
 from dnd_sim.turn_kernel import (
     CombatTurnContext,
@@ -46,6 +47,7 @@ from .session import EngineSessionError, EngineTransition
 
 DND_TURN_STATE_SCHEMA_VERSION = "dnd.turn-session-state.v2"
 PREPARE_TURN_COMMAND_KIND = "dnd.prepare_turn.v1"
+TRUSTED_BOARD_MOVEMENT_DISTANCE_KEY = "_vtt_board_movement_distance_ft"
 
 _STATE_FIELDS = frozenset(
     {
@@ -561,7 +563,7 @@ class DndCombatTurnDriver:
         command: SessionCommand,
         rng: random.Random,
     ) -> PreviewOutcome:
-        transition_kind, payload = self._apply_command(state, command, rng)
+        transition_kind, payload, roll_journal = self._apply_command(state, command, rng)
         return PreviewOutcome(
             projection=self.project_state(state),
             events=(
@@ -569,6 +571,7 @@ class DndCombatTurnDriver:
                     kind="dnd.turn.previewed",
                     payload={"transition_kind": transition_kind, **payload},
                 ),
+                *self.roll_event_drafts(roll_journal),
             ),
         )
 
@@ -578,7 +581,7 @@ class DndCombatTurnDriver:
         command: SessionCommand,
         rng: random.Random,
     ) -> EngineTransition:
-        transition_kind, payload = self._apply_command(state, command, rng)
+        transition_kind, payload, roll_journal = self._apply_command(state, command, rng)
         return EngineTransition(
             state=state,
             events=(
@@ -586,6 +589,7 @@ class DndCombatTurnDriver:
                     kind=transition_kind,
                     payload=payload,
                 ),
+                *self.roll_event_drafts(roll_journal),
             ),
         )
 
@@ -607,15 +611,27 @@ class DndCombatTurnDriver:
         state: DndCombatTurnState,
         command: SessionCommand,
         rng: random.Random,
-    ) -> tuple[str, dict[str, JSONValue]]:
+    ) -> tuple[str, dict[str, JSONValue], RollJournal | None]:
         if command.kind == PREPARE_TURN_COMMAND_KIND:
             prepared = self.prepare_turn(state, command, rng)
             if isinstance(prepared, CombatTurnPrompt):
-                return "dnd.turn.prepared", self.prompt_payload(prepared)
-            return "dnd.turn.completed_automatically", self.result_payload(prepared)
+                return "dnd.turn.prepared", self.prompt_payload(prepared), None
+            return "dnd.turn.completed_automatically", self.result_payload(prepared), None
         if command.kind == DECLARATION_COMMAND_KIND:
-            result = self.resolve_declaration(state, command, rng)
-            return "dnd.turn.resolved", self.result_payload(result)
+            if state.prompt is None:
+                return (
+                    "dnd.turn.resolved",
+                    self.result_payload(self.resolve_declaration(state, command, rng)),
+                    None,
+                )
+            recorder = EngineRollJournalRecorder.empty(state.prompt.turn_token)
+            result = self.resolve_declaration(
+                state,
+                command,
+                rng,
+                roll_journal_recorder=recorder,
+            )
+            return "dnd.turn.resolved", self.result_payload(result), recorder.journal
         raise EngineSessionError(
             "unsupported_command",
             "The D&D turn driver only accepts prepare or declaration commands.",
@@ -667,6 +683,8 @@ class DndCombatTurnDriver:
         state: DndCombatTurnState,
         command: SessionCommand,
         rng: random.Random,
+        *,
+        roll_journal_recorder: EngineRollJournalRecorder | None = None,
     ) -> CombatTurnResult:
         if state.phase == "complete":
             raise EngineSessionError("turn_complete", "This actor turn is already complete.")
@@ -706,17 +724,29 @@ class DndCombatTurnDriver:
                 "The turn declaration payload must be complete and canonical.",
             )
         declaration = declaration_payload.to_domain()
+        board_movement_distance = command.intent_metadata.get(TRUSTED_BOARD_MOVEMENT_DISTANCE_KEY)
+        if board_movement_distance is not None and (
+            type(board_movement_distance) is not float
+            or not math.isfinite(board_movement_distance)
+            or board_movement_distance < 0.0
+        ):
+            raise EngineSessionError(
+                "invalid_command_payload",
+                "The trusted board movement distance is invalid.",
+            )
 
         try:
-            result = engine_runtime.resolve_prompted_combat_turn(
-                rng=rng,
-                context=state.context,
-                prompt=state.prompt,
-                decision=CombatTurnDecision(
-                    strategy_name="interactive",
-                    declaration=declaration,
-                ),
-            )
+            with engine_runtime.combat_roll_journal_scope(roll_journal_recorder):
+                result = engine_runtime.resolve_prompted_combat_turn(
+                    rng=rng,
+                    context=state.context,
+                    prompt=state.prompt,
+                    decision=CombatTurnDecision(
+                        strategy_name="interactive",
+                        declaration=declaration,
+                    ),
+                    declared_movement_distance_ft=board_movement_distance,
+                )
         except TurnDeclarationValidationError as exc:
             details: dict[str, JSONValue] = {
                 "actor_id": exc.actor_id,
@@ -766,6 +796,19 @@ class DndCombatTurnDriver:
             "status": result.status,
             "strategy_name": result.strategy_name,
         }
+
+    @staticmethod
+    def roll_event_drafts(journal: RollJournal | None) -> tuple[EventDraft, ...]:
+        if journal is None:
+            return ()
+        return tuple(
+            EventDraft(
+                kind="dnd.roll.recorded.v1",
+                audience=("roll_projection_required",),
+                payload={"record": record.model_dump(mode="json")},
+            )
+            for record in journal.records
+        )
 
     @staticmethod
     def project_actor(actor: ActorRuntimeState) -> dict[str, JSONValue]:

@@ -24,6 +24,7 @@ ANNOTATION_COMMAND_SCHEMA_VERSION = "vtt.annotation_command.v1"
 ANNOTATION_EVENT_SCHEMA_VERSION = "vtt.annotation_event.v1"
 ANNOTATION_RECEIPT_SCHEMA_VERSION = "vtt.annotation_receipt.v1"
 ANNOTATION_STORE_SCHEMA_VERSION = "vtt.annotation_store.v1"
+MAX_ACTIVE_ANNOTATIONS = 2_000
 
 _METADATA_TABLE = "_vtt_annotation_store_metadata"
 _EVENTS_TABLE = "_vtt_annotation_event_log"
@@ -54,6 +55,10 @@ class AnnotationRevisionConflictError(AnnotationStoreError):
 
 class AnnotationNotFoundError(AnnotationStoreError):
     """Raised when deletion targets an annotation absent from the table."""
+
+
+class AnnotationCapacityError(AnnotationStoreError):
+    """Raised when a new record would exceed the active annotation ceiling."""
 
 
 def _canonical_text(value: str, *, field_name: str, maximum_length: int = 128) -> str:
@@ -265,14 +270,28 @@ class SQLiteAnnotationBoard:
     transaction; projections are rebuilt from strictly validated public events.
     """
 
-    def __init__(self, connection: sqlite3.Connection) -> None:
+    def __init__(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        max_active_annotations: int = MAX_ACTIVE_ANNOTATIONS,
+    ) -> None:
         if not isinstance(connection, sqlite3.Connection):
             raise TypeError("connection must be a sqlite3.Connection")
+        if (
+            type(max_active_annotations) is not int
+            or max_active_annotations < 1
+            or max_active_annotations > MAX_ACTIVE_ANNOTATIONS
+        ):
+            raise ValueError(
+                f"max_active_annotations must be an integer from 1 to " f"{MAX_ACTIVE_ANNOTATIONS}"
+            )
         if connection.in_transaction:
             raise AnnotationStoreError(
                 "cannot initialize an annotation board inside an active transaction"
             )
         self._connection = connection
+        self._max_active_annotations = max_active_annotations
         self._connection.execute("PRAGMA foreign_keys = ON")
         self._initialize_schema()
 
@@ -376,6 +395,11 @@ class SQLiteAnnotationBoard:
             event_id = f"{command.table_id}:annotation:{next_sequence}"
             if isinstance(command, AnnotationPutCommand):
                 annotation = parse_annotation(command.annotation.model_dump(mode="json"))
+                if (
+                    annotation.annotation_id not in current_annotations
+                    and len(current_annotations) >= self._max_active_annotations
+                ):
+                    raise AnnotationCapacityError("active annotation capacity has been reached")
                 event: AnnotationMutationEvent = AnnotationPutEvent(
                     table_id=command.table_id,
                     event_id=event_id,
@@ -645,6 +669,8 @@ __all__ = [
     "ANNOTATION_EVENT_SCHEMA_VERSION",
     "ANNOTATION_RECEIPT_SCHEMA_VERSION",
     "ANNOTATION_STORE_SCHEMA_VERSION",
+    "MAX_ACTIVE_ANNOTATIONS",
+    "AnnotationCapacityError",
     "AnnotationCommandConflictError",
     "AnnotationDeleteCommand",
     "AnnotationDeleteEvent",

@@ -143,6 +143,141 @@ subsystems:
       - "Safe: extracting helper methods and tightening orchestration-level contracts."
       - "Caution: round start/end ordering and initiative tie-breaking behavior."
       - "Keep the module below 1500 lines unless a waiver is recorded in this file."
+  combat_roll_runtime:
+    owner_pool: runtime_interactive
+    owner_task: VTT-ROLL-01
+    owner_module: src/dnd_sim/combat_roll_runtime.py
+    invariants:
+      - "Roll adapters consume no RNG and only record faces supplied by authoritative rules resolution."
+      - "Final damage facts are emitted only after target application and preserve signed adjustment provenance."
+      - "Recorder scopes reset on every exit so preview and commit remain deterministic and isolated."
+    safe_edit_boundaries:
+      - "Safe: strict roll-fact construction, post-hook promotion, and context binding."
+      - "Caution: generation ordering, replacement links, audience intent, and applied damage semantics."
+      - "Do not roll, infer hidden facts from HP deltas, or expose participant credentials from this module."
+  vtt_drawing_annotations:
+    owner_pool: runtime_interactive
+    owner_task: VTT-DRAW-01
+    owner_module: src/dnd_sim/vtt/annotations.py
+    invariants:
+      - "Drawing geometry is finite, bounded, planar world-feet data; pixels remain presentation-only."
+      - "Durable author, active-scene, audience, revision, and capacity authority is enforced before append."
+      - "Text remains inert canonical Unicode data and private records are absent from unauthorized HTTP and SSE projections."
+    safe_edit_boundaries:
+      - "Safe: additive bounded drawing variants, strict style validation, and calibration-only browser projection."
+      - "Caution: annotation union codecs, code-point ordering, active-map bounds, exact retries, and layer order around tokens."
+      - "Do not add HTML/CSS/URL payloads, wildcard erasure, unbounded paths, or browser-pixel authority."
+  vtt_journal_content:
+    owner_pool: runtime_interactive
+    owner_task: VTT-JOURNAL-01
+    owner_module: src/dnd_sim/vtt/journal_store.py
+    invariants:
+      - "Journal folders, documents, structured inert blocks, links, and map pins are append-only SQLite projections with exact retry semantics."
+      - "GM preparation folder identities and unauthorized document, link, and pin data are absent from protected HTTP and SSE projections."
+      - "Player-visible documents are folderless, search evaluates only projected text, and audience narrowing emits a sanitized prior-visible tombstone."
+      - "Map pins use bounded world-feet coordinates and must resolve to an enumerated unarchived scene before append."
+    safe_edit_boundaries:
+      - "Safe: additive inert block types, stricter bounded codecs, and projected browser presentation."
+      - "Caution: canonical Unicode ordering, folder/link referential integrity, privacy transitions, reconnect cursors, and pin calibration."
+      - "Do not store HTML, remote embeds, scriptable URLs, private folder identity in player views, or browser-authored revision authority."
+  vtt_sound_player_view:
+    owner_pool: runtime_interactive
+    owner_task: VTT-PRESENT-01
+    owner_module: src/dnd_sim/vtt/presentation_store.py
+    invariants:
+      - "Owned audio bytes, library records, playlists, playback, and shared camera state are strict append-only SQLite projections with exact retry and restart recovery."
+      - "Non-GM reads expose only currently addressed playback and its one verified track; hidden library, playlist, audience, and credential identities are absent."
+      - "Shared camera state binds to the active scene and finite in-map world-feet centers; it never moves an engine actor or token."
+      - "Volume, mute, autoplay recovery, and follow-camera preferences remain per-browser state and never enter authoritative commands."
+    safe_edit_boundaries:
+      - "Safe: additional bounded first-party audio codecs, stricter integrity checks, and accessible local playback controls."
+      - "Caution: canonical command/state replay, server-clock timing, audience transitions, active-scene changes, and object-URL cleanup."
+      - "Do not add remote fetch, unbounded media, secret-bearing SSE deltas, browser-authored playback clocks, or implicit autoplay retries."
+  vtt_combat_tracker:
+    owner_pool: runtime_interactive
+    owner_task: VTT-COMBAT-02
+    owner_module: src/dnd_sim/interactive/dnd_encounter_driver.py
+    invariants:
+      - "Normal declaration resolution and GM tracker corrections mutate the same durable encounter cursor and initiative order."
+      - "Tracker controls are actor-independent admin commands with exact bounded payloads and a required public audit reason."
+      - "Cursor changes preserve the current actor roster, prepare through the real turn driver, and remain deterministic under replay and restart."
+      - "Actor add/remove belongs to validated actor/content ingestion and must not accept browser-authored runtime actor state."
+    safe_edit_boundaries:
+      - "Safe: stricter control validation, additive audit facts, and accessible browser control presentation."
+      - "Caution: round wrap flags, automatic turn preparation, RNG position, outcome rules, and initiative cursor consistency."
+      - "Do not create a second combat cursor, optimistically mutate the browser projection, or bypass the engine session event store."
+  vtt_world_catalog:
+    owner_pool: runtime_interactive
+    owner_task: VTT-WORLD-01
+    owner_module: src/dnd_sim/vtt/world_catalog_store.py
+    invariants:
+      - "World and table identities are opaque, permanently unique, and linked only by validated catalog records."
+      - "World mutations are append-only, exactly idempotent, optimistic, hash chained, and recoverable after every transaction-exit path."
+      - "Archived worlds remain immutable; active normalized names and all table links remain unique across restart."
+    safe_edit_boundaries:
+      - "Safe: stricter portable codecs, bounded metadata, and explicit catalog projections."
+      - "Caution: Unicode comparison keys, command/receipt semantic replay, head anchors, and multi-store unit-of-work composition."
+      - "Do not treat a catalog create as an atomic table launch until a shared transaction boundary is explicitly implemented."
+  vtt_installation_identity:
+    owner_pool: runtime_interactive
+    owner_task: VTT-WORLD-02
+    owner_module: src/dnd_sim/vtt/installation_store.py
+    invariants:
+      - "First-run claim verification precedes protected payload validation and can succeed only once."
+      - "Password verifiers use bounded scrypt; durable bearer sessions contain hashes, not secrets."
+      - "Missing, corrupt, or unsupported metadata fails closed without silently creating a new administrator."
+    safe_edit_boundaries:
+      - "Safe: bounded authentication contracts and explicit session revocation."
+      - "Caution: durable authentication budgets, rollback detection, and bootstrap delivery."
+      - "Do not expose bootstrap claims, passwords, session bearers, or credential hashes in public projections."
+  vtt_installation_dashboard:
+    owner_pool: runtime_interactive
+    owner_task: VTT-WORLD-03
+    owner_module: src/dnd_sim/vtt/installation_api.py
+    invariants:
+      - "Catalog reads and mutations authenticate the installation session before validating protected input."
+      - "World identities originate on the server and exact retries preserve the original command identities."
+      - "Catalog records are not playable worlds until a separate provisioning boundary proves readiness."
+    safe_edit_boundaries:
+      - "Safe: strict secret-free response contracts and bounded administrator workflows."
+      - "Caution: connection serialization, error translation, shutdown cleanup, and retry semantics."
+      - "Do not silently launch the demonstration table or persist browser credentials."
+  vtt_reusable_world_content:
+    owner_pool: runtime_interactive
+    owner_task: VTT-CONTENT-01
+    owner_module: src/dnd_sim/vtt/world_content_store.py
+    invariants:
+      - "Actor and item documents are inert, deeply immutable, world-scoped, bounded, and audience projected."
+      - "Inventory references remain valid across update and archive; search evaluates authorized text only."
+      - "Durable mutations preserve optimistic revisions, exact retries, and complete-history validation."
+    safe_edit_boundaries:
+      - "Safe: bounded reusable metadata and stronger projection or reference checks."
+      - "Caution: normalized text safety, immutable nested values, and hash-chain reconstruction."
+      - "Do not treat a content document as executable engine state or bypass actor deployment validation."
+  vtt_integration_boundary:
+    owner_pool: runtime_interactive
+    owner_task: VTT-INTEGRATION-01
+    owner_module: src/dnd_sim/vtt/integration_contracts.py
+    invariants:
+      - "External content remains inert, bounded, provider neutral, provenance carrying, and free of credentials or active markup."
+      - "A commit is authorized by one live scoped grant and bound to the exact normalized writes a GM previewed."
+      - "Integration contracts perform no network, persistence, engine mutation, dynamic loading, or provider-specific authentication."
+    safe_edit_boundaries:
+      - "Safe: stricter recursive validation, declarative contribution types, and deterministic canonical hashing."
+      - "Caution: manifest/grant/provider composition, record-to-plan referential integrity, and preview/commit digest semantics."
+      - "Do not ingest D&D Beyond credentials, scrape private endpoints, execute third-party Python, or let imported records bypass engine validation."
+  roll_hook_provenance:
+    owner_pool: runtime_interactive
+    owner_task: VTT-ROLL-01
+    owner_module: src/dnd_sim/roll_hook_provenance.py
+    invariants:
+      - "Post-roll timing hooks report generated faces and signed changes without consuming additional RNG."
+      - "Replacement selection, modifier stages, and die bounds are explicit and validated at construction."
+      - "Engine finalization never reconstructs hidden hook provenance from a final total or outcome."
+    safe_edit_boundaries:
+      - "Safe: additive hook kinds and stricter construction checks with fixed-sequence engine tests."
+      - "Caution: stage meaning, die generation order, and selected replacement semantics."
+      - "Keep this module engine-local and free of VTT participant or transport selectors."
   interactive_session:
     owner_pool: runtime_interactive
     owner_task: VTT-00
@@ -282,5 +417,8 @@ policies:
     default_max_file_lines: 1500
     file_size_waivers:
       - module: src/dnd_sim/engine_runtime.py
-        max_lines: 16000
-        reason: "Wave 8 stabilization still keeps core combat and campaign orchestration centralized in engine_runtime.py while replay/reporting adapters and public-content boundary hardening move outward; further decomposition continues under W8-ARC-01."
+        max_lines: 16450
+        reason: "Wave 8 stabilization still keeps combat timing orchestration centralized in engine_runtime.py; immutable hook provenance and roll construction live in focused modules, while the remaining subscription adapters depend on engine-private reaction/resource rules and continue under W8-ARC-01."
+      - module: src/dnd_sim/rules_2014.py
+        max_lines: 1510
+        reason: "The core event contracts carry three provenance-list fields while immutable hook validation is extracted to roll_hook_provenance.py; further unrelated rules decomposition remains outside VTT-ROLL-01."

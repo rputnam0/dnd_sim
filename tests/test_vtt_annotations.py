@@ -10,14 +10,20 @@ from dnd_sim.vtt.annotations import (
     ANNOTATION_SCHEMA_VERSION,
     MAX_ABSOLUTE_COORDINATE_FT,
     MAX_RULER_WAYPOINTS,
+    MAX_DRAWING_PATH_POINTS,
     AnnotationBounds,
     AnnotationPoint,
+    ArrowDrawingAnnotation,
     CircleTemplateAnnotation,
     ConeTemplateAnnotation,
     CubeTemplateAnnotation,
+    DrawingStyle,
+    FreehandDrawingAnnotation,
     LineTemplateAnnotation,
     PingAnnotation,
     RulerAnnotation,
+    ShapeDrawingAnnotation,
+    TextDrawingAnnotation,
     annotation_bounds_ft,
     chebyshev_distance_ft,
     parse_annotation,
@@ -43,6 +49,16 @@ def _base(
 
 def _point(x: float, y: float, z: float = 0.0) -> AnnotationPoint:
     return AnnotationPoint(x_ft=x, y_ft=y, z_ft=z)
+
+
+def _style() -> DrawingStyle:
+    return DrawingStyle(
+        stroke_color="#2f6fed",
+        fill_color="#dbe7ff",
+        opacity=0.75,
+        stroke_width_ft=1.0,
+        line_style="solid",
+    )
 
 
 def _annotations():
@@ -85,7 +101,173 @@ def _annotations():
             center=_point(10.0, 10.0, 5.0),
             size_ft=4.0,
         ),
+        FreehandDrawingAnnotation(
+            **_base("freehand-1"),
+            annotation_type="freehand_drawing",
+            layer="over_tokens",
+            locked=False,
+            style=_style(),
+            points=(_point(1.0, 1.0), _point(4.0, 3.0), _point(8.0, 4.0)),
+        ),
+        ShapeDrawingAnnotation(
+            **_base("shape-1"),
+            annotation_type="shape_drawing",
+            layer="under_tokens",
+            locked=True,
+            style=_style(),
+            shape="ellipse",
+            corner_a=_point(2.0, 3.0),
+            corner_b=_point(12.0, 9.0),
+        ),
+        ArrowDrawingAnnotation(
+            **_base("arrow-1"),
+            annotation_type="arrow_drawing",
+            layer="over_tokens",
+            locked=False,
+            style=_style(),
+            start=_point(3.0, 4.0),
+            end=_point(13.0, 14.0),
+            head_size_ft=2.0,
+        ),
+        TextDrawingAnnotation(
+            **_base("text-1"),
+            annotation_type="text_drawing",
+            layer="under_tokens",
+            locked=False,
+            style=_style(),
+            anchor=_point(6.0, 7.0),
+            text="Door seals\nwhen the bell rings <script>",
+            font_size_ft=2.0,
+            background_color="#101828",
+        ),
     )
+
+
+def test_drawing_contracts_round_trip_bounded_style_layers_and_plain_text() -> None:
+    drawings = _annotations()[-4:]
+
+    for drawing in drawings:
+        assert parse_annotation_json(drawing.model_dump_json()) == drawing
+        assert parse_annotation(drawing.model_dump(mode="json")) == drawing
+
+    text = drawings[-1]
+    assert text.text.endswith("<script>")
+    assert text.layer == "under_tokens"
+    assert text.style.opacity == 0.75
+
+
+def test_drawing_contracts_reject_unsafe_style_text_and_unbounded_paths() -> None:
+    with pytest.raises(ValidationError, match="lowercase"):
+        _style().model_copy(update={"stroke_color": "#ABCDEF"}).model_validate(
+            _style().model_copy(update={"stroke_color": "#ABCDEF"}).model_dump()
+        )
+    with pytest.raises(ValidationError, match="control"):
+        TextDrawingAnnotation(
+            **_base("bad-text"),
+            annotation_type="text_drawing",
+            layer="over_tokens",
+            locked=False,
+            style=_style(),
+            anchor=_point(1.0, 1.0),
+            text="hidden\x00payload",
+            font_size_ft=2.0,
+            background_color=None,
+        )
+    with pytest.raises(ValidationError, match="at most"):
+        FreehandDrawingAnnotation(
+            **_base("too-long"),
+            annotation_type="freehand_drawing",
+            layer="over_tokens",
+            locked=False,
+            style=_style(),
+            points=tuple(
+                _point(float(index), float(index % 2))
+                for index in range(MAX_DRAWING_PATH_POINTS + 1)
+            ),
+        )
+    with pytest.raises(ValidationError, match="unique"):
+        FreehandDrawingAnnotation(
+            **_base("duplicate-path"),
+            annotation_type="freehand_drawing",
+            layer="over_tokens",
+            locked=False,
+            style=_style(),
+            points=(_point(1.0, 1.0), _point(1.0, 1.0)),
+        )
+
+
+def test_drawing_geometry_is_planar_nondegenerate_and_has_bounded_feet_extent() -> None:
+    style = _style()
+    freehand = FreehandDrawingAnnotation(
+        **_base("freehand-bounds"),
+        annotation_type="freehand_drawing",
+        layer="over_tokens",
+        locked=False,
+        style=style,
+        points=(_point(1.0, 2.0), _point(4.0, 8.0)),
+    )
+    arrow = ArrowDrawingAnnotation(
+        **_base("arrow-bounds"),
+        annotation_type="arrow_drawing",
+        layer="over_tokens",
+        locked=False,
+        style=style,
+        start=_point(5.0, 5.0),
+        end=_point(10.0, 10.0),
+        head_size_ft=2.0,
+    )
+
+    assert annotation_bounds_ft(freehand) == AnnotationBounds(
+        min_x_ft=0.5,
+        max_x_ft=4.5,
+        min_y_ft=1.5,
+        max_y_ft=8.5,
+        min_z_ft=0.0,
+        max_z_ft=0.0,
+    )
+    assert annotation_bounds_ft(arrow) == AnnotationBounds(
+        min_x_ft=3.0,
+        max_x_ft=12.0,
+        min_y_ft=3.0,
+        max_y_ft=12.0,
+        min_z_ft=0.0,
+        max_z_ft=0.0,
+    )
+    with pytest.raises(ValidationError, match="opposite corners"):
+        ShapeDrawingAnnotation(
+            **_base("flat-shape"),
+            annotation_type="shape_drawing",
+            layer="under_tokens",
+            locked=False,
+            style=style,
+            shape="rectangle",
+            corner_a=_point(1.0, 1.0),
+            corner_b=_point(1.0, 4.0),
+        )
+    with pytest.raises(ValidationError, match="distinct"):
+        ArrowDrawingAnnotation(
+            **_base("zero-arrow"),
+            annotation_type="arrow_drawing",
+            layer="over_tokens",
+            locked=False,
+            style=style,
+            start=_point(1.0, 1.0),
+            end=_point(1.0, 1.0),
+            head_size_ft=2.0,
+        )
+    with pytest.raises(ValidationError, match="unique"):
+        FreehandDrawingAnnotation(
+            **_base("looping-freehand"),
+            annotation_type="freehand_drawing",
+            layer="under_tokens",
+            locked=False,
+            style=style,
+            points=(
+                _point(1.0, 1.0),
+                _point(4.0, 4.0),
+                _point(1.0, 1.0),
+            ),
+        )
 
 
 def test_ruler_computes_ordered_5e_chebyshev_segments_and_total() -> None:

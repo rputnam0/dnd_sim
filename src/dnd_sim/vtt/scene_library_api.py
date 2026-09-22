@@ -13,16 +13,27 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, JsonValue, field_validator, model_validator
 
 from .access import TableAccessPolicy
+from .map_asset_store import (
+    SQLiteMapAssetStore,
+    MapAssetNotFoundError,
+    MapAssetStoreCorruptionError,
+    MapAssetStoreError,
+    MapAssetStoreSchemaError,
+)
 from .participants import TableParticipant
 from .scene_library_contracts import (
     SceneActivatedEvent,
     SceneArchivedEvent,
+    SceneCreateCommand,
     SceneCreatedEvent,
     SceneDuplicatedEvent,
     SceneImportedEvent,
+    SceneImportCommand,
     SceneLibraryView,
     SceneMutationCommand,
     SceneMutationEvent,
+    SceneUpdateCommand,
+    SceneUpdatedEvent,
 )
 from .scene_library_store import (
     SQLiteSceneLibrary,
@@ -65,18 +76,34 @@ def _canonical_text(value: str, *, field_name: str) -> str:
     return value
 
 
-def _canonicalize_browser_grid_size(value: Any, *, field_name: str | None = None) -> Any:
+def _canonicalize_browser_calibration_numbers(
+    value: Any,
+    *,
+    field_name: str | None = None,
+) -> Any:
     """Restore float semantics lost when browsers stringify whole-valued numbers."""
 
-    if field_name == "grid_size_px" and type(value) is int:
+    if (
+        field_name
+        in {
+            "grid_size_px",
+            "origin_x_px",
+            "origin_y_px",
+            "cell_extent_px",
+            "distance_ft",
+        }
+        and type(value) is int
+    ):
         return float(value)
     if isinstance(value, Mapping):
         return {
-            key: _canonicalize_browser_grid_size(item, field_name=str(key))
+            key: _canonicalize_browser_calibration_numbers(item, field_name=str(key))
             for key, item in value.items()
         }
     if isinstance(value, (list, tuple)):
-        return [_canonicalize_browser_grid_size(item, field_name=field_name) for item in value]
+        return [
+            _canonicalize_browser_calibration_numbers(item, field_name=field_name) for item in value
+        ]
     return value
 
 
@@ -90,7 +117,7 @@ class SceneLibraryRequest(_StrictSceneHTTPModel):
     @model_validator(mode="before")
     @classmethod
     def canonicalize_browser_numbers(cls, value: Any) -> Any:
-        return _canonicalize_browser_grid_size(value)
+        return _canonicalize_browser_calibration_numbers(value)
 
     @field_validator("session_id")
     @classmethod
@@ -245,6 +272,8 @@ def _event_visible_to(
         return event.became_active
     if isinstance(event, SceneDuplicatedEvent):
         return False
+    if isinstance(event, SceneUpdatedEvent):
+        return event.active
     if isinstance(event, SceneActivatedEvent):
         return True
     return isinstance(event, SceneArchivedEvent) and event.successor_scene_id is not None
@@ -327,6 +356,77 @@ def _execute_library(
         raise _corrupt_store_error() from exc
     except (sqlite3.Error, SceneLibraryStoreError) as exc:
         raise _unavailable_store_error() from exc
+
+
+def _command_map_metadata(command: SceneMutationCommand):
+    if isinstance(command, SceneCreateCommand):
+        return command.scene.map_metadata
+    if isinstance(command, SceneUpdateCommand):
+        return command.map_metadata
+    if isinstance(command, SceneImportCommand):
+        return command.bundle.scene.map_metadata
+    return None
+
+
+def _validate_managed_asset_reference(
+    library: SQLiteSceneLibrary,
+    asset_store: SQLiteMapAssetStore,
+    *,
+    table_id: str,
+    command: SceneMutationCommand,
+) -> None:
+    metadata = _command_map_metadata(command)
+    if metadata is None or metadata.asset is None:
+        return
+    reference = metadata.asset
+    if reference.content_path.startswith("/api/v1/map-assets/"):
+        try:
+            stored, _content = asset_store.content(table_id, reference.asset_id)
+        except MapAssetNotFoundError as exc:
+            raise SceneLibraryAPIError(
+                status_code=404,
+                code="scene_asset_not_found",
+                message="The referenced map asset is unavailable.",
+            ) from exc
+        except (MapAssetStoreCorruptionError, MapAssetStoreSchemaError) as exc:
+            raise SceneLibraryAPIError(
+                status_code=500,
+                code="scene_asset_store_corrupt",
+                message="The map asset catalog contains invalid durable data.",
+            ) from exc
+        except (sqlite3.Error, MapAssetStoreError) as exc:
+            raise SceneLibraryAPIError(
+                status_code=503,
+                code="scene_asset_storage_unavailable",
+                message="The referenced map asset could not be read.",
+            ) from exc
+        if stored.reference != reference:
+            raise SceneLibraryAPIError(
+                status_code=409,
+                code="scene_asset_mismatch",
+                message="The map reference does not match the durable asset record.",
+            )
+        if metadata.width_px != stored.width_px or metadata.height_px != stored.height_px:
+            raise SceneLibraryAPIError(
+                status_code=409,
+                code="scene_asset_dimensions_mismatch",
+                message="The scene dimensions do not match the durable map asset.",
+            )
+        return
+
+    view = _read_view(library, table_id=table_id)
+    trusted_static_references = {
+        entry.scene.map_metadata.asset
+        for entry in view.scenes
+        if entry.scene.map_metadata.asset is not None
+        and entry.scene.map_metadata.asset.content_path.startswith("/assets/maps/")
+    }
+    if reference not in trusted_static_references:
+        raise SceneLibraryAPIError(
+            status_code=409,
+            code="scene_asset_unmanaged",
+            message="Static map references must already be trusted by this table.",
+        )
 
 
 def _event_cursor(value: str | None, *, field: str) -> int | None:
@@ -420,6 +520,7 @@ def install_scene_library_routes(
     session_id: str,
     table_id: str,
     access_policy: TableAccessPolicy | None,
+    map_asset_store: SQLiteMapAssetStore | None = None,
 ) -> None:
     """Install optional scene routes without changing encounter HTTP schemas."""
 
@@ -452,6 +553,13 @@ def install_scene_library_routes(
             raise _binding_error(
                 session_id=configured_session_id,
                 table_id=configured_table_id,
+            )
+        if map_asset_store is not None:
+            _validate_managed_asset_reference(
+                library,
+                map_asset_store,
+                table_id=configured_table_id,
+                command=payload.command,
             )
         result = _execute_library(library, payload.command)
         return SceneLibraryResponse(

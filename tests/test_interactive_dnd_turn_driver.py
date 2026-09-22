@@ -97,6 +97,73 @@ def _turn_state(*, enemy_position: tuple[float, float, float] = (5.0, 0.0, 0.0))
     return DndCombatTurnState(context=context, actor_id="hero")
 
 
+def _healing_turn_state() -> DndCombatTurnState:
+    healing_word = ActionDefinition(
+        name="healing_word",
+        action_type="utility",
+        action_cost="action",
+        target_mode="self",
+        effects=[{"effect_type": "heal", "amount": "1d4+3", "target": "source"}],
+    )
+    hero = _actor("hero", team="party", actions=[healing_word])
+    hero.hp = 28
+    enemy = _actor("enemy", team="enemy", position=(5.0, 0.0, 0.0))
+    actors = {actor.actor_id: actor for actor in (hero, enemy)}
+    context = CombatTurnContext(
+        actors=actors,
+        initiative_order=["hero", "enemy"],
+        round_number=1,
+        damage_dealt={actor_id: 0 for actor_id in actors},
+        damage_taken={actor_id: 0 for actor_id in actors},
+        threat_scores={actor_id: 0 for actor_id in actors},
+        resources_spent={actor_id: {} for actor_id in actors},
+        active_hazards=[],
+        telemetry=[],
+        rule_trace=[],
+        obstacles=[],
+        light_level="bright",
+        burst_round_threshold=3,
+        strategy_overrides={},
+        timing_engine=engine_runtime._create_combat_timing_engine(),
+    )
+    return DndCombatTurnState(context=context, actor_id="hero")
+
+
+def _save_turn_state() -> DndCombatTurnState:
+    frost_burst = ActionDefinition(
+        name="frost_burst",
+        action_type="save",
+        action_cost="action",
+        target_mode="single_enemy",
+        save_dc=12,
+        save_ability="dex",
+        damage="4",
+        damage_type="cold",
+        half_on_save=True,
+    )
+    hero = _actor("hero", team="party", actions=[frost_burst])
+    enemy = _actor("enemy", team="enemy", position=(5.0, 0.0, 0.0))
+    actors = {actor.actor_id: actor for actor in (hero, enemy)}
+    context = CombatTurnContext(
+        actors=actors,
+        initiative_order=["hero", "enemy"],
+        round_number=1,
+        damage_dealt={actor_id: 0 for actor_id in actors},
+        damage_taken={actor_id: 0 for actor_id in actors},
+        threat_scores={actor_id: 0 for actor_id in actors},
+        resources_spent={actor_id: {} for actor_id in actors},
+        active_hazards=[],
+        telemetry=[],
+        rule_trace=[],
+        obstacles=[],
+        light_level="bright",
+        burst_round_threshold=3,
+        strategy_overrides={},
+        timing_engine=engine_runtime._create_combat_timing_engine(),
+    )
+    return DndCombatTurnState(context=context, actor_id="hero")
+
+
 def _declaration(*, invalid_bonus: bool = False, move: bool = False) -> TurnDeclaration:
     return TurnDeclaration(
         movement_path=([(0.0, 0.0, 0.0), (5.0, 0.0, 0.0)] if move else []),
@@ -192,6 +259,734 @@ def test_real_dnd_driver_preview_matches_commit_without_mutating_session() -> No
     assert session.state["phase"] == "complete"
     assert session.state["actors"]["enemy"]["hp"] == 26
     assert session.projection["choices"] is None
+
+
+def test_real_dnd_driver_emits_finalized_preview_commit_roll_records_without_rerolling() -> None:
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session = EngineSession("table-rolls", _turn_state(), driver, seed=13)
+    declaration = _declaration()
+    session.execute(_prepare_command(session_id="table-rolls"))
+
+    preview = session.execute(
+        _command(
+            session_id="table-rolls",
+            command_id="roll-preview",
+            mode="preview",
+            declaration=declaration,
+            expected_revision=1,
+        )
+    )
+    preview_rolls = [
+        event.payload["record"] for event in preview.events if event.kind == "dnd.roll.recorded.v1"
+    ]
+
+    committed = session.execute(
+        _command(
+            session_id="table-rolls",
+            command_id="roll-commit",
+            mode="commit",
+            declaration=declaration,
+            expected_revision=1,
+        )
+    )
+    committed_rolls = [
+        event.payload["record"]
+        for event in committed.events
+        if event.kind == "dnd.roll.recorded.v1"
+    ]
+
+    assert committed_rolls == preview_rolls
+    assert [record["sequence"] for record in committed_rolls] == [1, 2]
+    assert [record["fact"]["kind"] for record in committed_rolls] == ["d20", "damage"]
+    assert committed_rolls[0]["fact"]["outcome"] == "hit"
+    assert committed_rolls[1]["fact"]["raw_damage"] == 4
+    assert committed_rolls[1]["fact"]["applied_damage"] == 4
+    assert session.state["actors"]["enemy"]["hp"] == 26
+
+
+def test_real_dnd_driver_finalizes_lucky_replacement_in_one_attack_record() -> None:
+    state = _turn_state()
+    hero = state.context.actors["hero"]
+    hero.actions[0].to_hit = 0
+    hero.traits["lucky"] = {}
+    hero.resources["luck_points"] = 1
+    hero.max_resources["luck_points"] = 1
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session = EngineSession("table-lucky-roll", state, driver, seed=1)
+    session.execute(_prepare_command(session_id="table-lucky-roll"))
+
+    preview = session.execute(
+        _command(
+            session_id="table-lucky-roll",
+            command_id="lucky-preview",
+            mode="preview",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    receipt = session.execute(
+        _command(
+            session_id="table-lucky-roll",
+            command_id="lucky-commit",
+            mode="commit",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    attack = next(
+        event.payload["record"]["fact"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+    preview_attack = next(
+        event.payload["record"]["fact"]
+        for event in preview.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+
+    assert attack == preview_attack
+    assert [face["value"] for face in attack["roll"]["faces"]] == [5, 19]
+    assert attack["roll"]["faces"][0]["status"] == "replaced"
+    assert attack["roll"]["faces"][0]["replacement_generation_index"] == 2
+    assert attack["roll"]["faces"][1]["status"] == "kept"
+    assert attack["roll"]["total"] == 19
+    assert attack["outcome"] == "hit"
+    assert session.state["actors"]["enemy"]["hp"] == 26
+
+
+@pytest.mark.parametrize(
+    ("seed", "expected_faces"),
+    [(7, [11, 5]), (26, [7, 7])],
+)
+def test_real_dnd_driver_keeps_worse_and_tied_lucky_faces(
+    seed: int,
+    expected_faces: list[int],
+) -> None:
+    state = _turn_state()
+    hero = state.context.actors["hero"]
+    hero.actions[0].to_hit = 0
+    hero.traits["lucky"] = {}
+    hero.resources["luck_points"] = 1
+    hero.max_resources["luck_points"] = 1
+    session_id = f"table-lucky-{seed}"
+    session = EngineSession(
+        session_id,
+        state,
+        DndCombatTurnDriver(version_pins=VERSION_PINS),
+        seed=seed,
+    )
+    session.execute(_prepare_command(session_id=session_id))
+
+    preview = session.execute(
+        _command(
+            session_id=session_id,
+            command_id="lucky-preview",
+            mode="preview",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    receipt = session.execute(
+        _command(
+            session_id=session_id,
+            command_id="lucky-commit",
+            mode="commit",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    attack = next(
+        event.payload["record"]["fact"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+    preview_attack = next(
+        event.payload["record"]["fact"]
+        for event in preview.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+
+    assert attack == preview_attack
+    assert [face["value"] for face in attack["roll"]["faces"]] == expected_faces
+    assert [face["status"] for face in attack["roll"]["faces"]] == ["kept", "discarded"]
+    assert attack["roll"]["candidate_generation_indices"] == [1, 2]
+    assert attack["roll"]["mode"] == "resolved"
+    assert attack["adjustments"] == []
+    assert session.state["actors"]["hero"]["resources"]["luck_points"] == 0
+
+
+def test_real_dnd_driver_preserves_bardic_die_without_rewriting_flat_modifier() -> None:
+    state = _turn_state()
+    hero = state.context.actors["hero"]
+    hero.actions[0].to_hit = 0
+    hero.resources["bardic_inspiration_die"] = 6
+    hero.max_resources["bardic_inspiration_die"] = 6
+    session = EngineSession(
+        "table-bardic-roll",
+        state,
+        DndCombatTurnDriver(version_pins=VERSION_PINS),
+        seed=7,
+    )
+    session.execute(_prepare_command(session_id="table-bardic-roll"))
+
+    preview = session.execute(
+        _command(
+            session_id="table-bardic-roll",
+            command_id="bardic-preview",
+            mode="preview",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    receipt = session.execute(
+        _command(
+            session_id="table-bardic-roll",
+            command_id="bardic-commit",
+            mode="commit",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    attack = next(
+        event.payload["record"]["fact"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+    preview_attack = next(
+        event.payload["record"]["fact"]
+        for event in preview.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+
+    assert attack == preview_attack
+    assert attack["roll"]["flat_modifier"] == 0
+    assert attack["roll"]["total"] == 11
+    assert attack["adjustments"] == [
+        {
+            "stage": "total",
+            "kind": "bardic_inspiration",
+            "amount": 2,
+            "generated_face": {"generation_index": 1, "sides": 6, "value": 2},
+        }
+    ]
+    assert attack["outcome"] == "hit"
+
+
+def test_real_dnd_driver_preserves_cutting_words_die_and_shield_threshold() -> None:
+    cutting_state = _turn_state()
+    cutting_state.context.actors["hero"].actions[0].to_hit = 2
+    bard = _actor("bard", team="enemy", position=(5.0, 0.0, 0.0))
+    bard.traits["cutting words"] = {}
+    bard.resources["bardic_inspiration"] = 1
+    bard.max_resources["bardic_inspiration"] = 1
+    cutting_state.context.actors[bard.actor_id] = bard
+    cutting_state.context.initiative_order.append(bard.actor_id)
+    cutting_state.context.resources_spent[bard.actor_id] = {}
+    cutting_state.context.damage_dealt[bard.actor_id] = 0
+    cutting_state.context.damage_taken[bard.actor_id] = 0
+    cutting_state.context.threat_scores[bard.actor_id] = 0
+    cutting = EngineSession(
+        "table-cutting-attack",
+        cutting_state,
+        DndCombatTurnDriver(version_pins=VERSION_PINS),
+        seed=7,
+    )
+    cutting.execute(_prepare_command(session_id="table-cutting-attack"))
+    cutting_preview = cutting.execute(
+        _command(
+            session_id="table-cutting-attack",
+            command_id="cutting-preview",
+            mode="preview",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    cutting_receipt = cutting.execute(
+        _command(
+            session_id="table-cutting-attack",
+            command_id="cutting-commit",
+            mode="commit",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    cutting_attack = next(
+        event.payload["record"]["fact"]
+        for event in cutting_receipt.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+    cutting_preview_attack = next(
+        event.payload["record"]["fact"]
+        for event in cutting_preview.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+    assert cutting_attack == cutting_preview_attack
+    assert cutting_attack["roll"]["total"] == 13
+    assert cutting_attack["threshold"] == 12
+    assert cutting_attack["adjustments"][0]["amount"] == -2
+    assert cutting_attack["adjustments"][0]["generated_face"]["value"] == 2
+    assert cutting_attack["outcome"] == "miss"
+
+    shield_state = _turn_state()
+    shield_state.context.actors["hero"].actions[0].to_hit = 5
+    enemy = shield_state.context.actors["enemy"]
+    enemy.ac = 15
+    enemy.actions = [
+        ActionDefinition(
+            name="shield",
+            action_type="utility",
+            action_cost="reaction",
+            target_mode="self",
+            tags=["reaction", "shield_spell"],
+        )
+    ]
+    enemy.resources["spell_slot_1"] = 1
+    enemy.max_resources["spell_slot_1"] = 1
+    shield = EngineSession(
+        "table-shield-attack",
+        shield_state,
+        DndCombatTurnDriver(version_pins=VERSION_PINS),
+        seed=7,
+    )
+    shield.execute(_prepare_command(session_id="table-shield-attack"))
+    shield_preview = shield.execute(
+        _command(
+            session_id="table-shield-attack",
+            command_id="shield-preview",
+            mode="preview",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    shield_receipt = shield.execute(
+        _command(
+            session_id="table-shield-attack",
+            command_id="shield-commit",
+            mode="commit",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    shield_attack = next(
+        event.payload["record"]["fact"]
+        for event in shield_receipt.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+    shield_preview_attack = next(
+        event.payload["record"]["fact"]
+        for event in shield_preview.events
+        if event.kind == "dnd.roll.recorded.v1" and event.payload["record"]["purpose"] == "attack"
+    )
+    assert shield_attack == shield_preview_attack
+    assert shield_attack["threshold"] == 20
+    assert shield_attack["adjustments"] == [
+        {
+            "stage": "threshold",
+            "kind": "shield",
+            "amount": 5,
+            "generated_face": None,
+        }
+    ]
+    assert shield_attack["outcome"] == "miss"
+
+
+def test_real_dnd_driver_finalizes_target_mitigation_in_damage_record() -> None:
+    state = _turn_state()
+    state.context.actors["enemy"].damage_resistances.add("slashing")
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session = EngineSession("table-resistance-roll", state, driver, seed=13)
+    session.execute(_prepare_command(session_id="table-resistance-roll"))
+
+    receipt = session.execute(
+        _command(
+            session_id="table-resistance-roll",
+            command_id="resisted-roll",
+            mode="commit",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    damage = next(
+        event.payload["record"]["fact"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1"
+        and event.payload["record"]["fact"]["kind"] == "damage"
+    )
+
+    assert damage["raw_damage"] == 4
+    assert damage["applied_damage"] == 2
+    assert damage["adjustments"] == [
+        {
+            "stage": "applied",
+            "kind": "resistance",
+            "amount": -2,
+            "source_id": None,
+            "generated_face": None,
+        }
+    ]
+    assert session.state["actors"]["enemy"]["hp"] == 28
+
+
+def test_real_dnd_driver_finalizes_each_generated_damage_packet() -> None:
+    state = _turn_state()
+    hero = state.context.actors["hero"]
+    hero.traits["sneak attack"] = {}
+    hero.class_levels["rogue"] = 3
+    hero.actions[0].weapon_properties = ["finesse"]
+    ally = _actor("ally", team="party", position=(5.0, 5.0, 0.0))
+    state.context.actors[ally.actor_id] = ally
+    state.context.initiative_order.append(ally.actor_id)
+    state.context.damage_dealt[ally.actor_id] = 0
+    state.context.damage_taken[ally.actor_id] = 0
+    state.context.threat_scores[ally.actor_id] = 0
+    state.context.resources_spent[ally.actor_id] = {}
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session = EngineSession("table-packet-roll", state, driver, seed=13)
+    session.execute(_prepare_command(session_id="table-packet-roll"))
+
+    receipt = session.execute(
+        _command(
+            session_id="table-packet-roll",
+            command_id="packet-commit",
+            mode="commit",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    damages = [
+        event.payload["record"]["fact"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1"
+        and event.payload["record"]["fact"]["kind"] == "damage"
+    ]
+
+    assert len(damages) == 2
+    assert damages[0]["expression"] == "4"
+    assert damages[1]["expression"] == "2d6"
+    assert sum(damage["applied_damage"] for damage in damages) == (
+        30 - session.state["actors"]["enemy"]["hp"]
+    )
+    assert len(damages[1]["faces"]) == 2
+
+
+def test_real_dnd_driver_finalizes_attack_damage_after_cutting_words() -> None:
+    state = _turn_state()
+    bard = _actor("bard", team="enemy", position=(5.0, 0.0, 0.0))
+    bard.traits["cutting words"] = {}
+    bard.resources["bardic_inspiration"] = 1
+    bard.max_resources["bardic_inspiration"] = 1
+    state.context.actors[bard.actor_id] = bard
+    state.context.initiative_order.append(bard.actor_id)
+    state.context.damage_dealt[bard.actor_id] = 0
+    state.context.damage_taken[bard.actor_id] = 0
+    state.context.threat_scores[bard.actor_id] = 0
+    state.context.resources_spent[bard.actor_id] = {}
+    session = EngineSession(
+        "table-cutting-damage",
+        state,
+        DndCombatTurnDriver(version_pins=VERSION_PINS),
+        seed=13,
+    )
+    session.execute(_prepare_command(session_id="table-cutting-damage"))
+
+    preview = session.execute(
+        _command(
+            session_id="table-cutting-damage",
+            command_id="cutting-preview",
+            mode="preview",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    receipt = session.execute(
+        _command(
+            session_id="table-cutting-damage",
+            command_id="cutting-commit",
+            mode="commit",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    preview_damage = [
+        event.payload["record"]["fact"]
+        for event in preview.events
+        if event.kind == "dnd.roll.recorded.v1"
+        and event.payload["record"]["fact"]["kind"] == "damage"
+    ]
+    committed_damage = [
+        event.payload["record"]["fact"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1"
+        and event.payload["record"]["fact"]["kind"] == "damage"
+    ]
+
+    assert committed_damage == preview_damage
+    assert len(committed_damage) == 1
+    assert committed_damage[0]["rolled_total"] == 4
+    assert committed_damage[0]["raw_damage"] == 1
+    assert committed_damage[0]["applied_damage"] == 1
+    assert committed_damage[0]["adjustments"][0] == {
+        "stage": "raw",
+        "kind": "reduction",
+        "amount": -3,
+        "source_id": None,
+        "generated_face": {"generation_index": 1, "sides": 6, "value": 3},
+    }
+    assert session.state["actors"]["enemy"]["hp"] == 29
+
+
+def test_real_dnd_driver_correlates_multi_packet_cutting_words_by_packet_identity() -> None:
+    state = _turn_state()
+    hero = state.context.actors["hero"]
+    hero.traits["sneak attack"] = {}
+    hero.class_levels["rogue"] = 3
+    hero.actions[0].weapon_properties = ["finesse"]
+    ally = _actor("ally", team="party", position=(5.0, 5.0, 0.0))
+    bard = _actor("bard", team="enemy", position=(5.0, 0.0, 0.0))
+    bard.traits["cutting words"] = {}
+    bard.resources["bardic_inspiration"] = 1
+    bard.max_resources["bardic_inspiration"] = 1
+    for participant in (ally, bard):
+        state.context.actors[participant.actor_id] = participant
+        state.context.initiative_order.append(participant.actor_id)
+        state.context.damage_dealt[participant.actor_id] = 0
+        state.context.damage_taken[participant.actor_id] = 0
+        state.context.threat_scores[participant.actor_id] = 0
+        state.context.resources_spent[participant.actor_id] = {}
+    session = EngineSession(
+        "table-cutting-packets",
+        state,
+        DndCombatTurnDriver(version_pins=VERSION_PINS),
+        seed=13,
+    )
+    session.execute(_prepare_command(session_id="table-cutting-packets"))
+
+    receipt = session.execute(
+        _command(
+            session_id="table-cutting-packets",
+            command_id="packets-commit",
+            mode="commit",
+            declaration=_declaration(),
+            expected_revision=1,
+        )
+    )
+    damages = [
+        event.payload["record"]["fact"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1"
+        and event.payload["record"]["fact"]["kind"] == "damage"
+    ]
+
+    assert len(damages) == 2
+    assert [damage["expression"] for damage in damages] == ["4", "2d6"]
+    assert len(damages[1]["faces"]) == 2
+    assert all(
+        any(item["stage"] == "raw" and item["amount"] < 0 for item in damage["adjustments"])
+        for damage in damages
+    )
+    generated_faces = [
+        item["generated_face"]
+        for damage in damages
+        for item in damage["adjustments"]
+        if item["stage"] == "raw" and item["generated_face"] is not None
+    ]
+    assert len(generated_faces) == 1
+    assert sum(damage["applied_damage"] for damage in damages) == (
+        30 - session.state["actors"]["enemy"]["hp"]
+    )
+
+
+def test_real_dnd_driver_finalizes_save_damage_after_cutting_words() -> None:
+    state = _save_turn_state()
+    bard = _actor("bard", team="enemy", position=(5.0, 0.0, 0.0))
+    bard.traits["cutting words"] = {}
+    bard.resources["bardic_inspiration"] = 1
+    bard.max_resources["bardic_inspiration"] = 1
+    state.context.actors[bard.actor_id] = bard
+    state.context.initiative_order.append(bard.actor_id)
+    state.context.damage_dealt[bard.actor_id] = 0
+    state.context.damage_taken[bard.actor_id] = 0
+    state.context.threat_scores[bard.actor_id] = 0
+    state.context.resources_spent[bard.actor_id] = {}
+    session = EngineSession(
+        "table-cutting-save",
+        state,
+        DndCombatTurnDriver(version_pins=VERSION_PINS),
+        seed=13,
+    )
+    session.execute(_prepare_command(session_id="table-cutting-save"))
+    declaration = TurnDeclaration(
+        action=DeclaredAction(
+            action_name="frost_burst",
+            targets=[TargetRef(actor_id="enemy")],
+        ),
+    )
+
+    receipt = session.execute(
+        _command(
+            session_id="table-cutting-save",
+            command_id="save-commit",
+            mode="commit",
+            declaration=declaration,
+            expected_revision=1,
+        )
+    )
+    damage = next(
+        event.payload["record"]["fact"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1"
+        and event.payload["record"]["fact"]["kind"] == "damage"
+    )
+
+    assert damage["rolled_total"] == 4
+    assert damage["raw_damage"] == 1
+    assert damage["adjustments"][0]["stage"] == "raw"
+    assert damage["adjustments"][0]["generated_face"]["value"] == 3
+    assert damage["applied_damage"] == 30 - session.state["actors"]["enemy"]["hp"]
+
+
+def test_real_dnd_driver_records_effective_healing_and_overheal() -> None:
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session = EngineSession("table-healing-roll", _healing_turn_state(), driver, seed=13)
+    session.execute(_prepare_command(session_id="table-healing-roll"))
+    declaration = TurnDeclaration(
+        action=DeclaredAction(action_name="healing_word", targets=[]),
+    )
+
+    preview = session.execute(
+        _command(
+            session_id="table-healing-roll",
+            command_id="healing-preview",
+            mode="preview",
+            declaration=declaration,
+            expected_revision=1,
+        )
+    )
+    receipt = session.execute(
+        _command(
+            session_id="table-healing-roll",
+            command_id="healing-commit",
+            mode="commit",
+            declaration=declaration,
+            expected_revision=1,
+        )
+    )
+    preview_healing = next(
+        event.payload["record"]["fact"]
+        for event in preview.events
+        if event.kind == "dnd.roll.recorded.v1"
+    )
+    committed_healing = next(
+        event.payload["record"]["fact"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1"
+    )
+
+    assert committed_healing == preview_healing
+    assert committed_healing["kind"] == "healing"
+    assert 4 <= committed_healing["rolled_healing"] <= 7
+    assert committed_healing["effective_healing"] == 2
+    assert committed_healing["overheal"] == committed_healing["rolled_healing"] - 2
+    assert committed_healing["faces"][0]["sides"] == 4
+    assert session.state["actors"]["hero"]["hp"] == 30
+
+
+def test_real_dnd_driver_records_save_outcome_and_target_applied_damage() -> None:
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session = EngineSession("table-save-roll", _save_turn_state(), driver, seed=13)
+    session.execute(_prepare_command(session_id="table-save-roll"))
+    declaration = TurnDeclaration(
+        action=DeclaredAction(
+            action_name="frost_burst",
+            targets=[TargetRef(actor_id="enemy")],
+        ),
+    )
+
+    preview = session.execute(
+        _command(
+            session_id="table-save-roll",
+            command_id="save-preview",
+            mode="preview",
+            declaration=declaration,
+            expected_revision=1,
+        )
+    )
+    receipt = session.execute(
+        _command(
+            session_id="table-save-roll",
+            command_id="save-commit",
+            mode="commit",
+            declaration=declaration,
+            expected_revision=1,
+        )
+    )
+    preview_rolls = [
+        event.payload["record"] for event in preview.events if event.kind == "dnd.roll.recorded.v1"
+    ]
+    committed_rolls = [
+        event.payload["record"] for event in receipt.events if event.kind == "dnd.roll.recorded.v1"
+    ]
+
+    assert committed_rolls == preview_rolls
+    assert [record["fact"]["kind"] for record in committed_rolls] == [
+        "saving_throw",
+        "damage",
+    ]
+    save = committed_rolls[0]
+    damage = committed_rolls[1]
+    assert save["source_actor_id"] == "enemy"
+    assert save["target_actor_id"] == "hero"
+    assert save["fact"]["ability"] == "dexterity"
+    assert save["fact"]["dc"] == 12
+    assert save["fact"]["succeeded"] is (save["fact"]["roll"]["total"] >= save["fact"]["dc"])
+    assert damage["source_actor_id"] == "hero"
+    assert damage["target_actor_id"] == "enemy"
+    assert damage["fact"]["raw_damage"] == 4
+    assert damage["fact"]["applied_damage"] == 30 - session.state["actors"]["enemy"]["hp"]
+
+
+def test_real_dnd_driver_records_both_sides_of_a_contested_check() -> None:
+    state = _turn_state()
+    state.context.actors["hero"].str_mod = 3
+    state.context.actors["hero"].actions.insert(
+        0,
+        ActionDefinition(
+            name="grapple",
+            action_type="grapple",
+            action_cost="action",
+            target_mode="single_enemy",
+            reach_ft=5,
+        ),
+    )
+    driver = DndCombatTurnDriver(version_pins=VERSION_PINS)
+    session = EngineSession("table-check-roll", state, driver, seed=13)
+    session.execute(_prepare_command(session_id="table-check-roll"))
+
+    receipt = session.execute(
+        _command(
+            session_id="table-check-roll",
+            command_id="check-commit",
+            mode="commit",
+            declaration=TurnDeclaration(
+                action=DeclaredAction(
+                    action_name="grapple",
+                    targets=[TargetRef(actor_id="enemy")],
+                ),
+            ),
+            expected_revision=1,
+        )
+    )
+    checks = [
+        event.payload["record"]
+        for event in receipt.events
+        if event.kind == "dnd.roll.recorded.v1"
+        and event.payload["record"]["purpose"] in {"check", "opposed_check"}
+    ]
+
+    assert [record["purpose"] for record in checks] == ["check", "opposed_check"]
+    assert [record["source_actor_id"] for record in checks] == ["hero", "enemy"]
+    assert all(record["fact"]["kind"] == "d20" for record in checks)
+    assert {record["fact"]["outcome"] for record in checks} == {"success", "failure"}
 
 
 def test_real_dnd_driver_accepts_browser_integer_movement_coordinates() -> None:

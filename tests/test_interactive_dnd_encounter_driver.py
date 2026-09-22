@@ -17,6 +17,7 @@ from dnd_sim.interactive.dnd_contracts import (
     TurnDeclarationPayload,
 )
 from dnd_sim.interactive.dnd_encounter_driver import (
+    COMBAT_CONTROL_COMMAND_KIND,
     DND_ENCOUNTER_STATE_SCHEMA_VERSION,
     START_ENCOUNTER_COMMAND_KIND,
     DndCombatEncounterDriver,
@@ -171,6 +172,25 @@ def _declaration_command(
         kind=DECLARATION_COMMAND_KIND,
         version_pins=VERSION_PINS,
         payload=TurnDeclarationPayload.from_domain(declaration).model_dump(mode="json"),
+    )
+
+
+def _control_command(
+    *,
+    session_id: str,
+    command_id: str,
+    expected_revision: int,
+    payload: dict[str, object],
+) -> SessionCommand:
+    return SessionCommand(
+        command_id=command_id,
+        session_id=session_id,
+        actor_id=None,
+        expected_revision=expected_revision,
+        mode="admin",
+        kind=COMBAT_CONTROL_COMMAND_KIND,
+        version_pins=VERSION_PINS,
+        payload=payload,
     )
 
 
@@ -550,3 +570,199 @@ def test_encounter_v1_rejects_lair_actions_explicitly() -> None:
 
     with pytest.raises(ValueError, match="lair actions are unsupported"):
         driver.encode_state(state)
+
+
+def test_tracker_advances_and_rewinds_with_audited_round_wrap() -> None:
+    driver = DndCombatEncounterDriver(version_pins=VERSION_PINS)
+    session = EngineSession("tracker-cursor", _encounter_state(), driver, seed=61)
+    session.execute(_start_command(session_id="tracker-cursor"))
+
+    next_receipt = session.execute(
+        _control_command(
+            session_id="tracker-cursor",
+            command_id="next",
+            expected_revision=1,
+            payload={
+                "operation": "advance",
+                "direction": "next",
+                "reason": "Enemy turn was skipped at the table.",
+            },
+        )
+    )
+
+    assert [event.kind for event in next_receipt.events] == [
+        "dnd.encounter.cursor_overridden",
+        "dnd.turn.prepared",
+    ]
+    assert next_receipt.events[0].payload == {
+        "operation": "advance_next",
+        "reason": "Enemy turn was skipped at the table.",
+        "from_actor_id": "hero",
+        "to_actor_id": "enemy",
+        "from_round_number": 1,
+        "to_round_number": 1,
+        "initiative_order": ["hero", "enemy"],
+    }
+    assert session.projection["active_actor_id"] == "enemy"
+
+    wrapped = session.execute(
+        _control_command(
+            session_id="tracker-cursor",
+            command_id="wrap",
+            expected_revision=2,
+            payload={
+                "operation": "advance",
+                "direction": "next",
+                "reason": "Begin the next round.",
+            },
+        )
+    )
+    assert wrapped.events[0].payload["to_round_number"] == 2
+    assert session.projection["active_actor_id"] == "hero"
+    assert session.projection["round_number"] == 2
+
+    session.execute(
+        _control_command(
+            session_id="tracker-cursor",
+            command_id="previous",
+            expected_revision=3,
+            payload={
+                "operation": "advance",
+                "direction": "previous",
+                "reason": "Return to the missed enemy turn.",
+            },
+        )
+    )
+    assert session.projection["active_actor_id"] == "enemy"
+    assert session.projection["round_number"] == 1
+
+
+def test_tracker_reorders_delays_and_manually_overrides_without_roster_changes() -> None:
+    driver = DndCombatEncounterDriver(version_pins=VERSION_PINS)
+    session = EngineSession(
+        "tracker-order",
+        _encounter_state(include_automatic_ally=True),
+        driver,
+        seed=67,
+    )
+    reorder = session.execute(
+        _control_command(
+            session_id="tracker-order",
+            command_id="reorder",
+            expected_revision=0,
+            payload={
+                "operation": "reorder",
+                "initiative_order": ["enemy", "hero", "ally"],
+                "reason": "Apply the announced initiative totals.",
+            },
+        )
+    )
+    assert reorder.events[0].kind == "dnd.encounter.initiative_overridden"
+    assert session.projection["initiative_order"] == ["enemy", "hero", "ally"]
+    assert session.projection["active_actor_id"] == "enemy"
+    session.execute(
+        _start_command(session_id="tracker-order", command_id="start").model_copy(
+            update={"expected_revision": 1}
+        )
+    )
+
+    delayed = session.execute(
+        _control_command(
+            session_id="tracker-order",
+            command_id="delay",
+            expected_revision=2,
+            payload={
+                "operation": "delay",
+                "after_actor_id": "hero",
+                "reason": "Enemy waits for the hero to move.",
+            },
+        )
+    )
+    assert delayed.events[0].kind == "dnd.encounter.actor_delayed"
+    assert session.projection["initiative_order"] == ["hero", "enemy", "ally"]
+    assert session.projection["active_actor_id"] == "hero"
+
+    overridden = session.execute(
+        _control_command(
+            session_id="tracker-order",
+            command_id="override",
+            expected_revision=3,
+            payload={
+                "operation": "override",
+                "active_actor_id": "enemy",
+                "round_number": 2,
+                "reason": "Resume at the recorded table cursor.",
+            },
+        )
+    )
+    assert overridden.events[0].kind == "dnd.encounter.cursor_overridden"
+    assert overridden.events[0].payload["operation"] == "manual_override"
+    assert session.projection["active_actor_id"] == "enemy"
+    assert session.projection["round_number"] == 2
+
+
+@pytest.mark.parametrize(
+    "payload,code",
+    [
+        (
+            {"operation": "advance", "direction": "sideways", "reason": "No."},
+            "invalid_combat_control",
+        ),
+        (
+            {
+                "operation": "reorder",
+                "initiative_order": ["hero", "hero"],
+                "reason": "No.",
+            },
+            "invalid_combat_control",
+        ),
+        (
+            {"operation": "delay", "after_actor_id": "hero", "reason": "No."},
+            "combat_control_conflict",
+        ),
+        (
+            {
+                "operation": "override",
+                "active_actor_id": "missing",
+                "round_number": 1,
+                "reason": "No.",
+            },
+            "invalid_combat_control",
+        ),
+    ],
+)
+def test_invalid_tracker_controls_preserve_state_and_rng(
+    payload: dict[str, object],
+    code: str,
+) -> None:
+    driver = DndCombatEncounterDriver(version_pins=VERSION_PINS)
+    failed = EngineSession("tracker-invalid", _encounter_state(), driver, seed=71)
+    control = EngineSession("tracker-invalid", _encounter_state(), driver, seed=71)
+    failed.execute(_start_command(session_id="tracker-invalid"))
+    control.execute(_start_command(session_id="tracker-invalid"))
+    before = failed.snapshot_json()
+
+    with pytest.raises(EngineSessionError) as exc_info:
+        failed.execute(
+            _control_command(
+                session_id="tracker-invalid",
+                command_id="invalid",
+                expected_revision=1,
+                payload=payload,
+            )
+        )
+
+    assert exc_info.value.code == code
+    assert failed.snapshot_json() == before
+    legal = _control_command(
+        session_id="tracker-invalid",
+        command_id="legal",
+        expected_revision=1,
+        payload={
+            "operation": "advance",
+            "direction": "next",
+            "reason": "Continue after the rejected correction.",
+        },
+    )
+    assert failed.execute(legal).events == control.execute(legal).events
+    assert failed.snapshot_json() == control.snapshot_json()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 import sqlite3
 from pathlib import Path
@@ -7,9 +8,11 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from dnd_sim.vtt.board_calibration import BoardCalibration
 from dnd_sim.vtt.scene_library_contracts import (
     SCENE_COMMAND_SCHEMA_VERSION,
     SCENE_EXPORT_SCHEMA_VERSION,
+    SCENE_MAP_ASSET_SCHEMA_VERSION,
     SCENE_MAP_METADATA_SCHEMA_VERSION,
     SCENE_RECORD_SCHEMA_VERSION,
     SceneActivateCommand,
@@ -18,15 +21,19 @@ from dnd_sim.vtt.scene_library_contracts import (
     SceneDuplicateCommand,
     SceneExportBundle,
     SceneImportCommand,
+    SceneMapAssetReference,
     SceneMapMetadata,
     SceneRecord,
+    SceneUpdateCommand,
     parse_scene_export_json,
 )
 from dnd_sim.vtt.scene_library_store import (
     SceneActiveArchiveError,
+    SceneArchivedError,
     SceneCommandConflictError,
     SceneIdConflictError,
     SceneImportConflictError,
+    SceneLibraryStoreCorruptionError,
     SceneRevisionConflictError,
     SceneSuccessorError,
     SQLiteSceneLibrary,
@@ -72,7 +79,7 @@ def _create(
     )
 
 
-def test_scene_records_and_exports_are_strict_versioned_metadata_only_contracts() -> None:
+def test_scene_records_and_exports_are_strict_versioned_portable_contracts() -> None:
     scene = _scene("moon-temple", gridless=True)
     bundle = SceneExportBundle(
         schema_version=SCENE_EXPORT_SCHEMA_VERSION,
@@ -90,6 +97,14 @@ def test_scene_records_and_exports_are_strict_versioned_metadata_only_contracts(
             "height_px": 1_080,
             "grid_size_px": 70.0,
             "gridless": True,
+            "calibration": {
+                "schema_version": "vtt.board_calibration.v1",
+                "topology": "gridless",
+                "origin_x_px": 35.0,
+                "origin_y_px": 35.0,
+                "cell_extent_px": 70.0,
+                "distance_ft": 5.0,
+            },
         },
     }
 
@@ -106,6 +121,109 @@ def test_scene_records_and_exports_are_strict_versioned_metadata_only_contracts(
     with pytest.raises(ValidationError):
         SceneRecord.model_validate(
             {**scene.model_dump(mode="json"), "schema_version": "vtt.scene_record.v0"}
+        )
+
+
+def test_scene_map_asset_reference_is_safe_portable_and_round_trips() -> None:
+    asset = SceneMapAssetReference(
+        schema_version=SCENE_MAP_ASSET_SCHEMA_VERSION,
+        asset_id="echo-vault-original",
+        media_type="image/png",
+        content_path="/assets/maps/echo-vault-original.png",
+        sha256="a" * 64,
+        alt_text="A top-down arcane vault chamber.",
+    )
+    scene = SceneRecord(
+        scene_id="echo-vault",
+        map_metadata=SceneMapMetadata(
+            name="Echo Vault",
+            width_px=1_448,
+            height_px=1_086,
+            grid_size_px=181.0,
+            gridless=False,
+            asset=asset,
+        ),
+    )
+    bundle = SceneExportBundle(scene=scene)
+
+    assert parse_scene_export_json(bundle.model_dump_json()) == bundle
+    assert bundle.model_dump(mode="json")["scene"]["map_metadata"]["asset"] == {
+        "schema_version": SCENE_MAP_ASSET_SCHEMA_VERSION,
+        "asset_id": "echo-vault-original",
+        "media_type": "image/png",
+        "content_path": "/assets/maps/echo-vault-original.png",
+        "sha256": "a" * 64,
+        "alt_text": "A top-down arcane vault chamber.",
+    }
+
+    for invalid_path in (
+        "https://example.com/map.png",
+        "//example.com/map.png",
+        "/assets/maps/../secret.png",
+        "/assets/maps/map.png?token=secret",
+        "/assets/other/map.png",
+    ):
+        with pytest.raises(ValidationError):
+            SceneMapAssetReference.model_validate(
+                {**asset.model_dump(mode="json"), "content_path": invalid_path}
+            )
+    with pytest.raises(ValidationError):
+        SceneMapAssetReference.model_validate({**asset.model_dump(mode="json"), "sha256": "A" * 64})
+    with pytest.raises(ValidationError):
+        SceneMapAssetReference.model_validate(
+            {
+                **asset.model_dump(mode="json"),
+                "media_type": "image/webp",
+            }
+        )
+
+
+@pytest.mark.parametrize("topology", ("gridless", "square", "hex_flat", "hex_pointy"))
+def test_scene_metadata_embeds_one_explicit_usable_board_calibration(
+    topology: str,
+) -> None:
+    calibration = BoardCalibration(
+        topology=topology,
+        origin_x_px=100.0,
+        origin_y_px=100.0,
+        cell_extent_px=50.0,
+        distance_ft=5.0,
+    )
+    metadata = SceneMapMetadata(
+        name="Calibrated Board",
+        width_px=800,
+        height_px=600,
+        grid_size_px=50.0,
+        gridless=topology == "gridless",
+        calibration=calibration,
+    )
+
+    assert metadata.calibration == calibration
+    assert SceneMapMetadata.model_validate_json(metadata.model_dump_json()) == metadata
+
+    with pytest.raises(ValidationError, match="grid_size_px|cell extent"):
+        SceneMapMetadata.model_validate({**metadata.model_dump(mode="json"), "grid_size_px": 60.0})
+    with pytest.raises(ValidationError, match="gridless|topology"):
+        SceneMapMetadata.model_validate(
+            {**metadata.model_dump(mode="json"), "gridless": topology != "gridless"}
+        )
+
+
+def test_scene_metadata_rejects_calibration_without_a_complete_usable_cell() -> None:
+    with pytest.raises(ValidationError, match="complete usable cell"):
+        SceneMapMetadata(
+            name="Degenerate Board",
+            width_px=100,
+            height_px=80,
+            grid_size_px=500.0,
+            gridless=False,
+            calibration=BoardCalibration(
+                topology="hex_pointy",
+                origin_x_px=0.0,
+                origin_y_px=0.0,
+                cell_extent_px=500.0,
+                distance_ft=5.0,
+            ),
         )
 
 
@@ -207,6 +325,77 @@ def test_scene_library_create_duplicate_activate_and_archive_lifecycle() -> None
                     expected_revision=5,
                     scene_id="one",
                     successor_scene_id="two",
+                )
+            )
+    finally:
+        connection.close()
+
+
+def test_scene_library_updates_available_metadata_and_preserves_it_on_duplicate() -> None:
+    connection = sqlite3.connect(":memory:")
+    try:
+        library = SQLiteSceneLibrary(connection)
+        library.execute(_create("create-one", _scene("one"), expected_revision=0))
+        asset = SceneMapAssetReference(
+            asset_id="one-map",
+            media_type="image/png",
+            content_path="/api/v1/map-assets/one-map/content.png",
+            sha256="b" * 64,
+            alt_text="A top-down stone chamber.",
+        )
+        metadata = SceneMapMetadata(
+            name="One Calibrated",
+            width_px=1_600,
+            height_px=1_200,
+            grid_size_px=200.0,
+            gridless=False,
+            asset=asset,
+        )
+
+        updated = library.execute(
+            SceneUpdateCommand(
+                table_id="table-a",
+                command_id="update-one",
+                expected_revision=1,
+                scene_id="one",
+                map_metadata=metadata,
+            )
+        )
+        assert updated.receipt.event.event_type == "updated"
+        assert updated.receipt.event.active is True
+        assert library.snapshot("table-a").scene("one").scene.map_metadata == metadata
+
+        library.execute(
+            SceneDuplicateCommand(
+                table_id="table-a",
+                command_id="duplicate-updated",
+                expected_revision=2,
+                source_scene_id="one",
+                new_scene_id="one-copy",
+                new_name="One Copy",
+            )
+        )
+        copied = library.snapshot("table-a").scene("one-copy")
+        assert copied is not None
+        assert copied.scene.map_metadata.asset == asset
+        assert copied.scene.map_metadata.name == "One Copy"
+
+        library.execute(
+            SceneArchiveCommand(
+                table_id="table-a",
+                command_id="archive-copy",
+                expected_revision=3,
+                scene_id="one-copy",
+            )
+        )
+        with pytest.raises(SceneArchivedError):
+            library.execute(
+                SceneUpdateCommand(
+                    table_id="table-a",
+                    command_id="update-archived",
+                    expected_revision=4,
+                    scene_id="one-copy",
+                    map_metadata=metadata,
                 )
             )
     finally:
@@ -337,3 +526,104 @@ def test_scene_library_restarts_from_append_only_history(tmp_path: Path) -> None
         assert [event.revision for event in restored.events_after("table-a", 1)] == [2, 3]
     finally:
         second_connection.close()
+
+
+def test_scene_library_restores_and_replays_pre_calibration_history(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "legacy-scenes.sqlite3"
+    command = _create("create-legacy", _scene("legacy-vault"), expected_revision=0)
+    connection = sqlite3.connect(database_path)
+    store = SQLiteSceneLibrary(connection)
+    created = store.execute(command)
+
+    def strip_calibration(value: object) -> object:
+        if isinstance(value, list):
+            return [strip_calibration(item) for item in value]
+        if not isinstance(value, dict):
+            return value
+        result = {key: strip_calibration(item) for key, item in value.items()}
+        if result.get("schema_version") == "vtt.scene_map_metadata.v1":
+            result.pop("calibration", None)
+        return result
+
+    row = connection.execute(
+        "SELECT command_json, receipt_json FROM _vtt_scene_library_event_log"
+    ).fetchone()
+    assert row is not None
+    legacy_command_json = json.dumps(
+        strip_calibration(json.loads(row[0])),
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    legacy_receipt_json = json.dumps(
+        strip_calibration(json.loads(row[1])),
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    connection.execute(
+        "UPDATE _vtt_scene_library_event_log SET command_json = ?, receipt_json = ?",
+        (legacy_command_json, legacy_receipt_json),
+    )
+    connection.commit()
+    connection.close()
+
+    restored_connection = sqlite3.connect(database_path)
+    try:
+        restored = SQLiteSceneLibrary(restored_connection)
+        view = restored.snapshot("table-a")
+        assert view.scenes[0].scene.map_metadata.calibration.topology == "square"
+        replay = restored.execute(command)
+        assert replay.replayed is True
+        assert replay.receipt == created.receipt
+        assert restored.revision("table-a") == 1
+    finally:
+        restored_connection.close()
+
+
+def test_scene_library_does_not_treat_stripped_nonlegacy_calibration_as_legacy(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "stripped-hex-calibration.sqlite3"
+    connection = sqlite3.connect(database_path)
+    store = SQLiteSceneLibrary(connection)
+    scene = SceneRecord(
+        scene_id="hex-vault",
+        map_metadata=SceneMapMetadata(
+            name="Hex Vault",
+            width_px=800,
+            height_px=600,
+            grid_size_px=80.0,
+            gridless=False,
+            calibration=BoardCalibration(
+                topology="hex_flat",
+                origin_x_px=100.0,
+                origin_y_px=120.0,
+                cell_extent_px=80.0,
+                distance_ft=10.0,
+            ),
+        ),
+    )
+    store.execute(_create("create-hex", scene, expected_revision=0))
+    row = connection.execute("SELECT command_json FROM _vtt_scene_library_event_log").fetchone()
+    assert row is not None
+    tampered = json.loads(row[0])
+    tampered["scene"]["map_metadata"].pop("calibration")
+    connection.execute(
+        "UPDATE _vtt_scene_library_event_log SET command_json = ?",
+        (
+            json.dumps(
+                tampered,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            ),
+        ),
+    )
+    connection.commit()
+
+    with pytest.raises(SceneLibraryStoreCorruptionError):
+        store.snapshot("table-a")
+    connection.close()

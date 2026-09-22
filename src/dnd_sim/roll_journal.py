@@ -110,6 +110,20 @@ class DieFace(RollJournalModel):
         return self
 
 
+class ModifierDieFace(RollJournalModel):
+    """One generated non-d20 die that changed a resolved roll."""
+
+    generation_index: PositiveInt
+    sides: DieSides
+    value: PositiveInt
+
+    @model_validator(mode="after")
+    def validate_face(self) -> "ModifierDieFace":
+        if self.value > self.sides:
+            raise ValueError("modifier die value must not exceed its number of sides")
+        return self
+
+
 def _validate_generated_faces(faces: tuple[DieFace, ...], *, require_d20: bool) -> None:
     expected = tuple(range(1, len(faces) + 1))
     actual = tuple(face.generation_index for face in faces)
@@ -134,7 +148,7 @@ class D20Resolution(RollJournalModel):
     """Generated d20 candidates plus the engine's final kept value."""
 
     expression: str
-    mode: Literal["normal", "advantage", "disadvantage"]
+    mode: Literal["normal", "advantage", "disadvantage", "resolved"]
     faces: tuple[DieFace, ...]
     candidate_generation_indices: tuple[PositiveInt, ...]
     kept_generation_index: PositiveInt
@@ -155,6 +169,8 @@ class D20Resolution(RollJournalModel):
     def validate_resolution(self) -> "D20Resolution":
         if not self.faces:
             raise ValueError("a d20 resolution requires at least one generated face")
+        if len(self.faces) > 64:
+            raise ValueError("a d20 resolution must not exceed 64 generated faces")
         _validate_generated_faces(self.faces, require_d20=True)
 
         candidates = self.candidate_generation_indices
@@ -186,7 +202,7 @@ class D20Resolution(RollJournalModel):
 
         if self.mode == "normal" and len(candidates) != 1:
             raise ValueError("a normal d20 resolution must have exactly one final candidate")
-        if self.mode != "normal" and len(candidates) < 2:
+        if self.mode in {"advantage", "disadvantage"} and len(candidates) < 2:
             raise ValueError(f"{self.mode} requires at least two final candidates")
 
         candidate_values = [by_generation[index].value for index in candidates]
@@ -199,6 +215,32 @@ class D20Resolution(RollJournalModel):
         return self
 
 
+class D20Adjustment(RollJournalModel):
+    """A traced post-roll change without rewriting the base d20 modifier."""
+
+    stage: Literal["total", "threshold"]
+    kind: Literal[
+        "bardic_inspiration",
+        "cutting_words",
+        "shield",
+        "guided_strike",
+        "war_gods_blessing",
+        "other",
+    ]
+    amount: int
+    generated_face: ModifierDieFace | None = None
+
+    @model_validator(mode="after")
+    def validate_adjustment(self) -> "D20Adjustment":
+        if self.amount == 0:
+            raise ValueError("d20 adjustment amount must be non-zero")
+        if self.stage == "threshold" and self.generated_face is not None:
+            raise ValueError("threshold adjustments must not contain a generated die")
+        if self.kind == "shield" and (self.stage != "threshold" or self.amount <= 0):
+            raise ValueError("shield must be a positive threshold adjustment")
+        return self
+
+
 class D20RollFact(RollJournalModel):
     """An attack, check, or other thresholded d20 outcome."""
 
@@ -207,17 +249,52 @@ class D20RollFact(RollJournalModel):
     threshold: int | None
     outcome: Literal["hit", "miss", "success", "failure", "none"]
     critical: bool
+    adjustments: tuple[D20Adjustment, ...] = ()
+
+    @field_validator("adjustments", mode="before")
+    @classmethod
+    def validate_adjustments_shape(cls, value: Any) -> tuple[Any, ...]:
+        return _tuple_from_wire(value, field_name="adjustments")
 
     @model_validator(mode="after")
     def validate_comparison(self) -> "D20RollFact":
+        if len(self.adjustments) > 64:
+            raise ValueError("a d20 fact must not exceed 64 adjustments")
         has_comparison = self.outcome != "none"
         if has_comparison != (self.threshold is not None):
             raise ValueError("threshold must be present exactly when an outcome is resolved")
+        if not has_comparison and self.adjustments:
+            if any(item.stage == "threshold" for item in self.adjustments):
+                raise ValueError("an unresolved d20 fact must not adjust a threshold")
+        generated = [
+            item.generated_face for item in self.adjustments if item.generated_face is not None
+        ]
+        if tuple(face.generation_index for face in generated) != tuple(
+            range(1, len(generated) + 1)
+        ):
+            raise ValueError("modifier die generation indices must be contiguous and ordered")
+
+        if self.threshold is not None:
+            kept = self.roll.faces[self.roll.kept_generation_index - 1]
+            if self.outcome in {"hit", "miss"}:
+                expected = (
+                    "hit"
+                    if kept.value == 20 or (kept.value != 1 and self.total >= self.threshold)
+                    else "miss"
+                )
+            else:
+                expected = "success" if self.total >= self.threshold else "failure"
+            if self.outcome != expected:
+                raise ValueError("outcome must match the authoritative total and threshold")
+        if self.critical and self.outcome != "hit":
+            raise ValueError("a critical d20 fact must be a hit")
         return self
 
     @property
     def total(self) -> int:
-        return self.roll.total
+        return self.roll.total + sum(
+            item.amount for item in self.adjustments if item.stage == "total"
+        )
 
 
 class SavingThrowFact(RollJournalModel):
@@ -236,6 +313,12 @@ class SavingThrowFact(RollJournalModel):
     dc: NonNegativeInt
     succeeded: bool
 
+    @model_validator(mode="after")
+    def validate_outcome(self) -> "SavingThrowFact":
+        if self.succeeded != (self.roll.total >= self.dc):
+            raise ValueError("saving throw outcome must match total and DC")
+        return self
+
 
 class DamageAdjustment(RollJournalModel):
     """A signed change between rolled, raw, and applied damage stages."""
@@ -253,6 +336,7 @@ class DamageAdjustment(RollJournalModel):
     ]
     amount: int
     source_id: str | None
+    generated_face: ModifierDieFace | None = None
 
     @field_validator("amount")
     @classmethod
@@ -307,6 +391,10 @@ class DamageRollFact(RollJournalModel):
 
     @model_validator(mode="after")
     def validate_damage(self) -> "DamageRollFact":
+        if len(self.faces) > 64:
+            raise ValueError("damage must not exceed 64 generated faces")
+        if len(self.adjustments) > 64:
+            raise ValueError("damage must not exceed 64 adjustments")
         _validate_generated_faces(self.faces, require_d20=False)
         kept_total = sum(face.value for face in self.faces if face.status == "kept")
         if self.rolled_total != kept_total + self.flat_modifier:
@@ -326,8 +414,42 @@ class DamageRollFact(RollJournalModel):
         return self
 
 
+class HealingRollFact(RollJournalModel):
+    """Generated healing faces and effective target recovery."""
+
+    kind: Literal["healing"]
+    expression: str
+    faces: tuple[DieFace, ...]
+    flat_modifier: int
+    rolled_healing: NonNegativeInt
+    effective_healing: NonNegativeInt
+    overheal: NonNegativeInt
+
+    @field_validator("expression")
+    @classmethod
+    def validate_expression(cls, value: str) -> str:
+        return _canonical_text(value, field_name="expression")
+
+    @field_validator("faces", mode="before")
+    @classmethod
+    def validate_faces_shape(cls, value: Any) -> tuple[Any, ...]:
+        return _tuple_from_wire(value, field_name="faces")
+
+    @model_validator(mode="after")
+    def validate_healing(self) -> "HealingRollFact":
+        if len(self.faces) > 64:
+            raise ValueError("healing must not exceed 64 generated faces")
+        _validate_generated_faces(self.faces, require_d20=False)
+        kept_total = sum(face.value for face in self.faces if face.status == "kept")
+        if self.rolled_healing != kept_total + self.flat_modifier:
+            raise ValueError("rolled_healing must equal kept faces plus flat_modifier")
+        if self.rolled_healing != self.effective_healing + self.overheal:
+            raise ValueError("rolled_healing must equal effective_healing plus overheal")
+        return self
+
+
 RollFact: TypeAlias = Annotated[
-    D20RollFact | DamageRollFact | SavingThrowFact,
+    D20RollFact | DamageRollFact | HealingRollFact | SavingThrowFact,
     Field(discriminator="kind"),
 ]
 
@@ -445,6 +567,8 @@ class RollJournal(RollJournalModel):
 
     @model_validator(mode="after")
     def validate_records(self) -> "RollJournal":
+        if len(self.records) > 256:
+            raise ValueError("a roll journal must not exceed 256 records")
         for expected_sequence, record in enumerate(self.records, start=1):
             if record.sequence != expected_sequence:
                 raise ValueError("roll record sequences must be contiguous and ordered from 1")
@@ -538,6 +662,20 @@ class BoundRollJournalRecorder:
     @property
     def context(self) -> RollRecordContext:
         return self._context
+
+    @property
+    def journal(self) -> RollJournal:
+        return self._owner.journal
+
+    def record_fact(self, fact: RollFact) -> AuthoritativeRollRecord:
+        """Append one already-finalized fact using this bound context."""
+
+        if not isinstance(
+            fact,
+            (D20RollFact, DamageRollFact, HealingRollFact, SavingThrowFact),
+        ):
+            raise TypeError("fact must be a supported roll fact")
+        return self._owner._append(self._context.draft(fact))
 
     def record_d20(
         self,
@@ -734,6 +872,7 @@ __all__ = [
     "DamageRollFact",
     "DieFace",
     "EngineRollJournalRecorder",
+    "HealingRollFact",
     "RollAudienceIntent",
     "RollJournal",
     "RollRecordContext",

@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import math
+import logging
+import re
+import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Annotated, Any, Literal, TypeAlias
@@ -19,10 +22,16 @@ from pydantic import (
 
 ANNOTATION_SCHEMA_VERSION = "vtt.annotation.v1"
 
+logger = logging.getLogger(__name__)
+
 MAX_ABSOLUTE_COORDINATE_FT = 1_000_000.0
 MAX_TEMPLATE_SIZE_FT = 100_000.0
 MAX_RULER_WAYPOINTS = 128
 MAX_PING_DURATION_MS = 60_000
+MAX_DRAWING_PATH_POINTS = 512
+MAX_DRAWING_TEXT_LENGTH = 500
+MAX_DRAWING_STROKE_WIDTH_FT = 1_000.0
+MAX_DRAWING_FONT_SIZE_FT = 1_000.0
 
 
 def _require_float(value: Any) -> float:
@@ -79,6 +88,21 @@ ConeAngleDegrees = Annotated[
 PingDurationMilliseconds = Annotated[
     int,
     Field(strict=True, ge=250, le=MAX_PING_DURATION_MS),
+]
+DrawingExtentFeet = Annotated[
+    float,
+    BeforeValidator(_require_float),
+    Field(
+        strict=True,
+        gt=0.0,
+        le=MAX_DRAWING_STROKE_WIDTH_FT,
+        allow_inf_nan=False,
+    ),
+]
+DrawingOpacity = Annotated[
+    float,
+    BeforeValidator(_require_float),
+    Field(strict=True, ge=0.05, le=1.0, allow_inf_nan=False),
 ]
 
 
@@ -140,6 +164,143 @@ class _AnnotationBase(_StrictAnnotationModel):
     @classmethod
     def validate_audience(cls, value: Any) -> tuple[str, ...]:
         return _ordered_audience(value)
+
+
+def _drawing_color(value: str | None, *, field_name: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or re.fullmatch(r"#[0-9a-f]{6}", value) is None:
+        raise ValueError(f"{field_name} must be a lowercase #rrggbb color")
+    return value
+
+
+class DrawingStyle(_StrictAnnotationModel):
+    """Renderer-neutral, bounded style for one durable drawing."""
+
+    stroke_color: str
+    fill_color: str | None = None
+    opacity: DrawingOpacity = 1.0
+    stroke_width_ft: DrawingExtentFeet
+    line_style: Literal["solid", "dashed"] = "solid"
+
+    @field_validator("stroke_color")
+    @classmethod
+    def validate_stroke_color(cls, value: str) -> str:
+        validated = _drawing_color(value, field_name="stroke_color")
+        assert validated is not None
+        return validated
+
+    @field_validator("fill_color")
+    @classmethod
+    def validate_fill_color(cls, value: str | None) -> str | None:
+        return _drawing_color(value, field_name="fill_color")
+
+
+class _DrawingBase(_AnnotationBase):
+    layer: Literal["under_tokens", "over_tokens"]
+    locked: bool
+    style: DrawingStyle
+
+    @field_validator("locked", mode="before")
+    @classmethod
+    def validate_locked(cls, value: Any) -> bool:
+        if not isinstance(value, bool):
+            raise ValueError("locked must be a boolean")
+        return value
+
+
+def _require_planar_points(points: Sequence[AnnotationPoint], *, field_name: str) -> None:
+    if len({point.z_ft for point in points}) != 1:
+        raise ValueError(f"{field_name} must share one z_ft plane")
+
+
+class FreehandDrawingAnnotation(_DrawingBase):
+    annotation_type: Literal["freehand_drawing"] = "freehand_drawing"
+    points: tuple[AnnotationPoint, ...]
+
+    @field_validator("points", mode="before")
+    @classmethod
+    def validate_points_shape(cls, value: Any) -> tuple[Any, ...]:
+        if not isinstance(value, (list, tuple)):
+            raise ValueError("points must be an ordered list or tuple")
+        return tuple(value)
+
+    @model_validator(mode="after")
+    def validate_path(self) -> "FreehandDrawingAnnotation":
+        if len(self.points) < 2:
+            raise ValueError("a freehand drawing requires at least two points")
+        if len(self.points) > MAX_DRAWING_PATH_POINTS:
+            raise ValueError(
+                f"a freehand drawing supports at most {MAX_DRAWING_PATH_POINTS} points"
+            )
+        point_keys = {(point.x_ft, point.y_ft, point.z_ft) for point in self.points}
+        if len(point_keys) != len(self.points):
+            raise ValueError("freehand points must be globally unique")
+        _require_planar_points(self.points, field_name="freehand points")
+        return self
+
+
+class ShapeDrawingAnnotation(_DrawingBase):
+    annotation_type: Literal["shape_drawing"] = "shape_drawing"
+    shape: Literal["rectangle", "ellipse"]
+    corner_a: AnnotationPoint
+    corner_b: AnnotationPoint
+
+    @model_validator(mode="after")
+    def validate_corners(self) -> "ShapeDrawingAnnotation":
+        _require_planar_points((self.corner_a, self.corner_b), field_name="shape corners")
+        if self.corner_a.x_ft == self.corner_b.x_ft or self.corner_a.y_ft == self.corner_b.y_ft:
+            raise ValueError("shape drawing requires two opposite corners")
+        return self
+
+
+class ArrowDrawingAnnotation(_DrawingBase):
+    annotation_type: Literal["arrow_drawing"] = "arrow_drawing"
+    start: AnnotationPoint
+    end: AnnotationPoint
+    head_size_ft: DrawingExtentFeet
+
+    @model_validator(mode="after")
+    def validate_segment(self) -> "ArrowDrawingAnnotation":
+        _require_planar_points((self.start, self.end), field_name="arrow endpoints")
+        if self.start.x_ft == self.end.x_ft and self.start.y_ft == self.end.y_ft:
+            raise ValueError("arrow drawing requires distinct endpoints")
+        return self
+
+
+class TextDrawingAnnotation(_DrawingBase):
+    annotation_type: Literal["text_drawing"] = "text_drawing"
+    anchor: AnnotationPoint
+    text: str
+    font_size_ft: Annotated[
+        float,
+        BeforeValidator(_require_float),
+        Field(
+            strict=True,
+            gt=0.0,
+            le=MAX_DRAWING_FONT_SIZE_FT,
+            allow_inf_nan=False,
+        ),
+    ]
+    background_color: str | None = None
+
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, value: str) -> str:
+        if not isinstance(value, str) or not value or value != value.strip():
+            raise ValueError("drawing text must be non-empty canonical plain text")
+        if len(value) > MAX_DRAWING_TEXT_LENGTH:
+            raise ValueError(f"drawing text must be at most {MAX_DRAWING_TEXT_LENGTH} characters")
+        if any(
+            character != "\n" and unicodedata.category(character) == "Cc" for character in value
+        ):
+            raise ValueError("drawing text must not contain control characters")
+        return value
+
+    @field_validator("background_color")
+    @classmethod
+    def validate_background_color(cls, value: str | None) -> str | None:
+        return _drawing_color(value, field_name="background_color")
 
 
 def chebyshev_distance_ft(start: AnnotationPoint, end: AnnotationPoint) -> float:
@@ -255,7 +416,11 @@ VTTAnnotation: TypeAlias = Annotated[
     | CircleTemplateAnnotation
     | ConeTemplateAnnotation
     | LineTemplateAnnotation
-    | CubeTemplateAnnotation,
+    | CubeTemplateAnnotation
+    | FreehandDrawingAnnotation
+    | ShapeDrawingAnnotation
+    | ArrowDrawingAnnotation
+    | TextDrawingAnnotation,
     Field(discriminator="annotation_type"),
 ]
 
@@ -267,6 +432,17 @@ _ANNOTATION_TYPES = (
     ConeTemplateAnnotation,
     LineTemplateAnnotation,
     CubeTemplateAnnotation,
+    FreehandDrawingAnnotation,
+    ShapeDrawingAnnotation,
+    ArrowDrawingAnnotation,
+    TextDrawingAnnotation,
+)
+
+_DRAWING_TYPES = (
+    FreehandDrawingAnnotation,
+    ShapeDrawingAnnotation,
+    ArrowDrawingAnnotation,
+    TextDrawingAnnotation,
 )
 
 
@@ -313,6 +489,17 @@ def _point_bounds(points: Sequence[AnnotationPoint | _DerivedPoint]) -> Annotati
         max_y_ft=max(point.y_ft for point in points),
         min_z_ft=min(point.z_ft for point in points),
         max_z_ft=max(point.z_ft for point in points),
+    )
+
+
+def _expand_planar_bounds(bounds: AnnotationBounds, extent_ft: float) -> AnnotationBounds:
+    return AnnotationBounds(
+        min_x_ft=bounds.min_x_ft - extent_ft,
+        max_x_ft=bounds.max_x_ft + extent_ft,
+        min_y_ft=bounds.min_y_ft - extent_ft,
+        max_y_ft=bounds.max_y_ft + extent_ft,
+        min_z_ft=bounds.min_z_ft,
+        max_z_ft=bounds.max_z_ft,
     )
 
 
@@ -388,6 +575,23 @@ def annotation_bounds_ft(annotation: VTTAnnotation) -> AnnotationBounds:
         return _point_bounds(_cone_boundary_points(annotation))
     if isinstance(annotation, LineTemplateAnnotation):
         return _point_bounds(_line_boundary_points(annotation))
+    if isinstance(annotation, FreehandDrawingAnnotation):
+        return _expand_planar_bounds(
+            _point_bounds(annotation.points),
+            annotation.style.stroke_width_ft / 2.0,
+        )
+    if isinstance(annotation, ShapeDrawingAnnotation):
+        return _expand_planar_bounds(
+            _point_bounds((annotation.corner_a, annotation.corner_b)),
+            annotation.style.stroke_width_ft / 2.0,
+        )
+    if isinstance(annotation, ArrowDrawingAnnotation):
+        return _expand_planar_bounds(
+            _point_bounds((annotation.start, annotation.end)),
+            max(annotation.head_size_ft, annotation.style.stroke_width_ft / 2.0),
+        )
+    if isinstance(annotation, TextDrawingAnnotation):
+        return _point_bounds((annotation.anchor,))
 
     half_size = annotation.size_ft / 2.0
     return AnnotationBounds(
@@ -398,6 +602,14 @@ def annotation_bounds_ft(annotation: VTTAnnotation) -> AnnotationBounds:
         min_z_ft=annotation.center.z_ft - half_size,
         max_z_ft=annotation.center.z_ft + half_size,
     )
+
+
+def is_drawing_annotation(annotation: VTTAnnotation) -> bool:
+    """Return whether an annotation is one of the durable drawing variants."""
+
+    if not isinstance(annotation, _ANNOTATION_TYPES):
+        raise TypeError("annotation must be a supported VTT annotation model")
+    return isinstance(annotation, _DRAWING_TYPES)
 
 
 def project_annotations(
@@ -437,20 +649,30 @@ def project_annotations(
 __all__ = [
     "ANNOTATION_SCHEMA_VERSION",
     "MAX_ABSOLUTE_COORDINATE_FT",
+    "MAX_DRAWING_FONT_SIZE_FT",
+    "MAX_DRAWING_PATH_POINTS",
+    "MAX_DRAWING_STROKE_WIDTH_FT",
+    "MAX_DRAWING_TEXT_LENGTH",
     "MAX_PING_DURATION_MS",
     "MAX_RULER_WAYPOINTS",
     "MAX_TEMPLATE_SIZE_FT",
     "AnnotationBounds",
     "AnnotationPoint",
+    "ArrowDrawingAnnotation",
     "CircleTemplateAnnotation",
     "ConeTemplateAnnotation",
     "CubeTemplateAnnotation",
+    "DrawingStyle",
+    "FreehandDrawingAnnotation",
     "LineTemplateAnnotation",
     "PingAnnotation",
     "RulerAnnotation",
+    "ShapeDrawingAnnotation",
+    "TextDrawingAnnotation",
     "VTTAnnotation",
     "annotation_bounds_ft",
     "chebyshev_distance_ft",
+    "is_drawing_annotation",
     "parse_annotation",
     "parse_annotation_json",
     "project_annotations",

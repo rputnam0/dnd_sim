@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import random
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Literal, cast
+from typing import Any, Literal, NoReturn, cast
 
 import dnd_sim.engine_runtime as engine_runtime
+from dnd_sim.roll_journal import EngineRollJournalRecorder
 from dnd_sim.turn_kernel import CombatTurnContext, CombatTurnPrompt
 
 from .contracts import (
@@ -28,8 +30,11 @@ from .dnd_turn_driver import (
 )
 from .session import EngineSessionError, EngineTransition
 
+logger = logging.getLogger(__name__)
+
 DND_ENCOUNTER_STATE_SCHEMA_VERSION = "dnd.combat-encounter-state.v1"
 START_ENCOUNTER_COMMAND_KIND = "dnd.start_encounter.v1"
+COMBAT_CONTROL_COMMAND_KIND = "dnd.combat.control.v1"
 
 EncounterOutcome = Literal["party_victory", "enemy_victory", "timeout"]
 
@@ -197,10 +202,12 @@ class DndCombatEncounterDriver:
             events = self._apply_start(state, command, rng)
         elif command.kind == DECLARATION_COMMAND_KIND:
             events = self._apply_declaration(state, command, rng)
+        elif command.kind == COMBAT_CONTROL_COMMAND_KIND:
+            events = self._apply_combat_control(state, command, rng)
         else:
             raise EngineSessionError(
                 "unsupported_command",
-                "The D&D encounter driver only accepts start or declaration commands.",
+                "The D&D encounter driver does not support this command.",
                 details={"kind": command.kind},
             )
         self._validate_state(state)
@@ -251,6 +258,305 @@ class DndCombatEncounterDriver:
         self._drive_to_prompt_or_terminal(state, command, rng, events)
         return events
 
+    def _apply_combat_control(
+        self,
+        state: DndCombatEncounterState,
+        command: SessionCommand,
+        rng: random.Random,
+    ) -> list[EventDraft]:
+        if command.mode != "admin":
+            raise EngineSessionError(
+                "unsupported_command_mode",
+                "Combat tracker changes require admin mode.",
+            )
+        if command.actor_id is not None:
+            raise EngineSessionError(
+                "actor_mismatch",
+                "Combat tracker changes are actor-independent admin commands.",
+            )
+        operation = command.payload.get("operation")
+        if operation == "advance":
+            return self._apply_cursor_advance(state, command, rng)
+        if operation == "reorder":
+            return self._apply_initiative_reorder(state, command)
+        if operation == "delay":
+            return self._apply_delay(state, command, rng)
+        if operation == "override":
+            return self._apply_cursor_override(state, command, rng)
+        self._invalid_control()
+
+    def _apply_cursor_advance(
+        self,
+        state: DndCombatEncounterState,
+        command: SessionCommand,
+        rng: random.Random,
+    ) -> list[EventDraft]:
+        self._require_control_payload(
+            command,
+            fields=frozenset({"operation", "direction", "reason"}),
+        )
+        self._require_started_tracker(state)
+        direction = command.payload["direction"]
+        if direction not in {"next", "previous"}:
+            self._invalid_control()
+        reason = self._control_reason(command)
+        context = state.turn.context
+        prior_actor_id = state.turn.actor_id
+        prior_round = context.round_number
+        next_index = state.current_index
+        next_round = prior_round
+        final_index = len(context.initiative_order) - 1
+        if direction == "next":
+            if next_index == final_index:
+                if next_round >= state.max_rounds:
+                    self._control_conflict(
+                        "The tracker cannot advance past the configured final round."
+                    )
+                next_index = 0
+                next_round += 1
+                self._reset_round_flags(context)
+            else:
+                next_index += 1
+        elif next_index == 0:
+            if next_round == 1:
+                self._control_conflict("The tracker cannot move before round one.")
+            next_index = final_index
+            next_round -= 1
+        else:
+            next_index -= 1
+
+        self._replace_cursor(state, index=next_index, round_number=next_round)
+        events = [
+            self._cursor_event(
+                state,
+                operation=f"advance_{direction}",
+                reason=reason,
+                prior_actor_id=prior_actor_id,
+                prior_round=prior_round,
+            )
+        ]
+        self._drive_to_prompt_or_terminal(state, command, rng, events)
+        return events
+
+    def _apply_initiative_reorder(
+        self,
+        state: DndCombatEncounterState,
+        command: SessionCommand,
+    ) -> list[EventDraft]:
+        self._require_control_payload(
+            command,
+            fields=frozenset({"operation", "initiative_order", "reason"}),
+        )
+        reason = self._control_reason(command)
+        raw_order = command.payload["initiative_order"]
+        if not isinstance(raw_order, list) or any(
+            not isinstance(actor_id, str) or not actor_id or actor_id != actor_id.strip()
+            for actor_id in raw_order
+        ):
+            self._invalid_control()
+        initiative_order = cast(list[str], raw_order)
+        actor_ids = set(state.turn.context.actors)
+        if (
+            len(initiative_order) != len(actor_ids)
+            or len(set(initiative_order)) != len(initiative_order)
+            or set(initiative_order) != actor_ids
+        ):
+            self._invalid_control()
+        prior_order = list(state.turn.context.initiative_order)
+        state.turn.context.initiative_order = list(initiative_order)
+        if state.turn.phase == "unprepared":
+            self._replace_cursor(
+                state,
+                index=0,
+                round_number=state.turn.context.round_number,
+            )
+        else:
+            state.current_index = initiative_order.index(state.turn.actor_id)
+        return [
+            EventDraft(
+                kind="dnd.encounter.initiative_overridden",
+                payload={
+                    "operation": "reorder",
+                    "reason": reason,
+                    "active_actor_id": state.turn.actor_id,
+                    "round_number": state.turn.context.round_number,
+                    "previous_initiative_order": prior_order,
+                    "initiative_order": list(initiative_order),
+                },
+            )
+        ]
+
+    def _apply_delay(
+        self,
+        state: DndCombatEncounterState,
+        command: SessionCommand,
+        rng: random.Random,
+    ) -> list[EventDraft]:
+        self._require_control_payload(
+            command,
+            fields=frozenset({"operation", "after_actor_id", "reason"}),
+        )
+        self._require_started_tracker(state)
+        reason = self._control_reason(command)
+        after_actor_id = command.payload["after_actor_id"]
+        context = state.turn.context
+        if not isinstance(after_actor_id, str) or after_actor_id not in context.actors:
+            self._invalid_control()
+        target_index = context.initiative_order.index(after_actor_id)
+        if target_index <= state.current_index:
+            self._control_conflict(
+                "A combatant can delay only until a later slot in the current round."
+            )
+        delayed_actor_id = state.turn.actor_id
+        prior_round = context.round_number
+        initiative_order = list(context.initiative_order)
+        initiative_order.pop(state.current_index)
+        target_index = initiative_order.index(cast(str, after_actor_id))
+        initiative_order.insert(target_index + 1, delayed_actor_id)
+        context.initiative_order = initiative_order
+        next_actor_id = initiative_order[state.current_index]
+        self._replace_cursor(
+            state,
+            index=state.current_index,
+            round_number=prior_round,
+        )
+        events = [
+            EventDraft(
+                kind="dnd.encounter.actor_delayed",
+                payload={
+                    "operation": "delay",
+                    "reason": reason,
+                    "delayed_actor_id": delayed_actor_id,
+                    "after_actor_id": cast(str, after_actor_id),
+                    "from_actor_id": delayed_actor_id,
+                    "to_actor_id": next_actor_id,
+                    "round_number": prior_round,
+                    "initiative_order": list(initiative_order),
+                },
+            )
+        ]
+        self._drive_to_prompt_or_terminal(state, command, rng, events)
+        return events
+
+    def _apply_cursor_override(
+        self,
+        state: DndCombatEncounterState,
+        command: SessionCommand,
+        rng: random.Random,
+    ) -> list[EventDraft]:
+        self._require_control_payload(
+            command,
+            fields=frozenset({"operation", "active_actor_id", "round_number", "reason"}),
+        )
+        self._require_started_tracker(state)
+        reason = self._control_reason(command)
+        actor_id = command.payload["active_actor_id"]
+        round_number = command.payload["round_number"]
+        context = state.turn.context
+        if not isinstance(actor_id, str) or actor_id not in context.actors:
+            self._invalid_control()
+        if (
+            not isinstance(round_number, int)
+            or isinstance(round_number, bool)
+            or not 1 <= round_number <= state.max_rounds
+        ):
+            self._invalid_control()
+        prior_actor_id = state.turn.actor_id
+        prior_round = context.round_number
+        self._replace_cursor(
+            state,
+            index=context.initiative_order.index(cast(str, actor_id)),
+            round_number=round_number,
+        )
+        events = [
+            self._cursor_event(
+                state,
+                operation="manual_override",
+                reason=reason,
+                prior_actor_id=prior_actor_id,
+                prior_round=prior_round,
+            )
+        ]
+        self._drive_to_prompt_or_terminal(state, command, rng, events)
+        return events
+
+    @staticmethod
+    def _require_control_payload(
+        command: SessionCommand,
+        *,
+        fields: frozenset[str],
+    ) -> None:
+        if set(command.payload) != fields:
+            DndCombatEncounterDriver._invalid_control()
+
+    @staticmethod
+    def _control_reason(command: SessionCommand) -> str:
+        reason = command.payload.get("reason")
+        if not isinstance(reason, str) or reason != reason.strip() or not 1 <= len(reason) <= 256:
+            DndCombatEncounterDriver._invalid_control()
+        return reason
+
+    @staticmethod
+    def _require_started_tracker(state: DndCombatEncounterState) -> None:
+        if state.turn.phase != "awaiting_declaration":
+            DndCombatEncounterDriver._control_conflict(
+                "The encounter must be started before changing its active cursor."
+            )
+
+    @staticmethod
+    def _replace_cursor(
+        state: DndCombatEncounterState,
+        *,
+        index: int,
+        round_number: int,
+    ) -> None:
+        context = state.turn.context
+        context.round_number = round_number
+        state.current_index = index
+        state.turn = DndCombatTurnState(
+            context=context,
+            actor_id=context.initiative_order[index],
+        )
+
+    @staticmethod
+    def _reset_round_flags(context: CombatTurnContext) -> None:
+        for actor in context.actors.values():
+            actor.lair_action_used_this_round = False
+            actor.commanded_this_round = False
+
+    @staticmethod
+    def _cursor_event(
+        state: DndCombatEncounterState,
+        *,
+        operation: str,
+        reason: str,
+        prior_actor_id: str,
+        prior_round: int,
+    ) -> EventDraft:
+        return EventDraft(
+            kind="dnd.encounter.cursor_overridden",
+            payload={
+                "operation": operation,
+                "reason": reason,
+                "from_actor_id": prior_actor_id,
+                "to_actor_id": state.turn.actor_id,
+                "from_round_number": prior_round,
+                "to_round_number": state.turn.context.round_number,
+                "initiative_order": list(state.turn.context.initiative_order),
+            },
+        )
+
+    @staticmethod
+    def _invalid_control() -> NoReturn:
+        raise EngineSessionError(
+            "invalid_combat_control",
+            "The combat tracker command is invalid.",
+        )
+
+    @staticmethod
+    def _control_conflict(message: str) -> NoReturn:
+        raise EngineSessionError("combat_control_conflict", message)
+
     def _apply_declaration(
         self,
         state: DndCombatEncounterState,
@@ -258,7 +564,17 @@ class DndCombatEncounterDriver:
         rng: random.Random,
     ) -> list[EventDraft]:
         before_roster = self._roster_signature(state.turn.context)
-        result = self._turn_driver.resolve_declaration(state.turn, command, rng)
+        if state.turn.prompt is None:
+            result = self._turn_driver.resolve_declaration(state.turn, command, rng)
+            recorder = None
+        else:
+            recorder = EngineRollJournalRecorder.empty(state.turn.prompt.turn_token)
+            result = self._turn_driver.resolve_declaration(
+                state.turn,
+                command,
+                rng,
+                roll_journal_recorder=recorder,
+            )
         self._require_roster(state.turn.context, before_roster)
         events = [
             EventDraft(
@@ -266,6 +582,8 @@ class DndCombatEncounterDriver:
                 payload=self._turn_driver.result_payload(result),
             )
         ]
+        if recorder is not None:
+            events.extend(self._turn_driver.roll_event_drafts(recorder.journal))
         self._drive_to_prompt_or_terminal(state, command, rng, events)
         return events
 
@@ -333,9 +651,7 @@ class DndCombatEncounterDriver:
                 state.outcome = "timeout"
                 return
             context.round_number += 1
-            for actor in context.actors.values():
-                actor.lair_action_used_this_round = False
-                actor.commanded_this_round = False
+            self._reset_round_flags(context)
             state.current_index = 0
         else:
             state.current_index += 1

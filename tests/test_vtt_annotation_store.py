@@ -12,6 +12,7 @@ from dnd_sim.vtt.annotation_store import (
     ANNOTATION_EVENT_SCHEMA_VERSION,
     ANNOTATION_RECEIPT_SCHEMA_VERSION,
     AnnotationCommandConflictError,
+    AnnotationCapacityError,
     AnnotationDeleteCommand,
     AnnotationDeleteEvent,
     AnnotationNotFoundError,
@@ -168,6 +169,41 @@ def test_stale_revision_and_missing_delete_reject_without_mutation() -> None:
         assert board.revision("table-a") == 1
         assert [item.annotation_id for item in board.annotations("table-a")] == ["blast"]
         assert [event.command_id for event in board.events_after("table-a", 0)] == ["put-1"]
+
+
+def test_active_annotation_capacity_is_bounded_without_blocking_update_delete_or_retry() -> None:
+    with _connection() as connection:
+        board = SQLiteAnnotationBoard(connection, max_active_annotations=2)
+        first = _put("put-1", expected_revision=0, annotation=_circle("first"))
+        board.execute(first)
+        board.execute(_put("put-2", expected_revision=1, annotation=_circle("second")))
+
+        with pytest.raises(AnnotationCapacityError, match="active annotation capacity"):
+            board.execute(_put("put-3", expected_revision=2, annotation=_circle("third")))
+
+        assert board.execute(first).replayed is True
+        board.execute(
+            _put(
+                "update-2",
+                expected_revision=2,
+                annotation=_circle("second", radius_ft=15.0),
+            )
+        )
+        board.execute(
+            AnnotationDeleteCommand(
+                table_id="table-a",
+                command_id="delete-1",
+                expected_revision=3,
+                annotation_id="first",
+            )
+        )
+        board.execute(_put("put-4", expected_revision=4, annotation=_circle("third")))
+
+        assert board.revision("table-a") == 5
+        assert [item.annotation_id for item in board.annotations("table-a")] == [
+            "second",
+            "third",
+        ]
 
 
 def test_exact_retry_returns_original_receipt_and_conflicting_reuse_is_rejected() -> None:

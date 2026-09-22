@@ -20,6 +20,18 @@ from dnd_sim.characters import (
     total_character_level,
 )
 from dnd_sim.class_progression import build_character_progression
+from dnd_sim.combat_roll_runtime import (
+    bound_roll_recorder as _bound_roll_recorder,
+    capture_roll_recorder as _capture_roll_recorder,
+    captured_damage_fact as _captured_damage_fact,
+    combat_roll_journal_scope,
+    damage_packet_identity as _damage_packet_identity,
+    finalized_attack_fact,
+    finalized_damage_fact,
+    finalized_healing_fact,
+    first_generated_raw_modifier_face as _first_generated_raw_modifier_face,
+    record_saving_throw,
+)
 from dnd_sim.exploration_interaction import (
     AwarenessState,
     ExplorationInteractionState,
@@ -49,6 +61,11 @@ from dnd_sim.models import (
     SimulationSummary,
     SummaryMetric,
     TrialResult,
+)
+from dnd_sim.roll_journal import (
+    BoundRollJournalRecorder,
+    D20RollFact,
+    DamageRollFact,
 )
 from dnd_sim.spatial import (
     AABB,
@@ -91,6 +108,7 @@ from dnd_sim.rules_2014 import (
     DamageRollEvent,
     ListenerSubscription,
     ReactionWindowOpenedEvent,
+    RollHookTrace,
     advance_stable_recovery,
     apply_damage,
     apply_damage_bundle,
@@ -146,6 +164,7 @@ from dnd_sim.engine_resources import (
     iter_spell_slot_levels_desc as _iter_spell_slot_levels_desc_impl,
     recover_spell_slots_with_budget as _recover_spell_slots_with_budget_impl,
 )
+
 from dnd_sim.engine_spell_inference import (
     area_template_uses_self_origin as _area_template_uses_self_origin,
     description_is_probably_non_single_target as _description_is_probably_non_single_target,
@@ -174,7 +193,6 @@ from dnd_sim.turn_kernel import (
 )
 
 logger = logging.getLogger(__name__)
-
 
 _CONTROL_BLOCKING_CONDITIONS = {
     "incapacitated",
@@ -1153,6 +1171,7 @@ def _roll_damage_with_channel_divinity_hooks(
     resources_spent: dict[str, dict[str, int]],
     crit: bool = False,
     empowered_rerolls: int = 0,
+    journal_recorder: BoundRollJournalRecorder | None = None,
 ) -> int:
     resolved_expr = _resolve_runtime_roll_expression(actor=actor, expr=expr)
     normalized_type = str(damage_type).lower()
@@ -1166,6 +1185,7 @@ def _roll_damage_with_channel_divinity_hooks(
         empowered_rerolls=empowered_rerolls,
         source=actor,
         damage_type=damage_type,
+        journal_recorder=journal_recorder,
     )
 
 
@@ -1197,6 +1217,19 @@ def _append_damage_packet(
             crit_expanded=bool(crit_expanded),
         )
     )
+
+
+def _record_damage_packet_capture(
+    *,
+    captures: dict[tuple[str, int], DamageRollFact],
+    bundle: DamageBundle,
+    previous_packet_count: int,
+    fact: DamageRollFact | None,
+) -> None:
+    if fact is None or len(bundle.packets) != previous_packet_count + 1:
+        return
+    packet_index = len(bundle.packets) - 1
+    captures[_damage_packet_identity(bundle.packets, packet_index)] = fact
 
 
 _ROGUE_PACKAGE_FEATURE_LEVELS: tuple[tuple[int, str], ...] = (
@@ -8662,13 +8695,24 @@ def _apply_declared_movement_or_error(
     light_level: str = "bright",
     round_number: int | None = None,
     turn_token: str | None = None,
+    declared_movement_distance_ft: float | None = None,
 ) -> None:
     if not movement_path:
         return
 
-    declared_distance = _path_distance(movement_path)
-    if declared_distance <= 0:
+    native_distance = _path_distance(movement_path)
+    if native_distance <= 0:
         return
+    declared_distance = (
+        native_distance if declared_movement_distance_ft is None else declared_movement_distance_ft
+    )
+    if (
+        not isinstance(declared_distance, (int, float))
+        or isinstance(declared_distance, bool)
+        or not math.isfinite(float(declared_distance))
+        or declared_distance < 0.0
+    ):
+        raise ValueError("declared_movement_distance_ft must be finite and non-negative")
 
     available_distance, crawling = _prepare_voluntary_movement(actor)
     if available_distance <= 0:
@@ -8692,7 +8736,8 @@ def _apply_declared_movement_or_error(
                 message="Declared movement passes through blocked space.",
             )
 
-    declared_cost = _path_movement_cost(movement_path, active_hazards, crawling=crawling)
+    native_cost = _path_movement_cost(movement_path, active_hazards, crawling=crawling)
+    declared_cost = native_cost * float(declared_distance) / native_distance
     if declared_cost > (available_distance + 1e-6):
         _raise_turn_declaration_error(
             actor=actor,
@@ -8940,6 +8985,7 @@ def _execute_declared_turn_or_error(
     round_number: int | None = None,
     turn_token: str | None = None,
     rule_trace: list[dict[str, Any]] | None = None,
+    declared_movement_distance_ft: float | None = None,
 ) -> None:
     movement_path = _declared_movement_path_or_error(actor, declaration)
     _apply_declared_movement_or_error(
@@ -8956,6 +9002,7 @@ def _execute_declared_turn_or_error(
         light_level=light_level,
         round_number=round_number,
         turn_token=turn_token,
+        declared_movement_distance_ft=declared_movement_distance_ft,
     )
     if actor.dead or actor.hp <= 0:
         return
@@ -9137,6 +9184,7 @@ def resolve_declared_turn(
     actor_id: str,
     declaration: TurnDeclaration,
     strategy_name: str,
+    declared_movement_distance_ft: float | None = None,
 ) -> None:
     """Mutate one declared turn through the shared batch/interactive rules path."""
 
@@ -9161,6 +9209,7 @@ def resolve_declared_turn(
             round_number=state.round_number,
             turn_token=state.turn_token,
             rule_trace=state.rule_trace,
+            declared_movement_distance_ft=declared_movement_distance_ft,
         )
 
 
@@ -9171,6 +9220,7 @@ def resolve_declared_turn_atomic(
     actor_id: str,
     declaration: TurnDeclaration,
     strategy_name: str,
+    declared_movement_distance_ft: float | None = None,
 ) -> DeclaredTurnRuntimeState:
     """Resolve a declaration on a detached candidate and commit only RNG state.
 
@@ -9189,6 +9239,7 @@ def resolve_declared_turn_atomic(
         actor_id=actor_id,
         declaration=declaration,
         strategy_name=strategy_name,
+        declared_movement_distance_ft=declared_movement_distance_ft,
     )
 
     rng.setstate(candidate_rng.getstate())
@@ -10149,19 +10200,43 @@ def _apply_effect(
     if effect_type == "heal":
         before = recipient.hp
         raw_amount = str(effect.get("amount", "0")).strip().lower()
+        healing_recorder = (
+            _bound_roll_recorder(
+                source=actor,
+                target=recipient,
+                action=action,
+                purpose="healing",
+            )
+            if action is not None
+            else None
+        )
+        healing_capture = _capture_roll_recorder(healing_recorder)
         if raw_amount == "full":
             amount = max(0, recipient.max_hp - recipient.hp)
+            resolved_healing_expression = "full"
         else:
+            resolved_healing_expression = _resolve_runtime_roll_expression(
+                actor=actor,
+                expr=effect.get("amount", "0"),
+                effect_context=effect_context,
+            )
             amount = roll_damage(
                 rng,
-                _resolve_runtime_roll_expression(
-                    actor=actor,
-                    expr=effect.get("amount", "0"),
-                    effect_context=effect_context,
-                ),
+                resolved_healing_expression,
                 crit=False,
+                journal_recorder=healing_capture,
             )
         _apply_healing(recipient, amount)
+        effective_healing = max(0, recipient.hp - before)
+        if healing_recorder is not None:
+            healing_fact = finalized_healing_fact(
+                captured=(None if raw_amount == "full" else _captured_damage_fact(healing_capture)),
+                expression=resolved_healing_expression,
+                rolled_healing=amount,
+                effective_healing=effective_healing,
+            )
+            if healing_fact is not None:
+                healing_recorder.record_fact(healing_fact)
         if telemetry is not None:
             telemetry.append(
                 {
@@ -11980,6 +12055,7 @@ def _try_spend_bardic_inspiration_on_attack_roll(
     roll: AttackRollResult,
     target_ac: int,
     resources_spent: dict[str, dict[str, int]],
+    hook_trace: list[RollHookTrace] | None = None,
 ) -> AttackRollResult:
     if roll.hit or roll.natural_roll == 20:
         return roll
@@ -11993,6 +12069,16 @@ def _try_spend_bardic_inspiration_on_attack_roll(
     if consumed <= 0:
         return roll
     bonus = rng.randint(1, consumed)
+    if hook_trace is not None:
+        hook_trace.append(
+            RollHookTrace(
+                kind="bardic_inspiration",
+                stage="total",
+                amount=bonus,
+                die_sides=consumed,
+                die_value=bonus,
+            )
+        )
     total = roll.total + bonus
     hit = roll.crit or (roll.natural_roll != 1 and total >= target_ac)
     return AttackRollResult(hit=hit, crit=roll.crit, natural_roll=roll.natural_roll, total=total)
@@ -12082,6 +12168,7 @@ def _try_cutting_words_on_attack_roll(
     target_ac: int,
     actors: dict[str, ActorRuntimeState],
     resources_spent: dict[str, dict[str, int]],
+    hook_trace: list[RollHookTrace] | None = None,
 ) -> AttackRollResult:
     if not roll.hit or roll.natural_roll == 20:
         return roll
@@ -12096,6 +12183,16 @@ def _try_cutting_words_on_attack_roll(
     )
     if reduction <= 0:
         return roll
+    if hook_trace is not None:
+        hook_trace.append(
+            RollHookTrace(
+                kind="cutting_words",
+                stage="total",
+                amount=-reduction,
+                die_sides=_bardic_inspiration_die_sides(reactor),
+                die_value=reduction,
+            )
+        )
     total = roll.total - reduction
     hit = roll.crit or (roll.natural_roll != 1 and total >= target_ac)
     return AttackRollResult(hit=hit, crit=roll.crit, natural_roll=roll.natural_roll, total=total)
@@ -12109,6 +12206,7 @@ def _try_cutting_words_on_damage_roll(
     raw_damage: int,
     actors: dict[str, ActorRuntimeState],
     resources_spent: dict[str, dict[str, int]],
+    hook_trace: list[RollHookTrace] | None = None,
 ) -> int:
     if raw_damage <= 0:
         return raw_damage
@@ -12120,7 +12218,18 @@ def _try_cutting_words_on_damage_roll(
     )
     if reduction <= 0:
         return raw_damage
-    return max(0, raw_damage - reduction)
+    reduced = max(0, raw_damage - reduction)
+    if hook_trace is not None:
+        hook_trace.append(
+            RollHookTrace(
+                kind="cutting_words",
+                stage="raw",
+                amount=reduced - raw_damage,
+                die_sides=_bardic_inspiration_die_sides(reactor),
+                die_value=reduction,
+            )
+        )
+    return reduced
 
 
 def _ki_save_dc(actor: ActorRuntimeState) -> int:
@@ -12768,6 +12877,7 @@ def _apply_domain_attack_roll_hooks(
     target_ac: int,
     actors: dict[str, ActorRuntimeState],
     resources_spent: dict[str, dict[str, int]],
+    hook_trace: list[RollHookTrace] | None = None,
 ) -> AttackRollResult:
     if roll.hit or roll.natural_roll == 1:
         return roll
@@ -12776,6 +12886,14 @@ def _apply_domain_attack_roll_hooks(
     boosted_total = roll.total + 10
     if boosted_total >= target_ac and _has_any_trait(actor, guided_strike_traits):
         if _spend_channel_divinity(actor, resources_spent):
+            if hook_trace is not None:
+                hook_trace.append(
+                    RollHookTrace(
+                        kind="guided_strike",
+                        stage="total",
+                        amount=10,
+                    )
+                )
             return AttackRollResult(
                 hit=True,
                 crit=roll.crit,
@@ -12805,6 +12923,14 @@ def _apply_domain_attack_roll_hooks(
         if not _spend_channel_divinity(ally, resources_spent):
             continue
         ally.reaction_available = False
+        if hook_trace is not None:
+            hook_trace.append(
+                RollHookTrace(
+                    kind="war_gods_blessing",
+                    stage="total",
+                    amount=10,
+                )
+            )
         return AttackRollResult(
             hit=True,
             crit=roll.crit,
@@ -12840,6 +12966,7 @@ class _AttackRollBardicInspirationRule:
             roll=event.roll,
             target_ac=event.target_ac,
             resources_spent=event.resources_spent,
+            hook_trace=event.hook_trace,
         )
 
 
@@ -12857,6 +12984,16 @@ class _AttackRollLuckyAttackerRule:
         )
         lucky_natural = event.rng.randint(1, 20)
         new_natural = max(event.roll.natural_roll, lucky_natural)
+        event.hook_trace.append(
+            RollHookTrace(
+                kind="lucky_attacker",
+                stage="replacement",
+                amount=new_natural - event.roll.natural_roll,
+                die_sides=20,
+                die_value=lucky_natural,
+                selected=new_natural != event.roll.natural_roll,
+            )
+        )
         crit = new_natural == 20
         total = new_natural + event.to_hit_modifier
         hit = crit or (new_natural != 1 and total >= event.target_ac)
@@ -12877,6 +13014,16 @@ class _AttackRollLuckyDefenderRule:
         )
         lucky_natural = event.rng.randint(1, 20)
         new_natural = min(event.roll.natural_roll, lucky_natural)
+        event.hook_trace.append(
+            RollHookTrace(
+                kind="lucky_defender",
+                stage="replacement",
+                amount=new_natural - event.roll.natural_roll,
+                die_sides=20,
+                die_value=lucky_natural,
+                selected=new_natural != event.roll.natural_roll,
+            )
+        )
         crit = new_natural == 20
         total = new_natural + event.to_hit_modifier
         hit = crit or (new_natural != 1 and total >= event.target_ac)
@@ -12895,6 +13042,7 @@ class _AttackResolvedCuttingWordsRule:
             target_ac=event.target_ac,
             actors=event.actors,
             resources_spent=event.resources_spent,
+            hook_trace=event.hook_trace,
         )
 
 
@@ -12931,6 +13079,13 @@ class _AttackResolutionShieldRule:
             target_ac=event.target_ac,
             turn_token=event.turn_token,
         ):
+            event.hook_trace.append(
+                RollHookTrace(
+                    kind="shield",
+                    stage="threshold",
+                    amount=_SHIELD_SPELL_AC_BONUS,
+                )
+            )
             event.roll = AttackRollResult(
                 hit=False,
                 crit=False,
@@ -12969,6 +13124,7 @@ class _DamageRollCuttingWordsRule:
             raw_damage=event.raw_damage,
             actors=event.actors,
             resources_spent=event.resources_spent,
+            hook_trace=event.hook_trace,
         )
         if event.bundle is not None:
             event.bundle.rebalance_total(reduced_total)
@@ -13583,7 +13739,23 @@ def _execute_action_impl(
         defender_athletics = _athletics_check_mod(target)
         defender_acrobatics = _acrobatics_check_mod(target)
 
-        success = run_contested_check(rng, attacker_mod, [defender_athletics, defender_acrobatics])
+        success = run_contested_check(
+            rng,
+            attacker_mod,
+            [defender_athletics, defender_acrobatics],
+            attacker_journal_recorder=_bound_roll_recorder(
+                source=actor,
+                target=target,
+                action=action,
+                purpose="check",
+            ),
+            defender_journal_recorder=_bound_roll_recorder(
+                source=target,
+                target=actor,
+                action=action,
+                purpose="opposed_check",
+            ),
+        )
 
         if success:
             if action.action_type == "grapple":
@@ -13858,12 +14030,20 @@ def _execute_action_impl(
                 damage_bonus += rage_bonus
 
             to_hit_mod = action.to_hit + to_hit_penalty if action.to_hit is not None else 0
+            authoritative_attack_recorder = _bound_roll_recorder(
+                source=actor,
+                target=target,
+                action=action,
+                purpose="attack",
+            )
+            attack_capture = _capture_roll_recorder(authoritative_attack_recorder)
             roll = attack_roll(
                 rng,
                 to_hit_mod,
                 target_ac,
                 advantage=advantage,
                 disadvantage=disadvantage,
+                journal_recorder=attack_capture,
             )
             roll_event = active_timing_engine.emit(
                 AttackRollEvent(
@@ -13890,6 +14070,7 @@ def _execute_action_impl(
                 target_ac=target_ac,
                 actors=actors,
                 resources_spent=resources_spent,
+                hook_trace=roll_event.hook_trace,
             )
 
             if force_crit and roll.hit:
@@ -13907,6 +14088,7 @@ def _execute_action_impl(
                     actors=actors,
                     resources_spent=resources_spent,
                     timing_engine=active_timing_engine,
+                    hook_trace=roll_event.hook_trace,
                     round_number=round_number,
                     turn_token=turn_token,
                 )
@@ -13914,6 +14096,20 @@ def _execute_action_impl(
             if resolved_event.cancelled:
                 continue
             roll = resolved_event.roll
+            if attack_capture is not None and authoritative_attack_recorder is not None:
+                captured_attack = attack_capture.journal.records[-1].fact
+                if isinstance(captured_attack, D20RollFact):
+                    authoritative_attack_recorder.record_fact(
+                        finalized_attack_fact(
+                            captured_attack,
+                            natural_roll=roll.natural_roll,
+                            total=roll.total,
+                            hit=roll.hit,
+                            critical=roll.crit,
+                            target_ac=target_ac,
+                            hook_trace=resolved_event.hook_trace,
+                        )
+                    )
             event = resolved_event.outcome
             if roll.hit and action.damage:
                 empowered_rerolls = 0
@@ -14004,6 +14200,14 @@ def _execute_action_impl(
                     damage_expr += f"{damage_bonus:+d}"
                 attack_is_magical = _is_magical_action(action)
                 damage_bundle = DamageBundle()
+                authoritative_damage_recorder = _bound_roll_recorder(
+                    source=actor,
+                    target=target,
+                    action=action,
+                    purpose="damage",
+                )
+                damage_capture = _capture_roll_recorder(authoritative_damage_recorder)
+                packet_captures: dict[tuple[str, int], DamageRollFact] = {}
                 base_damage = _roll_damage_with_channel_divinity_hooks(
                     rng=rng,
                     actor=actor,
@@ -14012,7 +14216,9 @@ def _execute_action_impl(
                     resources_spent=resources_spent,
                     crit=roll.crit,
                     empowered_rerolls=empowered_rerolls,
+                    journal_recorder=damage_capture,
                 )
+                previous_packet_count = len(damage_bundle.packets)
                 _append_damage_packet(
                     bundle=damage_bundle,
                     amount=base_damage,
@@ -14020,6 +14226,12 @@ def _execute_action_impl(
                     packet_source="attack",
                     is_magical=attack_is_magical,
                     crit_expanded=_damage_expr_was_crit_expanded(damage_expr, crit=roll.crit),
+                )
+                _record_damage_packet_capture(
+                    captures=packet_captures,
+                    bundle=damage_bundle,
+                    previous_packet_count=previous_packet_count,
+                    fact=_captured_damage_fact(damage_capture),
                 )
                 if roll.crit and _has_trait_marker(actor, "brutal critical") and not is_ranged:
                     brutal_extra = 0
@@ -14031,13 +14243,16 @@ def _execute_action_impl(
                         brutal_extra = 1
                     brutal_expr = _critical_bonus_dice_expr(action.damage, brutal_extra)
                     if brutal_expr:
+                        brutal_capture = _capture_roll_recorder(authoritative_damage_recorder)
                         brutal_roll = roll_damage(
                             rng,
                             brutal_expr,
                             crit=False,
                             source=actor,
                             damage_type=action.damage_type,
+                            journal_recorder=brutal_capture,
                         )
+                        previous_packet_count = len(damage_bundle.packets)
                         _append_damage_packet(
                             bundle=damage_bundle,
                             amount=brutal_roll,
@@ -14046,14 +14261,23 @@ def _execute_action_impl(
                             is_magical=attack_is_magical,
                             crit_expanded=False,
                         )
+                        _record_damage_packet_capture(
+                            captures=packet_captures,
+                            bundle=damage_bundle,
+                            previous_packet_count=previous_packet_count,
+                            fact=_captured_damage_fact(brutal_capture),
+                        )
                 if sneak_damage_expr:
+                    sneak_capture = _capture_roll_recorder(authoritative_damage_recorder)
                     sneak_roll = roll_damage(
                         rng,
                         sneak_damage_expr,
                         crit=roll.crit,
                         source=actor,
                         damage_type=action.damage_type,
+                        journal_recorder=sneak_capture,
                     )
+                    previous_packet_count = len(damage_bundle.packets)
                     _append_damage_packet(
                         bundle=damage_bundle,
                         amount=sneak_roll,
@@ -14064,14 +14288,23 @@ def _execute_action_impl(
                             sneak_damage_expr, crit=roll.crit
                         ),
                     )
+                    _record_damage_packet_capture(
+                        captures=packet_captures,
+                        bundle=damage_bundle,
+                        previous_packet_count=previous_packet_count,
+                        fact=_captured_damage_fact(sneak_capture),
+                    )
                 if colossus_damage_expr:
+                    colossus_capture = _capture_roll_recorder(authoritative_damage_recorder)
                     colossus_roll = roll_damage(
                         rng,
                         colossus_damage_expr,
                         crit=roll.crit,
                         source=actor,
                         damage_type=action.damage_type,
+                        journal_recorder=colossus_capture,
                     )
+                    previous_packet_count = len(damage_bundle.packets)
                     _append_damage_packet(
                         bundle=damage_bundle,
                         amount=colossus_roll,
@@ -14082,18 +14315,37 @@ def _execute_action_impl(
                             colossus_damage_expr, crit=roll.crit
                         ),
                     )
+                    _record_damage_packet_capture(
+                        captures=packet_captures,
+                        bundle=damage_bundle,
+                        previous_packet_count=previous_packet_count,
+                        fact=_captured_damage_fact(colossus_capture),
+                    )
 
                 if _has_trait(actor, "improved divine smite") and not is_ranged:
-                    damage_bundle.add_packet(
-                        roll_damage_packet(
-                            rng,
-                            "1d8",
-                            damage_type="radiant",
-                            packet_source="improved_divine_smite",
-                            crit=roll.crit,
-                            source=actor,
-                            is_magical=True,
-                        )
+                    improved_smite_capture = _capture_roll_recorder(authoritative_damage_recorder)
+                    improved_smite_damage = roll_damage(
+                        rng,
+                        "1d8",
+                        crit=roll.crit,
+                        source=actor,
+                        damage_type="radiant",
+                        journal_recorder=improved_smite_capture,
+                    )
+                    previous_packet_count = len(damage_bundle.packets)
+                    _append_damage_packet(
+                        bundle=damage_bundle,
+                        amount=improved_smite_damage,
+                        damage_type="radiant",
+                        packet_source="improved_divine_smite",
+                        is_magical=True,
+                        crit_expanded=_damage_expr_was_crit_expanded("1d8", crit=roll.crit),
+                    )
+                    _record_damage_packet_capture(
+                        captures=packet_captures,
+                        bundle=damage_bundle,
+                        previous_packet_count=previous_packet_count,
+                        fact=_captured_damage_fact(improved_smite_capture),
                     )
 
                 # Divine Smite Logic
@@ -14118,13 +14370,16 @@ def _execute_action_impl(
                     if selected_slot is not None or slot_level > 0:
                         smite_dice = min(5, 1 + slot_level)
                         smite_expr = f"{smite_dice}d8"
+                        smite_capture = _capture_roll_recorder(authoritative_damage_recorder)
                         raw_smite = roll_damage(
                             rng,
                             smite_expr,
                             crit=roll.crit,
                             source=actor,
                             damage_type="radiant",
+                            journal_recorder=smite_capture,
                         )
+                        previous_packet_count = len(damage_bundle.packets)
                         _append_damage_packet(
                             bundle=damage_bundle,
                             amount=raw_smite,
@@ -14134,6 +14389,12 @@ def _execute_action_impl(
                             crit_expanded=_damage_expr_was_crit_expanded(
                                 smite_expr, crit=roll.crit
                             ),
+                        )
+                        _record_damage_packet_capture(
+                            captures=packet_captures,
+                            bundle=damage_bundle,
+                            previous_packet_count=previous_packet_count,
+                            fact=_captured_damage_fact(smite_capture),
                         )
                         if _has_trait(actor, "smite of protection"):
                             _apply_condition(actor, "smite_of_protection_window", duration_rounds=1)
@@ -14212,6 +14473,34 @@ def _execute_action_impl(
                         turn_token=turn_token,
                     )
                 )
+                if authoritative_damage_recorder is not None:
+                    raw_modifier_face = _first_generated_raw_modifier_face(
+                        damage_roll_event.hook_trace
+                    )
+                    modifier_face_available = raw_modifier_face is not None
+                    for packet_index, resolved_packet in enumerate(resolution.packets):
+                        packet_key = _damage_packet_identity(
+                            resolution.packets,
+                            packet_index,
+                        )
+                        captured_damage = packet_captures.get(packet_key)
+                        if captured_damage is None:
+                            continue
+                        generated_face = None
+                        if (
+                            modifier_face_available
+                            and captured_damage.raw_damage != resolved_packet.amount
+                        ):
+                            generated_face = raw_modifier_face
+                            modifier_face_available = False
+                        authoritative_damage_recorder.record_fact(
+                            finalized_damage_fact(
+                                captured_damage,
+                                raw_damage=resolved_packet.amount,
+                                applied_damage=resolved_packet.applied_amount,
+                                raw_generated_face=generated_face,
+                            )
+                        )
                 if applied > 0:
                     if not _force_end_concentration_if_needed(
                         target, actors=actors, active_hazards=active_hazards
@@ -14287,7 +14576,17 @@ def _execute_action_impl(
 
         # Roll AoE damage once and apply per-target save outcomes.
         raw_damage = 0
+        captured_save_damage: DamageRollFact | None = None
+        save_damage_hook_trace: list[RollHookTrace] = []
         if action.damage:
+            save_damage_capture = _capture_roll_recorder(
+                _bound_roll_recorder(
+                    source=actor,
+                    target=None,
+                    action=action,
+                    purpose="base_damage_roll",
+                )
+            )
             empowered_rerolls = 0
             if is_spell_action and empowered_metamagic:
                 empowered_rerolls = max(1, actor.cha_mod)
@@ -14309,7 +14608,12 @@ def _execute_action_impl(
                 resources_spent=resources_spent,
                 crit=False,
                 empowered_rerolls=empowered_rerolls,
+                journal_recorder=save_damage_capture,
             )
+            if save_damage_capture is not None and save_damage_capture.journal.records:
+                captured_fact = save_damage_capture.journal.records[-1].fact
+                if isinstance(captured_fact, DamageRollFact):
+                    captured_save_damage = captured_fact
         if raw_damage > 0:
             primary_enemy_target = next(
                 (
@@ -14327,6 +14631,7 @@ def _execute_action_impl(
                     raw_damage=raw_damage,
                     actors=actors,
                     resources_spent=resources_spent,
+                    hook_trace=save_damage_hook_trace,
                 )
 
         careful_allies = set()
@@ -14363,11 +14668,15 @@ def _execute_action_impl(
                     save_mod += _cover_bonus_from_state(cover_state)
                 save_mod += _smite_of_protection_half_cover_bonus(target, actors)
             auto_fail_save = _auto_fails_strength_or_dex_save(target, save_key)
+            save_values: list[int] = []
+            save_mode = "normal"
+            save_fact_is_explainable = not auto_fail_save
             if auto_fail_save:
                 save_roll = 0
                 success = False
             else:
                 save_roll = rng.randint(1, 20)
+                save_values.append(save_roll)
                 if (
                     save_key == "dex"
                     and _has_trait(target, "danger sense")
@@ -14375,21 +14684,36 @@ def _execute_action_impl(
                     and not has_condition(target, "deafened")
                     and not has_condition(target, "incapacitated")
                 ):
-                    save_roll = max(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    save_roll = max(save_values)
+                    save_mode = "advantage"
                 if (
                     "spell" in action.tags
                     and _has_trait(target, "gnomish cunning")
                     and save_key in {"int", "wis", "cha"}
                 ):
-                    save_roll = max(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    save_roll = max(save_values)
+                    save_mode = "advantage"
                 if save_key == "dex" and has_condition(target, "dodging"):
-                    save_roll = max(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    save_roll = max(save_values)
+                    save_mode = "advantage"
                 if is_spell_action and not subtle_spell and _has_trait(target, "mage slayer"):
-                    save_roll = max(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    save_roll = max(save_values)
+                    save_mode = "advantage"
                 if target.actor_id == heightened_target_id:
-                    save_roll = min(save_roll, rng.randint(1, 20))
+                    save_values.append(rng.randint(1, 20))
+                    if save_mode == "normal":
+                        save_roll = min(save_values)
+                        save_mode = "disadvantage"
+                    else:
+                        save_roll = min(save_roll, save_values[-1])
+                        save_fact_is_explainable = False
                 success = (save_roll + save_mod) >= action.save_dc
             if not auto_fail_save and not success:
+                before_inspiration_roll = save_roll
                 save_roll = _try_spend_bardic_inspiration_on_save(
                     rng=rng,
                     actor=target,
@@ -14398,6 +14722,8 @@ def _execute_action_impl(
                     dc=action.save_dc,
                     resources_spent=resources_spent,
                 )
+                if save_roll != before_inspiration_roll:
+                    save_fact_is_explainable = False
                 success = (save_roll + save_mod) >= action.save_dc
 
             # Lucky: Reroll failed save
@@ -14413,16 +14739,38 @@ def _execute_action_impl(
                 )
                 lucky_roll = rng.randint(1, 20)
                 save_roll = max(save_roll, lucky_roll)
+                save_fact_is_explainable = False
                 success = (save_roll + save_mod) >= action.save_dc
 
             if target.actor_id in careful_allies:
+                if not success:
+                    save_fact_is_explainable = False
                 success = True
             if not success and target.resources.get("legendary_resistance", 0) > 0:
                 target.resources["legendary_resistance"] -= 1
                 resources_spent[target.actor_id]["legendary_resistance"] = (
                     resources_spent[target.actor_id].get("legendary_resistance", 0) + 1
                 )
+                save_fact_is_explainable = False
                 success = True
+
+            save_recorder = _bound_roll_recorder(
+                source=target,
+                target=actor,
+                action=action,
+                purpose="saving_throw",
+            )
+            if save_recorder is not None and save_fact_is_explainable and save_values:
+                record_saving_throw(
+                    save_recorder,
+                    ability=save_key,
+                    mode=save_mode,
+                    generated_values=save_values,
+                    natural_roll=save_roll,
+                    modifier=save_mod,
+                    dc=action.save_dc,
+                    succeeded=success,
+                )
 
             final_damage = raw_damage
             if success:
@@ -14460,6 +14808,29 @@ def _execute_action_impl(
                 is_magical=_is_magical_action(action),
                 source=actor,
             )
+            if captured_save_damage is not None:
+                target_damage_recorder = _bound_roll_recorder(
+                    source=actor,
+                    target=target,
+                    action=action,
+                    purpose="damage",
+                )
+                if target_damage_recorder is not None:
+                    target_damage_recorder.record_fact(
+                        finalized_damage_fact(
+                            captured_save_damage,
+                            raw_damage=raw_damage,
+                            applied_damage=applied,
+                            raw_generated_face=_first_generated_raw_modifier_face(
+                                save_damage_hook_trace
+                            ),
+                            adjustment_kind=(
+                                "reduction"
+                                if final_damage != captured_save_damage.raw_damage
+                                else None
+                            ),
+                        )
+                    )
             if applied > 0:
                 if not _force_end_concentration_if_needed(
                     target, actors=actors, active_hazards=active_hazards
@@ -14510,6 +14881,21 @@ def _execute_action_impl(
                 if spent <= 0:
                     continue
                 _apply_healing(target, spent)
+                lay_on_hands_recorder = _bound_roll_recorder(
+                    source=actor,
+                    target=target,
+                    action=action,
+                    purpose="healing",
+                )
+                if lay_on_hands_recorder is not None:
+                    lay_on_hands_recorder.record_fact(
+                        finalized_healing_fact(
+                            captured=None,
+                            expression=str(spent),
+                            rolled_healing=spent,
+                            effective_healing=spent,
+                        )
+                    )
                 actor.resources["lay_on_hands_pool"] = max(0, pool - spent)
                 resources_spent[actor.actor_id]["lay_on_hands_pool"] = (
                     resources_spent[actor.actor_id].get("lay_on_hands_pool", 0) + spent
@@ -14537,7 +14923,27 @@ def _execute_action_impl(
 
             escape_mod = max(_athletics_check_mod(actor), _acrobatics_check_mod(actor))
             grappler_mods = [_athletics_check_mod(enemy) for enemy in nearby_enemies]
-            if run_contested_check(rng, escape_mod, grappler_mods):
+            primary_grappler = max(
+                nearby_enemies,
+                key=lambda enemy: (_athletics_check_mod(enemy), enemy.actor_id),
+            )
+            if run_contested_check(
+                rng,
+                escape_mod,
+                grappler_mods,
+                attacker_journal_recorder=_bound_roll_recorder(
+                    source=actor,
+                    target=primary_grappler,
+                    action=action,
+                    purpose="check",
+                ),
+                defender_journal_recorder=_bound_roll_recorder(
+                    source=primary_grappler,
+                    target=actor,
+                    action=action,
+                    purpose="opposed_check",
+                ),
+            ):
                 _remove_condition(actor, "grappled")
             return
         if _has_tag(action, "conversion:points_to_slot"):
@@ -15319,6 +15725,7 @@ def resolve_prompted_combat_turn(
     context: CombatTurnContext,
     prompt: CombatTurnPrompt,
     decision: CombatTurnDecision,
+    declared_movement_distance_ft: float | None = None,
 ) -> CombatTurnResult:
     """Resolve a decision from an already-prepared combat turn prompt."""
 
@@ -15404,6 +15811,7 @@ def resolve_prompted_combat_turn(
                 actor_id=actor.actor_id,
                 declaration=turn_declaration,
                 strategy_name=strategy_name,
+                declared_movement_distance_ft=declared_movement_distance_ft,
             )
         except TurnDeclarationValidationError as exc:
             _emit_turn_trace_event(

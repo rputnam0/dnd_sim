@@ -3,6 +3,11 @@ from __future__ import annotations
 import random
 
 from dnd_sim.models import ActorRuntimeState
+from dnd_sim.roll_journal import (
+    EngineRollJournalRecorder,
+    RollAudienceIntent,
+    RollRecordContext,
+)
 from dnd_sim.rules_2014 import (
     DamageBundle,
     DamagePacket,
@@ -64,6 +69,48 @@ def test_advantage_disadvantage_cancels() -> None:
     cancelled = attack_roll(rng_a, to_hit=5, target_ac=15, advantage=True, disadvantage=True)
     plain = attack_roll(rng_b, to_hit=5, target_ac=15)
     assert cancelled.natural_roll == plain.natural_roll
+
+
+def test_contested_check_records_both_authoritative_d20_results_without_extra_rng() -> None:
+    recorder = EngineRollJournalRecorder.empty("turn:contest")
+    audience = RollAudienceIntent(visibility="public", actor_ids=())
+    attacker = recorder.bind(
+        RollRecordContext(
+            source_actor_id="hero",
+            target_actor_id="ogre",
+            action_id="action:grapple",
+            purpose="check",
+            audience=audience,
+        )
+    )
+    defender = recorder.bind(
+        RollRecordContext(
+            source_actor_id="ogre",
+            target_actor_id="hero",
+            action_id="action:grapple",
+            purpose="opposed_check",
+            audience=audience,
+        )
+    )
+    observed_rng = CountingRng([12, 9])
+    control_rng = CountingRng([12, 9])
+
+    observed = run_contested_check(
+        observed_rng,
+        3,
+        [1],
+        attacker_journal_recorder=attacker,
+        defender_journal_recorder=defender,
+    )
+    control = run_contested_check(control_rng, 3, [1])
+
+    assert observed is control is True
+    assert observed_rng.calls == control_rng.calls == 2
+    assert [record.fact.total for record in recorder.journal.records] == [15, 10]
+    assert [record.fact.outcome for record in recorder.journal.records] == [
+        "success",
+        "failure",
+    ]
 
 
 def test_crit_doubles_damage_dice() -> None:

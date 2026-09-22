@@ -10,10 +10,13 @@ from dnd_sim.roll_journal import (
     ROLL_JOURNAL_SCHEMA_VERSION,
     AuthoritativeRollRecord,
     D20Resolution,
+    D20Adjustment,
     D20RollFact,
     DamageAdjustment,
     DamageRollFact,
     DieFace,
+    HealingRollFact,
+    ModifierDieFace,
     RollAudienceIntent,
     RollJournal,
     RollRecordDraft,
@@ -72,6 +75,42 @@ def _attack_draft() -> RollRecordDraft:
             critical=False,
         ),
     )
+
+
+def test_d20_adjustments_preserve_generated_modifier_dice_and_authoritative_total() -> None:
+    fact = D20RollFact(
+        kind="d20",
+        roll=_d20_roll(
+            values=(11,),
+            mode="normal",
+            kept_generation_index=1,
+            flat_modifier=0,
+        ),
+        threshold=12,
+        outcome="hit",
+        critical=False,
+        adjustments=(
+            D20Adjustment(
+                stage="total",
+                kind="bardic_inspiration",
+                amount=2,
+                generated_face=ModifierDieFace(
+                    generation_index=1,
+                    sides=6,
+                    value=2,
+                ),
+            ),
+        ),
+    )
+
+    assert fact.roll.total == 11
+    assert fact.total == 13
+    assert fact.adjustments[0].generated_face.value == 2
+
+    with pytest.raises(ValidationError, match="outcome must match"):
+        fact.model_copy(update={"outcome": "miss"}).model_validate(
+            fact.model_copy(update={"outcome": "miss"}).model_dump(mode="python")
+        )
 
 
 def _save_draft() -> RollRecordDraft:
@@ -177,6 +216,33 @@ def _unapplied_damage_draft() -> RollRecordDraft:
     )
 
 
+def _healing_draft() -> RollRecordDraft:
+    return RollRecordDraft(
+        source_actor_id="cleric",
+        target_actor_id="fighter",
+        action_id="action:healing_word",
+        purpose="healing",
+        audience=_public(),
+        fact=HealingRollFact(
+            kind="healing",
+            expression="1d4+3",
+            faces=(
+                DieFace(
+                    generation_index=1,
+                    sides=4,
+                    value=4,
+                    status="kept",
+                    replacement_generation_index=None,
+                ),
+            ),
+            flat_modifier=3,
+            rolled_healing=7,
+            effective_healing=2,
+            overheal=5,
+        ),
+    )
+
+
 def test_immutable_journal_appends_deterministic_ordered_records_without_rng_draws() -> None:
     rng = random.Random(41020)
     rng_state = rng.getstate()
@@ -241,6 +307,7 @@ def test_codec_is_canonical_byte_stable_and_round_trips_discriminated_facts() ->
         .append(_attack_draft())
         .append(_damage_draft())
         .append(_save_draft())
+        .append(_healing_draft())
     )
 
     encoded = encode_roll_journal(journal)
@@ -257,6 +324,12 @@ def test_codec_is_canonical_byte_stable_and_round_trips_discriminated_facts() ->
     )
     assert encoded.startswith('{"records":[')
     assert f'"schema_version":"{ROLL_JOURNAL_SCHEMA_VERSION}"' in encoded
+
+    healing = restored.records[-1].fact
+    assert isinstance(healing, HealingRollFact)
+    assert healing.rolled_healing == 7
+    assert healing.effective_healing == 2
+    assert healing.overheal == 5
 
 
 def test_damage_fact_can_explicitly_retain_an_unapplied_rng_boundary() -> None:
@@ -391,6 +464,26 @@ def test_codec_rejects_ambiguous_duplicate_json_keys() -> None:
                 ),
             ),
             "unapplied damage",
+        ),
+        (
+            lambda: HealingRollFact(
+                kind="healing",
+                expression="1d4+3",
+                faces=(
+                    DieFace(
+                        generation_index=1,
+                        sides=4,
+                        value=4,
+                        status="kept",
+                        replacement_generation_index=None,
+                    ),
+                ),
+                flat_modifier=3,
+                rolled_healing=7,
+                effective_healing=4,
+                overheal=2,
+            ),
+            "effective_healing plus overheal",
         ),
     ],
 )

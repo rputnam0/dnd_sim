@@ -28,6 +28,7 @@ from .dnd_contracts import (
     TurnDeclarationPayload,
 )
 from .dnd_encounter_driver import (
+    COMBAT_CONTROL_COMMAND_KIND,
     DND_ENCOUNTER_STATE_SCHEMA_VERSION,
     START_ENCOUNTER_COMMAND_KIND,
     DndCombatEncounterDriver,
@@ -57,6 +58,7 @@ from .session import (
 __all__ = [
     "ActorStateCodecError",
     "COMMAND_SCHEMA_VERSION",
+    "COMBAT_CONTROL_COMMAND_KIND",
     "DECLARATION_COMMAND_KIND",
     "DND_ENCOUNTER_STATE_SCHEMA_VERSION",
     "DND_TURN_STATE_SCHEMA_VERSION",

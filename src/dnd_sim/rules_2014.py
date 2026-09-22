@@ -14,6 +14,7 @@ from dnd_sim.models import ActionDefinition, ActorRuntimeState
 from dnd_sim.mortality import advance_stable_recovery, stabilize_creature
 from dnd_sim.noncombat_checks import resolve_contest
 from dnd_sim.roll_journal import BoundRollJournalRecorder
+from dnd_sim.roll_hook_provenance import RollHookTrace
 
 _TRAIT_NORMALIZE_RE = re.compile(r"[\s_-]+")
 _SHIELD_MASTER_INCAPACITATING_CONDITIONS = {
@@ -80,6 +81,7 @@ class AttackRollEvent(CombatEvent):
     to_hit_modifier: int
     actors: dict[str, ActorRuntimeState]
     resources_spent: dict[str, dict[str, int]]
+    hook_trace: list[RollHookTrace] = field(default_factory=list)
     round_number: int | None = None
     turn_token: str | None = None
 
@@ -106,6 +108,7 @@ class AttackResolvedEvent(CombatEvent):
     actors: dict[str, ActorRuntimeState]
     resources_spent: dict[str, dict[str, int]]
     timing_engine: "CombatTimingEngine | None" = None
+    hook_trace: list[RollHookTrace] = field(default_factory=list)
     round_number: int | None = None
     turn_token: str | None = None
 
@@ -127,6 +130,7 @@ class DamageRollEvent(CombatEvent):
     target_can_see_attacker: bool
     bundle: "DamageBundle | None" = None
     timing_engine: "CombatTimingEngine | None" = None
+    hook_trace: list[RollHookTrace] = field(default_factory=list)
     round_number: int | None = None
     turn_token: str | None = None
 
@@ -1110,13 +1114,44 @@ def run_contested_check(
     rng: random.Random,
     attacker_mod: int,
     defender_mods: list[int],
+    *,
+    attacker_journal_recorder: BoundRollJournalRecorder | None = None,
+    defender_journal_recorder: BoundRollJournalRecorder | None = None,
 ) -> bool:
     """Evaluates a contested check. Ties go to the defender."""
-    return resolve_contest(
+    for recorder in (attacker_journal_recorder, defender_journal_recorder):
+        if recorder is not None and not isinstance(recorder, BoundRollJournalRecorder):
+            raise TypeError("journal recorders must be BoundRollJournalRecorder values")
+    result = resolve_contest(
         rng,
         attacker_modifier=attacker_mod,
         defender_modifiers=defender_mods,
-    ).success
+    )
+    if attacker_journal_recorder is not None:
+        attacker_journal_recorder.record_d20(
+            expression=f"1d20{result.attacker_modifier:+d}",
+            mode="normal",
+            generated_values=(result.attacker_roll,),
+            kept_generation_index=1,
+            flat_modifier=result.attacker_modifier,
+            total=result.attacker_total,
+            threshold=result.defender_total + 1,
+            outcome="success" if result.success else "failure",
+            critical=False,
+        )
+    if defender_journal_recorder is not None:
+        defender_journal_recorder.record_d20(
+            expression=f"1d20{result.defender_modifier:+d}",
+            mode="normal",
+            generated_values=(result.defender_roll,),
+            kept_generation_index=1,
+            flat_modifier=result.defender_modifier,
+            total=result.defender_total,
+            threshold=result.attacker_total,
+            outcome="failure" if result.success else "success",
+            critical=False,
+        )
+    return result.success
 
 
 def roll_damage_packet(

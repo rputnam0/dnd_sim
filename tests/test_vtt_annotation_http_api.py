@@ -21,6 +21,7 @@ from dnd_sim.interactive import (
 )
 from dnd_sim.vtt import annotation_api
 from dnd_sim.vtt.access import TableAccessPolicy
+from dnd_sim.vtt.board_calibration import BoardCalibration
 from dnd_sim.vtt.annotation_api import (
     VTT_ANNOTATIONS_VIEW_SCHEMA_VERSION,
     VTT_ANNOTATION_REQUEST_SCHEMA_VERSION,
@@ -32,7 +33,12 @@ from dnd_sim.vtt.annotation_store import (
     AnnotationStoreCorruptionError,
     SQLiteAnnotationBoard,
 )
-from dnd_sim.vtt.annotations import ANNOTATION_SCHEMA_VERSION, PingAnnotation
+from dnd_sim.vtt.annotations import (
+    ANNOTATION_SCHEMA_VERSION,
+    ArrowDrawingAnnotation,
+    DrawingStyle,
+    PingAnnotation,
+)
 from dnd_sim.vtt.event_store import SQLiteSessionEventStore
 from dnd_sim.vtt.http_api import VTT_ERROR_SCHEMA_VERSION, create_vtt_app
 from dnd_sim.vtt.participants import (
@@ -42,6 +48,16 @@ from dnd_sim.vtt.participants import (
     TableRoster,
 )
 from dnd_sim.vtt.scene import SCENE_SCHEMA_VERSION, SquareGridScene
+from dnd_sim.vtt.scene_library_contracts import (
+    SCENE_COMMAND_SCHEMA_VERSION,
+    SCENE_MAP_METADATA_SCHEMA_VERSION,
+    SCENE_RECORD_SCHEMA_VERSION,
+    SceneActivateCommand,
+    SceneCreateCommand,
+    SceneMapMetadata,
+    SceneRecord,
+)
+from dnd_sim.vtt.scene_library_store import SQLiteSceneLibrary
 from dnd_sim.vtt.session_service import VTTSessionService
 
 SESSION_ID = "annotation-session"
@@ -226,6 +242,47 @@ def _delete_request(
             "expected_revision": expected_revision,
             "command_type": "delete",
             "annotation_id": annotation_id,
+        }
+    )
+
+
+def _arrow_request(
+    command_id: str,
+    *,
+    expected_revision: int,
+    annotation_id: str,
+    start_x_ft: float = 10.0,
+    end_x_ft: float = 20.0,
+    opacity: float = 1.0,
+    scene_id: str = SCENE.scene_id,
+    audience: tuple[str, ...] = ("all",),
+) -> dict[str, Any]:
+    annotation = ArrowDrawingAnnotation(
+        annotation_id=annotation_id,
+        scene_id=scene_id,
+        author_id="untrusted-client-author",
+        audience=audience,
+        layer="under_tokens",
+        locked=False,
+        style=DrawingStyle(
+            stroke_color="#5eead4",
+            fill_color=None,
+            opacity=opacity,
+            stroke_width_ft=2.0,
+            line_style="solid",
+        ),
+        start={"x_ft": start_x_ft, "y_ft": 10.0, "z_ft": 0.0},
+        end={"x_ft": end_x_ft, "y_ft": 20.0, "z_ft": 0.0},
+        head_size_ft=2.0,
+    )
+    return _request(
+        {
+            "schema_version": ANNOTATION_COMMAND_SCHEMA_VERSION,
+            "table_id": TABLE_ID,
+            "command_id": command_id,
+            "expected_revision": expected_revision,
+            "command_type": "put",
+            "annotation": annotation.model_dump(mode="json"),
         }
     )
 
@@ -511,6 +568,247 @@ def test_browser_integral_annotation_numbers_are_canonicalized_at_the_http_bound
     assert type(stored.position.x_ft) is float
     assert type(stored.position.y_ft) is float
     assert type(stored.position.z_ft) is float
+
+
+def test_drawing_put_is_authoritative_bounded_and_browser_numbers_are_normalized(
+    annotation_api_client,
+) -> None:
+    client, board, _service = annotation_api_client
+    accepted_request = _arrow_request(
+        "draw-inside",
+        expected_revision=0,
+        annotation_id="route-arrow",
+    )
+    wire = accepted_request["command"]["annotation"]
+    wire["style"]["opacity"] = 1
+    wire["style"]["stroke_width_ft"] = 2
+    wire["start"] = {"x_ft": 10, "y_ft": 10, "z_ft": 0}
+    wire["end"] = {"x_ft": 20, "y_ft": 20, "z_ft": 0}
+    wire["head_size_ft"] = 2
+
+    accepted = client.post(
+        "/api/v1/annotation-commands",
+        json=accepted_request,
+        headers=_authorization("player-1"),
+    )
+
+    assert accepted.status_code == 200
+    stored = accepted.json()["receipt"]["event"]["annotation"]
+    assert stored["author_id"] == "player-1"
+    assert type(stored["style"]["opacity"]) is float
+    assert type(stored["style"]["stroke_width_ft"]) is float
+    assert type(stored["head_size_ft"]) is float
+    assert type(stored["start"]["x_ft"]) is float
+
+    outside = client.post(
+        "/api/v1/annotation-commands",
+        json=_arrow_request(
+            "draw-outside",
+            expected_revision=1,
+            annotation_id="outside-arrow",
+            start_x_ft=99.0,
+            end_x_ft=100.0,
+        ),
+        headers=_authorization("player-1"),
+    )
+    payload = _assert_error(
+        outside,
+        status_code=409,
+        code="drawing_out_of_bounds",
+    )
+    assert payload["details"] == {"scene_id": SCENE.scene_id}
+    assert board.revision(TABLE_ID) == 1
+    assert [item.annotation_id for item in board.annotations(TABLE_ID)] == ["route-arrow"]
+
+
+def test_drawing_bounds_follow_the_activated_scene_calibration(tmp_path: Path) -> None:
+    connection = sqlite3.connect(
+        tmp_path / "annotation-calibrated-scene.sqlite3",
+        check_same_thread=False,
+    )
+    service = VTTSessionService.open(
+        session_id=SESSION_ID,
+        initial_state={"value": 0},
+        driver=_ProjectionDriver(),
+        seed=43,
+        event_store=SQLiteSessionEventStore(connection),
+    )
+    board = SQLiteAnnotationBoard(connection)
+    scenes = SQLiteSceneLibrary(connection)
+
+    def scene_record(scene_id: str, *, width_px: int) -> SceneRecord:
+        return SceneRecord(
+            schema_version=SCENE_RECORD_SCHEMA_VERSION,
+            scene_id=scene_id,
+            map_metadata=SceneMapMetadata(
+                schema_version=SCENE_MAP_METADATA_SCHEMA_VERSION,
+                name=scene_id,
+                width_px=width_px,
+                height_px=200,
+                grid_size_px=20.0,
+                gridless=False,
+                calibration=BoardCalibration(
+                    topology="square",
+                    origin_x_px=10.0,
+                    origin_y_px=10.0,
+                    cell_extent_px=20.0,
+                    distance_ft=5.0,
+                ),
+            ),
+        )
+
+    scenes.execute(
+        SceneCreateCommand(
+            schema_version=SCENE_COMMAND_SCHEMA_VERSION,
+            table_id=TABLE_ID,
+            command_id="create-wide",
+            expected_revision=0,
+            scene=scene_record("wide-scene", width_px=200),
+        )
+    )
+    scenes.execute(
+        SceneCreateCommand(
+            schema_version=SCENE_COMMAND_SCHEMA_VERSION,
+            table_id=TABLE_ID,
+            command_id="create-tight",
+            expected_revision=1,
+            scene=scene_record("tight-scene", width_px=80),
+        )
+    )
+    scenes.execute(
+        SceneActivateCommand(
+            schema_version=SCENE_COMMAND_SCHEMA_VERSION,
+            table_id=TABLE_ID,
+            command_id="activate-tight",
+            expected_revision=2,
+            scene_id="tight-scene",
+        )
+    )
+    app = create_vtt_app(
+        service,
+        scene=SCENE,
+        access_policy=_policy(),
+        annotation_board=board,
+        scene_library=scenes,
+        scene_library_table_id=TABLE_ID,
+    )
+    try:
+        with TestClient(app, raise_server_exceptions=False) as client:
+            outside = client.post(
+                "/api/v1/annotation-commands",
+                json=_arrow_request(
+                    "tight-outside",
+                    expected_revision=0,
+                    annotation_id="tight-outside",
+                    scene_id="tight-scene",
+                    start_x_ft=18.0,
+                    end_x_ft=20.0,
+                ),
+                headers=_authorization("gm"),
+            )
+            _assert_error(
+                outside,
+                status_code=409,
+                code="drawing_out_of_bounds",
+            )
+            accepted = client.post(
+                "/api/v1/annotation-commands",
+                json=_arrow_request(
+                    "tight-inside",
+                    expected_revision=0,
+                    annotation_id="tight-inside",
+                    scene_id="tight-scene",
+                    start_x_ft=5.0,
+                    end_x_ft=15.0,
+                ),
+                headers=_authorization("gm"),
+            )
+
+        assert accepted.status_code == 200
+        assert board.revision(TABLE_ID) == 1
+    finally:
+        connection.close()
+
+
+def test_annotation_capacity_maps_to_a_stable_nonmutating_api_error(tmp_path: Path) -> None:
+    connection = sqlite3.connect(
+        tmp_path / "annotation-capacity.sqlite3",
+        check_same_thread=False,
+    )
+    service = VTTSessionService.open(
+        session_id=SESSION_ID,
+        initial_state={"value": 0},
+        driver=_ProjectionDriver(),
+        seed=47,
+        event_store=SQLiteSessionEventStore(connection),
+    )
+    board = SQLiteAnnotationBoard(connection, max_active_annotations=1)
+    app = create_vtt_app(
+        service,
+        scene=SCENE,
+        access_policy=_policy(),
+        annotation_board=board,
+    )
+    try:
+        with TestClient(app, raise_server_exceptions=False) as client:
+            first = client.post(
+                "/api/v1/annotation-commands",
+                json=_arrow_request(
+                    "capacity-first",
+                    expected_revision=0,
+                    annotation_id="capacity-first",
+                ),
+                headers=_authorization("gm"),
+            )
+            rejected = client.post(
+                "/api/v1/annotation-commands",
+                json=_arrow_request(
+                    "capacity-second",
+                    expected_revision=1,
+                    annotation_id="capacity-second",
+                ),
+                headers=_authorization("gm"),
+            )
+
+        assert first.status_code == 200
+        payload = _assert_error(
+            rejected,
+            status_code=409,
+            code="annotation_capacity_exceeded",
+        )
+        assert payload["details"] == {}
+        assert board.revision(TABLE_ID) == 1
+        assert [item.annotation_id for item in board.annotations(TABLE_ID)] == ["capacity-first"]
+    finally:
+        connection.close()
+
+
+def test_private_drawing_is_absent_from_unauthorized_http_projection(
+    annotation_api_client,
+) -> None:
+    client, _board, _service = annotation_api_client
+    created = client.post(
+        "/api/v1/annotation-commands",
+        json=_arrow_request(
+            "private-drawing",
+            expected_revision=0,
+            annotation_id="private-drawing",
+            audience=("participant:player-1",),
+        ),
+        headers=_authorization("player-1"),
+    )
+
+    owner = client.get("/api/v1/annotations", headers=_authorization("player-1"))
+    unauthorized = client.get(
+        "/api/v1/annotations",
+        headers=_authorization("player-2"),
+    )
+
+    assert created.status_code == 200
+    assert [item["annotation_id"] for item in owner.json()["annotations"]] == ["private-drawing"]
+    assert unauthorized.json()["revision"] == 1
+    assert unauthorized.json()["annotations"] == []
+    assert "private-drawing" not in unauthorized.text
 
 
 @pytest.mark.parametrize(
@@ -1036,3 +1334,71 @@ def test_annotation_sse_is_exclusive_reconnectable_and_advances_hidden_events(
         status_code=400,
         code="invalid_annotation_event_cursor",
     )
+
+
+def test_annotation_sse_projects_a_delete_when_an_update_narrows_audience(
+    annotation_api_client,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client, _board, _service = annotation_api_client
+    assert (
+        client.post(
+            "/api/v1/annotation-commands",
+            json=_arrow_request(
+                "public-drawing",
+                expected_revision=0,
+                annotation_id="shared-drawing",
+            ),
+            headers=_authorization("gm"),
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            "/api/v1/annotation-commands",
+            json=_arrow_request(
+                "narrow-drawing",
+                expected_revision=1,
+                annotation_id="shared-drawing",
+                audience=("participant:player-1",),
+            ),
+            headers=_authorization("gm"),
+        ).status_code
+        == 200
+    )
+    current = client.get(
+        "/api/v1/annotations",
+        headers=_authorization("player-2"),
+    )
+    assert current.status_code == 200
+    assert current.json()["revision"] == 2
+    assert current.json()["annotations"] == []
+
+    monkeypatch.setattr(annotation_api, "SSE_POLL_INTERVAL_SECONDS", 0.001)
+    status, _headers, payload = asyncio.run(
+        _capture_sse(
+            client.app,
+            "/api/v1/annotation-events?after=1",
+            headers=_authorization("player-2"),
+            data_event_count=1,
+        )
+    )
+
+    assert status == 200
+    assert _sse_events(payload) == [
+        (
+            2,
+            {
+                "schema_version": "vtt.annotation_event.v1",
+                "table_id": TABLE_ID,
+                "event_id": f"{TABLE_ID}:annotation:2",
+                "sequence": 2,
+                "revision": 2,
+                "command_id": "narrow-drawing",
+                "annotation_id": "shared-drawing",
+                "event_type": "delete",
+                "scene_id": SCENE.scene_id,
+                "audience": ["all"],
+            },
+        )
+    ]

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import base64
+import hashlib
+import io
 import json
 import sqlite3
 from pathlib import Path
@@ -8,6 +11,7 @@ from typing import Any
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from dnd_sim.interactive.dnd_contracts import DECLARATION_COMMAND_KIND
 from dnd_sim.interactive.dnd_encounter_driver import START_ENCOUNTER_COMMAND_KIND
@@ -28,6 +32,23 @@ def _canonical_json(value: object) -> str:
         ensure_ascii=False,
         separators=(",", ":"),
         sort_keys=True,
+    )
+
+
+def test_original_solo_map_asset_matches_the_published_integrity_digest() -> None:
+    asset_path = (
+        Path(__file__).parents[1]
+        / "apps"
+        / "vtt-web"
+        / "public"
+        / "assets"
+        / "maps"
+        / "echo-vault-original.png"
+    )
+
+    assert asset_path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    assert hashlib.sha256(asset_path.read_bytes()).hexdigest() == (
+        "90ece48257967087c27ac6ae2da497434526f88811242b9ae7a267cbee0d6b89"
     )
 
 
@@ -101,6 +122,47 @@ def _public_ping_request(
                 # a decimal suffix. The HTTP boundary must still accept them.
                 "position": {"x_ft": 20, "y_ft": 15, "z_ft": 0},
                 "duration_ms": 1_500,
+            },
+        },
+    }
+
+
+def _public_text_drawing_request(
+    *,
+    session_id: str,
+    command_id: str,
+    annotation_id: str,
+    expected_revision: int,
+) -> dict[str, Any]:
+    return {
+        "schema_version": "vtt.annotation_request.v1",
+        "session_id": session_id,
+        "command": {
+            "schema_version": "vtt.annotation_command.v1",
+            "table_id": session_id,
+            "command_id": command_id,
+            "expected_revision": expected_revision,
+            "command_type": "put",
+            "annotation": {
+                "schema_version": "vtt.annotation.v1",
+                "annotation_id": annotation_id,
+                "scene_id": "echo-vault",
+                "author_id": "untrusted-browser-author",
+                "audience": ["all"],
+                "annotation_type": "text_drawing",
+                "layer": "over_tokens",
+                "locked": True,
+                "style": {
+                    "stroke_color": "#5eead4",
+                    "fill_color": None,
+                    "opacity": 1,
+                    "stroke_width_ft": 1,
+                    "line_style": "solid",
+                },
+                "anchor": {"x_ft": 20, "y_ft": 15, "z_ft": 0},
+                "text": "Hold <script>alert(1)</script>\nNorth",
+                "font_size_ft": 3,
+                "background_color": "#112233",
             },
         },
     }
@@ -188,6 +250,28 @@ def _public_presence_heartbeat_request(
     }
 
 
+def _public_map_asset_upload_request() -> tuple[dict[str, Any], bytes]:
+    output = io.BytesIO()
+    Image.new("RGB", (96, 72), color=(16, 46, 43)).save(output, format="PNG")
+    content = output.getvalue()
+    return (
+        {
+            "schema_version": "vtt.map_asset_upload_request.v1",
+            "session_id": "echo-vault-session",
+            "command": {
+                "schema_version": "vtt.map_asset_upload_command.v1",
+                "table_id": "echo-vault-session",
+                "command_id": "upload-sunken-observatory",
+                "expected_revision": 0,
+                "asset_id": "sunken-observatory",
+                "alt_text": "A top-down flooded observatory battle map.",
+                "content_base64": base64.b64encode(content).decode("ascii"),
+            },
+        },
+        content,
+    )
+
+
 def _stored_command_count(database_path: Path) -> int:
     with sqlite3.connect(database_path) as connection:
         row = connection.execute("SELECT COUNT(*) FROM vtt_committed_commands").fetchone()
@@ -212,6 +296,20 @@ def _stored_scene_event_count(database_path: Path) -> int:
 def _stored_presence_event_count(database_path: Path) -> int:
     with sqlite3.connect(database_path) as connection:
         row = connection.execute("SELECT COUNT(*) FROM _vtt_presence_event_log").fetchone()
+    assert row is not None
+    return int(row[0])
+
+
+def _stored_map_asset_count(database_path: Path) -> int:
+    with sqlite3.connect(database_path) as connection:
+        row = connection.execute("SELECT COUNT(*) FROM _vtt_map_asset").fetchone()
+    assert row is not None
+    return int(row[0])
+
+
+def _stored_token_event_count(database_path: Path) -> int:
+    with sqlite3.connect(database_path) as connection:
+        row = connection.execute("SELECT COUNT(*) FROM _vtt_token_event_log").fetchone()
     assert row is not None
     return int(row[0])
 
@@ -429,6 +527,45 @@ def test_solo_table_persists_browser_ping_across_restart_and_exact_retry(
         assert replayed.json()["receipt"] == created.json()["receipt"]
 
 
+def test_solo_table_persists_inert_layered_drawing_across_restart_and_retry(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "solo-drawing.sqlite3"
+    request = _public_text_drawing_request(
+        session_id="echo-vault-session",
+        command_id="browser-drawing-once",
+        annotation_id="browser-drawing",
+        expected_revision=0,
+    )
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as first_client:
+        created = first_client.post("/api/v1/annotation-commands", json=request)
+        assert created.status_code == 200
+        stored = created.json()["receipt"]["event"]["annotation"]
+        assert stored["author_id"] == "local"
+        assert stored["layer"] == "over_tokens"
+        assert stored["locked"] is True
+        assert stored["text"] == "Hold <script>alert(1)</script>\nNorth"
+        assert stored["style"]["opacity"] == 1.0
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as restored_client:
+        restored = restored_client.get("/api/v1/annotations")
+        replayed = restored_client.post("/api/v1/annotation-commands", json=request)
+
+    assert restored.status_code == 200
+    assert restored.json()["revision"] == 1
+    assert restored.json()["annotations"] == [stored]
+    assert replayed.status_code == 200
+    assert replayed.json()["replayed"] is True
+    assert replayed.json()["receipt"] == created.json()["receipt"]
+
+
 def test_solo_table_persists_open_local_plain_text_chat_across_restart_and_retry(
     tmp_path: Path,
 ) -> None:
@@ -528,10 +665,32 @@ def test_solo_table_seeds_and_persists_scene_library_across_restart_and_retry(
                     "map_metadata": {
                         "schema_version": "vtt.scene_map_metadata.v1",
                         "name": "Echo Vault",
-                        "width_px": 512,
-                        "height_px": 384,
-                        "grid_size_px": 64.0,
+                        "width_px": 1_448,
+                        "height_px": 1_086,
+                        "grid_size_px": 181.0,
                         "gridless": False,
+                        "calibration": {
+                            "schema_version": "vtt.board_calibration.v1",
+                            "topology": "square",
+                            "origin_x_px": 90.5,
+                            "origin_y_px": 90.5,
+                            "cell_extent_px": 181.0,
+                            "distance_ft": 5.0,
+                        },
+                        "asset": {
+                            "schema_version": "vtt.scene_map_asset.v1",
+                            "asset_id": "echo-vault-original",
+                            "media_type": "image/png",
+                            "content_path": "/assets/maps/echo-vault-original.png",
+                            "sha256": (
+                                "90ece48257967087c27ac6ae2da497434526f88811242b9ae"
+                                "7a267cbee0d6b89"
+                            ),
+                            "alt_text": (
+                                "A top-down arcane vault chamber with a fractured "
+                                "central resonator and broken stone colonnades."
+                            ),
+                        },
                     },
                 },
                 "archived": False,
@@ -542,8 +701,27 @@ def test_solo_table_seeds_and_persists_scene_library_across_restart_and_retry(
         assert created.status_code == 200
         assert created.json()["revision"] == 2
         assert created.json()["replayed"] is False
+        activated = first_client.post(
+            "/api/v1/scene-commands",
+            json={
+                "schema_version": "vtt.scene_library_request.v1",
+                "session_id": "echo-vault-session",
+                "command": {
+                    "schema_version": "vtt.scene_command.v1",
+                    "command_type": "activate",
+                    "table_id": "echo-vault-session",
+                    "command_id": "activate-second-map",
+                    "expected_revision": 2,
+                    "scene_id": "second-map",
+                },
+            },
+        )
+        assert activated.status_code == 200
+        active_session = first_client.get("/api/v1/session").json()
+        assert active_session["scene"]["scene_id"] == "second-map"
+        assert active_session["active_board"]["scene_revision"] == 3
 
-    assert _stored_scene_event_count(database_path) == 2
+    assert _stored_scene_event_count(database_path) == 3
 
     with TestClient(
         create_solo_table_app(database_path),
@@ -551,7 +729,8 @@ def test_solo_table_seeds_and_persists_scene_library_across_restart_and_retry(
     ) as restored_client:
         restored = restored_client.get("/api/v1/scenes")
         assert restored.status_code == 200
-        assert restored.json()["revision"] == 2
+        assert restored.json()["revision"] == 3
+        assert restored.json()["active_scene_id"] == "second-map"
         assert [entry["scene"]["scene_id"] for entry in restored.json()["scenes"]] == [
             "echo-vault",
             "second-map",
@@ -561,8 +740,11 @@ def test_solo_table_seeds_and_persists_scene_library_across_restart_and_retry(
         assert replayed.status_code == 200
         assert replayed.json()["replayed"] is True
         assert replayed.json()["revision"] == 2
+        restored_session = restored_client.get("/api/v1/session").json()
+        assert restored_session["scene"]["scene_id"] == "second-map"
+        assert restored_session["active_board"]["scene_revision"] == 3
 
-    assert _stored_scene_event_count(database_path) == 2
+    assert _stored_scene_event_count(database_path) == 3
 
 
 def test_solo_table_persists_open_local_presence_across_restart_and_exact_retry(
@@ -621,7 +803,234 @@ def test_solo_table_persists_open_local_presence_across_restart_and_exact_retry(
     assert _stored_presence_event_count(database_path) == 1
 
 
-def test_solo_table_owns_five_independent_sqlite_connections_and_closes_them(
+def test_solo_table_persists_uploaded_map_asset_bytes_across_restart_and_retry(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "solo-map-assets.sqlite3"
+    request, content = _public_map_asset_upload_request()
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as first_client:
+        initial = first_client.get("/api/v1/map-assets")
+        assert initial.status_code == 200
+        assert initial.json()["revision"] == 0
+        assert initial.json()["assets"] == []
+
+        created = first_client.post("/api/v1/map-assets", json=request)
+        assert created.status_code == 200
+        assert created.json()["replayed"] is False
+        assert created.json()["asset"]["width_px"] == 96
+        content_path = created.json()["asset"]["reference"]["content_path"]
+        served = first_client.get(content_path)
+        assert served.status_code == 200
+        assert served.content == content
+
+    assert _stored_map_asset_count(database_path) == 1
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as restored_client:
+        restored = restored_client.get("/api/v1/map-assets")
+        assert restored.status_code == 200
+        assert restored.json()["revision"] == 1
+        assert [asset["reference"]["asset_id"] for asset in restored.json()["assets"]] == [
+            "sunken-observatory"
+        ]
+
+        replayed = restored_client.post("/api/v1/map-assets", json=request)
+        assert replayed.status_code == 200
+        assert replayed.json()["replayed"] is True
+        assert replayed.json()["revision"] == 1
+
+    assert _stored_map_asset_count(database_path) == 1
+
+
+def test_solo_table_seeds_and_persists_linked_token_presentation_across_restart(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "solo-tokens.sqlite3"
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as first_client:
+        initial = first_client.get("/api/v1/tokens?scene_id=echo-vault")
+        assert initial.status_code == 200
+        assert initial.json()["revision"] == 2
+        assert [token["token_id"] for token in initial.json()["tokens"]] == [
+            "hushglass_sentry-token",
+            "vela_quill-token",
+        ]
+        vela = next(
+            token for token in initial.json()["tokens"] if token["actor_id"] == "vela_quill"
+        )
+        assert vela["pose"]["position_ft"] == {
+            "x_ft": 12.5,
+            "y_ft": 12.5,
+            "z_ft": 0.0,
+        }
+        vela["pose"]["rotation_degrees"] = 45.0
+        request = {
+            "schema_version": "vtt.token_request.v1",
+            "session_id": "echo-vault-session",
+            "command": {
+                "schema_version": "vtt.token_command.v1",
+                "command_type": "update",
+                "table_id": "echo-vault-session",
+                "command_id": "rotate-vela-token",
+                "expected_revision": 2,
+                "token": vela,
+            },
+        }
+        updated = first_client.post("/api/v1/token-commands", json=request)
+        assert updated.status_code == 200
+        assert updated.json()["replayed"] is False
+
+    assert _stored_token_event_count(database_path) == 3
+
+    with TestClient(
+        create_solo_table_app(database_path),
+        raise_server_exceptions=False,
+    ) as restored_client:
+        restored = restored_client.get("/api/v1/tokens?scene_id=echo-vault")
+        assert restored.status_code == 200
+        restored_vela = next(
+            token for token in restored.json()["tokens"] if token["actor_id"] == "vela_quill"
+        )
+        assert restored_vela["pose"]["rotation_degrees"] == 45.0
+        replayed = restored_client.post("/api/v1/token-commands", json=request)
+        assert replayed.status_code == 200
+        assert replayed.json()["replayed"] is True
+
+    assert _stored_token_event_count(database_path) == 3
+
+
+def test_solo_table_persists_journal_handout_pin_and_exact_retry_across_restart(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "solo-journal.sqlite3"
+    request = {
+        "schema_version": "vtt.journal_request.v1",
+        "session_id": "echo-vault-session",
+        "command": {
+            "schema_version": "vtt.journal_command.v1",
+            "command_type": "put_document",
+            "table_id": "echo-vault-session",
+            "command_id": "create-vault-handout",
+            "expected_revision": 0,
+            "document": {
+                "schema_version": "vtt.journal_document.v1",
+                "document_id": "vault-handout",
+                "document_type": "handout",
+                "folder_id": None,
+                "title": "Vault Handout",
+                "audience": ["all"],
+                "tags": ["lore"],
+                "favorite": True,
+                "blocks": [
+                    {
+                        "schema_version": "vtt.journal_block.v1",
+                        "block_type": "paragraph",
+                        "text": "The resonator answers a whispered chord.",
+                    }
+                ],
+                "map_pin": {
+                    "schema_version": "vtt.journal_map_pin.v1",
+                    "scene_id": "echo-vault",
+                    "position": {"x_ft": 7.5, "y_ft": 7.5, "z_ft": 0.0},
+                    "color": "#5eead4",
+                },
+            },
+        },
+    }
+
+    with TestClient(create_solo_table_app(database_path), raise_server_exceptions=False) as client:
+        created = client.post("/api/v1/journal-commands", json=request)
+        assert created.status_code == 200
+        assert created.json()["replayed"] is False
+
+    with TestClient(create_solo_table_app(database_path), raise_server_exceptions=False) as client:
+        restored = client.get("/api/v1/journal")
+        assert restored.status_code == 200
+        assert restored.json()["revision"] == 1
+        assert restored.json()["documents"][0]["document_id"] == "vault-handout"
+        assert restored.json()["documents"][0]["map_pin"]["scene_id"] == "echo-vault"
+        replayed = client.post("/api/v1/journal-commands", json=request)
+        assert replayed.status_code == 200
+        assert replayed.json()["replayed"] is True
+        assert replayed.json()["receipt"] == created.json()["receipt"]
+
+
+def test_solo_table_persists_sound_and_shared_camera_across_restart(tmp_path: Path) -> None:
+    database_path = tmp_path / "solo-presentation.sqlite3"
+    payload = b"\x00\x00\x01\x00"
+    body = (
+        b"WAVEfmt "
+        + (16).to_bytes(4, "little")
+        + b"\x01\x00\x01\x00"
+        + (8_000).to_bytes(4, "little")
+        + (16_000).to_bytes(4, "little")
+        + b"\x02\x00\x10\x00data"
+        + len(payload).to_bytes(4, "little")
+        + payload
+    )
+    content = b"RIFF" + len(body).to_bytes(4, "little") + body
+
+    def request(command: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "schema_version": "vtt.presentation_request.v1",
+            "session_id": "echo-vault-session",
+            "command": {
+                "schema_version": "vtt.presentation_command.v1",
+                "table_id": "echo-vault-session",
+                **command,
+            },
+        }
+
+    with TestClient(create_solo_table_app(database_path), raise_server_exceptions=False) as client:
+        uploaded = client.post(
+            "/api/v1/presentation-commands",
+            json=request(
+                {
+                    "command_type": "upload_track",
+                    "command_id": "upload-solo-hum",
+                    "expected_revision": 0,
+                    "track_id": "solo-hum",
+                    "name": "Solo hum",
+                    "content_base64": base64.b64encode(content).decode("ascii"),
+                }
+            ),
+        )
+        assert uploaded.status_code == 200
+        shared = client.post(
+            "/api/v1/presentation-commands",
+            json=request(
+                {
+                    "command_type": "share_camera",
+                    "command_id": "share-solo-camera",
+                    "expected_revision": 1,
+                    "scene_id": "echo-vault",
+                    "center_x_ft": 20.0,
+                    "center_y_ft": 15.0,
+                    "zoom": 1.5,
+                }
+            ),
+        )
+        assert shared.status_code == 200
+
+    with TestClient(create_solo_table_app(database_path), raise_server_exceptions=False) as client:
+        restored = client.get("/api/v1/presentation")
+        assert restored.status_code == 200
+        assert restored.json()["revision"] == 2
+        assert restored.json()["tracks"][0]["track_id"] == "solo-hum"
+        assert restored.json()["camera"]["scene_id"] == "echo-vault"
+        assert client.get("/api/v1/sound-assets/solo-hum/content.wav").content == content
+
+
+def test_solo_table_owns_ten_independent_sqlite_connections_and_closes_them(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
@@ -633,7 +1042,12 @@ def test_solo_table_owns_five_independent_sqlite_connections_and_closes_them(
         annotation_board,
         chat_log,
         scene_library,
+        map_asset_store,
+        token_store,
+        visibility_store,
+        journal_store,
         presence_store,
+        presentation_store,
         **_kwargs,
     ):
         captured_connections.extend(
@@ -642,7 +1056,12 @@ def test_solo_table_owns_five_independent_sqlite_connections_and_closes_them(
                 annotation_board._connection,
                 chat_log._connection,
                 scene_library._connection,
+                map_asset_store._connection,
+                token_store._connection,
                 presence_store._connection,
+                visibility_store._connection,
+                journal_store._connection,
+                presentation_store._connection,
             ]
         )
         return FastAPI()
@@ -651,12 +1070,12 @@ def test_solo_table_owns_five_independent_sqlite_connections_and_closes_them(
 
     app = create_solo_table_app(tmp_path / "owned-connections.sqlite3")
 
-    assert len(captured_connections) == 5
-    assert len({id(connection) for connection in captured_connections}) == 5
+    assert len(captured_connections) == 10
+    assert len({id(connection) for connection in captured_connections}) == 10
     assert [
         connection.execute("PRAGMA busy_timeout").fetchone()[0]
         for connection in captured_connections
-    ] == [30_000, 30_000, 30_000, 30_000, 30_000]
+    ] == [30_000] * 10
 
     with TestClient(app):
         pass
@@ -678,7 +1097,12 @@ def test_solo_table_closes_all_connections_when_http_composition_fails(
         annotation_board,
         chat_log,
         scene_library,
+        map_asset_store,
+        token_store,
+        visibility_store,
+        journal_store,
         presence_store,
+        presentation_store,
         **_kwargs,
     ):
         captured_connections.extend(
@@ -687,7 +1111,12 @@ def test_solo_table_closes_all_connections_when_http_composition_fails(
                 annotation_board._connection,
                 chat_log._connection,
                 scene_library._connection,
+                map_asset_store._connection,
+                token_store._connection,
                 presence_store._connection,
+                visibility_store._connection,
+                journal_store._connection,
+                presentation_store._connection,
             ]
         )
         raise RuntimeError("HTTP composition failed")
@@ -697,7 +1126,7 @@ def test_solo_table_closes_all_connections_when_http_composition_fails(
     with pytest.raises(RuntimeError, match="HTTP composition failed"):
         create_solo_table_app(tmp_path / "failed-composition.sqlite3")
 
-    assert len(captured_connections) == 5
+    assert len(captured_connections) == 10
     for connection in captured_connections:
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             connection.execute("SELECT 1")

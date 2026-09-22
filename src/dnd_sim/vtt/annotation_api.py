@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sqlite3
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Callable, Mapping
 from dataclasses import dataclass
 from typing import Annotated, Any, Literal, Self
 
@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, m
 
 from .access import TableAccessPolicy
 from .annotation_store import (
+    AnnotationCapacityError,
     AnnotationCommandConflictError,
     AnnotationDeleteCommand,
     AnnotationDeleteEvent,
@@ -31,7 +32,12 @@ from .annotation_store import (
     AnnotationStoreSchemaError,
     SQLiteAnnotationBoard,
 )
-from .annotations import VTTAnnotation, parse_annotation
+from .annotations import (
+    VTTAnnotation,
+    annotation_bounds_ft,
+    is_drawing_annotation,
+    parse_annotation,
+)
 from .participants import (
     TableParticipant,
     TableRoster,
@@ -39,6 +45,8 @@ from .participants import (
     validate_audience_selectors,
 )
 from .scene import SquareGridScene
+from .scene_library_contracts import SceneMapMetadata
+from .scene_library_store import SQLiteSceneLibrary
 
 VTT_ANNOTATIONS_VIEW_SCHEMA_VERSION = "vtt.annotations_view.v1"
 VTT_ANNOTATION_REQUEST_SCHEMA_VERSION = "vtt.annotation_request.v1"
@@ -75,7 +83,10 @@ def _canonicalize_float_semantics(value: Any, *, field_name: str | None = None) 
     """Convert browser-shaped integral JSON numbers only for annotation float fields."""
 
     is_float_field = bool(
-        field_name is not None and (field_name.endswith("_ft") or field_name.endswith("_degrees"))
+        field_name is not None
+        and (
+            field_name == "opacity" or field_name.endswith("_ft") or field_name.endswith("_degrees")
+        )
     )
     if is_float_field and type(value) is int:
         return float(value)
@@ -425,6 +436,12 @@ def _execute_board(
             code="annotation_not_found",
             message="The requested annotation does not exist.",
         ) from exc
+    except AnnotationCapacityError as exc:
+        raise AnnotationAPIError(
+            status_code=409,
+            code="annotation_capacity_exceeded",
+            message="The annotation board has reached its active-record limit.",
+        ) from exc
     except (AnnotationStoreCorruptionError, AnnotationStoreSchemaError) as exc:
         raise _corrupt_store_error() from exc
     except (sqlite3.Error, AnnotationStoreError) as exc:
@@ -457,6 +474,79 @@ def _normalize_put_command(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class _SceneDrawingBounds:
+    scene_id: str
+    min_x_ft: float
+    max_x_ft: float
+    min_y_ft: float
+    max_y_ft: float
+    z_ft: float
+
+
+def _drawing_bounds_for_scene(
+    *,
+    scene: SquareGridScene,
+    scene_id: str,
+    map_metadata: SceneMapMetadata | None,
+) -> _SceneDrawingBounds:
+    if map_metadata is None:
+        return _SceneDrawingBounds(
+            scene_id=scene_id,
+            min_x_ft=scene.origin_ft.x_ft,
+            max_x_ft=scene.origin_ft.x_ft + scene.columns * scene.cell_size_ft,
+            min_y_ft=scene.origin_ft.y_ft,
+            max_y_ft=scene.origin_ft.y_ft + scene.rows * scene.cell_size_ft,
+            z_ft=scene.origin_ft.z_ft,
+        )
+
+    calibration = map_metadata.calibration
+    scale = calibration.distance_ft / calibration.cell_extent_px
+    board_origin_x_ft = scene.origin_ft.x_ft + calibration.distance_ft / 2.0
+    board_origin_y_ft = scene.origin_ft.y_ft + calibration.distance_ft / 2.0
+    x_edges = (
+        board_origin_x_ft - calibration.origin_x_px * scale,
+        board_origin_x_ft + (map_metadata.width_px - calibration.origin_x_px) * scale,
+    )
+    y_edges = (
+        board_origin_y_ft - calibration.origin_y_px * scale,
+        board_origin_y_ft + (map_metadata.height_px - calibration.origin_y_px) * scale,
+    )
+    return _SceneDrawingBounds(
+        scene_id=scene_id,
+        min_x_ft=min(x_edges),
+        max_x_ft=max(x_edges),
+        min_y_ft=min(y_edges),
+        max_y_ft=max(y_edges),
+        z_ft=scene.origin_ft.z_ft,
+    )
+
+
+def _validate_drawing_bounds(
+    annotation: VTTAnnotation,
+    *,
+    scene_bounds: _SceneDrawingBounds,
+) -> None:
+    if not is_drawing_annotation(annotation):
+        return
+    bounds = annotation_bounds_ft(annotation)
+    tolerance = 1e-9
+    if (
+        bounds.min_x_ft < scene_bounds.min_x_ft - tolerance
+        or bounds.max_x_ft > scene_bounds.max_x_ft + tolerance
+        or bounds.min_y_ft < scene_bounds.min_y_ft - tolerance
+        or bounds.max_y_ft > scene_bounds.max_y_ft + tolerance
+        or abs(bounds.min_z_ft - scene_bounds.z_ft) > tolerance
+        or abs(bounds.max_z_ft - scene_bounds.z_ft) > tolerance
+    ):
+        raise AnnotationAPIError(
+            status_code=409,
+            code="drawing_out_of_bounds",
+            message="The drawing must fit entirely within the active scene.",
+            details={"scene_id": scene_bounds.scene_id},
+        )
+
+
 def _event_scene_and_audience(
     event: AnnotationMutationEvent,
 ) -> tuple[str, tuple[str, ...]]:
@@ -487,6 +577,65 @@ def _event_is_visible(
 ) -> bool:
     event_scene_id, audience = _event_scene_and_audience(event)
     return event_scene_id == scene_id and _visible_to(audience, participant)
+
+
+def _annotations_through_sequence(
+    board: SQLiteAnnotationBoard,
+    *,
+    table_id: str,
+    sequence: int,
+    roster: TableRoster | None,
+) -> dict[str, VTTAnnotation]:
+    prefix: list[AnnotationMutationEvent] = []
+    for event in _events_after(board, table_id=table_id, sequence=0):
+        if event.sequence > sequence:
+            break
+        _validate_stream_event(event, roster=roster)
+        prefix.append(event)
+    return dict(_fold_board(tuple(prefix)).annotations)
+
+
+def _project_stream_event(
+    event: AnnotationMutationEvent,
+    *,
+    previous: VTTAnnotation | None,
+    scene_id: str,
+    participant: TableParticipant | None,
+) -> AnnotationMutationEvent | None:
+    """Project one mutation without leaving a formerly visible record stale."""
+
+    if isinstance(event, AnnotationDeleteEvent):
+        return (
+            event
+            if _event_is_visible(
+                event,
+                scene_id=scene_id,
+                participant=participant,
+            )
+            else None
+        )
+
+    if _event_is_visible(event, scene_id=scene_id, participant=participant):
+        return event
+    if (
+        previous is not None
+        and previous.scene_id == scene_id
+        and _visible_to(previous.audience, participant)
+    ):
+        # The replacement is now hidden, so emit only the tombstone fields the
+        # recipient already observed. The new private geometry/text never
+        # crosses the projection boundary.
+        return AnnotationDeleteEvent(
+            table_id=event.table_id,
+            event_id=event.event_id,
+            sequence=event.sequence,
+            revision=event.revision,
+            command_id=event.command_id,
+            annotation_id=event.annotation_id,
+            scene_id=previous.scene_id,
+            audience=previous.audience,
+        )
+    return None
 
 
 def _event_cursor(value: str | None, *, field: str) -> int | None:
@@ -540,7 +689,7 @@ async def _stream_annotation_events(
     request: Request,
     board: SQLiteAnnotationBoard,
     table_id: str,
-    scene_id: str,
+    active_scene_id: Callable[[], str],
     after: int,
     initial_events: tuple[AnnotationMutationEvent, ...],
     participant: TableParticipant | None,
@@ -548,6 +697,12 @@ async def _stream_annotation_events(
 ) -> AsyncIterator[str]:
     cursor = after
     pending_events = initial_events
+    projection_annotations = _annotations_through_sequence(
+        board,
+        table_id=table_id,
+        sequence=after,
+        roster=roster,
+    )
     event_loop = asyncio.get_running_loop()
     next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
 
@@ -565,13 +720,20 @@ async def _stream_annotation_events(
                     return
                 cursor = event.sequence
                 _validate_stream_event(event, roster=roster)
-                if not _event_is_visible(
+                previous = projection_annotations.get(event.annotation_id)
+                projected_event = _project_stream_event(
                     event,
-                    scene_id=scene_id,
+                    previous=previous,
+                    scene_id=active_scene_id(),
                     participant=participant,
-                ):
+                )
+                if isinstance(event, AnnotationPutEvent):
+                    projection_annotations[event.annotation_id] = event.annotation
+                else:
+                    projection_annotations.pop(event.annotation_id, None)
+                if projected_event is None:
                     continue
-                yield _render_sse_event(event)
+                yield _render_sse_event(projected_event)
                 yielded_visible_event = True
             if yielded_visible_event:
                 next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
@@ -587,6 +749,7 @@ def install_annotation_routes(
     board: SQLiteAnnotationBoard,
     session_id: str,
     table_id: str,
+    scenes: SQLiteSceneLibrary | None,
     scene: SquareGridScene,
     access_policy: TableAccessPolicy | None,
 ) -> None:
@@ -601,17 +764,44 @@ def install_annotation_routes(
     if not isinstance(scene, SquareGridScene):
         raise TypeError("scene must be a SquareGridScene")
     configured_scene = scene.model_copy(deep=True)
+    if scenes is not None and not isinstance(scenes, SQLiteSceneLibrary):
+        raise TypeError("scenes must be a SQLiteSceneLibrary or None")
+
+    def active_scene_context() -> tuple[str, _SceneDrawingBounds]:
+        if scenes is None:
+            scene_id = configured_scene.scene_id
+            return scene_id, _drawing_bounds_for_scene(
+                scene=configured_scene,
+                scene_id=scene_id,
+                map_metadata=None,
+            )
+        snapshot = scenes.snapshot(configured_table_id)
+        if snapshot.active_scene_id is None:
+            raise RuntimeError("the annotation table has no active scene")
+        entry = snapshot.scene(snapshot.active_scene_id)
+        if entry is None:
+            raise RuntimeError("the annotation table active scene is missing")
+        return snapshot.active_scene_id, _drawing_bounds_for_scene(
+            scene=configured_scene,
+            scene_id=snapshot.active_scene_id,
+            map_metadata=entry.scene.map_metadata,
+        )
+
+    def active_scene_id() -> str:
+        return active_scene_context()[0]
+
     roster = None if access_policy is None else access_policy.roster
     router = APIRouter()
 
     @router.get("/api/v1/annotations", response_model=VTTAnnotationsView)
     async def get_annotations(request: Request) -> VTTAnnotationsView:
         participant = _request_participant(request, access_policy=access_policy)
+        resolved_scene_id, _scene_bounds = active_scene_context()
         state = _read_board_state(board, table_id=configured_table_id)
         visible: list[VTTAnnotation] = []
         for annotation_id in sorted(state.annotations):
             annotation = state.annotations[annotation_id]
-            if annotation.scene_id != configured_scene.scene_id:
+            if annotation.scene_id != resolved_scene_id:
                 continue
             _validate_stored_annotation(annotation, roster=roster)
             if _visible_to(annotation.audience, participant):
@@ -619,7 +809,7 @@ def install_annotation_routes(
         return VTTAnnotationsView(
             session_id=configured_session_id,
             table_id=configured_table_id,
-            scene_id=configured_scene.scene_id,
+            scene_id=resolved_scene_id,
             revision=state.revision,
             annotations=tuple(visible),
         )
@@ -633,6 +823,7 @@ def install_annotation_routes(
         request: Request,
     ) -> VTTAnnotationResponse:
         participant = _request_participant(request, access_policy=access_policy)
+        resolved_scene_id, scene_bounds = active_scene_context()
         if participant is not None and participant.role == "spectator":
             raise _annotation_forbidden()
         if (
@@ -661,16 +852,21 @@ def install_annotation_routes(
 
         command: AnnotationMutationCommand
         if isinstance(payload.command, AnnotationPutCommand):
-            if payload.command.annotation.scene_id != configured_scene.scene_id:
-                raise _scene_error(scene_id=configured_scene.scene_id)
-            if target is not None and target.scene_id != configured_scene.scene_id:
-                raise _scene_error(scene_id=configured_scene.scene_id)
+            if payload.command.annotation.scene_id != resolved_scene_id:
+                raise _scene_error(scene_id=resolved_scene_id)
+            if target is not None and target.scene_id != resolved_scene_id:
+                raise _scene_error(scene_id=resolved_scene_id)
             _validate_audience_policy(payload.command.annotation.audience, roster)
             command = _normalize_put_command(
                 payload.command,
                 participant=participant,
                 existing=target,
             )
+            if historical is None:
+                _validate_drawing_bounds(
+                    command.annotation,
+                    scene_bounds=scene_bounds,
+                )
         else:
             if target is None:
                 raise AnnotationAPIError(
@@ -678,8 +874,8 @@ def install_annotation_routes(
                     code="annotation_not_found",
                     message="The requested annotation does not exist.",
                 )
-            if target.scene_id != configured_scene.scene_id:
-                raise _scene_error(scene_id=configured_scene.scene_id)
+            if target.scene_id != resolved_scene_id:
+                raise _scene_error(scene_id=resolved_scene_id)
             command = payload.command
 
         result = _execute_board(
@@ -713,7 +909,7 @@ def install_annotation_routes(
                 request=request,
                 board=board,
                 table_id=configured_table_id,
-                scene_id=configured_scene.scene_id,
+                active_scene_id=active_scene_id,
                 after=cursor,
                 initial_events=initial_events,
                 participant=participant,

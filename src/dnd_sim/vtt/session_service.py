@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import threading
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from dnd_sim.interactive.contracts import CommandReceipt, JSONValue, PreviewReceipt
+from dnd_sim.interactive.contracts import (
+    CommandReceipt,
+    JSONValue,
+    PreviewReceipt,
+    normalize_json,
+)
 from dnd_sim.interactive.session import EngineSession, EngineSessionDriver
 
 from .contracts import (
@@ -128,7 +134,12 @@ class VTTSessionService:
                 VTTEvent.from_engine(event) for event in self._session.events_since(sequence)
             )
 
-    def execute(self, command: VTTCommand) -> VTTResponse:
+    def execute(
+        self,
+        command: VTTCommand,
+        *,
+        trusted_intent_metadata: Mapping[str, JSONValue] | None = None,
+    ) -> VTTResponse:
         """Execute a translated command and durably append each successful commit."""
 
         if not isinstance(command, VTTCommand):
@@ -140,6 +151,23 @@ class VTTSessionService:
                 raise VTTSessionServiceError("command.session_id does not match the open session")
 
             engine_command = command.to_session_command(self._session.version_pins)
+            if trusted_intent_metadata is not None:
+                trusted = normalize_json(
+                    trusted_intent_metadata,
+                    path="trusted_intent_metadata",
+                )
+                if not isinstance(trusted, dict):  # pragma: no cover - Mapping normalizes to dict
+                    raise TypeError("trusted_intent_metadata must normalize to an object")
+                if any(not key.startswith("_vtt_") for key in trusted):
+                    raise ValueError("trusted intent metadata keys must use the reserved prefix")
+                engine_command = engine_command.model_copy(
+                    update={
+                        "intent_metadata": {
+                            **engine_command.intent_metadata,
+                            **trusted,
+                        }
+                    }
+                )
             if command.mode == "preview":
                 receipt = self._session.execute(engine_command)
                 if not isinstance(receipt, PreviewReceipt):

@@ -202,10 +202,14 @@ def test_scene_library_http_contracts_and_store_are_public_vtt_exports() -> None
     import dnd_sim.vtt as vtt
 
     expected = {
+        "BOARD_CALIBRATION_SCHEMA_VERSION",
+        "AxialHexCell",
+        "BoardCalibration",
         "SCENE_COMMAND_SCHEMA_VERSION",
         "SCENE_EXPORT_SCHEMA_VERSION",
         "SCENE_LIBRARY_STORE_SCHEMA_VERSION",
         "SCENE_LIBRARY_VIEW_SCHEMA_VERSION",
+        "SCENE_MAP_ASSET_SCHEMA_VERSION",
         "SCENE_MAP_METADATA_SCHEMA_VERSION",
         "SCENE_RECORD_SCHEMA_VERSION",
         "VTT_SCENE_LIBRARY_REQUEST_SCHEMA_VERSION",
@@ -214,6 +218,7 @@ def test_scene_library_http_contracts_and_store_are_public_vtt_exports() -> None
         "SceneLibraryRequest",
         "SceneLibraryResponse",
         "SceneLibraryView",
+        "SceneMapAssetReference",
         "SceneMapMetadata",
         "SceneRecord",
         "SQLiteSceneLibrary",
@@ -346,12 +351,20 @@ def test_gm_mutates_while_player_and_spectator_receive_only_active_metadata(
     assert [entry["scene"]["scene_id"] for entry in active_view["scenes"]] == ["secret"]
 
 
-def test_browser_integral_grid_size_is_canonicalized_at_the_http_boundary(
+def test_browser_integral_calibration_numbers_are_canonicalized_at_the_http_boundary(
     scene_api_client,
 ) -> None:
     client, library, _service = scene_api_client
     request = _create_request("browser-create", "browser-map", expected_revision=0)
     request["command"]["scene"]["map_metadata"]["grid_size_px"] = 64
+    request["command"]["scene"]["map_metadata"]["calibration"] = {
+        "schema_version": "vtt.board_calibration.v1",
+        "topology": "hex_pointy",
+        "origin_x_px": 32,
+        "origin_y_px": 32,
+        "cell_extent_px": 64,
+        "distance_ft": 5,
+    }
 
     response = client.post(
         "/api/v1/scene-commands",
@@ -360,10 +373,76 @@ def test_browser_integral_grid_size_is_canonicalized_at_the_http_boundary(
     )
 
     assert response.status_code == 200
-    assert response.json()["event"]["scene"]["map_metadata"]["grid_size_px"] == 64.0
+    metadata = response.json()["event"]["scene"]["map_metadata"]
+    assert metadata["grid_size_px"] == 64.0
+    assert metadata["calibration"] == {
+        "schema_version": "vtt.board_calibration.v1",
+        "topology": "hex_pointy",
+        "origin_x_px": 32.0,
+        "origin_y_px": 32.0,
+        "cell_extent_px": 64.0,
+        "distance_ft": 5.0,
+    }
     stored = library.snapshot(TABLE_ID).scene("browser-map")
     assert stored is not None
     assert stored.scene.map_metadata.grid_size_px == 64.0
+    assert stored.scene.map_metadata.calibration.topology == "hex_pointy"
+
+
+def test_gm_attaches_and_calibrates_an_asset_on_the_active_scene(
+    scene_api_client,
+) -> None:
+    client, library, _service = scene_api_client
+    created = client.post(
+        "/api/v1/scene-commands",
+        headers=_authorization("gm"),
+        json=_create_request("create-map", "moon-temple", expected_revision=0),
+    )
+    assert created.status_code == 200
+    update = {
+        "schema_version": VTT_SCENE_LIBRARY_REQUEST_SCHEMA_VERSION,
+        "session_id": SESSION_ID,
+        "command": {
+            "schema_version": SCENE_COMMAND_SCHEMA_VERSION,
+            "command_type": "update",
+            "table_id": TABLE_ID,
+            "command_id": "attach-map",
+            "expected_revision": 1,
+            "scene_id": "moon-temple",
+            "map_metadata": {
+                "schema_version": SCENE_MAP_METADATA_SCHEMA_VERSION,
+                "name": "Moon Temple Calibrated",
+                "width_px": 800,
+                "height_px": 600,
+                "grid_size_px": 100,
+                "gridless": False,
+                "asset": {
+                    "schema_version": "vtt.scene_map_asset.v1",
+                    "asset_id": "moon-temple-map",
+                    "media_type": "image/png",
+                    "content_path": ("/api/v1/map-assets/moon-temple-map/content.png"),
+                    "sha256": "c" * 64,
+                    "alt_text": "A top-down moon temple battle map.",
+                },
+            },
+        },
+    }
+
+    attached = client.post(
+        "/api/v1/scene-commands",
+        headers=_authorization("gm"),
+        json=update,
+    )
+
+    assert attached.status_code == 200
+    assert attached.json()["event"]["event_type"] == "updated"
+    assert attached.json()["event"]["active"] is True
+    assert (
+        attached.json()["event"]["scene"]["map_metadata"]["asset"]["asset_id"] == "moon-temple-map"
+    )
+    player_view = client.get("/api/v1/scenes", headers=_authorization("player")).json()
+    assert player_view["scenes"][0]["scene"]["map_metadata"]["name"] == ("Moon Temple Calibrated")
+    assert library.revision(TABLE_ID) == 2
 
 
 def test_scene_binding_idempotency_and_store_conflicts_use_stable_errors(

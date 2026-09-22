@@ -146,6 +146,8 @@ class VTTCommand(VTTContractModel):
 
     @model_validator(mode="after")
     def validate_reaction_payload(self) -> "VTTCommand":
+        if any(key.startswith("_vtt_") for key in self.intent_metadata):
+            raise ValueError("intent_metadata contains a reserved server field")
         if self.mode == "reaction":
             reaction_id = self.payload.get("reaction_id")
             if not isinstance(reaction_id, str) or not reaction_id.strip():

@@ -265,12 +265,14 @@ def test_health_and_session_view_use_only_the_public_projection(api_client) -> N
         "revision",
         "versions",
         "scene",
+        "active_board",
         "projection",
     }
     assert payload["schema_version"] == VTT_SESSION_VIEW_SCHEMA_VERSION
     assert payload["session_id"] == "table-http"
     assert payload["revision"] == 0
     assert payload["scene"] == SCENE.model_dump(mode="json")
+    assert payload["active_board"] is None
     assert payload["projection"] == {"counter": {"value": 0}}
     assert payload["versions"]["schema_version"].startswith("vtt.")
     assert service.state["canonical_secret"] == "must-never-cross-http"

@@ -29,6 +29,8 @@ from .scene_library_contracts import (
     SceneMutationEvent,
     SceneMutationReceipt,
     SceneRecord,
+    SceneUpdateCommand,
+    SceneUpdatedEvent,
     parse_scene_command,
 )
 
@@ -110,6 +112,52 @@ def _canonical_json(model: BaseModel) -> str:
     )
 
 
+def _without_migrated_calibration(value: Any) -> Any:
+    """Return the canonical pre-calibration representation when it is lossless."""
+
+    if isinstance(value, list):
+        return [_without_migrated_calibration(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+    normalized = {key: _without_migrated_calibration(item) for key, item in value.items()}
+    if normalized.get("schema_version") != "vtt.scene_map_metadata.v1":
+        return normalized
+    calibration = normalized.get("calibration")
+    grid_size = normalized.get("grid_size_px")
+    gridless = normalized.get("gridless")
+    if (
+        type(grid_size) is float
+        and isinstance(gridless, bool)
+        and calibration
+        == {
+            "schema_version": "vtt.board_calibration.v1",
+            "topology": "gridless" if gridless else "square",
+            "origin_x_px": grid_size / 2.0,
+            "origin_y_px": grid_size / 2.0,
+            "cell_extent_px": grid_size,
+            "distance_ft": 5.0,
+        }
+    ):
+        normalized.pop("calibration")
+    return normalized
+
+
+def _matches_stored_canonical_json(model: BaseModel, encoded: str) -> bool:
+    if _canonical_json(model) == encoded:
+        return True
+    legacy = _without_migrated_calibration(model.model_dump(mode="json"))
+    return (
+        json.dumps(
+            legacy,
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        == encoded
+    )
+
+
 def _decode_json(encoded: str, *, field_name: str) -> Any:
     try:
         return json.loads(
@@ -188,6 +236,7 @@ class SQLiteSceneLibrary:
             (
                 SceneCreateCommand,
                 SceneDuplicateCommand,
+                SceneUpdateCommand,
                 SceneActivateCommand,
                 SceneArchiveCommand,
                 SceneImportCommand,
@@ -219,7 +268,7 @@ class SQLiteSceneLibrary:
                     command_id=command.command_id,
                     revision=revision,
                 )
-                if str(existing[3]) != command_json:
+                if stored_command != command:
                     raise SceneCommandConflictError(
                         f"command_id '{command.command_id}' has different content"
                     )
@@ -336,6 +385,20 @@ class SQLiteSceneLibrary:
                 source_scene_id=command.source_scene_id,
                 scene=scene,
                 became_active=False,
+            )
+        if isinstance(command, SceneUpdateCommand):
+            target = snapshot.scene(command.scene_id)
+            if target is None:
+                raise SceneNotFoundError(f"scene_id '{command.scene_id}' is missing")
+            if target.archived:
+                raise SceneArchivedError(f"scene_id '{command.scene_id}' is archived")
+            return SceneUpdatedEvent(
+                **common,
+                scene=SceneRecord(
+                    scene_id=command.scene_id,
+                    map_metadata=command.map_metadata,
+                ),
+                active=snapshot.active_scene_id == command.scene_id,
             )
         if isinstance(command, SceneActivateCommand):
             target = snapshot.scene(command.scene_id)
@@ -494,6 +557,21 @@ class SQLiteSceneLibrary:
                         "scene duplicate does not match its source"
                     )
                 entries[scene_id] = SceneLibraryEntry(scene=event.scene, archived=False)
+            elif isinstance(event, SceneUpdatedEvent):
+                scene_id = event.scene.scene_id
+                target = entries.get(scene_id)
+                if target is None or target.archived:
+                    raise SceneLibraryStoreCorruptionError(
+                        "scene update targets an unavailable scene"
+                    )
+                if event.active is not (active_scene_id == scene_id):
+                    raise SceneLibraryStoreCorruptionError(
+                        "scene update has inconsistent active state"
+                    )
+                entries[scene_id] = SceneLibraryEntry(
+                    scene=event.scene,
+                    archived=False,
+                )
             elif isinstance(event, SceneActivatedEvent):
                 target = entries.get(event.scene_id)
                 if target is None or target.archived:
@@ -569,7 +647,7 @@ class SQLiteSceneLibrary:
             command.table_id != table_id
             or command.command_id != command_id
             or command.expected_revision != revision - 1
-            or _canonical_json(command) != encoded
+            or not _matches_stored_canonical_json(command, encoded)
         ):
             raise SceneLibraryStoreCorruptionError("stored scene command identity is inconsistent")
         return command
@@ -597,7 +675,7 @@ class SQLiteSceneLibrary:
             or receipt.revision != revision
             or receipt.event.sequence != sequence
             or receipt.event.event_id != f"{table_id}:scene:{sequence}"
-            or _canonical_json(receipt) != encoded
+            or not _matches_stored_canonical_json(receipt, encoded)
         ):
             raise SceneLibraryStoreCorruptionError("stored scene receipt identity is inconsistent")
         return receipt
@@ -619,6 +697,12 @@ class SQLiteSceneLibrary:
                 and event.source_scene_id == command.source_scene_id
                 and event.scene.scene_id == command.new_scene_id
                 and event.scene.map_metadata.name == command.new_name
+            )
+        elif isinstance(command, SceneUpdateCommand):
+            valid = (
+                isinstance(event, SceneUpdatedEvent)
+                and event.scene.scene_id == command.scene_id
+                and event.scene.map_metadata == command.map_metadata
             )
         elif isinstance(command, SceneActivateCommand):
             valid = isinstance(event, SceneActivatedEvent) and event.scene_id == command.scene_id

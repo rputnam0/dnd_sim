@@ -20,6 +20,13 @@ from dnd_sim.interactive import (
     PreviewOutcome,
     SessionCommand,
 )
+from dnd_sim.roll_journal import (
+    DamageRollFact,
+    DieFace,
+    RollAudienceIntent,
+    RollJournal,
+    RollRecordDraft,
+)
 from dnd_sim.vtt.access import TableAccessPolicy
 from dnd_sim.vtt.contracts import VTT_COMMAND_SCHEMA_VERSION
 from dnd_sim.vtt.event_store import SQLiteSessionEventStore
@@ -175,6 +182,60 @@ class AudienceDriver:
         raise AssertionError("access tests do not open reactions")
 
 
+def _raw_roll_event(visibility: str, *, turn_token: str) -> EventDraft:
+    audience = RollAudienceIntent(
+        visibility=visibility,
+        actor_ids=("hero",) if visibility == "actors" else (),
+    )
+    record = (
+        RollJournal.empty(turn_token)
+        .append(
+            RollRecordDraft(
+                source_actor_id="hero",
+                target_actor_id="other_actor",
+                action_id="action:private-strike",
+                purpose="damage",
+                audience=audience,
+                fact=DamageRollFact(
+                    kind="damage",
+                    expression="1d6",
+                    damage_type="force",
+                    faces=(
+                        DieFace(
+                            generation_index=1,
+                            sides=6,
+                            value=4,
+                            status="kept",
+                            replacement_generation_index=None,
+                        ),
+                    ),
+                    flat_modifier=0,
+                    rolled_total=4,
+                    raw_damage=4,
+                    applied_damage=4,
+                    critical=False,
+                    adjustments=(),
+                ),
+            )
+        )
+        .records[0]
+    )
+    return EventDraft(
+        kind="dnd.roll.recorded.v1",
+        audience=("roll_projection_required",),
+        payload={"record": record.model_dump(mode="json")},
+    )
+
+
+class RollAudienceDriver(AudienceDriver):
+    @staticmethod
+    def _events(_value: int) -> tuple[EventDraft, ...]:
+        return (
+            _raw_roll_event("actors", turn_token="1:hero:private"),
+            _raw_roll_event("gm_only", turn_token="1:hero:blind"),
+        )
+
+
 def _command_payload(
     command_id: str,
     *,
@@ -205,6 +266,25 @@ def protected_api(tmp_path: Path):
         session_id="access-table",
         initial_state={"value": 0},
         driver=AudienceDriver(),
+        seed=23,
+        event_store=SQLiteSessionEventStore(connection),
+    )
+    app = create_vtt_app(service, access_policy=_policy())
+    with TestClient(app, raise_server_exceptions=False) as client:
+        yield client, service
+    connection.close()
+
+
+@pytest.fixture
+def protected_roll_api(tmp_path: Path):
+    connection = sqlite3.connect(
+        tmp_path / "roll-access.sqlite3",
+        check_same_thread=False,
+    )
+    service = VTTSessionService.open(
+        session_id="access-table",
+        initial_state={"value": 0},
+        driver=RollAudienceDriver(),
         seed=23,
         event_store=SQLiteSessionEventStore(connection),
     )
@@ -581,6 +661,132 @@ def _sse_data_events(payload: str) -> list[tuple[int, dict[str, Any]]]:
         if "id" in fields and "data" in fields:
             events.append((int(fields["id"]), json.loads(fields["data"])))
     return events
+
+
+def test_roll_cards_project_actor_private_and_blind_facts_across_http_and_sse(
+    protected_roll_api,
+) -> None:
+    client, _service = protected_roll_api
+    preview = client.post(
+        "/api/v1/commands",
+        json=_command_payload("roll-preview", mode="preview"),
+        headers=_authorization("player"),
+    )
+    other = client.post(
+        "/api/v1/commands",
+        json=_command_payload("roll-other-preview", actor_id="other_actor", mode="preview"),
+        headers=_authorization("other"),
+    )
+    committed = client.post(
+        "/api/v1/commands",
+        json=_command_payload("roll-commit"),
+        headers=_authorization("player"),
+    )
+    replayed = client.post(
+        "/api/v1/commands",
+        json=_command_payload("roll-commit"),
+        headers=_authorization("player"),
+    )
+
+    assert len(preview.json()["events"]) == 1
+    assert preview.json()["events"][0]["kind"] == "vtt.roll.card.v1"
+    assert other.json()["events"] == []
+    assert len(committed.json()["events"]) == 1
+    assert committed.json()["events"][0]["sequence"] == 1
+    assert replayed.json() == {**committed.json(), "replayed": True}
+    assert _service.revision == 1
+    for response in (preview, other, committed, replayed):
+        assert "roll_projection_required" not in response.text
+        assert "engine.roll_record" not in response.text
+        assert "gm_only" not in response.text
+        assert "turn_token" not in response.text
+
+    gm_preview = client.post(
+        "/api/v1/commands",
+        json=_command_payload(
+            "roll-gm-preview",
+            expected_revision=1,
+            actor_id="other_actor",
+            mode="preview",
+        ),
+        headers=_authorization("gm"),
+    )
+    assert [event["kind"] for event in gm_preview.json()["events"]] == [
+        "vtt.roll.card.v1",
+        "vtt.roll.card.v1",
+    ]
+
+    status, _headers, payload = asyncio.run(
+        _capture_sse(
+            client.app,
+            "/api/v1/events?after=0",
+            headers=_authorization("player"),
+            data_event_count=1,
+        )
+    )
+    assert status == 200
+    streamed = _sse_data_events(payload)
+    assert [sequence for sequence, _event in streamed] == [1]
+    assert streamed[0][1]["kind"] == "vtt.roll.card.v1"
+    assert "gm_only" not in payload
+    assert "turn_token" not in payload
+
+
+def test_committed_roll_card_restarts_and_exact_retry_does_not_duplicate(
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "roll-restart.sqlite3"
+    first_connection = sqlite3.connect(database_path, check_same_thread=False)
+    first_service = VTTSessionService.open(
+        session_id="access-table",
+        initial_state={"value": 0},
+        driver=RollAudienceDriver(),
+        seed=23,
+        event_store=SQLiteSessionEventStore(first_connection),
+    )
+    first_app = create_vtt_app(first_service, access_policy=_policy())
+    with TestClient(first_app, raise_server_exceptions=False) as first_client:
+        committed = first_client.post(
+            "/api/v1/commands",
+            json=_command_payload("roll-restart"),
+            headers=_authorization("player"),
+        )
+        assert committed.status_code == 200
+        committed_card = committed.json()["events"][0]
+    first_connection.close()
+
+    restarted_connection = sqlite3.connect(database_path, check_same_thread=False)
+    restarted_service = VTTSessionService.open(
+        session_id="access-table",
+        initial_state={"value": 0},
+        driver=RollAudienceDriver(),
+        seed=23,
+        event_store=SQLiteSessionEventStore(restarted_connection),
+    )
+    restarted_app = create_vtt_app(restarted_service, access_policy=_policy())
+    with TestClient(restarted_app, raise_server_exceptions=False) as restarted_client:
+        replayed = restarted_client.post(
+            "/api/v1/commands",
+            json=_command_payload("roll-restart"),
+            headers=_authorization("player"),
+        )
+        assert replayed.status_code == 200
+        assert replayed.json()["replayed"] is True
+        assert replayed.json()["events"] == [committed_card]
+        assert restarted_service.revision == 1
+        status, _headers, payload = asyncio.run(
+            _capture_sse(
+                restarted_client.app,
+                "/api/v1/events?after=0",
+                headers=_authorization("player"),
+                data_event_count=1,
+            )
+        )
+        assert status == 200
+        assert [sequence for sequence, _event in _sse_data_events(payload)] == [1]
+        assert payload.count('"kind":"vtt.roll.card.v1"') == 1
+        assert "engine.roll_record" not in payload
+    restarted_connection.close()
 
 
 @pytest.mark.parametrize(
