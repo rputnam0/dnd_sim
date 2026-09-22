@@ -285,14 +285,16 @@ async function tableResponseJson(response: Response): Promise<unknown> {
 export async function getTableView(input: {
   bearerToken?: string | null;
   signal?: AbortSignal;
+  apiBaseUrl?: string;
 } = {}): Promise<VttTableView> {
-  const response = await fetch(`${VTT_API_BASE_URL}/api/v1/table`, {
+  const response = await fetch(`${(input.apiBaseUrl ?? VTT_API_BASE_URL).replace(/\/+$/, "")}/api/v1/table`, {
     method: "GET",
     headers: buildVttRequestHeaders({
       accept: "application/json",
       bearerToken: input.bearerToken,
     }),
     signal: input.signal,
+    credentials: "omit", redirect: "error", cache: "no-store",
   });
   return parseTableView(await tableResponseJson(response));
 }

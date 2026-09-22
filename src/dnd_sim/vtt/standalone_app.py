@@ -1,7 +1,8 @@
-"""Local-operator composition root for standalone VTT administration.
+"""Local-operator composition root for standalone VTT world preparation.
 
-This app provisions installation identity and a metadata-only world catalog. It
-does not compose a table, encounter, fixture, content pack, or gameplay service.
+Catalog creation reserves world identity; an explicit launch prepares an empty
+scene/map workspace. This app never composes an encounter, fixture, content pack,
+or gameplay service.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from fastapi import FastAPI
 from .installation_api import install_administration_routes
 from .installation_store import SQLiteInstallationStore
 from .world_catalog_store import SQLiteWorldCatalog, WorldCatalogStoreError
+from .world_preparation import WorldPreparationManager
 
 logger = logging.getLogger(__name__)
 _CATALOG_TABLES = {
@@ -56,6 +58,7 @@ def create_standalone_app(
     lock = RLock()
     connections: list[sqlite3.Connection] = []
     closed = False
+    world_manager: WorldPreparationManager | None = None
 
     def close_owned_connections() -> None:
         nonlocal closed
@@ -64,6 +67,11 @@ def create_standalone_app(
                 return
             closed = True
             first_error: Exception | None = None
+            if world_manager is not None:
+                try:
+                    world_manager.close()
+                except Exception as exc:  # pragma: no cover - defensive cleanup
+                    first_error = exc
             for connection in reversed(connections):
                 try:
                     connection.close()
@@ -128,7 +136,20 @@ def create_standalone_app(
             lifespan=lifespan,
         )
         app.state.close_owned_connections = close_owned_connections
-        install_administration_routes(app, installation=installation, catalog=catalog, lock=lock)
+        if catalog is not None:
+            world_manager = WorldPreparationManager(
+                database_path=Path(normalized_path),
+                registry_connection=catalog_connection,
+                installation=installation,
+                catalog=catalog,
+                lock=lock,
+            )
+            app.state.world_manager = world_manager
+        install_administration_routes(
+            app, installation=installation, catalog=catalog, lock=lock, world_manager=world_manager
+        )
+        if world_manager is not None:
+            app.mount("/api/v1/worlds/{world_id}", world_manager)
         return app
     except BaseException:
         close_owned_connections()

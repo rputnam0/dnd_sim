@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
 from .installation_contracts import AdminPublic, SessionPublic
+from .http_api import VTTTableView
 from .world_catalog_contracts import (
     WorldArchiveCommand,
     WorldCatalogView,
@@ -40,10 +41,19 @@ class InstallationLoginResponse(_StrictAPIModel):
 class WorldDashboardView(_StrictAPIModel):
     schema_version: Literal["vtt.world_dashboard.v1"] = "vtt.world_dashboard.v1"
     catalog: WorldCatalogView
-    launch_supported: Literal[False] = False
-    launch_unavailable_reason: Literal["world_provisioning_not_implemented"] = (
+    launch_supported: bool = False
+    launch_unavailable_reason: Literal["world_provisioning_not_implemented"] | None = (
         "world_provisioning_not_implemented"
     )
+
+
+class WorldLaunchResponse(_StrictAPIModel):
+    schema_version: Literal["vtt.world_launch.v1"] = "vtt.world_launch.v1"
+    world: WorldRecord
+    session_id: str
+    table: VTTTableView
+    workspace_api_path: str
+    bearer_token: str = Field(repr=False)
 
 
 class WorldDashboardMutationResponse(_StrictAPIModel):

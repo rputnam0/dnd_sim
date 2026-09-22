@@ -1,8 +1,8 @@
 # VTT Installation and World Setup Rules
 
-Status: design gate for the next standalone vertical slice
+Status: administration and empty-world preparation implemented; invitations pending
 
-Last updated: 2026-08-12
+Last updated: 2026-09-22
 
 ## Scope
 
@@ -56,6 +56,15 @@ version.
 - Create reserves both identities before initializing world-owned stores. A
   world appears launchable only after a durable provisioning receipt proves
   every required store reached its expected empty revision.
+- The initial preparation release exposes an explicit `Prepare & open` action
+  for a reserved catalog record. It provisions only an empty scene library and
+  map asset store, then opens preparation after validating the durable receipt.
+  For records from the metadata-only release, that explicit action assigns
+  the requesting administrator as initial GM; it does not infer a historical
+  creator. A failed or damaged partial workspace is never silently recreated.
+- Preparation has no engine encounter until a later validated actor deployment
+  flow supplies a real roster. Scene editing is useful without fake combatants
+  or a copied demonstration.
 - Rename changes metadata only. Archive is irreversible in v1 and never
   deletes bytes. An archived or incompletely provisioned world cannot launch.
 - Launch selects one world for the requesting administrator; it does not make a

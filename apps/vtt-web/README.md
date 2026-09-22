@@ -61,16 +61,34 @@ stable retry identities. Passwords, bootstrap claims, session bearers, and
 private catalog state are never persisted in browser storage. Reload requires
 login, and logging out revokes the server session and clears the local catalog.
 
-**World launch is not implemented yet.** Catalog records are not playable
-workspaces; provisioning, player invitations, actor deployment, and complete
-world backup/restore are subsequent gates. The separate root route `/` remains
-the explicitly labeled Echo Vault demonstration, served by the existing solo
-table API. Creating a world never launches or copies that demonstration.
+Choose **Prepare & open** on an active world to initialize and open its empty
+preparation workspace. This explicit first preparation makes the requesting
+administrator its initial GM, including for records created by the earlier
+metadata-only release. The workspace supports original scene creation, map
+upload, calibration, activation, and durable return/relaunch. No default scene,
+actor, token, or encounter is invented. Combat and player invitations are not
+enabled in this preparation release; actor deployment and complete world
+backup/restore remain subsequent gates.
 
-Missing or corrupt installation/catalog structures fail closed. Do not delete
+Scene and map requests, streams, and image bytes use the installation service
+with an exact world path and a separate memory-only launch credential. A launch
+credential cannot access another world or the installation catalog. Returning
+revokes that launch without deleting authored state. Administrator logout,
+session expiry, and world archive also revoke workspace access. The separate
+root route `/` remains the explicitly labeled Echo Vault demonstration, served
+by the existing solo table API; no created world falls back to it.
+
+Missing or corrupt installation/catalog/workspace structures fail closed. Do not delete
 or replace an existing database to clear a safe-mode message: preserve its
 bytes for diagnosis. Automated repair, password recovery, schema migrations,
 and backup/restore UI are not yet supported.
+
+An installation at `/path/installation.sqlite` keeps each prepared world's
+scene/map database under `/path/installation.sqlite.worlds/<world_id>.sqlite`.
+Keep the installation and that sibling directory together when preserving
+local data. Never rename individual world files or derive their filenames from
+display names. The preparation receipt binds the reserved world and table to
+that storage; losing it intentionally prevents silent initialization over damage.
 
 ## Verification gates
 

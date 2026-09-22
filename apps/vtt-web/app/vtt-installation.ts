@@ -1,3 +1,6 @@
+import { parseTableView, type VttTableView } from "./vtt-access";
+import { normalizeVttBearerToken } from "./vtt-transport";
+
 /** Strict, secret-free public projections and a dedicated installation transport.
  * Bearers are returned only to the caller; this module never persists credentials.
  */
@@ -61,8 +64,17 @@ export interface WorldCatalogView {
 export interface WorldDashboard {
   schema_version: "vtt.world_dashboard.v1";
   catalog: WorldCatalogView;
-  launch_supported: false;
-  launch_unavailable_reason: "world_provisioning_not_implemented";
+  launch_supported: boolean;
+  launch_unavailable_reason: "world_provisioning_not_implemented" | null;
+}
+
+export interface WorldLaunch {
+  schema_version: "vtt.world_launch.v1";
+  world: WorldRecord;
+  session_id: string;
+  table: VttTableView;
+  workspace_api_path: string;
+  bearer_token: string;
 }
 
 interface WorldEventBase {
@@ -374,14 +386,30 @@ export function parseWorldDashboard(value: unknown): WorldDashboard {
     "launch_supported",
     "launch_unavailable_reason",
   ]);
+  const launch_supported = boolean(item.launch_supported);
+  if (launch_supported ? item.launch_unavailable_reason !== null : item.launch_unavailable_reason !== "world_provisioning_not_implemented") invalid();
   return {
     schema_version: literal(item.schema_version, "vtt.world_dashboard.v1"),
     catalog: parseWorldCatalog(item.catalog),
-    launch_supported: literal(item.launch_supported, false),
-    launch_unavailable_reason: literal(
-      item.launch_unavailable_reason,
-      "world_provisioning_not_implemented",
-    ),
+    launch_supported,
+    launch_unavailable_reason: launch_supported ? null : "world_provisioning_not_implemented",
+  };
+}
+
+export function parseWorldLaunch(value: unknown, expectedWorld: WorldRecord): WorldLaunch {
+  const item = exact(value, ["schema_version", "world", "session_id", "table", "workspace_api_path", "bearer_token"]);
+  const world = parseWorldRecord(item.world);
+  const table = parseTableView(item.table);
+  if (Object.keys(world).some((key) => world[key as keyof WorldRecord] !== expectedWorld[key as keyof WorldRecord]) ||
+    table.table_id !== world.table_id || table.access_mode !== "protected" ||
+    item.workspace_api_path !== `/api/v1/worlds/${world.world_id}`) invalid();
+  const bearer_token = humanText(item.bearer_token, 16, 256);
+  if (!/^[A-Za-z0-9_-]+$/.test(bearer_token)) invalid();
+  normalizeVttBearerToken(bearer_token);
+  return {
+    schema_version: literal(item.schema_version, "vtt.world_launch.v1"),
+    world, table, session_id: identity(item.session_id),
+    workspace_api_path: item.workspace_api_path as string, bearer_token,
   };
 }
 
@@ -650,6 +678,20 @@ export class InstallationApi {
   }
   worlds(token: string, signal: AbortSignal) {
     return this.request("/worlds", parseWorldDashboard, signal, { token });
+  }
+  launch(token: string, world: WorldRecord, signal: AbortSignal) {
+    const requestedWorld = parseWorldRecord(world);
+    return this.request(`/worlds/${requestedWorld.world_id}/launch`,
+      (value) => parseWorldLaunch(value, requestedWorld), signal,
+      { token, method: "POST" });
+  }
+  workspaceBaseUrl(launch: WorldLaunch): string {
+    const verified = parseWorldLaunch(launch, launch.world);
+    return `${this.baseUrl}${verified.workspace_api_path}`;
+  }
+  returnWorld(worldId: string, token: string, signal: AbortSignal) {
+    return this.request<void>(`/worlds/${identity(worldId)}/return`, null, signal,
+      { token, method: "POST", expectedStatus: 204 });
   }
   async mutate(token: string, command: WorldCommand, signal: AbortSignal) {
     const { kind, ...body } = command;

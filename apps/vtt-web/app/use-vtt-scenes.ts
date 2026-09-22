@@ -69,6 +69,8 @@ export function useVttScenes(input: {
   tableId: string | null;
   bearerToken: string | null;
   participant: VttTableParticipant | null;
+  apiBaseUrl?: string;
+  onAccessLost?: () => void;
 }) {
   const [view, setView] = useState<SceneLibraryView | null>(null);
   const [status, setStatus] = useState<SceneConnectionStatus>("loading");
@@ -78,6 +80,26 @@ export function useVttScenes(input: {
   const viewRef = useRef<SceneLibraryView | null>(null);
   const cursorRef = useRef(0);
   const mutationInFlightRef = useRef(false);
+  const identity = JSON.stringify([input.apiBaseUrl, input.sessionId, input.tableId, input.bearerToken, input.participant]);
+  const identityRef = useRef(identity);
+  const [viewIdentity, setViewIdentity] = useState(identity);
+  const [stateIdentity, setStateIdentity] = useState(identity);
+  const mutationController = useRef<AbortController | null>(null);
+  const accessLost = useRef(input.onAccessLost);
+  useEffect(() => { accessLost.current = input.onAccessLost; }, [input.onAccessLost]);
+  const reportAccessLoss = (failure: unknown) => {
+    if (failure instanceof VttApiError && [401, 403, 404, 410].includes(failure.status ?? 0)) accessLost.current?.();
+  };
+
+  useEffect(() => {
+    identityRef.current = identity;
+    viewRef.current = null;
+    cursorRef.current = 0;
+    mutationInFlightRef.current = false;
+    let active = true;
+    queueMicrotask(() => { if (active) setOperation(null); });
+    return () => { active = false; mutationController.current?.abort(); };
+  }, [identity]);
 
   useEffect(() => {
     if (
@@ -89,6 +111,7 @@ export function useVttScenes(input: {
     let active = true;
 
     const synchronize = async () => {
+      setStateIdentity(identity);
       setStatus("loading");
       setError(null);
       let hydrated: SceneLibraryView;
@@ -96,12 +119,14 @@ export function useVttScenes(input: {
         hydrated = await getSceneLibraryView(
           controller.signal,
           input.bearerToken,
+          input.apiBaseUrl,
         );
         if (hydrated.table_id !== input.tableId) {
           throw new Error("The scene library belongs to another table.");
         }
       } catch (loadError) {
         if (!active || isAbort(loadError)) return;
+        reportAccessLoss(loadError);
         if (
           loadError instanceof VttApiError &&
           (loadError.status === 404 || loadError.code === "not_found")
@@ -120,6 +145,7 @@ export function useVttScenes(input: {
       viewRef.current = hydrated;
       cursorRef.current = hydrated.revision;
       setView(hydrated);
+      setViewIdentity(identity);
       setStatus("connecting");
 
       while (active && !controller.signal.aborted) {
@@ -127,6 +153,7 @@ export function useVttScenes(input: {
           const cursor = await streamSceneEvents({
             after: cursorRef.current,
             bearerToken: input.bearerToken,
+            apiBaseUrl: input.apiBaseUrl,
             signal: controller.signal,
             onOpen: () => {
               if (active) {
@@ -135,15 +162,17 @@ export function useVttScenes(input: {
               }
             },
             onEvent: (event) => {
+              if (!active || controller.signal.aborted) return;
               cursorRef.current = Math.max(cursorRef.current, event.sequence);
-              if (active) setRefreshKey((current) => current + 1);
+              setRefreshKey((current) => current + 1);
             },
           });
-          cursorRef.current = Math.max(cursorRef.current, cursor);
           if (!active || controller.signal.aborted) return;
+          cursorRef.current = Math.max(cursorRef.current, cursor);
           setStatus("reconnecting");
         } catch (streamError) {
           if (!active || isAbort(streamError)) return;
+          reportAccessLoss(streamError);
           if (streamError instanceof VttApiError) {
             setStatus("error");
             setError(sceneErrorMessage(streamError));
@@ -171,6 +200,8 @@ export function useVttScenes(input: {
     input.participant,
     input.sessionId,
     input.tableId,
+    input.apiBaseUrl,
+    identity,
     refreshKey,
   ]);
 
@@ -194,26 +225,36 @@ export function useVttScenes(input: {
         throw new Error("Another scene change is still being saved.");
       }
       mutationInFlightRef.current = true;
+      const controller = new AbortController();
+      mutationController.current = controller;
+      const isCurrent = () => !controller.signal.aborted && identityRef.current === identity;
       setOperation(nextOperation);
       setError(null);
       try {
         const current = requireView();
         await postSceneLibraryRequest(
           build(current),
-          undefined,
+          controller.signal,
           input.bearerToken,
+          input.apiBaseUrl,
         );
+        if (!isCurrent()) return;
         const hydrated = await getSceneLibraryView(
-          undefined,
+          controller.signal,
           input.bearerToken,
+          input.apiBaseUrl,
         );
+        if (!isCurrent()) return;
         if (hydrated.table_id !== current.table_id) {
           throw new Error("The refreshed scene library belongs to another table.");
         }
         viewRef.current = hydrated;
         cursorRef.current = hydrated.revision;
         setView(hydrated);
+        setViewIdentity(identity);
       } catch (mutationError) {
+        if (!isCurrent()) return;
+        reportAccessLoss(mutationError);
         setError(sceneErrorMessage(mutationError));
         if (
           mutationError instanceof VttApiError &&
@@ -223,13 +264,17 @@ export function useVttScenes(input: {
         }
         throw mutationError;
       } finally {
-        mutationInFlightRef.current = false;
-        setOperation(null);
+        if (isCurrent()) {
+          mutationInFlightRef.current = false;
+          setOperation(null);
+        }
       }
     },
     [
       input.bearerToken,
       input.participant,
+      input.apiBaseUrl,
+      identity,
       requireView,
     ],
   );
@@ -317,17 +362,17 @@ export function useVttScenes(input: {
   );
 
   const available =
-    view !== null &&
+    viewIdentity === identity && view !== null &&
     status !== "loading" &&
     status !== "unavailable" &&
     status !== "error";
-  const pending = operation !== null;
+  const pending = stateIdentity === identity && operation !== null;
 
   return {
-    view,
-    status,
-    operation,
-    error,
+    view: viewIdentity === identity ? view : null,
+    status: stateIdentity === identity ? status : "loading" as SceneConnectionStatus,
+    operation: stateIdentity === identity ? operation : null,
+    error: stateIdentity === identity ? error : null,
     pending,
     available,
     canMutate:

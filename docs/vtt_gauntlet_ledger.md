@@ -89,3 +89,27 @@
 | Standalone administration | 1 | Local-operator bootstrap, setup/login/session/logout, opaque world CRUD and exact retries, fresh-only schema creation, fail-closed missing catalog, explicit disabled launch; 27 backend tests and 17 browser installation tests | Independent bounded critic accepted; four additional mounted auth/safe-mode/storage/late-reply probes passed | No API/state-machine blocker; actual browser visual journey unavailable while Mac locked | Real-browser desktop/compact setup/login/create/rename/archive/logout and restart journey | Awaiting visual gate |
 | Browser integration | 1 | Strict typecheck exposed nonexistent sound error helpers, incorrect journal error construction/headers, hidden presentation failure status, roll-face callback mismatch and incomplete fixtures; 10 exact regressions now pass; default typecheck, production build, 163 browser tests, ESLint, Black, diff check and full 2,036-test Python suite pass | Reproduced and corrected with shared existing decoder | No known runtime failure remains in the corrected boundary | Preserve public error/status behavior and complete the pending real-browser administration gate | Automated gates passed |
 | Standalone administration | 2 | Real browser on a disposable loopback installation: setup, rejected/correct login, create/rename, archive cancel/confirm, logout/reload, server restart and re-login; exact revision 4 and active/archived records retained; desktop and 390×844 screenshot inspection, no horizontal overflow, keyboard Tab/Enter login, empty warning/error console | Visual gate passed, completing the independently accepted API/state-machine slice in PR #263 | None in administration; catalog still cannot launch a workspace | Provision real empty worlds without a demo encounter, then expose authenticated preparation | Accepted |
+| Empty-world preparation backend | 1 | Explicit provision/launch/return; isolated scene/map SQLite files, complete empty-state receipt and initial GM; world-bound credentials, revocation/expiry/archive and stream revalidation; corruption, partial initialization, retry, restart and connection-lifetime tests | Fresh critic promoted one in-flight boundary error: revoked body arrival became HTTP 400 instead of 401 | Correct the response taxonomy without accepting a write or leaking input | Delayed/chunked valid and malformed scene/map bodies must return identity-free 401 and release resources | Corrected |
+| Empty-world preparation backend | 2 | 161 focused critic tests plus 16 independent in-flight return/logout/archive/expiry probes; root black-box two-world map-byte/ID isolation and restart journeys; full Python suite 2,057 passed | Focused critic accepted | None in this backend slice | Preserve through browser integration | Accepted |
+| Empty-world preparation integration | 1 | Strict launch identity/path codec, explicitly scoped scene/map/SSE/media transports, keyed private workspace cleanup, verified raw preview, focus/idle auth validation; desktop and compact real-browser create/upload/attach/return/restart; full typecheck/build, 178 browser tests, lint, Black and diff check | Independent whole-slice critic accepted after compact image containment and native skip-focus corrections | None within scene/map preparation; invitations and validated actors remain separate work | Preserve restart and cross-world gates while adding participants/content | Accepted in draft PR #264 |
+
+### Preparation visual evidence — 2026-09-22
+
+The parent inspected 1280×800 and 390×844 renders in the in-app browser against
+an isolated local installation. A pre-existing metadata world opened empty;
+the parent created `The Verdant Crossing`, explicitly uploaded the project's
+original map, attached it, returned, and reopened it after service restart.
+The 1,448×1,086 image rendered completely with the expected SHA-256 and saved
+calibration. This was a manual upload, never a default/demo fallback.
+
+At 390px, document and scroll widths were both 390px. The corrected map frame
+occupied x=49..341 (292px) inside its x=24..366 panel, retaining the 24px inset;
+the image was contained at x=50..340. Native Enter on the skip link focused
+`MAIN#installation-main`. Lower scene/map forms were visibly readable and
+wrapped. Temporary viewport overrides were reset after verification.
+
+The independent integration critic ran the mounted/transport and black-box
+journeys but could not access the parent's browser inventory; rendered evidence
+therefore comes from the parent, not that critic. A transient during a hot server
+restart is retained in the backlog; normal restart/reopen subsequently passed
+without a code change. This acceptance does not claim full Foundry parity.

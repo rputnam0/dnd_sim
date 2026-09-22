@@ -66,8 +66,8 @@ def test_setup_login_world_lifecycle_exact_retries_and_restart(tmp_path: Path) -
         assert dashboard == {
             "schema_version": "vtt.world_dashboard.v1",
             "catalog": {"schema_version": "vtt.world_catalog_view.v1", "revision": 0, "worlds": []},
-            "launch_supported": False,
-            "launch_unavailable_reason": "world_provisioning_not_implemented",
+            "launch_supported": True,
+            "launch_unavailable_reason": None,
         }
         command = {"command_id": "create-one", "expected_revision": 0, "name": "A New World"}
         created = client.post(ROOT + "/worlds/create", headers=headers, json=command)
@@ -143,7 +143,8 @@ def test_setup_login_world_lifecycle_exact_retries_and_restart(tmp_path: Path) -
         }
     assert not any(secret in dump for secret in (claims[0], PASSWORD, issued["bearer_token"]))
     assert all(
-        name.startswith(("_vtt_installation_", "_vtt_world_catalog_")) or name == "sqlite_sequence"
+        name.startswith(("_vtt_installation_", "_vtt_world_catalog_", "_vtt_world_preparation_"))
+        or name == "sqlite_sequence"
         for name in table_names
     )
 

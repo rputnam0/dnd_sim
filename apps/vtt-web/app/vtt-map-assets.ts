@@ -286,14 +286,16 @@ async function responseJson(response: Response): Promise<unknown> {
 export async function getMapAssetCatalog(
   signal?: AbortSignal,
   bearerToken?: string | null,
+  apiBaseUrl = VTT_API_BASE_URL,
 ): Promise<MapAssetCatalog> {
-  const response = await fetch(`${VTT_API_BASE_URL}/api/v1/map-assets`, {
+  const response = await fetch(`${apiBaseUrl.replace(/\/+$/, "")}/api/v1/map-assets`, {
     method: "GET",
     headers: buildVttRequestHeaders({
       accept: "application/json",
       bearerToken,
     }),
     signal,
+    credentials: "omit", redirect: "error", cache: "no-store",
   });
   return parseMapAssetCatalog(await responseJson(response));
 }
@@ -302,8 +304,9 @@ export async function postMapAssetUpload(
   request: MapAssetUploadRequest,
   signal?: AbortSignal,
   bearerToken?: string | null,
+  apiBaseUrl = VTT_API_BASE_URL,
 ): Promise<MapAssetUploadResponse> {
-  const response = await fetch(`${VTT_API_BASE_URL}/api/v1/map-assets`, {
+  const response = await fetch(`${apiBaseUrl.replace(/\/+$/, "")}/api/v1/map-assets`, {
     method: "POST",
     headers: buildVttRequestHeaders({
       accept: "application/json",
@@ -312,6 +315,7 @@ export async function postMapAssetUpload(
     }),
     body: JSON.stringify(request),
     signal,
+    credentials: "omit", redirect: "error", cache: "no-store",
   });
   const parsed = parseMapAssetUploadResponse(await responseJson(response));
   if (
@@ -329,15 +333,19 @@ export async function fetchAuthenticatedMapAsset(
   reference: SceneMapAssetReference,
   bearerToken: string | null,
   signal?: AbortSignal,
+  apiBaseUrl = VTT_API_BASE_URL,
 ): Promise<Blob> {
   const canonical = parseSceneMapAssetReference(reference);
-  const response = await fetch(new URL(canonical.content_path, VTT_API_BASE_URL), {
+  // References are strict local paths. URL(path, base) would discard both a
+  // reverse-proxy prefix and the world mount, risking cross-world requests.
+  const response = await fetch(`${apiBaseUrl.replace(/\/+$/, "")}${canonical.content_path}`, {
     method: "GET",
     headers: buildVttRequestHeaders({
       accept: canonical.media_type,
       bearerToken,
     }),
     signal,
+    credentials: "omit", redirect: "error", cache: "no-store",
   });
   if (!response.ok) {
     await responseJson(response);

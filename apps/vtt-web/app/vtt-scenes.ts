@@ -820,14 +820,16 @@ async function sceneResponseJson(response: Response): Promise<unknown> {
 export async function getSceneLibraryView(
   signal?: AbortSignal,
   bearerToken?: string | null,
+  apiBaseUrl = VTT_API_BASE_URL,
 ): Promise<SceneLibraryView> {
-  const response = await fetch(`${VTT_API_BASE_URL}/api/v1/scenes`, {
+  const response = await fetch(`${apiBaseUrl.replace(/\/+$/, "")}/api/v1/scenes`, {
     method: "GET",
     headers: buildVttRequestHeaders({
       accept: "application/json",
       bearerToken,
     }),
     signal,
+    credentials: "omit", redirect: "error", cache: "no-store",
   });
   return parseSceneLibraryView(await sceneResponseJson(response));
 }
@@ -836,8 +838,9 @@ export async function postSceneLibraryRequest(
   payload: SceneLibraryRequest,
   signal?: AbortSignal,
   bearerToken?: string | null,
+  apiBaseUrl = VTT_API_BASE_URL,
 ): Promise<SceneLibraryResponse> {
-  const response = await fetch(`${VTT_API_BASE_URL}/api/v1/scene-commands`, {
+  const response = await fetch(`${apiBaseUrl.replace(/\/+$/, "")}/api/v1/scene-commands`, {
     method: "POST",
     headers: buildVttRequestHeaders({
       accept: "application/json",
@@ -846,15 +849,16 @@ export async function postSceneLibraryRequest(
     }),
     body: JSON.stringify(payload),
     signal,
+    credentials: "omit", redirect: "error", cache: "no-store",
   });
   return parseSceneLibraryResponse(await sceneResponseJson(response));
 }
 
-export function sceneEventsUrl(after: number): string {
+export function sceneEventsUrl(after: number, apiBaseUrl = VTT_API_BASE_URL): string {
   if (!Number.isSafeInteger(after) || after < 0) {
     throw new Error("Scene event cursor must be a non-negative safe integer");
   }
-  return `${VTT_API_BASE_URL}/api/v1/scene-events?after=${after}`;
+  return `${apiBaseUrl.replace(/\/+$/, "")}/api/v1/scene-events?after=${after}`;
 }
 
 export function parseSceneSseBlock(block: string): SceneEvent | null {
@@ -910,18 +914,20 @@ function findSseBoundary(buffer: string): { index: number; length: number } | nu
 export async function streamSceneEvents(input: {
   after: number;
   bearerToken?: string | null;
+  apiBaseUrl?: string;
   signal: AbortSignal;
   onEvent: (event: SceneEvent) => void;
   onOpen?: () => void;
 }): Promise<number> {
   let cursor = integer(input.after, "after");
-  const response = await fetch(sceneEventsUrl(cursor), {
+  const response = await fetch(sceneEventsUrl(cursor, input.apiBaseUrl), {
     method: "GET",
     headers: buildVttRequestHeaders({
       accept: "text/event-stream",
       bearerToken: input.bearerToken,
     }),
     signal: input.signal,
+    credentials: "omit", redirect: "error", cache: "no-store",
   });
   if (!response.ok) await sceneResponseJson(response);
   if (!response.body) {
