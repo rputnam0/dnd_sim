@@ -262,7 +262,7 @@ The active end-to-end slice is installation administration:
       logout clear private catalog content. An uncertain authenticated mutation
       may retain its last verified snapshot only with an explicit pending
       notice and disabled mutations; it must never invent success or launch.
-- [ ] Pass backend and mounted browser tests, a real browser journey, and an
+- [x] Pass backend and mounted browser tests, a real browser journey, and an
       independent integration critic before accepting the slice.
 
 The dashboard must clearly label world launch as unavailable until actual
@@ -273,7 +273,7 @@ labeled demonstration table; it is never used as a created world's fallback.
 
 Implementation and passing automated evidence are in draft
 [PR #263](https://github.com/rputnam0/dnd_sim/pull/263), stacked on the existing
-interactive-session foundation. The final visual checklist remains open.
+interactive-session foundation. The administration visual checklist is now complete.
 
 The setup/login/world-dashboard implementation is present at `/setup` with a
 separate loopback administration service. An independent bounded reviewer
@@ -290,8 +290,16 @@ exposed real error-path defects in the recovered journal and sound clients;
 clearing, and useful roll-face diagnostics. Test fixtures now satisfy their
 actual contracts instead of bypassing missing fields.
 
-Final visual acceptance is still pending: the browser tool reported no
-available browser while the Mac was locked on this resume. Do not mark the
-administration checklist accepted solely on mounted tests. After browser
-verification, the next product slice is real empty-world provisioning and
-launch, then participant invitations and validated actor deployment.
+Real-browser verification completed on 2026-09-22 against a fresh disposable
+loopback installation: setup, rejected credentials, successful sign-in, create,
+rename, archive cancellation and confirmation, logout, reload, and sign-in
+after a full server restart. The renamed active world and retained archived
+world rehydrated at catalog revision 4. Desktop and 390×844 layouts were
+visually inspected; the compact document had no horizontal overflow. Keyboard
+Tab reached the password field and Enter submitted login. No browser warnings
+or errors were observed. Temporary viewport overrides were reset afterward.
+
+The next product slice is real empty-world provisioning and launch, then
+participant invitations and validated actor deployment. An empty world must
+open a preparation workspace without manufacturing an engine encounter or
+copying the Echo Vault demonstration.
