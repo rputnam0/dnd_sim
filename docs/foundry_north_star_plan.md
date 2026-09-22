@@ -252,13 +252,13 @@ on 2026-09-07; see `vtt_recovery_2026_09_07.md` for provenance and verification.
 
 The active end-to-end slice is installation administration:
 
-- [ ] Deliver the first-run claim only to the local operator, then claim an
+- [x] Deliver the first-run claim only to the local operator, then claim an
       administrator through an authenticated, bounded setup request.
-- [ ] Log in with a revocable memory-only browser session and hydrate the
+- [x] Log in with a revocable memory-only browser session and hydrate the
       authoritative administrator and world catalog.
-- [ ] Create, rename, and explicitly archive durable world records with exact
+- [x] Create, rename, and explicitly archive durable world records with exact
       retry and conflict recovery.
-- [ ] Prove lost/unverified authentication, failed hydration, safe mode, and
+- [x] Prove lost/unverified authentication, failed hydration, safe mode, and
       logout clear private catalog content. An uncertain authenticated mutation
       may retain its last verified snapshot only with an explicit pending
       notice and disabled mutations; it must never invent success or launch.
@@ -270,6 +270,10 @@ provisioning is implemented. The existing root route remains a separately
 labeled demonstration table; it is never used as a created world's fallback.
 
 ### Administration verification — 2026-09-22
+
+Implementation and passing automated evidence are in draft
+[PR #263](https://github.com/rputnam0/dnd_sim/pull/263), stacked on the existing
+interactive-session foundation. The final visual checklist remains open.
 
 The setup/login/world-dashboard implementation is present at `/setup` with a
 separate loopback administration service. An independent bounded reviewer
