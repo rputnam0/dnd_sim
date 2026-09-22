@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test, { type TestContext } from "node:test";
 import { createElement } from "react";
 import TestRenderer, { act } from "react-test-renderer";
@@ -81,8 +82,8 @@ async function mountGate(context: TestContext, handler: RequestHandler) {
   let renderer: TestRenderer.ReactTestRenderer | undefined;
   globalThis.fetch = async (input, init = {}) => {
     const url = String(input);
-    assert.ok(url.startsWith(API_ROOT), `Unexpected service request: ${url}`);
-    const call = { path: url.slice(API_ROOT.length), url, method: init.method ?? "GET", init };
+    assert.ok(url.startsWith(API_ROOT) || url.startsWith(`${API_BASE}/api/v1/worlds/`), `Unexpected service request: ${url}`);
+    const call = { path: url.startsWith(API_ROOT) ? url.slice(API_ROOT.length) : `/workspace${url.slice(API_BASE.length)}`, url, method: init.method ?? "GET", init };
     calls.push(call);
     return handler(call);
   };
@@ -173,6 +174,231 @@ function observeStorage(context: TestContext): string[] {
   }
   return operations;
 }
+
+const WORLD_BEARER = "world_private_launch_bearer_123456";
+function worldLaunch(world = privateWorld, token = WORLD_BEARER) {
+  const participant = { schema_version: "vtt.participant.v1", participant_id: "gm_keeper", display_name: admin.display_name, role: "gm", owned_actor_ids: [] };
+  return {
+    schema_version: "vtt.world_launch.v1", world, session_id: `workspace_${world.world_id}`,
+    table: { schema_version: "vtt.table_view.v1", table_id: world.table_id, access_mode: "protected", current_participant: participant, participants: [participant] },
+    workspace_api_path: `/api/v1/worlds/${world.world_id}`, bearer_token: token,
+  };
+}
+function preparationDashboard(worlds = [{ world: privateWorld, archived: false }]) {
+  return { ...dashboard(worlds), launch_supported: true, launch_unavailable_reason: null };
+}
+function emptyWorkspace(call: ApiCall, world = privateWorld, token = WORLD_BEARER): Response | Promise<Response> {
+  assert.equal(new Headers(call.init.headers).get("authorization"), `Bearer ${token}`);
+  if (call.url.endsWith("/api/v1/table")) return json(worldLaunch(world).table);
+  if (call.url.endsWith("/api/v1/scenes")) return json({ schema_version: "vtt.scene_library_view.v1", table_id: world.table_id, revision: 0, active_scene_id: null, scenes: [] });
+  if (call.url.endsWith("/api/v1/map-assets")) return json({ schema_version: "vtt.map_asset_catalog.v1", table_id: world.table_id, revision: 0, assets: [] });
+  if (call.url.includes("/api/v1/scene-events")) return new Promise((_resolve, reject) => {
+    call.init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true });
+  });
+  throw new Error(`Unexpected workspace request: ${call.url}`);
+}
+
+test("mounted preparation opens an honest empty world with isolated credentials and returns to its catalog", async (context) => {
+  const storage = observeStorage(context);
+  const { root, renderer, calls } = await mountGate(context, authenticatedHandler((call) => {
+    if (call.path === "/worlds") return json(preparationDashboard());
+    if (call.path.endsWith("/launch")) return json(worldLaunch());
+    if (call.path.endsWith("/return")) return new Response(null, { status: 204 });
+    return emptyWorkspace(call);
+  }));
+  await login(root);
+  assert.match(textContent(root), /initial Game Master/);
+  await click(root, /Prepare & open/);
+  assert.match(textContent(root), /A blank canvas for your world/);
+  assert.match(textContent(root), /Scene library/);
+  assert.doesNotMatch(textContent(root), /Echo Vault|Initiative|Round 1|encounter running/i);
+  for (const secret of [BEARER, WORLD_BEARER]) assert.equal(JSON.stringify(renderer.toJSON()).includes(secret), false);
+  assert.equal(calls.some((call) => call.url.includes(BEARER) || call.url.includes(WORLD_BEARER)), false);
+  assert.deepEqual(storage, []);
+  await click(root, "Return to worlds");
+  assert.match(textContent(root), /Worlds worth returning to/);
+  assert.doesNotMatch(textContent(root), /Scene library|A blank canvas/);
+  const returned = calls.find((call) => call.path.endsWith("/return"));
+  assert.equal(new Headers(returned?.init.headers).get("authorization"), `Bearer ${WORLD_BEARER}`);
+  assert.ok(calls.filter((call) => call.path.includes("scene-events")).every((call) => call.init.signal?.aborted));
+});
+
+test("mounted failed return clears private world immediately and reports unconfirmed server revocation", async (context) => {
+  let resolveReturn!: (response: Response) => void;
+  const pendingReturn = new Promise<Response>((resolve) => { resolveReturn = resolve; });
+  const { root } = await mountGate(context, authenticatedHandler((call) => {
+    if (call.path === "/worlds") return json(preparationDashboard());
+    if (call.path.endsWith("/launch")) return json(worldLaunch());
+    if (call.path.endsWith("/return")) return pendingReturn;
+    return emptyWorkspace(call);
+  }));
+  await login(root);
+  await click(root, /Prepare & open/);
+  let returning!: Promise<void>;
+  await act(async () => { returning = button(root, "Return to worlds").props.onClick(); });
+  assert.doesNotMatch(textContent(root), /Scene library|A blank canvas/);
+  await act(async () => { resolveReturn(apiError(503, "storage_unavailable")); await returning; });
+  assert.match(textContent(root), /revocation could not be confirmed/i);
+  assert.doesNotMatch(textContent(root), /Scene library/);
+});
+
+test("mounted logout aborts an in-flight launch and ignores its late response", async (context) => {
+  let resolveLaunch!: (response: Response) => void;
+  const pending = new Promise<Response>((resolve) => { resolveLaunch = resolve; });
+  const { root, calls } = await mountGate(context, authenticatedHandler((call) => {
+    if (call.path === "/worlds") return json(preparationDashboard());
+    if (call.path.endsWith("/launch")) return pending;
+    if (call.path === "/logout") return new Response(null, { status: 204 });
+    throw new Error(`Unexpected request ${call.path}`);
+  }));
+  await login(root);
+  let launching!: Promise<void>;
+  await act(async () => { launching = button(root, /Prepare & open/).props.onClick(); });
+  await click(root, "Log out");
+  await act(async () => { resolveLaunch(json(worldLaunch())); await launching; });
+  assert.equal(root.findAllByProps({ "aria-label": "Administrator login" }).length, 1);
+  assert.doesNotMatch(textContent(root), /Private Moonlit Archive|Scene library/);
+  assert.equal(calls.find((call) => call.path.endsWith("/launch"))?.init.signal?.aborted, true);
+  assert.equal(calls.some((call) => call.path.startsWith("/workspace")), false);
+});
+
+test("mounted revoked world access removes the workspace and keeps the administrator catalog separate", async (context) => {
+  const { root } = await mountGate(context, authenticatedHandler((call) => {
+    if (call.path === "/worlds") return json(preparationDashboard());
+    if (call.path.endsWith("/launch")) return json(worldLaunch());
+    if (call.url.endsWith("/api/v1/table")) return apiError(401, "world_session_revoked");
+    return emptyWorkspace(call);
+  }));
+  await login(root);
+  await click(root, /Prepare & open/);
+  assert.match(textContent(root), /World access ended/i);
+  assert.match(textContent(root), /Worlds worth returning to/);
+  assert.doesNotMatch(textContent(root), /Scene library/);
+});
+
+test("mounted world switching isolates tokens and ignores a previous world's late unauthorized scene reply", async (context) => {
+  const second = { ...privateWorld, world_id: "world_second", table_id: "table_second", name: "Second Private World" };
+  const secondToken = "world_second_launch_bearer_987654";
+  let resolveOldScenes!: (response: Response) => void;
+  const oldScenes = new Promise<Response>((resolve) => { resolveOldScenes = resolve; });
+  const { root, calls } = await mountGate(context, authenticatedHandler((call) => {
+    if (call.path === "/worlds") return json(preparationDashboard([{ world: privateWorld, archived: false }, { world: second, archived: false }]));
+    if (call.path === `/worlds/${privateWorld.world_id}/launch`) return json(worldLaunch());
+    if (call.path === `/worlds/${second.world_id}/launch`) return json(worldLaunch(second, secondToken));
+    if (call.path.endsWith("/return")) return new Response(null, { status: 204 });
+    if (call.url.endsWith(`/worlds/${privateWorld.world_id}/api/v1/scenes`)) return oldScenes;
+    return call.url.includes(`/worlds/${second.world_id}/`) ? emptyWorkspace(call, second, secondToken) : emptyWorkspace(call);
+  }));
+  await login(root);
+  await click(root.findByProps({ "aria-label": `World: ${privateWorld.name}` }), /Prepare & open/);
+  await click(root, "Return to worlds");
+  await click(root.findByProps({ "aria-label": `World: ${second.name}` }), /Prepare & open/);
+  await act(async () => { resolveOldScenes(apiError(401, "world_session_revoked")); });
+  assert.equal(root.findAllByProps({ "aria-label": `World preparation: ${second.name}` }).length, 1);
+  assert.match(textContent(root), /A blank canvas/);
+  assert.doesNotMatch(textContent(root), /Private Moonlit Archive|World access ended/);
+  assert.ok(calls.filter((call) => call.path.startsWith("/workspace") && call.url.includes(`/worlds/${privateWorld.world_id}/`)).every((call) => call.init.signal?.aborted));
+  for (const call of calls.filter((call) => call.path.startsWith("/workspace") && call.url.includes(`/worlds/${second.world_id}/`))) {
+    assert.equal(new Headers(call.init.headers).get("authorization"), `Bearer ${secondToken}`);
+  }
+});
+
+test("mounted scene creation shows only persisted scene metadata and a truthful raw map preview", async (context) => {
+  let savedScene: unknown = null;
+  const { root, calls } = await mountGate(context, authenticatedHandler((call) => {
+    if (call.path === "/worlds") return json(preparationDashboard());
+    if (call.path.endsWith("/launch")) return json(worldLaunch());
+    if (call.path.endsWith("/return")) return new Response(null, { status: 204 });
+    if (call.url.endsWith("/api/v1/scene-commands")) {
+      const request = JSON.parse(String(call.init.body));
+      savedScene = request.command.scene;
+      assert.equal(request.session_id, `workspace_${privateWorld.world_id}`);
+      assert.equal(request.command.table_id, privateWorld.table_id);
+      return json({ schema_version: "vtt.scene_library_response.v1", session_id: request.session_id,
+        table_id: privateWorld.table_id, command_id: request.command.command_id, revision: 1, replayed: false,
+        event: { schema_version: "vtt.scene_event.v1", table_id: privateWorld.table_id, event_id: "created_scene", sequence: 1, revision: 1, command_id: request.command.command_id, event_type: "created", scene: savedScene, became_active: true },
+      });
+    }
+    if (savedScene && call.url.endsWith("/api/v1/scenes")) return json({ schema_version: "vtt.scene_library_view.v1", table_id: privateWorld.table_id, revision: 1, active_scene_id: "quiet-coast", scenes: [{ scene: savedScene, archived: false }] });
+    return emptyWorkspace(call);
+  }));
+  await login(root);
+  await click(root, /Prepare & open/);
+  const form = root.findAllByType("form").find((node) => textContent(node).startsWith("Create scene"));
+  assert.ok(form);
+  await act(async () => {
+    form.findByProps({ placeholder: "moon-temple" }).props.onChange({ target: { value: "quiet-coast" } });
+    form.findByProps({ placeholder: "Moon Temple" }).props.onChange({ target: { value: "The Quiet Coast" } });
+  });
+  await act(async () => { await form.props.onSubmit({ preventDefault() {} }); });
+  assert.match(textContent(root), /The Quiet Coast/);
+  assert.match(textContent(root), /Your scene is ready for a map/);
+  assert.match(textContent(root), /Raw map preview/);
+  assert.doesNotMatch(textContent(root), /A blank canvas|Echo Vault|Initiative/);
+  assert.equal(calls.filter((call) => call.url.endsWith("/api/v1/scene-commands")).length, 1);
+  await click(root, "Return to worlds");
+  await click(root, /Prepare & open/);
+  assert.match(textContent(root), /The Quiet Coast/);
+});
+
+for (const topology of ["hex_flat", "gridless"] as const) {
+test(`mounted authenticated ${topology} map preview reports honest scale and revokes its blob URL on close`, async (context) => {
+  const bytes = new Uint8Array([137, 80, 78, 71]);
+  const reference = { schema_version: "vtt.scene_map_asset.v1", asset_id: "private-map", media_type: "image/png", content_path: "/api/v1/map-assets/private-map/content.png", sha256: createHash("sha256").update(bytes).digest("hex"), alt_text: "Private coastline" };
+  const scene = { schema_version: "vtt.scene_record.v1", scene_id: "coast", map_metadata: {
+    schema_version: "vtt.scene_map_metadata.v1", name: "Private Coast", width_px: 800, height_px: 600, grid_size_px: 70, gridless: topology === "gridless",
+    calibration: { schema_version: "vtt.board_calibration.v1", topology, origin_x_px: 0, origin_y_px: 0, cell_extent_px: 70, distance_ft: 5 }, asset: reference,
+  } };
+  const revoked: string[] = [];
+  const originalRevoke = URL.revokeObjectURL;
+  URL.revokeObjectURL = (url) => { revoked.push(url); originalRevoke(url); };
+  context.after(() => { URL.revokeObjectURL = originalRevoke; });
+  const { root, calls } = await mountGate(context, authenticatedHandler((call) => {
+    if (call.path === "/worlds") return json(preparationDashboard());
+    if (call.path.endsWith("/launch")) return json(worldLaunch());
+    if (call.path.endsWith("/return")) return new Response(null, { status: 204 });
+    if (call.url.endsWith("/api/v1/scenes")) return json({ schema_version: "vtt.scene_library_view.v1", table_id: privateWorld.table_id, revision: 1, active_scene_id: "coast", scenes: [{ scene, archived: false }] });
+    if (call.url.endsWith(reference.content_path)) return new Response(bytes, { headers: { "content-type": reference.media_type } });
+    return emptyWorkspace(call);
+  }));
+  await login(root);
+  await click(root, /Prepare & open/);
+  // WebCrypto completes outside React's initial promise chain.
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+  const preview = root.findByProps({ alt: "Private coastline" });
+  assert.match(preview.props.src, /^blob:/);
+  assert.match(textContent(root), new RegExp(topology.replaceAll("_", " ")));
+  if (topology === "gridless") {
+    assert.match(textContent(root), /5 ft \/ 70 px/);
+    assert.doesNotMatch(textContent(root), /ft \/ cell/);
+  } else assert.match(textContent(root), /5 ft \/ cell/);
+  assert.match(textContent(root), /no tactical grid or encounter is rendered/);
+  const content = calls.find((call) => call.url.endsWith(reference.content_path));
+  assert.equal(content?.url, `${API_BASE}/api/v1/worlds/${privateWorld.world_id}${reference.content_path}`);
+  assert.equal(new Headers(content?.init.headers).get("authorization"), `Bearer ${WORLD_BEARER}`);
+  const objectUrl = preview.props.src;
+  await click(root, "Return to worlds");
+  assert.ok(revoked.includes(objectUrl));
+  assert.equal(root.findAllByType("img").length, 0);
+});
+}
+
+test("mounted administrator logout clears an active workspace and aborts all private requests", async (context) => {
+  const { root, calls } = await mountGate(context, authenticatedHandler((call) => {
+    if (call.path === "/worlds") return json(preparationDashboard());
+    if (call.path.endsWith("/launch")) return json(worldLaunch());
+    if (call.path === "/logout") return new Response(null, { status: 204 });
+    return emptyWorkspace(call);
+  }));
+  await login(root);
+  await click(root, /Prepare & open/);
+  await click(root, "Log out");
+  assert.equal(root.findAllByProps({ "aria-label": "Administrator login" }).length, 1);
+  assert.doesNotMatch(textContent(root), /Private Moonlit Archive|Scene library/);
+  assert.ok(calls.filter((call) => call.path.startsWith("/workspace")).every((call) => call.init.signal?.aborted));
+  const logout = calls.find((call) => call.path === "/logout");
+  assert.equal(new Headers(logout?.init.headers).get("authorization"), `Bearer ${BEARER}`);
+});
 
 test("mounted discovery does not invent setup, login, or a catalog before hydration", async (context) => {
   let resolve!: (response: Response) => void;

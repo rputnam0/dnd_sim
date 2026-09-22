@@ -19,7 +19,9 @@ import {
   type WorldCatalogEntry,
   type WorldCommand,
   type WorldDashboard,
+  type WorldLaunch,
 } from "./vtt-installation";
+import { VttWorldWorkspace } from "./vtt-world-workspace";
 
 type Screen =
   | { kind: "loading" | "setup" | "login" | "safe_mode" }
@@ -29,6 +31,7 @@ type Screen =
       admin?: AdminPublic;
     }
   | { kind: "dashboard_loading"; admin: AdminPublic }
+  | { kind: "workspace"; admin: AdminPublic; launch: WorldLaunch }
   | { kind: "dashboard"; admin: AdminPublic; dashboard: WorldDashboard };
 type Credentials = {
   token: string;
@@ -88,6 +91,7 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
   const [archiving, setArchiving] = useState<WorldCatalogEntry | null>(null);
   const [retryCommand, setRetryCommand] = useState<WorldCommand | null>(null);
   const credentials = useRef<Credentials | null>(null);
+  const workspace = useRef<WorldLaunch | null>(null);
   const activeRequest = useRef<RequestGeneration | null>(null);
   const generation = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -119,6 +123,7 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
 
   const clearPrivateState = useCallback(() => {
     credentials.current = null;
+    workspace.current = null;
     setUsername("");
     setDisplayName("");
     setPassword("");
@@ -194,6 +199,7 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
       subscribed = false;
       invalidate();
       credentials.current = null;
+      workspace.current = null;
     };
   }, [discover, invalidate]);
 
@@ -384,6 +390,56 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
     await hydrate(begin());
   };
 
+  const launchWorld = async (entry: WorldCatalogEntry) => {
+    const auth = credentials.current;
+    if (!api || !auth || busy || retryCommand || entry.archived || screen.kind !== "dashboard" || !screen.dashboard.launch_supported) return;
+    const request = begin();
+    setBusy(`launch:${entry.world.world_id}`);
+    setFeedback(null);
+    setEditing(null); setArchiving(null);
+    try {
+      const launch = await api.launch(auth.token, entry.world, request.controller.signal);
+      if (!current(request)) return;
+      workspace.current = launch;
+      setScreen({ kind: "workspace", admin: auth.admin, launch });
+    } catch (error) {
+      if (!current(request)) return;
+      const failure = requestError(error);
+      if (failure.status === 401) { rejectAuthentication(); return; }
+      if (failure.code === "installation_safe_mode") { safeMode(); return; }
+      setFeedback({ message: failure.status === 403 ? "This world is prepared by another administrator. Only its Game Master can open it." : failure.message, error: true });
+    } finally { if (current(request)) setBusy(null); }
+  };
+
+  const returnToWorlds = async () => {
+    const launch = workspace.current;
+    const auth = credentials.current;
+    if (!api || !launch || !auth) return;
+    const request = begin();
+    workspace.current = null;
+    // Unmount private hooks and revoke object URLs before awaiting the server.
+    setScreen({ kind: "dashboard_loading", admin: auth.admin });
+    setBusy("return"); setFeedback(null);
+    let confirmed = true;
+    try { await api.returnWorld(launch.world.world_id, launch.bearer_token, request.controller.signal); }
+    catch { confirmed = false; }
+    if (!current(request)) return;
+    await hydrate(request);
+    if (current(request)) setFeedback({
+      message: confirmed ? "Returned to worlds. The preparation credential has been revoked." : "World closed on this page. Server-side revocation could not be confirmed; the preparation credential will expire automatically.",
+      error: !confirmed,
+    });
+  };
+
+  const worldAccessLost = () => {
+    if (!workspace.current || !credentials.current) return;
+    workspace.current = null;
+    const request = begin();
+    setScreen({ kind: "dashboard_loading", admin: credentials.current.admin });
+    setFeedback({ message: "World access ended or could not be verified. The private workspace has been cleared; open it again from your catalog if access is available.", error: true });
+    void hydrate(request);
+  };
+
   const execute = async (command: WorldCommand) => {
     const auth = credentials.current;
     if (!api || !auth || busy || screen.kind !== "dashboard") return;
@@ -415,7 +471,7 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
             ? "World archived. Its record and data are retained."
             : command.kind === "rename"
               ? "World renamed."
-              : "World created. Workspace provisioning is not available yet.",
+              : result.dashboard.launch_supported ? "World created. Prepare & open it to create an empty workspace." : "World created. Workspace provisioning is not available yet.",
         error: false,
       });
     } catch (error) {
@@ -532,23 +588,24 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
         <div className="vi-world-meta">
           <span>D&amp;D 5E</span>
           <span className="vi-badge">
-            {entry.archived ? "Archived" : "Metadata saved"}
+            {entry.archived ? "Archived" : dashboard?.launch_supported ? "Ready to prepare" : "Metadata saved"}
           </span>
         </div>
         <h3>{entry.world.name}</h3>
         <p>
           {entry.archived
             ? "Archived — retained, cannot launch."
-            : "Workspace provisioning is not available yet"}
+            : dashboard?.launch_supported ? "Your scenes and maps, in their own private workspace." : "Workspace provisioning is not available yet"}
         </p>
         <div className="vi-world-actions">
           <button
             type="button"
             className="vi-button vi-primary"
-            disabled
-            title="Workspace provisioning is not available yet"
+            disabled={entry.archived || locked || !dashboard?.launch_supported}
+            title={dashboard?.launch_supported ? undefined : "Workspace provisioning is not available yet"}
+            onClick={() => launchWorld(entry)}
           >
-            Launch world <span aria-hidden="true">↗</span>
+            {dashboard?.launch_supported ? busy === `launch:${entry.world.world_id}` ? "Preparing…" : "Prepare & open" : "Launch world"} <span aria-hidden="true">↗</span>
           </button>
           {!entry.archived && (
             <>
@@ -624,6 +681,7 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
       </header>
       <main
         id="installation-main"
+        tabIndex={-1}
         className="vi-main"
         aria-busy={
           screen.kind === "loading" || screen.kind === "dashboard_loading"
@@ -674,9 +732,8 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
                 <div>
                   <strong>Built around your world</strong>
                   <p>
-                    Manage world records here. Play stays in the separately
-                    labeled demonstration table until workspace provisioning is
-                    ready.
+                    Create a world, prepare scenes, and bring your own maps.
+                    Combat play remains in the separately labeled demonstration table.
                   </p>
                 </div>
               </div>
@@ -898,8 +955,7 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
                   Worlds worth returning to.
                 </h1>
                 <p>
-                  Keep each adventure in its own world. This catalog manages
-                  metadata; workspaces are not provisioned yet.
+                  {dashboard.launch_supported ? "Keep each adventure in its own world. Open a private preparation workspace for scenes and maps." : "Keep each adventure in its own world. This catalog manages metadata; workspaces are not provisioned yet."}
                 </p>
               </div>
               <div className="vi-catalog-stats">
@@ -1020,10 +1076,9 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
                 <section className="vi-provisioning-note">
                   <span aria-hidden="true">↗</span>
                   <div>
-                    <h2>What comes next</h2>
+                    <h2>{dashboard.launch_supported ? "A world starts with you" : "What comes next"}</h2>
                     <p>
-                      Workspace provisioning is not available yet. Creating a
-                      record does not launch or connect a playable table.
+                      {dashboard.launch_supported ? "The first Prepare & open makes you this world’s initial Game Master and creates an empty workspace. Later openings retain its scenes and maps. Combat and player invitations are not available yet." : "Workspace provisioning is not available yet. Creating a record does not launch or connect a playable table."}
                     </p>
                     <a href="/">Explore the demonstration table →</a>
                   </div>
@@ -1114,6 +1169,15 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
               </section>
             )}
           </>
+        )}
+        {screen.kind === "workspace" && api && (
+          <VttWorldWorkspace
+            key={`${screen.launch.world.world_id}:${screen.launch.bearer_token}`}
+            launch={screen.launch}
+            apiBaseUrl={api.workspaceBaseUrl(screen.launch)}
+            onReturn={returnToWorlds}
+            onAccessLost={worldAccessLost}
+          />
         )}
       </main>
       <footer className="vi-footer">

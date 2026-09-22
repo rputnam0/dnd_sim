@@ -1,4 +1,4 @@
-/* Administration-only design tokens; deliberately leaves the table shell alone.
+/* Standalone design tokens; deliberately leaves the demonstration table alone.
  * 8px spacing, 24px surface insets/corners, established Geist plus editorial serif.
  */
 .vi-app {
@@ -20,6 +20,99 @@
   background:
     radial-gradient(ellipse at 2% 35%, rgb(31 95 76 / 16%), transparent 55%),
     #061410;
+}
+
+/* Preparation workspace: inherited Geist/serif, 8px rhythm, 24px surfaces.
+ * The map itself is raw media, never an invented board or encounter. */
+.vw-workspace { display: grid; gap: 32px; }
+.vw-heading { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.vw-heading h1 { font: 400 40px/1.2 var(--vi-serif); overflow-wrap: anywhere; margin: 8px 0; }
+.vw-heading > div > p:last-child { color: var(--vi-muted); }
+.vw-heading > button { flex-shrink: 0; }
+.vw-stage-layout { display: grid; grid-template-columns: minmax(0, 1fr) 304px; gap: 24px; align-items: start; }
+.vw-stage, .vw-note-card, .vw-tools .scene-panel { border: 1px solid var(--vi-border); border-radius: 24px; padding: 24px; background: var(--vi-surface); min-width: 0; }
+.vw-stage { overflow: hidden; background: radial-gradient(ellipse at 50% 40%, rgb(64 128 104 / 13%), transparent 70%), var(--vi-surface); }
+.vw-stage-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.vw-empty-stage { min-height: 424px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; text-align: center; padding: 32px 0; }
+.vw-empty-stage h2, .vw-map-placeholder h2 { font: 400 32px/1.25 var(--vi-serif); max-width: 440px; }
+.vw-empty-stage > p:not(.vi-eyebrow), .vw-map-placeholder p { color: var(--vi-muted); max-width: 408px; font-size: 14px; }
+.vw-compass { display: grid; place-items: center; width: 80px; height: 80px; border: 1px solid var(--vi-border); border-radius: 24px; color: var(--vi-mint); font: 400 48px/1 var(--vi-serif); background: rgb(142 224 189 / 4%); }
+.vw-preparation-notes { display: grid; gap: 24px; min-width: 0; }
+.vw-note-card h2 { font: 400 24px/1.25 var(--vi-serif); margin-top: 8px; }
+.vw-note-card dl { margin: 24px 0 0; display: grid; gap: 16px; }
+.vw-note-card dl > div { display: flex; justify-content: space-between; gap: 16px; }
+.vw-note-card dt { color: var(--vi-muted); }
+.vw-note-card dd { margin: 0; }
+.vw-next-steps ol { display: grid; gap: 24px; padding: 0; list-style: none; margin: 24px 0 0; }
+.vw-next-steps li { display: flex; gap: 16px; }
+.vw-next-steps li > span { color: var(--vi-mint); }
+.vw-next-steps strong { font-weight: 600; }
+.vw-next-steps p { color: var(--vi-muted); margin-top: 8px; }
+.vw-scope-note { color: var(--vi-muted); font-size: 12px; }
+.vw-map-frame { display: grid; place-items: center; width: 100%; min-width: 0; aspect-ratio: var(--map-aspect, 16 / 9); min-height: 264px; max-height: 600px; overflow: hidden; border: 1px solid var(--vi-border); border-radius: 24px; margin-top: 24px; background: #061410; }
+.vw-map-frame img { display: block; width: 100%; min-width: 0; max-width: 100%; height: 100%; max-height: 600px; object-fit: contain; }
+.vw-map-placeholder { padding: 24px; display: grid; justify-items: center; gap: 16px; text-align: center; }
+.vw-map-placeholder > span { color: var(--vi-mint); font-size: 32px; }
+.vw-map-placeholder a { color: var(--vi-mint); }
+.vw-map-caption { display: grid; gap: 8px; padding-top: 24px; }
+.vw-map-caption strong { font: 400 24px/1.25 var(--vi-serif); overflow-wrap: anywhere; }
+.vw-map-caption span, .vw-map-caption small { color: var(--vi-muted); font-size: 12px; }
+.vw-tools { --ink: #fffaf0; --ink-soft: #aac4bb; --ink-faint: #aac4bb; scroll-margin-top: 24px; min-width: 0; }
+.vw-tools .scene-panel { width: 100%; color: #fffaf0; box-shadow: none; }
+.vw-tools .scene-panel h2 { font: 400 24px/1.25 var(--vi-serif); }
+.vw-tools .scene-heading { gap: 24px; padding: 0 0 24px; margin-bottom: 24px; border-color: var(--vi-border); }
+.vw-tools .eyebrow, .vw-tools .scene-status, .vw-tools .scene-active-card > span, .vw-tools .scene-active-card > small { color: var(--vi-muted); font-family: inherit; font-size: 12px; }
+.vw-tools .scene-active-card, .vw-tools .scene-archive-confirm { padding: 24px; border-radius: 24px; border-color: var(--vi-border); background: var(--vi-surface-raised); }
+.vw-tools .scene-active-card { display: flex; flex-wrap: wrap; align-items: baseline; gap: 16px; margin-top: 24px; }
+.vw-tools .scene-active-card strong { font-size: 24px; font-weight: 400; font-family: var(--vi-serif); overflow-wrap: anywhere; }
+.vw-tools .scene-active-card small { flex: 1 1 100%; }
+.vw-tools .scene-empty, .vw-tools .scene-readonly-note { font-size: 14px; }
+.vw-tools .scene-admin-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
+.vw-tools .scene-create-form, .vw-tools .scene-import-box { display: flex; flex-direction: column; align-items: stretch; gap: 16px; padding: 24px; border: 1px solid var(--vi-border); border-radius: 24px; background: var(--vi-surface-raised); min-width: 0; }
+.vw-tools .scene-create-form h3, .vw-tools .scene-import-box h3 { font: 400 24px/1.25 var(--vi-serif); }
+.vw-tools .scene-create-form label { color: var(--vi-muted); font-size: 14px; font-weight: 600; gap: 8px; }
+.vw-tools .scene-create-form input:not([type="checkbox"]), .vw-tools .scene-create-form select, .vw-tools .scene-archive-confirm select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; margin-top: 8px; padding: 8px 16px; border: 1px solid var(--vi-border); border-radius: 24px; color: #fffaf0; background: #071a15; font: inherit; }
+.vw-tools .scene-create-form input[type="file"] { padding: 8px; font-size: 12px; }
+.vw-tools .scene-create-form input:focus-visible, .vw-tools select:focus-visible, .vw-tools button:focus-visible, .vw-workspace a:focus-visible { outline: 3px solid var(--vi-mint); outline-offset: 3px; }
+.vw-tools .scene-create-form .button, .vw-tools .scene-import-box .button { margin-top: auto; min-height: 40px; border-radius: 24px; font: inherit; }
+.vw-tools .button-primary { background: var(--vi-mint); color: #08291d; border-color: var(--vi-mint); }
+.vw-tools .button-secondary { background: transparent; color: #fffaf0; border-color: var(--vi-border); }
+.vw-tools .scene-number-grid { gap: 16px; }
+.vw-tools .scene-import-box { grid-column: 1 / -1; }
+.vw-tools .scene-import-box > p { color: var(--vi-muted); font-size: 14px; }
+.vw-tools .scene-import-box .button { align-self: flex-start; }
+.vw-tools .scene-list { gap: 16px; margin-top: 24px; }
+.vw-tools .scene-list > li { padding: 24px; gap: 24px; border-radius: 24px; border-color: var(--vi-border); background: #071a15; }
+.vw-tools .scene-list > li > div:first-child { min-width: 0; overflow-wrap: anywhere; gap: 8px; }
+.vw-tools .scene-list strong { font-size: 14px; font-weight: 600; }
+.vw-tools .scene-list span { font-family: inherit; font-size: 12px; }
+.vw-tools .scene-row-actions { gap: 8px; flex-wrap: wrap; }
+.vw-tools .scene-row-actions button, .vw-tools .scene-error button { min-height: 40px; border-radius: 24px; padding: 8px 16px; color: var(--vi-mint); border-color: var(--vi-border); font-size: 14px; font-weight: 600; }
+.vw-tools .scene-row-actions button:disabled { color: var(--vi-muted); opacity: .55; }
+.vw-tools .scene-archive-confirm { gap: 24px; margin-top: 24px; }
+.vw-tools .scene-archive-confirm h3 { font: 400 24px/1.25 var(--vi-serif); color: #fffaf0; }
+.vw-tools .scene-archive-confirm p, .vw-tools .scene-archive-confirm label { font-size: 14px; }
+.vw-tools .scene-archive-confirm p { margin-top: 8px; }
+.vw-tools .scene-archive-confirm label { gap: 8px; font-weight: 600; }
+.vw-tools .scene-archive-actions { gap: 8px; flex-wrap: wrap; }
+.vw-tools .scene-archive-actions .button { border-radius: 24px; min-height: 40px; padding: 8px 16px; }
+.vw-tools .scene-error { color: var(--vi-coral); background: var(--vi-surface-raised); padding: 24px; border-radius: 24px; margin-top: 24px; gap: 16px; font-size: 14px; }
+@media (max-width: 1100px) {
+  .vw-stage-layout { grid-template-columns: minmax(0, 1fr); }
+  .vw-preparation-notes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vw-scope-note { grid-column: 1 / -1; }
+  .vw-tools .scene-admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+  .vw-heading { flex-direction: column; align-items: flex-start; }
+  .vw-heading h1 { font-size: 32px; }
+  .vw-preparation-notes, .vw-tools .scene-admin-grid { grid-template-columns: minmax(0, 1fr); }
+  .vw-empty-stage { min-height: 360px; }
+  .vw-tools .scene-list > li { flex-direction: column; align-items: flex-start; }
+  .vw-tools .scene-number-grid { grid-template-columns: minmax(0, 1fr); }
+  .vw-map-frame { min-height: 240px; }
+  .vw-tools .scene-heading { flex-wrap: wrap; }
+  .vw-tools .scene-archive-confirm { grid-template-columns: minmax(0, 1fr); }
 }
 .vi-app h1,
 .vi-app h2,
