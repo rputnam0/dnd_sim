@@ -146,6 +146,7 @@ loads only the versioned party JSON, avoiding local SQLite character overrides.
 ```sh
 uv run python -m dnd_sim.benchmarks.level_five --trials 1000 --seed 20261002
 uv run python scripts/benchmarks/plot_level_five.py artifacts/benchmarks/level_five/summary.json
+uv run python scripts/benchmarks/audit_level_five.py artifacts/benchmarks/level_five/summary.json
 uv run python -m dnd_sim.benchmarks.level_five --trials 20 --scenario 04_cinder_sentinel --output /tmp/dnd-l5-check
 uv run python -m dnd_sim.benchmarks.level_five --replay-sample artifacts/benchmarks/level_five/samples/01_raider_patrol__typical__0.json.gz
 uv run python -m pytest tests/test_level_five_rules.py tests/test_benchmark_tactics.py tests/test_benchmark_trials.py tests/test_benchmark_report.py

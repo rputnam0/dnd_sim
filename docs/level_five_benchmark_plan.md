@@ -59,4 +59,8 @@ deprecation warnings); Black and diff whitespace checks passed. Fixed final desi
 The first sweep was interrupted and excluded after transcript review found a
 same-weapon pairing in the rogue planner. That guard is fixed. Serial/parallel
 equivalence passes; the corrected sweep uses four processes with unchanged fixed
-sample sizes and seeds. Artifact inspection and PR delivery remain pending.
+sample sizes and seeds. Corrected sweep complete: 24,000 trials, 24 groups, zero errors/timeouts.
+All 38 saved samples replay exactly; 2,851 source fingerprints and every compact
+trial count/HP/resource bound passed audit. The 121-test mechanic gate, report
+figure inspection, Black, program-doc and supported-capability gates passed.
+PR delivery remains pending.
