@@ -45,6 +45,13 @@ confidence intervals, and replayable dice. Read the
 uv run python -m dnd_sim.benchmarks.level_five --trials 1000 --seed 20261002
 ```
 
+## The Lantern Below adventure
+
+Play an original adventure with a premade party, branching dialogue, exploration,
+shared-engine tactical combat, loot, rest, and automatic saving. See the
+[local play instructions](docs/lantern_adventure.md) for the adventure backend and
+the existing tabletop's `/adventure` route.
+
 ## Tests
 
 ```bash

@@ -77,6 +77,11 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 - Use `docs/program/capability_report.md` for current capability truth and
   `docs/program/status_board.md` for historical program/merge state.
 
+## Playable adventure
+
+- ADV-01 tracks [The Lantern Below delivery checklist](../lantern_adventure_plan.md),
+  an original local adventure built on the shared deterministic engine and tabletop.
+
 ## Active implementation milestone
 
 - Wave 8 is merged historical program state; it does not establish behavioral rules parity.

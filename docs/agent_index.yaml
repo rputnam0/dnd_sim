@@ -1,4 +1,25 @@
 subsystems:
+  lantern_adventure:
+    owner_pool: adventure_runtime
+    owner_task: ADV-01
+    owner_module: src/dnd_sim/adventure/*.py
+    invariants:
+      - "Adventure and combat use one session, RNG, revision, and durable command history."
+      - "Player choices are validated against authoritative phase and location."
+      - "Party health/resources have one canonical owner, including during encounters."
+    safe_edit_boundaries:
+      - "Safe: versioned authored adventure content and bounded original encounters."
+      - "Caution: state codec or content changes require persistence compatibility evidence."
+  adventure_gateway:
+    owner_pool: adventure_runtime
+    owner_task: ADV-01
+    owner_module: src/dnd_sim/vtt/adventure_app.py
+    invariants:
+      - "Local commands use atomic VTT persistence, exact retries, and revision checks."
+      - "Public reads exclude canonical snapshots and future random outcomes."
+    safe_edit_boundaries:
+      - "Safe: local player projection and explicit-origin HTTP routes."
+      - "Caution: multiplayer or remote hosting requires a separate authorization boundary."
   encounter_benchmarks:
     owner_pool: simulation_validation
     owner_task: L5-01

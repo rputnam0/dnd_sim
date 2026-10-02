@@ -800,6 +800,7 @@ function InitiativePanel({
 }
 
 export function TacticalMap({
+  playerMode = false,
   scene,
   mapMetadata,
   mapUrl,
@@ -866,6 +867,7 @@ export function TacticalMap({
   onClearLocal,
   onAnnotationRetry,
 }: {
+  playerMode?: boolean;
   scene: SquareGridScene;
   mapMetadata: SceneMapMetadata;
   mapUrl: string | null;
@@ -1161,7 +1163,7 @@ export function TacticalMap({
           <p className="eyebrow">Tactical surface</p>
           <h2 id="map-title">{mapMetadata?.name ?? scene.name}</h2>
         </div>
-        <div className="map-toolbar-tools">
+        {!playerMode ? <div className="map-toolbar-tools">
           <div className="map-readouts" aria-label="Map measurements">
             <span>{mapWidthPx} × {mapHeightPx}px</span>
             <span>{calibration.topology.replace("_", "-")}</span>
@@ -1602,7 +1604,7 @@ export function TacticalMap({
           {annotationError ? (
             <p className="annotation-error" role="alert">{annotationError}</p>
           ) : null}
-        </div>
+        </div> : <p className="eyebrow">{scene.cell_size_ft} ft per square</p>}
       </div>
 
       <div className="map-frame">
@@ -1965,7 +1967,7 @@ export function TacticalMap({
             ? "Measure mode · local presentation only"
             : movementPlan
               ? `Plan ${cellLabel(movementPlan.destination)} · ${movementPlan.distanceFt} ft`
-              : "Authoritative positions · engine feet"}
+              : playerMode ? projection.phase === "awaiting_declaration" ? "Choose a highlighted square to plan movement" : "Travel using the adventure choices below" : "Authoritative positions · engine feet"}
         </p>
       </div>
     </section>
