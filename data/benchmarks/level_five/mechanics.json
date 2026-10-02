@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "rules_url": "https://media.wizards.com/2023/downloads/dnd/SRD_CC_v5.1.pdf",
+  "mechanics": [
+    {
+      "id": "party_loadouts",
+      "claim": "Level 5, HP/AC/ability modifiers, weapon dice, explicit spells and slot caps",
+      "source": "SRD5.1 classes and equipment; deliberately bounded generated loadouts",
+      "tests": [
+        "tests/test_level_five_content.py"
+      ]
+    },
+    {
+      "id": "attacks",
+      "claim": "Attack bonus vs AC; natural 1/20; critical dice; weapon damage; separate multiattack rolls",
+      "source": "SRD5.1 pp94-97",
+      "tests": [
+        "tests/test_level_five_rules.py::test_binomial_hit_probability_matches_all_twenty_possible_faces",
+        "tests/test_level_five_rules.py::test_fire_bolt_level_five_and_critical_double_dice_without_doubling_modifiers",
+        "tests/test_rules_2014.py::test_crit_packet_doubles_damage_dice_but_not_static_modifier"
+      ]
+    },
+    {
+      "id": "fighter",
+      "claim": "Two attacks; four with one Action Surge; Second Wind d10+5 and bonus cost",
+      "source": "SRD5.1 pp24-25",
+      "tests": [
+        "tests/test_level_five_rules.py::test_level_five_extra_attack_surge_and_second_wind_exact_arithmetic",
+        "tests/test_fighter_mechanics.py::test_action_surge_is_illegal_outside_fighters_turn_token"
+      ]
+    },
+    {
+      "id": "rogue",
+      "claim": "Sneak Attack3d6 once per turn; off-hand omits positive ability modifier; Uncanny Dodge one reaction halves one hit",
+      "source": "SRD5.1 pp39-40,95",
+      "tests": [
+        "tests/test_level_five_rules.py::test_level_five_sneak_attack_is_three_d6_once_across_both_weapons",
+        "tests/test_level_five_rules.py::test_generated_rogue_uncanny_dodge_halves_only_one_attack_per_reaction",
+        "tests/test_engine_integration.py::test_sneak_attack_applies_on_rogue_turn_and_opportunity_attack_enemy_turn",
+        "tests/test_martial_mechanics.py::test_two_weapon_offhand_requires_attack_action_before_bonus_use",
+        "tests/test_engine_state_invariants.py::test_uncanny_dodge_requires_attacker_to_be_seen"
+      ]
+    },
+    {
+      "id": "cleric_spells",
+      "claim": "Sacred Flame2d8 ignores Dex cover; Healing Word Nd4+4 and Cure Wounds Nd8+4 with correct slots/healing caps",
+      "source": "SRD5.1 pp132,153,176",
+      "tests": [
+        "tests/test_level_five_rules.py::test_sacred_flame_ignores_half_cover_and_deals_nothing_on_success",
+        "tests/test_level_five_rules.py::test_healing_word_upcast_rescues_zero_hp_ally_with_exact_slot_and_amount",
+        "tests/test_level_five_rules.py::test_cure_wounds_healing_is_capped_and_higher_slots_add_d8"
+      ]
+    },
+    {
+      "id": "wizard_spells",
+      "claim": "Fire Bolt2d10, Scorching Ray3 attacks, Fireball8d6 radius20 affects friends and caster, Shield+5 until next turn",
+      "source": "SRD5.1 pp144,176,179",
+      "tests": [
+        "tests/test_level_five_rules.py::test_fire_bolt_level_five_and_critical_double_dice_without_doubling_modifiers",
+        "tests/test_level_five_rules.py::test_scorching_ray_rolls_three_separate_attacks_and_spends_one_second_level_slot",
+        "tests/test_level_five_rules.py::test_fireball_uses_one_damage_roll_and_includes_allies_and_caster_in_sphere",
+        "tests/test_level_five_rules.py::test_generated_wizard_shield_spends_one_reaction_and_slot_for_two_attacks",
+        "tests/test_reactions.py::test_shield_bonus_ends_at_start_of_caster_next_turn"
+      ]
+    },
+    {
+      "id": "boss",
+      "claim": "Homebrew multiattack and fire sphere; save halves then resistance floors; recharge5-6",
+      "source": "Original monster definitions; SRD5.1 pp97,259 for shared resolution",
+      "tests": [
+        "tests/test_level_five_rules.py::test_cinder_sentinel_resists_fire_and_successful_save_halves_again",
+        "tests/test_level_five_rules.py::test_cinder_burst_recharges_only_on_five_or_six",
+        "tests/test_level_five_rules.py::test_cinder_burst_hits_multiple_creatures_and_spends_recharge"
+      ]
+    },
+    {
+      "id": "spell_economy",
+      "claim": "Slots consumed once; bonus spell restricts action to cantrip; legal off-turn reactions",
+      "source": "SRD5.1 pp101-102",
+      "tests": [
+        "tests/test_spellcasting.py::test_bonus_action_spell_plus_leveled_action_spell_is_illegal",
+        "tests/test_spellcasting.py::test_bonus_action_spell_plus_action_cantrip_is_legal",
+        "tests/test_spellcasting_core_fnd05.py::test_bonus_action_spell_blocks_same_turn_shield_reaction_when_illegal",
+        "tests/test_spellcasting_core_fnd05.py::test_off_turn_shield_after_bonus_action_spell_is_legal"
+      ]
+    },
+    {
+      "id": "spatial",
+      "claim": "Five-foot grid, movement budgets, standing costs half speed, reach, cover, ranged disadvantage, spheres",
+      "source": "SRD5.1 pp91-96,102-105; fixed grid approximation",
+      "tests": [
+        "tests/test_movement_runtime.py::test_prepare_voluntary_movement_spends_prone_stand_cost",
+        "tests/test_range_and_reach.py",
+        "tests/test_cover_rules.py",
+        "tests/test_aoe_geometry.py",
+        "tests/test_opportunity_attacks.py"
+      ]
+    },
+    {
+      "id": "turns",
+      "claim": "Dodge duration/disadvantage; initiative Dex bonus; complete legal declaration and primary-kill bonus cancellation",
+      "source": "SRD5.1 pp90-95; engine rolls extra Dex tie-break each actor",
+      "tests": [
+        "tests/test_level_five_rules.py::test_dodge_disadvantage_persists_until_next_turn_start",
+        "tests/test_level_five_rules.py::test_initiative_uses_dexterity_and_documents_engine_tie_roll",
+        "tests/test_benchmark_tactics.py",
+        "tests/test_interactive_dnd_turn_driver.py::test_invalid_late_bonus_rolls_back_real_dnd_state_and_rng"
+      ]
+    },
+    {
+      "id": "death",
+      "claim": "Zero HP, unconsciousness, death save thresholds, stabilization, massive damage, healing recovery and early defeat stop",
+      "source": "SRD5.1 pp97-99",
+      "tests": [
+        "tests/test_level_five_rules.py::test_generated_party_death_save_boundaries",
+        "tests/test_death_and_dying.py",
+        "tests/test_terminal_outcomes.py",
+        "tests/test_level_five_rules.py::test_area_damage_includes_unconscious_creatures_and_causes_death_failure"
+      ]
+    },
+    {
+      "id": "attrition",
+      "claim": "HP and resources persist between waves without rests",
+      "source": "Scenario contract; SRD5.1 pp87-88 rest rules",
+      "tests": [
+        "tests/test_adventuring_day_flow.py::test_resource_carryover_persists_when_no_rest_is_applied"
+      ]
+    },
+    {
+      "id": "statistics",
+      "claim": "Independent seeds, observational roll capture, Wilson confidence intervals, replay and censoring",
+      "source": "NIST proportion intervals; benchmark v1 design",
+      "tests": [
+        "tests/test_benchmark_trials.py",
+        "tests/test_benchmark_report.py"
+      ]
+    }
+  ],
+  "allowed_actions": {
+    "fighter": {
+      "basic": "attacks",
+      "attack_1": "attacks",
+      "attack_2": "attacks",
+      "dodge": "turns",
+      "signature": "fighter",
+      "action_surge": "fighter",
+      "second_wind": "fighter"
+    },
+    "rogue": {
+      "basic": "attacks",
+      "attack_1": "attacks",
+      "attack_2": "attacks",
+      "attack_3": "attacks",
+      "dodge": "turns",
+      "signature": "rogue",
+      "off_hand_attack": "rogue"
+    },
+    "cleric": {
+      "basic": "attacks",
+      "attack_1": "attacks",
+      "dodge": "turns",
+      "Sacred Flame": "cleric_spells",
+      "Healing Word": "cleric_spells",
+      "Healing Word (slot 2)": "cleric_spells",
+      "Healing Word (slot 3)": "cleric_spells",
+      "Cure Wounds": "cleric_spells",
+      "Cure Wounds (slot 2)": "cleric_spells",
+      "Cure Wounds (slot 3)": "cleric_spells"
+    },
+    "wizard": {
+      "basic": "attacks",
+      "attack_1": "attacks",
+      "dodge": "turns",
+      "Fire Bolt": "wizard_spells",
+      "Scorching Ray": "wizard_spells",
+      "Fireball": "wizard_spells",
+      "Shield": "wizard_spells"
+    },
+    "enemy": {
+      "basic": "attacks",
+      "dodge": "turns",
+      "Cinder Burst": "boss"
+    }
+  }
+}

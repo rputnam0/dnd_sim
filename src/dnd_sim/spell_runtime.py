@@ -129,7 +129,10 @@ def resolve_action_targets(
         obstacles=obstacles,
         spell_cast_request=spell_cast_request,
     )
-    if requested:
+    # An area declaration selects an anchor; the template resolver owns its
+    # complete victim set, including allies. Only direct targeting is restricted
+    # to the explicitly selected actors.
+    if requested and not action.aoe_type:
         requested_ids = {target.actor_id for target in requested}
         resolved_targets = [
             target for target in resolved_targets if target.actor_id in requested_ids

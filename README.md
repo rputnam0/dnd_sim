@@ -34,6 +34,17 @@ selection, non-mutating preview, durable commit/restart, and reconnectable publi
 See [`docs/vtt_solo_table.md`](docs/vtt_solo_table.md) for the two-process local setup and play
 loop.
 
+## Level-five encounter validation
+
+The [level-five benchmark](docs/level_five_benchmark.md) supplies a bounded fighter,
+rogue, cleric, and wizard party, eight encounters, verified tactical turns, difficulty
+confidence intervals, and replayable dice. Read the
+[difficulty report](artifacts/benchmarks/level_five/report.md) or run:
+
+```bash
+uv run python -m dnd_sim.benchmarks.level_five --trials 1000 --seed 20261002
+```
+
 ## Tests
 
 ```bash

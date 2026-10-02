@@ -58,6 +58,10 @@ This file is the single canonical planning entrypoint for the DnD Sim completion
 
 ## Current Backend Snapshot
 
+- L5-01 adds a bounded [level-five combat validation milestone](../level_five_benchmark.md)
+  and [delivery checklist](../level_five_benchmark_plan.md). Its behavioral evidence and
+  difficulty reports apply to the declared loadouts, not blanket catalog parity.
+
 - The 2014 catalog contains `2674` capability records, but catalog coverage is not equivalent to
   behavioral rules parity.
 - The current capability report exposes `191` actionless monster stat shells as blocked and no

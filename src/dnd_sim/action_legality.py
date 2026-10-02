@@ -33,6 +33,36 @@ class TurnDeclarationValidationError(ValueError):
         super().__init__(f"{code} [{actor_id}:{field}] {message}")
 
 
+def pending_bonus_attack_targets(
+    actor: ActorRuntimeState,
+    declaration: TurnDeclaration,
+    actors: dict[str, ActorRuntimeState],
+    filter_in_range: Callable[[ActionDefinition, list[ActorRuntimeState]], list[ActorRuntimeState]],
+) -> tuple[ActionDefinition | None, list[ActorRuntimeState]]:
+    """Remember valid live targets so a primary kill can cancel its planned follow-up.
+
+    Unknown actions, invalid targets, and initial range errors retain the normal
+    strict validation path. Resources and bonus prerequisites are checked by the
+    caller after resolving the primary action.
+    """
+    bonus = declaration.bonus_action
+    if (
+        bonus is None
+        or not bonus.targets
+        or bonus.spell_slot_level is not None
+        or bonus.resource_spend.amounts
+    ):
+        return None, []
+    action = next((a for a in actor.actions if a.name == bonus.action_name), None)
+    if action is None or action.action_cost != "bonus" or action.action_type != "attack":
+        return None, []
+    targets = [actors.get(ref.actor_id) for ref in bonus.targets]
+    if any(t is None or t.dead or t.hp <= 0 or t.team == actor.team for t in targets):
+        return None, []
+    valid = filter_in_range(action, targets)
+    return (action, valid) if len(valid) == len(targets) else (None, [])
+
+
 @dataclass(frozen=True, slots=True)
 class CombatActionChoice:
     """One declaration-compatible action and its authoritative target choices."""

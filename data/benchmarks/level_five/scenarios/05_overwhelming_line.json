@@ -1,0 +1,87 @@
+{
+  "scenario_id": "05_overwhelming_line",
+  "encounter_id": "level_five_benchmark",
+  "ruleset": "5e-2014",
+  "character_db_dir": "repo:data/benchmarks/level_five/characters",
+  "party": [
+    "fighter",
+    "rogue",
+    "cleric",
+    "wizard"
+  ],
+  "enemies": [
+    "veteran_1",
+    "veteran_2",
+    "veteran_3",
+    "veteran_4",
+    "veteran_5",
+    "veteran_6"
+  ],
+  "initiative_mode": "individual",
+  "battlefield": {
+    "description": "Overwhelming veteran line",
+    "starting_positions": {
+      "fighter": [
+        0,
+        0,
+        0
+      ],
+      "rogue": [
+        10,
+        0,
+        0
+      ],
+      "cleric": [
+        0,
+        -15,
+        0
+      ],
+      "wizard": [
+        15,
+        -20,
+        0
+      ],
+      "veteran_1": [
+        -20,
+        30,
+        0
+      ],
+      "veteran_2": [
+        0,
+        30,
+        0
+      ],
+      "veteran_3": [
+        20,
+        30,
+        0
+      ],
+      "veteran_4": [
+        40,
+        30,
+        0
+      ],
+      "veteran_5": [
+        -10,
+        45,
+        0
+      ],
+      "veteran_6": [
+        30,
+        45,
+        0
+      ]
+    },
+    "obstacles": []
+  },
+  "termination_rules": {
+    "party_defeat": "all_unconscious_or_dead",
+    "enemy_defeat": "all_dead",
+    "max_rounds": 30
+  },
+  "resource_policy": {},
+  "assumption_overrides": {
+    "party_strategy": "benchmark",
+    "enemy_strategy": "benchmark"
+  }
+}

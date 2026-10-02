@@ -1,0 +1,57 @@
+{
+  "scenario_id": "04_cinder_sentinel",
+  "encounter_id": "level_five_benchmark",
+  "ruleset": "5e-2014",
+  "character_db_dir": "repo:data/benchmarks/level_five/characters",
+  "party": [
+    "fighter",
+    "rogue",
+    "cleric",
+    "wizard"
+  ],
+  "enemies": [
+    "cinder_sentinel"
+  ],
+  "initiative_mode": "individual",
+  "battlefield": {
+    "description": "Cinder sentinel",
+    "starting_positions": {
+      "fighter": [
+        0,
+        0,
+        0
+      ],
+      "rogue": [
+        10,
+        0,
+        0
+      ],
+      "cleric": [
+        0,
+        -15,
+        0
+      ],
+      "wizard": [
+        15,
+        -20,
+        0
+      ],
+      "cinder_sentinel": [
+        10,
+        35,
+        0
+      ]
+    },
+    "obstacles": []
+  },
+  "termination_rules": {
+    "party_defeat": "all_unconscious_or_dead",
+    "enemy_defeat": "all_dead",
+    "max_rounds": 30
+  },
+  "resource_policy": {},
+  "assumption_overrides": {
+    "party_strategy": "benchmark",
+    "enemy_strategy": "benchmark"
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "character_id": "cleric",
+  "name": "Iona Vale \u2014 Cleric 5",
+  "class_levels": {
+    "cleric": 5
+  },
+  "max_hp": 38,
+  "ac": 18,
+  "speed_ft": 30,
+  "ability_scores": {
+    "str": 14,
+    "dex": 10,
+    "con": 14,
+    "int": 10,
+    "wis": 18,
+    "cha": 12
+  },
+  "save_mods": {
+    "str": 2,
+    "dex": 0,
+    "con": 2,
+    "int": 0,
+    "wis": 7,
+    "cha": 4
+  },
+  "skill_mods": {},
+  "attacks": [
+    {
+      "name": "Mace",
+      "weapon_id": "mace",
+      "attack_profile_id": "mace",
+      "damage": "1d6+2",
+      "to_hit": 5,
+      "damage_type": "bludgeoning",
+      "weapon_properties": [],
+      "reach_ft": 5
+    }
+  ],
+  "traits": [],
+  "spells": [
+    {
+      "name": "Sacred Flame",
+      "level": 0,
+      "action_type": "save",
+      "damage": "1d8",
+      "damage_type": "radiant",
+      "save_dc": 15,
+      "save_ability": "dex",
+      "half_on_save": false,
+      "range_ft": 60,
+      "tags": [
+        "ignore_dex_save_cover"
+      ]
+    },
+    {
+      "name": "Healing Word",
+      "level": 1,
+      "action_type": "utility",
+      "damage": null,
+      "healing": "1d4+4",
+      "action_cost": "bonus",
+      "range_ft": 60,
+      "target_mode": "single_ally",
+      "include_self": true
+    },
+    {
+      "name": "Cure Wounds",
+      "level": 1,
+      "action_type": "utility",
+      "damage": null,
+      "healing": "1d8+4",
+      "action_cost": "action",
+      "range_ft": 5,
+      "target_mode": "single_ally",
+      "include_self": true
+    },
+    {
+      "name": "Healing Word (slot 2)",
+      "level": 2,
+      "action_type": "utility",
+      "damage": null,
+      "healing": "2d4+4",
+      "action_cost": "bonus",
+      "range_ft": 60,
+      "target_mode": "single_ally",
+      "include_self": true
+    },
+    {
+      "name": "Cure Wounds (slot 2)",
+      "level": 2,
+      "action_type": "utility",
+      "damage": null,
+      "healing": "2d8+4",
+      "action_cost": "action",
+      "range_ft": 5,
+      "target_mode": "single_ally",
+      "include_self": true
+    },
+    {
+      "name": "Healing Word (slot 3)",
+      "level": 3,
+      "action_type": "utility",
+      "damage": null,
+      "healing": "3d4+4",
+      "action_cost": "bonus",
+      "range_ft": 60,
+      "target_mode": "single_ally",
+      "include_self": true
+    },
+    {
+      "name": "Cure Wounds (slot 3)",
+      "level": 3,
+      "action_type": "utility",
+      "damage": null,
+      "healing": "3d8+4",
+      "action_cost": "action",
+      "range_ft": 5,
+      "target_mode": "single_ally",
+      "include_self": true
+    }
+  ],
+  "resources": {
+    "spell_slots": {
+      "1": 4,
+      "2": 3,
+      "3": 2
+    },
+    "spellcasting_focus": {
+      "max": 1
+    }
+  },
+  "raw_fields": [],
+  "source": {
+    "kind": "original_benchmark",
+    "rules": "SRD 5.1",
+    "scope": "subclass-neutral combat loadout"
+  }
+}

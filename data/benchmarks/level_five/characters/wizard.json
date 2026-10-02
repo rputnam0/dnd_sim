@@ -1,0 +1,107 @@
+{
+  "character_id": "wizard",
+  "name": "Orrin Ash \u2014 Wizard 5",
+  "class_levels": {
+    "wizard": 5
+  },
+  "max_hp": 32,
+  "ac": 12,
+  "speed_ft": 30,
+  "ability_scores": {
+    "str": 8,
+    "dex": 14,
+    "con": 14,
+    "int": 18,
+    "wis": 12,
+    "cha": 10
+  },
+  "save_mods": {
+    "str": -1,
+    "dex": 2,
+    "con": 2,
+    "int": 7,
+    "wis": 4,
+    "cha": 0
+  },
+  "skill_mods": {},
+  "attacks": [
+    {
+      "name": "Dagger",
+      "weapon_id": "dagger",
+      "attack_profile_id": "dagger",
+      "damage": "1d4+2",
+      "to_hit": 5,
+      "damage_type": "piercing",
+      "weapon_properties": [
+        "finesse",
+        "light"
+      ],
+      "reach_ft": 5
+    }
+  ],
+  "traits": [],
+  "spells": [
+    {
+      "name": "Fire Bolt",
+      "level": 0,
+      "action_type": "attack",
+      "damage": "1d10",
+      "damage_type": "fire",
+      "to_hit": 7,
+      "range_ft": 120
+    },
+    {
+      "name": "Scorching Ray",
+      "level": 2,
+      "action_type": "attack",
+      "damage": "2d6",
+      "damage_type": "fire",
+      "to_hit": 7,
+      "attack_count": 3,
+      "range_ft": 120
+    },
+    {
+      "name": "Fireball",
+      "level": 3,
+      "action_type": "save",
+      "damage": "8d6",
+      "damage_type": "fire",
+      "save_dc": 15,
+      "save_ability": "dex",
+      "half_on_save": true,
+      "range_ft": 150,
+      "aoe_type": "sphere",
+      "aoe_size_ft": 20,
+      "target_mode": "single_creature",
+      "include_self": true
+    },
+    {
+      "name": "Shield",
+      "level": 1,
+      "action_type": "utility",
+      "damage": null,
+      "action_cost": "reaction",
+      "range_ft": 0,
+      "target_mode": "self",
+      "tags": [
+        "shield_spell"
+      ]
+    }
+  ],
+  "resources": {
+    "spell_slots": {
+      "1": 4,
+      "2": 3,
+      "3": 2
+    },
+    "spellcasting_focus": {
+      "max": 1
+    }
+  },
+  "raw_fields": [],
+  "source": {
+    "kind": "original_benchmark",
+    "rules": "SRD 5.1",
+    "scope": "subclass-neutral combat loadout"
+  }
+}

@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import hashlib
 import json
+import logging
 import math
 import random
 from typing import Any
@@ -15,6 +16,8 @@ from dnd_sim.engine_runtime import run_simulation_core
 from dnd_sim.io_models import LoadedScenario
 from dnd_sim.models import TrialResult
 from dnd_sim.roll_journal import EngineRollJournalRecorder
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)

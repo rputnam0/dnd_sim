@@ -4649,6 +4649,7 @@ def _build_spell_actions(
             to_hit=int(to_hit) if to_hit is not None else None,
             damage=str(damage) if damage else None,
             damage_type=damage_type,
+            attack_count=max(1, int(spell.get("attack_count", 1))),
             save_dc=int(save_dc) if save_dc is not None else None,
             save_ability=str(save_ability) if save_ability else None,
             half_on_save=half_on_save,
@@ -4661,7 +4662,7 @@ def _build_spell_actions(
             aoe_size_ft=spell.get("aoe_size_ft"),
             max_targets=max_targets,
             concentration=bool(spell.get("concentration", False)),
-            include_self=smite_setup,
+            include_self=smite_setup or bool(spell.get("include_self", False)),
             effects=effects,
             mechanics=mechanics,
             spell=spell_metadata,
@@ -4706,6 +4707,7 @@ def _build_spell_actions(
                         to_hit=int(to_hit) if to_hit is not None else None,
                         damage=upcast_damage,
                         damage_type=damage_type,
+                        attack_count=action.attack_count,
                         save_dc=int(save_dc) if save_dc is not None else None,
                         save_ability=str(save_ability) if save_ability else None,
                         half_on_save=half_on_save,
@@ -4721,7 +4723,7 @@ def _build_spell_actions(
                         aoe_size_ft=spell.get("aoe_size_ft"),
                         max_targets=max_targets,
                         concentration=bool(spell.get("concentration", False)),
-                        include_self=smite_setup,
+                        include_self=action.include_self,
                         effects=list(effects),
                         mechanics=list(mechanics),
                         spell=replace(spell_metadata, scaling=upcast_scaling),
@@ -6716,6 +6718,8 @@ def _build_actor_from_enemy(
                     range_ft=getattr(action, "range_ft", None),
                     range_normal_ft=getattr(action, "range_normal_ft", None),
                     range_long_ft=getattr(action, "range_long_ft", None),
+                    aoe_type=getattr(action, "aoe_type", None),
+                    aoe_size_ft=getattr(action, "aoe_size_ft", None),
                     concentration=action.concentration,
                     include_self=action.include_self,
                     effects=[effect.model_dump() for effect in action.effects],
@@ -8405,7 +8409,8 @@ def _resolve_targets_for_action(
 ) -> list[ActorRuntimeState]:
     mode = action.target_mode
     include_self = action.include_self or mode == "self"
-    include_downed_allies = _action_can_target_downed_allies(action)
+    # Neutral creature-area templates affect living unconscious creatures too.
+    include_downed_allies = _action_can_target_downed_allies(action) or bool(action.aoe_type)
     candidates = _target_pool(
         actor,
         actors,
@@ -9036,6 +9041,16 @@ def _execute_declared_turn_or_error(
                     if declaration.bonus_action is not None
                     else None
                 ),
+                "action_targets": (
+                    [ref.actor_id for ref in declaration.action.targets]
+                    if declaration.action
+                    else []
+                ),
+                "bonus_action_targets": (
+                    [ref.actor_id for ref in declaration.bonus_action.targets]
+                    if declaration.bonus_action
+                    else []
+                ),
                 "reaction_policy": reaction_mode,
                 "ready_trigger": ready_declaration.trigger if ready_declaration else None,
                 "ready_response": (
@@ -9054,6 +9069,21 @@ def _execute_declared_turn_or_error(
     )
 
     executed_primary: tuple[ActionDefinition, list[ActorRuntimeState]] | None = None
+    from dnd_sim.action_legality import pending_bonus_attack_targets
+
+    pending_bonus, pending_targets = pending_bonus_attack_targets(
+        actor,
+        declaration,
+        actors,
+        lambda action, targets: _filter_targets_in_range(
+            actor,
+            action,
+            targets,
+            active_hazards=active_hazards,
+            obstacles=obstacles,
+            light_level=light_level,
+        ),
+    )
     if declaration.action is not None:
         executed_primary = _execute_declared_action_step_or_error(
             rng=rng,
@@ -9097,6 +9127,22 @@ def _execute_declared_turn_or_error(
                 obstacles=obstacles,
                 light_level=light_level,
             )
+    if (
+        executed_primary is not None
+        and pending_targets
+        and all(target.dead or target.hp <= 0 for target in pending_targets)
+        and _action_available(actor, pending_bonus, turn_token=turn_token)
+    ):
+        if telemetry is not None:
+            telemetry.append(
+                {
+                    "telemetry_type": "bonus_action_skipped",
+                    "actor_id": actor.actor_id,
+                    "round": round_number,
+                    "reason": "planned_targets_defeated",
+                }
+            )
+        return
     if declaration.bonus_action is not None and actor.hp > 0 and not actor.dead and _can_act(actor):
         bonus_action, bonus_targets = _execute_declared_action_step_or_error(
             rng=rng,
@@ -10126,7 +10172,9 @@ def _apply_effect(
 
     if effect_type == "damage":
         if action is not None and _is_magic_missile_action(action):
-            if _shield_spell_blocks_magic_missile(target=recipient, turn_token=turn_token):
+            if _shield_spell_blocks_magic_missile(
+                target=recipient, turn_token=turn_token, resources_spent=resources_spent
+            ):
                 return
         is_magical = False
         if action and getattr(action, "tags", None):
@@ -12428,12 +12476,16 @@ def _activate_shield_reaction(
     target: ActorRuntimeState,
     *,
     turn_token: str | None = None,
+    resources_spent: dict[str, dict[str, int]] | None = None,
 ) -> bool:
     context = _shield_reaction_cast_context(target, turn_token=turn_token)
     if context is None:
         return False
     shield_spell_action, slot_key = context
     target.resources[slot_key] -= 1
+    if resources_spent is not None:
+        spent = resources_spent.setdefault(target.actor_id, {})
+        spent[slot_key] = spent.get(slot_key, 0) + 1
     target.reaction_available = False
     _record_spell_cast_for_turn(target, shield_spell_action)
     _apply_condition(
@@ -12458,10 +12510,11 @@ def _shield_spell_blocks_magic_missile(
     *,
     target: ActorRuntimeState,
     turn_token: str | None = None,
+    resources_spent: dict[str, dict[str, int]] | None = None,
 ) -> bool:
     if _shield_spell_ac_bonus(target) > 0:
         return True
-    return _activate_shield_reaction(target, turn_token=turn_token)
+    return _activate_shield_reaction(target, turn_token=turn_token, resources_spent=resources_spent)
 
 
 def _try_shield_reaction(
@@ -12471,6 +12524,7 @@ def _try_shield_reaction(
     *,
     target_ac: int,
     turn_token: str | None = None,
+    resources_spent: dict[str, dict[str, int]] | None = None,
 ) -> bool:
     """Always-use Shield reaction: +5 AC to negate a hit. Consumes reaction + spell slot.
 
@@ -12480,7 +12534,7 @@ def _try_shield_reaction(
         return False
     if roll.total >= (target_ac + _SHIELD_SPELL_AC_BONUS):
         return False
-    return _activate_shield_reaction(target, turn_token=turn_token)
+    return _activate_shield_reaction(target, turn_token=turn_token, resources_spent=resources_spent)
 
 
 def _find_best_bonus_action(actor: ActorRuntimeState) -> ActionDefinition | None:
@@ -13079,6 +13133,7 @@ class _AttackResolutionShieldRule:
             event.roll,
             target_ac=event.target_ac,
             turn_token=event.turn_token,
+            resources_spent=event.resources_spent,
         ):
             event.hook_trace.append(
                 RollHookTrace(
@@ -14658,7 +14713,7 @@ def _execute_action_impl(
                     break
 
         for target in targets:
-            if target.dead or target.hp <= 0:
+            if target.dead or (target.hp <= 0 and not action.aoe_type):
                 continue
             cover_state = check_cover(actor.position, target.position, obstacles)
             if cover_state == "TOTAL" and _action_requires_line_of_effect(action):
@@ -14798,6 +14853,7 @@ def _execute_action_impl(
             if _is_magic_missile_action(action) and _shield_spell_blocks_magic_missile(
                 target=target,
                 turn_token=turn_token,
+                resources_spent=resources_spent,
             ):
                 final_damage = 0
 

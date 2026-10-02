@@ -1,0 +1,16 @@
+{
+  "characters": [
+    {
+      "character_id": "fighter"
+    },
+    {
+      "character_id": "rogue"
+    },
+    {
+      "character_id": "cleric"
+    },
+    {
+      "character_id": "wizard"
+    }
+  ]
+}

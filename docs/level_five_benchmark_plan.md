@@ -49,4 +49,11 @@ Items become checked only after their verification passes and they are in a PR.
 
 Branch: `codex/level-five-encounter-benchmark`, based on
 `codex/vtt-world-preparation-launch` at `fd9e12f`. Initial baseline: 2057 Python
-tests passed. No implementation or validation results claimed yet.
+tests passed. Implemented party, eight encounters, policy profiles, rule evidence,
+independent sampling, Wilson intervals, roll capture and exact replay. Six shared
+runtime defects found through prescribed-dice checks have been repaired.
+
+Pre-sweep validation: 2113 Python tests passed in 23.34s (seven existing seaborn
+deprecation warnings); Black and diff whitespace checks passed. Fixed final design:
+1000 trials per encounter/policy, eight encounters, three policies, seed20261002.
+Final sweep, artifact inspection, and PR delivery remain pending.

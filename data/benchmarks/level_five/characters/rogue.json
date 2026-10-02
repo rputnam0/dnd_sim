@@ -1,0 +1,78 @@
+{
+  "character_id": "rogue",
+  "name": "Kestrel Reed \u2014 Rogue 5",
+  "class_levels": {
+    "rogue": 5
+  },
+  "max_hp": 38,
+  "ac": 16,
+  "speed_ft": 30,
+  "ability_scores": {
+    "str": 10,
+    "dex": 18,
+    "con": 14,
+    "int": 14,
+    "wis": 12,
+    "cha": 10
+  },
+  "save_mods": {
+    "str": 0,
+    "dex": 7,
+    "con": 2,
+    "int": 5,
+    "wis": 1,
+    "cha": 0
+  },
+  "skill_mods": {},
+  "attacks": [
+    {
+      "name": "Shortsword main",
+      "weapon_id": "shortsword_main",
+      "attack_profile_id": "shortsword_main",
+      "damage": "1d6+4",
+      "to_hit": 7,
+      "damage_type": "piercing",
+      "weapon_properties": [
+        "finesse",
+        "light"
+      ],
+      "reach_ft": 5
+    },
+    {
+      "name": "Shortsword off",
+      "weapon_id": "shortsword_off",
+      "attack_profile_id": "shortsword_off",
+      "damage": "1d6+4",
+      "to_hit": 7,
+      "damage_type": "piercing",
+      "weapon_properties": [
+        "finesse",
+        "light"
+      ],
+      "reach_ft": 5
+    },
+    {
+      "name": "Shortbow",
+      "weapon_id": "shortbow",
+      "attack_profile_id": "shortbow",
+      "damage": "1d6+4",
+      "to_hit": 7,
+      "damage_type": "piercing",
+      "weapon_properties": [
+        "ranged",
+        "ammunition"
+      ],
+      "range_normal_ft": 80,
+      "range_long_ft": 320
+    }
+  ],
+  "traits": [],
+  "spells": [],
+  "resources": {},
+  "raw_fields": [],
+  "source": {
+    "kind": "original_benchmark",
+    "rules": "SRD 5.1",
+    "scope": "subclass-neutral combat loadout"
+  }
+}
