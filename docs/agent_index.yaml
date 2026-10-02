@@ -1,4 +1,24 @@
 subsystems:
+  encounter_benchmarks:
+    owner_pool: simulation_validation
+    owner_task: L5-01
+    owner_module: src/dnd_sim/benchmarks/*.py
+    invariants:
+      - "Independent seeded trials preserve shared-engine semantics and fresh policy state."
+      - "Observational roll traces consume no additional randomness; statistical reports separate sampling and model uncertainty."
+    safe_edit_boundaries:
+      - "Safe: bounded benchmark fixtures, evidence, reports, and policy profiles."
+      - "Caution: engine or content changes require regenerated benchmark evidence."
+  encounter_placement:
+    owner_pool: simulation_validation
+    owner_task: L5-01
+    owner_module: src/dnd_sim/encounter_setup.py
+    invariants:
+      - "Explicit positions are finite feet-space coordinates validated before deterministic trace generation."
+      - "Malformed placements raise structured path-specific ValueError diagnostics."
+    safe_edit_boundaries:
+      - "Safe: optional placement validation preserving legacy defaults."
+      - "Caution: changing defaults changes fixed-seed encounters."
   simulation_runtime:
     owner_pool: runtime_a
     owner_task: ARC-01

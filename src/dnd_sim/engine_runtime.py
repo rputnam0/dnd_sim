@@ -7291,6 +7291,7 @@ def _resolve_next_encounter_index(
 def _actor_state_snapshot(actor: ActorRuntimeState) -> dict[str, Any]:
     return {
         "name": actor.name,
+        "position": list(actor.position),
         "hp": actor.hp,
         "max_hp": actor.max_hp,
         "temp_hp": actor.temp_hp,
@@ -15921,11 +15922,12 @@ def run_simulation_core(
     trials: int,
     seed: int,
     run_id: str,
+    rng: random.Random | None = None,
 ) -> SimulationArtifacts:
     if trials <= 0:
         raise ValueError("trials must be >= 1")
 
-    rng = random.Random(seed)
+    rng = rng if rng is not None else random.Random(seed)
     trial_results: list[TrialResult] = []
 
     assumption_overrides = scenario.config.assumption_overrides
@@ -15942,6 +15944,11 @@ def run_simulation_core(
     exploration_legs = exploration.get("legs") if isinstance(exploration.get("legs"), list) else []
     light_level = str(battlefield.get("light_level", "bright")).lower()
     battlefield_obstacles = _build_battlefield_obstacles(battlefield.get("obstacles", []))
+    from dnd_sim.encounter_setup import starting_positions
+
+    positions = starting_positions(
+        battlefield, actor_ids=set(scenario.config.party) | set(scenario.enemies)
+    )
 
     encounter_plan = list(scenario.config.encounters)
     if not encounter_plan:
@@ -15989,6 +15996,7 @@ def run_simulation_core(
                 traits_db,
                 rules_profile=scenario.rules_profile,
             )
+            actor.position = positions.get(actor.actor_id, actor.position)
             actors[actor.actor_id] = actor
             damage_taken[actor.actor_id] = 0
             damage_dealt[actor.actor_id] = 0
@@ -16053,7 +16061,7 @@ def run_simulation_core(
                     rules_profile=scenario.rules_profile,
                 )
                 actor.actor_id = unique_enemy_id
-                actor.position = (0.0, 30.0, 0.0)
+                actor.position = positions.get(enemy_id, (0.0, 30.0, 0.0))
                 actors[actor.actor_id] = actor
 
                 damage_taken[actor.actor_id] = 0
