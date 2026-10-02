@@ -144,7 +144,7 @@ def test_setup_login_world_lifecycle_exact_retries_and_restart(tmp_path: Path) -
     assert not any(secret in dump for secret in (claims[0], PASSWORD, issued["bearer_token"]))
     assert all(
         name.startswith(("_vtt_installation_", "_vtt_world_catalog_", "_vtt_world_preparation_"))
-        or name == "sqlite_sequence"
+        or name in {"sqlite_sequence", "_vtt_world_invitation_metadata", "_vtt_world_invitations"}
         for name in table_names
     )
 

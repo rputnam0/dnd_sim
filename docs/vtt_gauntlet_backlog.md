@@ -10,3 +10,21 @@ operating envelope, or an explicit user decision promotes them.
 | Cross-GM live asset-catalog signals | A second GM sees another GM's new catalog item after retry/reload, while scene attachment itself is live through scene SSE. | Multi-client synchronization | Does not block the supported upload-and-attach job or player active-map delivery. | Low | Multi-GM asset preparation becomes a required task or user-visible staleness reproduces in play | Add an identity-free asset-catalog revision signal. |
 | Refresh recovered browser dependencies before hosting release | `npm audit` on 2026-09-07 reports 23 advisories (17 high, 5 moderate, 1 low), including inherited Next/RSC, Vite, vinext and Cloudflare toolchain dependencies. | Production hosting and dependency safety | The active administration slice binds to loopback; a broad framework migration is separate from proving its supported local journey. This is not a claim that every advisory is exploitable here. | Public exposure remains unsupported pending an applicability audit and patched build | Before exposing any application server beyond a trusted local/protected development environment | Upgrade compatible affected pins, inspect transitive advisories, and rerun the complete browser and hosting gates; do not use a blanket forced audit fix. |
 | Unclassified in-app-browser request failure during hot local restart | On 2026-09-22, a table verification and later image request stopped after successful CORS preflight; direct authenticated HTTP returned valid headers and exact bytes. The UI failed closed. A fresh server cycle and normal return/restart/reopen rendered the same saved map without code changes. | Restart usability | Candidate causality was not established; no speculative transport workaround was added. Mounted and API restart gates pass. | Observed only during interactive development restart | Reproducible failure in a stable running service or ordinary supported restart | Capture browser network failure details and server connection lifecycle before changing transport or retry policy. |
+
+## Transport follow-up promoted for next acceptance run — 2026-10-02
+
+The last row is no longer confined to a hot restart observation. During the
+invitation slice, intermittent authenticated GET failures affected GM and guest
+map loading and idle verification, including a production frontend build. A
+failed image request logged OPTIONS 200 with no subsequent GET; the same map
+later loaded following ordinary scene republishing. No candidate-code cause
+was established. Guest media now has an explicit tested retry control, but this
+is recovery—not a claimed fix for the transport failure.
+
+This is the next **active integration-evidence task**, ahead of actor deployment:
+capture the browser's failed network request and server connection lifecycle;
+compare a clean supported browser with the in-app browser, then prove a stable
+GM/guest join/publish/revoke run and compact authenticated views. Do not weaken
+auth, CORS, media verification, or private-view clearing to mask it. The
+invitation implementation and deterministic gates pass; full browser acceptance
+remains pending. See the 2026-10-02 ledger entry for bounded critic verdicts.

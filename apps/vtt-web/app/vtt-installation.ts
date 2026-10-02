@@ -413,6 +413,20 @@ export function parseWorldLaunch(value: unknown, expectedWorld: WorldRecord): Wo
   };
 }
 
+/** Join trusts no administrator catalog: bind every returned scope internally. */
+export function parseJoinedWorldLaunch(value: unknown): WorldLaunch {
+  const world = parseWorldRecord(record(value).world);
+  const launch = parseWorldLaunch(value, world);
+  const current = launch.table.current_participant;
+  const roster = launch.table.participants;
+  if (current.role === "gm" || current.owned_actor_ids.length !== 0 ||
+    roster.length !== 2 || roster.filter((entry) => entry.role === "gm").length !== 1 ||
+    roster.some((entry) => entry.participant_id !== current.participant_id && entry.role !== "gm")) invalid();
+  humanText(current.display_name, 1, 80);
+  identity(current.participant_id);
+  return launch;
+}
+
 export function parseWorldMutationReceipt(
   value: unknown,
 ): WorldMutationReceipt {
@@ -662,6 +676,14 @@ export class InstallationApi {
     return this.request("/login", parseInstallationLogin, signal, {
       body: { username, password },
       method: "POST",
+    });
+  }
+  join(invitationToken: string, displayName: string, signal: AbortSignal) {
+    const token = humanText(invitationToken, 16, 256);
+    if (!/^[A-Za-z0-9_-]+$/.test(token)) invalid();
+    humanText(displayName, 1, 80);
+    return this.request("/join", parseJoinedWorldLaunch, signal, {
+      token, body: { display_name: displayName }, method: "POST",
     });
   }
   session(token: string, signal: AbortSignal) {

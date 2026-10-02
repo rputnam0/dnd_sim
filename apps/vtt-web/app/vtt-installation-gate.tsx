@@ -1078,7 +1078,7 @@ export function VttInstallationGate({ apiBaseUrl }: { apiBaseUrl?: string }) {
                   <div>
                     <h2>{dashboard.launch_supported ? "A world starts with you" : "What comes next"}</h2>
                     <p>
-                      {dashboard.launch_supported ? "The first Prepare & open makes you this world’s initial Game Master and creates an empty workspace. Later openings retain its scenes and maps. Combat and player invitations are not available yet." : "Workspace provisioning is not available yet. Creating a record does not launch or connect a playable table."}
+                      {dashboard.launch_supported ? "The first Prepare & open makes you this world’s initial Game Master and creates an empty workspace. Later openings retain its scenes and maps. Invite players or spectators to view published scenes. Actors and combat are not available yet." : "Workspace provisioning is not available yet. Creating a record does not launch or connect a playable table."}
                     </p>
                     <a href="/">Explore the demonstration table →</a>
                   </div>

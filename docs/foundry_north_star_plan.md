@@ -4,7 +4,7 @@ Status: active product and implementation charter
 
 Owner: VTT program
 
-Last updated: 2026-09-22
+Last updated: 2026-10-02
 
 This plan expands the clean-room AboveVTT parity program into a high-quality,
 standalone virtual tabletop. Foundry Virtual Tabletop is a capability and
@@ -345,3 +345,28 @@ and the deferred hot-restart transport observation.
 Next highest-value gaps: participant invitations/revocation and reusable actor
 sheets with validated deployment into an actual engine encounter. Existing demo
 combat capabilities are not yet available in these original preparation worlds.
+
+### Participant invitations — implemented, browser acceptance pending
+
+Original worlds now support single-use expiring player/spectator invitations,
+durable guest identities, revocable memory-only sessions, GM management and a
+separate read-only `/join` workspace. Current-scene refresh signals contain no
+historical scene payloads; guests cannot author scenes/maps or read the catalog.
+See `vtt_participant_invitation_plan.md` for the exact supported boundary and
+recovery semantics. The layered design preserves the existing dark-green,
+Geist/serif, 24px surfaces rather than introducing another visual system.
+
+Backend independent review passed 151 focused/probe tests. The whole-slice
+critic passed implementation and deterministic gates, including the explicit
+map retry correction. Final lead runs pass 2,131 Python and 192 browser tests,
+typecheck/build/lint/format/diff gates. The join form passed independent desktop
+and compact keyboard/visual inspection.
+
+Do not mark the whole lifecycle P0 complete: intermittent authenticated requests
+in the in-app browser still prevent unqualified acceptance of a stable
+two-principal journey and authenticated compact layouts. The observation also
+affects the unchanged GM media path, and its cause is not fixed or established.
+Diagnosis and repeatable browser evidence are the next active gate, before
+actor sheets/deployment. This does not block preserving the reviewed invitation
+implementation in draft [PR #265](https://github.com/rputnam0/dnd_sim/pull/265),
+stacked on #264. Full Foundry parity remains substantially broader.

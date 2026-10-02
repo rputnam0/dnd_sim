@@ -7,6 +7,7 @@ import type { WorldLaunch } from "./vtt-installation";
 import { useVttScenes } from "./use-vtt-scenes";
 import { useVttMapAssets, useVttMapAssetUrl } from "./use-vtt-map-assets";
 import { VttScenesPanel } from "./vtt-scenes-panel";
+import { VttInvitationsPanel } from "./vtt-invitations-panel";
 
 /** A real empty-world workspace: scenes and maps only, with no combat fixture. */
 export function VttWorldWorkspace({ launch, apiBaseUrl, onReturn, onAccessLost }: {
@@ -134,13 +135,14 @@ export function VttWorldWorkspace({ launch, apiBaseUrl, onReturn, onAccessLost }
               <li><span>03</span><div><strong>Attach & calibrate</strong><p>Save scale and geometry for your scene.</p></div></li>
             </ol>
           </section>
-          <p className="vw-scope-note">Scenes and maps persist in this world. Combat, tokens, and player invitations are not available in this preparation workspace.</p>
+          <p className="vw-scope-note">Scenes and maps persist in this world. Invite players or spectators to view your published scene. Actors, tokens, and combat are not available in this preparation workspace.</p>
         </aside>
       </div>
 
       <div id="world-scene-tools" className="vw-tools" tabIndex={-1}>
         <VttScenesPanel table={launch.table} scenes={scenes} assets={assets} />
       </div>
+      <VttInvitationsPanel launch={launch} apiBaseUrl={apiBaseUrl} onAccessLost={onAccessLost} />
     </div>
   );
 }

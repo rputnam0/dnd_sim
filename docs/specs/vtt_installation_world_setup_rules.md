@@ -1,8 +1,9 @@
 # VTT Installation and World Setup Rules
 
-Status: administration and empty-world preparation implemented; invitations pending
+Status: administration, empty-world preparation, and guest invitations implemented;
+stable cross-browser verification remains a separate acceptance gate
 
-Last updated: 2026-09-22
+Last updated: 2026-10-02
 
 ## Scope
 
@@ -93,6 +94,26 @@ version.
 - No endpoint accepts a caller-supplied participant identity in place of the
   authenticated principal unless an explicit GM administration contract says
   so.
+
+### Initial invitation implementation boundary
+
+The shipped contract is in `../vtt_participant_invitation_plan.md`. Only player
+and spectator invitations are supported, with no actor ownership or GM/role
+editing. Codes expire in 24 hours. Single-use redemption creates a durable
+guest identity and a four-hour process-memory bearer. Page reload/service
+restart requires a replacement invitation; no password or reusable guest
+account is implied. Exact create retry returns the original public invitation
+and no plaintext secret. Losing a redemption response never makes a consumed
+code usable again.
+
+Access state is a separately versioned installation store, leaving existing
+world schema receipts unchanged. Joining can only reopen a validated prepared
+world. Guests receive the active scene and its media, plus self/initial-GM
+roster entries; revision-only scene signals contain no historic scene payloads.
+Guest authority is checked at every request, protected body arrival and stream
+iteration. Returning/logging out as GM does not revoke independent guests.
+Revocation and archive do, without deleting authored content. Browser transport
+observations and remaining verification limitations are recorded in the ledger.
 
 ## Browser journeys
 

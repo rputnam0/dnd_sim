@@ -56,6 +56,11 @@ from .world_catalog_store import (
     WorldRevisionConflictError,
     WorldTableConflictError,
 )
+from .world_invitation_store import (
+    InvitationAuthenticationError,
+    InvitationJoinCommand,
+    WorldInvitationStoreError,
+)
 
 MAX_ADMIN_BODY_BYTES = 16_384
 logger = logging.getLogger(__name__)
@@ -156,7 +161,7 @@ def install_administration_routes(
 
     async def boundary_error(request: Request, exc: Exception) -> JSONResponse:
         del request
-        if isinstance(exc, AuthenticationError):
+        if isinstance(exc, (AuthenticationError, InvitationAuthenticationError)):
             return _error(401, "authentication_required", "Administrator authentication required.")
         if isinstance(exc, BootstrapClaimError):
             return _error(401, "setup_claim_rejected", "Setup claim rejected.")
@@ -172,7 +177,15 @@ def install_administration_routes(
                 _WORLD_CONFLICT_CODES[type(exc)],
                 "World catalog command conflicts with current state.",
             )
-        if isinstance(exc, (sqlite3.DatabaseError, InstallationStoreError, WorldCatalogStoreError)):
+        if isinstance(
+            exc,
+            (
+                sqlite3.DatabaseError,
+                InstallationStoreError,
+                WorldCatalogStoreError,
+                WorldInvitationStoreError,
+            ),
+        ):
             return _error(503, "storage_unavailable", "Administration storage is unavailable.")
         if isinstance(exc, (ValidationError, RequestValidationError, ValueError)):
             return _error(422, "invalid_request", "Request payload is invalid.")
@@ -184,6 +197,7 @@ def install_administration_routes(
     for exception_type in (
         InstallationStoreError,
         WorldCatalogStoreError,
+        WorldInvitationStoreError,
         sqlite3.DatabaseError,
         ValidationError,
         RequestValidationError,
@@ -281,6 +295,17 @@ def install_administration_routes(
             return dashboard(require_catalog().snapshot())
 
     if world_manager is not None:
+
+        @app.post(_ROOT + "/join")
+        async def join_world(request: Request) -> Any:
+            with lock:
+                token = _bearer(request)
+                world_manager.authenticate_invitation(token)
+            body = await _bounded_body(request)
+            with lock:
+                world_manager.authenticate_invitation(token)
+                payload = _decode(InvitationJoinCommand, body)
+                return world_manager.join(token, display_name=payload.display_name)
 
         @app.post(_ROOT + "/worlds/{world_id}/launch")
         async def launch_world(world_id: str, request: Request) -> Any:

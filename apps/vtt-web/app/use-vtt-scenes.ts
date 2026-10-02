@@ -71,6 +71,7 @@ export function useVttScenes(input: {
   participant: VttTableParticipant | null;
   apiBaseUrl?: string;
   onAccessLost?: () => void;
+  refreshOnly?: boolean;
 }) {
   const [view, setView] = useState<SceneLibraryView | null>(null);
   const [status, setStatus] = useState<SceneConnectionStatus>("loading");
@@ -80,7 +81,7 @@ export function useVttScenes(input: {
   const viewRef = useRef<SceneLibraryView | null>(null);
   const cursorRef = useRef(0);
   const mutationInFlightRef = useRef(false);
-  const identity = JSON.stringify([input.apiBaseUrl, input.sessionId, input.tableId, input.bearerToken, input.participant]);
+  const identity = JSON.stringify([input.apiBaseUrl, input.sessionId, input.tableId, input.bearerToken, input.participant, input.refreshOnly]);
   const identityRef = useRef(identity);
   const [viewIdentity, setViewIdentity] = useState(identity);
   const [stateIdentity, setStateIdentity] = useState(identity);
@@ -166,6 +167,15 @@ export function useVttScenes(input: {
               cursorRef.current = Math.max(cursorRef.current, event.sequence);
               setRefreshKey((current) => current + 1);
             },
+            onRefresh: input.refreshOnly ? (revision) => {
+              if (!active || controller.signal.aborted) return;
+              cursorRef.current = Math.max(cursorRef.current, revision);
+              // A guest hint may withdraw a previously public scene. Hide its
+              // media immediately; only the next authorized GET can restore it.
+              viewRef.current = null;
+              setView(null);
+              setRefreshKey((current) => current + 1);
+            } : undefined,
           });
           if (!active || controller.signal.aborted) return;
           cursorRef.current = Math.max(cursorRef.current, cursor);
@@ -201,6 +211,7 @@ export function useVttScenes(input: {
     input.sessionId,
     input.tableId,
     input.apiBaseUrl,
+    input.refreshOnly,
     identity,
     refreshKey,
   ]);
