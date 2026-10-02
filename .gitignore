@@ -15,3 +15,6 @@ river_line/encounters/**/phase_*_sim_results*.json
 
 # secret keys
 .env
+
+# Local adventure saves
+.local/
