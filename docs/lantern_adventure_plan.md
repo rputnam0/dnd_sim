@@ -1,8 +1,11 @@
 # ADV-01 — The Lantern Below
 
-Status: pr_open — [PR #267](https://github.com/rputnam0/dnd_sim/pull/267)  
-Owner: adventure-runtime  
-Last updated: 2026-10-02  
+Status: pr_open — [PR #267](https://github.com/rputnam0/dnd_sim/pull/267)
+
+Owner: adventure-runtime
+
+Last updated: 2026-10-02
+
 Canonical source: `docs/program/README.md`
 
 ## Outcome
