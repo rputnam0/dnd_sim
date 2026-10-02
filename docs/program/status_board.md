@@ -44,10 +44,17 @@ Wave 6 remediation state:
 - Strict FIN-02 is now green on `main` with `blocked=0`; no unsupported-reason families remain.
 - `docs/program/parity_leaf_registry.csv` and `docs/program/parity_batch_registry.csv` are retained as canonical historical execution maps for parity closeout.
 
+## Playable adventure milestone
+
+| Task | Status | Owner | Notes |
+|---|---|---|---|
+| ADV-01 | in_progress | adventure_runtime | The Lantern Below: original adventure with shared-engine combat and persistent exploration/dialogue. See [delivery checklist](../lantern_adventure_plan.md). |
+
 ## Active completion tracks
 
 | Track | Scope | Status | Milestone | Notes |
 |---|---|---|---|---|
+| ADV | Playable adventure | in_progress | ADV-01 | The Lantern Below: first complete browser adventure. |
 | DOC | Documentation Control | merged | 5A-doc-control | Track complete and merged to `main`. |
 | ARC | Runtime Decomposition | merged | 5B-runtime-decomposition | Track complete and merged to `main`. |
 | CAP | Capability Manifest | merged | 5C-capability-manifest | Track complete and merged to `main`. |
@@ -77,6 +84,7 @@ Wave 6 remediation state:
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
+| ADV-01 | codex/lantern-adventure | adventure_runtime | in_progress | Shared-engine original adventure; implementation and tests underway. |
 | W8-AUD-01 | codex/wave8-section2-stabilization | program_control | in_progress | Wave 8 docs, gap matrix, and truthful baseline reset are implemented on the active branch and waiting on merge. |
 | W8-PRT-01 | codex/wave8-section2-stabilization | portability_core | in_progress | Live portable path refs, public-content path validation, and portability tests are implemented on the active branch and waiting on merge. |
 | W8-CRT-01 | codex/wave8-section2-stabilization | creator_boundary | in_progress | Public/internal scenario split, internal harness move, and creator-boundary validation gates are implemented on the active branch and waiting on merge. |

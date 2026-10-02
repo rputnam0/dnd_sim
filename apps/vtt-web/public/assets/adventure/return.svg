@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">Return to the landing</title>
+  <desc id="desc">Top-down lighthouse landing after the adventure, with salt-worn stone, quiet tidal washes, mooring ropes, and a soft new dawn across the open floor.</desc>
+  <defs>
+    <linearGradient id="floor" x2="1" y2="1"><stop stop-color="#5f6c62"/><stop offset=".52" stop-color="#788178"/><stop offset="1" stop-color="#425c5d"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#ffe4a9" stop-opacity=".48"/><stop offset=".4" stop-color="#ddbd80" stop-opacity=".16"/><stop offset="1" stop-color="#d7b472" stop-opacity="0"/></radialGradient>
+    <radialGradient id="shade"><stop offset=".4" stop-color="#24423f" stop-opacity="0"/><stop offset="1" stop-color="#16383d" stop-opacity=".45"/></radialGradient>
+    <linearGradient id="dawn" x1="1" x2="0" y2="1"><stop stop-color="#efd69c" stop-opacity=".25"/><stop offset="1" stop-color="#efd69c" stop-opacity="0"/></linearGradient>
+    <pattern id="stone" width="240" height="144" patternUnits="userSpaceOnUse"><path d="M0 0H240M0 72H240M120 0V72M44 72V144M202 72V144" fill="none" stroke="#263e3c" stroke-opacity=".19" stroke-width="3"/><path d="M3 4H117M124 4H236M49 77H197" stroke="#d3c6a6" stroke-opacity=".12" stroke-width="2"/></pattern>
+    <pattern id="fleck" width="91" height="67" patternUnits="userSpaceOnUse"><path d="m17 22 12-2m36 27 8 1m-52 14 4 1" stroke="#d1cbb3" stroke-opacity=".13" stroke-linecap="round"/><circle cx="81" cy="13" r="1.5" fill="#34544f" opacity=".2"/></pattern>
+    <g id="lantern"><ellipse cy="8" rx="15" ry="9" fill="#233f3c" opacity=".45"/><rect x="-11" y="-13" width="22" height="26" rx="4" fill="#455047" stroke="#baa06b" stroke-width="2"/><rect x="-6" y="-9" width="12" height="18" rx="2" fill="#ead3a0"/><path d="M-8-14Q0-25 8-14M0-9V9" fill="none" stroke="#af935f" stroke-width="2"/></g>
+  </defs>
+  <path fill="url(#floor)" d="M0 0h960v640H0z"/><path fill="url(#stone)" d="M0 0h960v640H0z"/><path fill="url(#fleck)" d="M0 0h960v640H0z"/>
+  <path d="M0 0H960V25C811 3 773 40 631 24S343 17 198 36 53 31 0 46ZM0 640H960V608C772 629 763 590 563 616S226 603 0 620Z" fill="#4f817d" opacity=".36"/>
+  <g fill="none" stroke="#bdd4ba" stroke-opacity=".27" stroke-width="2"><path d="M18 17c122 17 146-9 245-3m448 8c77 12 161-9 231-1M26 625c118-14 211 5 273-6m363 4c71-9 178 5 275-7"/><path d="m829 29 21 2m20-1 29-3M120 607l47 3"/></g>
+  <g stroke="#c3b791" fill="none" opacity=".33"><circle cx="476" cy="326" r="103" stroke-width="2"/><circle cx="476" cy="326" r="91"/><path d="m476 241 13 68 57 17-57 15-13 70-14-70-55-15 55-17z" stroke-width="2"/><path d="m425 274 51 52 53 51m0-103-53 52-51 51"/></g>
+  <g stroke="#38453c" stroke-width="3"><path d="M26 93h36v42H26zM24 510h38v40H24zM896 88h36v44h-36zM898 513h35v43h-35z" fill="#7c7a67"/><path d="M20 98h47v13H20zM18 515h50v13H18zM890 92h49v13h-49zM892 518h48v13h-48z" fill="#aaa58b"/></g>
+  <g fill="none" stroke="#c4af83" stroke-width="4" opacity=".8"><path d="M41 118C61 140 73 157 56 171S23 161 31 148 70 153 66 177 21 192 14 171"/><path d="M914 540c-25 9-50 28-33 46s44-3 28-13-42 0-39 21"/></g>
+  <path d="m120 174 28 14-12 31 24 24m539 219 31 7 7 30m-350 51 13-18-4-16" fill="none" stroke="#34534d" stroke-width="2" opacity=".23"/>
+  <path d="M960 0 200 0 444 640H960Z" fill="url(#dawn)"/>
+  <path fill="url(#shade)" d="M0 0h960v640H0z"/><ellipse cx="820" cy="90" rx="417" ry="275" fill="url(#glow)"/>
+  <use href="#lantern" x="87" y="58"/><use href="#lantern" x="869" y="578"/>
+  <path d="M0 0H960V640H0Z" fill="none" stroke="#294c48" stroke-width="8"/>
+</svg>

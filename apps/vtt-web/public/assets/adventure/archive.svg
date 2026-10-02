@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">Flooded archive</title>
+  <desc id="desc">Top-down shallow flooded archive in muted teal, with ripples across a continuous stone floor, books and scrolls along the edges, and a brass-bound supply chest. No artwork defines movement barriers.</desc>
+  <defs>
+    <linearGradient id="floor" x2="1" y2=".8"><stop stop-color="#445e5e"/><stop offset=".55" stop-color="#527576"/><stop offset="1" stop-color="#284e57"/></linearGradient>
+    <pattern id="stone" width="213" height="132" patternUnits="userSpaceOnUse"><path d="M0 0H213M0 66H213M143 0V66M57 66V132" fill="none" stroke="#17353e" stroke-opacity=".25" stroke-width="2"/><path d="M4 4H139M61 70H208" stroke="#9ab4a4" stroke-opacity=".11"/></pattern>
+    <radialGradient id="water"><stop stop-color="#6babab" stop-opacity=".25"/><stop offset="1" stop-color="#619e9f" stop-opacity="0"/></radialGradient>
+    <radialGradient id="shade"><stop offset=".3" stop-color="#102e39" stop-opacity="0"/><stop offset="1" stop-color="#0d2732" stop-opacity=".67"/></radialGradient>
+    <radialGradient id="glow"><stop stop-color="#efc578" stop-opacity=".48"/><stop offset="1" stop-color="#d8a862" stop-opacity="0"/></radialGradient>
+    <g id="shelf"><path d="M0 0h199v39H0z" fill="#2b423e" stroke="#203331" stroke-width="3"/><path d="M6 4h187v30H6z" fill="#634e38"/><g stroke="#293a34" stroke-width="2"><path d="M12 6h11v22H12zM67 6h14v24H67zM133 6h11v23h-11z" fill="#a8936b"/><path d="M26 6h17v25H26zM88 6h11v24H88zM167 6h12v23h-12z" fill="#5f837a"/><path d="M47 6h15v22H47zM103 6h21v24h-21zM148 6h14v23h-14zM184 6h6v22h-6z" fill="#866b55"/></g><path d="M0 35h199" stroke="#b39563" stroke-width="3"/></g>
+  </defs>
+  <path fill="url(#floor)" d="M0 0h960v640H0z"/><path fill="url(#stone)" d="M0 0h960v640H0z"/>
+  <path d="M0 403c85-65 154-15 228-41s124-54 210-24 192-7 305-34 170 39 217 16v320H0Z" fill="#36737b" opacity=".22"/>
+  <ellipse cx="595" cy="389" rx="353" ry="224" fill="url(#water)"/>
+  <g fill="none" stroke="#abd2c3" stroke-opacity=".23" stroke-width="1.5"><path d="M38 431c62-26 85-12 132-22m-114 49c70-23 88-6 121-17m351-82c62-28 79-8 128-27m-98 45c36-17 58-8 92-18m87 191c62-28 92-7 142-24m-124 48c48-25 83-7 132-24"/><ellipse cx="311" cy="533" rx="47" ry="13"/><path d="M242 533c0 15 30 23 69 23s70-8 70-23m359-381c0 10 27 18 59 18s56-8 56-18"/></g>
+  <use href="#shelf" x="172" y="6"/><use href="#shelf" x="415" y="6"/><use href="#shelf" x="657" y="6"/>
+  <g transform="translate(826 564)" stroke="#252f2d" stroke-width="3"><path d="M0 4q0-15 16-15h70q16 0 16 15v44H0Z" fill="#765f3e"/><path d="M3 17h96" fill="none" stroke="#d2b67a"/><path d="M16-8h9v54h-9zM77-8h9v54h-9z" fill="#bba06d"/><rect x="45" y="11" width="14" height="18" rx="2" fill="#d2b980"/><path d="M52 16v7" stroke="#4d513c"/></g>
+  <g fill="#bdb395" stroke="#686e58" stroke-width="1.5" opacity=".66"><path d="m69 553 27-6 7 38-28 5z"/><path d="m112 588 30-2 2 23-31 3z"/><path d="m156 538 25 6-6 34-26-7z"/><path d="m77 558 15-3m-13 10 14-3m-11 10 12-3" fill="none"/></g>
+  <g fill="none" stroke="#173840" stroke-opacity=".42" stroke-width="2"><path d="m467 152-18 24 7 26-19 34m208 202 29 9 11 24m-476-192 15 9-6 20"/></g>
+  <path fill="url(#shade)" d="M0 0h960v640H0z"/><ellipse cx="73" cy="78" rx="222" ry="193" fill="url(#glow)"/>
+  <g transform="translate(66 71)"><ellipse cy="6" rx="15" ry="11" fill="#172f34"/><circle r="13" fill="#9c8151"/><circle r="7" fill="#efd19a"/><path d="M-16 0H16M0-16V16" stroke="#795f3c" stroke-width="2"/></g>
+  <path d="M0 0H960V640H0Z" fill="none" stroke="#102f39" stroke-width="8"/>
+</svg>

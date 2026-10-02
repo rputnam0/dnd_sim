@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">Beacon chamber</title>
+  <desc id="desc">Top-down lighthouse beacon chamber with an open circular brass-inlaid stone floor. Teal light and amber lens reflections fall across the stone, with the dormant lantern mechanism at the far edge.</desc>
+  <defs>
+    <radialGradient id="floor" cx=".62" cy=".43" r=".75"><stop stop-color="#526e6b"/><stop offset=".6" stop-color="#3d595d"/><stop offset="1" stop-color="#253f48"/></radialGradient>
+    <radialGradient id="aura"><stop stop-color="#abded0" stop-opacity=".35"/><stop offset=".46" stop-color="#80c9c3" stop-opacity=".1"/><stop offset="1" stop-color="#80c9c3" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow"><stop stop-color="#e4b16a" stop-opacity=".43"/><stop offset=".5" stop-color="#d1a062" stop-opacity=".1"/><stop offset="1" stop-color="#cca269" stop-opacity="0"/></radialGradient>
+    <radialGradient id="shade"><stop offset=".42" stop-color="#17333e" stop-opacity="0"/><stop offset="1" stop-color="#0d2431" stop-opacity=".62"/></radialGradient>
+    <pattern id="stone" width="233" height="158" patternUnits="userSpaceOnUse"><path d="M0 0H233M0 79H233M157 0V79M61 79V158" fill="none" stroke="#112f3a" stroke-opacity=".23" stroke-width="2"/><path d="M4 4H152M66 84H227" stroke="#a9bcb0" stroke-opacity=".1"/></pattern>
+  </defs>
+  <path fill="url(#floor)" d="M0 0h960v640H0z"/><path fill="url(#stone)" d="M0 0h960v640H0z"/>
+  <g fill="none" stroke="#bda56e"><ellipse cx="482" cy="320" rx="345" ry="260" opacity=".24" stroke-width="3"/><ellipse cx="482" cy="320" rx="332" ry="247" opacity=".25"/><circle cx="482" cy="320" r="194" opacity=".3" stroke-width="2"/><circle cx="482" cy="320" r="184" opacity=".16"/><circle cx="482" cy="320" r="100" opacity=".21"/><circle cx="482" cy="320" r="43" opacity=".26" stroke-width="2"/></g>
+  <g fill="none" stroke="#c0b58d" stroke-opacity=".24" stroke-width="2"><path d="M482 60v26m0 468v26M137 320h29m632 0h29M237 136l20 17m450 334 20 17m0-368-20 17M257 487l-20 17"/><path d="m482 265 12 40 43 15-43 15-12 40-12-40-43-15 43-15Z"/></g>
+  <path d="M823 58 428 128 575 273Z" fill="#a4d8c9" opacity=".04"/><path d="M855 577 388 433 502 327Z" fill="#e6bc72" opacity=".05"/>
+  <ellipse cx="793" cy="319" rx="219" ry="256" fill="url(#aura)"/>
+  <g transform="translate(904 320)"><circle r="34" fill="#213f48" stroke="#a39366" stroke-width="3"/><circle r="26" fill="#567b78" stroke="#c5b179" stroke-width="2"/><circle r="17" fill="#81b5aa"/><path d="M-34 0H34M0-34V34m-24-24 48 48m-48 0 48-48" fill="none" stroke="#a3a780" stroke-width="2"/><circle r="7" fill="#c7dac0"/><path d="M-39-10h8M31-10h8M-39 10h8M31 10h8" stroke="#bead76" stroke-width="3"/></g>
+  <g fill="none" stroke="#84acaa" stroke-opacity=".32" stroke-width="2"><path d="M838 214a97 97 0 0 0-19 43m0 126a97 97 0 0 0 22 44M801 195a141 141 0 0 0-22 41m0 170a141 141 0 0 0 22 40"/></g>
+  <g fill="none" stroke="#142f3c" stroke-opacity=".42" stroke-width="2"><path d="m271 84 22 38-13 31 13 21m320 377 10-31 27-13 7-29m-473-73 33 6 19-16m384-244 28 15 8 24"/></g>
+  <path fill="url(#shade)" d="M0 0h960v640H0z"/><ellipse cx="80" cy="77" rx="216" ry="195" fill="url(#glow)"/><ellipse cx="861" cy="568" rx="235" ry="195" fill="url(#glow)"/>
+  <g fill="#a88d58" stroke="#263c3b" stroke-width="2"><circle cx="67" cy="64" r="17"/><circle cx="878" cy="580" r="17"/></g><g fill="#ebc581"><circle cx="67" cy="64" r="8"/><circle cx="878" cy="580" r="8"/></g><g fill="none" stroke="#91794e" stroke-width="2"><path d="m55 52 24 24m-24 0 24-24m799 516 24 24m-24 0 24-24"/></g>
+  <path d="M0 0H960V640H0Z" fill="none" stroke="#102c38" stroke-width="8"/>
+</svg>

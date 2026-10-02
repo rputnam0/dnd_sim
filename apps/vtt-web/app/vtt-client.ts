@@ -358,7 +358,7 @@ function parsePosition(value: unknown, path: string): Position3 {
   ];
 }
 
-function parseVersions(value: unknown, path: string): VttVersionInfo {
+export function parseVersions(value: unknown, path: string): VttVersionInfo {
   const data = exactObject(
     value,
     ["schema_version", "engine", "rules", "content"],
@@ -385,7 +385,7 @@ function parseFeetPosition(value: unknown, path: string): FeetPosition {
   };
 }
 
-function parseScene(value: unknown, path: string): SquareGridScene {
+export function parseScene(value: unknown, path: string): SquareGridScene {
   const data = exactObject(
     value,
     [
@@ -451,7 +451,7 @@ function parseAction(value: unknown, path: string): ActorAction {
   };
 }
 
-function parseActor(value: unknown, path: string): ActorProjection {
+export function parseActor(value: unknown, path: string): ActorProjection {
   const data = exactObject(
     value,
     [
@@ -698,7 +698,7 @@ function samePosition(left: Position3, right: Position3): boolean {
   return left.every((coordinate, index) => coordinate === right[index]);
 }
 
-function parseProjection(value: unknown, path: string): EncounterProjection {
+export function parseProjection(value: unknown, path: string): EncounterProjection {
   const data = exactObject(
     value,
     [

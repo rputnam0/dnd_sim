@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">Keeper's hall</title>
+  <desc id="desc">Top-down keeper's hall with weathered timber flooring, an old teal runner, maritime instruments at the edges, and amber lamplight. The whole floor remains open for tactical movement.</desc>
+  <defs>
+    <linearGradient id="floor" x2=".2" y2="1"><stop stop-color="#554c40"/><stop offset=".55" stop-color="#6a5c49"/><stop offset="1" stop-color="#413f38"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#f3c478" stop-opacity=".52"/><stop offset=".45" stop-color="#b89252" stop-opacity=".17"/><stop offset="1" stop-color="#aa8c54" stop-opacity="0"/></radialGradient>
+    <radialGradient id="shade"><stop offset=".32" stop-color="#14282b" stop-opacity="0"/><stop offset="1" stop-color="#102426" stop-opacity=".7"/></radialGradient>
+    <pattern id="planks" width="267" height="60" patternUnits="userSpaceOnUse"><path d="M0 0H267M0 30H267M87 0V30M206 30V60" stroke="#242b2b" stroke-opacity=".33" stroke-width="2" fill="none"/><path d="M9 9q28-4 63 0m29 8 91-2m24-7 37 2M14 42l67 2m20 7 83-3m38-6 34-2" stroke="#b2a17b" stroke-opacity=".12" fill="none"/><circle cx="78" cy="6" r="1.6" fill="#1f2c2b"/><circle cx="196" cy="54" r="1.6" fill="#1f2c2b"/></pattern>
+  </defs>
+  <path fill="url(#floor)" d="M0 0h960v640H0z"/><path fill="url(#planks)" d="M0 0h960v640H0z"/>
+  <path d="M144 233 802 225 813 413 151 422Z" fill="#284e51" opacity=".7"/>
+  <path d="m160 249 627-8 9 158-630 7Z" fill="none" stroke="#b6a06d" stroke-opacity=".44" stroke-width="3"/>
+  <path d="m175 263 595-7 9 128-598 7Z" fill="none" stroke="#93a49a" stroke-opacity=".28"/>
+  <g fill="none" stroke="#b5aa80" opacity=".26"><path d="m453 321 25-43 27 42-26 45Z" stroke-width="2"/><circle cx="479" cy="322" r="53"/><path d="M238 290v70m0-57-15 16 15 15 15-16Zm477-6v70m0-57-15 16 15 15 15-16Z"/></g>
+  <g stroke="#292c27" stroke-width="3"><path d="M362 10h231v36H362z" fill="#5e4a32"/><path d="M371 13h212v19H371z" fill="#8b7251"/><path d="M375 39h11v18h-11zM568 39h11v18h-11z" fill="#433c2c"/></g>
+  <g fill="#cab993" stroke="#746647" stroke-width="1.4"><path d="m408 15 32-3 2 24-31 3z"/><path d="m450 14 49 2-1 20-50-2z"/><path d="m455 22 11 2 10-4 15 5" fill="none" stroke="#897e60"/><circle cx="545" cy="25" r="10" fill="#5c807a"/><circle cx="545" cy="25" r="6" fill="none" stroke="#b9a77a"/></g>
+  <g transform="translate(878 67)" fill="none" stroke="#ba9b5d" stroke-width="2"><circle r="28"/><circle r="21"/><path d="M-34 0H34M0-34V34m-20-20 40 40m-40 0 40-40"/><circle r="5" fill="#c3a468"/></g>
+  <g fill="#77654b" stroke="#32372f" stroke-width="3"><path d="M342 599h248v30H342z"/><path d="M356 585h221v15H356z" fill="#99805a"/><path d="M361 628h12v12h-12zM559 628h12v12h-12z"/></g>
+  <g stroke="#928f6d" stroke-opacity=".26" fill="none"><path d="M104 113c58 6 62 20 115 17m529 385c34-7 69-5 96-13m-690 2 66-4"/><path d="M517 87l44 7m-229 76 72 2m125 299 79-4"/></g>
+  <path fill="url(#shade)" d="M0 0h960v640H0z"/><ellipse cx="88" cy="60" rx="267" ry="198" fill="url(#glow)"/><ellipse cx="861" cy="574" rx="254" ry="210" fill="url(#glow)"/>
+  <g fill="#edbd70" stroke="#9f7a46" stroke-width="3"><circle cx="83" cy="50" r="9"/><circle cx="871" cy="586" r="9"/></g><g fill="none" stroke="#d5ba80" stroke-width="2"><circle cx="83" cy="50" r="17"/><circle cx="871" cy="586" r="17"/></g>
+  <path d="M0 0H960V640H0Z" fill="none" stroke="#1a2c2a" stroke-width="8"/>
+</svg>
