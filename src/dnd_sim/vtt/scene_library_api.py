@@ -228,6 +228,14 @@ def _request_participant(
     *,
     access_policy: TableAccessPolicy | None,
 ) -> TableParticipant | None:
+    resolver = getattr(request.state, "vtt_resolve_participant", None)
+    if resolver is not None:
+        # Set only by the trusted standalone mount; legacy apps retain their
+        # static policy's exact canonical-roster check below.
+        participant = resolver()
+        if not isinstance(participant, TableParticipant):
+            raise RuntimeError("a protected scene request is missing its principal")
+        return participant
     revalidate = getattr(request.state, "vtt_revalidate", None)
     if revalidate is not None:
         revalidate()
@@ -492,6 +500,7 @@ async def _stream_scene_events(
     event_loop = asyncio.get_running_loop()
     next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
     access_valid = getattr(request.state, "vtt_access_valid", lambda: True)
+    refresh_only = getattr(request.state, "vtt_scene_refresh_only", False)
     while True:
         if not access_valid():
             return
@@ -499,6 +508,21 @@ async def _stream_scene_events(
             return
         if not access_valid():
             return
+        if refresh_only:
+            # New guests have no entitlement to earlier active scenes. Signal
+            # only the current revision; GET /scenes applies today's projection.
+            revision = _read_view(library, table_id=table_id).revision
+            if revision > cursor:
+                if not access_valid():
+                    return
+                cursor = revision
+                yield f'id: {revision}\nevent: vtt.scene_refresh\ndata: {{"revision":{revision}}}\n\n'
+                next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
+            elif event_loop.time() >= next_heartbeat:
+                yield ": heartbeat\n\n"
+                next_heartbeat = event_loop.time() + SSE_HEARTBEAT_INTERVAL_SECONDS
+            await asyncio.sleep(SSE_POLL_INTERVAL_SECONDS)
+            continue
         events = pending_events
         pending_events = ()
         if not events:
@@ -589,10 +613,10 @@ def install_scene_library_routes(
     ) -> StreamingResponse:
         participant = _request_participant(request, access_policy=access_policy)
         cursor = _resume_after(after=after, last_event_id=last_event_id)
-        initial_events = _events_after(
-            library,
-            table_id=configured_table_id,
-            sequence=cursor,
+        initial_events = (
+            ()
+            if getattr(request.state, "vtt_scene_refresh_only", False)
+            else _events_after(library, table_id=configured_table_id, sequence=cursor)
         )
         return StreamingResponse(
             _stream_scene_events(

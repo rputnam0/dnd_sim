@@ -132,6 +132,12 @@ def _request_participant(
     *,
     access_policy: TableAccessPolicy | None,
 ) -> TableParticipant | None:
+    resolver = getattr(request.state, "vtt_resolve_participant", None)
+    if resolver is not None:
+        participant = resolver()
+        if not isinstance(participant, TableParticipant):
+            raise RuntimeError("a protected map asset request is missing its principal")
+        return participant
     revalidate = getattr(request.state, "vtt_revalidate", None)
     if revalidate is not None:
         revalidate()
