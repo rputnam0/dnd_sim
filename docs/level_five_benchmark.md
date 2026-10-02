@@ -71,7 +71,8 @@ zero-HP creatures, including automatic Dex-save failure while unconscious.
 automatic reactions through the ordinary `TurnDeclaration` engine interface.
 It accounts for range, cover, standing from prone, spell slots, bonus-spell
 restrictions, Sneak Attack opportunities, rescue healing, off-hand prerequisites,
-and friendly fire. If unable to attack or heal, it advances and Dodges.
+distinct main/off-hand weapon identities, and friendly fire. If unable to attack
+or heal, it advances and Dodges.
 
 Conservative/typical/aggressive policies subtract 6/3/0 score points per spent
 slot level or class-resource unit. These are transparent heuristic coefficients,
@@ -101,16 +102,22 @@ This milestone exposed and repaired six shared-runtime problems:
    apply death-save failures as appropriate.
 
 The tactical policy also reserves half speed for standing before planning movement.
+A transcript audit found and corrected a planner pairing the same physical
+shortsword with itself; it now requires different weapons for two-weapon attacks.
 Sample tests reconcile actual slot/resource depletion against reported spending.
 
 ## Statistical design and reproducibility
 
 The final design is **1,000 trials × eight scenarios × three policies = 24,000**,
 master seed `20261002`, chosen before the final run. The earlier ten-trial pilot
-was diagnostic; its results are not pooled with the final run. SHA256 derives each
+was diagnostic; its results are not pooled with the final run. An interrupted
+pre-correction sweep is also excluded. SHA256 derives each
 seed from master seed, scenario ID, and trial index. Every trial gets a fresh RNG
 and strategy instance. Same-index policies start from the same seed, but divergent
 decisions consume different draws; this is not a paired significance analysis.
+The CLI uses four worker processes by default (`--workers 1` selects serial execution).
+Groups merge in design order; tests compare serial and parallel trial archives
+and samples byte for byte.
 
 Every proportion has a two-sided 95% Wilson interval. The worst-case half-width
 at n=1000 is about 3.1 percentage points. These are marginal sampling intervals,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict
 import gzip
 import hashlib
@@ -10,8 +11,10 @@ import json
 import logging
 from pathlib import Path
 import platform
+import shutil
 import subprocess
 import sys
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from dnd_sim.benchmarks.policies import POLICIES, TacticalPolicy
@@ -112,6 +115,52 @@ def replay_sample(path: Path) -> bool:
     return True
 
 
+def _run_partition(job: dict[str, Any]) -> dict[str, Any]:
+    return run_benchmark(**job)
+
+
+def _run_parallel(*, paths, policies, trials, master_seed, output, verification, workers):
+    """Partition independent groups; merge in design order, never completion order."""
+    with TemporaryDirectory(prefix=".partitions-", dir=output) as temporary:
+        jobs = [
+            dict(
+                trials=trials,
+                master_seed=master_seed,
+                output=Path(temporary) / f"{path.stem}__{policy}",
+                scenario_ids=[path.stem],
+                policies=[policy],
+                verification=verification,
+            )
+            for path in paths
+            for policy in policies
+        ]
+        with ProcessPoolExecutor(max_workers=min(workers, len(jobs))) as executor:
+            parts = list(executor.map(_run_partition, jobs))
+        report = dict(parts[0])
+        report["groups"] = [group for part in parts for group in part["groups"]]
+        trial_text, roll_text = [], []
+        (output / "samples").mkdir(exist_ok=True)
+        for job, part in zip(jobs, parts):
+            if (
+                part["provenance"] != report["provenance"]
+                or part["rules_profile"] != report["rules_profile"]
+            ):
+                raise RuntimeError("Source or rules changed during partitioned benchmark")
+            directory = job["output"]
+            trial_text.append(
+                gzip.decompress((directory / "trials.jsonl.gz").read_bytes()).decode()
+            )
+            excerpt = (directory / "rolls.md").read_text()
+            roll_text.append(excerpt if not roll_text else "## " + excerpt.split("\n## ", 1)[1])
+            for sample in (directory / "samples").glob("*.json.gz"):
+                shutil.copyfile(sample, output / "samples" / sample.name)
+        _write_compressed(output / "trials.jsonl.gz", "".join(trial_text))
+        (output / "rolls.md").write_text("\n".join(roll_text))
+        (output / "summary.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        (output / "report.md").write_text(render_report(report))
+        return report
+
+
 def run_benchmark(
     *,
     trials: int,
@@ -120,9 +169,12 @@ def run_benchmark(
     scenario_ids: list[str] | None = None,
     policies: list[str] | None = None,
     verification: dict[str, Any] | None = None,
+    workers: int = 1,
 ) -> dict[str, Any]:
     if type(trials) is not int or trials < 1:
         raise ValueError("trials must be a positive fixed sample size")
+    if type(workers) is not int or workers < 1:
+        raise ValueError("workers must be a positive integer")
     policies = list(POLICIES) if policies is None else policies
     if not policies or any(p not in POLICIES for p in policies):
         raise ValueError("Select at least one known policy")
@@ -132,6 +184,16 @@ def run_benchmark(
             raise ValueError("Select at least one known scenario")
         paths = [p for p in paths if p.stem in scenario_ids]
     output.mkdir(parents=True, exist_ok=True)
+    if workers > 1 and len(paths) * len(policies) > 1:
+        return _run_parallel(
+            paths=paths,
+            policies=policies,
+            trials=trials,
+            master_seed=master_seed,
+            output=output,
+            verification=verification,
+            workers=workers,
+        )
     (output / "samples").mkdir(exist_ok=True)
     party = load_party()
     inventory = json.loads((FIXTURES / "mechanics.json").read_text())
@@ -259,6 +321,7 @@ def main() -> None:
     parser.add_argument("--scenario", action="append", dest="scenarios")
     parser.add_argument("--policy", action="append", dest="policies", choices=POLICIES)
     parser.add_argument("--replay-sample", type=Path)
+    parser.add_argument("--workers", type=int, default=4)
     args = parser.parse_args()
     if args.replay_sample:
         replay_sample(args.replay_sample)
@@ -272,6 +335,7 @@ def main() -> None:
         scenario_ids=args.scenarios,
         policies=args.policies,
         verification=verification,
+        workers=args.workers,
     )
 
 

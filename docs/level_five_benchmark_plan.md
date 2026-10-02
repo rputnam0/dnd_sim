@@ -53,7 +53,10 @@ tests passed. Implemented party, eight encounters, policy profiles, rule evidenc
 independent sampling, Wilson intervals, roll capture and exact replay. Six shared
 runtime defects found through prescribed-dice checks have been repaired.
 
-Pre-sweep validation: 2113 Python tests passed in 23.34s (seven existing seaborn
+Pre-sweep validation: 2114 Python tests passed in 26.49s (seven existing seaborn
 deprecation warnings); Black and diff whitespace checks passed. Fixed final design:
 1000 trials per encounter/policy, eight encounters, three policies, seed20261002.
-Final sweep, artifact inspection, and PR delivery remain pending.
+The first sweep was interrupted and excluded after transcript review found a
+same-weapon pairing in the rogue planner. That guard is fixed. Serial/parallel
+equivalence passes; the corrected sweep uses four processes with unchanged fixed
+sample sizes and seeds. Artifact inspection and PR delivery remain pending.

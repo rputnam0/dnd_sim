@@ -93,3 +93,19 @@ def test_unverified_action_is_rejected_instead_of_counted_as_a_valid_trial():
     )
     with pytest.raises(ValueError, match="Unverified Spell"):
         validate_trial_scope(result, {"wizard": {"Fire Bolt": "wizard_spells"}})
+
+
+def test_parallel_groups_preserve_serial_trial_data_and_samples(tmp_path):
+    serial, parallel = tmp_path / "serial", tmp_path / "parallel"
+    args = dict(
+        trials=2,
+        master_seed=20261002,
+        scenario_ids=["01_raider_patrol"],
+        policies=["conservative", "typical"],
+    )
+    a = run_benchmark(output=serial, **args)
+    b = run_benchmark(output=parallel, workers=2, **args)
+    assert a == b
+    assert (serial / "trials.jsonl.gz").read_bytes() == (parallel / "trials.jsonl.gz").read_bytes()
+    for path in (serial / "samples").glob("*"):
+        assert path.read_bytes() == (parallel / "samples" / path.name).read_bytes()

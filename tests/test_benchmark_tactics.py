@@ -66,6 +66,11 @@ def test_rogue_combines_light_weapon_attack_and_off_hand_attack() -> None:
     turn = TacticalPolicy("typical").declare_turn(state.actors["rogue"], state)
     assert turn.bonus_action.action_name == "off_hand_attack"
     assert turn.action.action_name in {"basic", "attack_1", "attack_2", "signature"}
+    catalog = {a["name"]: a for a in state.metadata["action_catalog"]["rogue"]}
+    assert (
+        catalog[turn.action.action_name]["weapon_id"]
+        != catalog[turn.bonus_action.action_name]["weapon_id"]
+    )
 
 
 def test_cleric_rescues_downed_ally_and_casts_cantrip_without_double_slot_spend() -> None:

@@ -250,6 +250,8 @@ class TacticalPolicy(BaseStrategy):
                     props = set(primary.action.get("weapon_properties", []))
                     if "light" not in props or _is_ranged(primary.action):
                         continue
+                    if primary.action.get("weapon_id") == bonus.action.get("weapon_id"):
+                        continue
                     # Sneak Attack is already valued in the primary action score.
                     bonus.score = min(_average(bonus.action.get("damage")), bonus.target.hp) * 0.6
                 if _healing(primary.action) and _healing(bonus.action):
