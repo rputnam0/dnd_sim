@@ -66,8 +66,8 @@ preparation workspace. This explicit first preparation makes the requesting
 administrator its initial GM, including for records created by the earlier
 metadata-only release. The workspace supports original scene creation, map
 upload, calibration, activation, and durable return/relaunch. No default scene,
-actor, token, or encounter is invented. Combat and player invitations are not
-enabled in this preparation release; actor deployment and complete world
+actor, token, or encounter is invented. Player and spectator invitations now
+open a read-only published scene view; actor deployment, combat, and complete world
 backup/restore remain subsequent gates.
 
 Scene and map requests, streams, and image bytes use the installation service
@@ -77,6 +77,41 @@ revokes that launch without deleting authored state. Administrator logout,
 session expiry, and world archive also revoke workspace access. The separate
 root route `/` remains the explicitly labeled Echo Vault demonstration, served
 by the existing solo table API; no created world falls back to it.
+
+### Invite a guest
+
+In the prepared world, use **Participant invitations** to create a player or
+spectator code. **Copy invitation code** is an explicit clipboard action; share
+it privately with one guest and send the separate `/join` page address. Codes
+are not embedded in links or saved in browser storage. Clear the clipboard
+after sharing. An unused code expires after 24 hours and cannot be recovered
+after leaving or reloading the workspace. Refresh the invitation list and revoke
+an invitation whose creation response was lost, then issue a replacement.
+
+The guest enters the code and a display name. They see only the currently
+published scene/map, their own identity and the initial GM's public roster
+entry—not the installation catalog, private scene library, other guests, or
+authoring controls. A scene-change signal clears old media before reloading the
+new projection. An image failure offers **Retry published map** without another
+redemption.
+
+Guest credentials remain in page/server memory for at most four hours. Leaving,
+reloading, or restarting the service requires a new invitation. GM logout or
+return does not end guest access; **Revoke invitation** (with confirmation) and
+world archive do. Membership and revoked records remain durable; revocation
+never deletes scenes/maps. Up to ten pending invitations or active memberships
+fit in one world; revoke an old membership to free a slot. GM delegation,
+role changes, actor ownership, and account-based rejoining are not implemented.
+
+For local production-build verification, explicitly bind the frontend:
+`uv run npm run start -- --hostname localhost --port 3000`. The underlying
+server's default start host is not loopback. Public hosting remains unsupported.
+
+Known verification limitation: the in-app browser can intermittently stop a
+scoped GET after a successful CORS preflight, affecting both GM and guest media
+or idle verification. This is tracked in `docs/vtt_gauntlet_backlog.md`; the
+underlying cause is not fixed by the retry control. Unverified access clears
+private content rather than pretending the connection is healthy.
 
 Missing or corrupt installation/catalog/workspace structures fail closed. Do not delete
 or replace an existing database to clear a safe-mode message: preserve its

@@ -113,3 +113,47 @@ journeys but could not access the parent's browser inventory; rendered evidence
 therefore comes from the parent, not that critic. A transient during a hot server
 restart is retained in the backlog; normal restart/reopen subsequently passed
 without a code change. This acceptance does not claim full Foundry parity.
+
+### Participant invitations — 2026-10-02 checkpoint
+
+The repository was consolidated after the previous slice; the old sibling
+checkout no longer exists. This work is isolated at
+`/Users/rexputnam/.codex/worktrees/vtt-participant-invitations/dnd_sim`, branch
+`codex/vtt-participant-invitations`, based on `fd9e12f`. Concurrent engine work
+in the primary checkout was not modified. The scoped contract/checklist is
+`vtt_participant_invitation_plan.md`.
+
+| Workstream | Round | Artifact / evidence | Verdict | Promoted gap | Next acceptance check | Status |
+|---|---:|---|---|---|---|---|
+| Durable invitation authority | 1 | Store/API/manager, atomic single-use codes, hashed durable tokens, independent four-hour guest sessions, current-scene media/SSE, capacity and corruption boundaries; independent critic ran 151 tests including seven extra probes | Fresh backend critic PASS | None in backend scope | Preserve during integration | Backend accepted |
+| Guest browser integration | 1 | GM issue/copy/revoke; strict separate join; read-only guest canvas; real authenticated media; immediate old-map clearing on refresh; leave/cancel/late-response privacy; 192 browser tests | Fresh whole-slice critic implementation/deterministic PASS | Explicit media retry needed after a failed image fetch | One explicit retry must reload verified bytes without rejoining or fetching authoring data | Corrected |
+| Guest browser integration | Focused re-review | New red→green retry regression, independent 192-test run; desktop and 390×844 join-form inspection, mint 3px focus, no horizontal overflow | Focused retry review PASS; full browser acceptance withheld | Stable authenticated two-principal and compact-workspace run remains unverified because of intermittent scoped fetch failures | Repeat issue/copy → join/map → live publish → revoke/clear without transport interruption; capture request/connection evidence | Implemented; acceptance pending |
+
+Final lead gates: **2,131 Python tests**, seven existing seaborn warnings;
+**192 browser tests**, strict TypeScript, production build, ESLint, Black (417
+Python files), and diff check pass. Python used the available 3.13.7 environment.
+No dependency versions or lockfiles changed. Separate agent critics inspected
+actual candidate code and ran their own tests; they did not grade builder prose.
+
+The lead observed real GM issue/copy, keyboard Enter redemption, published map
+loading, private second-scene absence, live publication switching, return to
+the map, and immediate Leave clearing. Revocation was confirmed in GM management
+and the guest view subsequently cleared. These observations were **not one
+clean uninterrupted final run**. Failures also appeared in the unchanged GM
+map loader and idle table verification, including after switching to a
+production frontend build. For one failed image, the server logged OPTIONS 200
+but no following GET; republishing later loaded the same verified map. The
+underlying cause is not established or fixed. The browser correctly clears
+unverified private access; the explicit retry improves recovery only.
+
+The final critic independently inspected the join form at 1280px and 390×844.
+At 390px, document width and scroll width were both 390; inputs/form were 292px,
+and the submit button was 292×48. Native Tab reached it with a visible mint
+outline. Authenticated compact GM/guest layouts still need a reliable final
+run. An attempted independent Firefox check was stopped when that browser was
+in active use; no claim of cross-browser acceptance is made. Temporary viewport
+overrides were reset. No new image assets were necessary for this access flow.
+
+The next active acceptance task is the transport diagnosis/stable two-principal
+run, followed by reusable actor sheets and validated deployment. This checkpoint
+does not complete the product goal or imply public-hosting readiness.
