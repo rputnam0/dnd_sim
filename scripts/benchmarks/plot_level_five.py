@@ -90,6 +90,10 @@ def main() -> None:
             metadata={"Creator": "dnd-sim L5-01"},
         )
     plt.close(fig)
+    svg_path = args.summary.parent / "difficulty.svg"
+    svg_path.write_text(
+        "\n".join(line.rstrip() for line in svg_path.read_text().splitlines()) + "\n"
+    )
     report_path = args.summary.parent / "report.md"
     if report_path.exists():
         text = report_path.read_text()

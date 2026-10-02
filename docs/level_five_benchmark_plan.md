@@ -1,7 +1,7 @@
 # Level-five encounter validation milestone
 
-Status: in progress  
-Owner: simulation-validation  
+Status: in progress
+Owner: simulation-validation
 Last updated: 2026-10-02
 
 ## Outcome
