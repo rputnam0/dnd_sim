@@ -368,4 +368,5 @@ two-principal journey and authenticated compact layouts. The observation also
 affects the unchanged GM media path, and its cause is not fixed or established.
 Diagnosis and repeatable browser evidence are the next active gate, before
 actor sheets/deployment. This does not block preserving the reviewed invitation
-implementation in a draft PR. Full Foundry parity remains substantially broader.
+implementation in draft [PR #265](https://github.com/rputnam0/dnd_sim/pull/265),
+stacked on #264. Full Foundry parity remains substantially broader.

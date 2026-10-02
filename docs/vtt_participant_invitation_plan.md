@@ -1,6 +1,7 @@
 # Participant invitations — Gauntlet slice
 
-Status: implementation in progress; 2026-10-02. Base: `fd9e12f` / PR #264.
+Status: implemented and reviewed in draft [PR #265](https://github.com/rputnam0/dnd_sim/pull/265);
+stable browser acceptance pending, 2026-10-02. Base: `fd9e12f` / PR #264.
 
 ## Outcome and boundary
 
@@ -53,18 +54,25 @@ or event records. Copying a code is an explicit GM action.
 
 ## Checklist and acceptance
 
-- [ ] TDD durable hashed invitation state, atomic single use, bounded capacity,
+- [x] TDD durable hashed invitation state, atomic single use, bounded capacity,
       exact create retry, restart, expiry and idempotent revocation.
-- [ ] Compose guest launch and live canonical authority; prove auth-before-body,
+- [x] Compose guest launch and live canonical authority; prove auth-before-body,
       world isolation, GM-only administration, scene/media projection, request
       and stream revocation, return/relaunch and unchanged authored content.
-- [ ] Strict browser transport plus GM invite/copy/revoke panel and separate
+- [x] Strict browser transport plus GM invite/copy/revoke panel and separate
       join page; memory-only credentials, stale/late reply guards, clear loss
       of access, keyboard and compact-screen workflows.
 - [ ] Real two-principal browser journey plus focused mounted/API tests.
-- [ ] Full backend/browser tests, typecheck, build, lint, Black, diff check.
-- [ ] Fresh bounded Gauntlet critic; at most one focused correction/re-review;
+- [x] Full backend/browser tests, typecheck, build, lint, Black, diff check.
+- [x] Fresh bounded Gauntlet critic; at most one focused correction/re-review;
       document evidence, commit logical blocks, open and attach PR.
+
+Verification: 2,131 Python tests and 192 browser tests pass. Backend critic
+accepted the access boundary; final critic passed implementation/deterministic
+gates and the explicit map retry, but withheld unqualified browser acceptance.
+Intermittent in-app-browser authenticated GET failures remain unclassified and
+are the next active integration-evidence task, not a claimed solved issue.
+See the 2026-10-02 ledger and backlog entries.
 
 Promotion follows the existing charter: reproducible candidate-caused failures
 of this journey/privacy/recovery bar only. Broader account management, production

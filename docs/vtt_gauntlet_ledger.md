@@ -157,3 +157,8 @@ overrides were reset. No new image assets were necessary for this access flow.
 The next active acceptance task is the transport diagnosis/stable two-principal
 run, followed by reusable actor sheets and validated deployment. This checkpoint
 does not complete the product goal or imply public-hosting readiness.
+
+Preserved in draft [PR #265](https://github.com/rputnam0/dnd_sim/pull/265),
+stacked on #264. Test browser tabs and owned loopback servers were closed;
+the synthetic local fixture remains available for diagnosis. The managed
+worktree is retained for continuation, with no changes to the engine checkout.
