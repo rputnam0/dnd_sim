@@ -861,7 +861,7 @@ export function sceneEventsUrl(after: number, apiBaseUrl = VTT_API_BASE_URL): st
   return `${apiBaseUrl.replace(/\/+$/, "")}/api/v1/scene-events?after=${after}`;
 }
 
-export function parseSceneSseBlock(block: string): SceneEvent | null {
+function sceneSseFields(block: string): Map<string, string> {
   if (typeof block !== "string") throw new Error("Scene SSE block must be text");
   const fields = new Map<string, string>();
   for (const rawLine of block.replaceAll("\r\n", "\n").split("\n")) {
@@ -875,6 +875,11 @@ export function parseSceneSseBlock(block: string): SceneEvent | null {
     }
     fields.set(name, fieldValue);
   }
+  return fields;
+}
+
+export function parseSceneSseBlock(block: string): SceneEvent | null {
+  const fields = sceneSseFields(block);
   if (fields.size === 0) return null;
   if (fields.get("event") !== "vtt.scene_event") {
     throw new Error("Scene SSE event type is invalid");
@@ -901,6 +906,18 @@ export function parseSceneSseBlock(block: string): SceneEvent | null {
   return event;
 }
 
+/** Guests receive invalidations, never historical scene event bodies. */
+export function parseSceneRefreshSseBlock(block: string): number | null {
+  const fields = sceneSseFields(block);
+  if (fields.size === 0) return null;
+  const idText = fields.get("id");
+  if (fields.get("event") !== "vtt.scene_refresh" || !idText || !/^(0|[1-9]\d*)$/.test(idText)) throw new Error("Invalid guest scene refresh");
+  const revision = Number(idText);
+  const data: unknown = JSON.parse(fields.get("data") ?? "null");
+  if (!Number.isSafeInteger(revision) || !data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).length !== 1 || (data as { revision?: unknown }).revision !== revision) throw new Error("Invalid guest scene revision");
+  return revision;
+}
+
 function findSseBoundary(buffer: string): { index: number; length: number } | null {
   const unix = buffer.indexOf("\n\n");
   const windows = buffer.indexOf("\r\n\r\n");
@@ -917,6 +934,7 @@ export async function streamSceneEvents(input: {
   apiBaseUrl?: string;
   signal: AbortSignal;
   onEvent: (event: SceneEvent) => void;
+  onRefresh?: (revision: number) => void;
   onOpen?: () => void;
 }): Promise<number> {
   let cursor = integer(input.after, "after");
@@ -945,11 +963,14 @@ export async function streamSceneEvents(input: {
     buffer += decoder.decode(value, { stream: !done });
     let boundary = findSseBoundary(buffer);
     while (boundary !== null) {
-      const event = parseSceneSseBlock(buffer.slice(0, boundary.index));
+      const block = buffer.slice(0, boundary.index);
       buffer = buffer.slice(boundary.index + boundary.length);
-      if (event && event.sequence > cursor) {
-        cursor = event.sequence;
-        input.onEvent(event);
+      if (input.onRefresh) {
+        const revision = parseSceneRefreshSseBlock(block);
+        if (revision !== null && revision > cursor && !input.signal.aborted) { cursor = revision; input.onRefresh(revision); }
+      } else {
+        const event = parseSceneSseBlock(block);
+        if (event && event.sequence > cursor && !input.signal.aborted) { cursor = event.sequence; input.onEvent(event); }
       }
       boundary = findSseBoundary(buffer);
     }

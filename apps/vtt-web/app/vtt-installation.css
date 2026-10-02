@@ -25,6 +25,27 @@
 /* Preparation workspace: inherited Geist/serif, 8px rhythm, 24px surfaces.
  * The map itself is raw media, never an invented board or encounter. */
 .vw-workspace { display: grid; gap: 32px; }
+.vw-invitations { display: grid; gap: 24px; border: 1px solid var(--vi-border); border-radius: 24px; padding: 24px; background: var(--vi-surface); min-width: 0; }
+.vw-invitations h2, .vw-invitations h3 { font: 400 24px/1.25 var(--vi-serif); }
+.vw-invitations p, .vw-invitations li, .vw-invitations .vi-button { font-size: 14px; }
+.vw-invitations p, .vw-invitation-list span { color: var(--vi-muted); }
+.vw-invitations .vi-eyebrow { font-size: 12px; }
+.vw-invitations a { color: var(--vi-mint); text-underline-offset: 4px; }
+.vw-invitation-heading, .vw-invitation-secret, .vw-invitation-list li { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.vw-invitation-heading h2 { margin-top: 8px; }
+.vw-invitation-list { display: grid; gap: 16px; list-style: none; padding: 0; margin: 0; }
+.vw-invitation-list li, .vw-invitation-confirm { padding: 24px; border: 1px solid var(--vi-border); border-radius: 24px; background: var(--vi-surface-raised); }
+.vw-invitation-list li > div { display: grid; gap: 8px; overflow-wrap: anywhere; min-width: 0; }
+.vw-invitation-list strong { font-weight: 600; }
+.vw-invitation-confirm { display: grid; gap: 16px; }
+.vw-invitations .vi-button, .vj-auth .vi-button, .vj-auth input, .vw-guest .vi-button { border-radius: 24px; }
+.vw-invitations .vi-button:focus-visible, .vw-invitations a:focus-visible, .vj-auth .vi-button:focus-visible, .vw-guest .vi-button:focus-visible { outline: 3px solid var(--vi-mint); outline-offset: 3px; }
+.vj-auth h2 { font-size: 32px; }
+.vj-auth p, .vj-auth label, .vj-auth input, .vj-auth .vi-button { font-size: 14px; }
+.vj-auth .vi-security-note { font-size: 12px !important; }
+@media (max-width: 680px) {
+  .vw-invitation-heading, .vw-invitation-secret, .vw-invitation-list li { flex-direction: column; align-items: flex-start; }
+}
 .vw-heading { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
 .vw-heading h1 { font: 400 40px/1.2 var(--vi-serif); overflow-wrap: anywhere; margin: 8px 0; }
 .vw-heading > div > p:last-child { color: var(--vi-muted); }
