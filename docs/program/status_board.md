@@ -48,13 +48,13 @@ Wave 6 remediation state:
 
 | Task | Status | Owner | Notes |
 |---|---|---|---|
-| ADV-01 | in_progress | adventure_runtime | The Lantern Below: original adventure with shared-engine combat and persistent exploration/dialogue. See [delivery checklist](../lantern_adventure_plan.md). |
+| ADV-01 | pr_open | adventure_runtime | The Lantern Below is implemented and verified in [PR #267](https://github.com/rputnam0/dnd_sim/pull/267). See [delivery checklist](../lantern_adventure_plan.md). |
 
 ## Active completion tracks
 
 | Track | Scope | Status | Milestone | Notes |
 |---|---|---|---|---|
-| ADV | Playable adventure | in_progress | ADV-01 | The Lantern Below: first complete browser adventure. |
+| ADV | Playable adventure | pr_open | ADV-01 | The Lantern Below: first complete browser adventure, pending review. |
 | DOC | Documentation Control | merged | 5A-doc-control | Track complete and merged to `main`. |
 | ARC | Runtime Decomposition | merged | 5B-runtime-decomposition | Track complete and merged to `main`. |
 | CAP | Capability Manifest | merged | 5C-capability-manifest | Track complete and merged to `main`. |
@@ -84,7 +84,7 @@ Wave 6 remediation state:
 
 | Task ID | Branch | Owner | Status | Notes |
 |---|---|---|---|---|
-| ADV-01 | codex/lantern-adventure | adventure_runtime | in_progress | Shared-engine original adventure; implementation and tests underway. |
+| ADV-01 | codex/lantern-adventure | adventure_runtime | pr_open | Implemented and verified; PR #267 is stacked on L5-01 PR #266. |
 | W8-AUD-01 | codex/wave8-section2-stabilization | program_control | in_progress | Wave 8 docs, gap matrix, and truthful baseline reset are implemented on the active branch and waiting on merge. |
 | W8-PRT-01 | codex/wave8-section2-stabilization | portability_core | in_progress | Live portable path refs, public-content path validation, and portability tests are implemented on the active branch and waiting on merge. |
 | W8-CRT-01 | codex/wave8-section2-stabilization | creator_boundary | in_progress | Public/internal scenario split, internal harness move, and creator-boundary validation gates are implemented on the active branch and waiting on merge. |
@@ -101,6 +101,7 @@ Wave 6 remediation state:
 
 | Task ID | PR | Owner | Gate status | Notes |
 |---|---|---|---|---|
+| ADV-01 | [#267](https://github.com/rputnam0/dnd_sim/pull/267) | adventure_runtime | local checks passed | 2,149 Python tests; 189 frontend tests; browser completion/recovery verified. Human pacing playtest pending. |
 
 Draft carryovers [#220](https://github.com/rputnam0/dnd_sim/pull/220) and [#222](https://github.com/rputnam0/dnd_sim/pull/222) remain closed and excluded from live execution.
 

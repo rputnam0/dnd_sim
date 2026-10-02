@@ -1,6 +1,6 @@
 # ADV-01 — The Lantern Below
 
-Status: in progress  
+Status: pr_open — [PR #267](https://github.com/rputnam0/dnd_sim/pull/267)  
 Owner: adventure-runtime  
 Last updated: 2026-10-02  
 Canonical source: `docs/program/README.md`
@@ -15,21 +15,21 @@ and one durable session. Play duration is a design target pending human playtest
 
 ## Delivery checklist
 
-- [ ] ADV-01a: implement versioned adventure content/state, available choices,
+- [x] ADV-01a: implement versioned adventure content/state, available choices,
       dialogue branches, exploration interactions, loot, and a limited rest.
-- [ ] ADV-01b: connect two encounters to the shared combat driver, automatically
+- [x] ADV-01b: connect two encounters to the shared combat driver, automatically
       resolve enemy turns, and retain party health/resources between scenes.
-- [ ] ADV-01c: expose a local durable adventure API with optimistic commands,
+- [x] ADV-01c: expose a local durable adventure API with optimistic commands,
       atomic saves, exact retries, restart recovery, and an explicit new-run action.
-- [ ] ADV-01d: build the adventure route with the existing tactical map, readable
+- [x] ADV-01d: build the adventure route with the existing tactical map, readable
       story/quest/party panels, combat controls, and responsive keyboard access.
-- [ ] ADV-01e: prove peaceful and hostile routes, failed checks, defeat, repeated
+- [x] ADV-01e: prove peaceful and hostile routes, failed checks, defeat, repeated
       loot/rest rejection, mid-combat restart, retries, and browser interactions.
-- [ ] ADV-01f: complete full checks, browser inspection, independent review,
+- [x] ADV-01f: complete full checks, browser inspection, independent review,
       operating instructions, and a pull request.
 
-Items remain unchecked until passing evidence is included in a PR. Implementation
-notes below distinguish work present locally from accepted completion.
+Passing evidence is included in PR #267. The implementation is in review and has
+not been merged; human pacing validation remains a follow-up.
 
 ## Adventure beats
 
@@ -112,7 +112,6 @@ content; it does not claim a general campaign engine or full rules parity.
 ### Review base
 
 The starting checkpoint is `11c507c`, which includes the existing VTT and L5
-encounter fixes. Because the L5 branch is not yet published, the adventure PR
-uses a frozen `codex/lantern-adventure-base` comparison branch at that checkpoint.
-This keeps unrelated work out of the adventure review and leaves the concurrent
-L5 checkout unchanged. Retarget the PR when its upstream checkpoint is published.
+encounter fixes. PR #267 is stacked on `codex/level-five-encounter-benchmark`
+([PR #266](https://github.com/rputnam0/dnd_sim/pull/266)), keeping unrelated work
+out of the adventure review. The concurrent L5 checkout was left unchanged.
