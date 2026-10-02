@@ -1,6 +1,6 @@
 # Level-five encounter validation milestone
 
-Status: in progress
+Status: complete; in review
 Owner: simulation-validation
 Last updated: 2026-10-02
 
@@ -14,16 +14,16 @@ apply to this declared rules/loadout/policy envelope, not all D&D parties.
 
 ## Checklist (L5-01)
 
-- [ ] Author party and encounters with a finite mechanic/evidence inventory.
-- [ ] Prove the used rules with deterministic, independently calculated cases;
+- [x] Author party and encounters with a finite mechanic/evidence inventory.
+- [x] Prove the used rules with deterministic, independently calculated cases;
       fix regressions exposed on this supported path.
-- [ ] Add tactical action/bonus/movement/reaction/resource planning and policy
+- [x] Add tactical action/bonus/movement/reaction/resource planning and policy
       comparisons without changing the legacy strategy's default behavior.
-- [ ] Add independent trial seeds, Wilson intervals, outcome/resource summaries,
+- [x] Add independent trial seeds, Wilson intervals, outcome/resource summaries,
       and observational roll capture with deterministic replay checks.
-- [ ] Run encounter stress sweeps and preserve reports, compact trial data,
+- [x] Run encounter stress sweeps and preserve reports, compact trial data,
       representative roll transcripts, provenance, and limitations.
-- [ ] Pass focused and full tests, formatting and relevant repository gates;
+- [x] Pass focused and full tests, formatting and relevant repository gates;
       commit logical blocks and open a reviewable PR.
 
 Items become checked only after their verification passes and they are in a PR.
@@ -63,4 +63,8 @@ sample sizes and seeds. Corrected sweep complete: 24,000 trials, 24 groups, zero
 All 38 saved samples replay exactly; 2,851 source fingerprints and every compact
 trial count/HP/resource bound passed audit. The 121-test mechanic gate, report
 figure inspection, Black, program-doc and supported-capability gates passed.
-PR delivery remains pending.
+Delivered in [PR #266](https://github.com/rputnam0/dnd_sim/pull/266), stacked
+on #264. All checklist evidence is included in the PR. Read
+`artifacts/benchmarks/level_five/assessment.md` for findings and next priorities.
+No full-catalog or human-play validation is claimed; see documented loadout,
+tactical, general off-hand validation, and encounter-end limitations.
