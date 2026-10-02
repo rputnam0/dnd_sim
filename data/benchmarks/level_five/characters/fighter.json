@@ -1,0 +1,65 @@
+{
+  "character_id": "fighter",
+  "name": "Mara Stone \u2014 Fighter 5",
+  "class_levels": {
+    "fighter": 5
+  },
+  "max_hp": 49,
+  "ac": 18,
+  "speed_ft": 30,
+  "ability_scores": {
+    "str": 18,
+    "dex": 12,
+    "con": 16,
+    "int": 10,
+    "wis": 12,
+    "cha": 8
+  },
+  "save_mods": {
+    "str": 7,
+    "dex": 1,
+    "con": 6,
+    "int": 0,
+    "wis": 1,
+    "cha": -1
+  },
+  "skill_mods": {},
+  "attacks": [
+    {
+      "name": "Longsword",
+      "weapon_id": "longsword",
+      "attack_profile_id": "longsword",
+      "damage": "1d8+4",
+      "to_hit": 7,
+      "damage_type": "slashing",
+      "weapon_properties": [],
+      "reach_ft": 5
+    },
+    {
+      "name": "Javelin",
+      "weapon_id": "javelin",
+      "attack_profile_id": "javelin",
+      "damage": "1d6+4",
+      "to_hit": 7,
+      "damage_type": "piercing",
+      "weapon_properties": [
+        "thrown"
+      ],
+      "range_normal_ft": 30,
+      "range_long_ft": 120
+    }
+  ],
+  "traits": [
+    "Extra Attack",
+    "Action Surge",
+    "Second Wind"
+  ],
+  "spells": [],
+  "resources": {},
+  "raw_fields": [],
+  "source": {
+    "kind": "original_benchmark",
+    "rules": "SRD 5.1",
+    "scope": "subclass-neutral combat loadout"
+  }
+}

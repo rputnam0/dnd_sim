@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "trials": 24000,
+  "groups": 24,
+  "replayed_samples": 38,
+  "source_files_verified": 2851,
+  "censored_trials": 0,
+  "checks": [
+    "fixed sample sizes and trial identity",
+    "outcome counts recomputed from all rows",
+    "HP and resource bounds",
+    "source file fingerprints",
+    "exact full sample replay",
+    "distinct main/off-hand weapons in saved turns",
+    "no unlisted stale samples"
+  ],
+  "validator_sha256": "8890225bd938e8a52378584c13d3bfca43d08cd5c7b31c3a0434b3fcf29797da"
+}

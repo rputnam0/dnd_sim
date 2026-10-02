@@ -1,4 +1,24 @@
 subsystems:
+  encounter_benchmarks:
+    owner_pool: simulation_validation
+    owner_task: L5-01
+    owner_module: src/dnd_sim/benchmarks/*.py
+    invariants:
+      - "Independent seeded trials preserve shared-engine semantics and fresh policy state."
+      - "Observational roll traces consume no additional randomness; statistical reports separate sampling and model uncertainty."
+    safe_edit_boundaries:
+      - "Safe: bounded benchmark fixtures, evidence, reports, and policy profiles."
+      - "Caution: engine or content changes require regenerated benchmark evidence."
+  encounter_placement:
+    owner_pool: simulation_validation
+    owner_task: L5-01
+    owner_module: src/dnd_sim/encounter_setup.py
+    invariants:
+      - "Explicit positions are finite feet-space coordinates validated before deterministic trace generation."
+      - "Malformed placements raise structured path-specific ValueError diagnostics."
+    safe_edit_boundaries:
+      - "Safe: optional placement validation preserving legacy defaults."
+      - "Caution: changing defaults changes fixed-seed encounters."
   simulation_runtime:
     owner_pool: runtime_a
     owner_task: ARC-01
@@ -417,8 +437,8 @@ policies:
     default_max_file_lines: 1500
     file_size_waivers:
       - module: src/dnd_sim/engine_runtime.py
-        max_lines: 16450
-        reason: "Wave 8 stabilization still keeps combat timing orchestration centralized in engine_runtime.py; immutable hook provenance and roll construction live in focused modules, while the remaining subscription adapters depend on engine-private reaction/resource rules and continue under W8-ARC-01."
+        max_lines: 16480
+        reason: "Wave 8 stabilization keeps combat timing orchestration centralized under W8-ARC-01. L5-01 adds area hydration, Shield spending, and defeated bonus-target adapters here; benchmark policy, statistics, and placement live in focused modules."
       - module: src/dnd_sim/rules_2014.py
         max_lines: 1510
         reason: "The core event contracts carry three provenance-list fields while immutable hook validation is extracted to roll_hook_provenance.py; further unrelated rules decomposition remains outside VTT-ROLL-01."

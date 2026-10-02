@@ -1,0 +1,56 @@
+{
+  "identity": {
+    "enemy_id": "veteran_6",
+    "name": "Veteran 6",
+    "team": "enemy"
+  },
+  "stat_block": {
+    "max_hp": 58,
+    "ac": 17,
+    "speed_ft": 30,
+    "initiative_mod": 2,
+    "dex_mod": 2,
+    "con_mod": 2,
+    "save_mods": {
+      "str": 3,
+      "dex": 2,
+      "con": 2,
+      "int": 0,
+      "wis": 1,
+      "cha": 0
+    }
+  },
+  "actions": [
+    {
+      "name": "basic",
+      "action_type": "attack",
+      "to_hit": 6,
+      "damage": "1d8+3",
+      "damage_type": "slashing",
+      "attack_count": 2,
+      "range_ft": 5,
+      "range_normal_ft": null,
+      "range_long_ft": null,
+      "weapon_properties": [],
+      "target_mode": "single_enemy",
+      "resource_cost": {}
+    },
+    {
+      "name": "dodge",
+      "action_type": "utility",
+      "target_mode": "self",
+      "tags": [
+        "utility_dodge"
+      ]
+    }
+  ],
+  "bonus_actions": [],
+  "reactions": [],
+  "legendary_actions": [],
+  "lair_actions": [],
+  "resources": {},
+  "damage_resistances": [],
+  "damage_immunities": [],
+  "damage_vulnerabilities": [],
+  "condition_immunities": []
+}

@@ -1,0 +1,75 @@
+{
+  "scenario_id": "01_raider_patrol",
+  "encounter_id": "level_five_benchmark",
+  "ruleset": "5e-2014",
+  "character_db_dir": "repo:data/benchmarks/level_five/characters",
+  "party": [
+    "fighter",
+    "rogue",
+    "cleric",
+    "wizard"
+  ],
+  "enemies": [
+    "raider_1",
+    "raider_2",
+    "raider_3",
+    "raider_4"
+  ],
+  "initiative_mode": "individual",
+  "battlefield": {
+    "description": "Raider patrol",
+    "starting_positions": {
+      "fighter": [
+        0,
+        0,
+        0
+      ],
+      "rogue": [
+        10,
+        0,
+        0
+      ],
+      "cleric": [
+        0,
+        -15,
+        0
+      ],
+      "wizard": [
+        15,
+        -20,
+        0
+      ],
+      "raider_1": [
+        0,
+        30,
+        0
+      ],
+      "raider_2": [
+        10,
+        30,
+        0
+      ],
+      "raider_3": [
+        20,
+        30,
+        0
+      ],
+      "raider_4": [
+        30,
+        30,
+        0
+      ]
+    },
+    "obstacles": []
+  },
+  "termination_rules": {
+    "party_defeat": "all_unconscious_or_dead",
+    "enemy_defeat": "all_dead",
+    "max_rounds": 30
+  },
+  "resource_policy": {},
+  "assumption_overrides": {
+    "party_strategy": "benchmark",
+    "enemy_strategy": "benchmark"
+  }
+}

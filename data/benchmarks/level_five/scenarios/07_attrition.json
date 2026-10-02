@@ -1,0 +1,109 @@
+{
+  "scenario_id": "07_attrition",
+  "encounter_id": "level_five_benchmark",
+  "ruleset": "5e-2014",
+  "character_db_dir": "repo:data/benchmarks/level_five/characters",
+  "party": [
+    "fighter",
+    "rogue",
+    "cleric",
+    "wizard"
+  ],
+  "enemies": [],
+  "initiative_mode": "individual",
+  "battlefield": {
+    "description": "Three waves without rests or automatic between-wave healing",
+    "starting_positions": {
+      "fighter": [
+        0,
+        0,
+        0
+      ],
+      "rogue": [
+        10,
+        0,
+        0
+      ],
+      "cleric": [
+        0,
+        -15,
+        0
+      ],
+      "wizard": [
+        15,
+        -20,
+        0
+      ],
+      "veteran_1": [
+        -10,
+        30,
+        0
+      ],
+      "veteran_2": [
+        10,
+        30,
+        0
+      ],
+      "veteran_3": [
+        30,
+        30,
+        0
+      ],
+      "raider_1": [
+        -10,
+        35,
+        0
+      ],
+      "raider_2": [
+        10,
+        35,
+        0
+      ],
+      "raider_3": [
+        30,
+        35,
+        0
+      ],
+      "veteran_4": [
+        50,
+        30,
+        0
+      ]
+    },
+    "obstacles": []
+  },
+  "termination_rules": {
+    "party_defeat": "all_unconscious_or_dead",
+    "enemy_defeat": "all_dead",
+    "max_rounds": 30
+  },
+  "resource_policy": {},
+  "assumption_overrides": {
+    "party_strategy": "benchmark",
+    "enemy_strategy": "benchmark"
+  },
+  "encounters": [
+    {
+      "enemies": [
+        "raider_1",
+        "raider_2",
+        "raider_3"
+      ],
+      "checkpoint": "patrol"
+    },
+    {
+      "enemies": [
+        "veteran_1",
+        "veteran_2"
+      ],
+      "checkpoint": "gate"
+    },
+    {
+      "enemies": [
+        "veteran_3",
+        "veteran_4"
+      ],
+      "checkpoint": "keep"
+    }
+  ]
+}
